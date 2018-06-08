@@ -1,219 +1,159 @@
-  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}Using Edge admin utilities and
-  APIs after enabling SAML{% endblock %} {% block body %}
+{% extends "private-cloud/v4.18.05/_base.html" %}
+{% block title %}Using Edge admin utilities and APIs after enabling SAML{% endblock %}
+{% block body %}
 
   <p>This section describes how to run Edge system admin tools and commands after enabling SAML.
   Many tasks on Edge require system administration credentials, such as:</p>
 
   <ul>
     <li>Creating organizations and environments</li>
-
     <li>Adding and removing Edge components</li>
-
     <li>Runngin apigee-adminapi.sh commands</li>
-
-    <li>many other tasks</li>
   </ul>
 
   <p>However, after you enable SAML on Edge you typically disable Basic Auth so that the only way
   to authenticate is through the SAML IDP. Therefore, you must make sure that you have added the
   system admin account to your SAML IDP.</p>
 
-  <aside class="warning"><b>Warning:</b> Ensure that you have added the Edge system admin account
-  to the SAML IDP before you disable Basic Auth. Otherwise, you will not be able to authenticate as
-  the system admin.</aside>
+  <aside class="warning"><strong>Warning:</strong> Ensure that you have added the Edge system admin
+  account to the SAML IDP before you disable Basic Auth. Otherwise, you will not be able to
+  authenticate as the system admin.</aside>
 
   <h2 id="callingedgemanagementapisasthesystemadministrator">Calling Edge management APIs as the
   system administrator</h2>
 
   <p>Many Edge API calls require you to pass system administrator credentials. <a href=
-  "using-saml-edge-management-api.html">Using SAML with the Edge management API</a> contains
+  "using-saml-edge-management-api">Using SAML with the Edge management API</a> contains
   instructions on how to obtain and refresh tokens when making Edge management API calls.</p>
 
   <h2 id="usingtheapigeeadminapishutilitywithsamlauthentication">Using the apigee-adminapi.sh
   utility with SAML authentication</h2>
 
-  <p>Use the <span style="font-family:courier new,courier,monospace;">apigee-adminapi.sh</span>
-  utility to perform the same Edge configuration tasks that you perform by making calls to the Edge
-  management API. The advantage to the <span style=
-  "font-family:courier new,courier,monospace;">apigee-adminapi.sh</span> utility is that it:</p>
+  <p>Use the <code>apigee-adminapi.sh</code> utility to perform the same Edge configuration tasks
+  that you perform by making calls to the Edge management API. The advantage to the
+  <code>apigee-adminapi.sh</code> utility is that it:</p>
 
   <ul>
     <li>Use a simple command-line interface</li>
-
     <li>Implements tab-based command completion</li>
-
     <li>Provides help and usage information</li>
-
     <li>Can display the corresponding API call if you decide to try the API</li>
   </ul>
 
-  <p>For more, see <a href="using-apigee-ssoadminapish.html">Using apigee-ssoadminapi.sh</a>.</p>
+  <p>For more, see <a href="using-apigee-ssoadminapish">Using apigee-ssoadminapi.sh</a>.</p>
 
   <p>After you enable SAML authentication, you have several ways to pass the system admin
-  credentials to the <span style=
-  "font-family:courier new,courier,monospace;">apigee-adminapi.sh</span> utility.</p>
+  credentials to the <code>apigee-adminapi.sh</code> utility.</p>
 
-  <aside class="note"><b>Note:</b> The credentials must be for a sys admin user, not an org admin
-  or other type of user.</aside>
+  <aside class="note"><strong>Note:</strong> The credentials must be for a sys admin user, not an
+  organization administrator or other type of user.</aside>
 
-  <p>You can see all of the options for any <span style=
-  "font-family:courier new,courier,monospace;">apigee-adminapi.sh</span> command, including the
+  <p>You can see all of the options for any <code>apigee-adminapi.sh</code> command, including the
   options for specifying SAML credentials, by using the "-h" option to the command. For
   example:</p>
-  <pre class="prettyprint">
-&gt; apigee-adminapi.sh orgs list -h
-</pre>
+  <pre class="devsite-terminal">apigee-adminapi.sh orgs list -h</pre>
 
   <p>For example, you can pass the system admin credentials:</p>
-  <pre class="prettyprint">
-&gt; apigee-adminapi.sh orgs list --sso-url <em><strong>http://edge_sso_IP_DNS:9099</strong></em> --oauth-flow <strong>password_grant</strong> --admin <em><strong>adminEmail</strong></em> --oauth-password <em><strong>adminPword</strong></em> 
-</pre>
-
-  <p>where:</p>
-
+  <pre class="devsite-terminal">apigee-adminapi.sh orgs list --sso-url <var>http://edge_sso_IP_DNS:9099</var> --oauth-flow <strong>password_grant</strong> \
+  --admin <var>adminEmail</var> --oauth-password <var>adminPword</var></pre>
+  <p>Where:</p>
   <ul>
-    <li><span style="font-family:courier new,courier,monospace;">sso-url</span> specifies the URL
-    of the Edge SSO module. Modify the port or protocol if you have changed them from 9099 and
-    HTTP.</li>
-
-    <li><span style="font-family:courier new,courier,monospace;">oauth-flow</span> specifies either
-    <span style="font-family:courier new,courier,monospace;">passcode</span> or <span style=
-    "font-family:courier new,courier,monospace;">password_grant</span>. In this example, you
-    specify <span style="font-family:courier new,courier,monospace;">password_grant</span>.</li>
-
-    <li><strong><em>adminEmail</em></strong> is the email address of the sys admin.</li>
-
-    <li><span style="font-family:courier new,courier,monospace;">oauth-password</span> specifies
-    the sys admin's password<span style="font-family:courier new,courier,monospace;">.</span></li>
+    <li>The <code>sso-url</code> option specifies the URL of the Edge SSO module. Modify the port
+      or protocol if you have changed them from 9099 and HTTP.</li>
+    <li><code>oauth-flow</code> specifies either
+      <code>passcode</code> or <code>password_grant</code>. In this example, you specify
+      <code>password_grant</code>.</li>
+    <li><var>adminEmail</var> is the email address of the sys admin.</li>
+    <li><code>oauth-password</code> specifies the sys admin's password.</li>
   </ul>
 
   <p>Alternatively, you can use a passcode when calling the command:</p>
-  <pre class="prettyprint">
-&gt; apigee-adminapi.sh orgs list --sso-url <em><strong>http://edge_sso_IP_DNS:9099</strong></em> --oauth-flow <strong>passcode</strong> --admin <em><strong>adminEmail</strong></em> --oauth-passcode <em><strong>passcode</strong></em> 
-</pre>
-
-  <p>where:</p>
-
+  <pre class="devsite-terminal">apigee-adminapi.sh orgs list --sso-url <var>http://edge_sso_IP_DNS:9099</var> --oauth-flow <strong>passcode</strong> \
+  --admin <var>adminEmail</var> --oauth-passcode <var>passcode</var></pre>
+  <p>Where:</p>
   <ul>
-    <li><span style="font-family:courier new,courier,monospace;">oauth-flow</span> specifies
-    <span style="font-family:courier new,courier,monospace;">passcode</span>.</li>
-
-    <li><span style="font-family:courier new,courier,monospace;">oauth-passcode</span> specifies
-    the passcode obtained from <span style=
-    "font-family:courier new,courier,monospace;">http://<strong><em>edge_sso_IP_DNS</em></strong>:9099/passcode.</span></li>
+    <li><code>oauth-flow</code> specifies <code>passcode</code>.</li>
+    <li><code>oauth-passcode</code> specifies the passcode obtained from
+      <code><var>http://edge_sso_IP_DNS:9099</var>/passcode.</code></li>
   </ul>
 
   <p>Finally, you can use a token when calling the command:</p>
-  <pre class="prettyprint">
-&gt; apigee-adminapi.sh orgs list --sso-url <em><strong>http://edge_sso_IP_DNS:9099</strong></em> --oauth-flow <strong>passcode</strong> --admin <em><strong>adminEmail</strong></em> --oauth-token <em><strong>token</strong></em> 
-</pre>
-
-  <p>where:</p>
-
+  <pre class="devsite-terminal">apigee-adminapi.sh orgs list --sso-url <var>http://edge_sso_IP_DNS:9099</var> --oauth-flow <strong>passcode</strong> \
+  --admin <var>adminEmail</var> --oauth-token <var>token</var></pre>
+  <p>Where:</p>
   <ul>
-    <li><span style="font-family:courier new,courier,monospace;">oauth-flow</span> specifies either
-    <span style="font-family:courier new,courier,monospace;">passcode</span> or <span style=
-    "font-family:courier new,courier,monospace;">password_grant</span>, depending on how you
-    originally got the token. In this example, you specify <span style=
-    "font-family:courier new,courier,monospace;">passcode</span> because you originally got the
-    token by using <span style="font-family:courier new,courier,monospace;">get_token</span>. See
-    <a href="using-saml-edge-management-api.html">Using SAML with the Edge management API</a>.</li>
-
-    <li><span style="font-family:courier new,courier,monospace;">oauh_token</span> contains the
-    token.</li>
+    <li><code>oauth-flow</code> specifies either <code>passcode</code> or
+      <code>password_grant</code>, depending on how you originally got the token. In this example, you
+      specify <code>passcode</code> because you originally got the token by using
+      <code>get_token</code>. See <a href="using-saml-edge-management-api">Using SAML with the Edge
+      management API</a>.</li>
+    <li><code>oauh_token</code> contains the token.</li>
   </ul>
 
-  <h2 id="usingedgeutilitieswithsamlauthentication">Using Edge utilities with SAML
-  authentication</h2>
+  <h2 id="usingedgeutilitieswithsamlauthentication">Using Edge utilities with SAML authentication</h2>
 
   <p>Many Edge utilities require system admin credentials, such as:</p>
 
   <ul>
-    <li><span style="font-family:courier new,courier,monospace;">apigee-provision</span> used to
-    create organizations, environments, and virtual hosts</li>
-
-    <li><span style="font-family:courier new,courier,monospace;">setup.sh</span> used to add nodes
-    to an existing system</li>
-
+    <li><code>apigee-provision</code> used to create organizations, environments, and virtual
+      hosts</li>
+    <li><code>setup.sh</code> used to add nodes to an existing system</li>
     <li>Any other utility where you have to specify the system admin credentials in a configuration
-    file</li>
+      file</li>
   </ul>
 
   <p>These utilities take as input a configuration file that specifies the system admin's
   credentials by using the properties:</p>
-  <pre class="prettyprint">
-ADMIN_EMAIL="<em><strong>adminEmail</strong></em>"
-APIGEE_ADMINPW=<em><strong>adminPWord</strong></em>
-</pre>
+  <pre class="prettyprint">ADMIN_EMAIL="<var>adminEmail</var>"
+APIGEE_ADMINPW=<var>adminPWord</var></pre>
 
   <p>If you omit the password, then you are prompted for it.</p>
 
   <p>After you enable SAML you use different properties to specify the sys admin's credentials. For
   example, you can pass the system admin credentials:</p>
-  <pre class="prettyprint">
-ADMIN_EMAIL="<em><strong>adminEmail</strong></em>"
-SSO_LOGIN_URL=<em><strong>http://edge_sso_IP_DNS:9099</strong></em>
+  <pre class="prettyprint">ADMIN_EMAIL="<var>adminEmail</var>"
+SSO_LOGIN_URL=<var>http://edge_sso_IP_DNS:9099</var>
 OAUTH_FLOW=password_grant
-OAUTH_ADMIN_PASSWORD=<em><strong>adminPWord</strong></em>
-</pre>
-
-  <p>where:</p>
-
+OAUTH_ADMIN_PASSWORD=<var>adminPWord</var></pre>
+  <p>Where:</p>
   <ul>
-    <li><span style="font-family:courier new,courier,monospace;">SSO_LOGIN_URL</span> specifies the
-    URL of the Edge SSO module. Modify the port or protocol if you have changed them from 9099 and
-    HTTP.</li>
-
-    <li><span style="font-family:courier new,courier,monospace;">OAUTH_FLOW</span> specifies either
-    <span style="font-family:courier new,courier,monospace;">passcode</span> or <span style=
-    "font-family:courier new,courier,monospace;">password_grant</span>. In this example, you
-    specify <span style="font-family:courier new,courier,monospace;">password_grant</span> because
-    you are passing the sys admin's password.</li>
-
-    <li><span style="font-family:courier new,courier,monospace;">OAUTH_ADMIN_PASSWORD</span>
-    specifies the sys admin's password<span style=
-    "font-family:courier new,courier,monospace;">.</span></li>
+    <li><code>SSO_LOGIN_URL</code> specifies the URL of the Edge SSO module. Modify the port or
+      protocol if you have changed them from 9099 and HTTP.</li>
+    <li><code>OAUTH_FLOW</code> specifies either <code>passcode</code> or
+      <code>password_grant</code>. In this example, you specify <code>password_grant</code> because
+      you are passing the sys admin's password.</li>
+    <li><code>OAUTH_ADMIN_PASSWORD</code> specifies the sys admin's password.</li>
   </ul>
 
   <p>Alternatively, you can use the following properties to specify the credentials as part of a
   passcode flow:</p>
-  <pre class="prettyprint">
-ADMIN_EMAIL="<em><strong>adminEmail</strong></em>"
-SSO_LOGIN_URL=<em><strong>http://edge_sso_IP_DNS:9099</strong></em>
+  <pre class="prettyprint">ADMIN_EMAIL="<var>adminEmail</var>"
+SSO_LOGIN_URL=<var>http://edge_sso_IP_DNS:9099</var>
 OAUTH_FLOW=passcode
-OAUTH_ADMIN_PASSCODE=<em><strong>passcode</strong></em>
-</pre>
+OAUTH_ADMIN_PASSCODE=<var>passcode</var></pre>
 
-  <p>where:</p>
+  <p>Where:</p>
 
   <ul>
-    <li><span style="font-family:courier new,courier,monospace;">OAUTH_FLOW</span> specifies
-    <span style="font-family:courier new,courier,monospace;">passcode</span>.</li>
-
-    <li><span style="font-family:courier new,courier,monospace;">OAUTH_ADMIN_PASSCODE</span>
-    specifies the passcode obtained from <span style=
-    "font-family:courier new,courier,monospace;">http://<strong><em>edge_sso_IP_DNS</em></strong>:9099/passcode.</span></li>
+    <li><code>OAUTH_FLOW</code> specifies <code>passcode</code>.</li>
+    <li><code>OAUTH_ADMIN_PASSCODE</code> specifies the passcode obtained from
+      <code><var>http://edge_sso_IP_DNS:9099</var>/passcode.</code></li>
   </ul>
 
   <p>Finally, you can use a token</p>
-  <pre class="prettyprint">
-ADMIN_EMAIL="<em><strong>adminEmail</strong></em>"
-SSO_LOGIN_URL=<em><strong>http://edge_sso_IP_DNS:9099</strong></em>
+  <pre class="prettyprint">ADMIN_EMAIL="<var>adminEmail</var>"
+SSO_LOGIN_URL=<var>http://edge_sso_IP_DNS:9099</var>
 OAUTH_FLOW=passcode
-OAUTH_BEARER_TOKEN=<em><strong>token</strong></em>
-</pre>
+OAUTH_BEARER_TOKEN=<var>token</var></pre>
 
-  <p>where:</p>
-
+  <p>Where:</p>
   <ul>
-    <li><span style="font-family:courier new,courier,monospace;">OAUTH_FLOW</span> specifies either
-    <span style="font-family:courier new,courier,monospace;">passcode</span> or <span style=
-    "font-family:courier new,courier,monospace;">password_grant</span>, depending on how you
-    originally got the token. In this example, you specify <span style=
-    "font-family:courier new,courier,monospace;">passcode</span> because you originally got the
-    token by using <span style="font-family:courier new,courier,monospace;">get_token</span>. See
-    <a href="using-saml-edge-management-api.html">Using SAML with the Edge management API</a>.</li>
+    <li><code>OAUTH_FLOW</code> specifies either <code>passcode</code> or
+      <code>password_grant</code>, depending on how you originally got the token. In this example,
+      you specify <code>passcode</code> because you originally got the token by using
+      <code>get_token</code>. See <a href="using-saml-edge-management-api">Using SAML with the Edge
+      management API</a>.</li>
+    <li><code>OAUTH_BEARER_TOKEN</code> contains the token.</li>
+  </ul>
 
-    <li><span style="font-family:courier new,courier,monospace;">OAUTH_BEARER_TOKEN</span> contains
-    the token.</li>
-  </ul>{% endblock %}
+{% endblock %}

@@ -1,13 +1,13 @@
-  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}OpenLDAP Maintenance Tasks{% endblock %} {% block body %}
+{% extends "private-cloud/v4.18.05/_base.html" %}
+{% block title %}OpenLDAP maintenance tasks{% endblock %}
+{% block body %}
 
   <h2 id="logfilelocation">Log file location</h2>
 
-  <p>OpenLDAP log files are contained in the directory <span style=
-  "font-family:courier new,courier,monospace;">/opt/apigee/var/log</span>. These files can be
+  <p>OpenLDAP log files are contained in the directory <code>/opt/apigee/var/log</code>. These files can be
   periodically archived and removed in order to ensure that they do not take up excessive disk
   space. Information on maintaining, archiving and removing OpenLDAP logs can be found in Section
-  19.2 of the OpenLDAP manual at <a href=
-  "https://www.openldap.org/doc/admin24/maintenance.html">http://www.openldap.org/doc/admin24/maintenance.html</a>.</p>
+  19.2 of the OpenLDAP manual at <a href="https://www.openldap.org/doc/admin24/maintenance.html" class="external">http://www.openldap.org/doc/admin24/maintenance.html</a>.</p>
 
   <h2 id="manuallysetauserspassword">Manually set a user's password</h2>
 
@@ -19,138 +19,99 @@
   <p>To set a user's password:</p>
 
   <ol>
-    <li>Use <span style="font-family:courier new,courier,monospace;">ldapsearch</span> to
-    download user information:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt; ldapsearch -w
-    <em><strong>ldapAdminPWord</strong></em> -D "cn=manager,dc=apigee,dc=com" -b "dc=apigee,dc=com"
-    -LLL -h <em><strong>LDAP_IP</strong></em> -p 10389 &gt; ldap.txt</span></li>
-
-    <li>Search the ldap.txt file for the user's email address. You should see a block in the
-    form:<br>
-    <span style="font-family:courier new,courier,monospace;">dn:
-    uid=29383a67-9279-4aa8-a75b-cfbf901578fc,ou=users,ou=global,dc=apigee,dc=com<br>
-    mail: foo@bar.com<br>
-    userPassword:: e1NTSEF9a01UUDdSd01BYXRuUURXdXN5OWNPRzBEWWlYZFBRTm14MHlNVWc9PQ==<br>
-    uid: 29383a67-9279-4aa8-a75b-cfbf901578fc</span></li>
-
-    <li>Use <span style="font-family:courier new,courier,monospace;">ldappasswd</span> to set
-    the user's password based on the user's uid:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt; ldappasswd -h
-    <em><strong>LDAP_IP</strong></em> -p 10389 -D "cn=manager,dc=apigee,dc=com" -W -s
-    <em><strong>newPassWord</strong></em>
-    "uid=29383a67-9279-4aa8-a75b-cfbf901578fc,ou=users,ou=global,dc=apigee,dc=com"</span><br>
-    <br>
-    You are prompted for the OpenLDAP admin password.</li>
+    <li>Use <code>ldapsearch</code> to download user information:
+      <pre class="devsite-terminal">ldapsearch -w <var>ldapAdminPWord</var> -D "cn=manager,dc=apigee,dc=com" -b "dc=apigee,dc=com" -LLL -h <var>LDAP_IP</var> -p 10389 &gt; ldap.txt</pre>
+    </li>
+    <li>Search the ldap.txt file for the user's email address. You should see a block in the form:
+      <pre>dn: uid=29383a67-9279-4aa8-a75b-cfbf901578fc,ou=users,ou=global,dc=apigee,dc=com
+mail: foo@bar.com
+userPassword:: e1NTSEF9a01UUDdSd01BYXRuUURXdXN5OWNPRzBEWWlYZFBRTm14MHlNVWc9PQ==
+uid: 29383a67-9279-4aa8-a75b-cfbf901578fc</pre>
+      </li>
+    <li>Use <code>ldappasswd</code> to set the user's password based on the user's uid:
+      <pre class="devsite-terminal">ldappasswd -h <var>LDAP_IP</var> -p 10389 -D "cn=manager,dc=apigee,dc=com" -W -s <var>newPassWord</var> \
+  "uid=29383a67-9279-4aa8-a75b-cfbf901578fc,ou=users,ou=global,dc=apigee,dc=com"</pre>
+      <p>You are prompted for the OpenLDAP admin password.</p>
+    </li>
   </ol>
 
   <p>The user can now log in by using <em><strong>newPassWord</strong></em>.</p>
 
   <h2 id="manuallysetopenldapsystempassword">Manually set OpenLDAP system password</h2>
 
-  <p><a href="resetting-passwords.html">Resetting Edge Passwords</a> describes how to change the
+  <p><a href="resetting-passwords">Resetting Edge passwords</a> describes how to change the
   OpenLDAP system password but requires that you know the existing password. If you have lost that
-  password, you can use the following procedure to reset it.  </p>
+  password, you can use the following procedure to reset it.</p>
 
   <ol>
-    <li>Use <span style="font-family:courier new,courier,monospace;">slappasswd</span> to
-    create the SSHA encrypted password for a new password:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt; slappasswd -h {SSHA} -s
-    <em><strong>newPassWord</strong></em></span><br>
-    <br>
-    ?This command returns a string int he form:<br>
-    <span style=
-    "font-family:courier new,courier,monospace;">{SSHA}+DOup9d6l+czfWzkIvajwYPArjPurhS6</span></li>
-
-    <li>Open the <span style=
-    "font-family:courier new,courier,monospace;">/opt/apigee/data/apigee-openldap/slapd.d/cn=config/olcDatabase={2}bdb.ldif</span>
-    file in an editor:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    vi /opt/apigee/data/apigee-openldap/slapd.d/cn=config/olcDatabase={2}bdb.ldif</span></li>
-
-    <li>Find the line in the form:?<br>
-    <span style="font-family:courier new,courier,monospace;">olcRootPW::
-    <em><strong>OldPasswordString</strong></em></span></li>
-
-    <li>Replace <em><strong><span style=
-    "font-family:courier new,courier,monospace;">OldPasswordString</span></strong></em> with
-    the string returned from <span style=
-    "font-family:courier new,courier,monospace;">slappasswd</span>. If there are 2 colons after
-    <span style="font-family:courier new,courier,monospace;">olcRootPw</span>, remove one and
-    ensure there is a space after the colon:<br>
-    <span style="font-family:courier new,courier,monospace;">olcRootPW:
-    {SSHA}RGon+bLCe+Sk+HyHholFBj8ONQfabrhw</span></li>
-
-    <li>Restart OpenLDAP:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    /opt/apigee/apigee-service/bin/apigee-service apigee-openldap restart</span></li>
-
-    <li>Check using <span style="font-family:courier new,courier,monospace;">ldapsearch</span> if
-    your new password works.<br>
-    <span style="font-family:courier new,courier,monospace;">&gt; ldapsearch -W -D
-    "cn=manager,dc=apigee,dc=com" -b "dc=apigee,dc=com" -LLL -h <em><strong>LDAP_IP</strong></em>
-    -p 10389</span><br>
-    <br>
-    You are prompted for the OpenLDAP admin password.<span style=
-    "font-family:courier new,courier,monospace;"> </span></li>
-
-    <li>Repeat these steps on any other OpenLDAP servers that are being used for replication</li>
-
-    <li>Update the Management Server to use the new password:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    /opt/apigee/apigee-service/bin/apigee-service edge-management-server store_ldap_credentials -p
-    <em><strong>newPassWord</strong></em></span></li>
+    <li>Use <code>slappasswd</code> to create the SSHA encrypted password for a new password:
+      <pre class="devsite-terminal">slappasswd -h {SSHA} -s <var>newPassWord</var></pre>
+      <p>This command returns a string in the form:
+      <pre>{SSHA}+DOup9d6l+czfWzkIvajwYPArjPurhS6</pre>
+    </li>
+    <li>Open the <code>/opt/apigee/data/apigee-openldap/slapd.d/cn=config/olcDatabase={2}bdb.ldif</code>
+      file in an editor:
+      <pre class="devsite-terminal">vi /opt/apigee/data/apigee-openldap/slapd.d/cn=config/olcDatabase={2}bdb.ldif</pre>
+    </li>
+    <li>Find the line in the form:
+      <pre>olcRootPW:: <var>OldPasswordString</var></pre>
+    </li>
+    <li>Replace <var>OldPasswordString</var> with the string returned from <code>slappasswd</code>.
+      If there are 2 colons after <code>olcRootPw</code>, remove one and ensure there is a space
+      after the colon:
+      <pre>olcRootPW: {SSHA}RGon+bLCe+Sk+HyHholFBj8ONQfabrhw</pre>
+    </li>
+    <li>Restart OpenLDAP:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-openldap restart</pre>
+    </li>
+    <li>Check using <code>ldapsearch</code> if your new password works:
+      <pre class="devsite-terminal">ldapsearch -W -D "cn=manager,dc=apigee,dc=com" -b "dc=apigee,dc=com" -LLL -h <var>LDAP_IP</var> -p 10389</pre>
+      <p>You are prompted for the OpenLDAP admin password.</p>
+    </li>
+    <li>Repeat these steps on any other OpenLDAP servers that are being used for replication.</li>
+    <li>Update the Management Server to use the new password:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-management-server store_ldap_credentials -p <var>newPassWord</var></pre>
+    </li>
   </ol>
 
   <h2 id="manuallysetedgeadminpassword">Manually set Edge admin password</h2>
 
   <p><a href="resetting-passwords.html">Resetting Edge Passwords</a> describes how to change the
   Edge system password but requires that you know the existing password. If you have lost the Edge
-  system password, you can use the following procedure to reset it.  </p>
+  system password, you can use the following procedure to reset it.</p>
 
   <ol>
-    <li>On the UI node, stop the Edge UI:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    /opt/apigee/apigee-service/bin/apigee-service edge-ui stop</span></li>
-
-    <li>Use <span style="font-family:courier new,courier,monospace;">ldappasswd</span> to set the
-    Edge sys admin password:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt; ldappasswd -h localhost -p 10389
-    -D "cn=manager,dc=apigee,dc=com" -W -s <em><strong>newPassWord</strong></em>
-    "uid=admin,ou=users,ou=global,dc=apigee,dc=com"</span><br>
-    <br>
-    You are prompted for the OpenLDAP admin password.</li>
-
+    <li>On the UI node, stop the Edge UI:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-ui stop</pre>
+    </li>
+    <li>Use <code>ldappasswd</code> to set the Edge sys admin password:
+      <pre class="devsite-terminal">ldappasswd -h localhost -p 10389 -D "cn=manager,dc=apigee,dc=com" -W -s <var>newPassWord</var> \
+  "uid=admin,ou=users,ou=global,dc=apigee,dc=com"</pre>
+      <p>You are prompted for the OpenLDAP admin password.</p>
+    </li>
     <li>Update the config file that you used to install the Edge UI with the new Edge system
-    password:<br>
-    <span style=
-    "font-family:courier new,courier,monospace;">APIGEE_ADMINPW=<em><strong>newPassWord</strong></em></span></li>
-
-    <li>Configure and restart the Edge UI:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    /opt/apigee/apigee-setup/bin/setup.sh -p ui -f <em><strong>configFile</strong></em></span></li>
-
+      password:
+      <pre>APIGEE_ADMINPW=<var>newPassWord</var></pre>
+    </li>
+    <li>Configure and restart the Edge UI:
+      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/setup.sh -p ui -f <var>configFile</var></pre>
+    </li>
     <li><strong>(Only if TLS is enabled on the UI)</strong> Re-enable TLS on the Edge UI as
-    described in <a href="configuring-ssl-management-ui.html">Configuring TLS for the management
+    described in <a href="configuring-ssl-management-ui">Configuring TLS for the management
     UI</a>.</li>
   </ol>
 
   <h2 id="deleteslapdlockfile">Delete SLAPD lock file</h2>
 
-  <p>If you get an error when trying to start OpenLDAP that the <span style=
-  "font-family:courier new,courier,monospace;">slapd.pid</span> lock file exists, you can
-  delete the file.</p>
+  <p>If you get an error when trying to start OpenLDAP that the <code>slapd.pid</code> lock file
+  exists, you can delete the file.</p>
 
-  <p>The file is located in <span style=
-  "font-family:courier new,courier,monospace;">/opt/apigee/apigee-openldap/var/run/slapd.pid</span>.
-  Delete the file and try to restart OpenLDAP:</p>
-  <pre class="prettyprint">
-/opt/apigee/apigee-service/bin/apigee-service apigee-openldap restart
-</pre>
+  <p>The file is located in <code>/opt/apigee/apigee-openldap/var/run/slapd.pid</code>. Delete the
+  file and try to restart OpenLDAP:</p>
+  <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-openldap restart</pre>
 
   <p>If OpenLDAP does not start, try starting it in debug mode and check for errors:</p>
-  <pre class="prettyprint">
-&gt; slapd -h ldap://:10389/ -u apigee -F /opt/apigee/apigee-openldap/var/run -d 255
-</pre>
+  <pre class="devsite-terminal">slapd -h ldap://:10389/ -u apigee -F /opt/apigee/apigee-openldap/var/run -d 255</pre>
 
   <p>Errors may point to resource issues, memory, or CPU utilization issues.</p>
 
@@ -161,21 +122,14 @@
   ensure that they servers are functioning properly.</p>
 
   <ol>
-    <li>Ensure that <span style="font-family:courier new,courier,monospace;">ldapsearch</span>
-    returns data from each OpenLDAP server:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt; ldapsearch -W -D
-    "cn=manager,dc=apigee,dc=com" -b "dc=apigee,dc=com" -LLL -h
-    <em><strong>LDAP_IP</strong></em> -p 10389</span><br>
-    <br>
-    You are prompted for the OpenLDAP admin password.</li>
-
-    <li>Check the replication configuration by examining the <span style=
-    "font-family:courier new,courier,monospace;">/opt/apigee/conf/openldap/slapd.d/cn=config/olcDatabase={2}bdb.ldif</span>
-    file.</li>
-
+    <li>Ensure that <code>ldapsearch</code> returns data from each OpenLDAP server:
+      <pre class="devsite-terminal">ldapsearch -W -D "cn=manager,dc=apigee,dc=com" -b "dc=apigee,dc=com" -LLL -h <var>LDAP_IP</var> -p 10389</pre>
+      <p>You are prompted for the OpenLDAP admin password.</p>
+    </li>
+    <li>Check the replication configuration by examining the <code>/opt/apigee/conf/openldap/slapd.d/cn=config/olcDatabase={2}bdb.ldif</code>
+      file.</li>
     <li>Make sure the system password is the same on each OpenLDAP server.</li>
-
     <li>Check iptables and tcp wrapper settings.</li>
   </ol>
 
-  {% endblock %}
+{% endblock %}

@@ -1,36 +1,43 @@
-  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}Creating an Organization,
-  Environment, and Virtual Host{% endblock %} {% block body %}
+{% extends "private-cloud/v4.18.05/_base.html" %}
+{% block title %}Creating an organization, environment, and virtual host{% endblock %}
+{% block body %}
 
-  <h2 id="creatinganorganizationenvironmentandvirtualhostatthesametime">Creating an Organization,
-  Environment, and Virtual Host at the same time</h2>
+  <p>You can create an organization, environment, and virtual host on the command line in a single
+  command, or you can create each one separately. In addition, you can use the
+  <a href="https://apidocs.apigee.com/api-reference/content/api-reference-getting-started" class="external">management API</a>
+  to perform many of these actions.</p>
+
+  <h2 id="creatinganorganizationenvironmentandvirtualhostatthesametime">Creating an organization,
+  environment, and virtual host at the same time</h2>
 
   <p>Before you create an API proxy on Apigee Edge, you must create at least one organization and,
-  within each organization, one or more environments and virtual hosts. </p>
+  within each organization, one or more environments and virtual hosts.</p>
 
-  <aside class="note"><b>Note:</b> When creating a virtual host, you specify the Router port used
-  by the virtual host. For example, port 9001. By default, the Router runs as the user "apigee"
-  which does not have access to privileged ports, typically ports 1024 and below. If you want to
-  create a virtual host that binds the Router to a protected port then you have to configure the
-  Router to run as a user with access to those ports.  See <a href=
-  "setting-virtual-host.html">Setting up a virtual host</a> for more.  </aside>
+  <aside class="note"><strong>Note:</strong> When creating a virtual host, you specify the Router
+    port used by the virtual host.
+    <p>For example, port 9001. By default, the Router runs as the user "apigee"
+    which does not have access to privileged ports, which are typically ports 1024 and below.
+    To create a virtual host that binds the Router to a protected port, you must configure the
+    Router to run as a user with access to those ports.</p>
+    <p>For more information, see <a href="setting-virtual-host">Setting up a virtual host</a>.</p>
+  </aside>
 
   <p>Typically, organizations and environments are created together. To simplify the process, use
-  the <span style="font-family:courier new,courier,monospace;">apigee-provision</span> utility.
-  Invoke it from the command line on the Edge Management Server:</p>
-  <pre class="prettyprint">
-&gt; /opt/apigee/apigee-service/bin/apigee-service apigee-provision setup-org -f <em><strong>configFile</strong></em>
-</pre>
+  the <code>apigee-provision</code> utility. Invoke it from the command line on the Edge Management
+  Server:</p>
+  <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-provision setup-org -f <var>configFile</var></pre>
 
-  <p>The config file contains:</p>
+  <p>Where <var>configFile</var> is the path to a configuration file that looks similar to the
+  following:</p>
   <pre class="prettyprint">
 # Set Edge sys admin credentials.
 ADMIN_EMAIL=your@email.com
-APIGEE_ADMINPW=adminPword     # If omitted, you are prompted for it.
+APIGEE_ADMINPW=<var>adminPword</var>     # If omitted, you are prompted for it.
 NEW_USER="y"
 USER_NAME=orgAdmin@myCo.com
 FIRST_NAME=foo
 LAST_NAME=bar
-USER_PWD="userPwrod"
+USER_PWD="<var>userPword</var>"
 ORG_NAME=example  # lowercase only, no spaces, underscores, or periods.
 ENV_NAME=prod
 VHOST_PORT=9001
@@ -39,139 +46,110 @@ VHOST_ALIAS="$IP1:9001"
 # Optionally configure TLS/SSL for virtual host.
 # VHOST_SSL=y     # Set to "y" to enable TLS/SSL on the virtual host.
 # KEYSTORE_JAR=   # JAR file containing the cert and private key.
-# KEYSTORE_NAME=  # Name of the keystore. 
+# KEYSTORE_NAME=  # Name of the keystore.
 # KEYSTORE_ALIAS= # The key alias.
-# KEY_PASSWORD=   # The key password, if it has one. 
+# KEY_PASSWORD=   # The key password, if it has one.
 # Optionally set the base URL displayed by the Edge UI for an
 # API proxy deployed to the virtual host.
 # VHOST_BASEURL="http://myCo.com"
-# AXGROUP=axgroup-001 # Default value is axgroup-001 
+# AXGROUP=axgroup-001 # Default value is axgroup-001
 </pre>
 
-  <aside class="note"><b>Note:</b> For TLS/SSL configuration, see <a href=
-  "/api-platform/system-administration/keystores-and-truststores.html">Keystores and
+  <aside class="note"><strong>Note:</strong> For TLS/SSL configuration, see <a href=
+  "/api-platform/system-administration/keystores-and-truststores">Keystores and
   Truststores</a> and <a href=
-  "/api-platform/system-administration/creating-virtual-host.html">Configuring TLS access to an API
+  "/api-platform/system-administration/creating-virtual-host">Configuring TLS access to an API
   for the Private Cloud</a> for more information on creating the JAR file, and other aspects of
   configuring TLS/SSL.</aside>
 
-  <p>The command then:</p>
-
+  <p>When setting up an organization, the <code>setup-org</code> script does the following:</p>
   <ul>
-    <li>Create the organization<br>
-    <strong>Note</strong>: You cannot rename an organization after you create it.</li>
-
-    <li>Associate the organization with a pod, by default is associates it with the "gateway"
-    pod</li>
-
-    <li>Add the specified user as the org admin. If the user does not exist, you can create
-    one. </li>
-
-    <li>Create one or more environments</li>
-
-    <li>Create one or more virtual host for each environment</li>
-
-    <li>Associate the environment with all Message Processor(s)</li>
-
-    <li>Enable analytics </li>
+    <li>Creates the organization.
+      <aside class="note"><strong>Note</strong>: You cannot rename an organization after you create
+      it.</aside>
+    </li>
+    <li>Associates the organization with the "gateway" pod. You cannot change this.</li>
+    <li>Adds the specified user as the organization admininstrator. If the user does not exist, you
+      can create one.</li>
+    <li>Creates one or more environments.</li>
+    <li>Creates one or more virtual hosts for each environment.</li>
+    <li>Associates the environment with all Message Processor(s).</li>
+    <li>Enables analytics.</li>
   </ul>
 
-  <p>For a complete silent config file, see <a href="onboard-organization.html">Onboard an
-  organization</a>.</p>
-
   <p>By default, the maximum length of the organization name and environment name is 20 characters
-  when using the <span style="font-family:courier new,courier,monospace;">apigee-provision</span>
-  utility. This limit does not apply if you use the Edge API directly to create the organization or
-  environment. </p>
+  when using the <code>apigee-provision</code> utility. This limit does not apply if you use the
+  Edge API directly to create the organization or environment.</p>
 
-  <aside class="note"><b>Note:</b> Rather than using the <span style=
-  "font-family:courier new,courier,monospace;">apigee-provision</span> utility, you can use a set
-  of additional scripts, or the Edge API itself, to create and configure an organization. For
-  example, use thee scripts to add an organization and associate it with multiple pods. The
-  following sections describe those scripts and APIs in more detail.</aside>
+  <aside class="note"><strong>Note:</strong> Rather than using the <code>apigee-provision</code>
+  utility, you can use a set of additional scripts, or the Edge API itself, to create and configure
+  an organization. For example, use thee scripts to add an organization and associate it with
+  multiple pods. The following sections describe those scripts and APIs in more detail.</aside>
 
-  <h2 id="createanorganization">Create an Organization</h2>
+  <h2 id="createanorganization">Create an organization</h2>
 
-  <p>Use the create-org command to create an organization:</p>
-  <pre class="prettyprint">
-&gt; /opt/apigee/apigee-service/bin/apigee-service apigee-provision create-org -f <em><strong>configFile</strong></em>
-</pre>
+  <p>Use the <code>create-org</code> command to create an organization, as the following example
+  shows:</p>
+
+  <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-provision create-org -f <var>configFile</var></pre>
 
   <p>This script creates the organization, but does not add or configure the environments and
   virtual hosts required by the organization to handle API calls.</p>
 
-  <aside class="note"><b>Note:</b> You cannot rename an organization after you create it.</aside>
+  <aside class="note"><strong>Note:</strong> You cannot rename an organization after you create
+  it.</aside>
 
-  <p>The config file contains the name of the org and the email address of the org admin. The
-  characters you can use in the name attribute are restricted to: a-z0-9\-$%. Do not use spaces,
-  periods or upper-case letters in the name:</p>
-  <pre class="prettyprint">
-APIGEE_ADMINPW=adminPword    # If omitted, you are prompted for it.
+  <p>The configuration file contains the name of the organization and the email address of the organization
+  admin. The characters you can use in the <code>name</code> attribute are restricted to
+  <code>a-z0-9\-$%</code>. Do not use spaces, periods or upper-case letters in the name:</p>
+
+  <pre class="prettyprint">APIGEE_ADMINPW=<var>adminPword</var>    # If omitted, you are prompted for it.
 ORG_NAME=example  # lowercase only, no spaces, underscores, or periods.
-ORG_ADMIN=orgAdmin@myCo.com
-</pre>
+ORG_ADMIN=orgAdmin@myCo.com</pre>
 
-  <p>The command then:</p>
-
+  <p>The <code>create-org</code> script:</p>
   <ul>
-    <li>Creates the organization</li>
-
-    <li>Associates the organization with a pod, by default is associates it with the "gateway"
-    pod</li>
-
-    <li>Adds the specified user as the org admin. The user must already exist; otherwise the script
-    issues an error. </li>
+    <li>Creates the organization.</li>
+    <li>Associates the organization with the "gateway" pod.</li>
+    <li>Adds the specified user as the organization admininstrator. The user must already exist;
+      otherwise the script issues an error.</li>
   </ul>
 
-  <aside class="note"><b>Note:</b> You cannot create two organizations with the same name. In that
-  case, the second create will fail, like this:</aside>
-  <pre class="prettyprint">
-&lt;Error&gt;
-    &lt;Code&gt;organizations.OrganizationAlreadyExists&lt;/Code&gt;
-    &lt;Message&gt;Organization : test already exists&lt;/Message&gt;
-    &lt;Contexts/&gt;
-&lt;/Error&gt;
-</pre>
+  <aside class="note"><strong>Note:</strong> You cannot create two organizations with the same name.
+  In that case, the second create will fail, like this:
+  <pre class="prettyprint">&lt;Error&gt;
+  &lt;Code&gt;organizations.OrganizationAlreadyExists&lt;/Code&gt;
+  &lt;Message&gt;Organization : test already exists&lt;/Message&gt;
+  &lt;Contexts/&gt;
+&lt;/Error&gt;</pre></aside>
 
   <h3 id="createanorganization-createanorganizationbyusingapicalls">Create an organization by using
   API calls</h3>
 
-  <p>Alternatively, you can use the following API calls to create an org. The first call creates
-  the org:</p>
-  <pre class="prettyprint">
-curl -H "Content-Type:application/xml" -u &lt;sysAdminEmail&gt;:&lt;adminPasswd&gt; \
--X POST http://&lt;ms-ip&gt;:8080/v1/organizations \
--d '&lt;Organization name="&lt;org-name&gt;" type="paid"/&gt;'
-</pre>
+  <p>You can use the following API calls to create an organization. The first call creates the
+  organization:</p>
+  <pre class="devsite-terminal">curl -H "Content-Type:application/xml" -u <var>sysAdminEmail:adminPasswd</var> \
+  -X POST http://<var>management_server_IP</var>:8080/v1/organizations \
+  -d '&lt;Organization name="<var>org_name</var>" type="paid"/&gt;'</pre>
 
-  <p>The next call associates the org with a pod:</p>
-  <pre class="prettyprint">
-curl -H "Content-Type:application/x-www-form-urlencoded" \
--u &lt;sysAdminEmail&gt;:&lt;adminPasswd&gt; -X POST \
-http://&lt;ms-ip&gt;:8080/v1/organizations/&lt;org-name&gt;/pods \
--d "region=default&amp;pod=gateway" 
-</pre>
-
-  <p>You can make this call multiple times to associate the organization with multiple
-  pods. </p>
+  <p>The next call associates the organization with a pod:</p>
+  <pre class="devsite-terminal">curl -H "Content-Type:application/x-www-form-urlencoded" \
+  -u <var>sysAdminEmail:adminPasswd</var> -X POST \
+  http://<var>management_server_IP</var>:8080/v1/organizations/<var>org_name</var>/pods \
+  -d "region=default&amp;pod=gateway"</pre>
 
   <p>The final call adds an existing user as the org admin for the org:</p>
-  <pre class="prettyprint">
-curl -H "Content-Type:application/xml" -u &lt;sysAdminEmail&gt;:&lt;adminPasswd&gt; \
--X POST \
-http://&lt;ms-ip&gt;:8080/v1/organizations/&lt;org-name&gt;/users/&lt;user-email&gt;/userroles/ \
--d '&lt;Roles&gt;&lt;Role name="orgadmin"/&gt;&lt;/Roles&gt;'
-</pre>
+  <pre class="devsite-terminal">curl -H "Content-Type:application/xml" -u <var>sysAdminEmail:adminPasswd</var> \
+  -X POST http://&lt;ms-ip&gt;:8080/v1/organizations/<var>org_name</var>/users/<var>user_email</var>/userroles/ \
+  -d '&lt;Roles&gt;&lt;Role name="orgadmin"/&gt;&lt;/Roles&gt;'</pre>
 
   <aside class="note">
-    <b>Note:</b> Currently, Apigee Edge for Private Cloud supports the roles &#8211; orgadmin,
+    <strong>Note:</strong> Currently, Apigee Edge for Private Cloud supports the roles &#8211; orgadmin,
     opsadmin, user, and businessuser, all having a default permission of full access to entities
     (APIs, API products, apps, developers, and reports) in an Apigee organization. Depending on the
-    customer&#8217;s needs, you can customize the pre-defined or configure more complex roles and
-    permissions using RBAC API. See <a href=
-    "/api/user-roles">http://apigee.com/docs/api/user-roles</a>.
-
-    
+    customer's needs, you can customize the pre-defined or configure more complex roles and
+    permissions using RBAC API. See
+    <a href="/api/user-roles" target="external">http://apigee.com/docs/api/user-roles</a>.
 
     <p>Note that the readonlyadmin role is available in the Cloud only.</p>
   </aside>
@@ -179,18 +157,14 @@ http://&lt;ms-ip&gt;:8080/v1/organizations/&lt;org-name&gt;/users/&lt;user-email
   <p>If the user does not exist, you can use the following call to create the user as described in
   Adding a user.</p>
 
-  <h2 id="createanenvironment">Create an Environment</h2>
+  <h2 id="createanenvironment">Create an environment</h2>
 
-  <p>Use the <span style="font-family:courier new,courier,monospace;">add-env</span> command to
-  create an environment in an existing organization:</p>
-  <pre class="prettyprint">
-&gt; /opt/apigee/apigee-service/bin/apigee-service apigee-provision add-env -f configFile
-</pre>
+  <p>Use the <code>add-env</code> script to create an environment in an existing organization:</p>
+  <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-provision add-env -f <var>configFile</var></pre>
 
-  <p>This config file contain the information necessary to create the environment and virtual
+  <p>This config file contains the information necessary to create the environment and virtual
   host:</p>
-  <pre class="prettyprint">
-APIGEE_ADMINPW=adminPword    # If omitted, you are prompted for it.
+  <pre class="prettyprint">APIGEE_ADMINPW=adminPword    # If omitted, you are prompted for it.
 ORG_NAME=example  # lowercase only, no spaces, underscores, or periods.
 ENV_NAME=prod
 VHOST_PORT=9001
@@ -208,26 +182,22 @@ VHOST_ALIAS="$IP1:9001"
 # AXGROUP=axgroup-001 # Default value is axgroup-001
 </pre>
 
-  <aside class="note"><b>Note:</b> For TLS/SSL configuration, see <a href=
-  "/api-platform/system-administration/keystores-and-truststores.html">Keystores and
-  Truststores</a> and <a href=
-  "/api-platform/system-administration/creating-virtual-host.html">Configuring TLS access to an API
-  for the Private Cloud</a> for more information on creating the JAR file, and other aspects of
-  configuring TLS/SSL.</aside>
+  <aside class="note"><strong>Note:</strong> For TLS/SSL configuration, see
+  <a href="/api-platform/system-administration/keystores-and-truststores">Keystores and
+  Truststores</a> and <a href="/api-platform/system-administration/creating-virtual-host">Configuring
+  TLS access to an API for the Private Cloud</a> for more information on creating the JAR file, and
+  other aspects of configuring TLS/SSL.</aside>
 
-  <p>The command:</p>
-
+  <p>The <code>add-env</code> command:</p>
   <ul>
-    <li>Creates the environment</li>
-
-    <li>Creates a single virtual host for the environment</li>
-
+    <li>Creates the environment.</li>
+    <li>Creates a single virtual host for the environment.</li>
     <li>Associates the environment with all Message Processor(s) in the pod associated with the
-    organization containing the environment. </li>
-
-    <li>Enables analytics <br>
-    <strong>Note</strong>: If you enable analytics for one environment in an organization, you must
-    enable analytics for all environments in the organization. </li>
+      organization containing the environment.</li>
+    <li>Enables analytics
+      <aside class="note"><strong>Note</strong>: If you enable analytics for one environment in an
+      organization, you must enable analytics for all environments in the organization.</aside>
+    </li>
   </ul>
 
   <h3 id="createanenvironment-createanenvironmentbyusingapicalls">Create an environment by using
@@ -235,59 +205,48 @@ VHOST_ALIAS="$IP1:9001"
 
   <p>Alternatively, you can use the following API calls to create an environment. The first call
   creates the environment:</p>
-  <pre class="prettyprint">
-curl -H "Content-Type:application/xml" -u &lt;sysAdminEmail&gt;:&lt;adminPasswd&gt; \
--X POST http://&lt;ms-ip&gt;:8080/v1/organizations/&lt;org-name&gt;/environments \
--d  '&lt;Environment name="&lt;env-name&gt;"/&gt;' 
-</pre>
+  <pre class="devsite-terminal">curl -H "Content-Type:application/xml" -u <var>sysAdminEmail:adminPasswd</var> \
+  -X POST http://<var>management_server_IP</var>:8080/v1/organizations/<var>org_name</var>/environments \
+  -d  '&lt;Environment name="<var>env_name</var>"/&gt;'</pre>
 
-  <aside class="note"><b>Note:</b> Note: The characters you can use in the name attribute are
-  restricted to: a-zA-Z0-9._\-$ %. </aside>
+  <aside class="note"><strong>Note:</strong> The characters you can use in the name attribute are
+  restricted to: a-zA-Z0-9._\-$ %.</aside>
 
   <p>The next call associates the environment with a Message Processor. Make this call for each
   Message Processor that you want to associate with the environment:</p>
-  <pre class="prettyprint">
-curl -H "Content-Type:application/x-www-form-urlencoded" \
--u &lt;sysAdminEmail&gt;:&lt;adminPasswd&gt; -X POST \
-http://&lt;ms-ip&gt;:8080/v1/organizations/&lt;org-name&gt;/environments/&lt;env-name&gt;/servers \
--d "action=add&amp;uuid=&lt;uuid&gt;"
+  <pre class="devsite-terminal">curl -H "Content-Type:application/x-www-form-urlencoded" \
+  -u <var>sysAdminEmail:adminPasswd</var> -X POST \
+  http://<var>management_server_IP</var>:8080/v1/organizations/<var>org_name</var>/environments/<var>env_name</var>/servers \
+  -d "action=add&amp;uuid=<var>uuid</var>"
 </pre>
 
-  <p>Where "<span style="font-family:courier new,courier,monospace;">&lt;uuid&gt;</span>" is the
-  UUID of Message Processor. You can obtain the UUID by using the command:</p>
-  <pre class="prettyprint">
-&gt; curl http://&lt;mp-ip&gt;:8082/v1/servers/self
-</pre>
+  <p>Where <var>uuid</var> is the UUID of Message Processor. You can obtain the UUID by using the
+  command:</p>
+  <pre class="devsite-terminal">curl http://<var>Message_Processor_IP</var>:8082/v1/servers/self</pre>
 
-  <p>Where "<span style="font-family:courier new,courier,monospace;">&lt;mp-ip&gt;</span>" is the
-  IP address of the Message Processor.</p>
+  <p>Where <var>Message_Processor_IP</var> is the IP address of the Message Processor.</p>
 
   <p>The next API call enables Analytics for a given environment. It validates the existence of
   Qpid and Postgres Servers in the PODs of all datacenters. Then it starts the Analytics onboarding
   for the given organization and environment.</p>
 
-  <aside class="note"><b>Note:</b> Rather than use the following API call, use the following
-  command to enable Analytics:</aside>
-  <pre class="prettyprint">
-&gt; /opt/apigee/apigee-service/bin/apigee-service apigee-provision enable-ax -f <em><strong>configFile</strong></em>
-</pre>
+  <aside class="note"><strong>Note:</strong> Rather than use the following API call, use the
+    following command to enable Analytics:
+    <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-provision enable-ax -f <var>configFile</var></pre>
+  </aside>
 
   <p>This config file contains:</p>
-  <pre class="prettyprint">
-ORG_NAME=<em><strong>orgName</strong></em>  # lowercase only, no spaces, underscores, or periods.
-ENV_NAME=<em><strong>envName</strong></em>
-</pre>
+  <pre class="prettyprint">ORG_NAME=<var>orgName</var>  # lowercase only, no spaces, underscores, or periods.
+ENV_NAME=<var>envName</var></pre>
 
-  <aside class="note"><b>Note:</b> If you enable analytics for one environment in an organization,
-  you must enable analytics for all environments in the organization. </aside>
-  <pre class="prettyprint">
-curl -H "Content-Type:application/json" -u &lt;sysAdminEmail&gt;:&lt;adminPasswd&gt; 
--X POST http://&lt;ms-ip&gt;:8080/v1/organizations/&lt;org-name&gt;/environments/&lt;env-name&gt;/analytics/admin -d "@sample.json"
-</pre>
+  <aside class="note"><strong>Note:</strong> If you enable analytics for one environment in an
+  organization, you must enable analytics for all environments in the organization:
+  <pre class="devsite-terminal">curl -H "Content-Type:application/json" -u <var>sysAdminEmail:adminPasswd</var> \
+  -X POST http://<var>management_server_IP</var>:8080/v1/organizations/<var>org_name</var>/environments/<var>env_name</var>/analytics/admin -d "@sample.json"</pre>
+  </aside>
 
   <p>Where sample.json contains the following:</p>
-  <pre class="prettyprint">
-{
+  <pre class="prettyprint">{
   "properties" : {
     "samplingAlgo" : "reservoir_sampler",
     "samplingTables" : "10=ten;1=one;",
@@ -303,35 +262,29 @@ curl -H "Content-Type:application/json" -u &lt;sysAdminEmail&gt;:&lt;adminPasswd
 }
 </pre>
 
-  <p>The <span style="font-family:courier new,courier,monospace;">postgres-servers</span> property
-  contains a comma-separated list of the Postgres UUIDs, and the <span style=
-  "font-family:courier new,courier,monospace;">qpid-server</span> property contains the Qpid UUIDs.
+  <p>The <code>postgres-servers</code> property
+  contains a comma-separated list of the Postgres UUIDs, and the <code>qpid-server</code> property contains the Qpid UUIDs.
   If you need to obtain these UUIDs, use the following commands.</p>
 
-  <p>For Qpid, run the command:</p>
-  <pre class="prettyprint">
-curl -u &lt;sysAdminEmail&gt;:&lt;passwd&gt; http://&lt;ms-ip&gt;/v1/servers?pod=central
-</pre>
+  <p>For Qpid, run the following command:</p>
+  <pre class="devsite-terminal">curl -u <var>sysAdminEmail:password</var> http://<var>management_server_IP</var>/v1/servers?pod=central</pre>
 
   <p>The output of this command is a JSON object. For each Qpid server, you will see output in the
   form:</p>
-  <pre class="prettyprint">
-"type" : [ "qpid-server" ],
-"uUID" : "d3c5acf0-f88a-478e-948d-6f3094f12e3b"
-</pre>
 
-  <p>For Postgres, run the command:</p>
-  <pre class="prettyprint">
-curl -u &lt;sysAdminEmail&gt;:&lt;passwd&gt; http://&lt;ms-ip&gt;/v1/servers?pod=analytics
-</pre>
+  <pre class="prettyprint">"type" : [ "qpid-server" ],
+"uUID" : "d3c5acf0-f88a-478e-948d-6f3094f12e3b"</pre>
+
+  <p>For Postgres, run the following command:</p>
+  <pre class="devsite-terminal">curl -u <var>sysAdminEmail:passwor</var> http://<var>management_server_IP</var>/v1/servers?pod=analytics</pre>
 
   <p>For each Postgres server, you will see output in the form:</p>
-  <pre class="prettyprint">
-"type" : [ "postgres-server" ],
+
+  <pre class="prettyprint">"type" : [ "postgres-server" ],
 "uUID" : "d3c5acf0-f88a-478e-948d-6f3094f12e3b"
 </pre>
 
-  <h2 id="createavirtualhost">Create a Virtual Host</h2>
+  <h2 id="createavirtualhost">Create a virtual host</h2>
 
   <p>You can create a virtual host in an existing environment in an organization. Often an
   environment supports multiple virtual hosts. For example, one virtual host might support the HTTP
@@ -340,24 +293,22 @@ curl -u &lt;sysAdminEmail&gt;:&lt;passwd&gt; http://&lt;ms-ip&gt;/v1/servers?pod
 
   <p>Use the following API call to create additional virtual hosts, or to create a virtual host for
   an environment with no virtual host:</p>
-  <pre class="prettyprint">
-curl -H "Content-Type:application/xml" -u &lt;sysAdminEmail&gt;:&lt;adminPasswd&gt; \
--X POST \
-http://&lt;ms-ip&gt;:8080/v1/organizations/&lt;org-name&gt;/environments/&lt;env-name&gt;/virtualhosts \
--d '&lt;VirtualHost name="default"&gt; \
+  <pre class="devsite-terminal">curl -H "Content-Type:application/xml" -u <var>sysAdminEmail:adminPasswd</var> \
+  -X POST http://<var>management_server_IP</var>:8080/v1/organizations/<var>org_name</var>/environments/<var>env_name</var>/virtualhosts \
+  -d '&lt;VirtualHost name="default"&gt; \
     &lt;HostAliases&gt; \
-      &lt;HostAlias&gt;myorg-test.apigee.net&lt;/HostAlias&gt; \ 
+      &lt;HostAlias&gt;myorg-test.apigee.net&lt;/HostAlias&gt; \
     &lt;/HostAliases&gt; \
     &lt;Interfaces/&gt; \
     &lt;Port&gt;443&lt;/Port&gt; \
-  &lt;/VirtualHost&gt;' 
-</pre>
+  &lt;/VirtualHost&gt;'</pre>
 
-  <aside class="note"><b>Note:</b> The characters you can use in the name attribute are restricted
-  to: a-z<span style="font-family:courier new,courier,monospace;">A-Z0-9._\-$
-  %</span>. </aside>
+  <aside class="note"><strong>Note:</strong> The characters you can use in the name attribute are
+  restricted to <code>a-zA-Z0-9._\-$%</code>.</aside>
 
   <p>For a complete description of creating a virtual host, including creating a secure virtual
   host that uses TLS/SSL over HTTPS, see <a href=
-  "/api-platform/system-administration/creating-virtual-host.html">Configuring TLS access to an API
-  for the Private Cloud</a>.</p>{% endblock %}
+  "/api-platform/system-administration/creating-virtual-host">Configuring TLS access to an API
+  for the Private Cloud</a>.</p>
+
+{% endblock %}

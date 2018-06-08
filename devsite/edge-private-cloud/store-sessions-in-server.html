@@ -1,0 +1,50 @@
+{% extends "private-cloud/v4.18.05/_base.html" %}
+{% block title %}Configure the Edge UI to store session information in memory{% endblock %}
+{% block body %}
+
+  <aside class="note"><strong>Note:</strong> This feature is available in Edge version 4.17.01.01
+  and later.</aside>
+
+  <p>By default, when a user logs out of the Edge UI, the session cookie for the user is deleted.
+  However, while the user is logged in, malware or other malicious software running on the user's
+  system could obtain the cookie and use it to access the Edge UI. This situation is not specific
+  to the Edge UI itself, but with the security of the user's system.</p>
+
+  <p>As an added level of security, you can configure the Edge UI to store information about
+  current sessions in server memory. When the user logs out, their session information is deleted,
+  preventing another user from using the cookie to access the Edge UI.</p>
+
+  <aside class="note"><b>Note:</b> If the Edge UI server ever goes down, all session information
+  stored in memory is lost and all users must log in again after the server comes back up.</aside>
+
+  <p>This features is disabled by default. Before you enable this feature, your system must meet
+  one of the following requirements:</p>
+
+  <ul>
+    <li>Your system uses a single Edge UI server.</li>
+    <li>Your system uses multiple Edge UI servers with a load balancer, and the load balancer is
+      configured to use sticky sessions.</li>
+  </ul>
+
+  <p>If your system meets these requirements, then use the following procedure to enable the Edge
+  UI to track user sessions in memory:</p>
+
+  <ol>
+    <li>Open the <code>ui.properties</code> file in an editor. If the file does not exist, create
+    it:
+      <pre class="devsite-terminal">vi /opt/apigee/customer/application/ui.properties</pre>
+    </li>
+    <li>Set the following properties in:
+      <pre>conf_apigee_apigee.feature.expireSessionCookiesInternally="true"
+conf_apigee_apigee.feature.trackSessionCookies="true"</pre>
+    </li>
+    <li>Save your changes.</li>
+    <li>Ensure the properties file is owned by the "apigee" user:
+      <pre class="devsite-terminal">chown apigee:apigee /opt/apigee/customer/application/ui.properties</pre>
+    </li>
+    <li>Restart the Edge UI:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-ui restart</pre>
+    </li>
+  </ol>
+
+{% endblock %}

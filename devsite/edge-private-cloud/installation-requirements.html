@@ -1,4 +1,4 @@
-{% extends "private-cloud/v4.18.01/_base.html" %}
+{% extends "private-cloud/v4.18.05/_base.html" %}
 {% block title %}Installation Requirements{% endblock %}
 {% block body %}
 
@@ -165,57 +165,13 @@
     </tbody>
   </table>
 
-  <p>The following lists the hardware requirements if you wish to install API BaaS:</p>
-
-  <table>
-    <tbody>
-      <tr>
-        <th><strong>API BaaS Component</strong></th>
-        <th><strong>RAM</strong></th>
-        <th>CPU</th>
-        <th>Hard disk</th>
-      </tr>
-      <tr>
-        <td>ElasticSearch<sup>*</sup></td>
-        <td>8GB</td>
-        <td>4&#8209;core</td>
-        <td>60-80GB</td>
-      </tr>
-      <tr>
-        <td>API BaaS Stack<sup>*</sup></td>
-        <td>8GB</td>
-        <td>4-core</td>
-        <td>60-80GB</td>
-      </tr>
-      <tr>
-        <td>API BaaS Portal</td>
-        <td>1GB</td>
-        <td>2-core</td>
-        <td>20GB</td>
-      </tr>
-      <tr>
-        <td>Cassandra<sup>**</sup></td>
-        <td>16GB</td>
-        <td>8-core</td>
-        <td>250GB local storage with SSD or fast HDD supporting 2000 IOPS</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <sup><p>* You can install ElasticSearch and API BaaS Stack on the same node. If you do,
-  configure ElasticSearch to use 4GB of memory (default). If ElasticSearch is installed on
-  its own node, then configure it to use 6GB of memory.</p></sup>
-
-  <sup><p>** Optional; typically you use the same Cassandra cluster for both Edge and API BaaS
-  Services.</p></sup>
-
   <aside><strong>Note</strong>:
     <ul>
-      <li>If the root file system is not large enough for the installation, it is recommended to
-        place the data onto a larger disk.</li>
+      <li>If the root file system is not large enough for the installation, Apigee recommendeds
+        that you place the data onto a larger disk.</li>
       <li>If an older version of Apigee Edge for Private Cloud was installed on the machine, ensure
-        that you delete the folder <code>/tmp/java</code> before a new installation.</li>
-      <li>The system wide temporary folder <code>/tmp</code> needs execute permissions in order to
+        that you delete the <code>/tmp/java</code> directory before a new installation.</li>
+      <li>The system-wide temporary folder <code>/tmp</code> needs execute permissions in order to
         start Cassandra.</li>
       <li>If user 'apigee' was created prior to the installation, ensure that
       <code>/home/apigee</code> exists as home directory and is owned by
@@ -223,7 +179,7 @@
     </ul>
   </aside>
 
-  <h2 id="operatingsystemandthirdpartysoftwarerequirements">Operating System and third-party
+  <h2 id="operatingsystemandthirdpartysoftwarerequirements">Operating system and third-party
   software requirements</h2>
 
   <p>These installation instructions and the supplied installation files have been tested on the
@@ -240,17 +196,18 @@
 
   <p>By default, the installer writes all files to the <code>/opt/apigee</code> directory. You
   cannot change this directory location. While you cannot change this directory, you can create a
-  symlink to map <code>/opt/apigee</code> to another location, as described below.</p>
+  symlink to map <code>/opt/apigee</code> to another location, as described in
+  <a href="#symlink">Creating a symlink from /opt/apigee</a>.</p>
 
   <p>In the instructions in this guide, the installation directory is noted as
   <code>/opt/apigee</code>.</p>
 
-  <h3 id="installationdirectory-creatingasymlinkfromoptapigee">Creating a symlink from /opt/apigee</h3>
+  <h3 id="symlink">Creating a symlink from /opt/apigee</h3>
 
   <p>Before you create the symlink, you must first create a user and group named "apigee". This is
   the same group and user created by the Edge installer.</p>
 
-  <p>To create the symlink, perform these steps before downloading the bootstrap_4.18.01.sh file.
+  <p>To create the symlink, perform these steps before downloading the bootstrap_4.18.05.sh file.
   You must perform all of these steps as root:</p>
 
   <ol>
@@ -259,7 +216,7 @@
     </li>
     <li>Create a symlink from <code>/opt/apigee</code> to your desired install root:
       <pre class="devsite-terminal">ln -Ts <var>/srv/myInstallDir</var> /opt/apigee</pre>
-      <p>where <var>/srv/myInstallDir</var> is the desired location of the Edge files.</p>
+      <p>Where <var>/srv/myInstallDir</var> is the desired location of the Edge files.</p>
     </li>
     <li>Change ownership of the install root and symlink to the "apigee" user:
       <pre class="devsite-terminal">chown -h apigee:apigee <var>/srv/myInstallDir</var> /opt/apigee</pre>
@@ -272,19 +229,19 @@
   Supported JDKs are listed in
   <a href="/release/supported-software">Supported software and supported versions</a>.</p>
 
-  <p>Ensure that <code>JAVA_HOME</code> points to the root of the JDK for the user performing the
-  installation.</p>
+  <p>Ensure that the <code>JAVA_HOME</code> environment variable points to the root of the JDK for
+  the user performing the installation.</p>
 
   <h2 id="selinux">SELinux</h2>
 
   <p>Depending on your settings for SELinux, Edge can encounter issues with installing and starting
   Edge components. If necessary, you can disable SELinux or set it to permissive mode during
-  installation, and then re-enabling it after installation. See <a href=
+  installation, and then re-enable it after installation. See <a href=
   "install-edge-apigee-setup-utility">Install the Edge apigee-setup utility</a> for more.</p>
 
   <h2 id="networksetting">Network Setting</h2>
 
-  <p>It is recommended to check the network setting prior to the installation. The installer
+  <p>Apigee recommendeds that you check the network setting prior to the installation. The installer
   expects that all machines have fixed IP addresses. Use the following commands to validate the
   setting:</p>
 
@@ -294,12 +251,12 @@
     other machines.</li>
   </ul>
 
-  <p>Depending on your operating system type and version, you might have to edit
+  <p>Depending on your operating system type and version, you may need to edit
   <code>/etc/hosts</code> and <code>/etc/sysconfig/network</code> if the hostname is not
   set correctly. See the documentation for your specific operating system for more information.</p>
 
   <p>If a server has multiple interface cards, the "hostname -i" command returns a space-separated
-  list of IP addresses's. By default, the Edge installer uses the first IP address returned, which
+  list of IP addresses. By default, the Edge installer uses the first IP address returned, which
   might not be correct in all situations. As an alternative, you can set the following property in
   the installation configuration file:</p>
 
@@ -332,7 +289,7 @@
   <h2 id="ensureedgeroutercanaccessetcrcdinitdfunctions">Ensure Edge Router can
   access /etc/rc.d/init.d/functions</h2>
 
-  <p>The Edge Router and BaaS Portal nodes use the Nginx router and require read access
+  <p>The Edge Router uses the Nginx router and require read access
   to <code>/etc/rc.d/init.d/functions</code>.</p>
 
   <p>If your security process requires you to set permissions on
@@ -342,15 +299,15 @@
 
   <h2 id="cassandra">Cassandra </h2>
 
-  <p>All Cassandra nodes have to be connected to a ring. Cassandra stores data replicas on
+  <p>All Cassandra nodes must be connected to a ring. Cassandra stores data replicas on
   multiple nodes to ensure reliability and fault tolerance. The replication strategy for each
-  Edge keyspace determines the Cassandra nodes where replicas are placed. For more,see
+  Edge keyspace determines the Cassandra nodes where replicas are placed. For more, see
   <a href="about-cassandra-replication-factor-and-consistency-level">About Cassandra
-  Replication Factor and Consistency Level</a>.</p>
+  replication factor and consistency level</a>.</p>
 
   <p>Cassandra automatically adjusts its Java heap size based on the available memory. For more, see
   <a href="https://docs.datastax.com/en/cassandra/2.0/cassandra/operations/ops_tune_jvm_c.html" class="external">Tuning
-  Java resources</a>. In the event of a performance degradation or high memory consumption.</p>
+  Java resources</a> in the event of a performance degradation or high memory consumption.</p>
 
   <p>After installing the Edge for Private Cloud, you can check that Cassandra is configured
   correctly by examining the <code>/opt/apigee/apigee-cassandra/conf/cassandra.yaml</code>
@@ -377,11 +334,10 @@
 conf_postgresql_effective_cache_size = 45% of RAM
 conf_postgresql_work_mem = 512MB       # min 64kB</pre>
 
-  <aside class="note"><strong>Note:</strong> These settings assume that the PostgreSQL database is only used
-  for Edge analytics, and not for any other purpose.</aside>
+  <aside class="note"><strong>Note:</strong> These settings assume that the PostgreSQL database is
+  only used for Edge analytics, and not for any other purpose.</aside>
 
   <p>To set these values:</p>
-
   <ol>
     <li>Edit the postgresql.properties file:
       <pre class="devsite-terminal">vi /opt/apigee/customer/application/postgresql.properties</pre>
@@ -401,7 +357,7 @@ conf_postgresql_work_mem = 512MB       # min 64kB</pre>
 
   <ul>
     <li>On Cassandra nodes, set soft and hard memlock, nofile, and address space (as) limits for
-    installation user (default is &#8220;apigee") in <code>/etc/security/limits.d/90-apigee-edge-limits.conf</code>
+    installation user (default is "apigee") in <code>/etc/security/limits.d/90-apigee-edge-limits.conf</code>
     as shown below:
     <pre class="prettyprint">apigee soft memlock unlimited
 apigee hard memlock unlimited
@@ -411,25 +367,19 @@ apigee soft as unlimited
 apigee hard as unlimited</pre>
     </li>
     <li>On Message Processor nodes, set the maximum number of open file descriptors to 64K
-      in <code>/etc/security/limits.d/90-apigee-edge-limits.conf</code> as
-      shown below:
-      <pre>apigee soft nofile 32768
+      in <code>/etc/security/limits.d/90-apigee-edge-limits.conf</code> as shown below:
+      <pre class="prettyprint">apigee soft nofile 32768
 apigee hard nofile 65536</pre>
-      <p>If necessary, you can raise that limit. For example, if you have a large number of temporary
-      files open at any one time.</p>
+      <p>If necessary, you can raise that limit. For example, if you have a large number of
+      temporary files open at any one time.</p>
     </li>
   </ul>
-
-  <h2 id="jsvc">jsvc</h2>
-
-  <p>"jsvc" is a prerequisite for using API BaaS. Version 1.0.15-dev is installed when you install
-  the API BaaS.</p>
 
   <h2 id="networksecurityservicesnss">Network Security Services (NSS)</h2>
 
   <p>Network Security Services (NSS) is a set of libraries that supports development of
   security-enabled client and server applications. You should ensure that you have installed NSS
-  v3.19, or later. </p>
+  v3.19, or later.</p>
 
   <p>To check your current version:</p>
   <pre class="devsite-terminal">yum info nss</pre>
@@ -441,14 +391,13 @@ apigee hard nofile 65536</pre>
   from RedHat for more information.</p>
 
   <h2 id="disablednslookuponipv6whenusingnscdnameservicecachedaemon">Disable DNS lookup on IPv6
-  when using NSCD (Name Service Cache Daemon) </h2>
+  when using NSCD (Name Service Cache Daemon)</h2>
 
-  <p>If you have installed and enabled NSCD (Name Service Cache Daemon) the Message Processors
-  makes two DNS lookups: one for IPv4 and one for IPv6. You should disable DNS lookup on
-  IPv6 when using NSCD.</p>
+  <p>If you have installed and enabled NSCD (Name Service Cache Daemon), the Message Processors
+  make two DNS lookups: one for IPv4 and one for IPv6. You should disable DNS lookup on IPv6 when
+  using NSCD.</p>
 
   <p>To disable the DNS lookup on IPv6:</p>
-
   <ol>
     <li>On every Message Processor node, edit <code>/etc/nscd.conf</code></li>
     <li>Set the following property:
@@ -462,7 +411,7 @@ apigee hard nofile 65536</pre>
   <p>If you are installing Edge on RedHat 7 or CentOS 7 on Google Cloud Platform, then you
   must disable IPv6 on all Qpid nodes.</p>
 
-  <p>See the RedHat or CentOS documentation for your specific OS version for instructions on
+  <p>See the RedHat or CentOS documentation of your specific OS version for instructions on
   disabling IPv6. For example, you can:</p>
 
   <ol>
@@ -611,34 +560,35 @@ apigee hard nofile 65536</pre>
 
   <aside class="note"><strong>Note:</strong>
   <ul>
-    <li>The executable for the tool <code>useradd</code> is located in
-    <code>/usr/sbin</code> and for chkconfig in <code>/sbin</code>.</li>
+    <li>The executable for the <code>useradd</code> tool is located in
+      <code>/usr/sbin</code> and for <code>chkconfig</code> in <code>/sbin</code>.</li>
     <li>With sudo access you can gain access over the environment of the calling user, for example,
-    usually you would call <code>sudo <var>command</var></code> or
-    <code>sudo PATH=$PATH:/usr/sbin:/sbin <var>command</var></code>.</li>
+      usually you would call <code>sudo <var>command</var></code> or
+      <code>sudo PATH=$PATH:/usr/sbin:/sbin <var>command</var></code>.</li>
     <li>Ensure that you have <code>patch</code> installed prior to a service pack (patch)
-    installation.</li>
+      installation.</li>
   </ul>
   </aside>
 
   <h3>ntpdate</h3>
-  <p>It is recommended to have the servers' times synchronized. If not already configured,
-  <code>ntpdate</code> utility could serve this purpose, which verifies
+
+  <p>Apigee recommends that your servers' times are synchronized. If not already configured,
+  the <code>ntpdate</code> utility could serve this purpose, which verifies
   whether servers are time synchronized. You can use <code>yum install ntp</code> to install the
   utility. This is particularly useful for replicating OpenLDAP setups. Note that you set up server
   time zone in UTC.</p>
 
   <h3>openldap 2.4</h3>
-  <p>The on-premises installation requires OpenLDAP 2.4. If
-  your server has an Internet connection, then the Edge install script downloads and installs
+  <p>The on-premises installation requires OpenLDAP 2.4. If your server has an Internet connection,
+  then the Edge install script downloads and installs
   OpenLDAP. If your server does not have an Internet connection, you must ensure that OpenLDAP is
   already installed before running the Edge install script. On RHEL/CentOS, you can run
   <code>yum install openldap-clients openldap-servers</code> to install the OpenLDAP.</p>
 
-  <p>For 13-host installations, and 12-host installations with two Data Centers, you require
-  OpenLDAP replication because there are multiple nodes hosting OpenLDAP.</p>
+  <p>For 13-host installations, and 12-host installations with two data centers,  OpenLDAP
+  replication is required because there are multiple nodes hosting OpenLDAP.</p>
 
-  <h2 id="firewallsandvirtualhosts">Firewalls and Virtual Hosts</h2>
+  <h2 id="firewallsandvirtualhosts">Firewalls and virtual hosts</h2>
 
   <p>The term <code>virtual</code> commonly gets overloaded in the IT arena, and so it is with an
   Apigee Edge for Private Cloud deployment and virtual hosts. To clarify, there are two primary
@@ -646,8 +596,8 @@ apigee hard nofile 65536</pre>
 
   <ul>
     <li><strong>Virtual machines (VM)</strong>: Not required, but some deployment use VM technology
-    to create isolated servers for their Apigee components. VM hosts, like physical hosts, can have
-    network interfaces and firewalls.</li>
+      to create isolated servers for their Apigee components. VM hosts, like physical hosts, can have
+      network interfaces and firewalls.</li>
     <li><strong>Virtual hosts</strong>: Web endpoints, analogous to an Apache virtual host.</li>
   </ul>
 
@@ -668,14 +618,14 @@ apigee hard nofile 65536</pre>
   specific IP address), <code>api.mycompany.com:80</code>, <code>api.mycompany.com:443</code>, and
   <code>test.mycompany.com:80</code>.</p>
 
-  <p>The router in VM2 exposes <code>api.mycompany.com:80</code> (same name and port as
-  exposed by VM1).</p>
+  <p>The router in VM2 exposes <code>api.mycompany.com:80</code> (same name and port as exposed by
+  VM1).</p>
 
   <p>The physical host's operating system might have a network firewall; if so, that firewall
   must be configured to pass TCP traffic bound for the ports being exposed on the virtualized
-  interfaces (<code>111.111.111.111:{80, 443}</code> and <code>111.111.111.222:80</code>). In addition, each
-  VM's operating system may provide its own firewall on its eth0 interface and these too must
-  allow ports 80 and 443 traffic to connect.</p>
+  interfaces (<code>111.111.111.111:{80, 443}</code> and <code>111.111.111.222:80</code>). In
+  addition, each VM's operating system may provide its own firewall on its eth0 interface and these
+  too must allow ports 80 and 443 traffic to connect.</p>
 
   <p>The basepath is the third component involved in routing API calls to different API proxies
   that you may have deployed. API proxy bundles can share an endpoint if they have different
@@ -1151,71 +1101,6 @@ apigee hard nofile 65536</pre>
         centers.</li>
     </ul>
   </aside>
-
-  <h3 id="firewallsandvirtualhosts-apibaasportrequirements">API BaaS port requirements</h3>
-
-  <p>If you opt to install the API BaaS, you add the API BaaS Stack and API BaaS Portal components.
-  These components use the ports shown in the figure below:</p>
-
-  <p><img alt="" src="/private-cloud/images/arch_ports_baas_16_01_large_v6.png"></p>
-
-  <p><strong>Notes on this diagram:</strong></p>
-
-  <ul>
-    <li>The API BaaS Portal never makes requests directly to an BaaS Stack node. When a developer
-      logs into the Portal, the Portal app is downloaded to the browser. The Portal app running in
-      the browser then makes requests to the BaaS Stack nodes.</li>
-    <li>A production installation of API BaaS uses a load balancer between the API BaaS Portal node
-      and API BaaS Stack nodes. When configuring the Portal, and when making BaaS API calls, you
-      specify the IP address or DNS name of the load balancer, not of the Stack nodes. </li>
-    <li>All Stack nodes must open port 2551 for access from all other Stack nodes (indicated by the
-      loop arrow in the diagram above for port 2551 on the Stack nodes). If you have multiple Data
-      Centers, the port must be accessible from all Stack nodes in all Data Centers.</li>
-    <li>You must configure all Baas Stack nodes to send emails through an external SMTP server. For
-      non-TLS SMTP, the port number is typically 25. For TLS-enabled SMTP, it is often 465, but check
-      with your SMTP provider. </li>
-    <li>The Cassandra nodes can be dedicated to API BaaS, or can be shared with Edge.</li>
-  </ul>
-
-  <p>The table below shows the default ports that need to be opened in firewalls, by component:</p>
-
-  <table>
-    <thead>
-      <tr>
-        <th>Component</th>
-        <th>Port</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>API&nbsp;BaaS&nbsp;Portal</td>
-        <td>9000</td>
-        <td>Port for the API BaaS UI</td>
-      </tr>
-      <tr>
-        <td>API BaaS Stack</td>
-        <td>8080</td>
-        <td>Port where API request are received</td>
-      </tr>
-      <tr>
-        <td> </td>
-        <td>2551</td>
-        <td>
-          <p>Port for communication among all Stack nodes. Must be accessible by all other Stack
-          nodes in the data canter.</p>
-          <p>If you have multiple data centers, the port must be accessible from all Stack nodes in
-          all Data Centers.</p>
-        </td>
-      </tr>
-      <tr>
-        <td>ElasticSearch</td>
-        <td>9200&nbsp;to&nbsp;9400</td>
-        <td>For communicating with API BaaS Stack and for communicating between ElasticSearch
-          nodes</td>
-      </tr>
-    </tbody>
-  </table>
 
   <h2 id="licensing">Licensing</h2>
 

@@ -1,181 +1,145 @@
-  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}Adding a new analytics group{% endblock %} {% block body %}
+{% extends "private-cloud/v4.18.05/_base.html" %}
+{% block title %}Adding a new analytics group{% endblock %}
+{% block body %}
 
   <p>When you install Edge for the Private Cloud, by default the installer creates a single
   analytics group named "axgroup-001". At install time, you can change the default name of the
-  analytics group by including the <span style=
-  "font-family:courier new,courier,monospace;">AXGROUP</span> property in the installation config
-  file: </p>
-  <pre class="prettyprint">
-# Specify the analytics group. 
-# AXGROUP=axgroup-001          # Default name is axgroup-001.
-</pre>
+  analytics group by including the <code>AXGROUP</code> property in the installation config
+  file:</p>
+  <pre class="prettyprint"># Specify the analytics group.
+# AXGROUP=axgroup-001          # Default name is axgroup-001.</pre>
 
-  <p>See <a href="install-edge-components-node.html">Install Edge components on a node</a> for
-  more.</p>
+  <p>See <a href="install-edge-components-node">Install Edge components on a node</a> for more.</p>
 
-  <p>Use the procedure below if you later want to add a new analytics group to your
-  installation:</p>
-
+  <p>If you later want to add a new analytics group to your installation:</p>
   <ol>
     <li>Create and configure the new analytics group:
-
-      <ol style="list-style: lower-alpha outside">
-        <li>Create the analytics group, named <strong>analyticsNew</strong>:<br>
-        <span style="font-family:courier new,courier,monospace;">&gt; curl -u
-        sysAdminEmail:passWord -H "Content-Type: application/json" -X POST
-        'https://&lt;MS_IP&gt;:8080/v1/analytics/groups/ax/<strong><em>axgroupNew</em></strong>'</span></li>
-
+      <ol>
+        <li>Create the analytics group, named <strong>axgroupNew</strong>:
+          <pre class="devsite-terminal">curl -u <var>sysAdminEmail</var>:<var>passWord</var> -H "Content-Type: application/json"
+  -X POST 'https://<var>MS_IP</var>:8080/v1/analytics/groups/ax/<strong>axgroupNew</strong>'</pre>
+        </li>
         <li>Add a consumer group to the new analytics group, named
-        <strong>consumer-group-new</strong>. ?Consumer group names are unique within the
-        context of each analytics group:<br>
-        <span style="font-family:courier new,courier,monospace;">&gt; curl -u
-        sysAdminEmail:passWord -X POST -H 'Accept:application/json' -H
-        'Content-Type:application/json'
-        "https://&lt;MS_IP&gt;:8080/v1/analytics/groups/ax/<strong>axgroupNew</strong>/consumer-groups?name=<strong>consumer-group-new</strong>"</span></li>
-
-        <li>Set the consumer type of the analytics group to "ax":<br>
-        <span style="font-family:courier new,courier,monospace;">&gt; curl -u
-        sysAdminEmail:passWord -X POST -H "Content-Type:application/json"
-        "https://&lt;MS_IP&gt;:8080/v1/analytics/groups/ax/<strong>axgroupNew</strong>/properties?propName=consumer-type&amp;propValue=<strong>ax</strong>"</span></li>
-
+          <strong>consumer-group-new</strong>. Consumer group names are unique within the context of
+          each analytics group:
+          <pre class="devsite-terminal">curl -u <var>sysAdminEmail</var>:<var>passWord</var> -X POST -H 'Accept:application/json'
+  -H 'Content-Type:application/json'
+  "https://<var>MS_IP</var>:8080/v1/analytics/groups/ax/<strong>axgroupNew</strong>/consumer-groups?name=<strong>consumer-group-new</strong>"</pre>
+        </li>
+        <li>Set the consumer type of the analytics group to "ax":
+          <pre class="devsite-terminal">curl -u <var>sysAdminEmail</var>:<var>passWord</var> -X POST -H "Content-Type:application/json"
+  "https://<var>MS_IP</var>:8080/v1/analytics/groups/ax/<strong>axgroupNew</strong>/properties?propName=consumer-type&amp;propValue=<strong>ax</strong>"</pre>
+        </li>
         <li>Add the data center name. By default, you install Edge with a data center named "dc-1".
-        However, if you have multiple data centers, they each have a unique name. This call is
-        optional if you only have a single data center, and recommended if you have multiple data
-        centers: <br>
-        <span style="font-family:courier new,courier,monospace;">&gt; curl -u
-        sysAdminEmail:passWord -X POST -H "Content-Type:application/json"
-        "https://&lt;MS_IP&gt;:8080/v1/analytics/groups/ax/<strong>axgroupNew</strong>/properties?propName=region&amp;propValue=<strong>dc-1</strong>"</span></li>
+          However, if you have multiple data centers, they each have a unique name. This call is
+          optional if you only have a single data center, and recommended if you have multiple data
+          centers:
+          <pre class="devsite-terminal">curl -u <var>sysAdminEmail</var>:<var>passWord</var> -X POST -H "Content-Type:application/json"
+  "https://<var>MS_IP</var>:8080/v1/analytics/groups/ax/<strong>axgroupNew</strong>/properties?propName=region&amp;propValue=<strong>dc-1</strong>"</pre>
+          </li>
       </ol>
     </li>
-
     <li>Add the UUIDs of the Postgres servers to the new analytics group. If you have
     configured two Postgres servers to function as a master/standby pair, specify both as a
     comma-separated list of UUIDs.
-
-      <ol style="list-style: lower-alpha outside">
+      <ol>
         <li>To get the UUIDs of the Postgres servers, run the following cURL command on every
-        Postgres server node: <br>
-        <span style="font-family:courier new,courier,monospace;">&gt; curl -u
-        sysAdminEmail:passWord  https://&lt;PG_IP&gt;:8084/v1/servers/self  </span></li>
-
-        <li>If you only have a sinlge Postgres server, add it to the analytics group:<br>
-        <span style="font-family:courier new,courier,monospace;">&gt; curl -u
-        sysAdminEmail:passWord -H "Content-Type: application/json" -X POST
-        'https://&lt;MS_IP&gt;:8080/v1/analytics/groups/ax/<strong>axgroupNew</strong>/servers?uuid=<em><strong>UUID</strong></em>&amp;type=postgres-server&amp;force=true'</span><br>
-
-        <br>
-        If you have multiple Postgres servers configured as a master/standby pair, then add
-        them by specifying a comma-separated list of UUIDs:<br>
-        <span style="font-family:courier new,courier,monospace;">&gt; curl -u
-        sysAdminEmail:passWord -H "Content-Type: application/json" -X POST
-        'https://&lt;MS_IP&gt;:8080/v1/analytics/groups/ax/<strong>axgroupNew</strong>/servers?uuid=<em><strong>UUID_Master,UUID_standby</strong></em>&amp;type=postgres-server&amp;force=true'</span><br>
-
-        <br>
-        This command returns the information about the analytics group, including the UUID of the
-        Postgres server in the <span style=
-        "font-family:courier new,courier,monospace;">postgres-server</span> property under
-        <span style="font-family:courier new,courier,monospace;">uuids</span>:<br>
-        <span style="font-family:courier new,courier,monospace;">{<br>
-          "name" : "axgroupNew",<br>
-          "properties" : {<br>
-            "region" : "dc-1",<br>
-            "consumer-type" : "ax"<br>
-          },<br>
-          "scopes" : [ ],<br>
-          "uuids" : {<br>
-            "qpid-server" : [ ],<br>
-          <strong>  "postgres-server" : [ "2cb7211f-eca3-4eaf-9146-66363684e220"
-        ]</strong><br>
-          },<br>
-          "consumer-groups" : [ {<br>
-            "name" : "consumer-group-new",<br>
-            "consumers" : [ ],<br>
-            "datastores" : [ ],<br>
-            "properties" : {<br>
-            }<br>
-          } ],<br>
-          "data-processors" : {<br>
-          }</span></li>
-
+          Postgres server node:
+          <pre class="devsite-terminal">curl -u <var>sysAdminEmail</var>:<var>passWord</var> https://<var>PG_IP</var>:8084/v1/servers/self</pre>
+        </li>
+        <li>If you only have a single Postgres server, add it to the analytics group:
+        <pre class="devsite-terminal">curl -u <var>sysAdminEmail</var>:<var>passWord</var> -H "Content-Type: application/json"
+  -X POST 'https://<var>MS_IP</var>:8080/v1/analytics/groups/ax/<strong>axgroupNew</strong>/servers?uuid=<var>UUID</var>&amp;type=postgres-server&amp;force=true'</pre>
+        <p>If you have multiple Postgres servers configured as a master/standby pair, then add them
+        by specifying a comma-separated list of UUIDs:
+        <pre class="devsite-terminal">curl -u <var>sysAdminEmail</var>:<var>passWord</var> -H "Content-Type: application/json"
+  -X POST 'https://<var>MS_IP</var>:8080/v1/analytics/groups/ax/<strong>axgroupNew</strong>/servers?uuid=<var>UUID_Master,UUID_standby</var>&amp;type=postgres-server&amp;force=true'</pre>
+        <p>This command returns the information about the analytics group, including the UUID of the
+        Postgres server in the <code>postgres-server</code> property under
+        <code>uuids</code>:
+        <pre class="prettyprint">{
+  "name" : "axgroupNew",
+  "properties" : {
+    "region" : "dc-1",
+    "consumer-type" : "ax"
+  },
+  "scopes" : [ ],
+  "uuids" : {
+    "qpid-server" : [ ],
+    <strong>"postgres-server" : [ "2cb7211f-eca3-4eaf-9146-66363684e220" ]</strong>
+  },
+  "consumer-groups" : [ {
+    "name" : "consumer-group-new",
+    "consumers" : [ ],
+    "datastores" : [ ],
+    "properties" : {
+    }
+  } ],
+  "data-processors" : {
+  }
+}</pre>
+        </li>
         <li>Add the Postgres server to the data store of the consumer group. This call is required
-        to route analytics messages from the Qpid servers to the Postgres servers:<br>
-        <span style="font-family:courier new,courier,monospace;">&gt; curl -u
-        sysAdminEmail:passWord -X POST -H 'Accept:application/json' -H
-        'Content-Type:application/json'
-        "https://&lt;MS_IP&gt;:8080/v1/analytics/groups/ax/axgroupNew/consumer-groups/<strong>consumer-group-new</strong>/datastores?uuid=<em><strong>UUID</strong></em>"</span><br>
-
-        <br>
-        If multiple Postgre servers are configured as a master/standby pair, then add them by
-        specifying a comma-separated list of UUIDs:<br>
-        <span style="font-family:courier new,courier,monospace;">&gt; curl -u
-        sysAdminEmail:passWord -X POST -H 'Accept:application/json' -H
-        'Content-Type:application/json'
-        "https://&lt;MS_IP&gt;:8080/v1/analytics/groups/ax/axgroupNew/consumer-groups/<strong>consumer-group-new</strong>/datastores?uuid=<strong><em>UUID_Master</em>,<em>UUID_standby</em></strong>"</span><br>
-
-        <br>
-        The UUID appears in the <span style=
-        "font-family:courier new,courier,monospace;">datastores</span> property of the <span style=
-        "font-family:courier new,courier,monospace;">consumer-groups</span> in the output.</li>
+          to route analytics messages from the Qpid servers to the Postgres servers:
+          <pre class="devsite-terminal">curl -u <var>sysAdminEmail</var>:<var>passWord</var> -X POST -H 'Accept:application/json'
+  -H 'Content-Type:application/json'
+  "https://<var>MS_IP</var>:8080/v1/analytics/groups/ax/axgroupNew/consumer-groups/<strong>consumer-group-new</strong>/datastores?uuid=<var>UUID</var>"</pre>
+          <p>If multiple Postgre servers are configured as a master/standby pair, then add them by
+          specifying a comma-separated list of UUIDs:
+          <pre class="devsite-terminal">curl -u <var>sysAdminEmail</var>:<var>passWord</var> -X POST -H 'Accept:application/json'
+  -H 'Content-Type:application/json'
+  "https://<var>MS_IP</var>:8080/v1/analytics/groups/ax/axgroupNew/consumer-groups/<strong>consumer-group-new</strong>/datastores?uuid=<var>UUID_Master</var>,<var>UUID_standby</var>"</pre>
+          <p>The UUID appears in the <code>datastores</code> property of the
+          <code>consumer-groups</code> in the output.</p>
+        </li>
       </ol>
     </li>
-
     <li>Add the UUIDs of all Qpid servers to the new analytics group. You must perform this
-    step for all Qpid servers.
-
-      <ol style="list-style: lower-alpha outside">
-        <li>To get the UUIDs of the Qpid servers, run the
-        following cURL command on every Qpid server node: <br>
-        <span style="font-family:courier new,courier,monospace;">&gt; curl -u
-        sysAdminEmail:passWord  https://&lt;QP_IP&gt;:8083/v1/servers/self </span></li>
-
-        <li>Add the Qpid server to the analytics group:<br>
-        <span style="font-family:courier new,courier,monospace;">&gt; curl  -u
-        sysAdminEmail:passWord -H "Content-Type: application/json" -X POST
-        'https://&lt;MS_IP&gt;:8080/v1/analytics/groups/ax/<strong>axgroupNew</strong>/servers?uuid=<em><strong>UUID</strong></em>&amp;type=qpid-server'</span></li>
-
-        <li>Add the Qpid server to the consumer group:<br>
-        <span style="font-family:courier new,courier,monospace;">&gt; curl  -u
-        sysAdminEmail:passWord -X POST -H 'Accept:application/json' -H
-        'Content-Type:application/json'
-        "https://&lt;MS_IP&gt;:8080/v1/analytics/groups/ax/axgroupNew/consumer-groups/<strong>consumer-group-new</strong>/consumers?uuid=<em><strong>UUID</strong></em>"</span><br>
-
-        <br>
-        This call returns the following where you can see the UUID of the Qpid server added to the
-        <span style="font-family:courier new,courier,monospace;">qpid-server</span> property under
-        <span style="font-family:courier new,courier,monospace;">uuids</span>, and to the
-        <span style="font-family:courier new,courier,monospace;">consumers</span> property under
-        <span style="font-family:courier new,courier,monospace;">consumer-groups</span>:<br>
-        <span style="font-family:courier new,courier,monospace;">{<br>
-          "name" : "axgroupNew",<br>
-          "properties" : {<br>
-            "region" : "dc-1",<br>
-            "consumer-type" : "ax<br>
-          },  "scopes" : [ ],<br>
-        "uuids" : {<br>
-          <strong>  "qpid-server" : [ "fb6455c3-f5ce-433a-b98a-bdd016acd5af"
-        ],</strong><br>
-            "postgres-server" : [ "2cb7211f-eca3-4eaf-9146-66363684e220" ]<br>
-          },<br>
-          "consumer-groups" : [ {<br>
-            "name" : "consumer-group-new",<br>
-          <strong>  "consumers" : [ "fb6455c3-f5ce-433a-b98a-bdd016acd5af"
-        ],</strong><br>
-            "datastores" : [ "2cb7211f-eca3-4eaf-9146-66363684e220" ],<br>
-            "properties" : {<br>
-            }<br>
-          } ],<br>
-          "data-processors" : {<br>
-         }</span></li>
+      step for all Qpid servers.
+      <ol>
+        <li>To get the UUIDs of the Qpid servers, run the following cURL command on every Qpid
+          server node:
+          <pre class="devsite-terminal">curl -u <var>sysAdminEmail</var>:<var>passWord</var> https://<var>QP_IP</var>:8083/v1/servers/self</pre>
+        </li>
+        <li>Add the Qpid server to the analytics group:
+          <pre class="devsite-terminal">curl  -u sysAdminEmail:passWord -H "Content-Type: application/json"
+  -X POST 'https://<var>MS_IP</var>:8080/v1/analytics/groups/ax/<strong>axgroupNew</strong>/servers?uuid=<var>UUID</var>&amp;type=qpid-server'</pre>
+        </li>
+        <li>Add the Qpid server to the consumer group:
+        <pre class="devsite-terminal">curl  -u <var>sysAdminEmail</var>:<var>passWord</var> -X POST -H 'Accept:application/json'
+  -H 'Content-Type:application/json'
+  "https://<var>MS_IP</var>:8080/v1/analytics/groups/ax/axgroupNew/consumer-groups/<strong>consumer-group-new</strong>/consumers?uuid=<var>UUID</var>"</pre>
+        <p>This call returns the following where you can see the UUID of the Qpid server added to
+        the <code>qpid-server</code> property under <code>uuids</code>, and to the
+        <code>consumers</code> property under <code>consumer-groups</code>:
+        <pre class="prettyprint">{
+  "name" : "axgroupNew",
+  "properties" : {
+    "region" : "dc-1",
+    "consumer-type" : "ax"
+  },
+  "scopes" : [ ],
+  "uuids" : {
+      <strong>"qpid-server" : [ "fb6455c3-f5ce-433a-b98a-bdd016acd5af" ],</strong>
+      "postgres-server" : [ "2cb7211f-eca3-4eaf-9146-66363684e220" ]
+  },
+  "consumer-groups" : [ {
+    "name" : "consumer-group-new",
+    <strong>"consumers" : [ "fb6455c3-f5ce-433a-b98a-bdd016acd5af" ],</strong>
+    "datastores" : [ "2cb7211f-eca3-4eaf-9146-66363684e220" ],
+    "properties" : {
+    }
+  } ],
+  "data-processors" : {
+  }
+}</pre>
+         </li>
       </ol>
     </li>
-
-    <li>Provision an organizations and environment for the new AX group.<br>
-    <span style="font-family:courier new,courier,monospace;">&gt; curl -u sysAdminEmail:passWord -X
-    POST
-    "https://&lt;MS_IP&gt;:8080/v1/analytics/groups/ax/axgroupNew/scopes?org=<em><strong>org_name</strong></em>&amp;env=<strong>env_name</strong>"
-    -H "Content-Type: application/json"</span></li>
+    <li>Provision an organizations and environment for the new AX group:
+      <pre class="devsite-terminal">curl -u <var>sysAdminEmail</var>:<var>passWord</var> -H "Content-Type: application/json"
+  -X POST "https://<var>MS_IP</var>:8080/v1/analytics/groups/ax/axgroupNew/scopes?org=<var>org_name</var>&amp;env=<var>env_name</var>"</pre>
+    </li>
   </ol>
 
-  <div>
-     
-  </div>{% endblock %}
+{% endblock %}

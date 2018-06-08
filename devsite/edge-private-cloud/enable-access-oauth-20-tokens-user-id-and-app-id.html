@@ -1,5 +1,5 @@
-  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}Enable access to OAuth 2.0
-  tokens by user ID and app ID{% endblock %} {% block body %}
+{% extends "private-cloud/v4.18.05/_base.html" %}{% block title %}Enable access to OAuth 2.0 tokens by user ID and app ID{% endblock %}
+{% block body %}
 
   <p>This document describes how to enable retrieval and revocation of OAuth 2.0 access tokens by
   end user ID, app ID, or both.  </p>
@@ -34,11 +34,11 @@
   <p>Note the following:</p>
 
   <ul>
-    <li>The <span style="font-family:courier new,courier,monospace;">application_name</span> field
+    <li>The <code>application_name</code> field
     contains the UUID of the app associated with the token. If you enable retrieval and revocation
     of OAuth 2.0 access tokens by app ID, this is the app ID you use.</li>
 
-    <li>The <span style="font-family:courier new,courier,monospace;">access_token</span> field
+    <li>The <code>access_token</code> field
     contains the OAuth 2.0 access token value.</li>
   </ul>
 
@@ -94,50 +94,45 @@
 
   <p>You must enable token access for each organization separately. Call the PUT API below for each
   organization on which you want to enable the retrieval and revocation of OAuth 2.0 access tokens
-  by end user ID or app ID. </p>
+  by end user ID or app ID.</p>
 
   <p>The user making the following call must be in the role <strong>orgadmin</strong> or
-  <strong>opsadmin</strong> for the organization. Replace the values in <em><strong>{curly
-  braces}</strong></em> with your org-specific values:</p>
-  <pre class="prettyprint">
-&gt; curl -H "Content-type:text/xml" -X POST \
-  https://&lt;ms-ip&gt;:8080/v1/organizations/{org_name} \
-  -d '&lt;Organization name="{org_name}"&gt;
+  <code>opsadmin</code> for the organization. Replace the <var>values</var> with your org-specific
+  values:</p>
+  <pre class="devsite-terminal">curl -H "Content-type:text/xml" -X POST \
+  https://<var>management_server_IP</var>;:8080/v1/organizations/<var>org_name</var> \
+  -d '&lt;Organization name="<var>org_name</var>"&gt;
       &lt;Properties&gt;
         &lt;Property name="features.isOAuthRevokeEnabled"&gt;true&lt;/Property&gt;
         &lt;Property name="features.isOAuth2TokenSearchEnabled"&gt;true&lt;/Property&gt;
       &lt;/Properties&gt;
-    &lt;/Organization&gt;' \ 
-  -u {userEmail}:{mypassword}
-</pre>
+    &lt;/Organization&gt;' \
+  -u <var>USER_EMAIL</var>:<var>PASSWORD</var></pre>
 
   <h3 id="procedureforenablingtokenaccess-step2setpermissionsforopsadminroleintheorganization">Step
   2: Set permissions for opsadmin role in the organization</h3>
 
-  <p>Only the <strong>orgadmin</strong> and <strong>opsadmin</strong> roles in an organization
+  <p>Only the <code>orgadmin</code> and <code>opsadmin</code> roles in an organization
   should be given permissions to retrieve (HTTP GET) and revoke (HTTP PUT) OAuth 2.0 tokens based
   on user ID or app ID. To control access, set get and put permissions on the /oauth2 resource for
   an organization. That resource has a URL in the form:</p>
-  <pre class="prettyprint">
-https://&lt;ms-ip&gt;:8080/v1/organizations/{org_name}/oauth2
-</pre>
 
-  <p>The <strong>orgadmin</strong> role should already have the necessary permissions. For the
-  <strong>opsadmin</strong> role for the /oauth2 resource, the permissions should look like
+  <pre>https://<var>management_server_IP</var>:8080/v1/organizations/<var>org_name</var>/oauth2</pre>
+
+  <p>The <code>orgadmin</code> role should already have the necessary permissions. For the
+  <code>opsadmin</code> role for the /oauth2 resource, the permissions should look like
   this:</p>
-  <pre class="prettyprint">
-&lt;ResourcePermission path="/oauth2"&gt;
-    &lt;Permissions&gt;
-        &lt;Permission&gt;get&lt;/Permission&gt;
-        &lt;Permission&gt;put&lt;/Permission&gt;
-    &lt;/Permissions&gt;
-&lt;/ResourcePermission&gt;
-</pre>
+  <pre class="prettyprint">&lt;ResourcePermission path="/oauth2"&gt;
+  &lt;Permissions&gt;
+    &lt;Permission&gt;get&lt;/Permission&gt;
+    &lt;Permission&gt;put&lt;/Permission&gt;
+  &lt;/Permissions&gt;
+&lt;/ResourcePermission&gt;</pre>
 
   <p>You can use the <a href=
   "/management/apis/get/organizations/%7Borg_name%7D/userroles/%7Brole_name%7D/permissions">Get
   Permission for a Single Resource API</a> call to see which roles have permissions for the
-  <span style="font-family:courier new,courier,monospace;">/oauth2</span> resource. </p>
+  <code>/oauth2</code> resource.</p>
 
   <p>Based on the response, you can use the <a href=
   "/management/apis/post/organizations/%7Borg_name%7D/userroles/%7Brole_name%7D/permissions">Add
@@ -146,49 +141,42 @@ https://&lt;ms-ip&gt;:8080/v1/organizations/{org_name}/oauth2
   Delete Permission for Resource</a> API calls to make any necessary adjustments to the /oauth2
   resource permissions.</p>
 
-  <p>Use the following cURL command to give the <strong>opsadmin</strong> role <span style=
-  "font-family:courier new,courier,monospace;">get</span> and <span style=
-  "font-family:courier new,courier,monospace;">put</span> permissions for the <span style=
-  "font-family:courier new,courier,monospace;">/oauth2</span> resource. Replace the values in
-  <em><strong>{curly braces}</strong></em> with your org-specific values:</p>
-  <pre class="prettyprint">
-&gt; curl -X POST -H 'Content-type:application/xml' \
-  http://&lt;ms-ip&gt;:8080/v1/organizations/{org}/userroles/opsadmin/permissions \
+  <p>Use the following <code>curl</code> command to give the <code>opsadmin</code> role
+  <code>get</code> and <code>put</code> permissions for the <code>/oauth2</code> resource. Replace
+  the <var>values</var> with your org-specific values:</p>
+
+  <pre class="devsite-terminal">curl -X POST -H 'Content-type:application/xml' \
+  http://<var>management_server_IP</var>:8080/v1/organizations/<var>org_name</var>/userroles/opsadmin/permissions \
   -d '&lt;ResourcePermission path="/oauth2"&gt;
       &lt;Permissions&gt;
         &lt;Permission&gt;get&lt;/Permission&gt;
         &lt;Permission&gt;put&lt;/Permission&gt;
       &lt;/Permissions&gt;
     &lt;/ResourcePermission&gt;' \
-  -u {USEREMAIL}:{PWD} 
+  -u <var>USEREMAIL</var>:<var>PASSWORD</var>
 </pre>
 
-  <p>Use the following cURL command to revoke <span style=
-  "font-family:courier new,courier,monospace;">get</span> and <span style=
-  "font-family:courier new,courier,monospace;">put</span> permissions for the <span style=
-  "font-family:courier new,courier,monospace;">/oauth2</span> resource from roles other than
-  <strong>orgadmin</strong> and <strong>opsadmin</strong>. Replace the values in <em><strong>{curly
-  braces}</strong></em> with your org-specific values:</p>
-  <pre class="prettyprint">
-&gt; curl -X DELETE -H 'Content-type:application/xml' \
-  http://&lt;msip&gt;:8080/v1/organizations/{org-name}/userroles/{roles}/permissions \
+  <p>Use the following <code>curl</code> command to revoke <code>get</code> and <code>put</code>
+  permissions for the <code>/oauth2</code> resource from roles other than
+  <code>orgadmin</code> and <code>opsadmin</code>. Replace the <var>values</var> with your
+  org-specific values:</p>
+
+  <pre class="devsite-terminal">curl -X DELETE -H 'Content-type:application/xml' \
+  http://<var>management_server_IP</var>:8080/v1/organizations/<var>org_name</var>/userroles/<var>roles</var>/permissions \
   -d '&lt;ResourcePermission path="/oauth2"&gt;
       &lt;Permissions&gt;&lt;/Permissions&gt;
     &lt;/ResourcePermission&gt;' \
-   -u {USEREMAIL}:{PWD} 
+   -u <var>USEREMAIL</var>:<var>PASSWORD</var>
 </pre>
 
   <h3 id="procedureforenablingtokenaccess-step3settheoauth_max_search_limitproperty">Step 3: Set
   the oauth_max_search_limit property </h3>
 
-  <p>Ensure that the <span style=
-  "font-family:courier new,courier,monospace;">conf_keymanagement_oauth_max_search_limit</span>
-  property in <span style=
-  "font-family:courier new,courier,monospace;">/opt/apigee/customer/application/management-server.properties</span>
-  file is set to 100: </p>
-  <pre class="prettyprint">
-conf_keymanagement_oauth_max_search_limit = 100
-</pre>
+  <p>Ensure that the <code>conf_keymanagement_oauth_max_search_limit</code>
+  property in <code>/opt/apigee/customer/application/management-server.properties</code>
+  file is set to 100:</p>
+
+  <pre class="prettyprint">conf_keymanagement_oauth_max_search_limit = 100</pre>
 
   <p>If this file does not exist, create it.</p>
 
@@ -198,17 +186,16 @@ conf_keymanagement_oauth_max_search_limit = 100
   <p>On a new installation, the property should be already set to 100. If you have to change the
   value of this property, restart the Management Server and Message Processor by using the
   commands:</p>
-  <pre class="prettyprint">
-&gt; /opt/apigee/apigee-service/bin/apigee-service edge-management-server restart
-&gt; /opt/apigee/apigee-service/bin/apigee-service edge-message-processor restart
-</pre>
+
+  <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-management-server restart
+<code class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-message-processor restart</code></pre>
 
   <h3 id=
   "procedureforenablingtokenaccess-step4configuretheoauth20policythatgeneratestokenstoincludeenduserid">
   Step 4: Configure the OAuth 2.0 policy that generates tokens to include end user ID</h3>
 
-  <aside class="note"><b>Note:</b> This task is optional. You only need to perform it if you want
-  to retrieve and revoke OAuth 2.0 access tokens by end user ID. </aside>
+  <aside class="note"><strong>Note:</strong> This task is optional. You only need to perform it if
+  you want to retrieve and revoke OAuth 2.0 access tokens by end user ID.</aside>
 
   <p>Configure the OAuth 2.0 policy used to generate access tokens to include the end user ID in
   the token. By including end user IDs in the access token, you can retrieve and revoke tokens by
@@ -216,14 +203,13 @@ conf_keymanagement_oauth_max_search_limit = 100
 
   <p>To configure the policy to include an end user ID in an access token, the request that creates
   the access token must include the end user ID and you must specify the input variable that
-  contains the end user ID. </p>
+  contains the end user ID.</p>
 
   <p>The OAuth 2.0 policy below, named GenerateAccessTokenClient, generates an OAuth 2.0 access
-  token. Note the addition of the <span style=
-  "font-family:courier new,courier,monospace;">&lt;AppEndUser&gt;</span> tag in bold that specifies
+  token. Note the addition of the <code>&lt;AppEndUser&gt;</code> tag in bold that specifies
   the variable containing the end user ID:</p>
-  <pre class="prettyprint">
-&lt;OAuthV2 async="false" continueOnError="false" enabled="true" name="GenerateAccessTokenClient"&gt;
+
+  <pre class="prettyprint">&lt;OAuthV2 async="false" continueOnError="false" enabled="true" name="GenerateAccessTokenClient"&gt;
     &lt;DisplayName&gt;OAuth 2.0.0 1&lt;/DisplayName&gt;
     &lt;ExternalAuthorization&gt;false&lt;/ExternalAuthorization&gt;
     &lt;Operation&gt;GenerateAccessToken&lt;/Operation&gt;
@@ -234,30 +220,21 @@ conf_keymanagement_oauth_max_search_limit = 100
     &lt;GrantType&gt;request.queryparam.grant_type&lt;/GrantType&gt; 
     <strong>&lt;AppEndUser&gt;request.header.appuserID&lt;/AppEndUser&gt; 
     </strong>&lt;ExpiresIn&gt;960000&lt;/ExpiresIn&gt;
-&lt;/OAuthV2&gt;
-</pre>
+&lt;/OAuthV2&gt;</pre>
 
-  <p>You can then use the following cURL command to generate the OAuth 2.0 access token, passing
-  the user ID as the <span style="font-family:courier new,courier,monospace;">appuserID</span>
-  header:</p>
-  <pre class="prettyprint">
-&gt; curl -H "appuserID:6ZG094fgnjNf02EK" \
-https://myorg-test.apigee.net/oauth/client_credential/accesstoken?grant_type=client_credentials \
-  -X POST \
-  -d 'client_id=k3nJyFJIA3p62TKIkLO6OJNXFmP&amp;client_secret=gk5K5lIp943AY4'
-</pre>
+  <p>You can then use the following <code>curl</code> command to generate the OAuth 2.0 access
+  token, passing the user ID as the <code>appuserID</code> header:</p>
 
-  <p>In this example, the <span style="font-family:courier new,courier,monospace;">appuserID</span>
-  is passed as a request header. You can pass information as part of a request in many ways. For
-  example, as an alternative, you can: </p>
+  <pre class="devsite-terminal">curl -H "appuserID:6ZG094fgnjNf02EK" \
+  https://myorg-test.apigee.net/oauth/client_credential/accesstoken?grant_type=client_credentials \
+  -X POST -d 'client_id=k3nJyFJIA3p62TKIkLO6OJNXFmP&amp;client_secret=gk5K5lIp943AY4'</pre>
+
+  <p>In this example, the <code>appuserID</code> is passed as a request header. You can pass
+  information as part of a request in many ways. For example, as an alternative, you can:</p>
 
   <ul>
-    <li>Use a form parameter variable: <span style=
-    "font-family:courier new,courier,monospace;">request.formparam.appuserID</span></li>
-
+    <li>Use a form parameter variable: <code>request.formparam.appuserID</code></li>
     <li>Use a flow variable providing the end user ID</li>
   </ul>
 
-  <div>
-     
-  </div>{% endblock %}
+{% endblock %}

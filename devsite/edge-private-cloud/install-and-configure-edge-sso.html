@@ -1,14 +1,15 @@
-  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}Install and configure Edge
-  SSO{% endblock %} {% block body %}
+{% extends "private-cloud/v4.18.05/_base.html" %}
+{% block title %}Install and configure Edge SSO{% endblock %}
+{% block body %}
 
   <p>Installing and configuring the Edge SSO module requires that you first generate two sets of
   TLS keys and certificates. The Edge SSO module uses TLS to secure the transmission of information
   as part of the SAML handshaking process with the SAML IDP.</p>
 
-  <p><strong>Note</strong>: By default, the Edge SSO module is accessible over HTTP on port 9099 of
+  <aside class="note"><strong>Note</strong>: By default, the Edge SSO module is accessible over HTTP on port 9099 of
   the node on which it is installed. You can enable TLS on the Edge SSO module. To do so, you have
   to create a third set of TLS keys and certificates used by Tomcat to support TLS. See <a href=
-  "configure-apigee-sso-https-access.html">Configure apigee-sso for HTTPS access</a> for more.</p>
+  "configure-apigee-sso-https-access">Configure apigee-sso for HTTPS access</a> for more.</aside>
 
   <h2 id="createthetlskeysandcertificates">Create the TLS keys and certificates</h2>
 
@@ -18,74 +19,51 @@
   <p>To create the verification and signing key and self-signed cert:</p>
 
   <ol>
-    <li><span style="font-family:courier new,courier,monospace;">&gt; sudo mkdir -p
-    /opt/apigee/customer/application/apigee-sso/jwt-keys</span></li>
-
-    <li><span style="font-family:courier new,courier,monospace;">&gt; cd
-    /opt/apigee/customer/application/apigee-sso/jwt-keys/</span></li>
-
-    <li><span style="font-family:courier new,courier,monospace;">&gt; sudo openssl genrsa -out
-    privkey.pem 2048</span></li>
-
-    <li><span style="font-family:courier new,courier,monospace;">&gt; sudo openssl rsa -pubout -in
-    privkey.pem -out pubkey.pem</span></li>
-
-    <li><span style="font-family:courier new,courier,monospace;">&gt; sudo chown apigee:apigee
-    *.pem</span></li>
+    <li><pre class="devsite-terminal">sudo mkdir -p /opt/apigee/customer/application/apigee-sso/jwt-keys</pre></li>
+    <li><pre class="devsite-terminal">cd /opt/apigee/customer/application/apigee-sso/jwt-keys/</pre></li>
+    <li><pre class="devsite-terminal">sudo openssl genrsa -out privkey.pem 2048</pre></li>
+    <li><pre class="devsite-terminal">sudo openssl rsa -pubout -in privkey.pem -out pubkey.pem</pre></li>
+    <li><pre class="devsite-terminal">sudo chown apigee:apigee *.pem</pre></li>
   </ol>
 
   <p>To create the key and self-signed cert, with no passphrase, for communicating with the SAML
   IDP:</p>
 
   <ol>
-    <li><span style="font-family:courier new,courier,monospace;">&gt; sudo mkdir -p
-    /opt/apigee/customer/application/apigee-sso/saml/</span></li>
-
-    <li><span style="font-family:courier new,courier,monospace;">&gt; cd
-    /opt/apigee/customer/application/apigee-sso/saml/</span></li>
-
-    <li>Generate your private key with a passphrase:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt; sudo openssl genrsa -aes256 -out
-    server.key 1024</span></li>
-
+    <li><pre class="devsite-terminal">sudo mkdir -p /opt/apigee/customer/application/apigee-sso/saml/</pre></li>
+    <li><pre class="devsite-terminal">cd /opt/apigee/customer/application/apigee-sso/saml/</pre></li>
+    <li>Generate your private key with a passphrase:
+      <pre class="devsite-terminal">sudo openssl genrsa -aes256 -out server.key 1024</pre>
+    </li>
     <li>Remove the passphrase from the key:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt; sudo openssl rsa -in server.key
-    -out server.key</span></li>
-
-    <li>Generate certificate signing request for CA:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt; sudo openssl req -x509 -sha256
-    -new -key server.key -out server.csr</span></li>
-
-    <li>Generate self-signed certificate with 365 days expiry-time:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt; sudo openssl x509 -sha256 -days
-    365 -in server.csr -signkey server.key -out selfsigned.crt</span></li>
-
-    <li><span style="font-family:courier new,courier,monospace;">&gt; sudo chown apigee:apigee
-    server.key</span></li>
-
-    <li><span style="font-family:courier new,courier,monospace;">&gt; sudo chown apigee:apigee
-    selfsigned.crt</span></li>
+      <pre class="devsite-terminal">sudo openssl rsa -in server.key -out server.key</pre>
+    </li>
+    <li>Generate certificate signing request for CA:
+      <pre class="devsite-terminal">sudo openssl req -x509 -sha256 -new -key server.key -out server.csr</pre></li>
+    <li>Generate self-signed certificate with 365 days expiry-time:
+      <pre class="devsite-terminal">sudo openssl x509 -sha256 -days 365 -in server.csr -signkey server.key -out selfsigned.crt</pre>
+    </li>
+    <li><pre class="devsite-terminal">sudo chown apigee:apigee server.key</pre></li>
+    <li><pre class="devsite-terminal">sudo chown apigee:apigee selfsigned.crt</pre></li>
   </ol>
 
   <p>If you want to enable TLS on the Edge SSO module, by
   setting <strong>SSO_TOMCAT_PROFILE</strong> to <strong>SSL_TERMINATION</strong> or
   to <strong>SSL_PROXY</strong>, you cannot use a self-signed certificate. You must generate a
-  cert from a CA. See <a href="configure-apigee-sso-https-access.html">Configure apigee-sso for
+  cert from a CA. See <a href="configure-apigee-sso-https-access">Configure apigee-sso for
   HTTPS access</a> for more.</p>
 
   <h2 id="installandconfigureedgessoforhttpaccess">Install and configure Edge SSO for HTTP
   access</h2>
 
-  <p>To install the Edge SSO module, <span style=
-  "font-family:courier new,courier,monospace;">apigee-sso</span>, you must use the same process
-  that you used to install Edge. Because <span style=
-  "font-family:courier new,courier,monospace;">apigee-sso</span> is represented by an RPM file,
+  <p>To install the Edge SSO module, <code>apigee-sso</code>, you must use the same process
+  that you used to install Edge. Because <code>apigee-sso</code> is represented by an RPM file,
   that means the user performing the install must be the root user or be a user that has full sudo
-  access. See <a href="installation-overview.html">Edge Installation Overview</a> for more.</p>
+  access. See <a href="installation-overview">Edge Installation Overview</a> for more.</p>
 
   <p>Pass a config file to the installer. The config file has the following form:</p>
-  <pre class="prettyprint">
-IP1=hostname_or_ip_of_management_server
+
+  <pre class="prettyprint">IP1=hostname_or_ip_of_management_server
 IP2=hostname_or_ip_of_UI_and_apigge_sso
 
 ## Management Server configuration.
@@ -98,7 +76,7 @@ APIGEE_ADMINPW=Secret123
 # Set to https if you enabled TLS on the management API.
 MS_SCHEME=http
 
-## Postgres configuration. 
+## Postgres configuration.
 PG_HOST=$IP1
 PG_PORT=5432
 # Postgres username and password as set when you installed Edge.
@@ -151,9 +129,9 @@ SSO_SAML_SERVICE_PROVIDER_CERTIFICATE=/opt/apigee/customer/application/apigee-ss
 # Must configure an SMTP server so Edge SSO can send emails to users.
 SKIP_SMTP=n
 SMTPHOST=smtp.example.com
-SMTPUSER=smtp@example.com  
+SMTPUSER=smtp@example.com
 # omit for no username
-SMTPPASSWORD=smtppwd    
+SMTPPASSWORD=smtppwd
 # omit for no password
 SMTPSSL=n
 SMTPPORT=25
@@ -163,55 +141,41 @@ SMTPMAILFROM="My Company &lt;myco@company.com&gt;"
   <p>To install the Edge SSO module:</p>
 
   <ol>
-    <li>Log in to the Management Server node. That node should already have <span style=
-    "font-family:courier new,courier,monospace;">apigee-service</span> installed as described at
-    <a href="install-edge-apigee-setup-utility.html">Install the Edge apigee-setup utility</a>.<br>
-    Note that you can install Edge SSO on a different node. However, that node must be able to
-    access the Management Server over port 8080.</li>
-
-    <li>Instal and configure <span style=
-    "font-family:courier new,courier,monospace;">apigee-sso</span>:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    /opt/apigee/apigee-setup/bin/setup.sh -p sso -f <strong><em>configFile</em></strong></span><br>
-    <br>
-    where <strong><em>configFile</em></strong> is the config file shown above.</li>
-
-    <li>Instal the <span style=
-    "font-family:courier new,courier,monospace;">apigee-ssoadminapi.sh</span> utility used to
-    manage admin and machine users for the <span style=
-    "font-family:courier new,courier,monospace;">apigee-sso</span> module:<br>
-    <span style=
-    "font-family:courier new,courier,monospace;">/opt/apigee/apigee-service/bin/apigee-service
-    apigee-ssoadminapi install</span></li>
-
-    <li>Log out of the shell, and then log back in again to add the <span style=
-    "font-family:courier new,courier,monospace;">apigee-ssoadminapi.sh</span> utility to your
-    path.</li>
+    <li>Log in to the Management Server node. That node should already have
+      <code>apigee-service</code> installed as described at
+      <a href="install-edge-apigee-setup-utility">Install the Edge apigee-setup utility</a>.
+      <p>Note that you can install Edge SSO on a different node. However, that node must be able to
+      access the Management Server over port 8080.</p>
+    </li>
+    <li>Instal and configure <code>apigee-sso</code>:
+      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/setup.sh -p sso -f <var>configFile</var></pre>
+      <p>Where <var>configFile</var> is the config file shown above.</p>
+    </li>
+    <li>Install the <code>apigee-ssoadminapi.sh</code> utility used to
+      manage admin and machine users for the <code>apigee-sso</code> module:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-ssoadminapi install</pre>
+    </li>
+    <li>Log out of the shell, and then log back in again to add the <code>apigee-ssoadminapi.sh</code>
+      utility to your path.</li>
   </ol>
 
-  <h2 id="specifyingametadatafileinsteadofaurl">Specifying a metadata file instead of a URL</h2>
+  <h2 id="specifyingametadatafileinsteadofaurl">Specify a metadata file instead of a URL</h2>
 
   <p>If your IDP does not support an HTTP/HTTPS metadata URL, you can use a metadata XML file to
   configure Edge SSO:</p>
 
   <ol>
     <li>Copy the contents of the metadata XML from your IDP to a file on the Edge SSO node. For
-    example, copy the XML to: <br>
-    <span style=
-    "font-family:courier new,courier,monospace;">/opt/apigee/customer/application/apigee-sso/saml/metadata.xml</span></li>
-
-    <li>Change ownership of the file to apigee:apigee:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt; chown apigee:apigee
-    /opt/apigee/customer/application/apigee-sso/saml/metadata.xml</span></li>
-
-    <li>Set the value of <span style=
-    "font-family:courier new,courier,monospace;">SSO_SAML_IDP_METADATA_URL</span> to the absolute
-    file path:<br>
-    <span style=
-    "font-family:courier new,courier,monospace;">SSO_SAML_IDP_METADATA_URL=file:///opt/apigee/customer/application/apigee-sso/saml/metadata.xml</span><br>
-
-    <br>
-    You must prefix the file path with "<span style=
-    "font-family:courier new,courier,monospace;">file://</span>", followed by the absolute path
-    from root (/).</li>
-  </ol>{% endblock %}
+      example, copy the XML to:
+      <pre>/opt/apigee/customer/application/apigee-sso/saml/metadata.xml</pre>
+    </li>
+    <li>Change ownership of the file to apigee:apigee:
+      <pre class="devsite-terminal">chown apigee:apigee /opt/apigee/customer/application/apigee-sso/saml/metadata.xml</pre>
+    </li>
+    <li>Set the value of <code>SSO_SAML_IDP_METADATA_URL</code> to the absolute file path:
+      <pre>SSO_SAML_IDP_METADATA_URL=file:///opt/apigee/customer/application/apigee-sso/saml/metadata.xml</pre>
+      <p>You must prefix the file path with "<code>file://</code>", followed by the absolute path from
+      root (/).</p>
+    </li>
+  </ol>
+{% endblock %}

@@ -1,5 +1,6 @@
-  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}About Planets, Regions, Pods,
-  Organizations, Environments and Virtual Hosts{% endblock %} {% block body %}
+{% extends "private-cloud/v4.18.05/_base.html" %}
+{% block title %}About planets, regions, pods, organizations, environments and virtual hosts{% endblock %}
+{% block body %}
 
   <p>An on-premises installation of Edge Private Cloud, or an Edge instance, consists of multiple
   Edge components installed on a set of server nodes. The following image shows the relationship
@@ -13,10 +14,10 @@
   <table>
     <thead>
       <tr>
-        <th> </th>
-        <th><strong>Contains</strong></th>
-        <th><strong>Associated with</strong></th>
-        <th><strong>Default</strong></th>
+        <th>Component</th>
+        <th>Contains</th>
+        <th>Associated with</th>
+        <th>Default</th>
       </tr>
     </thead>
     <tbody>
@@ -62,7 +63,7 @@
   <h2 id="aboutplanets">About Planets</h2>
 
   <p>A <em>planet</em> represents an entire Edge hardware and software environment and can contain
-  one or more regions. In Edge, a planet is a logical grouping of regions &#8212; you do not
+  one or more regions. In Edge, a planet is a logical grouping of regions: you do not
   explicitly create or configure a planet as part of installing Edge.</p>
 
   <h2 id="aboutregions">About Regions</h2>
@@ -99,7 +100,7 @@
   this scenario, you host API endpoints so that they are geographically <em>close</em> to the
   consumers of those APIs.</p>
 
-  <p>In Edge, each region is referred to as a <em>data center</em>.  A data center in the
+  <p>In Edge, each region is referred to as a <em>data center</em>. A data center in the
   Eastern US can then handle requests arriving from Boston, Massachusetts, while a data center in
   Singapore can handle requests originating from devices or computers in Asia.</p>
 
@@ -170,12 +171,10 @@
 
   <p>You can use the following API call to view server registration details at the end of the
   installation for each pod. This is a useful monitoring tool.</p>
-  <pre class="prettyprint">
-curl -u adminEmail:pword http://<em><strong>&lt;ms_IP</strong></em>&gt;:8080/v1/servers?pod=<em><strong>podName</strong></em>
-</pre>
+  <pre class="devsite-terminal">curl -u <var>adminEmail:pword</var> http://<var>ms_IP</var>:8080/v1/servers?pod=<var>podName</var></pre>
 
-  <p>where <em><strong>ms_IP</strong></em> is the IP address or DNS name of the Management Server,
-  and <em><strong>podName</strong></em> is either:</p>
+  <p>Where <var>ms_IP</var> is the IP address or DNS name of the Management Server,
+  and <var>podName</var> is one of the following:</p>
 
   <ul>
     <li><code>gateway</code></li>
@@ -184,11 +183,10 @@ curl -u adminEmail:pword http://<em><strong>&lt;ms_IP</strong></em>&gt;:8080/v1/
   </ul>
 
   <p>For example, for the "gateway" pod:</p>
-  <pre class="prettyprint">&gt; curl -u adminEmail:pword http://&lt;<var>ms_IP</var>&gt;:8080/v1/servers?pod=<strong>gateway</strong></pre>
+  <pre class="devsite-terminal">curl -u adminEmail:pword http://<var>ms_IP</var>:8080/v1/servers?pod=<strong>gateway</strong></pre>
 
-  <p>You see output in the form:</p>
-  <pre class="prettyprint">
-[ {
+  <p>Apigee returns output similar to the following:</p>
+  <pre class="prettyprint">[ {
   "externalHostName" : "localhost",
   "externalIP" : "192.168.1.11",
   "internalHostName" : "localhost",
@@ -238,7 +236,7 @@ curl -u adminEmail:pword http://<em><strong>&lt;ms_IP</strong></em>&gt;:8080/v1/
 } ]
 </pre>
 
-  <p>The <strong>type</strong> attribute lists the component type. Note that it lists the Cassandra
+  <p>The <code>type</code> attribute lists the component type. Note that it lists the Cassandra
   datastores registered in the pod. While Cassandra nodes are installed in the "gateway" pod, you
   will see Cassandra datastores registered with all pods.</p>
 
@@ -294,13 +292,12 @@ curl -u adminEmail:pword http://<em><strong>&lt;ms_IP</strong></em>&gt;:8080/v1/
 
   <ol>
     <li>The organization containing the environment.</li>
-
     <li>The Message Processors that handle API proxy requests to the environment. These Message
-    Processors must be in a pod associated with the environment's parent organization.<br>
-    By default, when you create an environment, Edge associates all available Message Processors in
-    the "gateway" pod with the environment. Alternatively, you can specify a subset of the
-    available Message Processors so that different Message Processors handle requests to different
-    environments. </li>
+      Processors must be in a pod associated with the environment's parent organization.<br>
+      By default, when you create an environment, Edge associates all available Message Processors in
+      the "gateway" pod with the environment. Alternatively, you can specify a subset of the
+      available Message Processors so that different Message Processors handle requests to different
+      environments.</li>
   </ol>
 
   <p>A Message Processor can be associated with multiple environments. For example, your Edge
@@ -333,27 +330,24 @@ curl -u adminEmail:pword http://<em><strong>&lt;ms_IP</strong></em>&gt;:8080/v1/
   at least one virtual host. </p>
 
   <p>Ensure that the port number specified by the virtual host is open on the Router node. You can
-  then access an API proxy by making a request to:</p>
-  <pre class="prettyprint">
-http://<var>routerIP</var>:<var>port</var>/<var>proxy-base-path</var>/<var>resource-name</var>
-https://<var>routerIP</var>:<var>port</var>/<var>proxy-base-path</var>/<var>resource-name</var>
-</pre>
+  then access an API proxy by making a request to the following URLs:</p>
+  <pre>http://<var>routerIP</var>:<var>port</var>/<var>proxy-base-path</var>/<var>resource-name</var>
+https://<var>routerIP</var>:<var>port</var>/<var>proxy-base-path</var>/<var>resource-name</var></pre>
 
-  <p>where:</p>
+  <p>Where:</p>
   <ul>
     <li><code>http</code> or <code>https</code>: If the virtual host is configured to
-    supports TLS/SSL, use HTTPS. If the virtual host does not support TLS/SSL, use HTTP. </li>
+      supports TLS/SSL, use HTTPS. If the virtual host does not support TLS/SSL, use HTTP. </li>
     <li><var>routerIP:port</var> is the IP address and port number of the virtual host.</li>
     <li><var>proxy-base-path</var> and <var>resource-name</var> are defined when you create
-    the API proxy.</li>
+      the API proxy.</li>
   </ul>
 
   <p>Typically, you do not publish your APIs to customers with an IP address and port number.
   Instead, you define a DNS entry for the Router and port. For example:</p>
-  <pre class="prettyprint">
-http://<strong>myAPI.myCo.com</strong>/<var>proxy-base-path</var>/<var>resource-name</var>
-https://<strong>myAPI.myCo.com</strong>/<var>proxy-base-path</var>/<var>resource-name</var>
-</pre>
+
+  <pre class="prettyprint">http://<strong>myAPI.myCo.com</strong>/<var>proxy-base-path</var>/<var>resource-name</var>
+https://<strong>myAPI.myCo.com</strong>/<var>proxy-base-path</var>/<var>resource-name</var></pre>
 
   <p>You also must create a host alias for the virtual host that matches the domain name of the DNS
   entry. From the example above, you would specify a host alias of <strong>myAPI.myCo.com</strong>.
@@ -368,9 +362,8 @@ https://<strong>myAPI.myCo.com</strong>/<var>proxy-base-path</var>/<var>resource
   <p>After you complete the Edge installation process, your first action is typically to create an
   organization, environment, and virtual host through the "onboarding" process. To perform
   onboarding, run the following command on the Edge Management Server node:</p>
-  <pre class="prettyprint">
-/opt/apigee/apigee-service/bin/apigee-service apigee-provision setup-org -f <var>configFile</var>
-</pre>
+
+  <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-provision setup-org -f <var>configFile</var></pre>
 
   <p>This command takes as input a config file that defines a user, organization, environment, and
   virtual host.</p>
@@ -387,9 +380,7 @@ https://<strong>myAPI.myCo.com</strong>/<var>proxy-base-path</var>/<var>resource
   </ul>
 
   <p>After running that script, you can access your APIs by using a URL in the form:</p>
-  <pre class="prettyprint">
-http://<var>routerIP</var>:9001/<var>proxy-base-path</var>/<var>resource-name</var>
-</pre>
+  <pre>http://<var>routerIP</var>:9001/<var>proxy-base-path</var>/<var>resource-name</var></pre>
 
   <p>You can later add any number of organizations, environments, and virtual hosts.</p>
 
