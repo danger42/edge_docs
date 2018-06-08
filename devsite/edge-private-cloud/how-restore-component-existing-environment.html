@@ -1,27 +1,26 @@
-  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}How to Restore a Component to
-  an Existing Environment{% endblock %} {% block body %}
+{% extends "private-cloud/v4.18.05/_base.html" %}
+{% block title %}How to restore a component to an existing environment{% endblock %}
+{% block body %}
 
   <p>This document covers restoration of any Edge component to an existing environment without
   having to re-install the component. This means the node where you are restoring the component has
   the same IP address or DNS name as when you performed the backup.</p>
 
   <p>If you have to re-install the component see <a href=
-  "how-reinstall-and-restore-components.html">How to Reinstall and Restore Components</a>.</p>
+  "how-reinstall-and-restore-components">How to Reinstall and Restore Components</a>.</p>
 
   <h2 id="apachezookeeper">Apache ZooKeeper</h2>
 
   <h3 id="apachezookeeper-restoreonestandalonenode">Restore one standalone node</h3>
 
   <ol>
-    <li>Remove old ZooKeeper directories:<br>
-    <span style="font-family:courier new,courier,monospace;">/opt/apigee/data/apigee-zookeeper<br>
-    /opt/apigee/etc/apigee-zookeeper.d</span></li>
-
-    <li>Restore ZooKeeper data from the backup file:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    /opt/apigee/apigee-service/bin/apigee-service apigee-zookeeper restore
-    backup-2016.03.17,14.40.41.tar.gz</span></li>
-
+    <li>Remove old ZooKeeper directories:
+      <pre>/opt/apigee/data/apigee-zookeeper
+/opt/apigee/etc/apigee-zookeeper.d</pre>
+    </li>
+    <li>Restore ZooKeeper data from the backup file:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-zookeeper restore backup-2016.03.17,14.40.41.tar.gz</pre>
+    </li>
     <li>Restart all components to establish synchronization with the new restored ZooKeeper.</li>
   </ol>
 
@@ -29,21 +28,18 @@
 
   <ol>
     <li>If a single ZooKeeper node fails, that is part of an ensemble, you can create a new node
-    with the same hostname/IP address (follow the re-install steps mentioned in <a href=
-    "how-reinstall-and-restore-components.html">How to Reinstall and Restore Components</a>) and
-    when it joins the ZooKeeper ensemble it will get the latest snapshots from the Leader and start
-    to serve clients. You do not need to restore data in this instance.</li>
+      with the same hostname/IP address (follow the re-install steps mentioned in <a href=
+      "how-reinstall-and-restore-components">How to Reinstall and Restore Components</a>) and
+      when it joins the ZooKeeper ensemble it will get the latest snapshots from the Leader and start
+      to serve clients. You do not need to restore data in this instance.</li>
   </ol>
 
   <h3 id="apachezookeeper-restoreacompletecluster">Restore a complete cluster</h3>
 
   <ol>
     <li>Stop the complete cluster.</li>
-
-    <li>Restore all ZooKeeper nodes from the backup file. </li>
-
+    <li>Restore all ZooKeeper nodes from the backup file.</li>
     <li>Start the ZooKeeper cluster.</li>
-
     <li>Restart all components.</li>
   </ol>
 
@@ -52,15 +48,12 @@
   <h3 id="apachecassandra-restoreonestandalonenode">Restore one standalone node</h3>
 
   <ol>
-    <li>Remove old Cassandra directory:<br>
-    <span style=
-    "font-family:courier new,courier,monospace;">/opt/apigee/data/apigee-cassandra</span></li>
-
-    <li>Restore the Cassandra node from the backup file:<br>
-    <span style=
-    "font-family:courier new,courier,monospace;">/opt/apigee/apigee-service/bin/apigee-service
-    apigee-cassandra restore backup-2016.03.17,14.40.41.tar.gz</span></li>
-
+    <li>Remove old Cassandra directory:
+      <pre>/opt/apigee/data/apigee-cassandra</pre>
+    </li>
+    <li>Restore the Cassandra node from the backup file:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-cassandra restore backup-2016.03.17,14.40.41.tar.gz</pre>
+    </li>
     <li>Restart all components.</li>
   </ol>
 
@@ -68,29 +61,23 @@
 
   <ol>
     <li>If a single Cassandra node fails, that is part of an ensemble, you can create a new node
-    with the same hostname/IP address (follow the re-install steps mentioned in <a href=
-    "how-reinstall-and-restore-components.html">How to Reinstall and Restore Components</a>). You
-    only need to re-install Cassandra, you do not need to restore the data. <br>
-    <br>
-    When performing a restore on a non-seed node, ensure that at least one Cassandra seed node is
-    up.<br>
-    <br>
-    After installing Cassandra, and the node is up, (given that RF&gt;=2 for all keyspaces) execute
-    the following nodetool command to initialize the node:<br>
-    <span style=
-    "font-family:courier new,courier,monospace;">opt/apigee/apigee-cassandra/bin/nodetool -h
-    localhost repair</span></li>
+      with the same hostname/IP address (follow the re-install steps mentioned in <a href=
+      "how-reinstall-and-restore-components">How to Reinstall and Restore Components</a>). You
+      only need to re-install Cassandra, you do not need to restore the data.
+      <p>When performing a restore on a non-seed node, ensure that at least one Cassandra seed node
+      is up.</p>
+      <p>After installing Cassandra, and the node is up, (given that RF&gt;=2 for all keyspaces)
+      execute the following nodetool command to initialize the node:</p>
+      <pre class="devsite-terminal">opt/apigee/apigee-cassandra/bin/nodetool -h localhost repair</pre>
+    </li>
   </ol>
 
   <h3 id="apachecassandra-restoreacompletecluster">Restore a complete cluster</h3>
 
   <ol>
     <li>Stop the complete cluster.</li>
-
     <li>Restore all Cassandra nodes from the backup file. </li>
-
     <li>Start the Cassandra cluster.</li>
-
     <li>Restart all components.</li>
   </ol>
 
@@ -100,180 +87,154 @@
   as Master</h3>
 
   <ol>
-    <li>Stop the Management Server, Qpid Server, and Postgres Server on <strong>all
-    nodes</strong>: <br>
-    <strong>Note</strong>: Your system can still handle requests to API proxies while these
-    components are stopped.<br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    /opt/apigee/apigee-service/bin/apigee-service edge-management-server stop<br>
-    &gt; /opt/apigee/apigee-service/bin/apigee-service edge-qpid-server stop<br>
-    &gt; /opt/apigee/apigee-service/bin/apigee-service edge-postgres-server stop</span></li>
-
-    <li>Make sure PostgreSQL database is running:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    /opt/apigee/apigee-service/bin/apigee-service apigee-postgresql status</span></li>
-
-    <li>Restore PostgreSQL database from the backup file:<br>
-    <span style=
-    "font-family:courier new,courier,monospace;">/opt/apigee/apigee-service/bin/apigee-service
-    apigee-postgresql restore 2016.03.17,14.40.41.dump</span></li>
-
-    <li>Start the Management Server, Qpid Server, and Postgres Server on <strong>all
-    nodes</strong>: <br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    /opt/apigee/apigee-service/bin/apigee-service edge-management-server start<br>
-    &gt; /opt/apigee/apigee-service/bin/apigee-service edge-qpid-server start<br>
-    &gt; /opt/apigee/apigee-service/bin/apigee-service edge-postgres-server start</span></li>
+    <li>Stop the Management Server, Qpid Server, and Postgres Server on <strong>all nodes</strong>:
+      <aside class="note"><strong>Note</strong>: Your system can still handle requests to API
+      proxies while these components are stopped.</aside>
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-management-server stop
+<code class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-qpid-server stop</code>
+<code class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-postgres-server stop</code></pre>
+    </li>
+    <li>Make sure PostgreSQL database is running:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-postgresql status</pre>
+    </li>
+    <li>Restore PostgreSQL database from the backup file:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-postgresql restore 2016.03.17,14.40.41.dump</pre>
+    </li>
+    <li>Start the Management Server, Qpid Server, and Postgres Server on <strong>all nodes</strong>:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-management-server start
+<code class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-qpid-server start</code>
+<code class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-postgres-server start</code></pre>
+    </li>
   </ol>
 
   <h3 id="postgresqldatabase-posgresqlrunningasstandby">PosgreSQL running as Standby</h3>
 
   <ol>
-    <li>Reconfigure PostgreSQL database using the same config file you used to install it:<br>
-    <span style=
-    "font-family:courier new,courier,monospace;">/opt/apigee/apigee-service/bin/apigee-service
-    apigee-postgresql setup -f <em><strong>configFile</strong></em></span></li>
-
-    <li>Start PostgreSQL:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    /opt/apigee/apigee-service/bin/apigee-service apigee-postgresql start</span></li>
+    <li>Reconfigure PostgreSQL database using the same config file you used to install it:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-postgresql setup -f <var>configFile</var></pre>
+    </li>
+    <li>Start PostgreSQL:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-postgresql start</pre>
+    </li>
   </ol>
 
   <h2 id="postgresserver">Postgres Server</h2>
 
   <ol>
-    <li>Remove old Postgres Server directories:<br>
-    <span style=
-    "font-family:courier new,courier,monospace;">/opt/apigee/data/edge-postgres-server<br>
-    /opt/apigee/etc/edge-postgres-server.d</span></li>
-
-    <li>Restore Postgres Server from the backup file:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    /opt/apigee/apigee-service/bin/apigee-service edge-postgres-server restore
-    backup-2016.03.17,14.40.41.tar.gz</span></li>
-
-    <li>Start Postgres Server:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    /opt/apigee/apigee-service/bin/apigee-service edge-postgres-server start </span></li>
+    <li>Remove old Postgres Server directories:
+      <pre>/opt/apigee/data/edge-postgres-server
+/opt/apigee/etc/edge-postgres-server.d</pre>
+    </li>
+    <li>Restore Postgres Server from the backup file:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-postgres-server restore backup-2016.03.17,14.40.41.tar.gz</pre>
+    </li>
+    <li>Start Postgres Server:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-postgres-server start </pre>
+    </li>
   </ol>
 
   <h2 id="qpidddatabase">Qpidd database</h2>
 
   <ol>
-    <li>Remove old Qpidd directories:<br>
-    <span style="font-family:courier new,courier,monospace;">/opt/apigee/data/apigee-qpidd<br>
-    /opt/apigee/etc/apigee-qpidd.d</span></li>
-
-    <li>Restore Qpidd:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    /opt/apigee/apigee-service/bin/apigee-service apigee-qpidd restore
-    backup-2016.03.17,14.40.41.tar.gz </span></li>
-
-    <li>Start Qpidd:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    /opt/apigee/apigee-service/bin/apigee-service apigee-qpidd start</span></li>
+    <li>Remove old Qpidd directories:
+      <pre>/opt/apigee/data/apigee-qpidd
+/opt/apigee/etc/apigee-qpidd.d</pre>
+    </li>
+    <li>Restore Qpidd:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-qpidd restore backup-2016.03.17,14.40.41.tar.gz </pre>
+    </li>
+    <li>Start Qpidd:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-qpidd start</pre>
+    </li>
   </ol>
 
   <h2 id="qpidserver">Qpid Server</h2>
 
   <ol>
-    <li>Remove old Qpid Server directories:<br>
-    <span style="font-family:courier new,courier,monospace;">/opt/apigee/data/edge-qpid-server<br>
-    /opt/apigee/etc/edge-qpid-server.d</span></li>
-
-    <li>Restore Qpid Server from the backup file:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    /opt/apigee/apigee-service/bin/apigee-service edge-qpid-server restore
-    backup-2016.03.17,14.40.41.tar.gz</span></li>
-
-    <li>Start Qpid Server:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    /opt/apigee/apigee-service/bin/apigee-service edge-qpid-server start</span></li>
+    <li>Remove old Qpid Server directories:
+      <pre>/opt/apigee/data/edge-qpid-server
+/opt/apigee/etc/edge-qpid-server.d</pre>
+    </li>
+    <li>Restore Qpid Server from the backup file:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-qpid-server restore backup-2016.03.17,14.40.41.tar.gz</pre>
+    </li>
+    <li>Start Qpid Server:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-qpid-server start</pre>
+    </li>
   </ol>
 
   <h2 id="openldap">OpenLDAP</h2>
 
   <ol>
-    <li>Remove old OpenLDAP directories:<br>
-    <span style="font-family:courier new,courier,monospace;">/opt/apigee/data/apigee-openldap<br>
-    /opt/apigee/etc/apigee-openldap.d</span></li>
-
-    <li>Restore OpenLDAP from the backup file:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    /opt/apigee/apigee-service/bin/apigee-service apigee-openldap restore
-    backup-2016.03.17,14.40.41.tar.gz</span></li>
-
-    <li>Restart OpenLDAP:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    /opt/apigee/apigee-service/bin/apigee-service apigee-openldap start</span></li>
+    <li>Remove old OpenLDAP directories:
+      <pre>/opt/apigee/data/apigee-openldap
+/opt/apigee/etc/apigee-openldap.d</pre>
+    </li>
+    <li>Restore OpenLDAP from the backup file:
+    <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-openldap restore backup-2016.03.17,14.40.41.tar.gz</pre>
+    </li>
+    <li>Restart OpenLDAP:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-openldap start</pre>
+    </li>
   </ol>
 
   <h2 id="managementserver">Management Server</h2>
 
   <ol>
-    <li>Remove old Management Server directories:<br>
-    <span style=
-    "font-family:courier new,courier,monospace;">/opt/apigee/data/edge-management-server<br>
-    /opt/apigee/etc/edge-management-server.d</span></li>
-
-    <li>Restore Management Server from the backup file:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    /opt/apigee/apigee-service/bin/apigee-service edge-management-server restore
-    backup-2016.03.17,14.40.41.tar.gz</span></li>
-
-    <li>Restart the Management Server:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    /opt/apigee/apigee-service/bin/apigee-service edge-management-server start</span></li>
+    <li>Remove old Management Server directories:
+      <pre>/opt/apigee/data/edge-management-server
+/opt/apigee/etc/edge-management-server.d</pre>
+    </li>
+    <li>Restore Management Server from the backup file:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-management-server restore backup-2016.03.17,14.40.41.tar.gz</pre>
+    </li>
+    <li>Restart the Management Server:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-management-server start</pre>
+    </li>
   </ol>
 
   <h2 id="messageprocessor">Message Processor</h2>
 
   <ol>
-    <li>Remove old Message Processor directories:<br>
-    <span style=
-    "font-family:courier new,courier,monospace;">/opt/apigee/data/edge-message-processor<br>
-    /opt/apigee/etc/edge-message-processor.d</span></li>
-
-    <li>Restore Message Processor from the backup file:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    /opt/apigee/apigee-service/bin/apigee-service edge-message-processor restore
-    backup-2016.03.17,14.40.41.tar.gz</span></li>
-
-    <li>Restart Message Processor:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    /opt/apigee/apigee-service/bin/apigee-service edge-message-processor start</span></li>
+    <li>Remove old Message Processor directories:
+      <pre>/opt/apigee/data/edge-message-processor
+/opt/apigee/etc/edge-message-processor.d</pre>
+    </li>
+    <li>Restore Message Processor from the backup file:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-message-processor restore backup-2016.03.17,14.40.41.tar.gz</pre>
+    </li>
+    <li>Restart Message Processor:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-message-processor start</pre>
+    </li>
   </ol>
 
   <h2 id="router">Router</h2>
 
   <ol>
-    <li>Remove old Router directories:<br>
-    <span style="font-family:courier new,courier,monospace;">/opt/apigee/data/edge-router<br>
-    /opt/apigee/etc/edge-router.d</span></li>
-
-    <li>Restore Router from the backup file:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    /opt/apigee/apigee-service/bin/apigee-service edge-router restore
-    backup-2016.03.17,14.40.41.tar.gz</span></li>
-
-    <li>Restart Router:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    /opt/apigee/apigee-service/bin/apigee-service edge-router start</span></li>
+    <li>Remove old Router directories:
+      <pre>/opt/apigee/data/edge-router
+/opt/apigee/etc/edge-router.d</pre>
+    </li>
+    <li>Restore Router from the backup file:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-router restore backup-2016.03.17,14.40.41.tar.gz</pre>
+    </li>
+    <li>Restart Router:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-router start</pre>
+    </li>
   </ol>
 
   <h2 id="edgeui">Edge UI</h2>
 
   <ol>
-    <li>Remove old UI directories:<br>
-    <span style="font-family:courier new,courier,monospace;">/opt/apigee/data/edge-ui<br>
-    /opt/apigee/etc/edge-ui.d</span></li>
-
-    <li>Restore UI from the backup file:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    /opt/apigee/apigee-service/bin/apigee-service edge-ui restore
-    backup-2016.03.17,14.40.41.tar.gz</span></li>
-
-    <li>Restart UI:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    /opt/apigee/apigee-service/bin/apigee-service edge-ui start</span></li>
-  </ol>{% endblock %}
+    <li>Remove old UI directories:
+      <pre>/opt/apigee/data/edge-ui
+/opt/apigee/etc/edge-ui.d</pre>
+    </li>
+    <li>Restore UI from the backup file:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-ui restore backup-2016.03.17,14.40.41.tar.gz</pre>
+    </li>
+    <li>Restart UI:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-ui start</pre>
+    </li>
+  </ol>
+{% endblock %}

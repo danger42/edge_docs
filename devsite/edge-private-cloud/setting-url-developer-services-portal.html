@@ -1,44 +1,37 @@
-  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}Setting the URL of the
-  Developer Services portal{% endblock %} {% block body %}
+{% extends "private-cloud/v4.18.05/_base.html" %}
+{% block title %}Setting the URL of the portal{% endblock %}
+{% block body %}
 
-  <p>Apigee provides you with a Developer Services portal that you can use to build and launch your
+  <p>Apigee provides you with {{portal_1st_use}} that you can use to build and launch your
   own customized website to provide all of these services to your development community. Edge
   customers can create their own developer portal, either in the cloud or on-prem. See <a href=
-  "/api-platform/publish/drupal/what-developer-portal.html">What is a developer portal?</a> for
+  "/api-platform/publish/drupal/what-developer-portal">What is a developer portal?</a> for
   more information.</p>
 
   <p>The Edge UI displays the <strong>DevPortal</strong> button on the <strong>Publish &gt;
   Developers</strong> page that, when clicked, opens the portal associated with an organization. By
   default, that button opens the following URL:</p>
-  <pre class="prettyprint">
-http://live-{<em><strong>orgname</strong></em>).devportal.apigee.com
-</pre>
+  <pre class="prettyprint">http://live-<var>orgname</var>.devportal.apigee.com</pre>
 
-  <p>where {<em><strong>orgname</strong></em>} is the name of the organization. </p>
+  <p>Where <var>orgname</var> is the name of the organization.</p>
 
   <p>You can set this URL to a different URL, for example if your portal has a DNS record, or
   disable the button completely. Use the following properties of the organization to control the
   button:</p>
 
   <ul>
-    <li><span style="font-family:courier new,courier,monospace;">features.devportalDisabled</span>:
-    Set to false (default) to enable the button and to true to disable it.</li>
-
-    <li><span style="font-family:courier new,courier,monospace;">features.devportalUrl</span>: Set
-    to the URL of the developer portal.</li>
+    <li><code>features.devportalDisabled</code>: Set to false (default) to enable the button and to
+      true to disable it.</li>
+    <li><code>features.devportalUrl</code>: Set to the URL of the developer portal.</li>
   </ul>
 
   <p>You set these properties separately for each organization. To set these properties, you first
   use the following API call to determine the current property settings on the organization:</p>
-  <pre class="prettyprint">
-curl -H "Content-Type:application/json" \
--u adminEmail:pword -X GET \
-http://&lt;ms-IP&gt;:8080/v1/organizations/{orgname}
-</pre>
+  <pre class="devsite-terminal">curl -H "Content-Type:application/json" -u <var>adminEmail</var>:<var>pword</var> -X GET \
+  http://<var>ms_IP</var>:8080/v1/organizations/<var>orgname</var></pre>
 
   <p>This call returns an object describing the organization in the form:</p>
-  <pre class="prettyprint">
-{
+  <pre class="prettyprint">{
   "createdAt" : 1428676711119,
   "createdBy" : "me@my.com",
   "displayName" : "orgname",
@@ -46,47 +39,49 @@ http://&lt;ms-IP&gt;:8080/v1/organizations/{orgname}
   "lastModifiedAt" : 1428692717222,
   "lastModifiedBy" : "me@my.com",
   "name" : "organme",
-<strong>  "properties" : {
-    "property" : [{
+  <strong>"properties" : {
+    "property" : [ {
       "name" : "foo",
-      "value" : "bar"}]
-</strong>  },
+      "value" : "bar"
+    } ]
+  </strong>},
   "type" : "paid"
 }
 </pre>
 
-  <p>Note any existing properties in the <span style=
-  "font-family:courier new,courier,monospace;">properties</span> area of the object. When you set
+  <p>Note any existing properties in the <code>properties</code> area of the object. When you set
   properties on the organization, the value in properties overwrites any current properties.
-  Therefore, if you want to set <span style=
-  "font-family:courier new,courier,monospace;">features.devportalDisabled</span> or <span style=
-  "font-family:courier new,courier,monospace;">features.devportalUrl</span> in the organization,
+  Therefore, if you want to set <code>features.devportalDisabled</code> or
+  <code>features.devportalUrl</code> in the organization,
   make sure you copy any existing properties when you set them.</p>
 
   <p>Use the following PUT call to set properties on the organization:</p>
-  <pre class="prettyprint">
-curl -H "Content-Type:application/json" \
--u adminEmail:pword -X PUT \
-http://&lt;ms-IP&gt;:8080/v1/organizations/{orgname} \
--d '{
-  "displayName" : "orgname",
-  "name" : "orgname",
-  "properties" : {
-    "property" : [ {
-      "name" : "foo",
-      "value" : "bar"},
-    {
-      "name": "features.devportalUrl",
-      "value": "http://dev-orgname.devportal.apigee.com/"},
-    {
-      "name": "features.devportalDisabled",
-      "value": "false"}]
-  }
-}'
+  <pre class="prettyprint devsite-terminal">curl -H "Content-Type:application/json" -u <var>adminEmail</var>:<var>pword</var> -X PUT \
+  http://<var>ms_IP</var>:8080/v1/organizations/<var>orgname</var> \
+  -d '{
+    "displayName" : "<var>orgname</var>",
+    "name" : "<var>orgname</var>",
+    "properties" : {
+      "property" : [
+        {
+          "name" : "foo",
+          "value" : "bar"
+        },
+        {
+          "name": "features.devportalUrl",
+          "value": "http://dev-orgname.devportal.apigee.com/"
+        },
+        {
+          "name": "features.devportalDisabled",
+          "value": "false"
+        }
+      ]
+    }
+  }'
 </pre>
 
-  <p>In the PUT call, you only have to specify <span style=
-  "font-family:courier new,courier,monospace;">displayName</span>, <span style=
-  "font-family:courier new,courier,monospace;">name</span>, and <span style=
-  "font-family:courier new,courier,monospace;">properties</span>. Note that this call incudes the
-  "foo" property that was originally set on the organization.</p>{% endblock %}
+  <p>In the PUT call, you only have to specify <code>displayName</code>,
+  <code>name</code>, and <code>properties</code>. Note that this call incudes the
+  "foo" property that was originally set on the organization.</p>
+
+{% endblock %}

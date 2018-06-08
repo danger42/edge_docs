@@ -1,81 +1,55 @@
-  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}Troubleshooting SAML on the
-  Private Cloud{% endblock %} {% block body %}
+{% extends "private-cloud/v4.18.05/_base.html" %}
+{% block title %}Troubleshooting SAML on the Private Cloud{% endblock %}
+{% block body %}
 
   <p>If the installation or configuration process fails, you should first ensure that all necessary
   ports are open and accessible:</p>
 
   <ul>
-    <li>The <span style="font-family:courier new,courier,monospace;">apigee-sso</span> node must be
-    able to access the Postgres node on port 5432.</li>
-
-    <li>Port 9099 on <span style="font-family:courier new,courier,monospace;">apigee-sso</span>
-    node must be open for external HTTP access by the Edge UI and the SAML IDP. If you enable SAML
-    for API BaaS, the port must be accessible from the BaaS Portal and BaaS Stack nodes. If you
-    configure TLS on <span style="font-family:courier new,courier,monospace;">apigee-sso</span>,
-    the port number might be different.</li>
-
-    <li>The <span style="font-family:courier new,courier,monospace;">apigee-sso</span> node must be
-    able to access the SAML IDP at the URL specified by the <span style=
-    "font-family:courier new,courier,monospace;">SSO_SAML_IDP_METADATA_URL</span> property.</li>
-
-    <li>The <span style="font-family:courier new,courier,monospace;">apigee-sso</span> node must be
-    able to access port 8080 on the Management Server node.</li>
+    <li>The <code>apigee-sso</code> node must be able to access the Postgres node on port 5432.</li>
+    <li>Port 9099 on <code>apigee-sso</code>
+      node must be open for external HTTP access by the Edge UI and the SAML IDP. If you
+      configure TLS on <code>apigee-sso</code>, the port number might be different.</li>
+    <li>The <code>apigee-sso</code> node must be
+      able to access the SAML IDP at the URL specified by the <code>SSO_SAML_IDP_METADATA_URL</code>
+      property.</li>
+    <li>The <code>apigee-sso</code> node must be able to access port 8080 on the Management Server
+      node.</li>
   </ul>
 
   <p>If all necessary ports are open and accessible, you can rerun the configuration steps:</p>
-
   <ul>
-    <li>For <span style="font-family:courier new,courier,monospace;">apigee-sso</span>:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    /opt/apigee/apigee-service/bin/apigee-service apigee-sso setup -f
-    <strong><em>configFile</em></strong></span><br>
+    <li>For <code>apigee-sso</code>:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-sso setup -f <var>configFile</var></pre>
      </li>
-
-    <li>For the Edge UI:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    /opt/apigee/apigee-service/bin/apigee-service edge-ui configure-sso -f
-    <strong><em>configFile</em></strong></span></li>
+    <li>For the Edge UI:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-ui configure-sso -f <var>configFile</var></pre>
+    </li>
   </ul>
-
-  <p>If reconfiguration does work, then you can delete the Postgres database used by <span style=
-  "font-family:courier new,courier,monospace;">apigee-sso</span>, and then reconfigure <span style=
-  "font-family:courier new,courier,monospace;">apigee-sso</span> and the Edge UI:</p>
-
+  <p>If reconfiguration does work, then you can delete the Postgres database used by
+  <code>apigee-sso</code>, and then reconfigure <code>apigee-sso</code> and the Edge UI:</p>
   <ol>
     <li>Disable SAML on the Edge UI as described in <a href="disable-saml.html">Disable
-    SAML</a>.</li>
-
-    <li>Stop <span style="font-family:courier new,courier,monospace;">apigee-sso</span>:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    /opt/apigee/apigee-service/bin/apigee-service apigee-sso stop</span></li>
-
-    <li>Log in to the Postgres node and drop the Postgres database:<br>
-      <span style="font-family:courier new,courier,monospace;">&gt; psql -U
-      <strong><em>postgres_username</em></strong> -p <strong><em>postgres_port</em></strong> -h
-      <strong><em>postgres_host</em></strong> -c "drop database \"apigee_sso\""</span><br>
-      <br>
-      where:
-
+      SAML</a>.</li>
+    <li>Stop <code>apigee-sso</code>:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-sso stop</pre>
+    </li>
+    <li>Log in to the Postgres node and drop the Postgres database:
+      <pre class="devsite-terminal">psql -U <var>postgres_username</var> -p <var>postgres_port</var> -h <var>postgres_host</var> -c "drop database \"apigee_sso\""</pre>
+      <p>where:</p>
       <ul>
-        <li><strong><em>postgres_username</em></strong> is the Postgre username you specified when
-        you installed Edge. The default value is <span style=
-        "font-family:courier new,courier,monospace;">apigee</span>.</li>
-
-        <li><strong><em>postgres_port</em></strong> is the Postgres port you specified when you
-        installed Edge. The default value is 5432.</li>
-
-        <li><strong><em>postgres_host</em></strong> is the IP or DNS name of the Postgres
-        node.</li>
+        <li><var>postgres_username</var> is the Postgre username you specified when you installed
+          Edge. The default value is <code>apigee</code>.</li>
+        <li><var>postgres_port</var> is the Postgres port you specified when you installed Edge.
+          The default value is 5432.</li>
+        <li><var>postgres_host</var> is the IP or DNS name of the Postgres node.</li>
       </ul>
     </li>
-
-    <li>Reconfigure <span style="font-family:courier new,courier,monospace;">apigee-sso</span>:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    /opt/apigee/apigee-service/bin/apigee-service apigee-sso setup -f
-    <strong><em>configFile</em></strong></span></li>
-
-    <li>Reconfigure the Edge UI:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    /opt/apigee/apigee-service/bin/apigee-service edge-ui configure-sso -f
-    <strong><em>configFile</em></strong></span></li>
-  </ol>{% endblock %}
+    <li>Reconfigure <code>apigee-sso</code>:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-sso setup -f <var>configFile</var></pre>
+    </li>
+    <li>Reconfigure the Edge UI:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-ui configure-sso -f <var>configFile</var></pre>
+    </li>
+  </ol>
+{% endblock %}

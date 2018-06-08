@@ -1,22 +1,16 @@
-  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}Disabling Basic Auth on Edge{% endblock %} {% block body %}
+  {% extends "private-cloud/v4.18.05/_base.html" %} {% block title %}Disabling Basic Auth on Edge{% endblock %} {% block body %}
 
   <p>After you have enabled SAML on Edge, you can disable Basic Auth. However, <strong>before you
   disable Basic Auth</strong>:</p>
 
   <ul>
-    <li>Make sure you have added all Edge users, including system administrators, to your SAML
-    IDP.</li>
-
+    <li>Make sure you have added all Edge users, including system administrators, to your SAML IDP.</li>
     <li>Make sure you have thoroughly tested SAML authentication on the Edge UI and Edge management
     API.</li>
-
-    <li>If you are also using API BaaS, configure and test SAML on API BaaS. See <a href=
-    "enabling-saml-api-baas.html">Enabling SAML for API BaaS</a>.</li>
-
-    <li>If you are using the Developer Services portal, configure and test SAML on the portal to
+    <li>If you are using the {{portal_1st_use}}, configure and test SAML on the portal to
     ensure that the portal can connect to Edge. See <a href=
-    "configuring-developer-services-portal-use-saml-communicate-edge.html">Configuring the
-    Developer Services portal to use SAML to communicate with Edge</a>.</li>
+    "configuring-developer-services-portal-use-saml-communicate-edge">Configuring the
+    portal to use SAML to communicate with Edge</a>.</li>
   </ul>
 
   <h2 id="viewingthecurrentsecurityprofile">Viewing the current security profile</h2>
@@ -24,10 +18,7 @@
   <p>You can view the Edge security profile to determine the current configuration to determine if
   Basic Auth and SAML is currently enabled. Use the following Edge management API call on the Edge
   Management Server to view the current security profile used by Edge:</p>
-  <pre class="prettyprint">
-<span style=
-"font-family:courier new,courier,monospace;">&gt; curl -H "accept:application/xml" http://localhost:8080/v1/securityprofile -u <strong><em>sysAdminEmail:pWord</em></strong></span>
-</pre>
+  <pre class="devsite-terminal">curl -H "accept:application/xml" http://localhost:8080/v1/securityprofile -u <var>sysAdminEmail:pWord</var></pre>
 
   <p>If you have not yet configured SAML, the response is as shown below meaning Basic Auth is
   enabled:</p>
@@ -38,8 +29,8 @@
 &lt;/SecurityProfile&gt;
 </pre>
 
-  <p>If you have already enabled SAML, you see the <span style=
-  "font-family:courier new,courier,monospace;">&lt;ssoserver&gt;</span> tag in the output:</p>
+  <p>If you have already enabled SAML, you see the <code>&lt;ssoserver&gt;</code> tag in the
+  output:</p>
   <pre class="prettyprint">
 &lt;SecurityProfile enabled="true" name="securityprofile"&gt;
     &lt;UserAccessControl enabled="true"&gt;
@@ -62,9 +53,9 @@
   Auth. Note that you pass as the payload the XML object returned in the previous section. The only
   difference is that you set
   <strong>&lt;BasicAuthEnabled&gt;false&lt;/BasicAuthEnabled&gt;</strong>:</p>
-  <pre class="prettyprint">
-&gt; curl -H "Content-Type: application/xml"
-http://localhost:8080/v1/securityprofile  -u <em><strong>sysAdminEmail:pWord</strong></em> -d
+  <pre class="devsite-terminal">
+curl -H "Content-Type: application/xml"
+http://localhost:8080/v1/securityprofile  -u <var>sysAdminEmail:pWord</var> -d
  '&lt;SecurityProfile enabled="true" name="securityprofile"&gt;
   &lt;UserAccessControl enabled="true"&gt;
     &lt;SSOServer&gt;
@@ -73,97 +64,62 @@ http://localhost:8080/v1/securityprofile  -u <em><strong>sysAdminEmail:pWord</st
       &lt;ServerUrl&gt;http://35.197.37.220:9099&lt;/ServerUrl&gt;
   &lt;/SSOServer&gt;
  &lt;/UserAccessControl&gt;
-&lt;/SecurityProfile&gt;'
-</pre>
+&lt;/SecurityProfile&gt;'</pre>
 
   <p>After you disable Basic Auth, any Edge management API call that passes Basic Auth credentials
   returns the following error:</p>
-  <pre class="prettyprint">
-&lt;Error&gt;
+  <pre class="prettyprint">&lt;Error&gt;
     &lt;Code&gt;security.SecurityProfileBasicAuthDisabled&lt;/Code&gt;
     &lt;Message&gt;Basic Authentication scheme not allowed&lt;/Message&gt;
     &lt;Contexts/&gt;
-&lt;/Error&gt;
-</pre>
+&lt;/Error&gt;</pre>
 
   <h2 id="reenablebasicauth">Re-enable Basic Auth</h2>
 
   <p>If for any reason you have to re-enable Basic Auth, you must perform the following steps:</p>
 
-  <p><strong>Caution</strong>: As part of re-enabling Basic Auth, you have to temporarily disable
-  <strong>all</strong> authentication on Edge, including SAML.</p>
+  <aside class="caution"><strong>Caution</strong>: As part of re-enabling Basic Auth, you have to
+  temporarily disable <strong>all</strong> authentication on Edge, including SAML.</aside>
 
   <ol>
     <li>Log in to any Edge ZooKeeper node.</li>
 
-    <li>Run the following bash script to turn off all security:<br>
-      <strong>Caution</strong>: This step disables all authentication on Edge, including SAML.<br>
-      <br>
-      <span style="font-family:courier new,courier,monospace;">#! /bin/bash</span><br>
-
-      <div>
-        <span style=
-        "font-family:courier new,courier,monospace;">/opt/apigee/apigee-zookeeper/bin/zkCli.sh
-        -server localhost:2181 &lt;&lt;EOF</span>
-      </div>
-
-      <div>
-        <span style="font-family:courier new,courier,monospace;">set /system/securityprofile
-        &lt;SecurityProfile&gt;&lt;/SecurityProfile&gt;</span>
-      </div>
-
-      <div>
-        <span style="font-family:courier new,courier,monospace;">quit</span>
-      </div><span style="font-family:courier new,courier,monospace;">EOF </span><br>
-      <br>
-      You will see output in the form:<br>
-      <span style="font-family:courier new,courier,monospace;">Connecting to localhost:2181<br>
-      Welcome to ZooKeeper!<br>
-      JLine support is enabled<br>
-      WATCHER::</span><br>
-
-      <div>
-        <span style="font-family:courier new,courier,monospace;">WatchedEvent state:SyncConnected
-        type:None path:null</span>
-      </div>
-
-      <div>
-        <span style="font-family:courier new,courier,monospace;">[zk: localhost:2181(CONNECTED) 0]
-        set /system/securityprofile &lt;SecurityProfile&gt;&lt;/SecurityProfile&gt;</span>
-      </div>
-
-      <div>
-        <span style="font-family:courier new,courier,monospace;">cZxid = 0x89</span>
-      </div><span style="font-family:courier new,courier,monospace;">...<br>
-      [zk: localhost:2181(CONNECTED) 1] quit<br>
-      Quitting&#8230;</span>
+    <li>Run the following bash script to turn off all security:
+      <aside class="caution"><strong>Caution</strong>: This step disables all authentication on
+      Edge, including SAML.</aside>
+      <pre>#! /bin/bash
+/opt/apigee/apigee-zookeeper/bin/zkCli.sh -server localhost:2181 &lt;&lt;EOF
+set /system/securityprofile &lt;SecurityProfile&gt;&lt;/SecurityProfile&gt;
+quit
+EOF</pre>
+      <p>You will see output in the form:</p>
+      <pre>Connecting to localhost:2181
+Welcome to ZooKeeper!
+JLine support is enabled
+WATCHER::
+WatchedEvent state:SyncConnected
+type:None path:null
+[zk: localhost:2181(CONNECTED) 0]
+set /system/securityprofile &lt;SecurityProfile&gt;&lt;/SecurityProfile&gt;
+cZxid = 0x89
+...
+[zk: localhost:2181(CONNECTED) 1] quit
+Quitting...</pre>
     </li>
 
     <li>Re-enable Basic Auth and SAML authentication:<br>
 
-      <p><span style="font-family:courier new,courier,monospace;">&gt; curl -H "Content-Type:
-      application/xml"</span><br>
-      <span style=
-      "font-family: &quot;courier new&quot;, courier, monospace;">http://localhost:8080/v1/securityprofile
-       -u <em><strong>sysAdminEmail:pWord</strong></em> -d<br>
-      '&lt;SecurityProfile enabled="true" name="securityprofile"&gt;</span><br>
-      <span style="font-family: &quot;courier new&quot;, courier, monospace;"> 
-      &lt;UserAccessControl enabled="true"&gt;</span><br>
-      <span style="font-family: &quot;courier new&quot;, courier, monospace;">   
-      &lt;SSOServer&gt;</span><br>
-      <strong><span style="font-family: &quot;courier new&quot;, courier, monospace;">   
-        &lt;BasicAuthEnabled&gt;true&lt;/BasicAuthEnabled&gt;</span></strong><br>
-      <span style="font-family: &quot;courier new&quot;, courier, monospace;">     
-      &lt;PublicKeyEndPoint&gt;/token_key&lt;/PublicKeyEndPoint&gt;</span><br>
-      <span style="font-family: &quot;courier new&quot;, courier, monospace;">     
-      &lt;ServerUrl&gt;http://35.197.37.220:9099&lt;/ServerUrl&gt;</span><br>
-      <span style="font-family: &quot;courier new&quot;, courier, monospace;"> 
-      &lt;/SSOServer&gt;</span><br>
-      <span style=
-      "font-family: &quot;courier new&quot;, courier, monospace;"> &lt;/UserAccessControl&gt;</span><br>
-
-      <span style=
-      "font-family: &quot;courier new&quot;, courier, monospace;">&lt;/SecurityProfile&gt;'</span></p>You
-      can now use Basic Auth again.
+      <pre class="devsite-terminal">curl -H "Content-Type: application/xml" http://localhost:8080/v1/securityprofile
+  -u <var>sysAdminEmail:pWord</var> -d '&lt;SecurityProfile enabled="true" name="securityprofile"&gt;
+  &lt;UserAccessControl enabled="true"&gt;
+  &lt;SSOServer&gt;
+  &lt;BasicAuthEnabled&gt;true&lt;/BasicAuthEnabled&gt;
+  &lt;PublicKeyEndPoint&gt;/token_key&lt;/PublicKeyEndPoint&gt;
+  &lt;ServerUrl&gt;http://35.197.37.220:9099&lt;/ServerUrl&gt;
+  &lt;/SSOServer&gt;
+  &lt;/UserAccessControl&gt;
+  &lt;/SecurityProfile&gt;'</pre>
+      <p>You can now use Basic Auth again.</p>
     </li>
-  </ol>{% endblock %}
+  </ol>
+{% endblock %}

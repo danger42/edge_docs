@@ -1,5 +1,6 @@
-  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}Using SAML with automated
-  tasks{% endblock %} {% block body %}
+{% extends "private-cloud/v4.18.05/_base.html" %}
+{% block title %}Using SAML with automated tasks{% endblock %}
+{% block body %}
 
   <p>When using SAML with the Edge API, the process that you use to obtain OAuth2 access and
   refresh tokens from the SAML assertion is called the passcode flow. With the passcode flow, you
@@ -16,8 +17,8 @@
 
   <h2 id="createamachineuser">Create a machine user</h2>
 
-  <p>Use the <span style="font-family:courier new,courier,monospace;">apigee-ssoadminapi.sh</span>
-  utility to create a machine user. See <a href="using-apigee-ssoadminapish.html">Using
+  <p>Use the <code>apigee-ssoadminapi.sh</code>
+  utility to create a machine user. See <a href="using-apigee-ssoadminapish">Using
   apigee-ssoadminapi.sh</a> for more. You can create a single machine user used by all of your
   organizations, or create a separate machine user for each organization.</p>
 
@@ -31,41 +32,29 @@
   <p>To create a machine user:</p>
 
   <ol>
-    <li>Use the following <span style=
-    "font-family:courier new,courier,monospace;">apigee-ssoadminapi.sh</span> command to create the
-    machine user:<br>
-      <span style="font-family:courier new,courier,monospace;">&gt; apigee-ssoadminapi.sh saml
-      machineuser add --admin <strong><em>SSO_ADMIN_NAME</em></strong> --secret
-      <strong><em>SSO_ADMIN_SECRET</em></strong> --host
-      <strong><em>edge_sso_IP_or_DNS</em></strong> -u <strong><em>machine_user_email</em></strong>
-      -p <strong><em>machine_user_password</em></strong></span><br>
-      <br>
-      where:
-
+    <li>Use the following <code>apigee-ssoadminapi.sh</code> command to create the machine user:
+      <pre class="devsite-terminal">apigee-ssoadminapi.sh saml machineuser add --admin <var>SSO_ADMIN_NAME</var> \
+  --secret <var>SSO_ADMIN_SECRET</var> --host <var>edge_sso_IP_or_DNS</var> \
+  -u <var>machine_user_email</var> -p <var>machine_user_password</var></pre>
+      <p>Where:</p>
       <ul>
-        <li><strong><em>SSO_ADMIN_NAME</em></strong> is the admin username defined by the
-        <span style="font-family:courier new,courier,monospace;">SSO_ADMIN_NAME</span> property in
-        the configuration file used to configure the Edge SSO module. The default is <span style=
-        "font-family:courier new,courier,monospace;">ssoadmin</span>.</li>
-
-        <li><strong><em>SSO_ADMIN_SECRET</em></strong> is the admin password as specified by the
-        <span style="font-family:courier new,courier,monospace;">SSO_ADMIN_SECRET</span> property
-        in the config file.<br>
-        <br>
-        In this example, you can omit the values for <span style=
-        "font-family:courier new,courier,monospace;">--port</span> and <span style=
-        "font-family:courier new,courier,monospace;">--ssl</span> because the <span style=
-        "font-family:courier new,courier,monospace;">apigee-sso</span> module uses the default
-        values of 9099 for <span style="font-family:courier new,courier,monospace;">--port</span>
-        and http for <span style="font-family:courier new,courier,monospace;">--ssl</span>. If your
-        installation does not use these defaults, specify them as appropriate.</li>
+        <li><var>SSO_ADMIN_NAME</var> is the admin username defined by the
+          <code>SSO_ADMIN_NAME</code> property in
+          the configuration file used to configure the Edge SSO module. The default is
+          <code>ssoadmin</code>.</li>
+        <li><var>SSO_ADMIN_SECRET</var> is the admin password as specified by the
+          <code>SSO_ADMIN_SECRET</code> property in the config file.<br>
+        </li>
+        <p>In this example, you can omit the values for <code>--port</code> and
+        <code>--ssl</code> because the <code>apigee-sso</code> module uses the default
+        values of 9099 for <code>--port</code> and http for <code>--ssl</code>. If your
+        installation does not use these defaults, specify them as appropriate.</p>
       </ul>
     </li>
-
     <li>Log in to the Edge UI and add the machine user's email to your organizations, and assign
-    the machine user to the necessary role. See <a href=
-    "/api-platform/system-administration/adding-global-users.html">Adding global users</a> for
-    more.</li>
+      the machine user to the necessary role. See <a href=
+      "/api-platform/system-administration/adding-global-users">Adding global users</a> for
+      more.</li>
   </ol>
 
   <h2 id="obtainandrefreshmachineusertoken">Obtain and refresh machine user token</h2>
@@ -77,86 +66,68 @@
 
   <ol>
     <li>Use the following API call to generate the initial access and refresh tokens:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt; curl -H "Content-Type:
-    application/x-www-form-urlencoded;charset=utf-8" /<br>
-    -H "accept: application/json;charset=utf-8" /<br>
-    -H "Authorization: Basic ZWRnZWNsaTplZGdlY2xpc2VjcmV0" -X POST /<br>
-    http://<strong><em>edge_sso_IP_DNS</em></strong>:9099/oauth/token -s /<br>
-    -d
-    'grant_type=password&amp;username=<strong><em>m_user_email</em></strong>&amp;password=<strong><em>m_user_password</em></strong></span>
-    '<br>
-    <br>
-    For authorization, pass a reserved OAuth2 client credential in the <span style=
-    "font-family:courier new,courier,monospace;">Authorization</span> header. The call prints the
-    access and refresh tokens to the screen. Save the tokens for later use.</li>
-
+      <pre class="devsite-terminal">curl -H "Content-Type: application/x-www-form-urlencoded;charset=utf-8" \
+  -H "accept: application/json;charset=utf-8" \
+  -H "Authorization: Basic ZWRnZWNsaTplZGdlY2xpc2VjcmV0" -X POST \
+  http://<var>edge_sso_IP_DNS</var>:9099/oauth/token -s \
+  -d 'grant_type=password&amp;username=<var>m_user_email</var>&amp;password=<var>m_user_password</var>'</pre>
+      <p>For authorization, pass a reserved OAuth2 client credential in the
+      <code>Authorization</code> header. The call prints the access and refresh tokens to the screen.
+      Save the tokens for later use.</p>
+    </li>
     <li>Pass the access token to an Edge management API call as the Bearer header:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt; curl -H "Authorization: Bearer
-    <strong><em>access_token</em></strong>"
-    http://<strong><em>ms_IP_DNS</em></strong>:8080/v1/organizations/<strong><em>orgName</em></strong></span><br>
-
-    <br>
-    where <strong><em>orgName</em></strong> is the name of the organization containing the machine
-    user.</li>
-
+      <pre class="devsite-terminal">curl -H "Authorization: Bearer <var>access_token</var>" \
+  http://<var>ms_IP_DNS</var>:8080/v1/organizations/<var>orgName</var></pre>
+      <p>Where <var>orgName</var> is the name of the organization containing the machine user.</p>
+    </li>
     <li>To later refresh the access token, use the following call that includes the refresh
-    token:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt; curl -H
-    "Content-Type:application/x-www-form-urlencoded;charset=utf-8" /<br>
-    -H "Accept: application/json;charset=utf-8" /<br>
-    -H "Authorization: Basic ZWRnZWNsaTplZGdlY2xpc2VjcmV0" -X POST /<br>
-    http://<strong><em>edge_sso_IP_DNS</em></strong>:9099/oauth/token /<br>
-    -d
-    'grant_type=refresh_token&amp;refresh_token=<strong><em>refreshToken</em></strong>'</span><br>
-    <br>
-    For authorization, pass a reserved OAuth2 client credential in the <span style=
-    "font-family: &quot;courier new&quot;, courier, monospace;">Authorization</span> header.</li>
+      token:
+    <pre class="devsite-terminal">curl -H "Content-Type:application/x-www-form-urlencoded;charset=utf-8" \
+  -H "Accept: application/json;charset=utf-8" \
+  -H "Authorization: Basic ZWRnZWNsaTplZGdlY2xpc2VjcmV0" -X POST \
+  http://<var>edge_sso_IP_DNS</var>:9099/oauth/token \
+  -d 'grant_type=refresh_token&amp;refresh_token=<var>refreshToken</var>'</pre>
+      <p>For authorization, pass a reserved OAuth2 client credential in the
+      <code>Authorization</code> header.</p>
+    </li>
   </ol>
 
   <h2 id="createamachineuserbyusingtheedgemanagementapi">Create a machine user by using the Edge
   management API</h2>
 
   <p>You can create a machine user by using the Edge management API instead of using the
-  <span style="font-family:courier new,courier,monospace;">apigee-ssoadminapi.sh</span> utility. To
-  create a machine user:</p>
+  <code>apigee-ssoadminapi.sh</code> utility.</p>
+
+  <p>To create a machine user:</p>
 
   <ol>
-    <li>Use the following cURL command to obtain a token for the <span style=
-    "font-family:courier new,courier,monospace;">ssoadmin</span> user, the username of the admin
-    account for <span style="font-family:courier new,courier,monospace;">apigee-sso</span>:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt; curl
-    "http://<strong><em>edge_sso_IP_DNS</em></strong>:9099/oauth/token" -i -X POST /<br>
-    -H 'Accept: application/json' / -H 'Content-Type: application/x-www-form-urlencoded' /<br>
-    -d "response_type=token" -d "grant_type=client_credentials" /<br>
-    --data-urlencode "client_secret=<strong><em>SSO_ADMIN_SECRET</em></strong>" /<br>
-    --data-urlencode "client_id=ssoadmin"</span><br>
-    <br>
-    where <strong><em>SSO_ADMIN_SECRET</em></strong> is the admin password you set when you
-    installed <span style="font-family:courier new,courier,monospace;">apigee-sso</span> as
-    specified by the <span style=
-    "font-family:courier new,courier,monospace;">SSO_ADMIN_SECRET</span> property in the config
-    file.<br>
-    <br>
-    This command displays a token that you need to make the next call.</li>
-
-    <li>Use the following cURL command to create the machine user, passing the token that you
-    received in the previous step:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt; curl
-    "http://<strong><em>edge_sso_IP_DNS</em></strong>:9099/Users" -i -X POST /<br>
-    -H "Accept: application/json" -H "Content-Type: application/json" /<br>
-    -d '{"userName" : "<strong><em>machine_user_email</em></strong>", "name" :
-    {"formatted":"DevOps", "familyName" : "<strong><em>last_name</em></strong>", "givenName" :
-    "<strong><em>first_name</em></strong>"}, "emails" : [ {"value" :
-    "<strong><em>machine_user_email</em></strong>", "primary" : true } ], "active" : true,
-    "verified" : true, "password" : "<strong><em>machine_user_password</em></strong>" }' /<br>
-    -H "Authorization: Bearer <strong><em>token</em></strong>"</span><br>
-    <br>
-    You need the machine user password in later steps.</li>
-
+    <li>Use the following <code>curl</code> command to obtain a token for the <code>ssoadmin</code> user, the
+      username of the admin account for <code>apigee-sso</code>:
+      <pre class="devsite-terminal">curl "http://<var>edge_sso_IP_DNS</var>:9099/oauth/token" -i -X POST \
+  -H 'Accept: application/json' / -H 'Content-Type: application/x-www-form-urlencoded' \
+  -d "response_type=token" -d "grant_type=client_credentials" \
+  --data-urlencode "client_secret=<var>SSO_ADMIN_SECRET</var>" \
+  --data-urlencode "client_id=ssoadmin"</pre>
+      <p>Where <var>SSO_ADMIN_SECRET</var> is the admin password you set when you installed
+      <code>apigee-sso</code> as specified by the <code>SSO_ADMIN_SECRET</code> property in the
+      config file.</p>
+      <p>This command displays a token that you need to make the next call.</p>
+    </li>
+    <li>Use the following <code>curl</code> command to create the machine user, passing the token that you
+      received in the previous step:
+      <pre class="devsite-terminal">curl "http://<strong><em>edge_sso_IP_DNS</em></strong>:9099/Users" -i -X POST \
+  -H "Accept: application/json" -H "Content-Type: application/json" \
+  -d '{"userName" : "<var>machine_user_email</var>", "name" :
+    {"formatted":"DevOps", "familyName" : "<var>last_name</var>", "givenName" :
+    "<var>first_name</var>"}, "emails" : [ {"value" :
+    "<var>machine_user_email</var>", "primary" : true } ], "active" : true,
+    "verified" : true, "password" : "<var>machine_user_password</var>" }' \
+  -H "Authorization: Bearer <var>token</var>"</pre>
+      <p>You need the machine user password in later steps.</p>
+    </li>
     <li>Log in to the Edge UI and add the machine user's email to your organizations, and assign
-    the machine user to the necessary role. See <a href=
-    "/api-platform/system-administration/adding-global-users.html">Adding global users</a> for
-    more.</li>
+      the machine user to the necessary role. See <a href=
+      "/api-platform/system-administration/adding-global-users">Adding global users</a> for more.</li>
   </ol>
 
-  <h2 id=""> </h2>{% endblock %}
+{% endblock %}

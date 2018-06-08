@@ -1,113 +1,93 @@
-  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}Managing Users, Roles, and
-  Permissions{% endblock %} {% block body %}
+{% extends "private-cloud/v4.18.05/_base.html" %}
+{% block title %}Managing users, roles, and permissions{% endblock %}
+{% block body %}
 
   <p>The Apigee documentation site has extensive information on managing user roles and
   permissions. Users can be managed using both the Edge UI and the Management API; roles and
-  permissions can be managed only with the Management API. </p>
+  permissions can be managed only with the Management API.</p>
 
   <p>For information on users and creating users, see:</p>
-
   <ul>
-    <li><a href="/api-platform/system-administration/about-global-users.html">About global
-    users</a></li>
-
-    <li><a href="/api-platform/system-administration/adding-global-users.html">Creating global
-    users</a></li>
+    <li><a href="/api-platform/system-administration/about-global-users">About global
+      users</a></li>
+    <li><a href="/api-platform/system-administration/adding-global-users">Creating global
+      users</a></li>
   </ul>
 
   <p>Many of the operations that you perform to manage users requires system administrator
   privileges. In a Cloud based installation of Edge, Apigee functions in the role of system
   administrator. In an Edge for the Private Cloud installation, your system administrator must
-  perform these tasks as described below. </p>
+  perform these tasks as described below.</p>
 
   <h2 id="addingauser">Adding a user</h2>
 
   <p>You can create a user either by using the Edge API, the Edge UI, or Edge commands. This
   section describes how to use Edge API and Edge commands. For information on creating users in the
-  Edge UI, see <a href="/api-platform/system-administration/adding-global-users.html">Creating
+  Edge UI, see <a href="/api-platform/system-administration/adding-global-users">Creating
   global users</a>.</p>
 
   <p>After you create the user in an organization, you must assign a role to the user. Roles
-  determine the access rights of the user on Edge. </p>
+  determine the access rights of the user on Edge.</p>
 
-  <aside class="note"><b>Note:</b> The user cannot log in to the Edge UI, and does not appear in
+  <aside class="note"><strong>Note:</strong> The user cannot log in to the Edge UI, and does not appear in
   the list of users in the Edge UI, until you assign it to a role in an organization. </aside>
 
   <p>Use the following command to create a user with the Edge API:</p>
-  <pre class="prettyprint">
-curl -H "Content-Type:application/xml" -u &lt;sysAdminEmail&gt;:&lt;passwd&gt; \
--X POST http://&lt;ms_IP&gt;:8080/v1/users \
--d '&lt;User&gt; \
-   &lt;FirstName&gt;New&lt;/FirstName&gt; \
-   &lt;LastName&gt;User&lt;/LastName&gt; \
-   &lt;Password&gt;newUserPWord&lt;/Password&gt; \
-   &lt;EmailId&gt;foo@bar.com&lt;/EmailId&gt; \
-&lt;/User&gt;'
-</pre>
+  <pre class="devsite-terminal">curl -H "Content-Type:application/xml" \
+  -u <var>SYS_ADMIN_EMAIL</var>:<var>SYS_ADMIN_PASSWORD</var> -X POST http://<var>ms_IP</var>:8080/v1/users \
+  -d '&lt;User&gt; \
+    &lt;FirstName&gt;New&lt;/FirstName&gt; \
+    &lt;LastName&gt;User&lt;/LastName&gt; \
+    &lt;Password&gt;<var>NEW_USER_PASSWORD</var>&lt;/Password&gt; \
+    &lt;EmailId&gt;foo@bar.com&lt;/EmailId&gt; \
+  &lt;/User&gt;'</pre>
 
   <p>Or use the following Edge command to create a user:</p>
-  <pre class="prettyprint">
-&gt; /opt/apigee/apigee-service/bin/apigee-service apigee-provision create-user -f <em><strong>configFile</strong></em>
-</pre>
+  <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-provision create-user -f <var>configFile</var></pre>
 
-  <p>Where the <em><strong>configFile</strong></em> contain the information necessary to create the
-  user:</p>
-  <pre class="prettyprint">
-APIGEE_ADMINPW=sysAdminPW    # If omitted, you will be prompted.
+  <p>Where the <var>configFile</var> creates the user, as the following example shows:</p>
+  <pre class="prettyprint">APIGEE_ADMINPW=<var>SYS_ADMIN_PASSWORD</var>    # If omitted, you will be prompted.
 USER_NAME=foo@bar.com
 FIRST_NAME=New
 LAST_NAME=User
-USER_PWD="newUserPWord"
-ORG_NAME=myorg  
-</pre>
+USER_PWD="<var>NEW_USER_PASSWORD</var>"
+ORG_NAME=myorg</pre>
 
   <p>You can then use this call to view information about the user:</p>
-  <pre class="prettyprint">
-curl -u &lt;sysAdminEmail&gt;:&lt;passwd&gt; http://&lt;ms_IP&gt;:8080/v1/users/foo@bar.com
-</pre>
+  <pre class="devsite-terminal">curl -u <var>SYS_ADMIN_EMAIL</var>:<var>SYS_ADMIN_PASSWORD</var> http://<var>ms_IP</var>:8080/v1/users/foo@bar.com</pre>
 
   <h2 id="assigningtheusertoaroleinanorganization">Assigning the user to a role in an
   organization</h2>
 
   <p>Before a new user can do anything, they have to be assigned to a role in an organization. You
-  can assign the user to different roles, including: <span style=
-  "font-family:courier new,courier,monospace;">orgadmin</span>, <span style=
-  "font-family:courier new,courier,monospace;">businessuser</span>, <span style=
-  "font-family:courier new,courier,monospace;">opsadmin</span>, <span style=
-  "font-family:courier new,courier,monospace;">user</span>, or to a custom role defined in the
-  organization. </p>
+  can assign the user to different roles, including: <code>orgadmin</code>, <code>businessuser</code>,
+  <code>opsadmin</code>, <code>user</code>, or to a custom role defined in the organization.</p>
 
   <p>Assigning a user to a role in an organization automatically adds that user to the
   organization. Assign a user to multiple organizations by assigning them to a role in each
   organization.</p>
 
   <p>Use the following command to assign the user to a role in an organization:</p>
-  <pre class="prettyprint">
-curl -X POST -H "Content-Type:application/x-www-form-urlencoded" /
-http://&lt;ms_IP&gt;:8080/v1/o/&lt;org_name&gt;/userroles/&lt;role&gt;/users?id=foo@bar.com /
--u &lt;sysAdminEmail&gt;:&lt;passwd&gt; 
-</pre>
+
+  <pre class="devsite-terminal">curl -X POST -H "Content-Type:application/x-www-form-urlencoded" \
+  http://<var>ms_IP</var>:8080/v1/o/<var>org_name</var>/userroles/<var>role</var>/users?id=foo@bar.com \
+  -u <var>SYS_ADMIN_EMAIL</var>:<var>SYS_ADMIN_PASSWORD</var></pre>
 
   <p>This call displays all the roles assigned to the user. If you want to add the user, but
   display only the new role, use the following call:</p>
-  <pre class="prettyprint">
-curl -X POST -H "Content-Type: application/xml" /
-http://&lt;ms_IP&gt;:8080/v1/o/&lt;org_name&gt;/users/foo@bar.com/userroles /
--d '&lt;Roles&gt;&lt;Role name="<em><strong>role</strong></em>"/&gt;&lt;/Roles&gt;' /
--u &lt;sysAdminEmail&gt;:&lt;passwd&gt;
-</pre>
+
+  <pre class="devsite-terminal">curl -X POST -H "Content-Type: application/xml" \
+  http://<var>ms_IP</var>:8080/v1/o/<var>org_name</var>/users/foo@bar.com/userroles \
+  -d '&lt;Roles&gt;&lt;Role name="<var>role</var>"/&gt;&lt;Roles&gt;' \
+  -u <var>SYS_ADMIN_EMAIL</var>:<var>SYS_ADMIN_PASSWORD</var></pre>
 
   <p>You can view the user's roles by using the following command:</p>
-  <pre class="prettyprint">
-curl -u &lt;sysAdminEmail&gt;:&lt;passwd&gt; /
-http://&lt;ms_IP&gt;:8080/v1/users/foo@bar.com/userroles
-</pre>
+  <pre class="devsite-terminal">curl -u <var>SYS_ADMIN_EMAIL</var>:<var>SYS_ADMIN_PASSWORD</var> http://<var>ms_IP</var>:8080/v1/users/foo@bar.com/userroles</pre>
 
   <p>To remove a user from an organization, remove all roles in that organization from the user.
   Use the following command to remove a role from a user:</p>
-  <pre class="prettyprint">
-curl -X DELETE -u &lt;sysAdminEmail&gt;:&lt;passwd&gt; http://&lt;ms_IP&gt;:8080/v1/o/&lt;org_name&gt;/userroles/&lt;role&gt;/users/foo@bar.com
-</pre>
+  <pre class="devsite-terminal">curl -X DELETE -u <var>SYS_ADMIN_EMAIL</var>:<var>SYS_ADMIN_PASSWORD</var> \
+  http://<var>ms_IP</var>:8080/v1/o/<var>org_name</var>/userroles/<var>role</var>/users/foo@bar.com</pre>
 
   <h2 id="addingasystemadministrator">Adding a system administrator</h2>
 
@@ -115,76 +95,56 @@ curl -X DELETE -u &lt;sysAdminEmail&gt;:&lt;passwd&gt; http://&lt;ms_IP&gt;:8080
 
   <ul>
     <li>Create orgs</li>
-
     <li>Add Routers, Message Processors, and other components to an Edge installation</li>
-
     <li>Configure TLS/SSL</li>
-
     <li>Create additional system administrators</li>
-
     <li>Perform all Edge administrative tasks</li>
   </ul>
 
   <p>While only a single user is the default user for administrative tasks, there can be more than
-  one system administrator. Any user who is a member of the <span style=
-  "font-family:courier new,courier,monospace;">sysadmin</span> role has full permissions to all
-  resources.</p>
+  one system administrator. Any user who is a member of the "sysadmin" role has full
+  permissions to all resources.</p>
 
-  <aside class="note"><b>Note:</b> The <span style=
-  "font-family:courier new,courier,monospace;">sysadmin</span> role is unique in that a user
-  assigned to that role does not have to be part of an organization.  However, you typically
+  <aside class="note"><strong>Note:</strong> The "sysadmin" role is unique in that a user
+  assigned to that role does not have to be part of an organization. However, you typically
   assign it to an organization, otherwise that user cannot log in to the Edge UI.</aside>
 
   <p>You can create the user for the system administrator in either the Edge UI or API. However,
-  you must use the Edge API to assign the user to the role of <span style=
-  "font-family:courier new,courier,monospace;">sysadmin</span>. Assigning a user to the
-  <span style="font-family:courier new,courier,monospace;">sysadmin</span> role cannot be done in
-  the Edge UI.</p>
+  you must use the Edge API to assign the user to the role of "sysadmin". Assigning a
+  user to the "sysadmin" role cannot be done in the Edge UI.</p>
 
   <p>To add a system administrator:</p>
 
   <ol>
     <li>Create a user in the Edge UI or API.</li>
-
-    <li>Add user to <span style="font-family:courier new,courier,monospace;">sysadmin</span>
-    role:<br>
-    <span style="font-family:courier new,courier,monospace;">curl -u
-    &lt;sysAdminEmail&gt;:&lt;passwd&gt; \<br>
-    -X POST http://&lt;ms_IP&gt;:8080/v1/userroles/sysadmin/users \<br>
-    -d 'id=foo@bar.com'</span></li>
-
-    <li>Make sure new user is in sysadmin role:<br>
-    <span style="font-family:courier new,courier,monospace;">curl -u
-    &lt;sysAdminEmail&gt;:&lt;passwd&gt;
-    http://&lt;ms_IP&gt;:8080/v1/userroles/sysadmin/users</span><br>
-    <br>
-    Returns the user's email address:<br>
-    <span style="font-family:courier new,courier,monospace;">[ " foo@bar.com " ]</span></li>
-
-    <li>Check permissions of new user:<br>
-    <span style="font-family:courier new,courier,monospace;">curl -u
-    &lt;sysAdminEmail&gt;:&lt;passwd&gt;
-    http://&lt;ms_IP&gt;:8080/v1/users/foo@bar.com/permissions<br>
-    <br>
-    <span style="font-family:arial,helvetica,sans-serif;">Returns:</span><br>
-    {<br>
-      "resourcePermission" : [ {<br>
-      "path" : "/",<br>
-        "permissions" : [ "get", "put", "delete" ]<br>
-      } ]<br>
-    }</span></li>
-
+    <li>Add user to the "sysadmin" role:
+      <pre class="devsite-terminal">curl -u <var>SYS_ADMIN_EMAIL</var>:<var>SYS_ADMIN_PASSWORD</var> \
+  -X POST http://<var>ms_IP</var>:8080/v1/userroles/sysadmin/users -d 'id=foo@bar.com'</pre>
+    </li>
+    <li>Ensure that the new user is in the "sysadmin" role:
+      <pre class="devsite-terminal">curl -u <var>SYS_ADMIN_EMAIL</var>:<var>SYS_ADMIN_PASSWORD</var> http://<var>ms_IP</var>:8080/v1/userroles/sysadmin/users</pre>
+      <p>Returns the user's email address:</p>
+      <pre>[ " foo@bar.com " ]</pre>
+    </li>
+    <li>Check permissions of new user:
+      <pre class="devsite-terminal">curl -u <var>SYS_ADMIN_EMAIL</var>:<var>SYS_ADMIN_PASSWORD</var> http://<var>ms_IP</var>:8080/v1/users/foo@bar.com/permissions</pre>
+      <p>Returns:</p>
+      <pre class="prettyprint">{
+  "resourcePermission" : [ {
+  "path" : "/",
+    "permissions" : [ "get", "put", "delete" ]
+  } ]
+}</pre>
+    </li>
     <li>After you add the new system administrator, you can add the user to any orgs. <br>
-    <strong>Note</strong>: The new system administrator user cannot log in to the Edge UI until you
-    add the user to at least one org.</li>
-
+      <aside class="note"><strong>Note</strong>: The new system administrator user cannot log in to
+      the Edge UI until you add the user to at least one org.</aside></li>
     <li>If you later want to remove the user from the system administrator role, you can use the
-    following API:<br>
-    <span style="font-family:courier new,courier,monospace;">curl -X DELETE -u
-    &lt;sysadminEmail:pword&gt; <br>
-    http://&lt;ms_IP&gt;:8080/v1/userroles/sysadmin/users/foo@bar.com</span><br>
-    <br>
-    Note that this call only removes the user from the role, it does not delete the user.</li>
+      following API:
+      <pre class="devsite-terminal">curl -X DELETE -u <var>SYS_ADMIN_EMAIL:SYS_ADMIN_PASSWORD</var> \
+  http://<var>ms_IP</var>:8080/v1/userroles/sysadmin/users/foo@bar.com</pre>
+      <p>Note that this call only removes the user from the role, it does not delete the user.</p>
+    </li>
   </ol>
 
   <h2 id="changingthedefaultsystemadministratoruser">Changing the default system administrator
@@ -200,56 +160,41 @@ curl -X DELETE -u &lt;sysAdminEmail&gt;:&lt;passwd&gt; http://&lt;ms_IP&gt;:8080
 
   <p>To see the list of users currently configured as system administrators, use the following API
   call:</p>
-  <pre class="prettyprint">
-curl -u <em><strong>sysAdminEmail:passwd</strong></em> http://&lt;ms_IP&gt;:8080/v1/userroles/sysadmin/users
-</pre>
+  <pre class="devsite-terminal">curl -u <var>SYS_ADMIN_EMAIL</var>:<var>SYS_ADMIN_PASSWORD</var> http://<var>ms_IP</var>:8080/v1/userroles/sysadmin/users</pre>
 
-  <p>To determine the current default system administrator, view the <span style=
-  "font-family:courier new,courier,monospace;">/opt/apigee/customer/defaults.sh</span> file. The
-  file contains the following line showing the email address of the current default system
-  administrator:</p>
-  <pre class="prettyprint">
-ADMIN_EMAIL=foo@bar.com
-</pre>
+  <p>To determine the current default system administrator, view the
+  <code>/opt/apigee/customer/defaults.sh</code> file. The file contains the following line showing
+  the email address of the current default system administrator:</p>
+
+  <pre class="prettyprint">ADMIN_EMAIL=foo@bar.com</pre>
 
   <p>To change the default system administrator to be a different user:</p>
 
-  <aside class="note"><b>Note:</b> As part of changing the default system administrator, you have
-  to update the Edge UI.</aside>
+  <aside class="note"><strong>Note:</strong> As part of changing the default system administrator,
+  you have to update the Edge UI.</aside>
 
   <ol>
     <li>Create a new system administrator as described above, or ensure that the user account of
-    the new system administrator is already configured as a system administrator.</li>
-
-    <li>Edit <span style=
-    "font-family:courier new,courier,monospace;">/opt/apigee/customer/defaults.sh</span> to
-    set <span style="font-family:courier new,courier,monospace;">ADMIN_EMAIL</span> to the
-    email address of the new system administrator. </li>
-
+      the new system administrator is already configured as a system administrator.</li>
+    <li>Edit <code>/opt/apigee/customer/defaults.sh</code> to
+      set <code>ADMIN_EMAIL</code> to the email address of the new system administrator.</li>
     <li>Edit the silent config file that you used to install the Edge UI to set the following
-    properties:<br>
-    <span style=
-    "font-family:courier new,courier,monospace;">ADMIN_EMAIL=<em><strong>emailAddressOfNewSysAdmin</strong></em><br>
-
-    APIGEE_ADMINPW=<em><strong>pwOfNewSysAdmin</strong></em></span><br>
-    <span style=
-    "font-family: &quot;courier new&quot;, courier, monospace;">SMTPHOST=smtp.gmail.com</span><br>
-    <span style="font-family: &quot;courier new&quot;, courier, monospace;">SMTPPORT=465</span><br>
-    <span style=
-    "font-family: &quot;courier new&quot;, courier, monospace;">SMTPUSER=foo@gmail.com</span><br>
-    <span style=
-    "font-family: &quot;courier new&quot;, courier, monospace;">SMTPPASSWORD=bar</span><br>
-    <span style="font-family: &quot;courier new&quot;, courier, monospace;">SMTPSSL=y</span><br>
-    Note that you have to include the SMTP properties because all properties on the UI are
-    reset.</li>
-
-    <li>Reconfigure the Edge UI:<br>
-    <span style=
-    "font-family:courier new,courier,monospace;">&gt; /opt/apigee/apigee-service/bin/apigee-service
-    edge-ui stop<br>
-    &gt; /opt/apigee/apigee-service/bin/apigee-service edge-ui setup -f
-    <em><strong>configFile</strong></em><br>
-    &gt; /opt/apigee/apigee-service/bin/apigee-service edge-ui start</span></li>
+      properties:
+      <pre>ADMIN_EMAIL=<var>NEW_SYS_ADMIN_EMAIL</var>
+APIGEE_ADMINPW=<var>NEW_SYS_ADMIN_PASSWORD</var>
+SMTPHOST=smtp.gmail.com
+SMTPPORT=465
+SMTPUSER=foo@gmail.com
+SMTPPASSWORD=bar
+SMTPSSL=y</pre>
+      <p>Note that you must include the SMTP properties because all properties on the UI are
+      reset.</p>
+    </li>
+    <li>Reconfigure the Edge UI:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-ui stop
+<code class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-ui setup -f <var>configFile</var></code>
+<code class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-ui start</code></pre>
+    </li>
   </ol>
 
   <p>If you just want to change the email address of the user account for the current default
@@ -258,17 +203,13 @@ ADMIN_EMAIL=foo@bar.com
 
   <ol>
     <li>Update the user account of the current default system administrator user with a new email
-    address:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt; curl -H
-    content-type:application/json -X PUT /<br>
-    -u <em><strong>currentSysAdminEmail:passwd</strong></em> /<br>
-    http://&lt;ms_IP&gt;:8080/v1/users/<em><strong>currentSysAdminEmail</strong></em> /<br>
-    -d '{"emailId": "<em><strong>newSysAdminEmail</strong></em>", "lastName": "admin", "firstName":
-    "admin"}'</span></li>
-
-    <li>Repeat steps 2, 3. and 4 from the previous procedure to update the <span style=
-    "font-family: &quot;courier new&quot;, courier, monospace;">/opt/apigee/customer/defaults.sh</span> file
-    and to update the Edge UI. </li>
+      address:
+      <pre class="devsite-terminal">curl -H content-type:application/json -X PUT -u <var>CURRENT_SYS_ADMIN_EMAIL:SYS_ADMIN_PASSWORD</var> \
+  http://<var>ms_IP</var>:8080/v1/users/<var>CURRENT_SYS_ADMIN_EMAIL</var> \
+  -d '{"emailId": "<var>NEW_SYS_ADMIN_EMAIL</var>", "lastName": "admin", "firstName": "admin"}'</pre>
+    </li>
+    <li>Repeat steps 2, 3. and 4 from the previous procedure to update the
+      <code>/opt/apigee/customer/defaults.sh</code> file and to update the Edge UI.</li>
   </ol>
 
   <h2 id="specifyingtheemaildomainofasystemadministrator">Specifying the email domain of a system
@@ -276,37 +217,28 @@ ADMIN_EMAIL=foo@bar.com
 
   <p>As an extra level of security, you can specify the required email domain of an Edge system
   administrator. When adding a system administrator, if the user's email address is not in the
-  specified domain, then adding the user to the <span style=
-  "font-family:courier new,courier,monospace;">sysadmin</span> role fails.</p>
+  specified domain, then adding the user to the "sysadmin" role fails.</p>
 
   <p>By default, the required domain is empty, meaning you can add any email address to the
-  <span style="font-family:courier new,courier,monospace;">sysadmin</span> role.</p>
+  "sysadmin" role.</p>
 
   <p>To set the email domain:</p>
 
   <ol>
-    <li>Open in an editor <span style=
-    "font-family:courier new,courier,monospace;">management-server.properties</span>:<br>
-    <span style="font-family:courier new,courier,monospace;">vi
-    /opt/apigee/customer/application/management-server.properties</span><br>
-    <br>
-    If this file does not exist, create it.</li>
-
-    <li>Set the <span style=
-    "font-family:courier new,courier,monospace;">conf_security_rbac.global.roles.allowed.domains</span>
-    property to the comma-separated list of allowed domains. For example:<br>
-    <span style=
-    "font-family:courier new,courier,monospace;">conf_security_rbac.global.roles.allowed.domains=myCo.com,yourCo.com</span></li>
-
+    <li>Open the <code>management-server.properties</code> file in an editor:
+      <pre class="devsite-terminal">vi /opt/apigee/customer/application/management-server.properties</pre>
+      <p>If this file does not exist, create it.</p>
+    </li>
+    <li>Set the <code>conf_security_rbac.global.roles.allowed.domains</code>
+      property to the comma-separated list of allowed domains. For example:
+      <pre class="prettyprint">conf_security_rbac.global.roles.allowed.domains=myCo.com,yourCo.com</pre>
+    </li>
     <li>Save your changes.</li>
-
-    <li>Restart the Edge Management Server:<br>
-    <span style=
-    "font-family:courier new,courier,monospace;">/opt/apigee/apigee-service/bin/apigee-service
-    edge-management-server restart</span><br>
-    <br>
-    If you now attempt to add a user to the sysadmin role, and the email address of the user is not
-    in one of the specified domains, the add fails.</li>
+    <li>Restart the Edge Management Server:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-management-server restart</pre>
+      <p>If you now attempt to add a user to the "sysadmin" role, and the email address of the user
+      is not in one of the specified domains, the add fails.</p>
+    </li>
   </ol>
 
   <h2 id="deletingauser">Deleting a user</h2>
@@ -314,12 +246,11 @@ ADMIN_EMAIL=foo@bar.com
   <p>You can create a user either by using the Edge API or the Edge UI. However, you can only
   delete a user by using the API.</p>
 
-  <p>To see the list of current users, including email address, use the following cURL command:</p>
-  <pre class="prettyprint">
-curl -u &lt;sysAdminEmail&gt;:&lt;passwd&gt; http://&lt;ms-IP&gt;:8080/v1/users
-</pre>
+  <p>To see the list of current users, including email address, use the following
+  <code>curl</code> command:</p>
+  <pre class="devsite-terminal">curl -u <var>SYS_ADMIN_EMAIL</var>:<var>SYS_ADMIN_PASSWORD</var> http://<var>ms-IP</var>:8080/v1/users</pre>
 
-  <p>Use the following cURL command to delete a user:</p>
-  <pre class="prettyprint">
-curl -u &lt;sysAdminEmail&gt;:&lt;passwd&gt; -X DELETE http://&lt;ms-IP&gt;:8080/v1/users/&lt;userEmail&gt; 
-</pre>{% endblock %}
+  <p>Use the following <code>curl</code> command to delete a user:</p>
+  <pre class="devsite-terminal">curl -u <var>SYS_ADMIN_EMAIL</var>:<var>SYS_ADMIN_PASSWORD</var> -X DELETE http://<var>ms_IP</var>:8080/v1/users/<var>USER_EMAIL</var></pre>
+
+{% endblock %}

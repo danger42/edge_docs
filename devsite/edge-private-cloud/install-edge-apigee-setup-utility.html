@@ -1,5 +1,6 @@
-  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}Install the Edge apigee-setup
-  utility{% endblock %} {% block body %}
+{% extends "private-cloud/v4.18.05/_base.html" %}
+{% block title %}Install the Edge apigee-setup utility{% endblock %}
+{% block body %}
 
   <p>To install Edge on a node, you first install the Edge apigee-setup utility. If you are in an
   environment where your nodes do not have an external internet connection, you must also install a
@@ -7,96 +8,77 @@
 
   <h2 id="defaultinstallationdirectoryoptapigee">Default installation directory: /opt/apigee</h2>
 
-  <p>Edge installs all files in the <span style=
-  "font-family:courier new,courier,monospace;">/opt/apigee</span> directory. You cannot change this
-  directory. However, if desired, you can create a symlink to map <span style=
-  "font-family:courier new,courier,monospace;">/opt/apigee</span> to another location. See <a href=
-  "installation-requirements.html">Installation Requirements</a> for more information.</p>
+  <p>Edge installs all files in the <code>/opt/apigee</code> directory. You cannot change this
+  directory. However, if desired, you can create a symlink to map <code>/opt/apigee</code> to
+  another location. See <a href="installation-requirements">Installation Requirements</a> for more information.</p>
 
   <h2 id="prerequisitedisableselinux">Prerequisite: Disable SELinux</h2>
 
   <p>You must disable SELinux, or set it to permissive mode, before you can install  Edge
-  <span style="font-family:courier new,courier,monospace;">apigee-setup</span> utility or any Edge
+  <code>apigee-setup</code> utility or any Edge
   components. If necessary, after installing Edge, you can re-enable SELinux.</p>
 
   <ul>
-    <li>To <strong>temporarily</strong> set SELinux to permissive mode, execute the following
+    <li>To <em>temporarily</em> set SELinux to permissive mode, execute the following
     command:
-
       <ol>
-        <li><strong>On a Linux 6.x operating system</strong>:<br>
-        <span style="font-family:courier new,courier,monospace;">sudo echo 0 &gt;
-        /selinux/enforce</span><br>
-        <br>
-        To re-enable SELinux after installing Edge:<br>
-        <span style="font-family:courier new,courier,monospace;">sudo echo 1 &gt;
-        /selinux/enforce</span></li>
-
-        <li><strong>On a Linux 7.x operating system</strong>:<br>
-        <span style="font-family:courier new,courier,monospace;">sudo setenforce 0 </span><br>
-        <br>
-        To re-enable SELinux after installing Edge:<br>
-        <span style="font-family:courier new,courier,monospace;">sudo setenforce 1 </span></li>
+        <li><strong>On a Linux 6.x operating system</strong>:
+          <pre class="devsite-terminal">sudo echo 0 &gt; /selinux/enforce</pre>
+          <p>To re-enable SELinux after installing Edge:</p>
+          <pre class="devsite-terminal">sudo echo 1 &gt; /selinux/enforce</pre>
+        </li>
+        <li><strong>On a Linux 7.x operating system</strong>:
+          <pre class="devsite-terminal">sudo setenforce 0</pre>
+          <p>To re-enable SELinux after installing Edge:</p>
+          <pre class="devsite-terminal">sudo setenforce 1</pre>
+        </li>
       </ol>
     </li>
 
     <li>To <strong>permanently</strong> disable SELinux or set it to permissive mode:
-
       <ol>
-        <li>Open <span style=
-        "font-family:courier new,courier,monospace;">/etc/sysconfig/selinux</span> in an
-        editor.</li>
-
-        <li>Set <span style="font-family:courier new,courier,monospace;">SELINUX=disabled</span> or
-        <span style="font-family:courier new,courier,monospace;">SELINUX=permissive</span></li>
-
+        <li>Open <code>/etc/sysconfig/selinux</code> in an editor.</li>
+        <li>Set <code>SELINUX=disabled</code> or <code>SELINUX=permissive</code></li>
         <li>Save your edits.</li>
-
         <li>Restart the node.</li>
-
         <li>If necessary, re-enable SELinux after Edge installation by repeating this procedure to
-        set <span style="font-family:courier new,courier,monospace;">SELINUX=enabled</span>.</li>
+          set <code>SELINUX=enabled</code>.</li>
       </ol>
     </li>
   </ul>
 
   <h2 id="prerequisiteenableepelrepo">Prerequisite: Enable EPEL repo</h2>
 
-  <p>You must enable <a href="https://fedoraproject.org/wiki/EPEL">Extra Packages for
+  <p>You must enable <a href="https://fedoraproject.org/wiki/EPEL" class="external">Extra Packages for
   Enterprise Linux (or EPEL)</a> to install or update Edge, or to create a local repo. The
   command you use depends on your version of RedHat/CentOS:</p>
 
   <ul>
-    <li>For RedHat/CentOS/Oracle 7.x:?<br>
-    <span style="font-family:courier new,courier,monospace;">&gt; wget
-    https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm; sudo rpm -ivh
-    epel-release-latest-7.noarch.rpm</span></li>
-
-    <li>For RedHat/CentOS/Oracle 6.x:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt; wget
-    https://dl.fedoraproject.org/pub/epel/epel-release-latest-6.noarch.rpm; sudo rpm -ivh
-    epel-release-latest-6.noarch.rpm</span></li>
+    <li>For RedHat/CentOS/Oracle 7.x:
+      <pre class="devsite-terminal">wget https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+<code class="devsite-terminal">sudo rpm -ivh epel-release-latest-7.noarch.rpm</code></pre>
+    </li>
+    <li>For RedHat/CentOS/Oracle 6.x:
+      <pre class="devsite-terminal">wget https://dl.fedoraproject.org/pub/epel/epel-release-latest-6.noarch.rpm
+<code class="devsite-terminal">sudo rpm -ivh epel-release-latest-6.noarch.rpm</code></pre>
+    </li>
   </ul>
 
   <h2 id="prerequisitechecklibdb4libraryversiononredhat74andcentos74">Prerequisite: Check libdb4
   library version on RedHat 7.4 and CentOS 7.4</h2>
 
-  <p>On RedHat 7.4 and CentOS 7.4, check the version of the <span style=
-  "font-family:courier new,courier,monospace;">libdb4</span> RPMs before you install. Edge
+  <p>On RedHat 7.4 and CentOS 7.4, check the version of the <code>libdb4</code> RPMs before you install. Edge
   requires version 4.8 and some versions of RedHat 7.4 and CentOS 7.4 ship with a
   later version. If you have a later version, uninstall it and the Edge installer will
   then install version 4.8.</p>
 
   <p>You can use the following command to check your version:</p>
-  <pre class="prettyprint">
-&gt; rpm -qa | grep libdb4
-</pre>
+  <pre class="devsite-terminal">rpm -qa | grep libdb4</pre>
 
-  <p>If you see that the <span style=
-  "font-family:courier new,courier,monospace;">libdb4</span> RPM version is later than version
-  4.8, uninstall it.</p>
+  <p>If you see that the <code>libdb4</code> RPM version is later than version 4.8, uninstall
+  it.</p>
 
-  <h2 id="installedgeapigeesetuputilityonanodewithanexternalinternetconnection">Install Edge
+  <h2 id="internet-node">Install Edge
   apigee-setup utility on a node with an external internet connection</h2>
 
   <p>To install Edge on a node with an external Internet connection:</p>
@@ -105,72 +87,52 @@
     <li>Obtain the username and password from Apigee that you use to access the Apigee repository.
     If you have an existing username:password for the Apigee ftp site, you can use those
     credentials.</li>
-
     <li>Log in to your node as root to install the Edge RPMs<br>
-    <strong>Note</strong>: While RPM installation requires root access, you can perform Edge
-    configuration without root access.</li>
-
-    <li>Install <span style="font-family:courier new,courier,monospace;">yum-utils</span> and
-    <span style="font-family:courier new,courier,monospace;">yum-plugin-priorities</span>:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt; sudo yum install yum-utils<br>
-    &gt; sudo yum install yum-plugin-priorities</span></li>
-
+      <aside class="note"><strong>Note</strong>: While RPM installation requires root access, you can
+      perform Edge configuration without root access.</aside>
+    </li>
+    <li>Install <code>yum-utils</code> and <code>yum-plugin-priorities</code>:
+      <pre class="devsite-terminal">sudo yum install yum-utils
+<code class="devsite-terminal">sudo yum install yum-plugin-priorities</code></pre>
+    </li>
     <li>Disable SELinux as described above.</li>
-
     <li>Enable EPEL repo as described above.</li>
-
-    <li>Check your version of <span style=
-    "font-family:courier new,courier,monospace;">libdb4</span> as described above.</li>
-
-    <li><strong>If you are installing on Oracle 7.x,</strong> run the following command:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt; sudo yum-config-manager --enable
-    ol7_optional_latest</span></li>
-
-    <li><strong>If you are installing on AWS</strong>, run the following <span style=
-    "font-family:courier new,courier,monospace;">yum-configure-manager</span> commands:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt; yum update
-    rh-amazon-rhui-client.noarch<br>
-    &gt; sudo yum-config-manager --enable rhui-REGION-rhel-server-extras
-    rhui-REGION-rhel-server-optional</span></li>
-
-    <li>Download the Edge <span style=
-    "font-family:courier new,courier,monospace;">bootstrap_4.18.01.sh</span> file to <span style=
-    "font-family:courier new,courier,monospace;">/tmp/bootstrap_4.18.01.sh</span>:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt; curl
-    https://software.apigee.com/bootstrap_4.18.01.sh -o /tmp/bootstrap_4.18.01.sh</span></li>
-
-    <li>Install the Edge apigee-service utility and dependencies: <br>
-    <span style="font-family:courier new,courier,monospace;">&gt; sudo bash
-    /tmp/bootstrap_4.18.01.sh apigeeuser=uName apigeepassword=pWord </span><br>
-    <br>
-    where <em><strong>uName:pWord</strong></em> are the username and password you received from
-    Apigee. If you omit <em><strong>pWord</strong></em>, you will be prompted to enter it.<br>
-    <br>
-    By default, the installer checks to see that you have Java 1.8 installed. If you do not, it
-    installs it for you. Use the <span style=
-    "font-family:courier new,courier,monospace;">JAVA_FIX</span> option to specify how to handle
-    Java installation. <span style="font-family:courier new,courier,monospace;">JAVA_FIX</span>
-    takes the following values:<br>
-    <br>
-    I = Install OpenJDK 1.8 (default)<br>
-    C = Continue without installing Java<br>
-    Q = Quit. For this option, you have to install Java yourself.<br>
-    <br>
-    The installation of the apigee-service utility creates the /etc/yum.repos.d/apigee.repo file
-    that defines the Apigee repository. To view the definition file, use the command:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt; cat
-    /etc/yum.repos.d/apigee.repo</span><br>
-    <br>
-    To view the repo contents, use the command:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt; sudo yum -v repolist
-    'apigee*'</span></li>
-
+    <li>Check your version of <code>libdb4</code> as described above.</li>
+    <li><strong>If you are installing on Oracle 7.x,</strong> run the following command:
+      <pre class="devsite-terminal">sudo yum-config-manager --enable ol7_optional_latest</pre>
+    </li>
+    <li><strong>If you are installing on AWS</strong>, run the following
+      <code>yum-configure-manager</code> commands:
+      <pre class="devsite-terminal">yum update rh-amazon-rhui-client.noarch
+<code class="devsite-terminal">sudo yum-config-manager --enable rhui-REGION-rhel-server-extras rhui-REGION-rhel-server-optional</code></pre>
+    </li>
+    <li>Download the Edge <code>bootstrap_4.18.05.sh</code> file to <code>/tmp/bootstrap_4.18.05.sh</code>:
+      <pre class="devsite-terminal">curl https://software.apigee.com/bootstrap_4.18.05.sh -o /tmp/bootstrap_4.18.05.sh</pre>
+    </li>
+    <li>Install the Edge apigee-service utility and dependencies:
+      <pre class="devsite-terminal">sudo bash /tmp/bootstrap_4.18.05.sh apigeeuser=<var>uName</var> apigeepassword=<var>pWord</var></pre>
+      <p>Where <var>uName:pWord</var> are the username and password you received from
+      Apigee. If you omit <var>pWord</var>, you will be prompted to enter it.</p>
+      <p>By default, the installer checks to see that you have Java 1.8 installed. If you do not, it
+      installs it for you. Use the <code>JAVA_FIX</code> option to specify how to handle
+      Java installation. <code>JAVA_FIX</code>
+      takes the following values:</p>
+      <ul>
+        <li>I: Install OpenJDK 1.8 (default)</li>
+        <li>C: Continue without installing Java</li>
+        <li>Q: Quit. For this option, you have to install Java yourself.</li>
+      </ul>
+      <p>The installation of the apigee-service utility creates the /etc/yum.repos.d/apigee.repo file
+      that defines the Apigee repository. To view the definition file, use the command:</p>
+      <pre class="devsite-terminal">cat /etc/yum.repos.d/apigee.repo</pre>
+      <p>To view the repo contents, use the command:</p>
+      <pre class="devsite-terminal">sudo yum -v repolist 'apigee*'</pre>
+    </li>
     <li>Use apigee-service to install the apigee-setup utility:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    /opt/apigee/apigee-service/bin/apigee-service apigee-setup install</span></li>
-
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-setup install</pre>
+    </li>
     <li>Use apigee-setup to install and configure Edge components on the node. See <a href=
-    "install-edge-components-node.html">Install Edge components on a node</a> for more.</li>
+    "install-edge-components-node">Install Edge components on a node</a> for more.</li>
   </ol>
 
   <h2 id="installedgeapigeesetuputilityonanodewithnoexternalinternetconnection">Install Edge
@@ -186,372 +148,249 @@
   repo, you can then move it to another node or make that node accessible to the Edge nodes for
   installation.</p>
 
-  <p><strong>Note</strong>: Apigee does not host all third-party dependencies in our public
+  <aside class="note"><strong>Note</strong>: Apigee does not host all third-party dependencies in our public
   repositories. You must download and install these dependencies from publicly accessible
-  repositories.</p>
+  repositories.</aside>
 
   <p>After you create a local Edge repository, you might later have to update it with the latest
   Edge release files. The following sections describe how to create a local repository, and how to
   update it.</p>
 
-  <h3 id=
-  "installedgeapigeesetuputilityonanodewithnoexternalinternetconnection-createalocalapigeerepository">
-  Create a local Apigee repository</h3>
+  <h3 id="createalocalapigeerepository">Create a local Apigee repository</h3>
 
   <p>To create a local Apigee repo:</p>
 
   <ol>
     <li>Obtain the username and password from Apigee that you use to access the Apigee repository.
-    If you have an existing username:password for the Apigee ftp site, you can use those
-    credentials.</li>
-
+      If you have an existing username:password for the Apigee ftp site, you can use those
+      credentials.</li>
     <li>Log in to your node as root to install the Edge RPMs.<br>
-    <strong>Note</strong>: While RPM installation requires root access, you can perform Edge
-    configuration without root access.</li>
-
+      <aside class="note"><strong>Note</strong>: While RPM installation requires root access, you
+      can perform Edge configuration without root access.</aside>
+    </li>
     <li>Disable SELinux as described above.</li>
-
-    <li>Download the Edge <span style=
-    "font-family:courier new,courier,monospace;">bootstrap_4.18.01.sh</span> file to <span style=
-    "font-family:courier new,courier,monospace;">/tmp/bootstrap_4.18.01.sh</span>:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt; curl
-    https://software.apigee.com/bootstrap_4.18.01.sh -o /tmp/bootstrap_4.18.01.sh</span></li>
-
+    <li>Download the Edge <code>bootstrap_4.18.05.sh</code> file to <code>/tmp/bootstrap_4.18.05.sh</code>:
+      <pre class="devsite-terminal">curl https://software.apigee.com/bootstrap_4.18.05.sh -o /tmp/bootstrap_4.18.05.sh</pre>
+    </li>
     <li>Install the Edge apigee-service utility and dependencies: <br>
-    <span style="font-family:courier new,courier,monospace;">&gt; sudo bash
-    /tmp/bootstrap_4.18.01.sh apigeeuser=<em><strong>uName</strong></em>
-    apigeepassword=<em><strong>pWord</strong></em> </span><br>
-    <br>
-    where <em><strong>uName:pWord</strong></em> are the username and password you received from
-    Apigee. If you omit <em><strong>pWord</strong></em>, you will be prompted to enter it.</li>
-
-    <li>Install the <span style="font-family:courier new,courier,monospace;">apigee-mirror</span>
-    utility on the node:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    /opt/apigee/apigee-service/bin/apigee-service apigee-mirror install</span><br>
-    <br>
-    <strong>Note</strong>: If you are updating an existing repo to 4.18.01, you only have to update
-    <span style="font-family:courier new,courier,monospace;">apigee-mirror</span>:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    /opt/apigee/apigee-service/bin/apigee-service apigee-mirror update</span></li>
-
-    <li>Use the <span style="font-family:courier new,courier,monospace;">apigee-mirror</span>
-    utility to sync the Apigee repo to the <span style=
-    "font-family:courier new,courier,monospace;">/opt/apigee/data/apigee-mirror/repos/</span>
-    directory.<br>
-    <br>
-    To minimize the size of the repo, include the <span style=
-    "font-family:courier new,courier,monospace;">--only-new-rpms</span> to download just the latest
-    RPMs. You need approximately 1.6 GB of disk space for the download:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    /opt/apigee/apigee-service/bin/apigee-service apigee-mirror sync --only-new-rpms</span><br>
-    <br>
-    If you want to download the entire repo, including older RPMs, omit <span style=
-    "font-family:courier new,courier,monospace;">--only-new-rpms</span>. You need approximately 6
-    GB of disk space for the full download:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    /opt/apigee/apigee-service/bin/apigee-service apigee-mirror sync</span><br>
-    <br>
-    You now have a local copy of the Apigee repo. The next section describes how to install the
-    Edge <span style="font-family:courier new,courier,monospace;">apigee-setup</span> utility from
-    the local repo. </li>
-
+      <pre class="devsite-terminal">sudo bash /tmp/bootstrap_4.18.05.sh apigeeuser=<var>uName</var> apigeepassword=<var>pWord</var></pre>
+      <p>Where <var>uName:pWord</var> are the username and password you received from
+      Apigee. If you omit <var>pWord</var>, you will be prompted to enter it.</p>
+    </li>
+    <li>Install the <code>apigee-mirror</code> utility on the node:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-mirror install</pre>
+      <aside class="note"><strong>Note</strong>: If you are updating an existing repo to 4.18.05, you
+      only have to update <code>apigee-mirror</code>:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-mirror update</pre></aside>
+    </li>
+    <li>Use the <code>apigee-mirror</code> utility to sync the Apigee repo to the
+      <code>/opt/apigee/data/apigee-mirror/repos/</code> directory.
+      <p>To minimize the size of the repo, include the <code>--only-new-rpms</code> to download just the
+      latest RPMs. You need approximately 1.6 GB of disk space for the download:</p>
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-mirror sync --only-new-rpms</pre>
+      <p>If you want to download the entire repo, including older RPMs, omit <code>--only-new-rpms</code>.
+      You need approximately 6 GB of disk space for the full download:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-mirror sync</pre>
+      <p>You now have a local copy of the Apigee repo. The next section describes how to install the
+      Edge <code>apigee-setup</code> utility from the local repo.</p>
+    </li>
     <li>
       <strong>(Optional)</strong> If you want to install Edge from the local repo onto the same
       node that hosts the local repo, then you need to first run the following commands:
-
       <ol>
-        <li>Run <span style=
-        "font-family:courier new,courier,monospace;">bootstrap_4.18.01.sh</span> from the local
-        repo to install the <span style=
-        "font-family:courier new,courier,monospace;">apigee-service</span> utility:<br>
-        <span style="font-family:courier new,courier,monospace;">&gt; sudo bash
-        /opt/apigee/data/apigee-mirror/repos/bootstrap_4.18.01.sh apigeeprotocol="file://"
-        apigeerepobasepath=/opt/apigee/data/apigee-mirror/repos</span></li>
-
-        <li>Use <span style="font-family:courier new,courier,monospace;">apigee-service</span> to
-        install the <span style="font-family:courier new,courier,monospace;">apigee-setup</span>
-        utility:<br>
-        <span style="font-family:courier new,courier,monospace;">&gt;
-        /opt/apigee/apigee-service/bin/apigee-service apigee-setup install</span></li>
-
-        <li>Use <span style="font-family:courier new,courier,monospace;">apigee-setup</span> to
-        install and configure Edge components on the node. See <a href=
-        "install-edge-components-node.html">Install Edge components on a node</a> for more.</li>
+        <li>Run <code>bootstrap_4.18.05.sh</code> from the local repo to install the
+          <code>apigee-service</code> utility:
+          <pre class="devsite-terminal">sudo bash /opt/apigee/data/apigee-mirror/repos/bootstrap_4.18.05.sh apigeeprotocol="file://" apigeerepobasepath=/opt/apigee/data/apigee-mirror/repos</pre>
+        </li>
+        <li>Use <code>apigee-service</code> to install the <code>apigee-setup</code> utility:
+          <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-setup install</pre>
+        </li>
+        <li>Use <code>apigee-setup</code> to install and configure Edge components on the node. See
+          <a href="install-edge-components-node">Install Edge components on a node</a> for more.</li>
       </ol>
     </li>
   </ol>
 
-  <h3 id=
-  "installedgeapigeesetuputilityonanodewithnoexternalinternetconnection-installapigeesetuponaremotenodefromthelocalrepo">
-  Install apigee-setup on a remote node from the local repo</h3>
+  <h3 id="remote-from-local">Install apigee-setup on a remote node from the local repo</h3>
 
   <p>You have two options for installing Edge from the local repo. You can either:</p>
 
   <ul>
     <li>Create a .tar file of the repo, copy the .tar file to a node, and then install Edge from
     the .tar file.</li>
-
     <li>Install a webserver on the node with the local repo so that other nodes can access it.
     Apigee provides the Nginx webserver for you to use, or you can use your own
-    webserver. </li>
+    webserver.</li>
   </ul>
 
   <h4>Install from the .tar file:</h4>
 
   <ol>
     <li>On the node with the local repo, use the following command to package the local repo into a
-    single .tar file named <span style=
-    "font-family:courier new,courier,monospace;">/opt/apigee/data/apigee-mirror/apigee-4.18.01.tar.gz</span>:<br>
-
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    /opt/apigee/apigee-service/bin/apigee-service apigee-mirror package</span></li>
-
+      single .tar file named <code>/opt/apigee/data/apigee-mirror/apigee-4.18.05.tar.gz</code>:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-mirror package</pre>
+    </li>
     <li>Copy the .tar file to the node where you want to install Edge. For example, copy it to the
-    <span style="font-family:courier new,courier,monospace;">/tmp</span> directory on the new
-    node.</li>
-
+      <code>/tmp</code> directory on the new node.</li>
     <li>On the new node, disable SELinux as described above.</li>
-
-    <li>On the new node, enable EPEL repo as described above.  </li>
-
-    <li>On the new node, ensure that you have disabled any external internet repos.
-      When you run the following command, all external repos should show as disabled,
-      but the local Apigee repo and any of your internal repos should be enabled:<br>
-    <span style="font-family: &quot;courier new&quot;, courier, monospace;">&gt; sudo
-    yum repolist</span></li>
-
-    <li>On the new node, install <span style=
-    "font-family: &quot;courier new&quot;, courier, monospace;">yum-utils</span> and <span style="font-family: &quot;courier new&quot;, courier, monospace;">yum-plugin-priorities</span>:<br>
-
-    <span style="font-family: &quot;courier new&quot;, courier, monospace;">&gt; sudo yum
-    install yum-utils<br>
-    &gt; sudo yum install yum-plugin-priorities</span></li>
-
-    <li>On the new node, check your version of <span style=
-    "font-family: &quot;courier new&quot;, courier, monospace;">libdb4</span> as described
-    above.</li>
-
-      <li><strong>If you are installing on Oracle 7.x,</strong> run the following command:<br>
-    <span style="font-family: &quot;courier new&quot;, courier, monospace;">&gt; sudo
-    yum-config-manager --enable ol7_optional_latest</span></li>
-
-    <li><strong>If you are installing on AWS</strong>, run the following <span style=
-    "font-family:courier new,courier,monospace;">yum-configure-manager</span> command:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt; sudo yum-config-manager
-    --enable rhui-REGION-rhel-server-extras rhui-REGION-rhel-server-optional</span></li>
-
-    <li>On the new node, untar the file to the /tmp directory:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt; tar -xzf
-    apigee-4.18.01.tar.gz<br>
-    <br>
-    <span style="font-family:arial,helvetica,sans-serif;">This command creates a new directory,
-    named repos, in the directory containing the .tar file. For example
-    /tmp/repos.</span></span></li>
-
-    <li>Install the Edge apigee-service utility and dependencies from <span style=
-    "font-family:courier new,courier,monospace;">/tmp/repos</span>: <br>
-    <span style="font-family:courier new,courier,monospace;">&gt; sudo bash
-    /tmp/repos/bootstrap_4.18.01.sh apigeeprotocol="file://"
-    apigeerepobasepath=/tmp/repos</span><br>
-    <br>
-    Notice that you include the path to the repos directory in this command.</li>
-
-    <li>Use <span style="font-family:courier new,courier,monospace;">apigee-service</span> to
-    install the <span style="font-family:courier new,courier,monospace;">apigee-setup</span>
-    utility:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    /opt/apigee/apigee-service/bin/apigee-service apigee-setup install</span></li>
-
-    <li>Use <span style="font-family:courier new,courier,monospace;">apigee-setup</span> to install
-    and configure Edge components on the node. See <a href=
-    "install-edge-components-node.html">Install Edge components on a node</a> for more.</li>
+    <li>On the new node, enable EPEL repo as described above.</li>
+    <li>On the new node, ensure that you have disabled any external internet repos. When you run the
+      following command, all external repos should show as disabled, but the local Apigee repo and
+      any of your internal repos should be enabled:
+      <pre class="devsite-terminal">sudo yum repolist</pre>
+    </li>
+    <li>On the new node, install <code>yum-utils</code> and <code>yum-plugin-priorities</code>:
+      <pre class="devsite-terminal">sudo yum install yum-utils
+<code class="devsite-terminal">sudo yum install yum-plugin-priorities</code></pre>
+    </li>
+    <li>On the new node, check your version of <code>libdb4</code> as described above.</li>
+    <li><strong>If you are installing on Oracle 7.x,</strong> run the following command:
+      <pre class="devsite-terminal">sudo yum-config-manager --enable ol7_optional_latest</pre>
+    </li>
+    <li><strong>If you are installing on AWS</strong>, run the following
+      <code>yum-configure-manager</code> command:
+      <pre class="devsite-terminal">sudo yum-config-manager --enable rhui-REGION-rhel-server-extras rhui-REGION-rhel-server-optional</pre>
+    </li>
+    <li>On the new node, untar the file to the /tmp directory:
+      <pre class="devsite-terminal">tar -xzf apigee-4.18.05.tar.gz</pre>
+      <p>This command creates a new directory, named repos, in the directory containing the .tar
+      file. For example <code>/tmp/repos.</code></p>
+    </li>
+    <li>Install the Edge apigee-service utility and dependencies from <code>/tmp/repos</code>:
+      <pre class="devsite-terminal">sudo bash /tmp/repos/bootstrap_4.18.05.sh apigeeprotocol="file://" apigeerepobasepath=/tmp/repos</pre>
+      <p>Notice that you include the path to the repos directory in this command.</p>
+    </li>
+    <li>Use <code>apigee-service</code> to install the <code>apigee-setup</code> utility:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-setup install</pre>
+    </li>
+    <li>Use <code>apigee-setup</code> to install and configure Edge components on the node. See
+      <a href="install-edge-components-node">Install Edge components on a node</a> for more.</li>
   </ol>
 
   <h4>Install from the repo using the Nginx webserver:</h4>
 
   <ol>
     <li>Install the Nginx webserver on the repo node:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    opt/apigee/apigee-service/bin/apigee-service apigee-mirror nginxconfig</span></li>
-
+      <pre class="devsite-terminal">opt/apigee/apigee-service/bin/apigee-service apigee-mirror nginxconfig</pre>
+    </li>
     <li>By default, Nginx is configured to use localhost as the server name and port 3939. To
-    change these values
-
+      change these values:
       <ol>
-        <li>Open <span style=
-        "font-family:courier new,courier,monospace;">/opt/apigee/customer/application/mirror.properties</span>
-        in an editor. Create the file if it does not exist.</li>
-
-        <li>Set the following values as necessary:<br>
-        <span style=
-        "font-family:courier new,courier,monospace;">conf_apigee_mirror_listen_port=3939<br>
-        conf_apigee_mirror_server_name=localhost</span></li>
-
-        <li>Restart Nginx:<br>
-        <span style="font-family:courier new,courier,monospace;">?&gt;
-        /opt/nginx/scripts/apigee-nginx restart</span></li>
+        <li>Open <code>/opt/apigee/customer/application/mirror.properties</code> in an editor.
+          Create the file if it does not exist.</li>
+        <li>Set the following values as necessary:
+          <pre>conf_apigee_mirror_listen_port=3939
+conf_apigee_mirror_server_name=localhost</pre>
+        </li>
+        <li>Restart Nginx:
+          <pre class="devsite-terminal">/opt/nginx/scripts/apigee-nginx restart</pre>
+        </li>
       </ol>
     </li>
-
-    <li>By default, the repo requires a username:password of <span style=
-    "font-family:courier new,courier,monospace;">admin:admin</span>. To change these credentials,
-    set the following environment variables:<br>
-    <span style="font-family:courier new,courier,monospace;">MIRROR_USERNAME=uName<br>
-    MIRROR_PASSWORD=pWord</span></li>
-
-    <li>On the new node, install <span style=
-    "font-family: &quot;courier new&quot;, courier, monospace;">yum-utils</span> and <span style="font-family: &quot;courier new&quot;, courier, monospace;">yum-plugin-priorities</span>:<br>
-
-    <span style="font-family: &quot;courier new&quot;, courier, monospace;">&gt; sudo yum
-    install yum-utils<br>
-    &gt; sudo yum install yum-plugin-priorities</span></li>
-
+    <li>By default, the repo requires a username:password of <code>admin:admin</code>. To change
+      these credentials, set the following environment variables:
+      <pre>MIRROR_USERNAME=<var>uName</var>
+MIRROR_PASSWORD=<var>pWord</var></pre>
+    </li>
+    <li>On the new node, install <code>yum-utils</code> and <code>yum-plugin-priorities</code>:
+      <pre class="devsite-terminal">sudo yum install yum-utils
+<code class="devsite-terminal">sudo yum install yum-plugin-priorities</code></pre>
+    </li>
     <li>On the new node, disable SELinux as described above.</li>
-
     <li>On the new node, enable EPEL repo as described above.  </li>
-
-    <li>On the new node, check your version of <span style=
-    "font-family: &quot;courier new&quot;, courier, monospace;">libdb4</span> as described
-    above.</li>
-
-    <li>On the remote node, download the Edge bootstrap_4.18.01.sh file to <span style=
-    "font-family:courier new,courier,monospace;">/tmp/bootstrap_4.18.01.sh</span>:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt; /usr/bin/curl
-    http://<em><strong>uName:</strong></em><em><strong>pWord</strong></em>@<em><strong>remoteRepo</strong></em>:3939/bootstrap_4.18.01.sh
-    -o /tmp/bootstrap_4.18.01.sh</span><br>
-    <br>
-    where <em><strong>uName:pWord</strong></em> are the username and password you set above for the
-    repo, and <em><strong>remoteRepo</strong></em> is the IP address or DNS name of the repo
-    node. </li>
-
-    <li>On the remote node, install the Edge apigee-service utility and dependencies: <br>
-    <span style="font-family:courier new,courier,monospace;">&gt; sudo bash
-    /tmp/bootstrap_4.18.01.sh apigeerepohost=<em><strong>remoteRepo</strong></em>:3939
-    apigeeuser=<em><strong>uName</strong></em> apigeepassword=<em><strong>pWord</strong></em>
-    apigeeprotocol=http://</span><br>
-    <br>
-    where u<em><strong>Name</strong></em><em><strong>:pWord</strong></em> are the repo username and
-    password.</li>
-
-    <li>On the remote node, use <span style=
-    "font-family:courier new,courier,monospace;">apigee-service</span> to install the <span style=
-    "font-family:courier new,courier,monospace;">apigee-setup</span> utility:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    /opt/apigee/apigee-service/bin/apigee-service apigee-setup install</span></li>
-
-    <li>Use <span style="font-family:courier new,courier,monospace;">apigee-setup</span> to install
-    and configure Edge components on the remote node. See <a href=
-    "install-edge-components-node.html">Install Edge components on a node</a> for more.</li>
+    <li>On the new node, check your version of <code>libdb4</code> as described above.</li>
+    <li>On the remote node, download the Edge bootstrap_4.18.05.sh file to
+      <code>/tmp/bootstrap_4.18.05.sh</code>:
+      <pre class="devsite-terminal">curl http://<var>uName:</var><var>pWord</var>@<var>remoteRepo</var>:3939/bootstrap_4.18.05.sh -o /tmp/bootstrap_4.18.05.sh</pre>
+      <p>Where <var>uName:pWord</var> are the username and password you set above for the repo, and
+      <var>remoteRepo</var> is the IP address or DNS name of the repo node.</p>
+    </li>
+    <li>On the remote node, install the Edge apigee-service utility and dependencies:
+      <pre class="devsite-terminal">sudo bash /tmp/bootstrap_4.18.05.sh apigeerepohost=<var>remoteRepo</var>:3939 apigeeuser=<var>uName</var> apigeepassword=<var>pWord</var> apigeeprotocol=http://</pre>
+      <p>Where <var>uName:pWord</var> are the repo username and password.</p>
+    </li>
+    <li>On the remote node, use <code>apigee-service</code> to install the <code>apigee-setup</code>
+      utility:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-setup install</pre>
+    </li>
+    <li>Use <code>apigee-setup</code> to install and configure Edge components on the remote node.
+      See <a href="install-edge-components-node">Install Edge components on a node</a> for more.</li>
   </ol>
 
-  <h3 id=
-  "installedgeapigeesetuputilityonanodewithnoexternalinternetconnection-updatealocalapigeerepository">
-  Update a local Apigee repository</h3>
+  <h3 id="updatealocalapigeerepository">Update a local Apigee repository</h3>
 
-  <p>To update the repo, you must download the latest bootstrap_4.18.01.sh file, then perform a new
+  <p>To update the repo, you must download the latest bootstrap_4.18.05.sh file, then perform a new
   sysnc:</p>
 
   <ol>
-    <li>Download the Edge bootstrap_4.18.01.sh file to <span style=
-    "font-family:courier new,courier,monospace;">/tmp/bootstrap_4.18.01.sh</span>:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt; curl
-    https://software.apigee.com/bootstrap_4.18.01.sh -o /tmp/bootstrap_4.18.01.sh</span></li>
-
-    <li>Run the Edge <span style=
-    "font-family: &quot;courier new&quot;, courier, monospace;">bootstrap_4.18.01.sh</span> file: <br>
-
-    <span style=
-    "font-family: &quot;courier new&quot;, courier, monospace;">&gt; sudo bash
-    /tmp/bootstrap_4.18.01.sh apigeeuser=<em><strong>uName</strong></em> apigeepassword=<em><strong>pWord</strong></em> </span><br>
-
-    <br>
-    where <em><strong>uName:pWord</strong></em> are the username and password you
-    received from Apigee. If you omit <em><strong>pWord</strong></em>, you will be prompted to
-    enter it.</li>
-
-    <li>Update <span style=
-    "font-family: &quot;courier new&quot;, courier, monospace;">apigee-mirror</span>:<br>
-    <span style="font-family: &quot;courier new&quot;, courier, monospace;">&gt;
-     /opt/apigee/apigee-service/bin/apigee-service apigee-mirror update</span></li>
-
-    <li>Perform the sync:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    /opt/apigee/apigee-service/bin/apigee-service apigee-mirror sync --only-new-rpms</span></li>
-
-    <li>If you want to entire repo:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    /opt/apigee/apigee-service/bin/apigee-service apigee-mirror sync</span></li>
+    <li>Download the Edge bootstrap_4.18.05.sh file to <code>/tmp/bootstrap_4.18.05.sh</code>:
+      <pre class="devsite-terminal">curl https://software.apigee.com/bootstrap_4.18.05.sh -o /tmp/bootstrap_4.18.05.sh</pre>
+    </li>
+    <li>Run the Edge <code>bootstrap_4.18.05.sh</code> file:
+      <pre class="devsite-terminal">sudo bash/tmp/bootstrap_4.18.05.sh apigeeuser=<var>uName</var> apigeepassword=<var>pWord</var></pre>
+      <p>Where <var>uName:pWord</var> are the username and password you received from Apigee. If you
+      omit <var>pWord</var>, you will be prompted to enter it.</p>
+    </li>
+    <li>Update <code>apigee-mirror</code>:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-mirror update</pre>
+    </li>
+    <li>Perform the sync:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-mirror sync --only-new-rpms</pre>
+    </li>
+    <li>If you want to entire repo:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-mirror sync</pre>
+    </li>
   </ol>
 
-  <h3 id=
-  "installedgeapigeesetuputilityonanodewithnoexternalinternetconnection-cleanalocalapigeerepo">
-  Clean a local Apigee repo</h3>
+  <h3 id="cleanalocalapigeerepo">Clean a local Apigee repo</h3>
 
-  <p>Cleaning the local repo deletes /opt/apigee/data/apigee-mirror and /var/tmp/yum-apigee-*.
-   </p>
+  <p>Cleaning the local repo deletes /opt/apigee/data/apigee-mirror and /var/tmp/yum-apigee-*.</p>
 
   <p>To clean the local repo, use:</p>
-  <pre class="prettyprint">
-<span style=
-"font-family:courier new,courier,monospace;">&gt; /opt/apigee/apigee-service/bin/apigee-service apigee-mirror clean</span>
-</pre>
+  <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-mirror clean</pre>
 
-  <h3 id=
-  "installedgeapigeesetuputilityonanodewithnoexternalinternetconnection-addorupdateedge4160x4170xina41801repo">
-  Add or update Edge 4.16.0x/4.17.0x in a 4.18.01 repo</h3>
+  <h3 id="update-repo">Add or update Edge 4.16.0x/4.17.0x in a 4.18.05 repo</h3>
 
-  <p>If you have to maintain installations for Edge 4.16.0x or 4.17.0x in a 4.18.01 repo, you can
+  <p>If you have to maintain installations for Edge 4.16.0x or 4.17.0x in a 4.18.05 repo, you can
   maintain a repo that contains all versions. From that repo, you can then install any version of
   Edge.</p>
 
-  <p>To add 4.16.0x/4.17.0x to an 4.18.01 repo:</p>
+  <p>To add 4.16.0x/4.17.0x to a 4.18.05 repo:</p>
 
   <ol>
-    <li>Ensure that you have installed the 4.18.01 version of the <span style=
-    "font-family: 'courier new', courier, monospace;">apigee-mirror</span> utility:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    /opt/apigee/apigee-service/bin/apigee-service apigee-mirror version</span><br>
-    <br>
-    You should see a result in the form below, where <em><strong>xyz</strong></em> is the build
-    number:<br>
-    <span style=
-    "font-family:courier new,courier,monospace;">apigee-mirror-<strong>4.18.01-0.0.</strong><em><strong>xyz</strong></em></span></li>
-
-    <li>Use the <span style="font-family:courier new,courier,monospace;">apigee-mirror</span>
-    utility to download Edge 4.16.0x/4.17.0x to your repo. Notice how you prefix the command with
-    the desired version:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    <strong>apigeereleasever=4.17.01</strong> /opt/apigee/apigee-service/bin/apigee-service
-    apigee-mirror sync --only-new-rpms</span><br>
-    <br>
-    Use this same command to later update the 4.16.0x/4.17.0x repos by specifying the required
-    version numbers.</li>
-
-    <li>Examine the <span style=
-    "font-family:courier new,courier,monospace;">/opt/apigee/data/apigee-mirror/repos</span>
-    directory to see the file structure:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt; ls
-    /opt/apigee/data/apigee-mirror/repos</span><br>
-    <br>
-    You should see the following files and directories:<br>
-    <span style="font-family:courier new,courier,monospace;">apigee
-     apigee-repo-1.0-6.x86_64.rpm  <strong>bootstrap_4.16.01.sh
-     bootstrap_4.16.05.sh</strong>
-    <strong>bootstrap_4.17.01.sh </strong><strong>bootstrap_4.17.05.sh </strong><strong><strong>bootstrap_4.17.09.sh </strong>bootstrap_4.18.01.sh</strong> thirdparty</span><br>
-
-    <br>
-    Notice how you have a bootstrap file for all versions of Edge. The <span style=
-    "font-family:courier new,courier,monospace;">apigee</span> directory also contains separate
-    directories for each version of Edge.</li>
-
+    <li>Ensure that you have installed the 4.18.05 version of the <code>apigee-mirror</code>
+      utility:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-mirror version</pre>
+      <p>You should see a result in the form below, where <var>xyz</var> is the build number:</p>
+      <pre>apigee-mirror-<strong>4.18.05-0.0.</strong><var>xyz</var></pre>
+    </li>
+    <li>Use the <code>apigee-mirror</code>
+      utility to download Edge 4.16.0x/4.17.0x to your repo. Notice how you prefix the command with
+      the desired version:
+      <pre class="devsite-terminal"><strong>apigeereleasever=4.17.01</strong> /opt/apigee/apigee-service/bin/apigee-service apigee-mirror sync --only-new-rpms</pre>
+      <p>Use this same command to later update the 4.16.0x/4.17.0x repos by specifying the required
+      version numbers.</p>
+    </li>
+    <li>Examine the <code>/opt/apigee/data/apigee-mirror/repos</code> directory to see the file
+      structure:
+      <pre class="devsite-terminal">ls /opt/apigee/data/apigee-mirror/repos</pre>
+      <p>You should see the following files and directories:</p>
+      <pre>apigee
+apigee-repo-1.0-6.x86_64.rpm
+<strong>bootstrap_4.16.01.sh
+bootstrap_4.16.05.sh</strong>
+<strong>bootstrap_4.17.01.sh</strong>
+<strong>bootstrap_4.17.05.sh</strong>
+<strong>bootstrap_4.17.09.sh</strong>
+<strong>bootstrap_4.18.05.sh</strong>
+thirdparty</pre>
+      <p>Notice how you have a bootstrap file for all versions of Edge. The <code>apigee</code>
+      directory also contains separate directories for each version of Edge.</li>
     <li>To package the repo into a .tar file, use the following command:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    <strong>apigeereleasever=4.17.01</strong> /opt/apigee/apigee-service/bin/apigee-service
-    apigee-mirror package</span><br>
-    <br>
-    This command packages all the 4.17.0x and 4.16.0x repos into the same .tar file. You cannot
-    package only part of the repo.</li>
+      <pre class="devsite-terminal"><strong>apigeereleasever=4.17.01</strong> /opt/apigee/apigee-service/bin/apigee-service apigee-mirror package</pre>
+      <p>This command packages all the 4.17.0x and 4.16.0x repos into the same .tar file. You cannot
+      package only part of the repo.</p>
+    </li>
   </ol>
 
   <p>To install Edge from the local repo or .tar file, just make sure to run the correct bootstrap
@@ -559,25 +398,17 @@
 
   <ul>
     <li>If installing from a .tar file, run the correct bootstrap file from the repo:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt; sudo bash
-    /tmp/repos/<strong>bootstrap_4.17.01.sh</strong> apigeeprotocol="file://"
-    apigeerepobasepath=/tmp/repos</span><br>
-    <br>
-    To complete the installation, follow the remaining steps from "Install from the .tar file"
-    above.</li>
-
+      <pre class="devsite-terminal">sudo bash /tmp/repos/<strong>bootstrap_4.17.01.sh</strong> apigeeprotocol="file://" apigeerepobasepath=/tmp/repos</pre>
+      <p>To complete the installation, follow the remaining steps from "Install from the .tar file"
+      above.</p>
+    </li>
     <li>If installing using the Nginx webserver, download and then run the correct bootstrap file
-    from the repo:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt; /usr/bin/curl
-    http://uName:pWord@remoteRepo:3939/<strong>bootstrap_4.17.01.sh</strong> -o
-    /tmp/<strong>bootstrap_4.17.01.sh</strong><br>
-    &gt; sudo bash /tmp/<strong>bootstrap_4.17.01.sh</strong> apigeerepohost=remoteRepo:3939
-    apigeeuser=uName apigeepassword=pWord apigeeprotocol=http://</span><br>
-    <br>
-    To complete the installation, follow the remaining steps from "Install from the repo using the
-    Nginx webserver" above.</li>
+      from the repo:
+      <pre class="devsite-terminal">/usr/bin/curl http://uName:pWord@remoteRepo:3939/<strong>bootstrap_4.17.01.sh</strong> -o /tmp/<strong>bootstrap_4.17.01.sh</strong>
+<code class="devsite-terminal">sudo bash /tmp/<strong>bootstrap_4.17.01.sh</strong> apigeerepohost=remoteRepo:3939 apigeeuser=<var>uName</var> apigeepassword=<var>pWord</var> apigeeprotocol=http://</code></pre>
+      <p>To complete the installation, follow the remaining steps from "Install from the repo using
+      the Nginx webserver" above.</p>
+    </li>
   </ul>
 
-  <div>
-     
-  </div>{% endblock %}
+{% endblock %}

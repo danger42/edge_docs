@@ -1,15 +1,16 @@
-  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}Set up Master-Standby
-  Replication for Postgres{% endblock %} {% block body %}
+{% extends "private-cloud/v4.18.05/_base.html" %}
+{% block title %}Set up master-standby replication for Postgres{% endblock %}
+{% block body %}
 
   <p>By default, Edge installs all Postgres nodes in master mode. However, in production systems
   with multiple Postgres nodes, you configure them to use master-standby replication so that if the
   master node fails, the standby node can continue to server traffic.</p>
 
   <p>If the master node ever fails, you can promote the standby server to the master. See <a href=
-  "handling-postgressql-database-failover.html">Handling a PostgresSQL Database Failover</a> for
+  "handling-postgressql-database-failover">Handling a PostgresSQL Database Failover</a> for
   more information.</p>
 
-  <aside class="note"><b>Note:</b> Master-Standby replication is not supported for the Developer
+  <aside class="note"><strong>Note:</strong> Master-standby replication is not supported for the Developer
   Services portal. The portal only supports a single Postgres node.</aside>
 
   <h2 id="configuremasterstandbyreplicationatinstalltime">Configure Master-Standby Replication at
@@ -17,10 +18,16 @@
 
   <p>You can configure master-standby replication at install time by including the following
   properties in the config file for the two Postgres nodes:</p>
-  <pre class="prettyprint">
-PG_MASTER=<strong><em>IPorDNSofNewMaster</em></strong>
-PG_STANDBY=<strong><em>IPorDNSofNewStandby</em></strong>
-</pre>
+  <pre class="prettyprint">PG_MASTER=<var>IPorDNSofNewMaster</var>
+PG_STANDBY=<var>IPorDNSofNewStandby</var></pre>
+
+  <aside class="note"><strong>Note:</strong> Apigee strongly recommends that you use IP
+    addresses rather than host names for the <code>PG_MASTER</code> and <code>PG_STANDBY</code>
+    properties in your silent configuration file. In addition, you should be consistent on
+    both nodes.
+    <p>If you use host names rather than IP addresses, you must be sure sure that the host
+    names properly resolve using DNS.</p>
+  </aside>
 
   <p>The installer automatically configures the two Postgres node to function as master-standby
   with replication.</p>
@@ -33,67 +40,43 @@ PG_STANDBY=<strong><em>IPorDNSofNewStandby</em></strong>
 
   <ol>
     <li>Identify which Postgre node will be the master and which will be the standby server.</li>
-
-    <li>On the master node, edit the config file to set:<br>
-    <span style=
-    "font-family:courier new,courier,monospace;">PG_MASTER=<em><strong>IPorDNSofNewMaster</strong></em><br>
-
-    PG_STANDBY=<em><strong>IPorDNSofNewStandby</strong></em></span></li>
-
-    <li>Enable replication on the new master:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    /opt/apigee/apigee-service/bin/apigee-service apigee-postgresql setup-replication-on-master -f
-    <em><strong>configFIle</strong></em></span></li>
-
-    <li>On the standby node, edit the config file to set:<br>
-    <span style=
-    "font-family:courier new,courier,monospace;">PG_MASTER=<em><strong>IPorDNSofNewMaster</strong></em><br>
-
-    PG_STANDBY=</span><em style=
-    "font-family: &quot;courier new&quot;, courier, monospace;"><strong>IPorDNSofNewStandby</strong></em></li>
-
-    <li>
-      <div>
-        Stop the standby node:
-      </div>
-
-      <div>
-        <span style="font-family:courier new,courier,monospace;">&gt;
-        /opt/apigee/apigee-service/bin/apigee-service apigee-postgresql stop</span>
-      </div>
+    <li>On the master node, edit the config file to set:
+      <pre>PG_MASTER=<var>IPorDNSofNewMaster</var>
+PG_STANDBY=<var>IPorDNSofNewStandby</var></pre></li>
+    <li>Enable replication on the new master:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-postgresql setup-replication-on-master -f <var>configFile</var></pre>
     </li>
-
-    <li>On the standby node, delete any existing Postgres data:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt; rm -rf
-    /opt/apigee/data/apigee-postgresql/</span><br>
-    <strong>Note</strong>: If necessary, you can backup this data before deleting it.</li>
-
-    <li>Configure the standby node:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    /opt/apigee/apigee-service/bin/apigee-service apigee-postgresql setup-replication-on-standby -f
-    <em><strong>configFile</strong></em></span></li>
+    <li>On the standby node, edit the config file to set:
+      <pre>PG_MASTER=<var>IPorDNSofNewMaster</var>
+PG_STANDBY=<var>IPorDNSofNewStandby</var></li>
+    <li>Stop the standby node:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-postgresql stop</pre>
+    </li>
+    <li>On the standby node, delete any existing Postgres data:
+      <pre class="devsite-terminal">rm -rf /opt/apigee/data/apigee-postgresql/</pre>
+      <aside class="note"><strong>Note</strong>: If necessary, you can backup this data before
+      deleting it.</aside>
+    </li>
+    <li>Configure the standby node:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-postgresql setup-replication-on-standby -f <var>configFile</var></pre>
+    </li>
   </ol>
 
-  <h2 id="testmasterstandbyreplication">Test Master-Standby Replication  </h2>
+  <h2 id="testmasterstandbyreplication">Test Master-Standby Replication</h2>
 
   <p>On completion of replication, verify the replication status by issuing the following scripts
   on both servers. The system should display identical results on both servers to ensure a
   successful replication:</p>
 
   <ol>
-    <li>On the master node, run:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    /opt/apigee/apigee-service/bin/apigee-service apigee-postgresql
-    postgres-check-master</span><br>
-    Validate that it says it is the master.</li>
-
-    <li>On the standby node:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    /opt/apigee/apigee-service/bin/apigee-service apigee-postgresql
-    postgres-check-standby</span><br>
-    Validate that it says it is the standby.</li>
+    <li>On the master node, run:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-postgresql postgres-check-master</pre>
+      <p>Validate that it says it is the master.</p>
+    </li>
+    <li>On the standby node:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-postgresql postgres-check-standby</pre>
+      <p>Validate that it says it is the standby.</p>
+    </li>
   </ol>
 
-  <div>
-     
-  </div>{% endblock %}
+{% endblock %}

@@ -1,4 +1,6 @@
-  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}Setting up a virtual host{% endblock %} {% block body %}
+{% extends "private-cloud/v4.18.05/_base.html" %}
+{% block title %}Setting up a virtual host{% endblock %}
+{% block body %}
 
   <p>A virtual host on Edge defines the domains and Edge Router ports on which an API proxy is
   exposed, and, by extension, the URL that apps use to access an API proxy. A virtual host also
@@ -6,113 +8,84 @@
   protocol.</p>
 
   <p>As part of the Edge onboarding process, you have to create an organization, environment, and
-  virtual host. Edge provides the <span style=
-  "font-family: &quot;courier new&quot;, courier, monospace;">setup-org</span> command to make
+  virtual host. Edge provides the <code>setup-org</code> command to make
   this process easier for new users.</p>
 
   <p>When you create the virtual host, you must specify the following information:</p>
 
   <ul>
     <li><strong>The name</strong> of the virtual host that you use to reference it in your API
-    proxies.</li>
-
+      proxies.</li>
     <li><strong>The port</strong> on the Router for the virtual host. Typically these ports
-    start at 9001 and increment by one for every new virtual host.</li>
-
+      start at 9001 and increment by one for every new virtual host.</li>
     <li><strong>The host alias</strong> of the virtual host. Typically the DNS name of the
-    virtual host.</li>
+      virtual host.</li>
   </ul>
 
-  <p>For example, in a config file passed to the <span style=
-  "font-family: &quot;courier new&quot;, courier, monospace;">setup-org</span> command, you
-  can specify this information as:</p>
-  <pre class="prettyprint">
-# Specify virtual host information.
+  <p>For example, in a config file passed to the <code>setup-org</code> command, you can specify
+  this information as:</p>
+  <pre class="prettyprint"># Specify virtual host information
 VHOST_PORT=9001
 VHOST_NAME=default
 
-# If you have a DNS entry for the virtual host.
-VHOST_ALIAS=myapis.apigee.net
-</pre>
+# If you have a DNS entry for the virtual host
+VHOST_ALIAS=myapis.apigee.net</pre>
 
-  <p>The Edge Router compares the <span style=
-  "font-family: &quot;courier new&quot;, courier, monospace;">Host</span> header of the
+  <p>The Edge Router compares the <code>Host</code> header of the
   incoming request to the list of available host aliases as part of determining the API proxy that
   handles the request. When making a request through a virtual host, either specify a domain name
   that matches the host alias of a virtual host, or specify the IP address of the Router and
-  the <span style=
-  "font-family: &quot;courier new&quot;, courier, monospace;">Host</span> header containing
-  the host alias.</p>
+  the <code>Host</code> header containing the host alias.</p>
 
   <p>For example, if you created a virtual host with a host alias of myapis.apigee.net on port
   9001, then a cURL request to an API through that virtual host could use one of the following
   forms:</p>
 
   <ul>
-    <li>If you have a DNS entry for <strong>myapis.apigee.net</strong>:<br>
-    <br>
-    <span style="font-family: &quot;courier new&quot;, courier, monospace;">curl
-    http://<strong>myapis.apigee.net</strong>:9001/{proxy-base-path}/{resource-path}</span></li>
-
-    <li>If you do not have a DNS entry for <strong>myapis.apigee.net</strong>:<br>
-    <br>
-    <span style="font-family: &quot;courier new&quot;, courier, monospace;">curl
-    http://<strong>&lt;routerIP&gt;:9001</strong>/{proxy-base-path}/{resource-path} <strong>-H
-    'Host: myapis.apigee.net'</strong></span><br>
-    <br>
-    In this form, you specify the IP address of the Router, and pass the host alias in the
-    <span style="font-family:courier new,courier,monospace;">Host</span> header. <br>
-    <br>
-    <strong>Note</strong>: The cURL command, most browsers, and many other utilities automatically
-    append the <span style="font-family:courier new,courier,monospace;">Host</span> header with the
-    domain as part of the request, so you can actually use a cURL command in the form:<br>
-    <br>
-    <span style="font-family:courier new,courier,monospace;">curl
-    http://&lt;routerIP&gt;:9001/{proxy-base-path}/{resource-path} </span></li>
+    <li>If you have a DNS entry for <strong>myapis.apigee.net</strong>:
+      <pre class="devsite-terminal">curl http://<strong>myapis.apigee.net</strong>:9001/<var>proxy-base-path</var>/<var>resource-path</var></pre>
+    </li>
+    <li>If you do not have a DNS entry for <strong>myapis.apigee.net</strong>:
+      <pre class="devsite-terminal">curl http://<var>routerIP</var>:9001/<var>proxy-base-path</var>/<var>resource-path</var> <strong>-H 'Host: myapis.apigee.net'</strong></pre>
+      <p>In this form, you specify the IP address of the Router, and pass the host alias in the
+      <code>Host</code> header.</p>
+      <aside class="note"><strong>Note</strong>: The curl command, most browsers, and many other
+        utilities automatically append the <code>Host</code> header with the domain as part of the
+        request, so you can actually use a cURL command in the form:
+        <pre class="devsite-terminal">curl http://<var>routerIP</var>:9001/<var>proxy-base-path</var>/<var>resource-path</var></pre>
+      </aside>
+    </li>
   </ul>
 
   <h2 id="optionswhenyoudonothaveadnsentryforthevirtualhost">Options when you do not have a DNS
   entry for the virtual host</h2>
 
   <p>One option when you do not have a DNS entry is to set the host alias to the IP address of the
-  Router and port of the virtual host, as <span style=
-  "font-family: &quot;courier new&quot;, courier, monospace;">&lt;routerIP&gt;:port</span>. For
-  example:</p>
-  <pre class="prettyprint">
-VHOST_ALIAS=192.168.1.31:9001
-</pre>
+  Router and port of the virtual host, as <var>routerIP</var>:<var>port</var>. For example:</p>
+  <pre class="prettyprint">VHOST_ALIAS=192.168.1.31:9001</pre>
 
   <p>Then you make a curl command in the form below:</p>
-  <pre class="prettyprint">
-curl http://<strong>&lt;routerIP&gt;:9001</strong>/{proxy-base-path}/{resource-path} 
-</pre>
+  <pre class="devsite-terminal">curl http://<var>routerIP</var>:9001/<var>proxy-base-path</var>/<var>resource-path</var></pre>
 
-  <p>This option is preferred because it works well with the Edge UI. </p>
+  <p>This option is preferred because it works well with the Edge UI.</p>
 
   <p>If you have multiple Routers, add a host alias for each Router, specifying the IP address of
   each Router and port of the virtual host:</p>
-  <pre class="prettyprint">
-# Specify the IP and port of each router as a space-separated list enclosed in quotes:
-# VHOST_ALIAS="192.168.1.31:9001 192.168.1.32:9001"
-</pre>
 
-  <p>Alternatively, you can set the host alias to a value, such
-  as <strong>temp.hostalias.com</strong>. Then, you have to pass the <span style=
-  "font-family: &quot;courier new&quot;, courier, monospace;">Host</span> header on every
-  request:</p>
-  <pre class="prettyprint">
-curl -v http://&lt;routerIP&gt;:9001/{proxy-base-path}/{resource-path} <span style=
-"font-family: &quot;courier new&quot;, courier, monospace;">?<strong>-H 'host: temp.hostalias.com'</strong></span>
-</pre>
+  <pre class="prettyprint"># Specify the IP and port of each router as a space-separated list enclosed in quotes:
+# VHOST_ALIAS="192.168.1.31:9001 192.168.1.32:9001"</pre>
 
-  <p>Or, add the host alias to your <span style=
-  "font-family:courier new,courier,monospace;">/etc/hosts</span> file. For example, add this line
-  to <span style="font-family:courier new,courier,monospace;">/etc/hosts</span>:</p>
-  <pre class="prettyprint">
-192.168.1.31   temp.hostalias.com
-</pre>
+  <p>Alternatively, you can set the host alias to a value, such as <code>temp.hostalias.com</code>.
+  Then, you have to pass the <code>Host</code> header on every request:</p>
+
+  <pre class="devsite-terminal">curl -v http://<var>routerIP</var>:9001/<var>proxy-base-path</var>/<var>resource-path</var> <strong>-H 'host: temp.hostalias.com'</strong></pre>
+
+  <p>Or, add the host alias to your <code>/etc/hosts</code> file. For example, add this line
+  to <code>/etc/hosts</code>:</p>
+
+  <pre class="prettyprint">192.168.1.31   temp.hostalias.com</pre>
 
   <p>Then you can make a request as if you had a DNS entry:</p>
-  <pre class="prettyprint">
-curl -v http://<strong>myapis.apigee.net</strong>:9001/{proxy-base-path}/{resource-path}
-</pre>{% endblock %}
+  <pre class="devsite-terminal">curl -v http://<strong>myapis.apigee.net</strong>:9001/<var>proxy-base-path</var>/<var>resource-path</var></pre>
+
+{% endblock %}

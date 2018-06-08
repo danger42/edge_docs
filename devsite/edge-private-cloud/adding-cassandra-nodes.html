@@ -1,4 +1,6 @@
-  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}Adding Cassandra nodes{% endblock %} {% block body %}
+{% extends "private-cloud/v4.18.05/_base.html" %}
+{% block title %}Adding Cassandra nodes{% endblock %}
+{% block body %}
 
   <p>This document describes how to add three new Cassandra nodes to an existing Edge for Private
   Cloud installation.</p>
@@ -7,58 +9,52 @@
   recommends that you add three nodes at a time.</p>
 
   <p>For a list of the system requirements for a Cassandra node, see <a href=
-  "installation-requirements.html">Installation Requirements</a>.</p>
+  "installation-requirements">Installation Requirements</a>.</p>
 
   <h2 id="existingedgeconfiguration">Existing Edge configuration</h2>
 
   <p>All the supported Edge topologies for a production system specify to use three Cassandra
-  nodes. The three nodes are specified to the <em><span style=
-  "font-family:courier new,courier,monospace;"><strong>CASS_HOSTS</strong></span></em> property in
-  the config file as shown below:</p>
-  <pre class="prettyprint">
-<strong>IP1=10.10.0.1
+  nodes. The three nodes are specified to the <code>CASS_HOSTS</code> property in the config file
+  as shown below:</p>
+
+  <pre class="prettyprint"><strong>IP1=10.10.0.1
 IP2=10.10.0.2
 IP3=10.10.0.3</strong>
 HOSTIP=$(hostname -i)
-ADMIN_EMAIL=opdk@google.com 
+ADMIN_EMAIL=opdk@google.com
 APIGEE_ADMINPW=Secret123
-LICENSE_FILE=/tmp/license.txt 
+LICENSE_FILE=/tmp/license.txt
 MSIP=$IP1 
-USE_LDAP_REMOTE_HOST=n 
+USE_LDAP_REMOTE_HOST=n
 LDAP_TYPE=1
-APIGEE_LDAPPW=secret 
+APIGEE_LDAPPW=secret
 MP_POD=gateway
-<strong>REGION=dc-1 </strong>
-ZK_HOSTS="$IP1 $IP2 $IP3" 
-ZK_CLIENT_HOSTS="$IP1 $IP2 $IP3" 
+<strong>REGION=dc-1</strong>
+ZK_HOSTS="$IP1 $IP2 $IP3"
+ZK_CLIENT_HOSTS="$IP1 $IP2 $IP3"
 # Must use IP addresses for CASS_HOSTS, not DNS names.
 <strong>CASS_HOSTS="$IP1:1,1 $IP2:1,1 $IP3:1,1" </strong>
 SKIP_SMTP=n
-SMTPHOST=smtp.example.com 
-SMTPUSER=smtp@example.com  
-SMTPPASSWORD=smtppwd       
-</pre>
+SMTPHOST=smtp.example.com
+SMTPUSER=smtp@example.com
+SMTPPASSWORD=smtppwd</pre>
 
-  <p>Note that the <span style="font-family:courier new,courier,monospace;">REGION</span> property
-  specifies the region name as "dc-1". You need that information when adding the new Cassandra
-  nodes.</p>
+  <p>Note that the <code>REGION</code> property specifies the region name as "dc-1". You need that
+  information when adding the new Cassandra nodes.</p>
 
   <h2 id="modifyingtheconfigfiletoaddthethreenewcassandranodes">Modifying the config file to add
-  the three new Cassandra nodes </h2>
+  the three new Cassandra nodes</h2>
 
   <p>In this example, the three new Cassandra nodes are at the following IP addresses:</p>
 
   <ul>
     <li>10.10.0.14</li>
-
     <li>10.10.0.15</li>
-
     <li>10.10.0.16</li>
   </ul>
 
   <p>You must first update Edge configuration file to add the new nodes:</p>
-  <pre class="prettyprint">
-IP1=10.10.0.1
+  <pre class="prettyprint">IP1=10.10.0.1
 IP2=10.10.0.2
 IP3=10.10.0.3
 <strong># Add the new node IP addresses.
@@ -66,16 +62,15 @@ IP14=10.10.0.14
 IP15=10.10.0.15
 IP16=10.10.0.16</strong>
 HOSTIP=$(hostname -i)
-ADMIN_EMAIL=opdk@google.com 
+ADMIN_EMAIL=opdk@google.com
 ...
 <strong># Update CASS_HOSTS to add each new node after an existing nodes. </strong>
 <strong># Must use IP addresses for CASS_HOSTS, not DNS names.</strong>
 <strong>CASS_HOSTS</strong>="$IP1:1,1 $<strong>IP14:1,1</strong> $IP2:1,1 <strong>$IP15:1,1</strong> $IP3:1,1 <strong>$IP16:1,1</strong>" 
 </pre>
 
-  <p><strong>Important</strong>: Add each new Cassandra node to <span style=
-  "font-family:courier new,courier,monospace;">CASS_HOSTS</span> <strong>after an existing
-  node</strong>. </p>
+  <aside class="note"><strong>Note</strong>: Add each new Cassandra node to <code>CASS_HOSTS</code>
+  <em>after an existing node</em>.</aside>
 
   <p>This ensure that the existing nodes retain their initial token settings, and the initial token
   of each new node is  between the token values of the existing nodes.</p>
@@ -86,9 +81,7 @@ ADMIN_EMAIL=opdk@google.com
 
   <ul>
     <li>Reconfigure the existing Cassandra nodes</li>
-
     <li>Install Cassandra on the new nodes</li>
-
     <li>Reconfigure the Management Server</li>
   </ul>
 
@@ -98,10 +91,9 @@ ADMIN_EMAIL=opdk@google.com
   <p>On the existing Cassandra nodes:</p>
 
   <ol>
-    <li>Rerun the setup.sh with the "-p c" profile and the new config file:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    /opt/apigee/apigee-setup/bin/setup.sh -p c -f
-    <em><strong>updatedConfigFile</strong></em> </span></li>
+    <li>Rerun the setup.sh with the "-p c" profile and the new config file:
+      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/setup.sh -p c -f <var>updatedConfigFile</var></pre>
+    </li>
   </ol>
 
   <h3 id="configureedge-installcassandraonthenewnodes">Install Cassandra on the new nodes</h3>
@@ -110,32 +102,23 @@ ADMIN_EMAIL=opdk@google.com
 
   <ol>
     <li>Install Cassandra on the three nodes:
-
-      <ol style="list-style: lower-alpha outside">
-        <li>Install <span style="font-family:courier new,courier,monospace;">apigee-setup</span> on
-        the first node as described in <a href="install-edge-apigee-setup-utility.html">Install the
-        Edge apigee-setup utility</a>.</li>
-
-        <li>Install Cassandra on the first node by using the updated config file:<br>
-        <span style="font-family:courier new,courier,monospace;">&gt;
-        /opt/apigee/apigee-setup/bin/setup.sh -p c -f
-        <em><strong>updatedConfigFile</strong></em></span></li>
-
+      <ol>
+        <li>Install <code>apigee-setup</code> on
+          the first node as described in <a href="install-edge-apigee-setup-utility">Install the
+          Edge apigee-setup utility</a>.</li>
+        <li>Install Cassandra on the first node by using the updated config file:
+          <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/setup.sh -p c -f <var>updatedConfigFile</var></pre>
+        </li>
         <li>Repeat these two steps for the remaining new Cassandra nodes.</li>
       </ol>
     </li>
-
     <li>Rebuild the three new Cassandra nodes, specifying the region name set in the config file by
-    the <span style="font-family:courier new,courier,monospace;">REGION</span> property. In this
-    example, it is "dc-1":
-
-      <ol style="list-style: lower-alpha outside">
-        <li>On the first node, run:<br>
-        <span style="font-family:courier new,courier,monospace;">&gt;
-        /opt/apigee/apigee-cassandra/bin/nodetool -h <em><strong>nodeIP</strong></em> rebuild
-        <em><strong>dc-1</strong></em></span><br>
-        where <em><strong>nodeIP</strong></em> is the IP address of the Cassandra node.</li>
-
+    the <code>REGION</code> property. In this example, it is "dc-1":
+      <ol>
+        <li>On the first node, run:
+          <pre class="devsite-terminal">/opt/apigee/apigee-cassandra/bin/nodetool -h <var>nodeIP</var> rebuild <strong>dc-1</strong></pre>
+          <p>Where <var>nodeIP</var> is the IP address of the Cassandra node.</p>
+        </li>
         <li>Repeat this step on the remaining new Cassandra nodes.</li>
       </ol>
     </li>
@@ -146,32 +129,29 @@ ADMIN_EMAIL=opdk@google.com
   <p>On a Management-Server node</p>
 
   <ol>
-    <li>Rerun setup.sh to update the Management Server for the newly added Cassandra nodes:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    /opt/apigee/apigee-setup/bin/setup.sh -p ms -f
-    <em><strong>updatedConfigFile</strong></em></span></li>
+    <li>Rerun setup.sh to update the Management Server for the newly added Cassandra nodes:
+      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/setup.sh -p ms -f <var>updatedConfigFile</var></pre>
+    </li>
   </ol>
 
   <h3 id="configureedge-restartallroutersandmessageprocessors">Restart all Routers and Message
   Processors</h3>
 
   <ol>
-    <li>On all Routers:<br>
-    <span style="font-family: &quot;courier new&quot;, courier, monospace;">&gt;
-    /opt/apigee/apigee-service/bin/apigee-service edge-router restart</span></li>
-
-    <li>On all Message Processors:<br>
-    <span style=
-    "font-family: &quot;courier new&quot;, courier, monospace;">&gt; /opt/apigee/apigee-service/bin/apigee-service edge-message-processor
-    restart</span></li>
+    <li>On all Routers:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-router restart</pre>
+    </li>
+    <li>On all Message Processors:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-message-processor restart</pre>
+    </li>
   </ol>
 
   <h3 id="configureedge-freememoryontheexistingcassandranodes">Free memory on the existing
   Cassandra nodes</h3>
 
-  <p>On the existing Cassandra nodes, run the nodetool <span style=
-  "font-family:courier new,courier,monospace;">cleanup</span> command to free up memory:</p>
+  <p>On the existing Cassandra nodes, run the nodetool <code>cleanup</code> command to free up
+  memory:</p>
 
-  <p><span style="font-family:courier new,courier,monospace;">&gt;
-  /opt/apigee/apigee-cassandra/bin/nodetool -h <em><strong>cassandraIP</strong></em>
-  cleanup</span></p>{% endblock %}
+  <pre class="devsite-terminal">/opt/apigee/apigee-cassandra/bin/nodetool -h <var>cassandraIP</var> cleanup</pre>
+
+{% endblock %}

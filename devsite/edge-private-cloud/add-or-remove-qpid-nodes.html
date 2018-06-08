@@ -1,13 +1,12 @@
-  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}Adding or removing Qpid
-  nodes{% endblock %} {% block body %}
+{% extends "private-cloud/v4.18.05/_base.html" %}
+{% block title %}Adding or removing Qpid nodes{% endblock %}
+{% block body %}
 
-  <p>This document describes how to add and remove a Qpid server in an existing Edge
-  installation.</p>
+  <p>This document describes how to add and remove a Qpid server in an existing Edge installation.</p>
 
   <h2 id="addaqpidserver">Add a Qpid server</h2>
 
   <p>To add a Qpid server:</p>
-
   <ol>
     <li>On the Management Server, determine the name of the analytics and consumer groups.
       <p>Many of the commands below require that information. By default, the name of the analytics
@@ -16,7 +15,7 @@
       the analytics group by using the <code>AXGROUP</code> property.</p>
       <p>If you are unsure of the names of the analytics and consumer groups, use the following command
       to display them:
-      <pre>&gt; apigee-adminapi.sh analytics groups list --admin adminEmail --pwd adminPword --host localhost</pre>
+      <pre class="devsite-terminal">apigee-adminapi.sh analytics groups list --admin <var>adminEmail</var> --pwd <var>adminPword</var> --host localhost</pre>
       <p>This command returns the analytics group name in the <code>name</code> field, and the
       consumer group name in the <code>consumer-groups</code> field.</p>
     </li>
@@ -25,19 +24,19 @@
       <a href="install-edge-apigee-setup-utility">Install the Edge apigee-setup utility</a>.
     </li>
     <li>Use <code>apigee-setup.sh</code> to install Qpid on the node:
-      <pre>&gt; /opt/apigee/apigee-setup/bin/setup.sh -p qs -f <var>configFile</var></pre>
+      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/setup.sh -p qs -f <var>configFile</var></pre>
       <p>The "-p qs" option specifies to install Qpid. See
       <a href="install-edge-components-node">Install Edge components on a node</a> for information on
       creating a <var>configFile</var>.</p>
       <p>When the installation completes, the script displays the UUID of the Qpid server. If you need
       to determine the UUID later, use the following cURL command on the host where you installed
       Qpid:</p>
-      <pre>&gt; curl http://<var>qpid_IP</var>:8083/v1/servers/self</pre>
+      <pre class="devsite-terminal">curl http://<var>qpid_IP</var>:8083/v1/servers/self</pre>
     </li>
 
     <li>Add Qpid to the analytics group:
-    <pre>&gt; curl -u <var>adminEmail:pword</var> -H "Content-Type: application/json" -X POST
-  "http://<var>ms_IP</var>:8080/v1/analytics/groups/ax/<var>AX_GROUP</var>/servers?uuid=<var>QPID_UUID</var>&amp;type=qpid-server"</pre>
+    <pre class="devsite-terminal">curl -u <var>adminEmail:pword</var> -H "Content-Type: application/json"
+  -X POST "http://<var>ms_IP</var>:8080/v1/analytics/groups/ax/<var>AX_GROUP</var>/servers?uuid=<var>QPID_UUID</var>&amp;type=qpid-server"</pre>
     <p>In the output, you see the UUID of the Qpid node added to the <code>qpid-server</code>
     property under axgroup-001:
     <pre class="prettyprint">{
@@ -53,10 +52,9 @@
 }
 </pre>
     </li>
-
     <li>Add Qpid to the consumer group:
-    <pre>&gt; curl -u <var>adminEmail:pword</var> -H "Content-Type: application/json" -X POST
-  "http://<var>ms_IP</var>:8080/v1/analytics/groups/ax/<var>AX_GROUP</var>/consumer-groups/<var>CONSUMER_GROUP</var>/consumers?uuid=<var>QPID_UUID</var>"</pre>
+    <pre class="devsite-terminal">curl -u <var>adminEmail:pword</var> -H "Content-Type: application/json"
+  -X POST "http://<var>ms_IP</var>:8080/v1/analytics/groups/ax/<var>AX_GROUP</var>/consumer-groups/<var>CONSUMER_GROUP</var>/consumers?uuid=<var>QPID_UUID</var>"</pre>
     <p>In the output, you see the UUID of the Qpid node added to the <code>consumer-groups</code>
     property under <code>consumer-group-001</code>:</p>
     <pre class="prettyprint">
@@ -75,7 +73,6 @@
   <h2 id="removeaqpidserver">Remove a Qpid server</h2>
 
   <p>To remove a Qpid node:</p>
-
   <ol>
     <li>On the Management Server, determine the name of the analytics and consumer groups. Many of
       the commands below require that information.<br>
@@ -85,25 +82,26 @@
       <code>AXGROUP</code> property.</p>
       <p>If you are unsure of the names of the analytics and consumer groups, use the following command
       to display them:</p>
-      <pre>&gt; apigee-adminapi.sh analytics groups list --admin adminEmail --pwd adminPword --host localhost</pre>
+      <pre class="devsite-terminal">apigee-adminapi.sh analytics groups list --admin <var>adminEmail</var> --pwd <var>adminPword</var> --host localhost</pre>
       <p>This command returns the analytics group name in the name field, and the consumer group name in
       the consumer-groups field.</p>
     </li>
     <li>Remove Qpid from the consumer group:
-      <pre>&gt; curl -u <var>adminEmail:pword</var> -H "Content-Type: application/json" -X DELETE
-  "http://<var>ms_IP</var>:8080/v1/analytics/groups/ax/<var>AX_GROUP</var>/consumer-groups/<var>CONSUMER_GROUP</var>/consumers/<var>QPID_UUID</var>"</pre>
+      <pre class="devsite-terminal">curl -u <var>adminEmail:pword</var> -H "Content-Type: application/json"
+  -X DELETE "http://<var>ms_IP</var>:8080/v1/analytics/groups/ax/<var>AX_GROUP</var>/consumer-groups/<var>CONSUMER_GROUP</var>/consumers/<var>QPID_UUID</var>"</pre>
     </li>
     <li>Remove Qpid from the analytics group:
-      <pre>&gt; curl -v -u <var>adminEmail:pword </var>-X DELETE
-  "http://<var>ms_IP</var>:8080/v1/analytics/groups/ax/<var>AX_GROUP</var>/servers?uuid=<var>QPID_UUID</var>&amp;type=qpid-server"</pre>
+      <pre class="devsite-terminal">curl -v -u <var>adminEmail:pword</var>
+  -X DELETE "http://<var>ms_IP</var>:8080/v1/analytics/groups/ax/<var>AX_GROUP</var>/servers?uuid=<var>QPID_UUID</var>&amp;type=qpid-server"</pre>
     </li>
     <li>Deregister the Qpid server from the Edge installation:
-      <pre>&gt; curl -u <var>adminEmail:pword</var> -X POST
-  http://<var>ms_IP</var>:8080/v1/servers -d "type=qpid-server&amp;region=dc-1&amp;pod=central&amp;uuid=<var>QPID_UUID</var>&amp;action=remove"</pre>
+      <pre class="devsite-terminal">curl -u <var>adminEmail:pword</var>
+  -X POST http://<var>ms_IP</var>:8080/v1/servers -d "type=qpid-server&amp;region=dc-1&amp;pod=central&amp;uuid=<var>QPID_UUID</var>&amp;action=remove"</pre>
     </li>
     <li>Remove the Qpid server from the Edge installation:
-      <pre>&gt; curl -u <var>adminEmail:pword</var> -X DELETE http://<var>ms_IP</var>:8080/v1/servers/<var>QPID_UUID</var></pre>
+      <pre class="devsite-terminal">curl -u <var>adminEmail:pword</var> -X DELETE http://<var>ms_IP</var>:8080/v1/servers/<var>QPID_UUID</var></pre>
     </li>
     <li>Uninstall Qpid as described at <a href="uninstalling-edge">Uninstalling Edge</a>.</li>
   </ol>
+
 {% endblock %}

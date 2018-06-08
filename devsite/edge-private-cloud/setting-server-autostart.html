@@ -1,59 +1,50 @@
-  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}Setting Server Autostart{% endblock %} {% block body %}
+{% extends "private-cloud/v4.18.05/_base.html" %}
+{% block title %}Setting server autostart{% endblock %}
+{% block body %}
 
-  <p>An on-premises installation of Edge Private does not restart automatically during a reboot.
-  You can use the following commands to enable/disable autostart on any node. </p>
+  <p>An on-premises installation of Edge Private Cloud does not restart automatically during a
+  reboot. You can use the following commands to enable/disable autostart on any node.</p>
 
-  <p>For all components on the node:</p>
+  <p>To <em>enable</em> all components on the node:</p>
+  <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-all enable_autostart</pre>
 
-  <ul>
-    <li><span style=
-    "font-family:courier new,courier,monospace;">/opt/apigee/apigee-service/bin/apigee-all
-    enable_autostart</span></li>
+  <p>To <em>disable</em> all components on the node:</p>
+  <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-all disable_autostart</pre>
 
-    <li><span style=
-    "font-family:courier new,courier,monospace;">/opt/apigee/apigee-service/bin/apigee-all
-    disable_autostart</span></li>
-  </ul>
+  <p>To enable or disable autostart for a specific component on the node:</p>
 
-  <p>For a specific component:</p>
+    <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service <var>component_name</var> enable_autostart
+<code class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service <var>component_name</var> disable_autostart</code></pre>
 
-  <ul>
-    <li><span style=
-    "font-family:courier new,courier,monospace;">/opt/apigee/apigee-service/bin/apigee-service comp
-    enable_autostart</span></li>
-
-    <li><span style=
-    "font-family:courier new,courier,monospace;">/opt/apigee/apigee-service/bin/apigee-service comp
-    disable_autostart</span></li>
-  </ul>
+  <p>Where <var>component_name</var> identifies the component. Possible values include:</p>
+  {% dynamic include "/includes/___opdk-component-list" %}
 
   <p>The script only affects the node on which you run it. If you want to configure all nodes for
   autostart, run the script on all nodes.</p>
 
-  <aside class="note"><b>Note:</b> If you run into issues where the OpenLDAP server does not start
-  automatically on reboot, try disabling SELinux or setting it to permissive mode.</aside>
+  <aside class="note"><strong>Note:</strong> If you run into issues where the OpenLDAP server does
+  not start automatically on reboot, try disabling SELinux or setting it to permissive mode.</aside>
 
   <p>Note that the order of starting the components is very important:</p>
 
   <ol>
-    <li>First start ZooKeeper, Cassandra, LDAP (OpenLDAP)<br>
-    <br>
-    If ZooKeeper and Cassandra are installed as cluster, the complete cluster must be up and
-    running before starting any other Apigee component.</li>
-
+    <li>First start ZooKeeper, Cassandra, LDAP (OpenLDAP)
+      <p>If ZooKeeper and Cassandra are installed as cluster, the complete cluster must be up and
+      running before starting any other Apigee component.</p>
+    </li>
     <li>Then, any Apigee component (Management Server, Router, UI, etc.). For Postgres Server
-    first start postgresql and for Qpid Server first start qpidd.</li>
+      first start postgresql and for Qpid Server first start qpidd.</li>
   </ol>
 
   <p><strong>Implications:</strong></p>
 
   <ul>
     <li>For a complete restart of an Apigee Edge environment, the nodes with ZooKeeper and
-    Cassandra need to be booted completely prior to any other node.</li>
-
+      Cassandra need to be booted completely prior to any other node.</li>
     <li>If any other Apigee component is running on one or more ZooKeeper and Cassandra nodes, it
-    is not recommended to use autostart. Instead, start the components in the order described below
-    in Starting, Stopping, and Restarting Apigee Edge.</li>
+      is not recommended to use autostart. Instead, start the components in the order described
+      in <a href="starting-stopping-and-restarting-apigee-edge">Starting, stopping, restarting, and
+      checking the status of Apigee Edge</a>.</li>
   </ul>
 
   <h2 id="troubleshootingautostart">Troubleshooting autostart</h2>
@@ -63,17 +54,13 @@
   SELinux:</p>
 
   <ol>
-    <li>Edit the <span style=
-    "font-family:courier new,courier,monospace;">/etc/sysconfig/selinux</span> file:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt; sudo vi /etc/sysconfig/selinux
-     </span></li>
-
-    <li>Set <span style="font-family:courier new,courier,monospace;">SELINUX=disabled</span> or
-    <span style="font-family:courier new,courier,monospace;">SELINUX=permissive</span>.</li>
-
+    <li>Edit the <code>/etc/sysconfig/selinux</code> file:
+      <pre class="devsite-terminal">sudo vi /etc/sysconfig/selinux</pre>
+    </li>
+    <li>Set <code>SELINUX=disabled</code> or <code>SELINUX=permissive</code>.</li>
     <li>Save your edits.</li>
-
-    <li>Restart the machine and then restart Edge:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    /opt/apigee/apigee-service/bin/apigee-all restart</span></li>
-  </ol>{% endblock %}
+    <li>Restart the machine and then restart Edge:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-all restart</pre>
+    </li>
+  </ol>
+{% endblock %}

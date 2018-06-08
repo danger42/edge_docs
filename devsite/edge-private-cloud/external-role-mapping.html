@@ -1,131 +1,93 @@
-  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}External Role Mapping{% endblock %} {% block body %}
+{% extends "private-cloud/v4.18.05/_base.html" %}
+{% block title %}External Role Mapping{% endblock %}
+{% block body %}
 
   <p>External Role Mapping lets you map your own groups or roles to role-based access control
-  (RBAC) roles and groups created on Apigee Edge. This feature is only available with Edge Private
-  Cloud.</p>
-
-  <h2 id="what's-new">What's New</h2>
-
-  <p>The External Role Mapping service for Edge for Private Cloud releases prior to 4.18.01 has
-  been deprecated. Release 4.18.01 of External Role Mapping is an updated version with bugs fixed
-  and new features added:</p>
-
-  <ul>
-    <li>Fixed the problem where you received authentication 403 forbidden responses when
-    authenticating with users who should have access.</li>
-
-    <li><span style="font-family:courier new,courier,monospace;">X-Apigee-Current-User</span>
-    header is supported now in External Role Mapping. Users with proper access (sysadmin) can now
-    view the roles assigned to another user.</li>
-  </ul>
+  (RBAC) roles and groups created on Apigee Edge. This feature is only available with Edge for
+  Private Cloud.</p>
 
   <h2 id="prerequisites">Prerequisites</h2>
 
   <ul>
     <li>You must be an Apigee Private Cloud system administrator with global system admin
-    credentials to perform this configuration.</li>
-
-    <li>
-      <p>You need to know the root directory of your Apigee Edge Private Cloud installation. The
-      default root directory is <span style=
-      "font-family:courier new,courier,monospace;">/opt</span>.</p>
-    </li>
+      credentials to perform this configuration.</li>
+    <li>You need to know the root directory of your Apigee Edge Private Cloud installation. The
+      default root directory is <code>/opt</code>.</li>
   </ul>
 
   <h2 id="stepbystepsetupexample">Step-by-step setup example</h2>
 
   <p>See <a href=
-  "https://community.apigee.com/content/kbentry/53336/external-role-mapping-step-by-step-guide.html">
-  this article</a> on the Apigee Community Forums for a step-by-step example of setting up external
-  role mapping.</p>
+  "https://community.apigee.com/content/kbentry/53336/external-role-mapping-step-by-step-guide.html" class="external">
+  this article</a> on the Apigee Community Forums for a step-by-step example of setting up External
+  Role Mapping.</p>
 
   <h2 id="default-configuration">Default configuration</h2>
 
-  <p>External role mapping is <strong>disabled</strong> by default.</p>
+  <p>External Role Mapping is <em>disabled</em> by default.</p>
 
-  <h2 id="enabling-external-role-mapping-v2">Enabling External Role Mapping</h2>
+  <h2 id="enabling-external-role-mapping-v2">Enable External Role Mapping</h2>
+
+  <p>To enable External Role Mapping:</p>
 
   <ol>
     <li>Before you can complete the following configuration, you must create a Java class that
-    implements the ExternalRoleMapperServiceV2 interface and include your implementation in the
-    Management Server classpath:<br>
-    <br>
-    <span style=
-    "font-family:courier new,courier,monospace;">/opt/apigee/edge-management-server/lib/thirdparty/</span><br>
+      implements the ExternalRoleMapperServiceV2 interface and include your implementation in the
+      Management Server classpath:
+      <pre>/opt/apigee/edge-management-server/lib/thirdparty/</pre>
+      <p>For details about this implementation, see the section <a href=
+      "#about-the-externalrolemapperimpl-sample-implementation">About the ExternalRoleMapperImpl
+      sample implementation</a> later in this document.</p>
+    </li>
+    <li>Log in to your Apigee Edge management server and then stop the management server process:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service management-server stop</pre>
+    </li>
+    <li>Open <code>/opt/apigee/customer/application/management-server.properties</code>
+      in a text editor. If this file does not exist, create it.</li>
+    <li>Edit the properties file to make the following settings:
+      <pre class="prettyprint"># The user store to be used for authentication.
+# Use "externalized.authentication" for LDAP user store.
+# Note that for authorization, we continue to use LDAP.
+# See <a href="enabling-external-authentication.html">Enabling external authentication</a> more on enabling external auth.
+conf_security_authentication.user.store=<strong>externalized.authentication</strong>
 
-    <br>
-    For details about this implementation, see the section <a href=
-    "#about-the-externalrolemapperimpl-sample-implementation">About the ExternalRoleMapperImpl
-    sample implementation</a> later in this document.</li>
+#Enable the external authorizations role mapper.
+conf_security_externalized.authentication.role.mapper.enabled=<strong>true</strong>
+conf_security_externalized.authentication.role.mapper.implementation.class=<strong>com.customer.authorization.impl.ExternalRoleMapperImpl</strong></pre>
 
-    <li>Log into your Apigee Edge management server and then stop the management server
-    process:<br>
-    <span style=
-    "font-family:courier new,courier,monospace;">&gt; /opt/apigee/apigee-service/bin/apigee-service
-    management-server stop</span></li>
-
-    <li>Open <span style=
-    "font-family:courier new,courier,monospace;">/opt/apigee/customer/application/management-server.properties</span>
-    in a text editor. If this file does not exist, create it.</li>
-
-    <li>Edit the properties file to make the following settings:<br>
-    <span style="font-family:courier new,courier,monospace;"># The user store to be used for
-    authentication.<br>
-    # Use "externalized.authentication" for LDAP user store.<br>
-    # Note that for authorization, we continue to use LDAP.<br>
-    # See <a href="enabling-external-authentication.html">Enabling external authentication</a> more
-    on enabling external auth.<br>
-    conf_security_authentication.user.store=<strong>externalized.authentication</strong><br>
-    <br>
-    #Enable the external authorizations role mapper.<br>
-    conf_security_externalized.authentication.role.mapper.enabled=<strong>true</strong>
-    conf_security_externalized.authentication.role.mapper.implementation.class=</span><strong><span style="font-family:courier new,courier,monospace;"><em>com.customer.authorization.impl.ExternalRoleMapperImpl</em></span><br>
-
-    <br>
-    <span style="font-family:arial,helvetica,sans-serif;">Important:</span></strong> The
-    implementation class and package name referenced in the above configuration
-    (ExternalRoleMapperImpl) are only examples -- it is a class that you must implement and that
-    you can name the class and package whatever you wish. For details about implementing this
-    class, see <a href="#about-the-externalrolemapperimpl-sample-implementation">About the
-    ExternalRoleMapperImpl sample implementation</a> class below. This is a class that you
-    must implement to reflect your own groups.</li>
-
-    <li>Save the <span style=
-    "font-family:courier new,courier,monospace;">management-server.properties</span> file.</li>
-
-    <li>Make sure <span style=
-    "font-family:courier new,courier,monospace;">management-server.properties</span> is owned by
-    the apigee user:?<br>
-    <span style="font-family:courier new,courier,monospace;">&gt; chown apigee:apigee
-    /opt/apigee/customer/application/management-server.properties</span></li>
-
-    <li>Start the management server:<br>
-    <span style=
-    "font-family:courier new,courier,monospace;">&gt; /opt/apigee/apigee-service/bin/apigee-service
-    management-server start</span></li>
+      <aside class="key-point"><strong>Important:</strong> The implementation class and package name
+      referenced in the above configuration (ExternalRoleMapperImpl) are only examples &mdash; it is a
+      class that you must implement and that
+      you can name the class and package whatever you wish. For details about implementing this
+      class, see <a href="#about-the-externalrolemapperimpl-sample-implementation">About the
+      ExternalRoleMapperImpl sample implementation</a> class below. This is a class that you
+      must implement to reflect your own groups.</p>
+    </li>
+    <li>Save the <code>management-server.properties</code> file.</li>
+    <li>Ensure that <code>management-server.properties</code> is owned by the apigee user:
+      <pre class="devsite-terminal">chown apigee:apigee /opt/apigee/customer/application/management-server.properties</pre>
+    </li>
+    <li>Start the management server:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service management-server start</pre>
+    </li>
   </ol>
 
-  <h2 id="disabling-external-authorization">Disabling External Authorization</h2>
+  <h2 id="disabling-external-authorization">Disable external authorization</h2>
 
   <p>To disable external authorization:</p>
 
   <ol>
-    <li>Open <span style=
-    "font-family:courier new,courier,monospace;">/opt/apigee/customer/application/management-server.properties</span>
-    in a text editor. If the file doesn't exist, create it.</li>
-
-    <li>Change the authentication user store to ldap:<br>
-    <span style=
-    "font-family:courier new,courier,monospace;">conf_security_authentication.user.store=<strong>ldap</strong></span></li>
-
-    <li>Set this property to false:<br>
-    <span style=
-    "font-family:courier new,courier,monospace;">conf_security_externalized.authentication.role.mapper.enabled=<strong>false</strong></span></li>
-
-    <li>Restart the management server:<br>
-    <span style=
-    "font-family:courier new,courier,monospace;">&gt; /opt/apigee/apigee-service/bin/apigee-service
-    management-server start</span></li>
+    <li>Open <code>/opt/apigee/customer/application/management-server.properties</code>
+      in a text editor. If the file doesn't exist, create it.</li>
+    <li>Change the authentication user store to "ldap":
+      <pre>conf_security_authentication.user.store=<strong>ldap</strong></pre>
+    </li>
+    <li>Set this property to "false":
+      <pre>conf_security_externalized.authentication.role.mapper.enabled=<strong>false</strong></pre>
+    </li>
+    <li>Restart the management server:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service management-server start</pre>
+    </li>
   </ol>
 
   <h2 id="about-the-externalrolemapperimpl-sample-implementation">About the ExternalRoleMapperImpl
@@ -133,33 +95,29 @@
 
   <p>In the security.properties config file described previously in <a href=
   "#enabling-external-role-mapping-v2">Enabling external role mapping</a>, note the this line:</p>
-  <pre class="prettyprint">
-externalized.authentication.role.mapper.implementation.class=com.customer.authorization.impl.ExternalRoleMapperImpl
-</pre>
+  <pre class="prettyprint">externalized.authentication.role.mapper.implementation.class=com.customer.authorization.impl.ExternalRoleMapperImpl</pre>
 
   <p>This class implements the ExternalRoleMapperServiceV2 interface, and is required. You need to
   create your own implementation of this class that reflects your respective groups. When finished,
   place the compiled class in a JAR and put that JAR in the Management Server's classpath in:</p>
-  <pre class="prettyprint">
-/opt/apigee/edge-management-server/lib/thirdparty/
-</pre>
+
+  <pre class="prettyprint">/opt/apigee/edge-management-server/lib/thirdparty/</pre>
 
   <aside class="warning">
     <b>Warning:</b> To compile this class, you must reference the following JAR file included with
     Edge:
-    <pre class="prettyprint">
-/opt/apigee/edge-management-server/lib/infra/libraries/authentication-1.0.0.jar
-</pre>
+    <pre class="prettyprint">/opt/apigee/edge-management-server/lib/infra/libraries/authentication-1.0.0.jar</pre>
   </aside>
 
   <p>You can name the class and package whatever you wish as long as it implements
   ExternalRoleMapperServiceV2, is accessible in your classpath, and is referenced correctly in the
   management-server.properties config file.</p>
 
-  <p>Below we offer a well-commented sample implementation of an ExternalRoleMapperImpl class.</p>
+  <p>The following is a sample implementation of an ExternalRoleMapperImpl class:</p>
 
   <aside class="note"><b>Note:</b> For better readability, we recommend that you copy the code into
   a text editor or IDE with wider margins.</aside>
+
   <pre class="prettyprint">
 package com.customer.authorization.impl;
 
@@ -495,4 +453,6 @@ import javax.naming.directory.SearchResult;
    }
 
 }
-</pre>{% endblock %}
+</pre>
+
+{% endblock %}

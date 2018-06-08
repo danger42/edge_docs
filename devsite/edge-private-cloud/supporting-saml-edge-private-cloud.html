@@ -1,16 +1,16 @@
-  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}Supporting SAML on Edge for
-  Private Cloud{% endblock %} {% block body %}
+{% extends "private-cloud/v4.18.05/_base.html" %}
+{% block title %}Supporting SAML on Edge for Private Cloud{% endblock %}
+{% block body %}
 
   <p>The Edge UI and Edge management API operate by making requests to the Edge Management Server,
   where the Management Server supports the following types of authentication:</p>
 
   <ul>
     <li><strong>Basic Auth</strong> Log in to the Edge UI or make requests to the Edge management
-    API by passing your username and password.</li>
-
+      API by passing your username and password.</li>
     <li><strong>OAuth2</strong> Exchange your Edge Basic Auth credentials for an OAuth2 access
-    token and refresh token. Make calls to the Edge management API by passing the OAuth2 access
-    token in the Bearer header of an API call.</li>
+      token and refresh token. Make calls to the Edge management API by passing the OAuth2 access
+      token in the Bearer header of an API call.</li>
   </ul>
 
   <p>Edge also supports Security Assertion Markup Language (SAML) 2.0 as the authentication
@@ -18,22 +18,20 @@
   access tokens. However, now you can generate these tokens from SAML assertions returned by a SAML
   identity provider.</p>
 
-  <p><strong>Note</strong>: SAML is supported as the authentication mechanism only. It is not
+  <aside class="note"><strong>Note</strong>: SAML is supported as the authentication mechanism only. It is not
   supported for authorization. Therefore, you still use the Edge OpenLDAP database to maintain
-  authentication information. See <a href=
-  "/api-platform/system-administration/understanding-roles.html">Assigning roles</a> for
-  more.</p>
+  authentication information. See <a href="/api-platform/system-administration/understanding-roles">Assigning roles</a>
+  for more.</aside>
 
   <p>SAML supports a single sign-on (SSO) environment. By using SAML with Edge, you can support SSO
   for the Edge UI and API in addition to any other services that you provide and that also support
   SAML.</p>
 
-  <h2 id="supportaddedforoauth2toedgeforprivatecloud">Support added for OAuth2 to Edge for Private
-  Cloud</h2>
+  <h2 id="supportaddedforoauth2toedgeforprivatecloud">Support added for OAuth2 to Edge for Private Cloud</h2>
 
   <p>As mentioned above, the Edge implementation of SAML relies on OAuth2 access tokens.Therefore,
-  OAuth2 support has been added to Edge for Private Cloud. For more information, see <a href=
-  "/api-platform/security/oauth/oauth-introduction.html">Introduction to OAuth 2.0</a>.</p>
+  OAuth2 support has been added to Edge for Private Cloud. For more information, see
+  <a href="/api-platform/security/oauth/oauth-introduction">Introduction to OAuth 2.0</a>.</p>
 
   <h2 id="samladvantages">SAML advantages</h2>
 
@@ -41,22 +39,18 @@
 
   <ul>
     <li>Take full control of user management. When users leave your organization and are
-    deprovisioned centrally, they are automatically denied access to Edge..</li>
-
+      deprovisioned centrally, they are automatically denied access to Edge..</li>
     <li>Control how users authenticate to access Edge. You can choose different authentication
-    types for different Edge organizations.</li>
-
+      types for different Edge organizations.</li>
     <li>Control authentication policies. Your SAML provider may support authentication policies
-    that are more in line with your enterprise standards.</li>
-
+      that are more in line with your enterprise standards.</li>
     <li>You can monitor logins, logouts, unsuccessful login attempts and high risk activities on
-    your Edge deployment.</li>
+      your Edge deployment.</li>
   </ul>
 
   <h2 id="usingsamlwithedge">Using SAML with Edge</h2>
 
-  <p>To support SAML on Edge, you install <span style=
-  "font-family:courier new,courier,monospace;">apigee-sso</span>, the Edge SSO module. The
+  <p>To support SAML on Edge, you install <code>apigee-sso</code>, the Edge SSO module. The
   following image shows Edge SSO in an Edge for Private Cloud installation:</p>
 
   <p><img alt="" src="/private-cloud/images/EdgeSAML.png"></p>
@@ -81,84 +75,60 @@
   <p>Once generated from a SAML assertion, the OAuth token is valid for 30 minutes and the refresh
   token is valid for 24 hours. Your development environment might support automation for common
   development tasks, such as test automation or Continuous Integration/Continuous Deployment
-  (CI/CD), that require tokens with a longer duration. See <a href=
-  "using-saml-automated-tasks.html">Using SAML with automated tasks</a> for information on creating
-  special tokens for automated tasks.</p>
+  (CI/CD), that require tokens with a longer duration. See
+  <a href="using-saml-automated-tasks">Using SAML with automated tasks</a> for information on
+  creating special tokens for automated tasks.</p>
 
   <h2 id="edgeuiandapiurls">Edge UI and API URLs</h2>
 
   <p>The URL that you use to access the Edge UI and Edge management API is the same as used before
   you enabled SAML. For the Edge UI:</p>
-  <pre class="prettyprint">
-http://edge_ui_IP_DNS:9000
-https://edge_ui_IP_DNS:9000
-</pre>
+  <pre class="prettyprint">http://<var>edge_ui_IP_DNS</var>:9000
+https://<var>edge_ui_IP_DNS</var>:9000</pre>
 
-  <p>where <strong><em>edge_ui_IP_DNS</em></strong> is the IP address or DNS name of the machine
+  <p>where <var>edge_ui_IP_DNS</var> is the IP address or DNS name of the machine
   hosting the Edge UI. As part of configuring the Edge UI, you can specify that the connection use
   HTTP or the encrypted HTTPS protocol.</p>
 
   <p>For the Edge management API:</p>
-  <pre class="prettyprint">
-http://ms_IP_DNS:8080/v1  
-https://ms_IP_DNS:8080/v1  
-</pre>
+  <pre class="prettyprint">http://<var>ms_IP_DNS</var>:8080/v1
+https://<var>ms_IP_DNS</var>:8080/v1</pre>
 
-  <p>where <strong><em>ms_IP_DNS</em></strong> is the IP address or DNS name of the Management
+  <p>where <var>ms_IP_DNS</var> is the IP address or DNS name of the Management
   Server. As part of configuring the API, you can specify that the connection use HTTP or the
   encrypted HTTPS protocol.</p>
 
   <h2 id="configuretlsonedgesso">Configure TLS on Edge SSO</h2>
 
   <p>By default, the connection to Edge SSO uses HTTP over port 9099 on the node hosting
-  <span style="font-family:courier new,courier,monospace;">apigee-sso</span>, the Edge SSO module.
-  Built into <span style="font-family:courier new,courier,monospace;">apigee-sso</span> is a Tomcat
+  <code>apigee-sso</code>, the Edge SSO module. Built into <code>apigee-sso</code> is a Tomcat
   instance that handles the HTTP and HTTPS requests.</p>
 
   <p>Edge SSO and Tomcat support three connection modes:</p>
 
   <ul>
     <li><strong>DEFAULT</strong> - The default configuration supports HTTP requests on port
-    9099.</li>
-
+      9099.</li>
     <li><strong>SSL_TERMINATION</strong> - Enabled TLS access to Edge SSO on the port of your
-    choice. You must specify a TLS key and cert for this mode.</li>
-
+      choice. You must specify a TLS key and cert for this mode.</li>
     <li><strong>SSL_PROXY</strong> - Configures Edge SSO in proxy mode, meaning you installed a
-    load balancer in front of <span style=
-    "font-family:courier new,courier,monospace;">apigee-sso</span> and terminated TLS on the load
-    balancer. You can specify the port used on <span style=
-    "font-family:courier new,courier,monospace;">apigee-sso</span> for requests from the load
-    balancer.</li>
+      load balancer in front of <code>apigee-sso</code> and terminated TLS on the load
+      balancer. You can specify the port used on <code>apigee-sso</code> for requests from the load
+      balancer.</li>
   </ul>
 
-  <h2 id="enablesamlsupportforthedeveloperservicesportalandforapibaas">Enable SAML support for the
-  Developer Services portal and for API BaaS</h2>
+  <h2 id="enablesamlsupportforthedeveloperservicesportal">Enable SAML support for the portal</h2>
 
-  <p>After enabling SAML support for Edge, you can optionally enable SAML for:</p>
+  <p>After enabling SAML support for Edge, you can optionally enable SAML for {{portal_1st_use}}.
+  The portal supports SAML authentication when making requests to Edge. Note that this is
+  different from SAML authentication for developer login to the portal. You configure SAML
+  authentication for developer login separately. See
+  <a href="configuring-developer-services-portal-use-saml-communicate-edge">Configuring the
+  portal to use SAML to communicate with Edge</a> for more.</p>
 
-  <ul>
-    <li><strong>API BaaS</strong> - Both the BaaS Portal and BaaS Stack support SAML for user
-    authentication. See <a href="enabling-saml-api-baas.html">Enabling SAML for API BaaS</a> for
-    more.</li>
-
-    <li><strong>Developer Services portal</strong> - The portal supports SAML authentication when
-    making requests to Edge. Note that this is different from SAML authentication for developer
-    login to the portal. You configure SAML authentication for developer login separately. See
-    <a href="configuring-developer-services-portal-use-saml-communicate-edge.html">Configuring the
-    Developer Services portal to use SAML to communicate with Edge</a> for more.</li>
-  </ul>
-
-  <p>As part of configuring the Developer Services portal and API BaaS, you must specify the URL of
-  the Edge SSO module that you installed with Edge:</p>
+  <p>As part of configuring the portal, you must specify the URL of the Edge SSO
+  module that you installed with Edge:</p>
 
   <p><img alt="" src="/private-cloud/images/EdgeSAMLBaaSPorta.png"></p>
 
-  <p>Because Edge and API BaaS share the same Edge SSO module, they support single sign on. That
-  is, logging into either Edge or API BaaS logs you into both. That also means you only have to
-  maintain one location for all user credentials.</p>
-
-  <p>You can optionally configure single sign-out as well. See <a href=
-  "configure-single-sign-out-edge-ui.html">Configure single sign-out from the Edge UI</a>.</p>
-
-  {% endblock %}
+{% endblock %}

@@ -1,0 +1,212 @@
+{% extends "private-cloud/v4.18.05/_base.html" %}
+{% block title %}Portal overview{% endblock %}
+{% block body %}
+
+  <p>{{portal_1st_use}} is a template portal for content and community management. It is based on
+  the <a href="www.drupal.org" class="external">open source Drupal project</a>. The default portal
+  setup provides the following services:</p>
+    <ul>
+      <li><strong>Content management:</strong> Use the portal to create and manage:
+        <ul>
+          <li>API documentation
+          <li>Forums
+          <li>Blog postings</li>
+        </ul>
+      </li>
+      <li><strong>Testing:</strong> Use the portal to test APIs in real time using a built-in
+        test console</li>
+      <li><strong>Community management:</strong> The portal manages:
+        <ul>
+          <li>Manual or automatic user registration</li>
+          <li>Moderation of user comments</li>
+        </ul>
+    </ul>
+
+  <p>Portal's Role-Based Access Control (RBAC) model controls the access to features on the portal.
+  For example, you can enable controls to allow registered user to create forum posts, use test
+  consoles, and so on.</p>
+
+  <p>This version of this document has details specific to version <strong>{{cur_version}}</strong>. Any
+  references that are specific to previous versions are oversights and should be reported as
+  bugs.</p>
+
+  <p>For more information, see
+  <a href="/api-platform/publish/drupal/what-developer-portal">What is a developer portal?</a>
+
+  <h2 id="supportednetworktopologies">Supported network topologies</h2>
+
+   <p>Do not install the portal on the same servers as Apigee Edge.</p>
+
+  <p>The portal components can be installed in different network configurations, or topologies,
+  including:</p>
+
+  <ul>
+    <li><strong>Single machine:</strong> All portal components installed on a single machine.</li>
+    <li><strong>Small:</strong> The Drupal database is installed on a separate machine from the
+      other components.</li>
+  </ul>
+
+  <aside class="note"><strong>Note:</strong> These topologies are the only topologies supported by
+  Apigee. If you use a different network topology, Apigee might not be able to support it. Contact
+  your account manager or {{support}} if you require a custom solution.</aside>
+
+  <p>The following figure shows the single-machine topology where all portal components are
+  installed on a single machine:</p>
+
+  <p><img alt="" src="/private-cloud/images/portal-topography-aio.png"></p>
+
+  <aside class="note"><strong>Note:</strong>
+    <ul>
+      <li>On a new install of {{cur_version}}, the installation script installs Postgres and Nginx.</li>
+      <li>On an update to {{cur_version}} from an install that uses Postgres and Nginx, the installation
+        script updates Postgres and Nginx.</li>
+      <li>On an update to {{cur_version}} from an install that uses MySQL/MariaDB/Apache, you
+        <strong>must</strong> first convert your installation to Postgres/Nginx before you
+        can update to {{cur_version}}.</li>
+    </ul>
+  </aside>
+
+  <p>In this figure, the Public core contains the components that are publicly accessible. The
+  Private core contains components that are not publicly accessible.</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <th>Component</th>
+        <th>Description</th>
+        <th>Installed by</th>
+      </tr>
+      <tr>
+        <td>
+          <p>ELB</p>
+        </td>
+        <td>
+          <p>An Enterprise Load Balancer (ELB).</p>
+        </td>
+        <td>
+          <p>Your network provider.</p>
+          <p>For example, both Amazon and Rackspace provide Enterprise load balancers for use with
+          their instances.</p>
+        </td>
+      </tr>
+      <tr>
+        <td>Nginx 1.10.1</td>
+        <td>The Nginx web server used for installations of 4.18.05. </td>
+        <td>Apigee</td>
+      </tr>
+      <tr>
+        <td>
+          <p>Apache&nbsp;Server&nbsp;Version&nbsp;2.2</p>
+        </td>
+        <td>
+          <p>The Apache web server used in previous versions of the portal.</p>
+        </td>
+        <td>
+          <p>Apigee</p>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <p>Postgres 9.6</p>
+        </td>
+        <td>
+          <p>The database used by Drupal for new installations of 4.18.05.</p>
+        </td>
+        <td>
+          <p>Apigee, or connect to an existing installation.</p>
+          <p>If you want to connect to a remote Postgres installation, it must be version 9.6.</p>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <p>MySQL 5.0.15 or later</p>
+        </td>
+        <td>
+          <p>The database used in previous versions of the portal on RedHat 6.x
+          or CentOS 6.x. </p>
+        </td>
+        <td>
+          <p>Apigee, or connect to an existing installation. If MySQL is installed by the Apigee
+          installer, it installs the latest version available for your OS.</p>
+          <p>If you want to connect to a remote MySQL installation, it must be version 5.0.15 or
+          later.</p>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <p>MariaDB 5.1.38 or later</p>
+        </td>
+        <td>
+          <p>The database used in previous versions of the portal on RedHat 7.x
+          or CentOS 7.x.</p>
+        </td>
+        <td>
+          <p>Apigee, or connect to an existing installation. If MariaDB is installed by the Apigee
+          installer, it installs the latest version available for your OS.</p>
+          <p>If you want to connect to a remote MariaDB installation, it must be version 5.1.38 or
+          later.</p>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <p>Drupal shared storage</p>
+        </td>
+        <td>
+          <p>The shared storage area used by Drupal for uploaded files, static scripts, and other
+          information.</p>
+        </td>
+        <td>
+          <p>Apigee</p>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <p>Drush 6.2</p>
+        </td>
+        <td>
+          <p>The Drupal command line interface.</p>
+        </td>
+        <td>
+          <p>Apigee</p>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <p>PHP 7.0</p>
+        </td>
+        <td>
+          <p>Server-side scripting engine.</p>
+        </td>
+        <td>
+          <p>Apigee</p>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <p>Apache Solr</p>
+        </td>
+        <td>
+          <p>The Drupal search server. Apache Solr uses the Apache Lucene search library.</p>
+        </td>
+        <td>
+          <p>Apigee, but it is not enabled by default. Only enable it if you have a large amount of
+          data on the portal. See <a href="developer-services-portal-installation">Install the portal</a>
+          for instructions on enabling it.</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>The following example shows the small topology where the MySQL server resides on a separate
+  machine:</p>
+
+  <p><img alt="" src="/private-cloud/images/portal-topography-2-machine.png"></p>
+
+  <h2 id="accesstheapigeecommunityforyourquestions">Access the Apigee community for your
+  questions</h2>
+
+  {{community_blurb}}
+
+
+
+{% endblock %}
