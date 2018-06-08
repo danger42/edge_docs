@@ -24,10 +24,17 @@ This archive includes the following files:
        - Markdown (https://daringfireball.net/projects/markdown/syntax)
 
      This directory also includes PDFs, images, CSS, "helper" files, and included
-     files. Helper files are at the root that begin with an "_" (underscore).
-     Includes are described in detail below.
+     files.
 
-  2. /drupal-node-to-file-mapping.csv
+  2. /devsite/edge/includes/*
+
+     Contains files that are included within another file (see below for more info)
+     
+  2. /devsite/_localvars.html 
+  
+     Contains variable definitions that should replace {{variable_name}} (see below)
+
+  3. /drupal-node-to-file-mapping.csv
 
      Maps Drupal nodes to new files in CSV format. Columns are:
        - node_id          Drupal node ID in old system
@@ -37,10 +44,14 @@ This archive includes the following files:
        - new_alias        File location in new CMS
        - new_path
 
-  3. A license.txt file.
-  
-  4. /devsite/_localvars.html (see below)
+  4. /README.txt
 
+  5. /license.txt
+  
+  6. /41805-private-cloud-links.txt 
+  
+     Contains links to the 4.18.05 Private Cloud release notes and SAP Updates.
+  
 This may not be a comprehensive list of all files included in the archive; it's
 provided as informational.
 
@@ -73,7 +84,7 @@ sense out of it if you look at the source.
    {% includecode ... %}
 
    These directives insert the contents of another file into the current file.
-   Included files are in the /___shared-files directory of the repo. In some
+   Included files are in the /devsite/edge/includes directory of the repo. In some
    cases, an included file is used more than once.
 
 2. Variable values:
