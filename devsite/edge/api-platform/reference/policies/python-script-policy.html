@@ -1,0 +1,157 @@
+  {% extends "_base.html" %} {% block title %}Python Script policy{% endblock %} {% block body %}
+  <img src="/api-platform/images/icon_policy_python.jpg">
+
+  <h3>What</h3>
+
+  <p>The Python Script policy lets you add customized Python functionality to your API proxy flow,
+  especially when the functionality you need is beyond what the Edge out-of-the-box policies
+  provide.</p>
+
+  <p>{% dynamic include /includes/___edge-price-plan-note %}</p>
+
+  <h3 id="samples">Samples</h3><!-- Begin tab list -->
+  <!-- End tab list --><!-- Begin tabbed region -->
+
+  <div class="ds-selector-tabs">
+    <section>
+      <h3 class="two-line-tab">Python policy &amp; script</h3>
+
+      <h3>Python Script policy</h3>
+      <pre class="prettyprint">
+&lt;?xml version="1.0" encoding="UTF-8" standalone="yes"?&gt;
+&lt;Script name="Python-1"&gt;
+        &lt;DisplayName&gt;Python-1&lt;/DisplayName&gt;
+        &lt;ResourceURL&gt;py://myscript.py&lt;/ResourceURL&gt;
+&lt;/Script&gt;
+</pre>
+
+      <p>In this example, the element, ResourceURL specifies the relevant Python script
+      resource.</p>
+
+      <h3>Python Script</h3>
+
+      <p>This shows what you might include in the Python script itself.</p>
+      <pre class="prettyprint">
+import base64
+
+username = flow.getVariable("request.formparam.client_id")
+password = flow.getVariable("request.formparam.client_secret")
+
+base64string = base64.encodestring('%s:%s' % (username, password))[:-1]
+authorization = "Basic "+base64string
+
+flow.setVariable("authorizationParam",authorization)
+</pre>
+    </section>
+  </div><!-- End tabbed region. -->
+
+  <h2 id="elements">Element reference</h2>
+  <pre class="prettyprint">
+&lt;?xml version="1.0" encoding="UTF-8" standalone="yes"?&gt;
+&lt;Script name="Python-1"&gt;
+    &lt;DisplayName&gt;Python-1&lt;/DisplayName&gt;
+    &lt;ResourceURL&gt;py://myscript.py&lt;/ResourceURL&gt;
+    &lt;IncludeURL&gt;py://myscript_dependency.py&lt;/IncludeURL&gt;
+&lt;/Script&gt;
+</pre>{% dynamic include /includes/___policies-parent-element-attributes %}
+
+  <h2 id="resourceurlelement"><a id="ResourceURL" name="ResourceURL"></a>&lt;ResourceURL&gt;
+  element</h2>
+
+  <p>This element specifies the main Python file that will execute in the API flow. You can store
+  this file at the API proxy scope (under <code>/apiproxy/resources/py</code> in the API proxy
+  bundle or in the Scripts section of the API proxy editor's Navigator pane), or at the
+  organization or environment scopes for reuse across multiple API proxies, as described in
+  <a href="/api-platform/develop/resource-files.html">Resource files</a>. Your code can use the
+  objects, methods, and properties of the <a href=
+  "/api-platform/reference/javascript-object-model.html">JavaScript object model</a>.</p>
+  <pre class="prettyprint">
+&lt;ResourceURL&gt;py://myscript.py&lt;/ResourceURL&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>None</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Required</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>String</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="includeurlelement"><a id="IncludeURL" name="IncludeURL"></a>&lt;IncludeURL&gt;
+  element</h2>
+
+  <p>Specifies a Python file to be loaded as dependency to the main Python file specified with the
+  <code>&lt;ResourceURL&gt;</code> element. The scripts will be evaluated in the order in which
+  they are listed in the policy.</p>
+
+  <p>Include more than one Python dependency resource with additional
+  <code>&lt;IncludeURL&gt;</code> elements.</p>
+
+  <aside class="warning"><b>Warning:</b> If your Python files are stored at the organization or
+  environment level, be sure they were uploaded correctly with cURL using the <code>-F</code>
+  option or as a file attachment through a REST client. Content-Type is
+  <code>multipart/form-data</code>. For more information, see <a href=
+  "/api-platform/develop/resource-files.html">Resource files</a>.</aside>
+  <pre class="prettyprint">
+&lt;IncludeURL&gt;py://myscript_dependency.py&lt;/IncludeURL&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>None</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>String</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="usage">Usage notes</h2>
+
+  <p>A Python policy contains no actual code. Instead, a Python policy references a Python
+  'resource' and defines the Step in the API flow where the Python script executes. You can upload
+  your script through the Management UI proxy editor, or you can include it in the
+  <code>/resources/py</code> directory in API proxies that you develop locally.</p>
+
+  <aside class="warning"><b>Warning:</b> System calls are not permitted by the security model. For
+  example: internal file system reads or writes, or getting current user info, the process list, or
+  CPU/memory utilization. Although some such calls may be functional, they are unsupported and
+  liable to be actively disabled at any time. For forward compatibility, you should avoid making
+  such calls in your code.</aside>
+
+  <h2 id="errorcodes">Error codes</h2>
+
+  <p>{% dynamic include /includes/___python-script-policy-error-codes %}</p>
+
+  <h2 id="relatedtopics">Related topics</h2>
+
+  <aside class="note"><b>Sample:</b> For working samples of API proxies, see the <a href=
+  "/api-platform/samples/samples-reference.html">Samples list</a>.</aside>
+
+  {% endblock %}

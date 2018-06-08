@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html devsite>
+  <head>
+    <title>JavaScript Policy Error Codes</title>
+  </head>
+  <body>
+
+  <p>This section describes the error messages and flow variables that are set when this policy
+  triggers an error. This information is important to know if you are developing fault rules for a
+  proxy. To learn more, see <a href=
+  "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html">What you need to know
+  about policy errors</a> and <a href="/api-platform/fundamentals/fault-handling.html">Handling
+  faults</a>.</p>
+
+  <h3>Error code prefix</h3>
+
+  <p><code>steps.javascript</code> <span style="font-size: 10pt">(<a href=
+  "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html#aboutthedefaultpolicyerrorresponse">What's
+  this?</a>)</span></p>
+
+  <h3>Runtime errors</h3>
+
+  <p>These errors can occur when the policy executes.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th scope="col" width="277">Error name</th>
+
+        <th scope="col" width="129">HTTP<br>
+        Status</th>
+
+        <th scope="col" width="657">Occurs when</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td><code>ScriptExecutionFailed</code></td>
+
+        <td>500</td>
+
+        <td>A runtime error occurred in the JavaScript code. See the fault string for details.</td>
+      </tr>
+
+      <tr>
+        <td><code><!--td {border: 1px solid #ccc;}br {mso-data-placement:same-cell;}-->
+        <!--td {border: 1px solid #ccc;}br {mso-data-placement:same-cell;}--><span data-sheets-userformat="{'2':513,'3':{'1':0},'12':0}"
+        data-sheets-value=
+        "{'1':2,'2':'javascript.ScriptExecutionFailedLineNumber'}">ScriptExecutionFailedLineNumber</span></code></td>
+
+        <td><!--td {border: 1px solid #ccc;}br {mso-data-placement:same-cell;}-->
+        <!--td {border: 1px solid #ccc;}br {mso-data-placement:same-cell;}--><span data-sheets-userformat="{'2':513,'3':{'1':0},'12':0}"
+        data-sheets-value=
+        "{'1':2,'2':'Execution of {0} failed on line {2} with error: {1}'}">500</span></td>
+
+        <td>An error occurred in the JavaScript code. See the fault string for details.</td>
+      </tr>
+
+      <tr>
+        <td><code>
+        <!--td {border: 1px solid #ccc;}br {mso-data-placement:same-cell;}--><span data-sheets-userformat="{'2':513,'3':{'1':0},'12':0}"
+        data-sheets-value=
+        "{'1':2,'2':'javascript.ScriptSecurityError'}">ScriptSecurityError</span></code></td>
+
+        <td>500</td>
+
+        <td>A security error occurred when the JavaScript executed. See the fault string for
+        details.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Deployment errors</h3>
+
+  <p>These errors can occur when you deploy a proxy containing this policy.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th scope="col" width="222">Error name</th>
+
+        <th scope="col" width="877">Occurs when</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td><code>WrongResourceType</code></td>
+
+        <td>In the <code>&lt;ResourceURL&gt;</code> and <code>&lt;IncludeURL&gt;</code>
+        elements, you must refer to a JavaScript file correctly using the <code>jsc</code> resource
+        type. For example, here is the correct way to refer to the JavaScript file in the
+        policy:<br>
+        <code>&lt;ResourceURL&gt;jsc://JavaScript-1.js&lt;/ResourceURL&gt;</code></td>
+      </tr>
+
+      <tr>
+        <td><code>NoResourceForURL</code></td>
+
+        <td>The <code>&lt;ResourceURL&gt;</code> and <code>&lt;IncludeURL&gt;</code> elements
+        refer to a JavaScript file that does not exist.</td>
+      </tr>
+
+      <tr>
+        <td><code>ScriptCompilationFailed</code></td>
+
+        <td>An error occurred when Edge tried to compile the JavaScript code. Refer to the error
+        message for details.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Fault variables</h3>
+
+  <p>These variables are set when this policy triggers an error at runtime. For more information,
+  see <a href="/api-platform/fundamentals/what-you-need-know-about-policy-errors.html">What you
+  need to know about policy errors</a>.</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <th width="324">Variables set <code><span style="font-size: 10pt">(<a href=
+        "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html">Learn
+        more</a>)</span></code></th>
+
+        <th width="428">Where</th>
+
+        <th width="428">Example</th>
+      </tr>
+
+      <tr>
+        <td width="324"><code>[prefix].[policy_name].failed</code></td>
+
+        <td width="428">The <code>[prefix]</code> is <strong><code>javascript</code></strong>.<br>
+        The <code>[policy_name]</code> is the name of the policy that threw the error.</td>
+
+        <td width="428"><code>javascript.JavaScript-1.failed = true</code></td>
+      </tr>
+
+      <tr>
+        <td><code>fault.[error_name]</code></td>
+
+        <td><code>[error_name]</code> is the specific error name to check for as listed in the
+        table above.</td>
+
+        <td><code>fault.name Matches "ScriptExecutionFailed"</code></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Example error response</h3>
+
+  <aside class="note"><b>Note:</b> For error handling, the best practice is to trap the
+  <code>errorcode</code> part of the error response. Do not rely on the text in the
+  <code>faultstring</code>, because it could change.</aside>
+  <pre class="prettyprint">
+{
+  "fault": {
+    "faultstring": "Execution of SetResponse failed with error: Javascript runtime error: "ReferenceError: "status" is not defined. (setresponse.js:6)\"",
+    "detail": {
+      "errorcode": "steps.javascript.ScriptExecutionFailed"
+    }
+  }
+}
+</pre>
+
+  <h3>Example fault rule</h3>
+  <pre class="prettyprint">
+&lt;FaultRule name="JavaScript Policy Faults"&gt;
+    &lt;Step&gt;
+        &lt;Name&gt;AM-CustomErrorResponse&lt;/Name&gt;
+        &lt;Condition&gt;(fault.name Matches "ScriptExecutionFailed") &lt;/Condition&gt;
+    &lt;/Step&gt;
+    &lt;Condition&gt;(javascript.JavaScript-1.failed = true) &lt;/Condition&gt;
+&lt;/FaultRule&gt;
+</pre>
+  </body>
+  </html>

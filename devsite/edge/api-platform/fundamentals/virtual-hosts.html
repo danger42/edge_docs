@@ -1,0 +1,466 @@
+  {% extends "_base.html" %} {% block title %}About virtual hosts{% endblock %} {% block body %}
+
+  <aside class="note"><b>Note:</b> <strong>Self-service virtual hosts for Edge for the Cloud
+  require that you enable TLS. For information about TLS, see <a href=
+  "/api-platform/system-administration/ssl">TLS/SSL</a>.</strong></aside>
+
+  <p>In Edge, a <em>Router</em> handles all incoming API traffic. That means all HTTP and HTTPS
+  requests to an Edge API proxy are first handled by an Edge Router. Therefore, API proxy request
+  must be directed to the IP address and open port on a Router.</p>
+
+  <p>A <em>virtual host</em> lets you host multiple domain names on a single server or group of
+  servers. For Edge, the servers correspond to Edge Routers. By defining virtual hosts on a Router,
+  you can handle requests to multiple domains.</p>
+
+  <p>A virtual host on Edge defines a protocol (HTTP or HTTPS), along with a Router port and a host
+  alias. The host alias is typically a DNS domain name that maps to a Router's IP address.</p>
+
+  <p>For example, the following image shows a Router with two virtual host definitions:</p>
+
+  <p><img alt="" src="/api-platform/images/vhost_example_1.png"></p>
+
+  <p>In this example, you have two virtual host definitions. One handles HTTPS requests on the
+  domain <em>domainName1</em>, the other handles HTTP requests on <em>domainName2</em>.</p>
+
+  <p>On a request to an API proxy, the Router compares the <code>Host</code> header of the incoming request to the
+  list of <strong>host aliases</strong> defined by all virtual hosts to determine which virtual
+  host handles the request.</p>
+
+  <aside class="note"><b>Note:</b> cURL commands, browsers, and many other utilities automatically
+  set the <code>Host</code> header with the
+  domain of the request. If for any reason your app is not setting the <code>Host</code> header automatically, you must set it
+  manualy.</aside>
+
+  <h2 id="aboutvirtualhostdefinitions">About virtual host definitions</h2>
+
+  <p>When you create a virtual host, you must specify the following information:</p>
+
+  <ul>
+    <li>The <strong>name</strong> of the virtual host. You use that name to reference the virtual
+    host in your API proxies and when configuring the virtual host.</li>
+
+    <li>The <strong>host alias</strong> of the virtual host. Typically the host alias is the DNS
+    domain name that maps to the IP address on the Router.</li>
+
+    <li>An <strong>open port</strong> on the Router.</li>
+
+    <li>Whether TLS (HTTPS access) is enabled or not (HTTP access).</li>
+  </ul>
+
+  <p>For example, you specify the following information when you create a virtual host:</p>
+
+  <ul>
+    <li>name = <strong>myvhost</strong></li>
+
+    <li>host alias = <strong>apis.acme.com</strong></li>
+
+    <li>port = <strong>443</strong></li>
+
+    <li>TLS is enabled</li>
+  </ul>
+
+  <aside class="note"><b>Note:</b> You can define multiple virtual hosts on an Edge Router that
+  share the same port number. However, the host alias for each virtual host must be unique, and
+  they must match in support for TLS. That is, all virtual hosts on the same port must all support
+  TLS, or none.</aside>
+
+  <p>For example, based on the setting above for the virtual host, a request to an API proxy uses
+  the form:</p>
+  <pre class="prettyprint">
+https://apis.acme.com/{<var>proxy-base-path</var>}/{<var>resource-path</var>}
+</pre>
+
+  <p>where:</p>
+
+  <ul>
+    <li>{<var>proxy-base-path</var>} is defined when you create an API proxy and is unique for each API proxy.</li>
+
+    <li>{<var>resource-path</var>} the path to a resource accessible through the API proxy.</li>
+  </ul>
+
+  <h3 id="aboutvirtualhostdefinitions-aboutvirtualhostsinedgeforthecloud">About virtual hosts in
+  Edge for the Cloud</h3>
+
+  <p>In Edge for the Cloud, when you first create an Edge organization, Apigee automatically
+  created two environments (<code>test</code>
+  and <code>prod</code>), two virtual hosts in
+  each environment (<strong>default</strong> and <strong>secure</strong>), and DNS records for each
+  host alias.</p>
+
+  <aside class="note"><b>Note:</b> By creating DNS records for each host alias, Cloud customers do
+  not need to know the IP address of the Edge Routers.</aside>
+
+  <p>The host alias of each virtual host contains the name of the <strong>organization</strong> and
+  <strong>environment</strong>, as shown in the following table:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th><strong>Environment</strong></th>
+
+        <th><strong>Virtual host name</strong></th>
+
+        <th><strong>Host alias</strong></th>
+
+        <th><strong>Port</strong></th>
+
+        <th><strong>TLS enabled</strong></th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td rowspan="2">prod</td>
+
+        <td>default</td>
+
+        <td><code>{org-name}-<strong>prod</strong>.apigee.net</code></td>
+
+        <td>80</td>
+
+        <td>No</td>
+      </tr>
+
+      <tr>
+        <td>secure</td>
+
+        <td><code>{org-name}-<strong>prod</strong>.apigee.net</code></td>
+
+        <td>443</td>
+
+        <td>Yes</td>
+      </tr>
+
+      <tr>
+        <td rowspan="2">test</td>
+
+        <td>default</td>
+
+        <td><code>{org-name}-<strong>test</strong>.apigee.net</code></td>
+
+        <td>80</td>
+
+        <td>No</td>
+      </tr>
+
+      <tr>
+        <td>secure</td>
+
+        <td><code>{org-name}-<strong>test</strong>.apigee.net</code></td>
+
+        <td>443</td>
+
+        <td>Yes</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>For example, the default domain name of an organization called "<code>myorg</code>"
+    in the <code>prod</code> environment is "<code>myorg-prod.apigee.net</code>".
+    Therefore, to access an API proxy in that organization, you use a URL in the form:</p>
+
+  <pre class="prettyprint">
+http://myorg-prod.apigee.net/{<var>proxy-base-path</var>}/{<var>resource-path</var>}
+https://myorg-prod.apigee.net/{<var>proxy-base-path</var>}/{<var>resource-path</var>}
+</pre>
+
+  <p>However, a domain name containing "apigee.net" may not be what you want to expose to your
+  customers. Paid Apigee customers can use a DNS entry and CNAME record to map a domain name to
+  your organization on Edge. They must also create a virtual host with the host alias set to that
+  domain name. This lets developers access your API through a domain specific to your company.</p>
+
+  <aside class="note"><b>Note:</b> Free and trial accounts cannot create virtual hosts and are
+  limited to the four virtual hosts created for them at Edge registration time.</aside>
+
+  <p>For example:</p>
+  <pre class="prettyprint">
+https://apis.acme.com/{proxy-base-path}/{resource-path}
+</pre>
+
+  <p>See <a href="#abouthostaliasesanddnsnames">About host aliases and DNS names</a> below for
+  more.</p>
+
+  <h3 id="aboutvirtualhostdefinitions-aboutvirtualhostsonedgeforprivatecloud">About virtual hosts
+  on Edge for Private Cloud</h3>
+
+  <p>When you install Apigee Edge for Private Cloud, there are no default organizations,
+  environments, or virtual hosts created for you. After you complete the Edge installation process,
+  your first action is typically to create an organization, environment, and virtual host through
+  the "onboarding" process.</p>
+
+  <p>To perform onboarding, run the following command on the Edge Management Server node:</p>
+  <pre class="devsite-terminal">
+/opt/apigee/apigee-service/bin/apigee-service apigee-provision setup-org -f <var>configFile</var>
+</pre>
+
+  <p>where <strong><em>configFile</em></strong> contains the information necessary to create a
+  user, organization, environment, and virtual host.</p>
+
+  <p>For example, you create:</p>
+
+  <ul>
+    <li>A user of your choosing to function as the organization administrator</li>
+
+    <li>An organization named <code>example</code></li>
+
+    <li>An environment in the organization named <code>prod</code></li>
+
+    <li>A virtual host in the environment named <code>default</code> that allows HTTP access on port
+    9001</li>
+
+    <li>A host alias of the DNS name used to access the Router, or the IP address of the Router and
+    port of the virtual host in the form <code>IP:9001</code>.</li>
+  </ul>
+
+  <p>You can later add any number of organizations, environments, and virtual hosts to your
+  on-premises version of Edge. For more information, see:</p>
+
+  <ul>
+    <li><a href="/private-cloud/latest/setting-virtual-host">Setting up a virtual
+    host</a></li>
+
+    <li><a href=
+    "/private-cloud/latest/creating-organization-environment-and-virtual-host">Creating an
+    Organization, Environment, and Virtual Host</a></li>
+  </ul>
+
+  <p>Virtual hosts are opened on the Edge Router. Therefore, you have to ensure that the port that
+  you specify for the virtual host is open on the Router. You can use a command in the form below
+  to open a port:</p>
+  <pre class="devsite-terminal">
+iptables -A INPUT -m state --state NEW -m tcp -p tcp --dport 9001 -j ACCEPT --verbose
+</pre>
+
+  <p>After running that command, you can access your APIs by using a URL in the form:</p>
+  <pre class="prettyprint">
+http://&lt;<var>router-ip</var>&gt;:9001/{proxy-base-path}/{resource-path}
+</pre>
+
+  <p>Note that this URL uses the IP address of the Router and the virtual host port on the Router
+  to access your APIs. Typically, you do not publish your APIs to customers with an IP address and
+  port number. Instead, you define a DNS entry for the router and port. For example:</p>
+  <pre class="prettyprint">
+http://myAPI.myCo.com/{proxy-base-path}/{resource-path}
+</pre>
+
+  <p>When you define the DNS entry, then you also must create a virtual host with a host alias that
+  matches the domain name of the DNS entry. From the example above, you would specify a host alias
+  of myAPI.myCo.com when you create the virtual host.</p>
+
+  <p>See <a href="#abouthostaliasesanddnsnames">About host aliases and DNS names</a> below for
+  more.</p>
+
+
+  <h2 id="abouthostaliasesanddnsnames">About host aliases and DNS names</h2>
+
+  <p>One property that you set for a virtual host is the <em>host alias</em>. The host alias is
+  typically the DNS name of the virtual host. How you set the host alias depends on your type of
+  Edge installation: Cloud or Private Cloud.</p>
+
+  <h3 id="abouthostaliasesanddnsnames-hostaliasesanddnsnamesforedgeforthecloud">Host aliases and
+  DNS names for Edge for the Cloud</h3>
+
+  <p>In Edge for the Cloud, when you first create an Edge organization, Apigee automatically
+  creates two environments (<code>test</code>
+  and <code>prod</code>), two virtual hosts in
+  each environment (<strong>default</strong> and <strong>secure</strong>), and DNS records for each
+  virtual host.</p>
+
+  <p>The host alias of the virtual hosts contains the name of the organization and environment.
+  Therefore, a request through a virtual host has the form:</p>
+
+  <ul>
+    <li><code>http://{<var>org-name</var>}<strong>-prod</strong>.apigee.net/{<var>proxy-base-path</var>}/{<var>resource-path</var>}</code></li>
+
+    <li><code>https://{<var>org-name</var>}<strong>-prod</strong>.apigee.net/{<var>proxy-base-path</var>}/{<var>resource-path</var>}</code></li>
+
+    <li><code>http://{<var>org-name</var>}<strong>-test</strong>.apigee.net/{<var>proxy-base-path</var>}/{<var>resource-path</var>}</code></li>
+
+    <li><code>https://{<var>org-name</var>}<strong>-test</strong>.apigee.net/{<var>proxy-base-path</var>}/{<var>resource-path</var>}</code></li>
+  </ul>
+
+  <p>Typically, you want to create virtual hosts that use your domain name, rather than use the
+  default <code>apigee.net</code> domain. To do
+  so, you must first create your own DNS entry and CNAME record.</p>
+
+  <p>The following figure shows a typical configuration for how Edge processes an API request:</p>
+
+  <p><img alt="" src="/api-platform/images/cloud_dns.png"></p>
+
+  <p>In this example:</p>
+
+  <ul>
+    <li><strong>api.acme.com</strong> is your desired domain name.</li>
+
+    <li>You define a DNS entry and CNAME record to point <strong>api.acme.com</strong> to
+    <strong>acme-prod.apigee.net</strong>.</li>
+
+    <li>The request contains the <code>Host</code> header which the Router uses to
+    determine the virtual host that handles the request.</li>
+  </ul>
+
+  <p>In this example, you specify the following information in a virtual host definition:</p>
+
+  <ul>
+    <li>name = <strong>myvhost</strong></li>
+
+    <li>host alias = <strong>apis.acme.com</strong></li>
+
+    <li>port = <strong>443</strong></li>
+
+    <li>Enable TLS access</li>
+  </ul>
+
+  <p>See <a href="configuring-virtual-hosts-cloud">Configuring virtual hosts for the Cloud</a> for more.</p>
+
+  <h3 id="abouthostaliasesanddnsnames-hostaliasesanddnsnamesforedgeforprivatecloud">Host aliases
+  and DNS names for Edge for Private Cloud</h3>
+
+  <p>Like with the Cloud, you create virtual hosts that use your own domain name for the host
+  alias. You then create your own DNS entry and CNAME record to access those virtual hosts.</p>
+
+  <p>One of the differences between Cloud and Private Cloud is that in the Cloud Apigee
+  automatically created DNS names for your organizations, in the form:</p>
+
+  <ul>
+    <li>name=<strong>default</strong>: <code>http://{<var>org-name</var>}-{<var>env-name</var>}.apigee.net</code>
+    (Router port 80)</li>
+
+    <li>name=<strong>secure</strong>: <code>https://{<var>org-name</var>}-{<var>env-name</var>}.apigee.net</code>
+    (Router port 443)</li>
+  </ul>
+
+  <p>In Edge for the Private Cloud, you have to create the DNS entries to the IP address and port
+  of your Router.</p>
+
+  <p>For example, you specify this information in a virtual host definition:</p>
+
+  <ul>
+    <li>name = <strong>myvhost</strong></li>
+
+    <li>host alias = <strong>apis.acme.com</strong></li>
+
+    <li>port = <strong>9001</strong></li>
+
+    <li>Enable TLS access</li>
+  </ul>
+
+  <p>The following figure shows a typical configuration for how Edge processes an API request:</p>
+
+  <p><img alt="" src="/api-platform/images/opdk_dns.png"></p>
+
+  <p>In this example:</p>
+
+  <ul>
+    <li><strong>api.acme.com</strong> is your desired domain name.</li>
+
+    <li>You define a DNS entry and CNAME record to point <strong>api.acme.com</strong> to the IP
+    address and port of the Router.</li>
+
+    <li>The request contains the <code>Host</code> header which the Router uses to
+    determine the virtual host that handles the request.</li>
+  </ul>
+
+  <p>See <a href=
+  "configuring-virtual-hosts-private-cloud">Configuring virtual hosts for the Private Cloud</a> for more.</p>
+
+  <h2 id="virtualhostproperties">About virtual host properties</h2>
+
+  <p>To create a virtual host, create an XML object that defines the virtual host. For example, the
+    following XML object defines a virtual host. </p>
+
+  <p>The list of properties that you can set is based on whether you are using Edge for the Cloud
+    or Edge for the Private Cloud. If you are using eEdge for the Private Cloud, the list of
+    avialable properties is also dependent on your version of Edge.
+    For a complete description of all properties of a virtual host, see
+    <a href="virtual-host-property-reference">Virtual host property reference</a>:</p>
+
+  <pre class="prettyprint">
+&lt;VirtualHost name="<var>vhostName</var>"&gt;
+    &lt;HostAliases&gt;
+        &lt;HostAlias&gt;<var>hostAlias</var>&lt;/HostAlias&gt;
+    &lt;/HostAliases&gt;
+    &lt;Interfaces&gt;
+        &lt;!-- Private Cloud only --&gt;
+        &lt;Interface&gt;<var>interfaceName</var>&lt;/Interface&gt;
+    &lt;Port&gt;<var>portNumber</var>&lt;/Port&gt;
+    &lt;BaseURL&gt;http://myCo.com&lt;&lt;/BaseUrl&gt;
+    &lt;OCSPStapling&gt;off&lt;/OCSPStapling&gt;
+    &lt;RetryOptions/&gt;
+   &lt;SSLInfo&gt;
+        &lt;Enabled&gt;<var>trueFalse</var>&lt;/Enabled&gt;
+        &lt;ClientAuthEnabled&gt;<var>trueFalse</var>&lt;/ClientAuthEnabled&gt;
+        &lt;KeyStore&gt;ref://<var>keystoreRef</var>&lt;/KeyStore&gt;
+        &lt;KeyAlias&gt;<var>keyAlias</var>&lt;/KeyAlias&gt;
+        &lt;TrustStore&gt;ref://<var>truststoreRef</var>&lt;/TrustStore&gt;
+        &lt;IgnoreValidationErrors&gt;<var>trueFalse</var>&lt;/IgnoreValidationErrors&gt;
+    &lt;/SSLInfo&gt;
+    &lt;Properties&gt;
+        &lt;Property name="proxy_read_timeout"&gt;<var>timeout</var>&lt;/Property&gt;
+        &lt;Property name="keepalive_timeout"&gt;<var>timeout</var>&lt;/Property&gt;
+        &lt;Property name="proxy_request_buffering"&gt;<var>onOff</var>&lt;/Property&gt;
+        &lt;Property name="proxy_buffering"&gt;onOff&lt;/Property&gt;
+        &lt;Property name="ssl_protocols"&gt;<var>protocolList</var>&lt;/Property&gt;
+        &lt;Property name="ssl_ciphers"&gt;<var>cipherList</var>&lt;/Property&gt;
+    &lt;/Properties&gt;
+&lt;/VirtualHost&gt;
+</pre>
+
+  <p>A virtual host has several properties that you set when you create it. The most important
+  are:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th><strong>Property</strong></th>
+
+        <th><strong>Description</strong></th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td><strong>name</strong></td>
+
+        <td>Use the virtual host name to reference the virtual host in an API proxy or in an API
+        call.</td>
+      </tr>
+
+      <tr>
+        <td><strong>host alias</strong></td>
+
+        <td>
+          Typically the DNS name of the virtual host.
+
+          <p>The host alias must be unique across all organizations and environments.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td><strong>port</strong></td>
+
+        <td>
+          The Router port of the virtual host. All requests through the virtual host go through a
+          specific Router port. For example, port 443 for TLS access over HTTPS and port 80 for
+          HTTP access.
+
+          <p><strong>Note</strong>: Cloud customers can only create TLS-enabled virtual hosts on
+          port 443.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td><strong>SSLInfo (TLS)</strong></td>
+
+        <td>
+          For a virtual host that supports TLS, the keystore containing the TLS cert and key, key
+          alias, and any other TLS information.
+
+          <p><strong>Note</strong>: Cloud customers can only create TLS-enabled virtual hosts on
+          port 443.</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+{% endblock %}

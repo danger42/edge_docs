@@ -1,0 +1,157 @@
+  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}Configuring TLS for the
+  management UI{% endblock %} {% block body %}
+
+  <p>By default, you access the Edge management UI over HTTP by using the IP address of the
+  Management Server node and port 9000. For example:</p>
+  <pre class="prettyprint">
+http://ms_IP:9000
+</pre>
+
+  <p>Alternatively, you can configure TLS access to the management UI so that you can access it in
+  the form:</p>
+  <pre class="prettyprint">
+https://ms_IP:9443
+</pre>
+
+  <p>In this example, you configure TLS access to use port 9443. However, that port number is not
+  required by Edge - you can configure the Management Server to use other port values. The only
+  requirement is that your firewall allows traffic over the specified port. </p>
+
+  <h2 id="ensurethatyourtlsportisopen">Ensure that your TLS port is open</h2>
+
+  <p>The procedure in this section configures TLS to use port 9443 on the Management Server.
+  Regardless of the port that you use, you must ensure that the port is open on the Management
+  Server. For example, you can use the following command to open it:</p>
+  <pre class="prettyprint">
+$ iptables -A INPUT -m state --state NEW -m tcp -p tcp --dport 9443 -j ACCEPT --verbose 
+</pre>
+
+  <aside class="note">
+    <b>Note:</b> This example uses port 9443 for the TLS port, and not the more common port 443.
+    The reason is that ports below 1024 are typically protected by the operating system and require
+    the process that accesses them to have root access. The Edge UI runs as the "apigee" user and
+    therefore typically does not have access to ports below 1024.
+
+    
+
+    <p>One alternative it to use a load balancer with the Edge UI and terminate TLS on the load
+    balancer on port 443. You can then use either HTTP or HTTPS between the load balancer and the
+    Edge UI. </p>
+
+    
+
+    <p>Another alternative is to use <span style=
+    "font-family:courier new,courier,monospace;">iptables</span> to forward requests to port 443 to
+    port 9443. For example:</p>
+    <pre class="prettyprint">
+iptables -A PREROUTING -t nat -i eth0 -p tcp --dport 443 -j REDIRECT --to-port 9443 
+</pre>
+  </aside>
+
+  <h2 id="configuretls">Configure TLS</h2>
+
+  <aside class="note"><b>Note:</b> If you have multiple UI instances installed on separate nodes,
+  you must configure both to support TLS. After enabling TLS on the first node, see <a href=
+  "supporting-multiple-edge-ui-instances.html">Supporting multiple Edge UI instances</a> for
+  information about configuring TLS on the second node. </aside>
+
+  <p>Use the following procedure to configure TLS access to the management UI:</p>
+
+  <ol>
+    <li>Generate the keystore JKS file containing your TLS certification and private key and copy
+    it to the Management Server node. For more information, see <a href=
+    "configuring-ssl-edge-premises.html">Configuring TLS/SSL for Edge On Premises</a>.</li>
+
+    <li>Run the following command to configure TLS:<br>
+    <span style="font-family:courier new,courier,monospace;">$
+    /opt/apigee/apigee-service/bin/apigee-service edge-ui configure-ssl</span></li>
+
+    <li>Enter the HTTPS port number, for example, 9443.</li>
+
+    <li>Specify if you want to disable HTTP access to the management UI. By default, the management
+    UI is accessible over HTTP on port 9000. </li>
+
+    <li>Enter the keystore algorithm. The default is JKS.</li>
+
+    <li>Enter the absolute path to the keystore JKS file. <br>
+    <br>
+    The script copies the file to the <span style=
+    "font-family:courier new,courier,monospace;">/opt/apigee/customer/conf</span> directory on the
+    Management Server node, and changes the ownership of the file to <span style=
+    "font-family:courier new,courier,monospace;">apigee</span>.</li>
+
+    <li>Enter the clear text keystore password.</li>
+
+    <li>The script then restarts the Edge management UI. After the restart, the management UI
+    supports access over TLS.<br>
+    You can see these settings in <span style=
+    "font-family:courier new,courier,monospace;">/opt/apigee/etc/edge-ui.d/SSL.sh</span>.</li>
+  </ol>
+
+  <p>You can also pass a config file to the command instead of responding to prompts. The config
+  file takes the following properties:</p>
+
+  <div>
+    <pre class="prettyprint">
+HTTPSPORT=9443
+DISABLE_HTTP=y
+KEY_ALGO=JKS
+KEY_FILE_PATH=/opt/apigee/customer/application/mykeystore.jks
+KEY_PASS=clearTextKeystorePWord
+</pre>
+
+    <p>Then use the following command to configure TLS of the Edge UI:</p>
+    <pre class="prettyprint">
+/opt/apigee/apigee-service/bin/apigee-service edge-ui configure-ssl -f <em><strong>configFile</strong></em>
+</pre>
+  </div>
+
+  <h2 id="configuretheedgeuiwhentlsterminatesontheloadbalancer">Configure the Edge UI when TLS
+  terminates on the load balancer</h2>
+
+  <p>If you have a load balancer that forwards requests to the Edge UI, you might choose to
+  terminate the TLS connection on the load balancer, and then have the load balancer forward
+  requests to the Edge UI over HTTP. This configuration is supported but you need to configure the
+  load balancer and the Edge UI accordingly.</p>
+
+  <p>The additional configuration is required when the Edge UI sends users emails to set their
+  password when the user is created or when the user request to reset a lost password. This email
+  contains a URL that the user selects to set or reset a password. By default, if the Edge UI is
+  not configured to use TLS, the URL in the generated email uses the HTTP protocol, and not HTTPS.
+  You must configure the load balancer and Edge UI to generates an email address that uses
+  HTTPS.</p>
+
+  <p>To configure the load balancer, ensure that it sets the following header on requests forwarded
+  to the Edge UI:</p>
+  <pre class="prettyprint">
+X-Forwarded-Proto: https
+</pre>
+
+  <p>To configure the Edge UI:</p>
+
+  <ol>
+    <li>Open the <span style=
+    "font-family:courier new,courier,monospace;">/opt/apigee/customer/application/ui.properties</span>
+    file in an editor. If the file does not exist, create it:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt; vi
+    /opt/apigee/customer/application/ui.properties</span></li>
+
+    <li>Set the following property in <span style=
+    "font-family:courier new,courier,monospace;">ui.properties</span>:<br>
+    <span style=
+    "font-family:courier new,courier,monospace;">conf/application.conf+trustxforwarded=true</span></li>
+
+    <li>Save your changes to <span style=
+    "font-family:courier new,courier,monospace;">ui.properties</span>.</li>
+
+    <li>Restart the Edge UI:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt;
+    /opt/apigee/apigee-service/bin/apigee-service edge-ui restart</span></li>
+  </ol>
+
+  <h2 id="disabletlsontheedgeui">Disable TLS on the Edge UI</h2>
+
+  <p>To disable TLS on the Edge UI, use the following command:</p>
+  <pre class="prettyprint">
+/opt/apigee/apigee-service/bin/apigee-service edge-ui disable-ssl
+</pre>{% endblock %}

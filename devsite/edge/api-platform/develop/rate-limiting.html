@@ -1,0 +1,61 @@
+  {% extends "_base.html" %} {% block title %}Rate-limiting{% endblock %} {% block body %}
+
+  <p>To maintain performance and availability across a diverse base of client apps, it's critical
+  to maintain app traffic within the limits of the capacity of your APIs and backend services. It's
+  also important to ensure that apps don't consume more resources than permitted.</p>
+
+  <p>Apigee Edge provides three mechanisms that enable you to optimize traffic management to
+  minimize latency for apps while maintaining the health of backend services. Each policy type
+  addresses a distinct aspect of traffic management. In some cases, you might use all three policy
+  types in a single API proxy.</p>
+
+  <div class="video">
+    <p>Watch this video for an introduction to API traffic management policies.</p>
+
+    <div style="text-align: left;">
+      <iframe allowfullscreen="" frameborder="0" height="315" src=
+      "https://www.youtube.com/embed/-hlpMQr-sss" width="560"></iframe>
+    </div>
+  </div>
+
+  <h2 id="spikearrest">Spike Arrest</h2>
+
+  <p>This policy smooths traffic spikes by dividing a limit that you define into smaller intervals.
+  For example, if you define a limit of 100 messages per second, the Spike Arrest policy enforces a
+  limit of about 1 request every 10 milliseconds (1000 / 100); and 30 messages per minute is
+  smoothed into about 1 request every 2 seconds (60 / 30). The Spike Arrest limit should be close
+  to capacity calculated for either your backend service or the API proxy itself. The limit should
+  also be configured for shorter time intervals, such as seconds or minutes. This policy should be
+  used to prevent sudden traffic bursts caused by malicious attackers attempting to disrupt a
+  service using a denial-of-service (DOS) attack or by buggy client applications.</p>
+
+  <p>See <a href="/api-platform/reference/policies/spike-arrest-policy.html">Spike Arrest
+  policy</a>.</p>
+
+  <h2 id="quota">Quota</h2>
+
+  <p>This policy enforces consumption limits on client apps by maintaining a distributed 'counter'
+  that tallies incoming requests. The counter can tally API calls for any identifiable entity,
+  including apps, developers, API keys, access tokens, and so on. Usually, API keys are used to
+  identify client apps. This policy is computationally expensive so, for high-traffic APIs, it
+  should configured for longer time intervals, such as a day or month. This policy should be used
+  to enforce business contracts or SLAs with developers and partners, rather than for operational
+  traffic management.</p>
+
+  <p>See <a href="/api-platform/reference/policies/quota-policy.html">Quota policy</a>.</p>
+
+  <h2 id="concurrentratelimiting">ConcurrentRateLimiting</h2>
+
+  <p>This policy enables traffic management between API Services and your backend services. Some
+  backend services, such as legacy applications, may have strict limits on the number of
+  simultaneous connections they can support. This policy enforces a limit on the number of requests
+  that can be sent at any given time from API services to your backend service. This number is
+  counted across all of the distributed instances of API Services that may be calling your backend
+  service. Policy limits and time duration should be configured to match the capacity available for
+  your backend service.</p>
+
+  <p>See <a href="/api-platform/reference/policies/concurrent-rate-limit-policy.html">Concurrent
+  Rate Limit policy</a>.</p>
+
+  <h2 id="gethelp">Get help</h2>For help, see <a href=
+  "https://community.apigee.com/content/apigee-customer-support">Apigee Customer Support</a>. {% endblock %}

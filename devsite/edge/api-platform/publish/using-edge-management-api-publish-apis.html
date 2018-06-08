@@ -1,0 +1,734 @@
+  {% extends "_base.html" %} {% block title %}Using the Edge management API to Publish APIs{% endblock %} {% block body %}
+
+  <p>This topic covers the definition of API products. API products enable developers to register
+  apps that consume APIs using API keys and OAuth access tokens. API products are designed to
+  enable you to 'bundle' API resources and then publish those bundles to different groups of
+  developers. For example, you may need to publish one set of API resources to your partner
+  developers, while you publish another bundle to external developers. API products enable you to
+  perform this bundling on-the-fly, without requiring any changes to your APIs themselves. An
+  additional benefit is that developer access can 'upgraded' and 'downgraded' without requiring
+  developers to obtain new consumer keys for their apps.</p>
+
+  <p><strong>Using the UI instead</strong><br>
+  This topic demonstrates provisioning API products, apps, and developers using the Apigee Edge
+  management API. You can also provision API products, developers, and apps using the Apigee Edge
+  <a href="https://enterprise.apigee.com">management UI</a>. For instructions on using the Edge
+  management UI, see <a href="/api-platform/publish/create-api-products.html">Create API
+  products</a>.</p>
+
+  <h2 id="configuringapiproducts">Configuring API products</h2>
+
+  <p>You can configure API products using the Edge management UI or the Edge management API. The
+  API enables you to create and manage API products programmatically.</p>
+
+  <p>To set up a minimal API product using the Apigee Edge management API, POST a payload to the
+  <code>/apiproducts</code> resource in your organization using the <a href=
+  "/management/apis/post/organizations/{org_name}/apiproducts">Create API Product</a> API.</p>
+
+  <p>The following request creates an API product called <code>weather_free</code>. The API product
+  provides access to all APIs exposed by the API proxy called <code>weatherapi</code> that is
+  deployed in the <code>test</code> environment. The approval type is set to <code>auto</code>--any
+  request for access will be approved.</p>
+
+  <aside class="key-point"><b>Tip:</b> Remember to change the values for <code>email</code>,
+  <code>password</code>, and <code>org_name</code> to match the settings for your account on
+  <a href="https://enterprise.apigee.com">https://enterprise.apigee.com.</a></aside>
+  <pre class="terminal">
+$ curl -H "Content-Type:application/json" -X POST -d \
+'{
+  "approvalType": "auto", 
+  "displayName": "Free API Product",
+  "name": "weather_free",
+  "proxies": [ "weatherapi" ],
+  "environments": [ "test" ]
+}' \
+https://api.enterprise.apigee.com/v1/o/{org_name}/apiproducts \
+-u email:password 
+</pre>
+
+  <p>Sample response:</p>
+  <pre class="prettyprint">
+{
+  "apiResources" : [ ],
+  "approvalType" : "auto",
+  "attributes" : [ ],
+  "createdAt" : 1362759663145,
+  "createdBy" : "developer@apigee.com",
+  "displayName" : "Free API Product",
+  "environments" : [ "test" ],
+  "lastModifiedAt" : 1362759663145,
+  "lastModifiedBy" : "developer@apigee.com",
+  "name" : "weather_free",
+  "proxies" : [ "weatherapi" ],
+  "scopes" : [ ]
+}
+</pre>
+
+  <p>You have now set up a very basic API product that can be used to restrict access to the API
+  proxy named <code>weatherapi</code> running in the environment called <code>test</code>.</p>
+
+  <p>The API product created above implements the most basic scenario--it authorizes requests to an
+  API proxy in an environment. It defines an API product that enables an authorized app to access
+  any API resources accessed through the API proxy running in the test environment. API products
+  expose additional configuration settings that enable you to customize access control to your APIs
+  for different developer groups. For example you can create two API products that provide access
+  to different API proxies. You can also create two API products that provide access to the same
+  API proxies, but with different associated Quota settings.</p>
+
+  <h2 id="apiproductconfigurationsettings">API product configuration settings</h2>
+
+  <p>API products expose the following configuration options:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+
+        <th>Description</th>
+
+        <th>Default</th>
+
+        <th>Required?</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td><code>apiResources</code></td>
+
+        <td>
+          <p>A comma-separated list of URIs, or <em>resource paths</em>, 'bundled' into the API
+          product.</p>
+
+          <p>By default, the resource paths are mapped from the <code>proxy.pathsuffix</code>
+          variable. The proxy path suffix is defined as the URI fragment following the
+          ProxyEndpoint base path. For example, in the sample API product below, the
+          <code>apiResources</code> element is defined to be <code>/forecastrss</code>. Since the
+          Base Path defined for this API proxy is <code>/weather</code>, that means that only
+          requests to <code>/weather/forecastrss</code> are permitted by this API product.</p>
+
+          <p>You can select a specific path, or you can select all subpaths with a wildcard.
+          Wildcards (/** and /*) are supported. The double asterisk wildcard indicates that all
+          sub-URIs are included. A single asterisk indicates that only URIs one level down are
+          included.<br>
+          <br>
+          By default, <strong>'</strong>/' supports the same resources as '/**' as well as the Base
+          Path defined by the API proxy. For example, if the Base Path of the API proxy is
+          <span style="font-family:courier new,courier,monospace;">/v1/weatherapikey</span>, then
+          the API product supports requests to <span style=
+          "font-family:courier new,courier,monospace;">/v1/weatherapikey</span> and to any
+          sub-URIs, such as <span style=
+          "font-family:courier new,courier,monospace;">/v1/weatherapikey/forecastrss</span>,
+          <span style=
+          "font-family:courier new,courier,monospace;">/v1/weatherapikey/region/CA</span>, etc. See
+          <a href="/api-platform/publish/create-api-products.html">Create API products</a> for
+          information on changing the behavior of this default.</p>
+        </td>
+
+        <td>N/A</td>
+
+        <td>No</td>
+      </tr>
+
+      <tr>
+        <td><code>approvalType</code></td>
+
+        <td>Specifies how API keys are approved to access the APIs defined by the API product. If
+        set to <code>manual</code>, the key that is generated for app is in the 'pending' state.
+        Such keys won't work until they have been explicitly approved. If set to <code>auto</code>,
+        all keys are generated in the 'approved' and work right away. (<code>auto</code> is
+        typically used for providing access to free/trial API products that provide limited Quota
+        or capabilities.)</td>
+
+        <td>N/A</td>
+
+        <td>Yes</td>
+      </tr>
+
+      <tr>
+        <td><code>attributes</code></td>
+
+        <td>
+          <p>Array of attributes that may be used to extend the default API product profile with
+          customer-specific metadata.</p>
+
+          <div>
+            Use this property to specify the access level of the API product as either <span style=
+            "font-family:courier new,courier,monospace;">public</span>, <span style=
+            "font-family:courier new,courier,monospace;">private</span>, or <span style=
+            "font-family:courier new,courier,monospace;">internal</span>. For example: 
+          </div>
+
+          <div>
+             
+          </div>
+
+          <div>
+            <span style="font-family:courier new,courier,monospace;">"attributes": [</span>
+          </div>
+
+          <div>
+            <span style="font-family:courier new,courier,monospace;">     {</span>
+          </div>
+
+          <div>
+            <span style="font-family:courier new,courier,monospace;">     
+             "name": "access",</span>
+          </div>
+
+          <div>
+            <span style="font-family:courier new,courier,monospace;">     
+             "value": "public"</span>
+          </div>
+
+          <div>
+            <span style="font-family:courier new,courier,monospace;">     },</span>
+          </div>
+
+          <div>
+            <span style="font-family:courier new,courier,monospace;">     {</span>
+          </div><span style="font-family:courier new,courier,monospace;">     
+           "name": "foo",<br style="font-family: 'courier new', courier, monospace;">
+                 "value": "foo"<br style=
+          "font-family: 'courier new', courier, monospace;">
+               },<br style="font-family: 'courier new', courier, monospace;">
+               {<br style="font-family: 'courier new', courier, monospace;">
+                 "name": "bar",<br style=
+          "font-family: 'courier new', courier, monospace;">
+                 "value": "bar"<br style=
+          "font-family: 'courier new', courier, monospace;">
+               }</span>
+
+          <div>
+            <span style="font-family:courier new,courier,monospace;">  ]</span>
+          </div>
+        </td>
+
+        <td>N/A</td>
+
+        <td>No</td>
+      </tr>
+
+      <tr>
+        <td><code>scopes</code></td>
+
+        <td>A comma-separated list of OAuth scopes that are validated at runtime. (Apigee Edge
+        validates that the scopes in any access token presented match the scope set in the API
+        product.)</td>
+
+        <td>N/A</td>
+
+        <td>No</td>
+      </tr>
+
+      <tr>
+        <td><code>proxies</code></td>
+
+        <td>Named API proxies to which this API product is bound. By specifying proxies, you can
+        associate resources in the API product with specific API proxies, preventing developers
+        from accessing those resources through other API proxies.</td>
+
+        <td>N/A</td>
+
+        <td>No. If not defined, <code>apiResources</code> must be explicitly defined (see the info
+        for <code>apiResources</code> above), and <code>flow.resource.name</code> variable set in
+        AssignMessage policy.</td>
+      </tr>
+
+      <tr>
+        <td><code>environments</code></td>
+
+        <td>Named environments (for example 'test' or 'prod") to which this API product is bound.
+        By specifying one or more environment, you can bind the resources listed in the API product
+        to specific environment, preventing developer from accessing those resources through API
+        proxies in another environment. This setting is used, for example, to prevent resources
+        associated with API proxies in 'prod' from being accessed by API proxies deployed in
+        'test'.</td>
+
+        <td>N/A</td>
+
+        <td>No. If not defined, <code>apiResources</code> must be explicitly defined, and
+        <code>flow.resource.name</code> variable set in AssignMessage policy.</td>
+      </tr>
+
+      <tr>
+        <td><code>quota</code></td>
+
+        <td>Number of requests permitted per app over the time interval specified.</td>
+
+        <td>N/A</td>
+
+        <td>No</td>
+      </tr>
+
+      <tr>
+        <td><code>quotaInterval</code></td>
+
+        <td>Number of time units over which quotas are evaluated</td>
+
+        <td>N/A</td>
+
+        <td>No</td>
+      </tr>
+
+      <tr>
+        <td><code>quotaTimeUnit</code></td>
+
+        <td>The time unit (minute, hour, day, or month) over which quotas are counted.</td>
+
+        <td>N/A</td>
+
+        <td>No</td>
+      </tr>
+    </tbody>
+  </table>
+  <pre class="terminal">
+$ curl -H "Content-Type:application/json" -X POST -d \
+ '{
+  "apiResources": [ "/forecastrss" ], 
+  "approvalType": "auto", 
+  "attributes":
+    [ {"name": "access", "value": "public"} ],
+  "description": "Free API Product",
+  "displayName": "Free API Product",
+  "name": "weather_free",
+  "scopes": [],
+  "proxies": [ "weatherapi" ],
+  "environments": [ "test" ],
+  "quota": "10",
+  "quotaInterval": "2",
+  "quotaTimeUnit": "hour" }' \
+-u email:password https://api.enterprise.apigee.com/v1/o/{org_name}/apiproducts
+</pre>
+
+  <p>Sample Response</p>
+  <pre class="prettyprint">
+{
+  "apiResources" : [ "/forecastrss" ],
+  "approvalType" : "auto",
+  "attributes" : [ {
+    "name" : "access",
+    "value" : "public"
+  },
+  "createdAt" : 1344454200828,
+  "createdBy" : "admin@apigee.com",
+  "description" : "Free API Product",
+  "displayName" : "Free API Product",
+  "lastModifiedAt" : 1344454200828,
+  "lastModifiedBy" : "admin@apigee.com",
+  "name" : "weather_free",
+  "scopes" : [ ],
+  "proxies": [ {'weatherapi'} ],
+  "environments": [ {'test'} ],
+  "quota": "10",
+  "quotaInterval": "1",
+  "quotaTimeUnit": "hour"}'
+}
+</pre>
+
+  <h3 id="apiproductconfigurationsettings-anoteonscopes">A note on scopes</h3>
+
+  <p>A scope is a concept drawn from OAuth and maps roughly to the concept of a 'permission'. On
+  Apigee Edge, scopes are completely optional. You can use scopes to achieve finer-grained
+  authorization. Every consumer key issued to an app is associated with a 'master scope'. The
+  master scope is the set of all scopes in all API products for this the app has been approved. For
+  apps approved to consume multiple API products, the master scope is the union of all scopes
+  defined in the API products for which the consumer key has been approved.</p>
+
+  <h2 id="registeringdevelopers">Registering developers</h2>
+
+  <p>All apps belong to either developers or companies. Therefore, to create an app, you first need
+  to register a developer or company.</p>
+
+  <aside class="note">
+    <b>Note:</b> This section describes how to register apps for developers. You can use the
+    Companies API to set up a company group and the Company Developers API to add developers to the
+    company. See <a href="/api/companies-0">Companies</a> and <a href=
+    "/api/company-developers-0">Company Developers</a> for more.
+
+    <p>If you use the Developer Services portal, Apigee recommends that you create, edit, and
+    delete developers on the portal itself, not using the Edge management API. For more
+    information, see <a href="/api-platform/publish/drupal/add-and-manage-user-accounts.html">Add
+    and manage user accounts</a>.</p>
+  </aside>
+
+  <p>Developers are registered in an organization by creating a profile. Note that the developer
+  email that is included in the profile is used as the unique key for the developer throughout
+  Apigee Edge.</p>
+
+  <p>To support monetization, you must define the <a href=
+  "/api-platform/publish/adding-developers-your-api-product.html#definingmonetizationattributes">monetization
+  attributes</a> when creating or editing developers. You can also define other arbitrary
+  attributes for use in custom analytics, custom policy enforcement, and so on; these arbitrary
+  attributes will not be interpreted by Apigee Edge, </p>
+
+  <p>For example, the following request registers a profile for a developer whose email address is
+  <code>ntesla@theremin.com</code> and defines a subset of <a href=
+  "/api-platform/publish/adding-developers-your-api-product.html#definingmonetizationattributes">monetization
+  attributes</a> using the <a href=
+  "/management/apis/post/organizations/{org_name}/developers">Create Developer</a> API:</p>
+  <pre class="terminal">
+$ curl -H "Content-type:application/json" -X POST -d \
+'{"email" : "ntesla@theremin.com", 
+  "firstName" : "Nikola", 
+  "lastName" : "Tesla", 
+  "userName" : "theremin", 
+  "attributes" : [ 
+  { 
+    "name" : "project_type", 
+    "value" : "public"
+  },
+  {    
+   "name": "MINT_BILLING_TYPE",
+   "value": "POSTPAID"
+  },
+  {
+   "name": "MINT_DEVELOPER_ADDRESS",
+   "value": "{\"address1\":\"Dev One Address\",\"city\":\"Pleasanton\",\"country\":\"US\",\"isPrimary\":true,\"state\":\"CA\",\"zip\":\"94588\"}"
+  },
+  {
+   "name": "MINT_DEVELOPER_TYPE",
+   "value": "TRUSTED"
+  },
+  {    
+   "name": "MINT_HAS_SELF_BILLING,
+   "value": "FALSE"
+  },
+  {
+   "name" : "MINT_SUPPORTED_CURRENCY",
+   "value" : "usd"
+  }
+ ] 
+}' \
+https://api.enterprise.apigee.com/v1/o/{org_name}/developers \
+-u email:password 
+</pre>
+
+  <p>Sample Response</p>
+
+  <div id="well">
+    <pre class="prettyprint">
+{
+          "email" : "ntesla@theremin.com",
+          "firstName" : "Nikola",
+          "lastName" : "Tesla",
+          "userName" : "theremin",
+          "organizationName" : "{org_name}",
+          "status" : "active",
+          "attributes" : [ 
+          {
+            "name" : "project_type",
+            "value" : "public"
+          },
+          {    
+             "name": "MINT_BILLING_TYPE",
+             "value": "POSTPAID"
+          },
+          {
+             "name": "MINT_DEVELOPER_ADDRESS",
+             "value": "{\"address1\":\"Dev One Address\",\"city\":\"Pleasanton\",\"country\":\"US\",\"isPrimary\":true,\"state\":\"CA\",\"zip\":\"94588\"}"
+          },
+          {
+             "name": "MINT_DEVELOPER_TYPE",
+             "value": "TRUSTED"
+          },
+          {    
+             "name": "MINT_HAS_SELF_BILLING,
+             "value": "FALSE"
+          },
+          {
+             "name" : "MINT_SUPPORTED_CURRENCY",
+             "value" : "usd"
+          } 
+          ],
+          "createdAt" : 1343189787717,
+          "createdBy" : "admin@apigee.com",
+          "lastModifiedAt" : 1343189787717,
+          "lastModifiedBy" : "admin@apigee.com"
+        }
+</pre>
+  </div>
+
+  <h2 id="registeringdeveloperapps">Registering developer apps</h2>
+
+  <p>Every app that is registered on Apigee Edge is associated with a developer and an API product.
+  When an app is registered on behalf of a developer, Apigee Edge generates a "credential" (a
+  consumer key and secret pair) that identifies the app. The app then must pass these credentials
+  as part of every request to an API product associated with the app.</p>The following request uses
+  the <a href=
+  "/management/apis/post/organizations/{org_name}/developers/{developer_email}/apps">Create
+  Developer App</a> API to register an app for the developer you created above:
+  ntesla@theremin.com. When registering an app you define a name for the app, a <span style=
+  "font-family:courier new,courier,monospace;">callbackUrl</span>, and a list of one or more API
+  products:
+  <pre class="terminal">
+$ curl -H "Content-type:application/json" -X POST -d \
+'{
+  "apiProducts": [ "weather_free"], 
+  "callbackUrl" : "login.weatherapp.com", 
+  "keyExpiresIn" : "2630000000",
+  "name" : "weatherapp"}' \
+https://api.enterprise.apigee.com/v1/o/{org_name}/developers/ntesla@theremin.com/apps \
+-u email:password 
+</pre>
+
+  <p>The <span style="font-family:courier new,courier,monospace;">callbackUrl</span> is used by
+  some OAuth grant types (such as authorization code) to validate redirect requests from the app.
+  If you use OAuth, then this value must be set to the same value as the <code>redirect_uri</code>
+  used to make OAuth requests.</p>
+
+  <p>The <code>keyExpiresIn</code> attribute specifies, in milliseconds, for the lifetime of the
+  consumer key that will be generated for the developer app. The default value, -1, indicates an
+  infinite validity period.</p>
+
+  <aside class="note"><b>Note:</b> You cannot update the expiration time of any existing consumer
+  keys. You can only generate new keys with certain expiration time.</aside>
+
+  <p>Sample Response</p>
+  <pre class="prettyprint">
+{
+  "appId": "5760d130-528f-4388-8c6f-65a6b3042bd1",
+  "attributes": [
+    {
+      "name": "DisplayName",
+      "value": "Test Key Expires"
+    },
+    {
+      "name": "Notes",
+      "value": "Just testing this attribute"
+    }
+  ],
+  "createdAt": 1421770824390,
+  "createdBy": "wwitman@apigee.com",
+  "credentials": [
+    {
+      "apiProducts": [
+        {
+          "apiproduct": "ProductNoResources",
+          "status": "approved"
+        }
+      ],
+      "attributes": [],
+      "consumerKey": "jcAFDcfwImkJ19A5gTsZRzfBItlqohBt",
+      "consumerSecret": "AX7lGGIRJs6s8J8y",
+      "expiresAt": 1424400824401,
+      "issuedAt": 1421770824401,
+      "scopes": [],
+      "status": "approved"
+    }
+  ],
+  "developerId": "e4Oy8ddTo3p1BFhs",
+  "lastModifiedAt": 1421770824390,
+  "lastModifiedBy": "wwitman@apigee.com",
+  "name": "TestKeyExpires",
+  "scopes": [],
+  "status": "approved"
+}
+</pre>
+
+  <aside class="note"><b>Note:</b> If you delete an app, all client keys associated with the apps
+  become invalid. Using an invalid key on a request causes the request to fail. See <a href=
+  "/management/apis/delete/organizations/{org_name}/developers/{developer_email}/apps/{app_name}">Delete
+  Developer App</a> for the API to delete an app.</aside>
+
+  <h2 id="managingconsumerkeysforapps">Managing consumer keys for apps</h2>
+
+  <h3 id="managingconsumerkeysforapps-gettheconsumerkeytheapikeyfortheapp">Get the consumer key
+  (the API Key) for the app</h3>
+
+  <p>The credentials for an app, (API product, consumer key and secret) are returned as part of the
+  app profile. An administrator of an organization can retrieve the consumer key at any time.</p>
+
+  <p>The app profile displays the value of the consumer key and secret, the status of the consumer
+  key, as well as any API product associations for the key. As an admin, you can retrieve the
+  consumer key profile at any time using the <strong>Get Key Details for a Developer App
+  API</strong>:</p>
+  <pre class="terminal">
+$ curl -X GET -H "Accept: application/json" \
+https://api.enterprise.apigee.com/v1/o/{org_name}/developers/ntesla@theremin.com/apps/weatherapp/keys/HQg0nCZ54adKobpqEJaE8FefGkdKFc2J \
+-u email:password
+</pre>
+
+  <p>Sample Response</p>
+  <pre class="prettyprint">
+{
+  "apiProducts" : [ {
+    "apiproduct" : "weather_free",
+    "status" : "approved"
+  } ],
+  "attributes" : [ ],
+  "consumerKey" : "HQg0nCZ54adKobpqEJaE8FefGkdKFc2J",
+  "consumerSecret" : "1eluIIdWG3JGDjE0",
+  "status" : "approved"
+}
+</pre>
+
+  <p>See <a href=
+  "/management/apis/get/organizations/{org_name}/developers/{developer_email}/apps/{app_name}/keys/{consumer_key}-0">
+  Get Key Details for a Developer App</a> for more.</p>
+
+  <h3 id="managingconsumerkeysforapps-addinganapiproducttoanappandkey">Adding an API product to an
+  app and key</h3>
+
+  <p>To update an app to add a new API product, you actually add the API product to the app's key
+  using the <strong>Add API Product to Key API</strong>. See <a href=
+  "/management/apis/post/organizations/{org_name}/developers/{developer_email}/apps/{app_name}/keys/{consumer_key}">
+  Add API Product to Key</a> for more.</p>
+
+  <p>Adding an API product to an app key enables the app that holds the key to access the API
+  resources bundled in the API product. The following method call adds a new API product to an
+  app:</p>
+  <pre class="terminal">
+$ curl -H "Content-type:application/json" -X POST -d \
+'{
+  "apiProducts": [ "newAPIProduct"]
+}' \
+https://api.enterprise.apigee.com/v1/o/{org_name}/developers/ntesla@theremin.com/apps/weatherapp/keys/HQg0nCZ54adKobpqEJaE8FefGkdKFc2J \
+-u email:password 
+</pre>
+
+  <p>Sample Response:</p>
+  <pre class="terminal">
+{
+  "apiProducts": [
+   {
+     "apiproduct": "weather_free",
+     "status": "approved"
+   },
+   {
+     "apiproduct": "newAPIProduct",
+     "status": "approved"
+   }
+ ],
+ "attributes": [],
+ "consumerKey": "HQg0nCZ54adKobpqEJaE8FefGkdKFc2J",
+ "consumerSecret": "1eluIIdWG3JGDjE0",
+ "expiresAt": -1,
+ "issuedAt": 1411491156464,
+ "scopes": [],
+ "status": "approved"
+ }
+</pre>
+
+  <h3 id="managingconsumerkeysforapps-approvingconsumerkeys">Approving consumer keys</h3>
+
+  <p>Setting approval type to <span style=
+  "font-family:courier new,courier,monospace;">manual</span> enables you to control which
+  developers can access the resources protected by API products. When API products have key
+  approval set to <code>manual</code>, consumer keys must be explicitly approved. Keys can be
+  explicitly approved using the <strong>Approve or Revoke Specific Key of Developer App</strong>
+  API:</p>
+  <pre class="terminal">
+$ curl -X POST -H "Content-type:appilcation/octet-stream" \ 
+https://api.enterprise.apigee.com/v1/o/{org_name}/developers/ntesla@theremin.com/apps/weatherapp/keys/HQg0nCZ54adKobpqEJaE8FefGkdKFc2J?"action=approve" \
+-u email:password
+</pre>
+
+  <p>Sample Response</p>
+  <pre class="prettyprint">
+{
+  "apiProducts" : [ {
+  "apiproduct" : "weather_free",
+  "status" : "approved"
+} ],
+  "attributes" : [ ],
+  "consumerKey" : "HQg0nCZ54adKobpqEJaE8FefGkdKFc2J",
+  "consumerSecret" : "1eluIIdWG3JGDjE0",
+  "status" : "approved"
+}
+</pre>
+
+  <p>See <a href=
+  "/management/apis/post/organizations/{org_name}/developers/{developer_email}/apps/{app_name}/keys/{consumer_key}-0">
+  Approve or Revoke Specific Key of Developer App</a> for more.</p>
+
+  <h3 id="managingconsumerkeysforapps-approvingapiproductsforconsumerkeys">Approving API products
+  for consumer keys</h3>
+
+  <p>The association of an API product with a consumer key also has a status. For API access to be
+  successful, the consumer key must be approved, <i>and</i> the consumer key must be approved for
+  the appropriate API product. The association of a consumer key with an API product can be
+  approved by using the <strong>Approve or Revoke API Product for a Key for a Developer
+  App</strong> API:</p>
+  <pre class="terminal">
+$ curl -X POST -H "Content-type:application/octet-stream" \ 
+https://api.enterprise.apigee.com/v1/o/{org_name}/developers/ntesla@theremin.com/apps/weatherapp/keys/HQg0nCZ54adKobpqEJaE8FefGkdKFc2J/apiproducts/weather_free?"action=approve" \
+-u email:password
+</pre>
+
+  <p>This cURL command does not return a response. See <a href=
+  "/management/apis/post/organizations/{org_name}/developers/{developer_email}/apps/{app_name}/keys/{consumer_key}/apiproducts/{apiproduct_name}">
+  Approve or Revoke API Product for a Key for a Developer App</a> for more. </p>
+
+  <h3 id="managingconsumerkeysforapps-revokingapiproductsforconsumerkeys">Revoking API products for
+  consumer keys</h3>
+
+  <p>There are many reasons why you may need to revoke a consumer key's association with an API
+  product. You may need to remove an API product from a consumer key due to non-payment by the
+  developer, an expired trial period, or When an app is promoted from one API product to
+  another.</p>
+
+  <p>To revoke the association of a consumer key with an API product, use the <strong>Approve
+  or Revoke Specific Key of Developer App </strong>API, using the action revoke against the
+  consumer key of the develop app:</p>
+  <pre class="terminal">
+$ curl -X POST -H "Content-type:application/octet-stream" \ 
+https://api.enterprise.apigee.com/v1/o/{org_name}/developers/ntesla@theremin.com/apps/weatherapp/keys/HQg0nCZ54adKobpqEJaE8FefGkdKFc2J/apiproducts/weather_free?"action=revoke" \
+-u email:password
+</pre>
+
+  <p>This cURL command does not return a response. See <a href=
+  "/management/apis/post/organizations/{org_name}/developers/{developer_email}/apps/{app_name}/keys/{consumer_key}-0">
+  Approve or Revoke Specific Key of Developer App</a> for more.</p>
+
+  <h2 id="enforcingapiproductsettings">Enforcing API product settings</h2>
+
+  <aside class="key-point"><b>Tip:</b> API product settings are enforced by matching policies, such
+  as VerifyAPIKey, OAuthV2, and Quota. Until those policies are attached to API proxies, API
+  products and quotas will not be enforced by Apigee Edge.</aside>
+
+  <p>For API products to be enforced, one of the following policy types must be attached to the API
+  proxy flow:</p>
+
+  <ul>
+    <li>VerifyAPIKey: Takes a reference to an API key, verifies that it represents a valid app, and
+    matches the API product. See <a href=
+    "/api-platform/reference/policies/verify-api-key-policy.html">Verify API Key policy</a> for
+    more.</li>
+
+    <li>OAuthV1, &#8220;VerifyAccessToken&#8221; operation: Verifies the signature, validates an
+    OAuth 1.0a access token and &#8220;consumer key&#8221;, and matches the app to the API product.
+    See <a href="/api-platform/reference/policies/oauth-10-policy.html">OAuth v1.0a policy</a> for
+    more.</li>
+
+    <li>OAuthV2, &#8220;VerifyAccessToken&#8221; operation: Verifies that the OAuth 2.0 access
+    token is valid, matches the token to the app, verifies that the app is valid, and then matches
+    the app to an API product. See <a href="/api-platform/security/oauth/oauth-home.html">OAuth
+    home</a> for more.</li>
+  </ul>
+
+  <p>Once policies and API products are configured, the following process is executed by Apigee
+  Edge:</p>
+
+  <ol>
+    <li>A request is received by Apigee Edge and routed to the appropriate API proxy.</li>
+
+    <li>A policy is executed that verifies the API key or OAuth access token presented by the
+    client.</li>
+
+    <li>Edge resolves the API Key or access token to an app profile.</li>
+
+    <li>Edge resolves the list (if any) of API products associated with the app.</li>
+
+    <li>The first API product that matches is used to populate Quota variables.</li>
+
+    <li>If no API product matches the API key or access token, then the request is rejected.</li>
+
+    <li>Edge enforces URI-based access control (environment, API proxy, and URI path) based on the
+    API product settings, along with Quota settings.</li>
+  </ol>
+
+  <h2 id="gethelp">Get help</h2>
+
+  <p>Post questions to the <a href=
+  "https://community.apigee.com/content/apigee-customer-support">Apigee Customer Support</a>.</p>{% endblock %}

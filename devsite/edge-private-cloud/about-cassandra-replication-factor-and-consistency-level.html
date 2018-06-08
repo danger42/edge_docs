@@ -1,0 +1,108 @@
+  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}About Cassandra Replication
+  Factor and Consistency Level{% endblock %} {% block body %}
+
+  <h2 id="aboutthecassandrareplicationfactor">About the Cassandra replication factor</h2>
+
+  <p>Cassandra stores data replicas on multiple nodes to ensure reliability and fault tolerance.
+  The replication strategy for each Edge keyspace determines the nodes where replicas are
+  placed. </p>
+
+  <p>The total number of replicas for a keyspace across a Cassandra cluster is referred to as the
+  keyspace's <em>replication factor</em>. A replication factor of one means that there is only one
+  copy of each row in the Cassandra cluster.  A replication factor of two means there are two
+  copies of each row, where each copy is on a different node. All replicas are equally important;
+  there is no primary or master replica. </p>
+
+  <p>In a production system with three or more Cassandra nodes in each data center, the default
+  replication factor for an Edge keyspace is three. As a general rule, the replication factor
+  should not exceed the number of Cassandra nodes in the cluster. </p>
+
+  <p>Use the following procedure to view the Cassandra schema, which shows the replication factor
+  for each Edge keyspace:</p>
+
+  <ol>
+    <li>Log in to a Cassandra node.</li>
+
+    <li>Run the following command:<br>
+    <pre>&gt; /opt/apigee/apigee-cassandra/bin/cassandra-cli -h $(hostname -i) &lt;&lt;&lt; "show schema;"</pre>
+    <p>where <code>$(hostname -i)</code> resolves to the IP address of the Cassandra node. Or you
+    can replace <code>$(hostname -i)</cpde> with the IP address of the node.</li>
+  </ol>
+
+  <p>For each keyspace, you will see output in the form: </p>
+  <pre class="prettyprint">
+create keyspace kms
+  with placement_strategy = 'NetworkTopologyStrategy'
+  and strategy_options = {dc-1 : 3}
+  and durable_writes = true;
+</pre>
+
+  <p>You can see that for data center 1, <code>dc-1</code>, the default replication factor for the
+  <code>kms</code> keyspace is three for an
+  installation with three Cassandra nodes.</p>
+
+  <aside class="note"><strong>Note:</strong> For a smaller Cassandra cluster, such as a single node Cassandra
+  cluster used in an Edge all-in-one installation, the replication factor is one. However, an Edge
+  production cluster should always have three or more Cassandra nodes.</aside>
+
+  <p>If you add additional Cassandra nodes to the cluster, the default replication factor is not
+  affected. However, if you decide that you want to increase the replication factor, contact
+  Apigee.</p>
+
+  <p>For example, if you increase the number of Cassandra nodes to six, but leave the replication
+  factor at three, you do not ensure that all Cassandra nodes have a copy of all the data. If a
+  node goes down, a higher replication factor means a higher probability that the data on the node
+  exists on one of the remaining nodes. The downside of a higher replication factor is an increased
+  latency on data writes.  </p>
+
+  <h2 id="aboutthecassandraconsistencylevel">About the Cassandra consistency level</h2>
+
+  <p>The Cassandra consistency level is defined as the minimum number of Cassandra nodes that must
+  acknowledge a read or write operation before the operation can be considered successful.
+  Different consistency levels can be assigned to different Edge keyspaces.</p>
+
+  <p>When connecting to Cassandra for read and write operations, Message Processor and Management
+  Server nodes typically use the Cassandra value of <code>LOCAL_QUORUM</code> to
+  specify the consistency level for a keyspace. However, some keyspaces are defined to use a
+  consistency level of one.</p>
+
+  <p>The calculation of the value of <code>LOCAL_QUORUM</code> for a data center is:</p>
+  <pre class="prettyprint">LOCAL_QUORUM = (replication_factor/2) + 1</pre>
+
+  <p>As described above, the default replication factor for an Edge production environment with
+  three Cassandra nodes is three. Therefore, the default value of <code>LOCAL_QUORUM</code> =
+  (3/2) +1 = 2 (the value is rounded down to an integer).</p>
+
+  <p>With <code>LOCAL_QUORUM</code> = 2, at least two of the three Cassandra nodes in the data
+  center must respond to a read/write operation for the operation to succeed. For a three node
+  Cassandra cluster, the cluster could therefore tolerate one node being down per data center.</p>
+
+  <p>By specifying the consistency level as <code>LOCAL_QUORUM</code>, Edge avoids the latency
+  required by validating operations across multiple data centers. If a keyspace used the Cassandra
+  <code>QUORUM</code> value as the consistency level, read/write operations would have to be
+  validated across all data centers.</p>
+
+  <p>To see the consistency level used by the Edge Message Processor or Management Server nodes:</p>
+
+  <ol>
+    <li>Log in to a Message Processor node.</li>
+    <li>Change to the /opt/apigee/edge-message-processor/conf directory:
+      <pre>&gt; cd /opt/apigee/edge-message-processor/conf</pre>
+    </li>
+    <li>For write consistency:
+      <pre>&gt; grep -ri "write.consistencylevel" *</pre>
+    </li>
+    <li>For read consistency:
+      <pre>&gt; grep -ri "read.consistencylevel" *</pre>
+    </li>
+    <li>Log in to the Management Server node.</li>
+    <li>Change to the /opt/apigee/edge-management-server/conf directory:
+      <pre>&gt; cd /opt/apigee/edge-management-server/conf</pre>
+    </li>
+    <li>Repeat steps 3 and 4.</li>
+  </ol>
+
+  <p>If you add additional Cassandra nodes to the cluster, the consistency level is not affected.
+  However, if you decide that you want to change the consistency level, contact Apigee.</p>
+
+{% endblock %}

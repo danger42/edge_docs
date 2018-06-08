@@ -1,0 +1,159 @@
+  {% extends "_base.html" %} {% block title %}What's a policy?{% endblock %} {% block body %}
+
+  <p>Apigee Edge enables you to 'program' API behavior without writing any code, by using
+  'policies'. A policy is like a module that implements a specific, limited management function.
+  Policies are designed to let you add common types of management capabilities to an API easily and
+  reliably. Policies provide features like security, rate-limiting, transformation, and mediation
+  capabilities, saving you from having to code and maintain this functionality on your own.</p>
+
+  <p>You're not limited to the set of policy types provided by Apigee Edge. You can also write
+  custom scripts and code (such as JavaScript and Node.js applications), that extend API proxy
+  functionality and enable you to innovate on top of the basic management capabilities supported by
+  Apigee Policies.</p>
+
+  <div class="video">
+    <p>Watch this video for an introduction to policy attachment and enforcement.</p>
+
+    <div style="text-align: left;">
+      <iframe allowfullscreen="" frameborder="0" height="315" src=
+      "https://www.youtube.com/embed/_B_y0gIT86o" width="560"></iframe>
+    </div>
+
+    <div>
+       
+    </div>
+  </div>
+
+  <h2 id="policytypes">Policy types</h2>
+
+  <p>Technically, a policy is an XML-formatted configuration file. Each policy type's structure
+  (for example, the required and optional configuration elements) is defined by an <a href=
+  "https://en.wikipedia.org/wiki/XML_schema">XML schema</a>. If you are proficient with XML tools,
+  it is worthwhile to familiarize yourself with the policy schemas in the <a href=
+  "https://github.com/apigee/api-platform-samples/">API Platform samples</a> on Github.</p>
+
+  <p>Edge Policy types are grouped into the following functional categories:</p>
+
+  <h3 id="policytypes-trafficmanagement">Traffic management</h3>
+
+  <p>Policies in the traffic management category enable you to control the flow of request and
+  response messages through an API proxy. These policies support both operational- and
+  business-level control. They give you control over raw throughput, and can also control traffic
+  on a per-app basis. Traffic management policy types enable you to enforce quotas, and they also
+  help you to mitigate denial of service attacks.</p>
+
+  <h3 id="policytypes-security">Security</h3>
+
+  <p>Policies in the security category support authentication, authorization, as well as
+  content-based security.</p>
+
+  <h3 id="policytypes-mediation">Mediation</h3>
+
+  <p>Policies in the mediation category enable you to actively manipulate messages as they flow
+  through API proxies. They enable you to transform message formats, from XML to JSON (and
+  vice-versa), or to transform one XML format to another XML format.  They also enable you to
+  parse messages, to generate new messages and to change values on outbound messages. Mediation
+  policies also interact with basic services exposed by API Services, enabling you to retrieve data
+  about apps, developers, security tokens, and API products at runtime. </p>
+
+  <h3 id="policytypes-extension">Extension </h3>
+
+  <p>Policies in the extension category enable you to tap into the extensibility of API Services to
+  implement custom behavior in the programming language of you choice.</p>
+
+  <p>Each Policy type is documented in detail in the <a href=
+  "/api-platform/reference/policies/reference-overview-policy.html">Policy reference overview</a>.
+  This topic demonstrates general interaction, showing you how to create Policies, and how to
+  attach them to Flows in an API proxy configuration.</p>
+
+  <h2 id="deployingpolicychanges">Deploying policy changes</h2>
+
+  <p>For policy changes to take effect, you must deploy the API proxy revision to an environment.
+  After you attach a policy or make changes to an existing policy, use the management UI or the
+  management API to deploy the changes.</p>
+
+  <h2 id="verifyingpolicyenforcement"><a name="verify_quota_policy" id=
+  "verify_quota_policy"></a>Verifying policy enforcement</h2>
+
+  <p>To verify that a policy is enforced properly, the API must be invoked by an HTTP client. To
+  verify this Quota configuration, submit multiple requests to the API, exceeding the quota limit
+  that you set in the quota policy. (The URI path, configured as the base path setting in the
+  ProxyEndpoint, in the request below is <code>/weather</code>).</p>
+  <pre class="prettyprint">
+http://{org_name}-test.apigee.net/weather/forecastrss?w=12797282
+</pre>
+
+  <p>After you submit more than 1 request within a minute, you should see the following error
+  message:</p>
+  <pre class="prettyprint">
+{  
+   "fault":{  
+      "faultstring":"policies.ratelimit.QuotaViolation",
+      "detail":{  
+         "errorcode":"policies.ratelimit.QuotaViolation"
+      }
+   }
+}
+</pre>
+
+  <p>This indicates that the Quota policy is being enforced by API Services.</p>
+
+  <h2 id="policybasedfaulthandling">Policy-based fault handling</h2>
+
+  <p>Note the format of the error message above. It contains a <code>faultstring</code> property
+  and an <code>errorcode</code> property. In many cases, you need to implement some behavior to
+  handle these errors. For example, you may wish to issue a customized message to a developer whose
+  app has exceeded the Quota.</p>
+
+  <p>For more on fault handling, see <a href=
+  "/api-platform/fundamentals/fault-handling.html">Handling faults</a>.</p>
+
+  <h2 id="bestpracticescommonpolicysets">Best practices: Common policy sets</h2>
+
+  <p>To meet basic management requirements, API proxies usually enforce the following policies:</p>
+
+  <h3 id="bestpracticescommonpolicysets-basicapikeyvalidation">Basic API key
+  validation</h3><b>ProxyEndpoint Request Flow:</b>
+
+  <ol>
+    <li>SpikeArrest</li>
+
+    <li>XMLThreatProtection or JSONThreatProtection</li>
+
+    <li>API key validation</li>
+
+    <li>Quota</li>
+
+    <li>ResponseCache</li>
+  </ol><b>ProxyEndpoint Response Flow:</b>
+
+  <ol>
+    <li>ResponseCache</li>
+  </ol>
+
+  <h3 id="bestpracticescommonpolicysets-basictransformationjsontoxml">Basic transformation: JSON to
+  XML</h3><b>Request Flow:</b>
+
+  <ol>
+    <li>SpikeArrest</li>
+
+    <li>JSONThreatProtection</li>
+
+    <li>API key validation</li>
+
+    <li>Quota</li>
+
+    <li>JSONToXML</li>
+  </ol><b>Response Flow:</b>
+
+  <ol>
+    <li>XMLToJSON</li>
+
+    <li>ResponseCache</li>
+  </ol>
+
+  <aside class="note"><b>Sample:</b> Working samples of policy configurations are available in the
+  <a href="/api-platform/samples/using-samples.html">Using the sample API proxies</a> on
+  GitHub.</aside>
+
+  {% endblock %}

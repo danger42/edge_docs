@@ -1,0 +1,172 @@
+  {% extends "_base.html" %} {% block title %}Streaming requests and responses{% endblock %} {% block body %}
+
+  <h2 id="whatyoulllearninthistopic">What you'll learn in this topic</h2>
+
+  <p>After reading this topic you will know:</p>
+
+  <ul>
+    <li>What request and response streaming on Apigee Edge is</li>
+
+    <li>When to use request and response streaming</li>
+
+    <li>How to enable request and response streaming</li>
+  </ul>
+
+  <aside class="note"><b>Sample:</b> If you'd like to jump directly to a code sample, see "<a href=
+  "#RelatedCodeSamples">Related code samples</a>" for details.</aside>
+
+  <h2 id="whatisrequestandresponsestreaming">What is request and response streaming?</h2>
+
+  <p>By default, HTTP streaming is disabled and HTTP request and response payloads are written to a
+  buffer in memory before they are processed by the API proxy pipeline. You can change this
+  behavior by enabling streaming. With streaming enabled, request and response payloads are
+  streamed without modification to the client app (for responses) and the target endpoint (for
+  requests). </p>
+
+  <h2 id="whenshouldienablestreaming">When should I enable streaming?</h2>
+
+  <p>If your API proxy handles very large requests and/or responses (for size limits, see "What
+  else should I know about streaming" below), you may wish to enable streaming. For example, you
+  may wish to enable a streaming response flow if you have a Node.js application deployed on Edge
+  that returns output over time, such as a Comet-style application. Or, you may wish to enable
+  streaming for any application that accepts or returns a very large amount of data. </p>
+
+  <aside class="note">
+    <b>Note:</b> If your API requests or returns a large amount of data, you may see this HTTP
+    error:
+    <pre class="prettyprint">
+{"fault":"{\"detail\":{\"errorcode\":\"protocol.http.TooBigBody\"},\"faultstring\":\"Body buffer overflow\"}"}
+</pre>
+
+    <p>If you see this error, we recommend that you enable streaming. If you continue to see the
+    error after you enable streaming, consider removing any policies that require access to the
+    request or response payload. For more information, see "Message payload size" in <a href=
+    "/api-platform/fundamentals/best-practices-api-proxy-design-and-development.html">Best
+    practices for API proxy design and development</a>.</p>
+  </aside>
+
+  <h2 id="whatelseshouldiknowaboutstreaming">What else should I know about streaming?</h2>
+
+  <p>Message payload size is restricted to the following. Exceeding those sizes results in
+  a <code>protocol.http.TooBigBody</code> error.</p>
+
+  <ul>
+    <li>10MB in Edge Cloud</li>
+
+    <li>10MB in Edge for Private Cloud</li>
+  </ul>
+
+  <p>In Edge for Private Cloud deployments, you can modify this value. Be sure to test before
+  deploying the change to production. </p>
+
+  <ul>
+    <li><strong>For Edge for Private Cloud releases previous to 4.16.01:</strong><br>
+    <br>
+    On all Message Processors, edit the <code>http.properties</code> file to increase the
+    limit in the <code>HTTPResponse.body.buffer.limit</code> parameter and then restart
+    the Message Processor. </li>
+
+    <li>
+      <strong>For Edge for Private Cloud release 4.16.01 and later:</strong>
+
+      <ol>
+        <li>
+          <p>Edit the file <span style=
+          "font-family:courier new,courier,monospace;">/&lt;inst_root&gt;/apigee/customer/application/message-processor.properties</span>.
+          If that file does not exist, create it.</p>
+        </li>
+
+        <li>
+          <p>Set the <span style=
+          "font-family:courier new,courier,monospace;">conf_http_HTTPResponse.body.buffer.limit</span>
+          property in <span style=
+          "font-family:courier new,courier,monospace;">message-processor.properties</span>. For
+          example:<br>
+          <span style=
+          "font-family:courier new,courier,monospace;">conf_http_HTTPResponse.body.buffer.limit=5m</span></p>
+        </li>
+
+        <li>
+          <p>Restart the Message Processor:<br>
+          <span style="font-family:courier new,courier,monospace;">&gt;
+          /&lt;inst_root&gt;/apigee/apigee-service/bin/apigee-service edge-message-processor
+          restart</span></p>
+        </li>
+
+        <li>
+          <p>Repeat for all Message Processors.</p>
+        </li>
+      </ol>
+    </li>
+  </ul>
+
+  <aside class="note">With streaming enabled, Apigee strongly recommends you do <strong>not</strong> attach policies
+  that require access to the request or response payload. Those types of policies will either
+  cause errors or trigger buffering in the API proxy, which limits payload size to the numbers
+  listed above and defeats the purpose of enabling streaming to handle large payloads. You can attach
+    policies that do not interact with the request/response body, such as authentication or message
+    logging policies.</aside>
+
+  <h2 id="howtoenableresponseandrequeststreaming">How to enable response and request streaming</h2>
+
+  <p>To enable request streaming you need to add the <code>request.streaming.enabled</code>
+  property to the ProxyEndpoint and TargetEndpoint definitions in the proxy bundle and set it to
+  <code>true</code>. Similarly, set the <code style=
+  "font-size: 12px;">response.streaming.enabled</code> property to enable response streaming.</p>
+
+  <p>You can locate these configuration files in the management UI in the Develop view for your
+  proxy. If you are developing locally, these definition files are in <code>apiproxy/proxies</code>
+  and <code>apiproxy/targets</code>. </p>
+
+  <p>This sample shows how to enable both request and response streaming in the TargetEndpoint
+  definition.</p>
+  <pre class="prettyprint">
+&lt;TargetEndpoint name="default"&gt;
+  &lt;HTTPTargetConnection&gt;
+    &lt;URL&gt;http://mocktarget.apigee.net&lt;/URL&gt;
+    &lt;Properties&gt;
+      &lt;Property name="<strong>response.streaming.enabled"&gt;true</strong>&lt;/Property&gt;
+      &lt;Property name="<strong>request.streaming.enabled"&gt;true</strong>&lt;/Property&gt;
+      &lt;Property name="supports.http10"&gt;true&lt;/Property&gt;
+      &lt;Property name="request.retain.headers"&gt;User-Agent,Referer,Accept-Language&lt;/Property&gt;
+      &lt;Property name="retain.queryparams"&gt;apikey&lt;/Property&gt;
+    &lt;/Properties&gt;
+  &lt;/HTTPTargetConnection&gt;
+&lt;/TargetEndpoint&gt;
+</pre>
+
+  <p>This example shows how to enable response and request streaming in the ProxyEndpoint
+  definition:</p>
+  <pre class="prettyprint">
+&lt;ProxyEndpoint name="default"&gt;
+  &lt;HTTPProxyConnection&gt;
+    &lt;URL&gt;http://mocktarget.apigee.net&lt;/URL&gt;
+    &lt;Properties&gt;
+      &lt;Property name="allow.http10"&gt;true&lt;/Property&gt;
+      &lt;Property name="<strong>response.streaming.enabled"&gt;true</strong>&lt;/Property&gt;
+      &lt;Property name="<strong>request.streaming.enabled"&gt;true</strong>&lt;/Property&gt;
+    &lt;/Properties&gt;
+  &lt;/HTTPProxyConnection&gt;
+&lt;/ProxyEndpoint&gt;
+</pre>
+
+  <p>For more information about configuring endpoint definitions, see <a href=
+  "/api-platform/reference/policies/endpoint-properties-reference.html">Endpoint properties
+  reference</a>.</p>
+
+  <h2 id="relatedcodesamples"><a id="RelatedCodeSamples" name="RelatedCodeSamples"></a>Related code
+  samples</h2>
+
+  <p>API proxy samples on GitHub are easy to download and use. See <a href=
+  "/api-platform/samples/using-samples.html">Using the sample API proxies</a> for information about
+  downloading and using the samples. </p>
+
+  <p>Sample proxies that feature streaming include:</p>
+
+  <ul>
+    <li><a href=
+    "https://github.com/apigee/api-platform-samples/tree/master/sample-proxies/streaming">streaming</a>
+    - Demonstrates an API proxy configured for HTTP streaming. </li>
+  </ul>
+
+  {% endblock %}

@@ -1,0 +1,540 @@
+  {% extends "_base.html" %} {% block title %}Configuring TLS from Edge to the backend (Cloud and
+  Private Cloud){% endblock %} {% block body %}
+
+  <p>An API proxy functions as a mapping of a publicly available endpoint to your backend service.
+  A virtual host defines the way that the public facing API proxy is exposed to an app. For
+  example, the virtual host determines if the API proxy can be accessed by using TLS. When you
+  configure an API proxy, edit its ProxyEndpoint definition to configure the virtual hosts that it
+  uses.</p>
+
+  <p>The TargetEndpoint is the outbound equivalent of the ProxyEndpoint. A TargetEndpoint functions
+  as an HTTP client from Edge to a backend service. When creating an API proxy, you can configure
+  it to use zero or more TargetEndpoints. </p>
+
+  <aside class="note"><b>Note:</b> <strong>Node.js</strong>: If your proxy target is a Node.js
+  application, you can use the Node.js <code>tls</code> module to create secure
+  connections to backend services. You make outgoing requests with
+  the <code>tls</code> module the same way you would normally in Node.js. Basically, you
+  need to add client-side keys and certificates (.pem files) to the resources/node directory and
+  load them inside your script. For information on using the <code>tls</code> module and
+  its methods, see the <a href="https://nodejs.org/api/tls.html">Node.js tls module
+  documentation</a>. For more information, see <a href=
+  "/api-platform/nodejs/understanding-edge-support-nodejs-modules">Understanding Edge support
+  for Node.js modules</a>.</aside>
+
+  <p><strong>Learn more:</strong></p>
+
+  <ul>
+    <li><a href="about-ssl">About TLS/SSL</a></li>
+    <li><a href="using-ssl-edge">Using TLS with Edge</a></li>
+    <li><a href="/api-platform/fundamentals/virtual-hosts">About virtual hosts</a></li>
+    <li><a href="keystores-and-truststores">Keystores and Truststores</a></li>
+    <li><a href="/api-platform/reference/policies/api-proxy-configuration-reference">API proxy
+    configuration reference</a></li>
+  </ul>
+
+  <h2 id="configuringatargetendpointortargetserver">Configuring a TargetEndpoint or
+  TargetServer</h2>
+
+  <p>To configure a TargetEndpoint, edit the XML object that defines the TargetEndpoint. You can
+  edit the TargetEndpoint by editing the XML file that defines the TargetEndpoint in your
+  API proxy, or edit it in the Edge management UI. </p>
+
+  <p>To use the Edge management UI to edit the TargetEndpoint:</p>
+
+  <ol>
+    <li>Login to the Edge management UI at <a href="https://enterprise.apigee.com" class="external">https://enterprise.apigee.com</a>.</li>
+
+    <li>Select the name of the API proxy to update.</li>
+
+    <li>Select the <strong>Develop</strong> tab.</li>
+
+    <li>Under <strong>Target Endpoints</strong>, select <strong>default</strong>.</li>
+
+    <li>In the code area, the TargetEndpoint definition appears, similar to below:
+
+<pre class="prettyprint">
+&lt;TargetEndpoint name="default"&gt;
+  &lt;Description/&gt;
+  &lt;FaultRules/&gt;
+  &lt;Flows/&gt;
+  &lt;PreFlow name="PreFlow"&gt;
+    &lt;Request/&gt;
+    &lt;Response/&gt;
+  &lt;/PreFlow&gt;
+  &lt;PostFlow name="PostFlow"&gt;
+    &lt;Request/&gt;
+    &lt;Response/&gt;
+  &lt;/PostFlow&gt;
+  &lt;HTTPTargetConnection&gt;
+    &lt;Properties/&gt;
+    <strong>&lt;SSLInfo&gt;
+      &lt;Enabled&gt;true&lt;/Enabled&gt;
+    &lt;/SSLInfo&gt;
+    &lt;URL&gt;https://mocktarget.apigee.net&lt;/URL&gt;</strong>
+  &lt;/HTTPTargetConnection&gt;
+&lt;/TargetEndpoint&gt;</pre>
+    </li>
+
+    <aside class="note"><b>Note: </b>In the Edge UI, if <code>&lt;URL&gt;</code> specifies
+      the HTTPS protocol, the UI does not automatically insert the <code>&lt;SSLInfo&gt;</code> block.
+      By default, the value of <code>&lt;Enabled&gt;</code> is <code>true</code> if
+      <code>&lt;URL&gt;</code> specifies HTTPS. However, all the examples below explicitly
+      set the value of <code>&lt;Enabled&gt;</code> to <code>true</code>. </aside>
+
+    <li>Make any changes and save the proxy. If the API proxy has been deployed, saving it
+    redeploys it with the new setting.</li>
+  </ol>
+
+  <p>Notice that the TargetEndpoint definition contains a <code>name</code> property. You use the value of
+  the <code>name</code> property
+  to configure the ProxyEndpoint definition of an API proxy to use the
+  TargetEndpoint.
+  See <a href="/api-platform/reference/policies/api-proxy-configuration-reference">API proxy configuration
+  reference</a> for more.</p>
+
+  <p>TargetEndpoints can be configured to reference a TargetServer, rather than the explicit
+  target URL. A TargetServer configuration decouples concrete endpoint URLs from
+  TargetEndpoint configurations. TargetServers are used to support load balancing and failover
+  across multiple backend server instances.</p>
+
+  <p>Shown below is an example TargetServer definition:</p>
+
+  <pre class="prettyprint">
+&lt;TargetServer name="target1"&gt;
+  &lt;Host&gt;mocktarget.apigee.net&lt;/Host&gt;
+  &lt;Port&gt;80&lt;/Port&gt;
+  &lt;IsEnabled&gt;true&lt;/IsEnabled&gt;
+&lt;/TargetServer&gt; 
+</pre>
+
+  <p>A TargetServer is referenced by name in the <code>&lt;HTTPTargetConnection&gt;</code>
+    element in a TargetEndpoint definition.
+    You can configure one or more named TargetServers, as shown below.</p>
+
+  <pre class="prettyprint">
+&lt;TargetEndpoint name="default"&gt;
+  ...
+  &lt;HTTPTargetConnection&gt;
+    &lt;LoadBalancer&gt;
+      &lt;Server name="target1" /&gt;
+      &lt;Server name="target2" /&gt;
+    &lt;/LoadBalancer&gt;
+    &lt;Path&gt;/test&lt;/Path&gt;
+  &lt;/HTTPTargetConnection&gt;
+  ...
+&lt;/TargetEndpoint&gt;
+</pre>
+
+  <p>See <a href="/api-platform/deploy/load-balancing-across-backend-servers">Load balancing
+  across backend servers</a> for more.</p>
+
+  <h2 id="about-tls-config">About TLS configuration with the backend</h2>
+
+ <p>Before you configure TLS access to the backend, you should understand two important
+   points:</p>
+
+  <ol>
+    <li>By default, Edge does not validate the backend cert. You must create a truststore to configure
+    Edge to validate the cert.</li>
+    <li>Use a reference to specify the keystore or truststore used by Edge.</li>
+  </ol>
+
+  <p>Both considerations are described below.</p>
+
+  <h3  id="define-tstore-validation">Defining a truststore to enable cert validation</h3>
+
+  <p>When making a TLS request through a TargetEndpoint or TargetServer, Edge <em>does not </em>
+    by default validate the TLS cert received from the backend server.
+    That means Edge does <em>not validate</em> that:</p>
+
+  <ul>
+    <li>The certificate has been signed by a trusted CA.</li>
+    <li>The certificate has not expired.</li>
+    <li>The certificate presents a common name. If there is a common name, Edge does not validate
+      that the common name matches the hostname specified in the URL.</li>
+  </ul>
+
+  <p>To configure Edge to validate the backend cert, you must:</p>
+
+  <ol>
+    <li>Create a truststore on Edge.
+    <li>Upload the server's cert or cert chain to the truststore.
+      If the server certificate is signed by a third party, then you will need to upload the
+      complete cert chain, including the root CA cert, to the truststore.
+      There are no implicitly-trusted CAs.
+    <li>Add the truststore to the TargertEndpoint or TargetServer definition. </li>
+  </ol>
+
+  <aside class="note"><b>Note: </b>You are responsible for updating the truststore when a cert expires.</aside>
+
+  <p>See <a href="keystores-and-truststores">Keystores and Truststores</a> for more. </p>
+
+  <p>For example:</p>
+
+<pre class="prettyprint">&lt;TargetEndpoint name="default">
+  …
+  &lt;HTTPTargetConnection>
+    &lt;SSLInfo>
+      &lt;Enabled>true&lt;/Enabled>
+      <strong>&lt;TrustStore>ref://myTrustStoreRef&lt;/TrustStore></strong>
+    &lt;/SSLInfo>
+    &lt;URL>https://myservice.com&lt;/URL>
+  &lt;/HTTPTargetConnection>
+  …
+&lt;/TargetEndpoint&gt;</pre>
+
+  <h3 id="using-reference">Using a reference
+  to a keystore or truststore</h3>
+
+  <p>Many of the example below shown how to configure a TargetEndpoint or TargetServer to
+  support TLS. As part of configuring TLS, you might have to specify a keystore or
+  truststore as part of a TargetEndpoint or TargetServer definition.</p>
+
+  <p>Apigee <strong>strongly</strong> recommends that you use a reference to the keystore and
+  truststore in the TargetEndpoints or TargetServer definition. The advantage to using a reference
+  is that you only have to update the reference to point to a different keystore or truststore to
+  update the TLS cert.</p>
+
+  <p>References to keystores and truststores in
+  the TargetEndpoints or TargetServer definition work the same way as they do
+  for <a href="creating-virtual-host#creatingandmodifyingreferencestoakeystoreortruststore">virtual hosts</a>.</p>
+
+  <aside class="warning"><b>Warning:</b> Another option is to specify the literal name of the
+  keystore and truststore in the TargetEndpoints or TargetServer definition. With literal names,
+  depending on the configuration, you might have to redeploy proxies, contact Apigee Support
+  (Cloud), or restart Message Processors (Private Cloud).
+    See <a href="update-or-replace-ssl-certificate">Update a TLS certificate</a> for more.</aside>
+
+  <h3 id=
+  "usingareferencetoakeystoreortruststoreinatargetendpointortargetserver-convertinganexistingtargetendpointortargetservertouseareference">
+  Converting a TargetEndpoint or TargetServer to use a reference</h3>
+
+  <p>You might have existing TargetEndpoint or TargetServer definitions that
+  uses the literal name of the keystore and truststore. To convert the TargetEndpoint
+  or TargetServer definition to use references:</p>
+
+  <ol>
+    <li>Update the TargetEndpoint or TargetServer definition to use a reference.</li>
+
+    <li>Restart the Edge Message Processors:
+
+      <ul>
+        <li><strong>For Public Cloud</strong> customers, contact
+          <a href="https://support.apigee.com/" class="external">Apigee Support</a> to restart the Message Processors.</li>
+
+        <li><strong>For Private Cloud</strong> customers, restart the Edge Message Processors one
+        at a time.</li>
+      </ul>
+    </li>
+
+    <li>Confirm that your TargetEndpoint or TargetServer is working correctly. </li>
+  </ol>
+
+  <h2 id="configuringonewaytlstothebackendserver">Configuring one-way TLS to the backend
+  server</h2>
+
+  <p>When using a TargetEndpoint definition, configuring one-way TLS access from Edge (TLS client)
+  to the backend server (TLS server) does not require any additional configuration on Edge. It is
+    up to the backend server to configure TLS correctly. </p>
+
+  <p>You only need to make sure that the <code>&lt;URL&gt;</code> element in the
+  TargetEndpoint definition references the backend service by the HTTPS protocol and that you
+  enable TLS:</p>
+
+  <pre class="prettyprint">
+&lt;TargetEndpoint name="default"&gt;
+  &#8230;
+  &lt;HTTPTargetConnection&gt;
+    <strong>&lt;SSLInfo&gt;
+      &lt;Enabled&gt;true&lt;/Enabled&gt;
+    &lt;/SSLInfo&gt;
+    &lt;URL&gt;https://myservice.com&lt;/URL&gt;</strong>
+  &lt;/HTTPTargetConnection&gt;
+  &#8230;
+&lt;/TargetEndpoint&gt;
+</pre>
+
+  <p>If you are using a TargetServer to define the backend service, then enable TLS
+  in the TargetServer definition:</p>
+
+  <pre class="prettyprint">
+&lt;TargetServer name="target1"&gt;
+  &lt;Host&gt;mocktarget.apigee.net&lt;/Host&gt;
+  &lt;Port&gt;443&lt;/Port&gt;
+  &lt;IsEnabled&gt;true&lt;/IsEnabled&gt;
+  <strong>&lt;SSLInfo&gt; 
+    &lt;Enabled&gt;true&lt;/Enabled&gt;
+  &lt;/SSLInfo&gt; </strong>
+&lt;/TargetServer&gt; 
+</pre>
+
+  <p>However, if you want Edge to validate the backend cert, then you must create a truststore
+    that contains the backend cert or cert chain. You then specify the truststore in
+    the TargetEndpoint definition:</p>
+
+<pre class="prettyprint">
+&lt;TargetEndpoint name="default"&gt;
+  &#8230;
+  &lt;HTTPTargetConnection&gt;
+    <strong>&lt;SSLInfo&gt;
+      &lt;Enabled&gt;true&lt;/Enabled&gt;
+      &lt;TrustStore&gt;ref://myTrustStoreRef&lt;/TrustStore&gt;
+    &lt;/SSLInfo&gt;
+    &lt;URL&gt;https://myservice.com&lt;/URL&gt;</strong>
+  &lt;/HTTPTargetConnection&gt;
+  &#8230;
+&lt;/TargetEndpoint&gt;
+</pre>
+
+  <p>Or in the TargetServer definition:</p>
+
+  <pre class="prettyprint">
+&lt;TargetServer name="target1"&gt;
+  &lt;Host&gt;mockserver.apigee.net&lt;/Host&gt;
+  &lt;Port&gt;443&lt;/Port&gt;
+  &lt;IsEnabled&gt;true&lt;/IsEnabled&gt;
+  <strong>&lt;SSLInfo&gt;
+    &lt;Enabled&gt;true&lt;/Enabled&gt;
+    &lt;TrustStore&gt;ref://myTrustStoreRef&lt;/TrustStore&gt;
+  &lt;/SSLInfo&gt; </strong>
+&lt;/TargetServer&gt;
+</pre>
+
+  <p>To configure one-way TLS:</p>
+
+  <ol>
+    <li><strong>If you want to validate the backend cert</strong>, create a truststore on Edge, and upload
+      the backend cert or CA chain, as described in
+      <a href="keystores-and-truststores">Keystores and Truststores</a>.
+
+    For this example, if you have to create a truststore, name it
+    <strong>myTrustStore</strong>. </li>
+
+    <li>
+      <p><strong>If you created a truststore,</strong> use the following POST API call to create
+      the reference named <strong>myTrustStoreRef</strong> to the truststore you created
+      above:</p>
+
+      <pre class="devsite-terminal">
+curl -X POST  -H "Content-Type:application/xml" https://api.enterprise.apigee.com/v1/o/{org_name}/e/{env_name}/references \
+  -d '&lt;ResourceReference name="<strong>myTrustStoreRef</strong>"&gt;
+    &lt;Refers&gt;<strong>myTrustKeystore</strong>&lt;/Refers&gt;
+    &lt;ResourceType&gt;<strong>KeyStore</strong>&lt;/ResourceType&gt;
+  &lt;/ResourceReference&gt;' -u <var>email</var>:<var>password</var>
+</pre>
+    </li>
+
+    <li>Use the Edge management UI to update the TargetEndpoint definition for the API proxy (or,
+    if you define the API proxy in XML, edit the XML files for the proxy):
+
+      <ol>
+        <li>Log in to the Edge management UI at <a href="https://enterprise.apigee.com" class="external">https://enterprise.apigee.com</a>.</li>
+
+        <li>In the Edge management UI menu, select <strong>APIs</strong>.</li>
+
+        <li>Select the name of the API proxy to update.</li>
+
+        <li>Select the <strong>Development</strong> tab.</li>
+
+        <li>Under <strong>Target Endpoints</strong>, select <strong>default</strong>.</li>
+
+        <li>In the code area, edit the <code>&lt;HTTPTargetConnection&gt;</code> element to
+        add the <code>&lt;SSLInfo&gt;</code> element.
+        Make sure to specify the correct truststore reference and set <code>&lt;Enabled&gt;</code> to true:
+
+<pre class="prettyprint">&lt;TargetEndpoint name="default"&gt;
+  &#8230;
+  &lt;HTTPTargetConnection&gt;
+    <strong>&lt;SSLInfo&gt;
+      &lt;Enabled&gt;true&lt;/Enabled&gt;
+      &lt;TrustStore&gt;ref://myTrustStoreRef&lt;/TrustStore&gt;
+    &lt;/SSLInfo&gt;
+    &lt;URL&gt;https://myservice.com&lt;/URL&gt;</strong>
+  &lt;/HTTPTargetConnection&gt;
+  &#8230;
+&lt;/TargetEndpoint&gt;</pre>
+        </li>
+
+        <li>Save the API proxy. If the API proxy has been deployed, saving it redeploys it with the
+        new setting.</li>
+      </ol>
+    </li>
+  </ol>
+
+
+
+  <h2 id="configuringtwowaytlstothebackendserver">Configuring two-way TLS to the backend
+  server</h2>
+
+  <p>If you want to support two-way TLS between Edge (TLS client) and the backend server (TLS
+  server):</p>
+
+  <ul>
+    <li>Create a keystore on Edge and upload the Edge cert and private key. This cert and private
+    key is typically supplied by the backend server. </li>
+
+    <li>If you want to validate the backend cert, create a truststore on Edge that contains the
+      cert and CA chain that you received from the backend server. </li>
+
+    <li>Update the TargetEndpoint of any API proxies that reference the backend server to configure
+    TLS access. </li>
+  </ul>
+
+  <aside class="note"><b>Note:</b> Apigee provides all Cloud customers with a cert when they create
+  an account so that the customer can get up and running quickly with Edge. All Cloud customers get
+  a copy of the same Apigee-provided cert. If you are doing two-way TLS to the backend, you cannot
+  use the Apigee-provided cert because it cannot be used to uniquely identify the owner of the API
+  proxy connecting to the backend. Instead, you should obtain your own cert for your
+  organization.</aside>
+
+  <p>To configure two-way TLS:</p>
+
+  <ol>
+    <li>Create the keystore on Edge, and upload the cert and private key, by using the procedure
+    described here: <a href="keystores-and-truststores">Keystores and Truststores</a>.
+
+    For this example, create a keystore named <strong>myTestKeystore</strong> that uses an
+    alias name of <strong>myKey</strong> for the cert and private key.</li>
+
+    <li>
+      <p>Use the following POST API call to create the reference
+      named <strong>myKeyStoreRef</strong> to the keystore you created above:</p>
+
+      <pre class="devsite-terminal">
+curl -X POST  -H "Content-Type:application/xml" https://api.enterprise.apigee.com/v1/o/{org_name}/e/{env_name}/references \
+-d '&lt;ResourceReference name="<strong>myKeyStoreRef</strong>"&gt;
+    &lt;Refers&gt;<strong>myTestKeystore</strong>&lt;/Refers&gt;
+    &lt;ResourceType&gt;<strong>KeyStore</strong>&lt;/ResourceType&gt;
+&lt;/ResourceReference&gt;' -u <var>email</var>:<var>password</var>
+</pre>
+
+      <p>The reference specifies the name of the keystore and the reference type as <code>KeyStore</code>.</p>
+
+      <p>Use the following GET API call to view the reference:</p>
+      <pre class="devsite-terminal">
+curl -X GET https://api.enterprise.apigee.com/v1/o/[org_name}/e/{env_name}/references/myKeyStoreRef /
+-u <var>email</var>:<var>password</var>
+</pre>
+    </li>
+
+    <li><strong>If you want to validate the backend cert</strong>, create a truststore on Edge, and upload the cert and CA
+    chain, as described here: <a href="keystores-and-truststores">Keystores and Truststores</a>.
+
+    For this example, if you have to create a truststore name it <strong>myTrustStore</strong>. </li>
+
+    <li>
+      <p><strong>If you created a truststore,</strong> use the following POST API call to create
+      the reference named <strong>myTrustStoreRef</strong> to the truststore you created
+      above:</p>
+
+      <pre class="devsite-terminal">
+curl -X POST  -H "Content-Type:application/xml" https://api.enterprise.apigee.com/v1/o/{org_name}/e/{env_name}/references \
+-d '&lt;ResourceReference name="<strong>myTrustStoreRef</strong>"&gt;
+    &lt;Refers&gt;<strong>myTrustKeystore</strong>&lt;/Refers&gt;
+    &lt;ResourceType&gt;<strong>KeyStore</strong>&lt;/ResourceType&gt;
+&lt;/ResourceReference&gt;' -u <var>email</var>:<var>password</var>
+</pre>
+    </li>
+
+    <li>Use the Edge management UI to update the TargetEndpoint definition for the API proxy (or,
+    if you define the API proxy in XML, edit the XML files for the proxy):
+
+      <ol style="list-style: lower-alpha outside">
+        <li>Login to the Edge management UI at <a href="https://enterprise.apigee.com" class="external">https://enterprise.apigee.com</a>.</li>
+
+        <li>In the Edge management UI menu, select <strong>APIs</strong>.</li>
+
+        <li>Select the name of the API proxy to update.</li>
+
+        <li>Select the <strong>Development</strong> tab.</li>
+
+        <li>Under <strong>Target Endpoints</strong>, select <strong>default</strong>.</li>
+
+        <li>In the code area, edit the <code>&lt;HTTPTargetConnection&gt;</code> element to
+        add the <code>&lt;SSLInfo&gt;</code>
+        element. Make sure to specify the correct keystore and key alias and set both the
+        <code>&lt;Enabled&gt;</code> and <code>&lt;ClientAuthEnabled&gt;</code> elements to true:
+
+<pre class="prettyprint">&lt;TargetEndpoint name="default"&gt;
+  ...
+  &lt;HTTPTargetConnection&gt;
+    <strong>&lt;SSLInfo&gt;
+      &lt;Enabled&gt;true&lt;/Enabled&gt;
+      &lt;ClientAuthEnabled&gt;true&lt;/ClientAuthEnabled&gt;
+      &lt;KeyStore&gt;ref://myKeyStoreRef&lt;/KeyStore&gt;
+      &lt;KeyAlias&gt;myKey&lt;/KeyAlias&gt;
+    &lt;/SSLInfo&gt;
+    &lt;URL&gt;https://myservice.com&lt;/URL&gt;</strong>
+  &lt;/HTTPTargetConnection&gt;
+  ...
+&lt;/TargetEndpoint&gt;</pre>
+
+    <aside class="note"><b>Note:</b> If you created a truststore, include it in the
+      <code>&lt;HTTPTargetConnection&gt;</code> element:
+
+<pre class="prettyprint">&lt;TargetEndpoint name="default"&gt;
+  &#8230;
+  &lt;HTTPTargetConnection&gt;
+    &lt;SSLInfo&gt;
+      &lt;Enabled&gt;true&lt;/Enabled&gt;
+      &lt;ClientAuthEnabled&gt;true&lt;/ClientAuthEnabled&gt;
+      &lt;KeyStore&gt;myKeystore&lt;/KeyStore&gt;
+      &lt;KeyAlias&gt;myKey&lt;/KeyAlias&gt;
+      <strong>&lt;TrustStore&gt;ref://myTrustStoreRef&lt;/TrustStore&gt;</strong>
+    &lt;/SSLInfo&gt;
+    &lt;URL&gt;https://myservice.com&lt;/URL&gt;
+  &lt;/HTTPTargetConnection&gt;
+    &#8230;
+&lt;/TargetEndpoint&gt;</pre>
+
+            If your TargetEndpoint references a TargetServer instead of a specific URL, update the
+            TargetServer definition to reference the new keystore and key alias. For example:
+
+<pre class="prettyprint">&lt;TargetServer name="target1&gt;
+  ...
+  <strong>&lt;SSLInfo&gt;
+    &lt;Enabled&gt;true&lt;/Enabled&gt;
+    &lt;ClientAuthEnabled&gt;true&lt;/ClientAuthEnabled&gt;
+    &lt;KeyAlias&gt;ref://myKeyStoreRef&lt;/KeyAlias&gt;
+    &lt;KeyStore&gt;myKey&lt;/KeyStore&gt;
+  &lt;/SSLInfo&gt;</strong>
+&lt;/TargetServer&gt;</pre>
+
+            If you had to create a truststore:
+<pre class="prettyprint">&lt;TargetServer name="target1"&gt;
+  ...
+  &lt;SSLInfo&gt;
+    &lt;Enabled&gt;true&lt;/Enabled&gt;
+    &lt;ClientAuthEnabled&gt;true&lt;/ClientAuthEnabled&gt;
+    &lt;KeyAlias&gt;myKeystore&lt;/KeyAlias&gt;
+    &lt;KeyStore&gt;myKey&lt;/KeyStore&gt;
+    <strong>&lt;TrustStore&gt;ref://myTrustStoreRef&lt;/TrustStore&gt;</strong>
+  &lt;/SSLInfo&gt;
+&lt;/TargetServer&gt;</pre>
+
+             You do not have to save the API proxy if you update a TargetServer definition.
+          </aside>
+        </li>
+
+        <li>Save the API proxy. If the API proxy has been deployed, saving it redeploys it with the
+        new setting.</li>
+      </ol>
+    </li>
+  </ol>
+
+  <p>For more information on the options available in the TargetEndpoint, including using variables
+  to supply TargetEndpoint <code>&lt;SSLInfo&gt;</code> values, see
+    <a href="/api-platform/reference/policies/api-proxy-configuration-reference">API proxy configuration
+  reference</a>. </p>
+
+  <h2 id="enablingsni">Enabling SNI</h2>
+
+  <p>Edge supports the use of Server Name Indication (SNI) from Message Processors to target
+  endpoints in Apigee Edge for Cloud and for Private Cloud deployments. </p>
+
+  <p>For Edge for the Private Cloud, to be backward compatible with your existing target backends,
+  Apigee disabled SNI by default. If your target backend is configured to support SNI,
+  you can enable this feature. See <a href="using-sni-edge">Using SNI with Edge</a> for more.</p>
+
+{% endblock %}

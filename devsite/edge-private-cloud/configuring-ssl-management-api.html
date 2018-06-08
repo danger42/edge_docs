@@ -1,0 +1,328 @@
+  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}Configuring TLS for the
+  management API{% endblock %} {% block body %}
+
+  <p>By default, TLS is disabled for the management API and you access the Edge management API over
+  HTTP by using the IP address of the Management Server node and port 8080. For example:</p>
+  <pre class="prettyprint">
+http://ms_IP:8080
+</pre>
+
+  <p>Alternatively, you can configure TLS access to the management API so that you can access it in
+  the form:</p>
+  <pre class="prettyprint">
+https://ms_IP:8443
+</pre>
+
+  <p>In this example, you configure TLS access to use port 8443. However, that port number is not
+  required by Edge - you can configure the Management Server to use other port values. The only
+  requirement is that your firewall allows traffic over the specified port. </p>
+
+  <p>To ensure traffic encryption to and from your management API, configure the settings in the
+  <code>/opt/apigee/customer/application/management-server.properties</code>
+  file. </p>
+
+  <p>In addition to TLS configuration, you can also control password validation (password length
+  and strength) by modifying the <code>management-server.properties</code> file.</p>
+
+  <aside class="note"><b>Note:</b> After modifying these files, restart your management API
+  service.</aside>
+
+  <h2 id="ensurethatyourtlsportisopen">Ensure that your TLS port is open</h2>
+
+  <p>The procedure in this section configures TLS to use port 8443 on the Management Server.
+  Regardless of the port that you use, you must ensure that the port is open on the Management
+  Server. For example, you can use the following command to open it:</p>
+  <pre class="devsite-terminal">
+iptables -A INPUT -m state --state NEW -m tcp -p tcp --dport 8443 -j ACCEPT --verbose
+</pre>
+
+  <aside class="note">
+    <b>Note:</b> This example uses port 8443 for the TLS port, and not the more common port 443.
+    The reason is that ports below 1024 are typically protected by the operating system and require
+    the process that accesses them to have root access. The Edge Management Server runs as the
+    "apigee" user and therefore typically does not have access to ports below 1024.
+
+    
+
+    <p>One alternative it to use a load balancer with the Edge API and terminate TLS on the load
+    balancer on port 443. You can then use either HTTP or HTTPS between the load balancer and the
+    Edge API. </p>
+
+    
+
+    <p>Another alternative is to use <code>iptables</code> to forward requests to port 443 to
+    port 8443. For example:</p>
+    <pre class="devsite-terminal">
+iptables -A PREROUTING -t nat -i eth0 -p tcp --dport 443 -j REDIRECT --to-port 8443 
+</pre>
+  </aside>
+
+  <h2 id="configuretls">Configure TLS</h2>
+
+  <p>Edit the <code>/opt/apigee/customer/application/management-server.properties</code>
+  file to control TLS use on traffic to and from your management API. If this file does not exist,
+  create it.</p>
+
+  <p>Use the following procedure to configure TLS access to the management API:</p>
+
+  <ol>
+    <li>Generate the keystore JKS file containing your TLS certification and private key. For more
+    see <a href="configuring-ssl-edge-premises">Configuring TLS/SSL for Edge On
+    Premises</a>.</li>
+
+    <li>Copy the keystore JKS file to a directory on the Management Server node, such
+    as <code>/opt/apigee/customer/application</code>.</li>
+
+    <li>Change ownership of the JKS file to apigee:
+
+      <pre class="devsite-terminal">chown apigee:apigee <var>keystore.jks</var></pre>
+
+    where <var>keystore.jks</var> is the name of your keystore file.</li>
+
+    <li>Edit <code>/opt/apigee/customer/application/management-server.properties</code>
+    to set the following properties. If that file does not exist, create it:
+
+    <pre class="prettyprint">
+conf_webserver_ssl.enabled=true
+# Leave conf_webserver_http.turn.off set to false
+# because many Edge internal calls use HTTP.
+conf_webserver_http.turn.off=false
+conf_webserver_ssl.port=8443
+conf_webserver_keystore.path=/opt/apigee/customer/application/<var>keystore.jks</var>
+# Enter the obfuscated keystore password below.
+conf_webserver_keystore.password=OBF:<var>obfuscatedPassword</var>
+conf_webserver_cert.alias=apigee-devtest</pre>
+
+    where <var>keyStore.jks</var> is your keystore file, and
+    <strong>obfuscatedPassword</strong> is your obfuscated keystore password. See <a href=
+    "configuring-ssl-edge-premises">Configuring TLS/SSL for Edge On Premises</a> for
+    information on generating an obfuscated password.</li>
+
+    <li>Restart the Edge Management Server by using the command:
+      <pre class="devsite-terminal">
+/opt/apigee/apigee-service/bin/apigee-service edge-management-server restart</pre></li>
+  </ol>
+
+  <p>The management API now supports access over TLS.</p>
+
+  <h2 id="configuretheedgeuitousetlstoaccesstheedgeapi">Configure the Edge UI to use TLS to access
+  the Edge API</h2>
+
+  <p>In the procedure above, Apigee recommended leaving <code>conf_webserver_http.turn.off=false</code> so that
+  the Edge UI can continue to make Edge API calls over HTTP.</p>
+
+  <aside class="warning"><b>Warning:</b> Apigee recommends that you disable HTTP access in
+  production environments.</aside>
+
+  <p>Use the following procedure to configure the Edge UI to make these calls over HTTPS only:</p>
+
+  <ol>
+    <li>Configure TLS access to the management API as described above.</li>
+
+    <li>After confirming that TLS is working for the management API, edit <code>/opt/apigee/customer/application/<strong>management-server.properties</strong></code> to
+    set the following property:
+    <code>conf_webserver_http.turn.off=true</code></li>
+
+    <li>Restart the Edge Management Server by using the command:
+    <pre class="devsite-terminal">
+/opt/apigee/apigee-service/bin/apigee-service edge-management-server restart </pre></li>
+
+    <li>Edit <code>/opt/apigee/customer/application/<strong>ui.properties</strong></code>
+    to set the following property for the Edge UI. If that file does not exist, create it:
+
+    <code>conf_apigee_apigee.mgmt.baseurl="https://<em><strong>FQDN:8443</strong></em>/v1"</code>
+
+    where <em><strong>FQDN</strong></em> is the full domain name, as per your certificate
+    address of the Management Server, and the port number is the port specified above by
+    <code>conf_webserver_ssl.port</code>.</li>
+
+    <li><strong>Only if you used a self-signed cert (not recommended in a production
+    environment)</strong> when configuring TLS access to the management API above, add the
+    following property to <code>ui.properties</code>:
+
+    <code>conf/application.conf+play.ws.ssl.loose.acceptAnyCertificate=true</code>
+
+    Otherwise, the Edge UI will reject a self-signed cert.</li>
+
+    <li>Restart the Edge UI by using the command:
+
+    <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-ui restart</pre></li>
+  </ol>
+
+  <h2 id="tlspropertiesforthemanagementserver">TLS properties for the Management Server</h2>
+
+  <p>The following table lists all of the TLS/SSL properties that you can set in <code>management-server.properties</code>:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>
+          <p><strong>Properties</strong></p>
+        </th>
+
+        <th>
+          <p><strong>Description</strong></p>
+        </th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td>
+          <p><code>conf_webserver_http.port=8080</code></p>
+        </td>
+
+        <td>
+          <p>Default is 8080.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><code>conf_webserver_ssl.enabled=false</code></p>
+        </td>
+
+        <td>
+          <p>To enable/disable TLS/SSL. With TLS/SSL enabled (true), you must also set the ssl.port
+          and keystore.path properties.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><code>conf_webserver_http.turn.off=true</code></p>
+        </td>
+
+        <td>
+          <p>To enable/disable http along with https. If you want to use only HTTPS, leave the
+          default value to <code>true</code>.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><code>conf_webserver_ssl.port=8443</code></p>
+        </td>
+
+        <td>
+          <p>The TLS/SSL port.</p>
+
+          <p>Required when TLS/SSL is enabled (<code>conf_webserver_ssl.enabled=true</code>).</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><code>conf_webserver_keystore.path=&lt;path&gt;</code></p>
+        </td>
+
+        <td>
+          <p>The path to your keystore file.</p>
+
+          <p>Required when TLS/SSL is enabled (<code>conf_webserver_ssl.enabled=true</code>).</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><code>conf_webserver_keystore.password=</code></p>
+        </td>
+
+        <td>
+          <p>Use an obfuscated password in this format: OBF:xxxxxxxxxx</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><code>conf_webserver_cert.alias=
+           </code></p>
+        </td>
+
+        <td>
+          <p>Optional keystore certificate alias  </p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><code>conf_webserver_keymanager.password=</code></p>
+        </td>
+
+        <td>
+          <p>If your key manager has a password, enter an obfuscated version of the password in
+          this format: OBF:xxxxxxxxxx</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><code>conf_webserver_trust.all=
+          &lt;false | true&gt;</code></p>
+
+          
+
+          <p><code>conf_webserver_trust.store.path=&lt;path&gt;</code></p>
+
+          
+
+          <p><code>conf_webserver_trust.store.password=</code></p>
+        </td>
+
+        <td>
+          <p>Configure settings for your trust store. Determine whether you want to accept all
+          TLS/SSL certificates (for example, to accept non-standard types). The default is
+          <code>false</code>. Provide the path
+          to your trust store, and enter an obfuscated trust store password in this format:
+          OBF:xxxxxxxxxx</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><code>conf_webserver_exclude.cipher.suites=&lt;CIPHER_SUITE_1
+          CIPHER_SUITE_2&gt;</code></p>
+
+          
+
+          <p><code>conf_webserver_include.cipher.suites=</code></p>
+        </td>
+
+        <td>
+          <p>Indicate any cipher suites you want to include or exclude. For example, if you
+          discover vulnerability in a cipher, you can exclude it here. Separate multiple ciphers
+          with a space.</p>
+
+          <p>For information on cypher suites and cryptography architecture, see:</p>
+
+          <p><a href=
+          "https://docs.oracle.com/javase/8/docs/technotes/guides/security/SunProviders.html#SunJSSE">
+          http://docs.oracle.com/javase/8/docs/technotes/guides/security/SunProviders.html#SunJSSE</a></p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><code>conf_webserver_ssl.session.cache.size=</code></p>
+
+          
+
+          <p><code>conf_webserver_ssl.session.timeout=</code></p>
+        </td>
+
+        <td>
+          <p>Integers that determine:</p>
+
+          <ul>
+            <li>The TLS/SSL session cache size (in bytes) for storing session information for
+            multiple clients.</li>
+
+            <li>The amount of time TLS/SSL sessions can last before they time out (in
+            milliseconds).</li>
+          </ul>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  {% endblock %}

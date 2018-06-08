@@ -1,0 +1,967 @@
+  {% extends "_base.html" %} {% block title %}Working with Acquia{% endblock %} {% block body %}
+
+  <p>Apigee uses <a href="https://www.acquia.com/">Acquia</a>, a web site management service, for
+  hosting cloud-based versions of the Developer Services portal in the European Union (EU). Acquia
+  is designed to work with Drupal to let you develop, test, and publish your portal in a secure
+  environment.</p>
+
+  <aside class="note"><b>Note:</b> Acquia is provided as an alternative to customers that need to
+  host the Developer Portal in the EU only due to EU regulations. Apigee uses Pantheon for hosting
+  in the US. For more information about Pantheon, see <a href=
+  "/api-platform/publish/drupal/working-pantheon.html">Working with Pantheon</a>.</aside>
+
+  <aside class="warning">
+    <b>Warning:</b>
+
+    <h2 id="requiredreadingacquiadocumentation"><span style="color:#ff0000;">Required reading:
+    Acquia documentation</span></h2>This document contains an overview of how you use Acquia with
+    your portal. Refer to the <a href="https://docs.acquia.com" target="_new">Acquia
+    documentation</a> for complete details about working with Acquia.
+  </aside>
+
+  <h2 id="access">Accessing the Acquia Cloud interface</h2>
+
+  <p>After your Acquia Cloud account is set up, you can access your portal via the Acquia Cloud
+  interface at at <a href="https://cloud.acquia.com/" target=
+  "_new">https://cloud.acquia.com/</a>.</p>
+
+  <p>When you first log in, the <b>Applications</b> page is displayed, as shown in the following
+  figure.</p>
+
+  <p><img alt="" src="/api-platform/images/develop-tab.png"></p>
+
+  <p>The Applications page displays all of the applications that you have access to that are hosted
+  on Acquia Cloud. An <i>application</i> is the software entity that you are managing in the Acquia
+  Cloud, such as your Drupal-based portal site.</p>
+
+  <p>The following sections describe how to use the Acquia Cloud interface to manage your portal
+  content.</p>
+
+  <p>For more information about the Acquia Cloud interface, see <a href=
+  "https://docs.acquia.com/acquia-cloud/cloud-ui" target="_new">Using the Acquia Cloud
+  interface</a> and <a href="https://docs.acquia.com/acquia-cloud/manage" target="_new">Managing
+  applications with Acquia Cloud</a> in the Acquia Cloud documentation.</p>
+
+  <h2 id="managing-your-environments">Managing your environments</h2>
+
+  <p>Access the <a href="https://cloud.acquia.com/" target="_new">Acquia Cloud interface</a> and on
+  the Applications page click <strong>Manage</strong> associated with your portal site to access
+  its dashboard.</p>
+
+  <p>To manage your workflow, three environments are provided for developing, testing, and
+  publishing your portal, as outlined in the following table. Your portal is deployed to each
+  environment, but might be in a different state with a unique code branch or tag, database, and so
+  on. See <a href="#deploying-code-to-your-portal-environments">Deploying code to your portal
+  environments</a>.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <td><strong>Environment</strong></td>
+
+        <td><strong>Description</strong></td>
+
+        <td><strong>Default URL</strong></td>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td>Dev</td>
+
+        <td>Develop new features and customize your portal.</td>
+
+        <td>
+          <code>http://{<em>application-name</em>}<em>xxxxxx</em>.devcloud.acquia-sites.com/</code>
+
+          <p>Where <code><em>application-name</em></code> is the name of your application and
+          <code><em>xxxxxx</em></code> is a unique string of characters used to differentiate Dev
+          and Stage.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Stage</td>
+
+        <td>Test the latest code before pushing it to the production environment.</td>
+
+        <td>
+          <code>http://{<em>application-name</em>}<em>yyyyyy</em>.devcloud.acquia-sites.com/</code>
+
+          <p>Where <code><em>application-name</em></code> is the name of your application and
+          <code><em>yyyyyy</em></code> is a unique string of characters used to differentiate Dev
+          and Stage.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Prod</td>
+
+        <td>Publish your portal to production (live).</td>
+
+        <td>
+          <code>http://{<em>application-name</em>}.devcloud.acquia-sites.com/</code>
+
+          <p>Where <code><em>application-name</em></code> is the name of your application.</p>
+
+          <p><b>Note:</b> See also <a href="#configuring-a-custom-domain">Configuring a custom
+          domain</a>.</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>For more information, see <a href=
+  "https://docs.acquia.com/acquia-cloud/manage/environments" target="_new">Working with
+  environments</a> in the Acquia Cloud documentation.</p>
+
+  <h2 id="developing-your-portal">Developing your portal</h2>
+
+  <p>The following sections describe how to develop your portal.</p>
+
+  <ul>
+    <li><a href="#gitrepo">Overview of the Git repository</a></li>
+
+    <li><a href="#accessing-your-code">Accessing your code</a></li>
+
+    <li><a href="#deploying-code-to-your-portal-environments">Deploying code to your portal
+    environments</a></li>
+
+    <li><a href="#adding-custom-modules-and-themes">Adding custom modules and themes</a></li>
+
+    <li><a href="#override">Overriding Drupal profile modules and themes</a></li>
+  </ul>
+
+  <p>In addition, refer to the following sections for more details about customizing your
+  portal.</p>
+
+  <table swidth="700">
+    <thead>
+      <tr>
+        <th>
+          <p><strong>If you want to...</strong></p>
+        </th>
+
+        <th>
+          <p><strong>You can</strong></p>
+        </th>
+
+        <th>
+          <p><strong>More Information</strong></p>
+        </th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td rowspan="2" style="height: 28px;">
+          <p>Change the site&#8217;s look and feel</p>
+        </td>
+
+        <td style="height: 28px;">
+          <p><strong>Basic</strong> - Use the <strong>Appearance</strong> menu entry
+          on the portal site to make changes, such as modify the logo and site colors.</p>
+        </td>
+
+        <td style="height: 28px;">
+          <p>See <a href="/api-platform/publish/drupal/customize-appearance.html">Customize
+          the appearance</a></p>
+        </td>
+      </tr>
+
+      <tr>
+        <td style="height: 28px;">
+          <p><strong>Advanced</strong> - To make modifications to the complete look and feel
+          of the site, extend the Apigee Responsive theme.</p>
+        </td>
+
+        <td style="height: 28px;">
+          <p>See <a href="/api-platform/publish/drupal/customizing-theme.html">Customizing the
+          theme</a></p>
+        </td>
+      </tr>
+
+      <tr>
+        <td rowspan="2" style="height: 28px;">
+          <p>Change the behavior of site functionality</p>
+        </td>
+
+        <td style="height: 28px;">
+          <p><strong>Basic</strong> - Use the admin settings on the portal to change/configure
+          the way the site behaves.</p>
+        </td>
+
+        <td style="height: 28px;">
+          <p>See the Apigee documentation starting <a href=
+          "/api-platform/publish/drupal/customize-appearance.html">here</a></p>
+        </td>
+      </tr>
+
+      <tr>
+        <td style="height: 28px;">
+          <p><strong>Advanced</strong> - Create a custom module to change any behavior of the
+          site.</p>
+        </td>
+
+        <td style="height: 28px;">
+          <p>See <a href="https://www.drupal.org/developing/modules/7">Creating custom
+          modules</a> in the Drupal documentation</p>
+
+          <div>
+             
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <aside class="warning">
+    <b>Warning:</b> <strong><span style="color:#ff0000;">Required reading:</span></strong> Review
+    the following sections in the Acquia Cloud documentation for best practices, considerations,
+    and tips when developing code on Acquia Cloud:
+
+    <ul>
+      <li><a href="https://docs.acquia.com/acquia-cloud/develop/drupal" target="_new">Developing a
+      Drupal application on Acquia Cloud</a></li>
+
+      <li><a href="https://docs.acquia.com/acquia-cloud/develop/code" target="_new">Working with
+      code</a></li>
+
+      <li><a href="https://docs.acquia.com/acquia-cloud/manage/database" target="_new">Working with
+      databases</a></li>
+
+      <li><a href="https://docs.acquia.com/acquia-cloud/manage/files" target="_new">Working with
+      files</a></li>
+
+      <li><a href="https://docs.acquia.com/acquia-cloud/develop/publish" target="_new">Publishing
+      your application</a></li>
+    </ul>
+  </aside>
+
+  <h3 id="developingyourportal-overviewofthegitrepository"><a id="gitrepo" name=
+  "gitrepo"></a>Overview of the Git repository</h3>
+
+  <p>The Git repository for your Drupal code contains all of your portal code and is organized
+  using the following structure.</p>
+
+  <p><strong>Note</strong>: Only modify content within the <span style=
+  "font-family: monospace;">/sites/all</span> directory. If you modify content that is outside
+  of the <code>/sites/all</code> directory, you will have issues when upgrading to new
+  versions and may experience merge conflicts when checking in changes to Git.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>
+          <p>Folder in Git repo</p>
+        </th>
+
+        <th>
+          <p>Description</p>
+        </th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td><code>/profiles/apigee</code></td>
+
+        <td>
+          <p>Apigee maintained modules and themes, including:</p>
+
+          <ul>
+            <li><code>/profiles/apigee/modules/contrib</code>: Drupal contrib modules maintained by
+            Apigee</li>
+
+            <li><code>/profiles/apigee/themes/contrib</code>: Drupal contrib themes maintained by
+            Apigee</li>
+
+            <li><code>/profiles/apigee/modules/custom</code>: Custom modules created by Apigee</li>
+
+            <li><code>/profiles/apigee/themes/custom</code>: Custom themes created by Apigee</li>
+          </ul>
+
+          <p><strong>Note</strong>: Do not modify content in the <span style=
+          "font-family: monospace;">/profiles/apigee</span> directory or you will have
+          issues when upgrading to new versions and may experience merge conflicts when checking in
+          changes to Git. For Drupal best practices, see <a href=
+          "https://www.drupal.org/docs/7/site-building-best-practices/never-hack-core" target=
+          "_new">Never hack core</a>.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td><code>/sites/all</code></td>
+
+        <td>
+          <p>Your custom Drupal modules and themes. For information about managing the content in
+          this folder, see <a href="#adding-custom-modules-and-themes">Adding custom modules
+          and themes</a> and <a href="#override">Overriding Drupal profile modules and
+          themes</a>.</p>
+
+          <p><strong>Note</strong>: Only modify content within the <span style=
+          "font-family: monospace;">/sites/all</span> directory.</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="accessing-your-code">Accessing your code</h3>
+
+  <p>In order to access your code repository in Git, you need to perform the tasks described in the
+  following sections:</p>
+
+  <ul>
+    <li><a href="#enabling-ssh-access-to-your-server">Enabling SSH access to your server</a></li>
+
+    <li><a href="#accessing-your-code-repository-in-git">Accessing your code repository in
+    Git</a></li>
+  </ul>
+
+  <h4 id="enabling-ssh-access-to-your-server">Enabling SSH access to your server</h4>
+
+  <p>Before you can use Git to manage your Drupal code, you must enable SSH to access your server.
+  For more information, see <a href="https://docs.acquia.com/acquia-cloud/ssh/enable" target=
+  "_new">Enabling SSH access</a> in the Acquia Cloud documentation.</p>
+
+  <p><strong>To enable SSH access:</strong></p>
+
+  <ol>
+    <li>Log in to the Acquia Accounts interface at <a href="https://accounts.acquia.com" target=
+    "_new">https://accounts.acquia.com</a>.</li>
+
+    <li>Click <strong>Credentials</strong>.</li>
+
+    <li>If prompted, re-enter your password to confirm your identity.</li>
+
+    <li>Under SSH keys, click <strong>Add SSH key</strong>.</li>
+
+    <li>Enter the following information:
+
+      <table>
+        <thead>
+          <tr>
+            <td><strong>Field</strong></td>
+
+            <td><strong>Description</strong></td>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr>
+            <td>Nickname</td>
+
+            <td>Nickname for the SSH key. The nickname can contain alphanumeric characters and
+            underscores.</td>
+          </tr>
+
+          <tr>
+            <td>Public key</td>
+
+            <td>
+              Public key.
+
+              <p>For information about generating an SSH public key, see <a href=
+              "https://docs.acquia.com/acquia-cloud/ssh/generate" target="_new">Generating an SSH
+              public key</a> in the Acquia Cloud documentation.</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </li>
+
+    <li>Click <strong>Add key</strong>.</li>
+  </ol>
+
+  <h4 id="accessing-your-code-repository-in-git">Accessing your code repository in Git</h4>
+
+  <p>The Git repository contains all of your portal site's code. You can add new code or customize
+  existing code to configure your portal. For more information, see <a href=
+  "https://docs.acquia.com/acquia-cloud/develop/repository" target="_new">Using your code
+  repository</a> in the Acquia Cloud documentation.</p>
+
+  <aside class="note"><b>Note:</b> Even though the Git repository enables you to access to all of
+  the Drupal and Apigee modules, do not modify the code in those modules. Create your own custom
+  modules and themes inside the <code>sites/all</code> folder and restrict your changes to only
+  those modules. See <a href="#adding-custom-modules-and-themes">Adding custom modules and
+  themes</a>. For more best practices, see <a href=
+  "https://docs.acquia.com/acquia-cloud/ready/developing" target="_new">Developing on Acquia
+  Cloud</a> in the Acquia Cloud documentation.</aside>
+
+  <p><strong>To access your code repository in the Git repo:</strong></p>
+
+  <ol>
+    <li>Log in to the Acquia Cloud interface at <a href="https://cloud.acquia.com/" target=
+    "_new">https://cloud.acquia.com/</a>.</li>
+
+    <li>On the Applications page, click <strong>Manage</strong> to view the details of the
+    portal.</li>
+
+    <li>Click <strong>Application Info</strong> in the navigation bar.
+
+      <p><img alt="" src="/api-platform/images/application-info2.png"></p>
+    </li>
+
+    <li>Copy the clone command in the Application Information dialog.</li>
+
+    <li>Clone the Git repository to your local environment by executing one of the following Git
+    commands:
+
+      <p>To clone the Git repository and create a new branch:</p>
+
+      <p><code>&gt; git clone --branch [branch]
+      myportal@abcdef.devcloud.hosting.acquia.com:myportal.git [destination]</code></p>
+
+      <p>To clone the Git repository from the <strong>master</strong> branch:</p>
+
+      <p><code>&gt; git clone myportal@abcdef.devcloud.hosting.acquia.com:myportal.git
+      [destination]</code></p>
+    </li>
+
+    <li>Repeat these steps when you are ready to stage, commit, and push your changes to the Git
+    repository using the relevant commands shown in the Application window.<br>
+
+      <p>When you commit a branch to your repository, Acquia Cloud updates the environment running
+      that code branch. You can deploy code to your portal environments, as described in the next
+      section.</p>
+    </li>
+  </ol>
+
+  <h3 id="deploying-code-to-your-portal-environments">Deploying code to your portal
+  environments</h3>
+
+  <p>To deploy, switch, or revert code in a portal environment, move your code between
+  environments, or learn more about the repository structure and recommended workflow, see <a href=
+  "https://docs.acquia.com/acquia-cloud/develop/code" target="_new">Working with code</a> in the
+  Acquia Cloud documentation.</p>
+
+  <p>When you deploy new code to an environment, you will need to run <code>update.php</code> to
+  make the required database updates, as described in <a href=
+  "https://docs.acquia.com/acquia-cloud/develop/code#update" target="_new">Run update.php</a> in
+  the Acquia Cloud documentation.</p>
+
+  <h3 id="adding-custom-modules-and-themes">Adding custom modules and themes</h3>
+
+  <p>You can expand the functionality of the portal by adding your own custom modules and themes to
+  the folders listed in the following table.</p>
+
+  <p><strong>Note</strong>: Only modify content within the <span style=
+  "font-family: monospace;">/sites/all</span> directory. If you modify content that is outside
+  of the <span style="font-family: monospace;">/sites/all</span> directory, you may
+  experience merge conflicts when checking in changes to Git.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <td><strong>Module/Theme</strong></td>
+
+        <td><strong>Folder in Git repository</strong></td>
+
+        <td><strong>More information (Drupal documentation)</strong></td>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td>Custom modules</td>
+
+        <td><code>sites/all/modules/custom</code></td>
+
+        <td><a href="https://www.drupal.org/developing/modules/7" target="_new">Creating custom
+        modules</a></td>
+      </tr>
+
+      <tr>
+        <td>Custom themes</td>
+
+        <td><code>sites/all/themes</code></td>
+
+        <td><a href="/api-platform/publish/drupal/customizing-theme.html#sub-theme" target=
+        "_new">Customizing the theme</a><br>
+        <a href="https://www.drupal.org/docs/7/theming" target="_new">Theming Drupal 7</a></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>After adding the custom module or theme in the <strong>Dev</strong> environment, you
+  can deploy it to <strong>Test</strong> for testing, and then to
+  the <strong>Live</strong> environment for production, as described in <a href=
+  "#deploying-code-to-your-portal-environments">Deploying code to your portal environments</a>.</p>
+
+  <h3 id="override">Overriding Drupal profile modules and themes</h3>
+
+  <p>The modules and themes in the following directories override the Drupal profile modules and
+  themes maintained and distributed by Apigee in <code>/profiles/apigee</code>.
+  See <a href="#gitrepo">Overview of your Git repository</a>.</p>
+
+  <p>For example, you may want to override a module in the Apigee Drupal distribution in the
+  following scenarios:</p>
+
+  <ul>
+    <li>You want to use a different version of a particular module.</li>
+
+    <li>You want implement a security update before the next scheduled Apigee release.</li>
+  </ul>
+
+  <aside class="note"><b>Note:</b> If you wish to use the Drupal profile modules and themes
+  maintained by Apigee in the <span style=
+  "font-family: monospace;">/profiles/apigee</span> folder, then you will need to remove any
+  duplicate modules and themes that you added to this folder.</aside>
+
+  <table>
+    <thead>
+      <tr>
+        <td><strong>Module/Theme</strong></td>
+
+        <td><strong>Folder in Git repository</strong></td>
+
+        <td><strong>More information (Drupal documentation)</strong></td>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td>Drupal Contributed modules</td>
+
+        <td>
+          <code>sites/all/modules/contrib</code>
+
+          <p><strong>Note</strong>: Modules stored anywhere under <code>/sites/all/modules</code>
+          will override the Apigee Drupal distribution modules.</p>
+        </td>
+
+        <td>
+          <a href="https://www.drupal.org/docs/7/modules" target="_new">Contributed modules</a>
+
+          <p><b>Note</b>: Drupal contributed modules in this directory override equivalent modules
+          maintained and distributed by Apigee in <code>/profiles/apigee/modules</code>.
+          Remove any duplicate modules that you added to this folder if you wish to use the Apigee
+          maintained Drupal profile modules.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Drupal Contributed themes</td>
+
+        <td><code>sites/all/themes</code></td>
+
+        <td>
+          <a href="https://www.drupal.org/docs/7/themes" target="_new">Contributed themes</a>
+
+          <p><b>Note</b>: Drupal contributed themes in this directory override equivalent modules
+          maintained and distributed by Apigee
+          in <code>/profiles/apigee/themes</code>. Remove any duplicate modules that you
+          added to this folder if you wish to use the Apigee maintained profile themes.</p>
+
+          <div>
+             
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="ssl">Enabling SSL</h2>
+
+  <p>To enable secure access to your site using HTTPS, you must enable SSL.</p>
+
+  <p><strong>To enable SSL</strong>:</p>
+
+  <ol>
+    <li>Obtain an SSL certificate from a Certificate Authority (CA) or SSL certificate vendor.
+    See <a href="https://docs.acquia.com/acquia-cloud/ssl" target="_new">Enabling
+    SSL</a>.</li>
+
+    <li>Upload the SSL certificate on the SSL page in the Acquia Cloud interface. See <a href=
+    "https://docs.acquia.com/acquia-cloud/ssl/cert" target="_new">Managing SSL
+    certificates</a>.</li>
+  </ol>
+
+  <h2 id="securing-your-production-environment">Securing your production environment</h2>
+
+  <p>When you first create an application, you can freely manage the production environment and
+  propagate changes from the development and staging environments. After you publish your content
+  you may want to lock the production environment to prevent unauthorized or accidental updates to
+  the content. For more information, see <a href=
+  "https://docs.acquia.com/acquia-cloud/manage/prod-mode" target="_new">Using Production mode to
+  protect your live application</a> in the Acquia Cloud documentation.</p>
+
+  <p><strong>To secure your production environment:</strong></p>
+
+  <ol>
+    <li>Log in to the Acquia Cloud interface at <a href="https://cloud.acquia.com/" target=
+    "_new">https://cloud.acquia.com/</a>.</li>
+
+    <li>On the Applications page, click <strong>Manage</strong> to view the details of
+    your portal site.</li>
+
+    <li>Click <strong>Prod</strong> to view the production environment details.</li>
+
+    <li>Click <strong>Production Mode</strong> in the navigation bar.</li>
+
+    <li>Click <strong>Enable</strong> to enable production mode.</li>
+  </ol>
+
+  <h2 id="applying-module-and-theme-updates-to-the-portal">Applying module and theme updates to the
+  portal</h2>
+
+  <p>Periodically, Apigee updates the modules and themes in your portal to the latest version
+  automatically. Updates are made to the <strong>Dev</strong> environment only and are tagged to
+  indicate that they need to be migrated to other portal environments.</p>
+
+  <aside class="note"><b>Note:</b> You can subscribe to Apigee release and status notifications
+  at <a href="https://status.apigee.com" target="_new">status.apigee.com</a>.
+  Click <strong>Subscribe to Updates</strong> and enter your contact information, such as
+  email address, when prompted, and click <strong>Subscribe</strong>. On the email
+  notification management page, ensure that <strong>Developer Portal</strong> is
+  selected, toggle other notification settings as required, and click <strong>Update
+  Preferences</strong>.</aside>
+
+  <p>If you added any custom modules or themes, you will need to update them manually.</p>
+
+  <p>The following table summarizes the steps required to apply module and theme updates to the
+  portal.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <td><strong>Modules/Themes</strong></td>
+
+        <td><strong>Description</strong></td>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td>Apigee Edge modules</td>
+
+        <td>
+          <p>Apigee applies updates automatically to the <strong>Dev</strong> environment only.</p>
+
+          <p>After you test the updates, migrate them
+          from <strong>Dev</strong> to <strong>Stage</strong> to <strong>Prod</strong> environments,
+          as described in <a href="#deploying-code-to-your-portal-environments">Deploying code
+          to your portal environments</a>.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Apigee Responsive theme</td>
+
+        <td>
+          <p>Apigee applies updates automatically to the <strong>Dev</strong> environment
+          only.</p>
+
+          <p>After you test the updates, migrate them
+          from <strong>Dev</strong> to <strong>Stage</strong> to <strong>Prod</strong> environments,
+          as described in <a href="#deploying-code-to-your-portal-environments">Deploying code
+          to your portal environments</a>.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Drupal core and contributed modules</td>
+
+        <td>
+          <p>Apigee applies updates automatically to the <strong>Dev</strong> environment
+          only. </p>
+
+          <p>After you test the updates, migrate them
+          from <strong>Dev</strong> to <strong>Stage</strong> to <strong>Prod</strong> environments,
+          as described in <a href="#deploying-code-to-your-portal-environments">Deploying code
+          to your portal environments</a>.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Custom modules and themes</td>
+
+        <td>
+          <p>If you have added custom modules and themes to your portal, as described in <a href=
+          "#adding-custom-modules-and-themes">Adding custom modules and themes</a>, you must
+          install updates manually.</p>
+
+          <p>Download the latest version to your local directory manually or using <a href=
+          "https://drushcommands.com/" target="_new">Drush</a>. Then stage, commit, and push the
+          updates to the Git repository. After you test the updates, migrate them
+          from <strong>Dev</strong> to <strong>Stage</strong> to <strong>Prod</strong> environments,
+          as described in <a href="#deploying-code-to-your-portal-environments">Deploying code
+          to your portal environments</a>.</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="migrating-your-custom-features">Migrating your custom features</h2>
+
+  <p>If you add custom code or configurations to the portal, you need to maintain and migrate them
+  from <strong>Dev</strong> to <strong>Stage</strong> to <strong>Prod</strong> environments.</p>
+
+  <p>For code in the Git repository, you can use the process described in <a href=
+  "#deploying-code-to-your-portal-environments">Deploying code to your portal
+  environments</a> to migrate the code
+  from <strong>Dev</strong> to <strong>Stage</strong> to <strong>Prod</strong>.</p>
+
+  <p>If you have created any custom configurations, use one of the following methods to migrate
+  them:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <td><strong>Method</strong></td>
+
+        <td><strong>Description</strong></td>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td>Export your configuration to code</td>
+
+        <td>Many common configurations are "exportable" to code using the <a href=
+        "https://www.drupal.org/project/features" target="_new">Features module</a>. For example,
+        views, panels, image cache, and so on.</td>
+      </tr>
+
+      <tr>
+        <td>Implement <code>hook_update_N()</code> function</td>
+
+        <td>
+          Drupal manages database and configuration changes by using the <a href=
+          "https://api.drupal.org/api/drupal/modules%21system%21system.api.php/function/hook_update_N/7"
+          target="_new">hook_update_N() function</a>.
+
+          <p>If you have a custom module, you can:</p>
+
+          <ul>
+            <li>Add <code>hook_update_N()</code> functions to your
+            module's <code>.install</code> file to process your changes.</li>
+
+            <li>Deploy these changes along with your code.</li>
+
+            <li>Run <code>update.php</code> to migrate the changes in the Stage and Prod
+            environments.</li>
+
+            <li> </li>
+          </ul>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="configuring-a-custom-domain">Configuring a custom domain</h2>
+
+  <p>As noted in <a href="#managing-your-environments">Managing your environments</a>, the default
+  domain names for the portal environments all end in <code>acquia-sites.com</code>. It is
+  recommended that you provide your own custom domain name that personalizes and better conveys the
+  purpose of your site. For example, a popular alternative is:</p>
+
+  <p><code>https://developers.mycompany.com</code></p>
+
+  <p><strong>To configure a custom domain</strong>:</p>
+
+  <ol>
+    <li>Add your domain to your portal site environment. See <a href=
+    "https://docs.acquia.com/acquia-cloud/manage/domains" target="_new">Managing domains</a> in the
+    Acquia Cloud documentation.</li>
+
+    <li>Set up your custom domain with your DNS provider by pointing your domain name's DNS record
+    entry to the public IP address (not to an <code>acquia-sites.com</code> domain). See <a href=
+    "https://docs.acquia.com/acquia-cloud/manage/domains/dns" target="_name">Pointing DNS records
+    to your public IP addresses</a> in the Acquia Cloud documentation.
+
+      <p><strong>Note</strong>: Do not set the domain name's CNAME entry to an
+      <code>acquia-sites.com</code> domain. Doing so may cause latency issues or down time with
+      your portal site.</p>
+    </li>
+  </ol>
+
+  <h2 id="monitoringyourportalusingacquiainsight">Monitoring your portal using Acquia Insight</h2>
+
+  <p>Acquia Insight is a set of tools that enables you to optimize your portal site by monitoring
+  its performance, security, and search engine optimization. For more information, see <a href=
+  "https://docs.acquia.com/acquia-cloud/insight" target="_new">Acquia Insight</a>.</p>
+
+  <aside class="note"><b>Note:</b> Before you can use Acquia Insight, you must install and enable
+  the Acquia Connector. For Drupal 7, you must use the <a href=
+  "https://kbv2.acquia.com/release-note/acquia-connector-7x-30" target="_blank">7.x-3.x version</a>
+  of the Acquia Insight module.</aside>
+
+  <h2 id="backing-up-your-portal">Backing up your portal</h2>
+
+  <p>The following tables summarize the options available for backing up your portal
+  components.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <td><strong>Component</strong></td>
+
+        <td><strong>Backup details</strong></td>
+
+        <td><strong>More info in Acquia Cloud Docs</strong></td>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td>Code</td>
+
+        <td>
+          <ul>
+            <li>Code is maintained by a version control system and tagged each time you
+            commit.</li>
+
+            <li>Sync or revert to a specific tag at any time.</li>
+          </ul>
+        </td>
+
+        <td><a href="https://docs.acquia.com/acquia-cloud/manage/back-up#code" target="_new">Code
+        backups</a></td>
+      </tr>
+
+      <tr>
+        <td>Database</td>
+
+        <td>
+          <ul>
+            <li>Daily backups are performed and maintained for three days.</li>
+
+            <li>Schedule automatic and on-demand backups.</li>
+
+            <li>Internal disaster snapshots of all data are taken every hour.</li>
+          </ul>
+        </td>
+
+        <td>
+          <ul>
+            <li><a href="https://docs.acquia.com/acquia-cloud/manage/back-up#db" target=
+            "_new">Database backups</a></li>
+
+            <li><a href="https://docs.acquia.com/acquia-cloud/manage/cron" target="_new">Using
+            scheduled jobs to maintain your application</a></li>
+          </ul>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Files</td>
+
+        <td>Perform manual backups or schedule a cron job.</td>
+
+        <td>
+          <ul>
+            <li><a href="https://docs.acquia.com/acquia-cloud/manage/back-up#file" target=
+            "_new">File backups</a></li>
+
+            <li><a href="https://docs.acquia.com/acquia-cloud/manage/cron" target="_new">Using
+            scheduled jobs to maintain your application</a></li>
+          </ul>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Full application</td>
+
+        <td>Perform manual backup using <a href="https://drushcommands.com/" target=
+        "_new">Drush.</a><br>
+        .</td>
+
+        <td>
+          <ul>
+            <li><a href="https://docs.acquia.com/acquia-cloud/manage/back-up#site" target=
+            "_new">Full application backups</a></li>
+
+            <li><a href="https://docs.acquia.com/acquia-cloud/manage/cron" target="_new">Using
+            scheduled jobs to maintain your application</a></li>
+          </ul>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Drupal file system</td>
+
+        <td>
+          Perform manual backups using one of the following options:
+
+          <ul>
+            <li>Copy your files using an FTP client or command-line tools (<code>rsync</code> and
+            <code>scp</code>).</li>
+
+            <li>Create a compressed archive using <a href="https://drushcommands.com/" target=
+            "_new">Drush.</a></li>
+          </ul>
+
+          <p><b>Note:</b> The <strong>Backup and Migrate</strong> module is not supported on Acquia
+          Cloud. For more information, see <a href=
+          "https://docs.acquia.com/articles/backup-and-migrate-module-acquia-hosted-sites" target=
+          "_new">Backup and Migrate module not supported on Acquia Cloud</a>.</p>
+        </td>
+
+        <td>
+          <ul>
+            <li><a href="https://docs.acquia.com/article/backing-your-drupal-file-system" target=
+            "_new">Backing up your Drupal file system</a></li>
+
+            <li><a href="https://docs.acquia.com/acquia-cloud/manage/cron" target="_new">Using
+            scheduled jobs to maintain your application</a></li>
+          </ul>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="viewing-activity-notifications">Viewing activity notifications</h2>
+
+  <p>You can view activity notifications to keep track of significant actions that occur with your
+  portal site, such as code being installed or copied between environments, database updates and
+  backups, server changes, and more. For more information, see <a href=
+  "https://docs.acquia.com/acquia-cloud/notify" target="_new">Viewing activity
+  notifications</a> in the Acquia Cloud documentation.</p>
+
+  <p>To view the list of notifications:</p>
+
+  <ol>
+    <li>Log in to the Acquia Cloud interface at <a href="https://cloud.acquia.com/" target=
+    "_new">https://cloud.acquia.com/</a>.</li>
+
+    <li>On the Applications page, click <strong>Manage</strong> to view the details of your portal
+    site.</li>
+
+    <li>Click the <strong>bell icon</strong> in the upper right corner of the navigation bar to
+    view your most recent notifications.
+
+      <p id="gdcalert5"><img alt="" src="/api-platform/images/notifications.png"></p>
+    </li>
+
+    <li>Click the arrow next to a notification to view more information about the activity.</li>
+  </ol>
+
+  <h2 id="subscribingtostatusupdates">Subscribing to status updates</h2>
+
+  <p>You can subscribe to <strong>Apigee</strong> release and status updates
+  at <a href="https://status.apigee.com" target="_new">status.apigee.com</a>.
+  Click <strong>Subscribe to Updates</strong>, enter your contact information, such as email
+  address, when prompted, and click <strong>Subscribe</strong>. On the email notification
+  management page, ensure that <strong>Developer Portal</strong> is selected, toggle
+  other notification settings as required, and click <strong>Update Preferences</strong>.</p>
+
+  <p>You can subscribe to Acquia status updates to receive notifications about any service
+  interruptions, emergency maintenance, or security updates that are made to the platform. To
+  subscribe to Acquia Cloud updates:</p>
+
+  <ol>
+    <li>Navigate to the <a href="https://status.acquia.com/" target="_new">Acquia Status
+    page</a>.</li>
+
+    <li>Click <strong>Subscribe to Updates</strong>.</li>
+
+    <li>Select the method you want to use to receive updates (email, SMS, and so on).</li>
+
+    <li>On the Notifications page, select the products for which you want to receive status
+    updates. For example, Acquia Cloud Enterprise.</li>
+
+    <li>Click <strong>Update Preferences</strong>.</li>
+  </ol>
+
+  {% endblock %}

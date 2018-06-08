@@ -1,0 +1,347 @@
+  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}Moving Apigee Servers{% endblock %} {% block body %}
+
+  <p>Apigee components use IP addresses to communicate with each other. Moving components from one
+  machine to another may cause a configuration mismatch. To fix configuration mismatches, follow
+  the relevant instructions below.</p>
+
+  <h2 id="changingtheipaddressofacassandranode">Changing the IP Address of a Cassandra Node</h2>
+
+  <p>To change the IP address of a Cassandra node, perform the following steps: </p>
+
+  <h3 id="changingtheipaddressofacassandranode-forconfigurationswithasinglecassandranode">For
+  configurations with a single Cassandra node</h3>
+
+  <ol>
+    <li>Edit <span style=
+    "font-family:courier new,courier,monospace;">/opt/apigee/customer/application/cassandra.properties</span>
+    on the system being modified. If the file does not exist, create it. </li>
+
+    <li>Change the following parameters:
+
+      <ul>
+        <li>Set the <span style=
+        "font-family:courier new,courier,monospace;">conf_cassandra_seeds</span> and <span style=
+        "font-family:courier new,courier,monospace;">conf_cassandra_listen_address</span>
+        parameters to specify the system&#8217;s new IP address.</li>
+
+        <li>Change the <span style=
+        "font-family:courier new,courier,monospace;">conf_cassandra_rpc_address</span> to use
+        either the new IP address or 0.0.0.0 (which allows Cassandra Thrift to listen on all
+        interfaces).</li>
+      </ul>
+    </li>
+
+    <li>Open <span style=
+    "font-family:courier new,courier,monospace;">/opt/apigee/apigee-cassandra/conf/cassandra-topology.properties</span>
+    in an editor. You should see the old IP address and default setting in the form:<br>
+    <span style="font-family:courier new,courier,monospace;">192.168.56.101=dc-1:ra-1<br>
+    default=dc-1:ra-1</span><br>
+    <br>
+    Save that information.</li>
+
+    <li>Edit <span style=
+    "font-family:courier new,courier,monospace;">/opt/apigee/customer/application/cassandra.properties</span>
+    to change the old IP address specified to the new IP address:<br>
+    <span style=
+    "font-family:courier new,courier,monospace;">conf_cassandra-topology_topology=192.168.56.103=dc-1:ra-1\ndefault=dc-1:ra-1\n</span><br>
+
+    <br>
+    Ensure that you insert &#8220;\n&#8221; after the IP address, and specify the same default
+    settings as you found above in Step 3.</li>
+
+    <li>Restart Cassandra:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt;
+    /opt/apigee/apigee-service/bin/apigee-service apigee-cassandra restart</span></li>
+
+    <li>If necessary also repair ZooKeeper (see below), else restart every Apigee platform
+    component starting with Management Server. </li>
+  </ol>
+
+  <h3 id="changingtheipaddressofacassandranode-forconfigurationswithmultiplecassandranodesring">For
+  configurations with multiple Cassandra nodes (ring) </h3>
+
+  <ol>
+    <li>If the node being changed is a seed node, edit <span style=
+    "font-family:courier new,courier,monospace;">/opt/apigee/customer/application/cassandra.properties</span>
+    file on each system in the ring, and change the <span style=
+    "font-family:courier new,courier,monospace;">conf_cassandra_seeds</span> parameter to include
+    the modified system&#8217;s new IP. If the cassandra.properties file does not exist, create
+    it.</li>
+
+    <li>Edit <span style=
+    "font-family:courier new,courier,monospace;">/opt/apigee/customer/application/cassandra.properties</span>
+    on the system being modified, and change the following parameters:
+
+      <ul>
+        <li>Set the conf_cassandra_listen_address to use the new IP address.</li>
+
+        <li>Set the conf_cassandra_rpc_address to use either the new IP address or 0.0.0.0 (which
+        allows Cassandra Thrift to listen on all interfaces).</li>
+      </ul>
+    </li>
+
+    <li>Open <span style=
+    "font-family:courier new,courier,monospace;">/opt/apigee/apigee-cassandra/conf/cassandra-topology.properties</span>
+    in an editor. You should see all Cassandra IP addresses and default setting in the
+    form:<br>
+    <span style="font-family:courier new,courier,monospace;">192.168.56.101=dc-1:ra-1<br>
+    192.168.56.102=dc-1:ra-1<br>
+    192.168.56.103=dc-1:ra-1<br>
+    default=dc-1:ra-1</span><br>
+    <br>
+    Save that information.</li>
+
+    <li>Edit <span style=
+    "font-family:courier new,courier,monospace;">/opt/apigee/customer/application/cassandra.properties</span>
+    to change the old IP address specified to the new IP address:<br>
+    <span style=
+    "font-family:courier new,courier,monospace;">conf_cassandra-topology_topology=192.168.56.101=dc-1:ra-1\n192.168.56.102=dc-1:ra-1\<strong>n192.168.56.104</strong>=dc-1:ra-1\ndefault=dc-1:ra-1\n<br>
+
+    <br>
+    <span style="font-family:arial,helvetica,sans-serif;">Ensure that you insert "\n" after each IP
+    address, and use the same default settings as you recorded above in Step 3.</span></span></li>
+
+    <li>Restart Cassandra on the modified system. If the modified system is a seed node, also
+    restart each system that used the modified seed node.<br>
+    <span style="font-family:courier new,courier,monospace;">&gt;
+    /opt/apigee/apigee-service/bin/apigee-service apigee-cassandra restart</span></li>
+
+    <li>Run the <span style="font-family:courier new,courier,monospace;">nodetool ring</span>
+    command on the modified node to ensure that the ring is complete. The utility can be found at
+    <span style=
+    "font-family:courier new,courier,monospace;">opt/apigee/apigee-cassandra/bin</span>.<br>
+    <span style="font-family:courier new,courier,monospace;">&gt; nodetool -h localhost
+    ring</span></li>
+
+    <li>Run <span style="font-family:courier new,courier,monospace;">nodetool repair</span> on the
+    modified node.  Note that this process may take some time, so it is highly recommended
+    that this not be done during peak API traffic hours.<br>
+    <span style="font-family:courier new,courier,monospace;">&gt; nodetool -h localhost
+    repair</span></li>
+
+    <li>If necessary, repair ZooKeeper (see below), then restart every Apigee platform component
+    starting with Management Server </li>
+  </ol>
+
+  <h3 id="changingtheipaddressofacassandranode-updatedatastoreregistrations">Update datastore
+  registrations</h3>
+
+  <ol>
+    <li>Find the UUIDs of datastore registrations specifying the old IP address by using the
+    commands below. Take note of the "type" and "UUID" parameters:
+
+      <ul>
+        <li><span style="font-family:courier new,courier,monospace;">curl -u $ADMINEMAIL:$PW
+         "http://$MSIP:$port/v1/servers?pod=central&amp;region=<em><strong>DC</strong></em>" |
+        egrep -i '(type|internalip|uuid|region)'</span></li>
+
+        <li><span style="font-family:courier new,courier,monospace;">curl -u $ADMINEMAIL:$PW
+         "http://$MSIP:$port/v1/servers?pod=gateway&amp;region=<em><strong>DC</strong></em>" |
+        egrep -i '(type|internalip|uuid|region)'</span></li>
+
+        <li><span style="font-family:courier new,courier,monospace;">curl -u $ADMINEMAIL:$PW
+         "http://$MSIP:$port/v1/servers?pod=analytics&amp;region=<em><strong>DC</strong></em>"
+        | egrep -i '(type|internalip|uuid|region)'</span><br>
+        <br>
+        where <em><strong>DC</strong></em> is the data center name. In a single data center
+        installation, the vaue is typically "<span style=
+        "font-family:courier new,courier,monospace;">dc-1</span>".</li>
+      </ul>
+    </li>
+
+    <li>Register the new IP addresses using one of the commands below.  The command needed
+    will depend on the type of the changed node.<br>
+      <br>
+      <strong>Note</strong>: The REGION parameter below refers to the datacenter that the cluster
+      is in. For example, for high availability you would generally have a cluster in dc-1 (Dater
+      Center 1) and a cluster in dc-2 (Data Center 2). This parameter is defined at installation
+      time. The default value is dc-1.
+
+      <ul>
+        <li>For type="application-datastore":<br>
+        <span style="font-family:courier new,courier,monospace;">curl -u $ADMINEMAIL:$PW
+         "http://$MSIP:$port/v1/servers -d
+        "Type=application-datastore&amp;Type=audit-datastore&amp;InternalIP=${NEWIP}&amp;region=${REGION}&amp;pod=central"
+        -H 'content-type: application/x-www-form-urlencoded' -X POST </span></li>
+
+        <li>For type="kms-datastore":<br>
+        <span style="font-family:courier new,courier,monospace;">curl -u $ADMINEMAIL:$PW
+         "http://$MSIP:$port/v1/servers -d
+        "Type=kms-datastore&amp;Type=dc-datastore&amp;Type=keyvaluemap-datastore&amp;Type=counter-datastore&amp;Type=cache-datastore
+        &amp;InternalIP=${NEWIP}&amp;region=${REGION}&amp;pod=${GATEWAY_POD}" -H 'content-type:
+        application/x-www-form-urlencoded' -X POST </span></li>
+
+        <li>For type="reportcrud-datastore": <br>
+        <span style="font-family:courier new,courier,monospace;">curl -u $ADMINEMAIL:$PW
+        "http://$MSIP:$port/v1/servers" -d
+        "Type=reportcrud-datastore&amp;InternalIP=${NEW_IP}&amp;region=${REGION}&amp;pod=analytics"
+        -H 'content-type: application/x-www-form-urlencoded' -X POST </span></li>
+      </ul>
+    </li>
+
+    <li>Delete old registrations for the UUID of the system on which the IP address was
+    changed. For each of these UUIDs issue:<br>
+    <span style="font-family:courier new,courier,monospace;">curl -u $ADMINEMAIL:$PW
+    "http://$MSIP:$port/v1/servers/${OLD_UUID}" -X DELETE</span></li>
+  </ol>
+
+  <h2 id="changingtheipaddressofazookeepernode">Changing the IP Address of a ZooKeeper Node</h2>
+
+  <p>Follow the steps below to change the IP address of a ZooKeeper node: </p>
+
+  <h3 id=
+  "changingtheipaddressofazookeepernode-changetheipaddressandrestartthezookeeperensembleformultinodeensembleconfigurationsonly">
+  Change the IP Address and restart the ZooKeeper ensemble (for multi-node ensemble configurations
+  only)</h3>
+
+  <ol>
+    <li>Open <span style=
+    "font-family:courier new,courier,monospace;">/opt/apigee/apigee-zookeeper/conf/zoo.cfg</span>
+    in an editor. You should see all ZooKeeper IP addresses and default setting in the
+    form:<br>
+    <span style="font-family:courier new,courier,monospace;">server.1=192.168.56.101:2888:3888<br>
+    server.2=192.168.56.102:2888:3888<br>
+    server.3=192.168.56.103:2888:3888</span><br>
+    <br>
+    Save that information.</li>
+
+    <li>On each ZooKeeper node, edit the file <span style=
+    "font-family:courier new,courier,monospace;">/opt/apigee/customer/application/zookeeper.properties</span>
+    file to set the <span style="font-family:courier new,courier,monospace;">conf_zoo_quorum</span>
+    property to the correct IP addresses. If the file does not exist, create it.<br>
+    <span style=
+    "font-family:courier new,courier,monospace;">conf_zoo_quorum=server.1=192.168.56.101:2888:3888\nserver.2=192.168.56.102:2888:3888\nserver.3=192.168.56.104:2888:3888\n</span><br>
+
+    <br>
+    Ensure that you insert &#8220;\n&#8221; after each IP address and that entries are in the same
+    order on every node.</li>
+
+    <li>Find the leader of the ZooKeeper ensemble by using the following command (replace
+    <em><strong>&lt;node&gt;</strong></em> with the IP address of the Zookeeper machine): <br>
+    <span style="font-family:courier new,courier,monospace;">echo srvr | nc
+    <em><strong>&lt;node&gt;</strong></em> 2181</span><br>
+    <br>
+    The Mode line in the output should say "leader".</li>
+
+    <li>Restart one ZooKeeper after the other starting with the leader and ending with the node on
+    which the IP address was changed. If more than one zookeeper node changed IP addresses it may
+    be necessary to restart all nodes.<br>
+    <span style="font-family:courier new,courier,monospace;">&gt;
+    /opt/apigee/apigee-service/bin/apigee-service apigee-zookeeper restart</span></li>
+
+    <li>Use the <span style="font-family:courier new,courier,monospace;">echo</span> command
+    described above to verify each ZooKeeper node.  </li>
+  </ol>
+
+  <h3 id="changingtheipaddressofazookeepernode-informtheapigeenodesofthechangedconfiguration">
+  Inform the Apigee nodes of the changed configuration </h3>
+
+  <ol>
+    <li>On each Router node, edit the file <span style=
+    "font-family:courier new,courier,monospace;">/opt/apigee/customer/application/router.properties</span>
+    as follows. If the file does not exist, create it.
+
+      <ul>
+        <li>Change the <span style=
+        "font-family:courier new,courier,monospace;">conf_zookeeper_connection</span>.string
+        parameter to include the new IP address</li>
+
+        <li>Change the <span style=
+        "font-family:courier new,courier,monospace;">conf_zookeeper_zk1</span>.host parameter to
+        include the new IP address</li>
+      </ul>
+    </li>
+
+    <li>On every Message Processor node, edit the file <span style=
+    "font-family:courier new,courier,monospace;">/opt/apigee/customer/application/message-processor.properties</span>
+    as follows. If the file does not exist, create it.
+
+      <ul>
+        <li>Change the <span style=
+        "font-family:courier new,courier,monospace;">conf_zookeeper_connection.string</span>
+        parameter to include the new IP address</li>
+
+        <li>Change the <span style=
+        "font-family:courier new,courier,monospace;">conf_zookeeper_zk1.host</span> parameter to
+        include the new IP address</li>
+      </ul>
+    </li>
+
+    <li>On the Management Server node, edit the file <span style=
+    "font-family:courier new,courier,monospace;">/opt/apigee/customer/application/management-server.properties</span>
+    as follows. If the file does not exist, create it.
+
+      <ul>
+        <li>Change the <span style=
+        "font-family:courier new,courier,monospace;">conf_zookeeper_connection.string</span>
+        parameter to include the new IP address</li>
+
+        <li>Change the <span style=
+        "font-family:courier new,courier,monospace;">conf_zookeeper_zk1.host</span> parameter to
+        include the new IP address</li>
+      </ul>
+    </li>
+
+    <li>Restart all Apigee platform component by running the following command on each node:<br>
+    <span style=
+    "font-family:courier new,courier,monospace;">/opt/apigee/apigee-service/bin/apigee-all
+    restart</span></li>
+  </ol>
+
+  <h2 id="changingtheipaddressofaldapserveropenldap">Changing the IP Address of a LDAP Server
+  (OpenLDAP)</h2>
+
+  <p>To change the IP address of an OpenLDAP node, do the following: </p>
+
+  <ol>
+    <li>On the Management Server node, edit the file <span style=
+    "font-family:courier new,courier,monospace;">/opt/apigee/customer/application/management-server.properties</span>
+    file. If the file does not exist, create it.</li>
+
+    <li>In the <span style=
+    "font-family:courier new,courier,monospace;">management-server.properties</span> file, set the
+    <span style="font-family:courier new,courier,monospace;">conf_security_ldap.server.host</span>
+    parameter to the new IP address.</li>
+
+    <li>Restart the Management Server:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt;
+    /opt/apigee/apigee-service/bin/apigee-service edge-management-server restart</span></li>
+  </ol>
+
+  <h2 id="changingtheipaddressofotherapigeenodetypes">Changing the IP Address of Other Apigee Node
+  Types</h2>
+
+  <p>To change the IP address of any of these node types (Router, Message Processor, Postgres
+  Server (not postgresql) and Qpid Server (not qpidd): </p>
+
+  <ol>
+    <li>Use the following cURL command to register the new internal and external IP
+    address: <br>
+    <span style="font-family:courier new,courier,monospace;">curl -u $ADMINEMAIL:$PW -X PUT
+    http://$MSIP:8080/v1/servers/&lt;<em><strong>uuid</strong></em>&gt; -d
+    ExternalIP=&lt;ip&gt;<br>
+    curl -u $ADMINEMAIL:$PW -X PUT
+    http://$MSIP:8080/v1/servers/&lt;<em><strong>uuid</strong></em>&gt; -d
+    InternalIP=&lt;ip&gt;</span><br>
+    <br>
+    where <em><strong><span style=
+    "font-family:courier new,courier,monospace;">uuid</span></strong></em> is the UUID of the
+    node. </li>
+  </ol>
+
+  <p>If you do not know the UUID of the node, you can use the following command to display it:</p>
+
+  <ul>
+    <li><strong>Router</strong>: <span style="font-family:courier new,courier,monospace;">curl
+    http://&lt;router_IP&gt;:8081/v1/servers/self</span></li>
+
+    <li><strong>Message Processor:</strong> <span style=
+    "font-family:courier new,courier,monospace;">curl
+    http://&lt;mp_IP&gt;:8082/v1/servers/self</span></li>
+
+    <li><strong>Qpid</strong>: <span style="font-family:courier new,courier,monospace;">curl
+    http://&lt;qp_IP&gt;:8083/v1/servers/self</span></li>
+
+    <li><strong>Postgres</strong>: <span style="font-family:courier new,courier,monospace;">curl
+    http://&lt;pg_IP&gt;:8084/v1/servers/self</span></li>
+  </ul>{% endblock %}

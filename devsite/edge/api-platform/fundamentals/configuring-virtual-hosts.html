@@ -1,0 +1,600 @@
+  {% extends "_base.html" %} {% block title %}Configuring virtual hosts{% endblock %}
+  {% block body %}
+
+
+  <p>A Cloud customer with a paid account and all Edge for Private Cloud customers
+  can create a virtual host in an organization. The user
+  creating the virtual host must be in the role of <em>organization administrator</em>, or in a
+  custom role with permissions to modify a virtual host. Users in other roles do not have
+  authorization to create virtual hosts.</p>
+
+  <aside class="note"><b>Note:</b> Creating virtual hosts for Edge for the Cloud
+  require that you enable TLS. For information about TLS, see the <a href=
+  "/api-platform/system-administration/ssl.html">TLS/SSL</a>.</aside>
+
+  <aside class="note"><b>Note:</b> Edge for the Cloud customers with free and trial accounts
+  cannot create or modify virtual hosts
+  and are limited to the virtual hosts created for them at Edge registration time. For more
+  information on Edge pricing plans, see <a class="external" href=
+  "https://apigee.com/api-management/#/pricing">https://apigee.com/api-management/#/pricing</a>.</aside>
+
+  <h2 id="creatingavirtualhost">Creating a virtual host</h2>
+
+  <p>Use the following basic procedure to create the virtual host.
+    The actual procedure you use is based on whether you are a Cloud or Private Cloud customer,
+    and whether you are enabling TLS:</p>
+
+  <ol>
+    <li>Create a DNS entry and CNAME record for your publicly facing domain.
+
+       <aside class="note"><b>Note:</b> Private Cloud customers can create a virtual host from an
+         IP address, without a DNS entry and CNAME record.
+         See <a href="configuring-virtual-hosts-private-cloud">Configuring virtual hosts for the Private Cloud</a>
+         for more. </aside>
+    </li>
+
+    <li>If enabling TLS on the virtual host:</li>
+
+    <ol style="list-style: lower-alpha outside">
+
+      <li>Create and configure a keystore by using the procedure described here:
+        <a href="/api-platform/system-administration/keystores-and-truststores">Keystores and Truststores</a>.</li>
+
+      <li>Upload your cert and key to the keystore. Ensure that the domain name specified by your
+      cert matches the host alias that you want to use for the virtual host.</li>
+
+    <li>Create a reference to the keystore by using the Edge UI or API. The reference
+      specifies the name of the keystore and the reference type as <code>KeyStore</code>. See <a href=
+      "/api-platform/system-administration/working-references">Working with references</a> for
+      more on creating and modifying references.</li>
+
+      <li> If you are performing two-way TLS, create a truststore, upload the cert,
+        and create a reference to the truststore. Create the truststore by using the procedure described
+        here: <a href="/api-platform/system-administration/keystores-and-truststores">Keystores and Truststores</a>.
+
+    </ol>
+
+    <li>Create the virtual host by using the <a href=
+    "/management/apis/post/organizations/{org_name}/environments/{env_name}/virtualhosts">Create a
+    Virtual Host</a> API. If enabling TLS, make sure to specify the correct keystore reference,
+      truststore reference, and key alias.
+    </li>
+
+    <li>If you have any existing API proxies, add the virtual host to the ProxyEndpoint.
+      The virtual host is added automatically to all new API proxies. See
+      <a href="#configuringanapiproxytouseavirtualhost">Configuring an API proxy to use a virtual host</a>.<br>
+    <br>
+
+    <strong>Caution</strong>: All virtual hosts are automatically added to all new API proxies.
+    Therefore, if you create a new API proxy that should not be accessible over a particular
+    virtual host, then you must edit the API proxy to remove that virtual host from its
+    ProxyEndpoint.</li>
+  </ol>
+
+  <p>After updating an API proxy to use the virtual host, and creating the DNS entry and CNAME
+  record for the host alias, you can access the API proxy as shown below:</p>
+
+  <pre class="prettyprint">https://api.myCompany.com/v1/{project-base-path}/{resource-path}</pre>
+
+  <p>For example:</p>
+
+  <pre class="prettyprint">https://api.myCompany.com/v1/weather/forecastrss?w=12797282</pre>
+
+
+  <h3>Creating a virtual host using the API or UI</h3>
+
+  <p>You can create a virtual host by using the Edge API or the Edge UI.</p>
+
+  <aside class="note"><b>Note: </b>The virtual host UI is available for Edge for the Cloud only
+    when using the New Edge experience. It is not available in the Classic Edge UI or
+    in Edge for the Private Cloud.</aside>
+
+  <p>Most of the examples below use the Edge API. To access the UI to create, modify, and delete
+    virtual hosts in the New Edge experience:</p>
+
+  <ol>
+    <li>Login to the Edge management UI at <a href=
+    "https://enterprise.apigee.com/">https://enterprise.apigee.com</a> (New Edge experience for the Cloud only).</li>
+
+    <li>Select <strong>Admin &gt;Environments</strong>.</li>
+
+    <li>Select the environment, such as <strong>prod</strong> or <strong>test</strong>. </li>
+
+    <li>Select to the <strong>Virtual Hosts</strong> tab. The virtual
+    hosts defined for the environment appear.</li>
+
+    <li>Select <strong>+ Virtual Host</strong> to create a virtual host or select the name of an
+      existing virtual host to edit it.</li>
+  </ol>
+
+  <h3>Creating a virtual host for HTTP</h3>
+
+<p> Edge for Private Cloud customers can create a virtual host using HTTP.</p>
+
+  <aside class="note"><b>Note: </b>Edge for the Cloud customers can only
+  create an HTTPS virtual hosts with TLS enabled.</aside>
+
+<p>To create a virtual host that does not support TLS, create an XML object that defines the
+  virtual host. For example, the following XML object defines a virtual host that uses the HTTP
+  protocol:</p>
+  <pre class="prettyprint">
+&lt;VirtualHost name="myVHost"&gt;
+   &lt;HostAliases&gt;
+     &lt;HostAlias&gt;api.myCompany.com&lt;/HostAlias&gt;
+   &lt;/HostAliases&gt;
+   &lt;Interfaces/&gt;
+   &lt;Port&gt;80&lt;/Port&gt;
+&lt;/VirtualHost&gt;
+</pre>
+
+  <p>In this definition you:</p>
+
+  <ul>
+    <li>Specify the <strong>name</strong> as <strong>myVHost</strong>. Use the name to reference
+    the virtual host in an API proxy or in an API call.</li>
+
+    <li>Specify the <strong>host alias</strong> as <strong>api.myCompany.com</strong>. This is the
+    publicly facing domain used to access your APIs as defined by a DNS definition and CNAME
+    record.</li>
+
+    <li>Specify the <strong>port</strong> number as <strong>80</strong>. If omitted, by default
+    the port is set to 443.</li>
+
+    <li><p>There are additional properties that you can set in the virtual host.
+      For a reference for all properties, see
+    <a href="/api-platform/fundamentals/virtual-host-property-reference.html">Virtual host property reference</a>.</p></li>
+
+  </ul>
+
+    <p>If you have any existing API proxies, add the virtual host to the <code>&lt;HTTPConnection&gt;</code> element
+    in the Proxy Endpoint. The virtual host is added automatically to all new API proxies.
+    See <a href="#configuringanapiproxytouseavirtualhost">Configuring an API proxy to use a virtual host</a>.
+      If you create a new API proxy that should not be accessible over a particular virtual host,
+      then you must edit the API proxy to remove that virtual host from its ProxyEndpoint.</p>
+
+  <p>You can then access an API proxy through this virtual host by making a request to:</p>
+
+  <pre class="prettyprint">http://api.myCompany.com/{proxy-base-path}/{resource-path}
+https://api.myCompany.com/{proxy-base-path}/{resource-path}
+</pre>
+
+  <p>Create the virtual host by using the <a href=
+    "/management/apis/post/organizations/{org_name}/environments/{env_name}/virtualhosts">Create a
+    Virtual Host</a> API:</p>
+
+<pre class="devsite-terminal">curl -X POST -H "Content-Type:application/xml" \
+  http://<var>ms-IP</var>:8080/v1/o/{org_name}/environments/{env_name}/virtualhosts \
+  -d '&lt;VirtualHost name="myVHost"&gt;
+        &lt;HostAliases&gt;
+            &lt;HostAlias&gt;api.myCompany.com&lt;/HostAlias&gt;
+        &lt;/HostAliases&gt;
+        &lt;Interfaces/&gt;
+        &lt;Port&gt;80&lt;/Port&gt;
+    &lt;/VirtualHost&gt;' \
+  -u sysAdminEmail:password
+</pre>
+
+<aside class="note"><b>Note:</b> In Edge for Private Cloud, you make API calls to the
+  domain name <var>ms-ip</var>:8080 where <var>ms-ip</var> is the IP of the Edge Management Server.
+  Edge for the Cloud customers make requests to the domain <code>api.enterprise.apigee.com</code></aside>
+
+
+  <h3 id="definingavirtualhostforonewaytls">Creating a virtual host for one-way TLS</h3>
+
+  <p>The following XML object defines a virtual host for one-way TLS:</p>
+  <pre class="prettyprint">
+&lt;VirtualHost <strong>name="myTLSVHost"</strong>&gt;
+    &lt;HostAliases&gt;
+        <strong>&lt;HostAlias&gt;api.myCompany.com&lt;/HostAlias&gt;</strong>
+    &lt;/HostAliases&gt;
+    <strong>&lt;Port&gt;443&lt;/Port&gt;
+    &lt;SSLInfo&gt;
+        &lt;Enabled&gt;true&lt;/Enabled&gt;
+        &lt;ClientAuthEnabled&gt;false&lt;/ClientAuthEnabled&gt;
+        &lt;KeyStore&gt;ref://myTestKeystoreRef&lt;/KeyStore&gt;
+        &lt;KeyAlias&gt;myKeyAlias&lt;/KeyAlias&gt;
+    &lt;/SSLInfo&gt;</strong>
+&lt;/VirtualHost&gt;
+</pre>
+
+  <p>In this definition you enable TLS by setting the <code>&lt;Enable&gt;</code> element
+    to true, and use the <code>&lt;KeyStore&gt;</code> and <code>&lt;KeyAliase&gt;</code> elements
+    to specify the keystore and key alias used by the TLS connection.</p>
+
+    <aside class="note"><strong>Note:</strong> Because Edge originally supported SSL, the tag that you use to configure
+    TLS is named <code>&lt;SSLInfo&gt;</code>.</aside>
+
+   <p>See <a href="/api-platform/system-administration/ssl.html">TLS/SSL</a> for more
+     information on using TLS.</p>
+
+  <h4 id=
+  "definingavirtualhostforonewaytls-decidinghowtospecifythekeystoreandtruststorenameinthevirtualhost">
+  Deciding how to specify the keystore and truststore name in the virtual host</h4>
+
+  <p>When configuring a virtual host to support TLS, you specify a keystore by using a
+  <em>reference</em>. A reference is a variable that contains the name of the keystore or
+  truststore, rather than specifying the keystore or truststore name directly, as shown below:</p>
+  <pre class="prettyprint">
+    &lt;SSLInfo&gt;
+        &lt;Enabled&gt;true&lt;/Enabled&gt;
+        &lt;ClientAuthEnabled&gt;false&lt;/ClientAuthEnabled&gt;
+<strong>        &lt;KeyStore&gt;ref://myTestKeystoreRef&lt;/KeyStore&gt;
+</strong>        &lt;KeyAlias&gt;myKeyAlias&lt;/KeyAlias&gt;
+    &lt;/SSLInfo&gt;
+</pre>
+
+  <p>The advantage to using a reference is that you can change the value of the reference to change
+  the keystore used by the virtual host, usually because the cert in the current keystore is
+  expiring in the near future. Changing the value of the reference does not require you to restart
+  the Edge Router. See <a href=
+  "/api-platform/system-administration/working-references.html">Working with references</a> for
+  more on creating and modifying references.</p>
+
+  <p>You can only use a reference to the keystore and truststore; you cannot use a reference to the
+  alias. When you change the reference to a keystore, ensure that the alias name of the cert is the
+  same as in the old keystore.</p>
+
+  <aside class="warning"><b>Warning:</b> Alternatively, you can use a literal keystore name in the
+  virtual host. However, if you ever modify the virtual host to change the keystore name, you have
+  to restart the Edge Routers, meaning you have to contact <a href=
+  "https://community.apigee.com/content/apigee-customer-support">Apigee Suport</a>. <strong>Apigee
+  strongly recommends that you use references to keystores and truststores in a virtual host and do
+  not use direct references.</strong></aside>
+
+  <h4 id="definingavirtualhostforonewaytls-restrictionsinusingreferencestokeystoresandtruststore">
+  Restrictions in using references to keystores and truststore</h4>
+
+  <p>You must take into account the following restriction when using references to keystores and
+  truststores:</p>
+
+  <ul>
+    <li>You can only use keystore and truststore references in virtual hosts if you support SNI and
+    you terminate SSL on the Apigee Routers.</li>
+
+    <li>If you have a load balancer in front of the Apigee Routers, and you terminate TLS on the
+    load balancer, then you cannot use keystore and truststore references in virtual hosts.</li>
+  </ul>
+
+  <h3 id="definingavirtualhostfortwowaytls">Creating a virtual host for two-way TLS</h3>
+
+  <p>To enable two-way TLS, set the <code>&lt;ClientAuthEnabled&gt;</code> element to
+  <code>true</code>, and specify a truststore by
+  using a <em>reference</em> with the <code>&lt;TrustStore&gt;</code> element. The truststore
+  holds the client's certificate and, optionally, certificate's CA chain. The client must also be
+  configured correctly for two-way TLS.</p>
+
+  <p>To create a virtual host for two-way TLS, create an XML object that defines the virtual
+  host:</p>
+  <pre class="prettyprint">
+&lt;VirtualHost <strong>name="myTLSVHost"</strong>&gt;
+    &lt;HostAliases&gt;
+        <strong>&lt;HostAlias&gt;api.myCompany.com&lt;/HostAlias&gt;</strong>
+    &lt;/HostAliases&gt;
+    <strong>&lt;Port&gt;443&lt;/Port&gt;
+    &lt;SSLInfo&gt;
+        &lt;Enabled&gt;true&lt;/Enabled&gt;
+        &lt;ClientAuthEnabled&gt;true&lt;/ClientAuthEnabled&gt;
+        &lt;KeyStore&gt;ref://myTestKeystoreRef&lt;/KeyStore&gt;
+        &lt;KeyAlias&gt;myKeyAlias&lt;/KeyAlias&gt;
+        &lt;TrustStore&gt;ref://myTestTruststoreRef&lt;/TrustStore&gt;
+    &lt;/SSLInfo&gt;</strong>
+&lt;/VirtualHost&gt;
+</pre>
+
+  <p>In this definition you:</p>
+
+  <ul>
+    <li>Enable two-way TLS by setting <code>&lt;ClientAuthEnabled&gt;</code> to true.</li>
+
+    <li>Specify the reference to the truststore using the <code>&lt;TrustStore&gt;</code> element. The truststore
+    holds the client's certificate and, optionally, certificate's CA chain.</li>
+  </ul>
+
+   <p>See <a href="/api-platform/system-administration/ssl.html">TLS/SSL</a> for more
+     information on using TLS.</p>
+
+
+  <h2 id="modifyingavirtualhost">Modifying a virtual host</h2>
+
+  <p>A Cloud customer with a paid account and all Edge for Private Cloud customers can use the <a href=
+  "/management/apis/put/organizations/{org_name}/environments/{env_name}/virtualhosts/{virtualhost_name}">
+  Update a Virtual Host</a> API to update a virtual host. This API lets you set all of the
+  properties for the virtual host described at <a href="virtual-host-property-reference">Virtual host property reference</a>.</p>
+
+  <aside class="note"><b>Note:</b> Free and trial accounts cannot create or modify virtual hosts
+  and are limited to the four virtual hosts created for them at Edge registration time.</aside>
+
+ <aside class="warning"><strong>Caution: Modifying an existing virtual host has limitations based on your version oe Edge.
+    Before you modify a virtual host:</strong>
+
+  <ul>
+    <li>Cloud customers must be aware of the limitaions when modifying a virtual host. See
+    <a href="configuring-virtual-hosts-cloud">Configuring virtual hosts for the Cloud</a> for more.</li>
+
+    <li>Private Cloud customers must be aware of the limitaions when modifying a virtual host. See
+    <a href="configuring-virtual-hosts-private-cloud">Configuring virtual hosts for the Private Cloud</a> for more.</li>
+</ul>
+</aside>
+
+  <p>Update the virtual host by using the <a href=
+    "/management/apis/put/organizations/{org_name}/environments/{env_name}/virtualhosts/{virtualhost_name}">
+    Update a Virtual Host</a> API. When using the API, you must specify the complete definition of
+    the virtual host in the request body, not just the elements that you want to change. </p>
+
+    <p>In this example, you set the value of the <code>proxy_read_timeout</code> property:<p>
+
+    <pre class="prettyprint">curl -X PUT -H "Content-Type:application/xml" \
+    https://api.enterprise.apigee.com/v1/o/{org_name}/e/{env_name}/virtualhosts/{vhost_name} \
+    -d '&lt;VirtualHost  name="myTLSVHost"&gt;
+         &lt;HostAliases&gt;
+           &lt;HostAlias&gt;api.myCompany.com&lt;/HostAlias&gt;
+         &lt;/HostAliases&gt;
+         &lt;Port&gt;443&lt;/Port&gt;
+         &lt;SSLInfo&gt;
+           &lt;Enabled&gt;true&lt;/Enabled&gt;
+           &lt;ClientAuthEnabled&gt;false&lt;/ClientAuthEnabled&gt;
+           &lt;KeyStore&gt;ref://myTestKeystoreRef&lt;/KeyStore&gt;
+           &lt;KeyAlias&gt;myKeyAlias&lt;/KeyAlias&gt;
+         &lt;/SSLInfo&gt;
+    <strong>     &lt;Properties&gt;
+           &lt;Property name="proxy_read_timeout"&gt;50&lt;/Property&gt;
+         &lt;/Properties&gt;</strong>
+     &lt;/VirtualHost&gt;' \
+    -u <var>orgAdminEmail:password</var></pre>
+
+
+  <h2 id="deletingavirtualhost">Deleting a virtual host</h2>
+
+  <p>Before you can delete a virtual host from an environment, you must update any API proxies that
+  reference the virtual host to remove the reference. See
+    <a href="#configuringanapiproxytouseavirtualhost">Configuring an API proxy to use a virtual host</a>.</p>
+
+  <p>Delete the virtual host by using the <a href=
+    "/management/apis/delete/organizations/{org_name}/environments/{env_name}/virtualhosts/{virtualhost_name}">
+    Delete a Virtual Host</a> API:</p>
+
+    <pre class="devsite-terminal">curl -X DELETE \
+    https://api.enterprise.apigee.com/v1/o/{org_name}/e/{env_name}/virtualhosts/{vhost_name} \
+    -u <var>orgAdminEmail:password</var></pre>
+
+
+  <h2 id="viewinginformationaboutavirtualhost">Viewing information about a virtual host</h2>
+
+  <p>You can use the Edge management UI to see the virtual hosts defined in an environment:</p>
+
+  <ol>
+    <li>Login to the Edge management UI at <a href=
+    "https://enterprise.apigee.com/">https://enterprise.apigee.com</a> (Cloud) or
+      <code>http://&lt;<var>ms-ip</var>&gt;:9000</code>
+    (on-premises), where &lt;<var>ms-ip</var>&gt; is the IP address or DNS name of
+    the Management Server node.</li>
+
+    <li>Depending on your version of the Edge UI:
+
+      <ol style="list-style: lower-alpha outside">
+        <li>If you are using the <strong>Classic Edge UI</strong>: Select <strong>APIs &gt;
+        Environment Configuration</strong>.</li>
+
+        <li>If you are using the <strong>New Edge UI</strong>: Select <strong>Admin &gt;
+        Environments</strong>.</li>
+      </ol>
+    </li>
+
+    <li>Select the environment, such as <strong>prod</strong> or <strong>test</strong>. The virtual
+    hosts defined for the environment appear.</li>
+
+    <li>Go to the <strong>Virtual Hosts</strong> tab.<br>
+    <img alt="" src="/api-platform/images/vhost_display.png"><br>
+    If the virtual host is configured to use a keystore or truststore, select the Show button to
+    see more information.</li>
+  </ol>
+
+  <p>If the virtual host is configured to use TLS/SSL, a lock icon appears next to the name of the
+  virtual host. That means an TLS/SSL certificate, key, and certificate chain has been uploaded to
+  Edge and associated with the virtual host. To see information about the available
+  certificates:</p>
+
+  <ol>
+    <li>Login to the Edge management UI.</li>
+
+    <li>Depending on your version of the Edge UI:
+
+      <ol style="list-style: lower-alpha outside">
+        <li>If you are using the <strong>Classic Edge UI</strong>: Select <strong>APIs &gt;
+        Environment Configuration</strong>.</li>
+
+        <li>If you are using the <strong>New Edge UI</strong>: Select <strong>Admin &gt;
+        Environment</strong>.</li>
+      </ol>
+    </li>
+
+    <li>Select the Environment (typically <code>prod</code> or <code>test</code>).</li>
+
+    <li>Select the <strong>TLS Keystores</strong> tab.</li>
+  </ol>
+
+  <p>Expand the keystores until you see the certificate.</p>
+
+  <h3 id="viewinginformationaboutavirtualhost-viewingavirtualhostwiththeedgemanagementapi">Viewing
+  a virtual host with the Edge management API</h3>
+
+  <p>You can also use the Edge management APIs to view information about virtual hosts. For
+  example, the <a href=
+  "/management/apis/get/organizations/{org_name}/environments/{env_name}/virtualhosts">List Virtual
+  Hosts</a> API returns a list of all virtual hosts:</p>
+
+  <pre class="devsite-terminal">curl -X GET -H "accept:application/xml" \
+    https://api.enterprise.apigee.com/v1/o/{<em><strong>org_name</strong></em>}/environments/{<em><strong>env_name</strong></em>}/virtualhosts \
+    -u <var>orgAdminEmail:pWord</var></pre>
+
+  <p>where <strong><code><em>orgAdminEmail:pWord</em></code></strong> is the
+  username and password of the org admin, and
+  <strong><em>org_name</em></strong>/<strong><em>env_name</em></strong> specify the organization
+  and environment containing the virtual host. Sample response:</p>
+  <pre class="prettyprint">
+[
+ "default",
+ "secure"
+]</pre>
+
+  <p>To see information about a specific virtual host, use the <a href=
+  "/management/apis/get/organizations/{org_name}/environments/{env_name}/virtualhosts/{virtualhost_name}">
+  Get Virtual Host</a> API:</p>
+
+  <pre class="devsite-terminal">curl -X GET -H "accept:application/xml" \
+    https://api.enterprise.apigee.com/v1/o/{<em><strong>org_name</strong></em>}/environments/{<em><strong>env_name</strong></em>}/virtualhosts/{<em><strong>vhost_name</strong></em>} \
+    -u <var>orgAdminEmail:pWord</var></pre>
+
+  <p>where <strong><code><em>vhost_name</em></code></strong> is the name of
+  the virtual host. For example, you can specify the <strong><code><em>vhost_name</em></code></strong> as "secure" to
+  see the configuration of the default secure virtual host created by Apigee:</p>
+  <pre class="prettyprint">
+&lt;VirtualHost name="secure"&gt;
+    &lt;HostAliases&gt;
+        &lt;HostAlias&gt;api.myCompany.com&lt;/HostAlias&gt;
+    &lt;/HostAliases&gt;
+    &lt;Port&gt;443&lt;/Port&gt;
+    &lt;Properties/&gt;
+    &lt;Interfaces/&gt;
+    &lt;RetryOptions/&gt;
+    &lt;SSLInfo&gt;
+        &lt;ClientAuthEnabled&gt;false&lt;/ClientAuthEnabled&gt;
+        &lt;Enabled&gt;true&lt;/Enabled&gt;
+        &lt;KeyAlias&gt;freetrial&lt;/KeyAlias&gt;
+        &lt;KeyStore&gt;ref://freetrial&lt;/KeyStore&gt;
+        &lt;IgnoreValidationErrors&gt;false&lt;/IgnoreValidationErrors&gt;
+    &lt;/SSLInfo&gt;
+&lt;/VirtualHost&gt;
+</pre>
+
+  <aside class="note"><b>Note:</b> In Edge for Private Cloud, replace the <code>api.enterprise.apigee.com</code> domain name with
+  <var>ms-ip:8080</var> where <var>ms-ip</var> is the IP of the Edge Management
+  Server.</aside>
+
+  <h2 id="configuringanapiproxytouseavirtualhost">Configuring an API proxy to use a virtual
+  host</h2>
+
+  <p>When you create a new API proxy, Edge automatically configures it to use all available virtual
+  hosts in the organization. A request to an API proxy through a virtual host uses the form:</p>
+  <pre class="prettyprint">
+https://{<var>host-alias</var>}/{<var>proxy-base-path</var>}/{<var>resource-path</var>}
+</pre>
+
+  <p>where:</p>
+
+  <ul>
+    <li><var>{host-alias}</var> is typically the DNS name of the virtual host.</li>
+
+    <li><var>{proxy-base-path}</var> is defined when you create an API proxy and is unique for each API proxy.</li>
+
+    <li><var>{resource-path}</var> the path to a resource accessible through the API proxy.</li>
+  </ul>
+
+  <h3 id="configuringanapiproxytouseavirtualhost-controllingthevirtualhostsusedbyanapiproxy">
+  Controlling the virtual hosts used by an API proxy</h3>
+
+  <p>In the XML configuration of an API proxy, you use the <code>virtualhost</code> tag to specify the
+  <strong>name</strong> of the virtual host associated with the API proxy:</p>
+
+  <pre class="prettyprint">&lt;HTTPProxyConnection&gt;
+  &lt;BasePath&gt;/v1/my/proxy/basepath&lt;/BasePath&gt;
+  <strong>&lt;VirtualHost&gt;secure&lt;/VirtualHost&gt;
+  &lt;VirtualHost&gt;default&lt;/VirtualHost&gt;</strong>
+&lt;/HTTPProxyConnection&gt;</pre>
+
+  <p>For example, <code><strong>&lt;VirtualHost&gt;secure&lt;/VirtualHost&gt;</strong></code> means
+  a client can call the API proxy using the host alias of the "secure" virtual host.</p>
+
+  <p>You typically modify the virtual hosts associated with an API proxy when:</p>
+
+  <ul>
+    <li>You create a new virtual host and have existing API proxies. You must edit any existing API
+    proxies to add the new virtual host.</li>
+
+    <li>You create a new API proxy that should not be accessible over a particular virtual host.
+    You must edit the API proxy to remove that virtual host from its definition.</li>
+  </ul>
+
+  <p>To use the Edge management UI to edit the API proxy:</p>
+
+  <ol>
+    <li>Login to the Edge management UI at <a href=
+    "https://enterprise.apigee.com/">https://enterprise.apigee.com</a>.</li>
+
+    <li>In the Edge management UI menu, select <strong>APIs</strong>.</li>
+
+    <li>Select the name of the API proxy to update.</li>
+
+    <li>Select the <strong>Development</strong> tab.</li>
+
+    <li>Under <strong>Proxy Endpoints</strong>, select <strong>default</strong>.</li>
+
+    <li>In the code area:
+
+      <ol style="list-style: lower-alpha outside">
+        <li>Remove any <code>&lt;VirtualHost&gt;</code> elements for
+        virtual hosts not supported by the API proxy.</li>
+
+        <li>Add a new <code>&lt;VirtualHost&gt;</code> element
+        with the name of the new virtual host. For example, if the new virtual host is named
+        <strong>MyVirtualHost</strong>, add the following tag:<br>
+
+          <pre  class="prettyprint">&lt;HTTPProxyConnection&gt;
+    &lt;BasePath&gt;/v1/my/proxy/basepath&lt;/BasePath&gt;
+    &lt;VirtualHost&gt;default&lt;/VirtualHost&gt;
+    &lt;VirtualHost&gt;secure&lt;/VirtualHost&gt;
+    &lt;VirtualHost&gt;MyVirtualHost&lt;/VirtualHost&gt;
+&lt;/HTTPProxyConnection&gt;</pre>
+        </li>
+      </ol>
+    </li>
+
+    <li>Save the API proxy. If the API proxy has been deployed, saving it redeploys it with the new
+    setting.</li>
+  </ol>
+
+  <h2 id="settingthebaseurldisplayedbytheedgeuiforanapiproxy">Setting the base URL displayed by the
+  Edge UI for an API proxy</h2>
+
+  <p>The Edge UI displays the URL of an API proxy based on settings in the virtual host
+  corresponding to where the proxy is deployed. This display can include the Router port number of
+  the virtual host.</p>
+
+  <p>In most cases, the URL displayed in the Edge UI is the correct URL for making external
+  requests to the proxy. However, for some configurations, the displayed URL is not correct. For
+  example, any one of the following configurations can cause the displayed URL displayed to not
+  correspond to the actual URL used to make external requests to the proxy:</p>
+
+  <ul>
+    <li>SSL termination occurs at a load balancer</li>
+
+    <li>Port mapping occurs between a load balancer and Apigee Routers</li>
+
+    <li>A load balancer configured with path rewriting</li>
+  </ul>
+
+  <p>Edge supports an attribute on the virtual host called <code>&lt;BaseUrl&gt; </code>that lets
+  you override the URL displayed by the Edge UI. Here's an example showing the virtual host object
+  with the <code>&lt;BaseUrl&gt;</code> attribute.
+  In this example, the value "http://myCo.com" appears in the Edge UI:</p>
+  <pre class="prettyprint">
+&lt;VirtualHost name="myTLSVHost"&gt;
+    &lt;HostAliases&gt;
+        &lt;HostAlias&gt;api.myCompany.com&lt;/HostAlias&gt;
+    &lt;/HostAliases&gt;
+    &lt;BaseUrl&gt;http://myCo.com&lt;/BaseUrl&gt;
+    &lt;Port&gt;443&lt;/Port&gt;
+    &lt;SSLInfo&gt;
+        &lt;Enabled&gt;true&lt;/Enabled&gt;
+        &lt;ClientAuthEnabled&gt;false&lt;/ClientAuthEnabled&gt;
+        &lt;KeyStore&gt;ref://myTestKeystoreRef&lt;/KeyStore&gt;
+        &lt;KeyAlias&gt;myKeyAlias&lt;/KeyAlias&gt;
+    &lt;/SSLInfo&gt;
+&lt;/VirtualHost&gt;</pre>
+
+  <p>If <code>&lt;BaseUrl&gt;</code> is not set,
+  the default, then the default URL rendered by the Edge UI will appear as: "api.myCompany.com",
+  whereas actual host alias setup is "http://myCo.com". </p>
+
+
+{% endblock %}

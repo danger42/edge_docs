@@ -1,0 +1,961 @@
+  {% extends "_base.html" %} {% block title %}Requesting access tokens and authorization codes{% endblock %} {% block body %}
+
+  <p>In this topic, we show you how to request access tokens and authorization codes, configure
+  OAuth 2.0 endpoints, and configure policies <strong>for each supported grant
+  type</strong>. </p>
+
+  <aside class="note"><b>Note:</b> These examples show the most basic configurations possible. In
+  particular, the OAuthV2 policy includes many optional configurable elements that are not shown in
+  this topic. For more information on those elements, see <a href=
+  "/api-platform/reference/policies/oauthv2-policy.html">OAuthV2 policy</a>.</aside>
+
+  <h2 id="samplecode">Sample code</h2>
+
+  <p>For your convenience, the policies and endpoints discussed in this topic are available on
+  GitHub in the <a href=
+  "https://github.com/apigee/api-platform-samples/tree/master/doc-samples/oauth-doc-examples">oauth-doc-examples</a> project
+  in the Apigee api-platform-samples repository. You can deploy the sample code and try
+  out the sample requests shown in this topic. See the project README for details.</p>
+
+  <h2 id="requestinganaccesstokenauthorizationcodegranttype">Requesting an access token:
+  authorization code grant type</h2>
+
+  <p>This section explains how to request an access token using the authorization code grant type
+  flow. For an introduction to OAuth 2.0 grant types, see <a href=
+  "/api-platform/security/oauth/oauth-introduction.html">Introduction to OAuth 2.0</a>.</p>
+
+  <aside class="note">
+    <b>Note:</b> This flow requires you to obtain an authorization code first. See <a href=
+    "#requestAuthCode">Requesting authorization codes</a> below. 
+
+    <p>For information on encoding the basic authentication header in the following call, see
+    "<a href="#encoding">Encoding basic authentication credentials</a>". </p>
+  </aside>
+
+  <h3 id="requestinganaccesstokenauthorizationcodegranttype-samplerequest"><strong>Sample
+  request</strong></h3>
+  <pre class="prettyprint">
+$ curl -i -H 'Content-Type: application/x-www-form-urlencoded' \
+   -H 'Authorization: Basic c3FIOG9vSGV4VHo4QzAyg5T1JvNnJoZ3ExaVNyQWw6WjRsanRKZG5lQk9qUE1BVQ' \
+   -X POST 'https://docs-test.apigee.net/oauth/accesstoken' \
+   -d 'code=I9dMGHAN&amp;grant_type=authorization_code&amp;redirect_uri=http://example-callback.com' 
+</pre>
+
+  <h3 id="requestinganaccesstokenauthorizationcodegranttype-requiredparameters"><strong>Required
+  parameters</strong></h3>
+
+  <p>By default, these parameters must be <code>x-www-form-urlencoded</code> and specified in the
+  request body (as shown in the sample above); however, it is possible to change this default by
+  configuring the <code>&lt;GrantType&gt;</code>, <code>&lt;Code&gt;</code>, and
+  <code>&lt;RedirectUri&gt;</code> elements in the OAuthV2 policy that is attached to this
+  <code>/accesstoken</code> endpoint. For details, see <a href=
+  "/api-platform/reference/policies/oauthv2-policy.html">OAuthV2 policy</a>.</p>
+
+  <ul>
+    <li><strong>grant_type</strong> - Must be set to the value
+    <code>authorization_code</code>.</li>
+
+    <li><strong>code</strong> - The authorization code received from the <code>/authorize</code>
+    endpoint (or whatever you choose to name it). To request an access token in the authorization
+    code grant type flow, you must first obtain an authorization code. See <a href=
+    "#requestAuthCode">Requesting authorization codes</a> below. See also  <a href=
+    "/api-platform/security/oauth/oauth-v2-policy-authorization-code-grant-type.html">Implementing
+    the authorization code grant type</a>.</li>
+
+    <li><strong>redirect_uri</strong> - You must provide this parameter if the
+    <code>redirect_uri</code> parameter was included in the prior authorization code request. If
+    the <code>redirect_uri</code> parameter was not included in the authorization code request, and
+    if you do not provide this parameter, then this policy uses the value of the Callback URL that
+    was provided when the developer app was registered.</li>
+  </ul>
+
+  <h3 id="requestinganaccesstokenauthorizationcodegranttype-optionalparameters"><strong>Optional
+  parameters</strong></h3>
+
+  <ul>
+    <li><strong>state</strong> - A string that will be sent back with the response. Typically used
+    to prevent cross-site request forgery attacks.</li>
+
+    <li><strong>scope</strong> - Allows you to filter the list of API products with which the
+    minted token can be used. For detailed information on scope, see <a href=
+    "/api-platform/security/oauth/working-scopes.html">Working with OAuth2 scopes</a>.</li>
+  </ul>
+
+  <h3 id="requestinganaccesstokenauthorizationcodegranttype-authentication">
+  <strong>Authentication</strong></h3>
+
+  <p>You must pass the Client ID and Client Secret either as a Basic Authentication header
+  (Base64-encoded) or as form parameters <code>client_id</code> and <code>client_secret</code>. You
+  obtain these values from a registered developer app. See also "<a href="#encoding">Encoding basic
+  authentication credentials</a>". </p>
+
+  <h3 id="requestinganaccesstokenauthorizationcodegranttype-sampleendpoint">Sample endpoint</h3>
+
+  <p>Here's a sample endpoint configuration for generating an access token. It'll execute the
+  GenerateAccessToken policy, which must be configured to support the authorization_code grant
+  type.</p>
+  <pre class="prettyprint">
+...   
+       &lt;Flow name="generate-access-token"&gt;
+            &lt;Description&gt;Generate a token&lt;/Description&gt;
+            &lt;Request&gt;
+                &lt;Step&gt;
+                    &lt;Name&gt;GenerateAccessToken&lt;/Name&gt;
+                &lt;/Step&gt;
+            &lt;/Request&gt;
+            &lt;Response/&gt;
+            &lt;Condition&gt;(proxy.pathsuffix MatchesPath "/token") and (request.verb = "POST")&lt;/Condition&gt;
+        &lt;/Flow&gt;
+...
+</pre>
+
+  <h3 id="requestinganaccesstokenauthorizationcodegranttype-samplepolicy">Sample policy</h3>
+
+  <p>This is a basic GenerateAccessToken policy that is configured to accept the
+  <code>authorization_code</code> grant type. For information on optional configuration elements
+  that you can configure with this policy, see <a href=
+  "/api-platform/reference/policies/oauthv2-policy.html">OAuthV2 policy</a>.</p>
+  <pre class="prettyprint">
+&lt;OAuthV2 name="GenerateAccessToken"&gt;
+    &lt;Operation&gt;GenerateAccessToken&lt;/Operation&gt;
+    &lt;ExpiresIn&gt;1800000&lt;/ExpiresIn&gt;
+    &lt;RefreshTokenExpiresIn&gt;86400000&lt;/RefreshTokenExpiresIn&gt;
+    &lt;SupportedGrantTypes&gt;
+      &lt;GrantType&gt;authorization_code&lt;/GrantType&gt;
+    &lt;/SupportedGrantTypes&gt;
+    &lt;GenerateResponse enabled="true"/&gt;
+&lt;/OAuthV2&gt;
+</pre>
+
+  <h3 id="requestinganaccesstokenauthorizationcodegranttype-returns"><strong>Returns</strong></h3>
+
+  <p>With <code>&lt;GenerateResponse&gt;</code> enabled, the policy returns a JSON response that
+  includes the access token, as shown below. The <code>authorization_code</code> grant type creates
+  an access token and a refresh tokens, so a response might look like this:</p>
+  <pre class="prettyprint">
+{
+    "issued_at": "1420262924658",
+    "scope": "READ",
+    "application_name": "ce1e94a2-9c3e-42fa-a2c6-1ee01815476b",
+    "refresh_token_issued_at": "1420262924658",
+    "status": "approved",
+    "refresh_token_status": "approved",
+    "api_product_list": "[PremiumWeatherAPI]",
+    "expires_in": "1799", //--in seconds
+    "developer.email": "tesla@weathersample.com",
+    "organization_id": "0",
+    "token_type": "BearerToken",
+    "refresh_token": "fYACGW7OCPtCNDEnRSnqFlEgogboFPMm",
+    "client_id": "5jUAdGv9pBouF0wOH5keAVI35GBtx3dT",
+    "access_token": "2l4IQtZXbn5WBJdL6EF7uenOWRsi",
+    "organization_name": "docs",
+    "refresh_token_expires_in": "86399", //--in seconds
+    "refresh_count": "0"
+}
+</pre>
+
+  <aside class="note"><b>Note:</b> Yes, it's kind of unusual to specify the expiry values in
+  milliseconds in the policy, but receive them in seconds in the response payload. We are
+  aware.</aside>
+
+  <p>If <code>&lt;GenerateResponse&gt;</code> is set to false, the policy does not return a
+  response. Instead, it populates the following set of flow variables with data pertaining to the
+  access token grant.</p>
+  <pre class="prettyprint">
+oauthv2accesstoken.{policy-name}.access_token   
+oauthv2accesstoken.{policy-name}.expires_in //--in seconds
+oauthv2accesstoken.{policy-name}.refresh_token
+oauthv2accesstoken.{policy-name}.refresh_token_expires_in //--in seconds
+oauthv2accesstoken.{policy-name}.refresh_token_issued_at
+oauthv2accesstoken.{policy-name}.refresh_token_status
+</pre>
+
+  <p>For example:</p>
+  <pre class="prettyprint">
+oauthv2accesstoken.GenerateAccessToken.access_token     
+oauthv2accesstoken.GenerateAccessToken.expires_in         
+oauthv2accesstoken.GenerateAccessToken.refresh_token    
+oauthv2accesstoken.GenerateAccessToken.refresh_token_expires_in         
+oauthv2accesstoken.GenerateAccessToken.refresh_token_issued_at  
+oauthv2accesstoken.GenerateAccessToken.refresh_token_status
+</pre>
+
+  <h2 id="requestinganaccesstokenclientcredentialsgranttype">Requesting an access token: client
+  credentials grant type</h2>
+
+  <p>This section explains how to request an access token using the client credentials grant type
+  flow. For an introduction to OAuth 2.0 grant types, see <a href=
+  "/api-platform/security/oauth/oauth-introduction.html">Introduction to OAuth 2.0</a>.</p>
+
+  <h3 id="requestinganaccesstokenclientcredentialsgranttype-samplerequest"><strong>Sample
+  request</strong></h3>
+
+  <p>For information on encoding the basic authentication header in the following call, see
+  "<a href="#encoding">Encoding basic authentication credentials</a>". </p>
+  <pre class="prettyprint">
+$ curl -i -H 'Content-Type: application/x-www-form-urlencoded' \
+  -H 'Authorization: Basic c3FIOG9vSGV4VHoAyg5T1JvNnJoZ3ExaVNyQWw6WjRsanRKZG5lQk9qUE1BVQ' \
+  -X POST 'https://docs-test.apigee.net/oauth/accesstoken' \
+  -d 'grant_type=client_credentials'
+</pre>
+
+  <h3 id="requestinganaccesstokenclientcredentialsgranttype-requiredparameters"><strong>Required
+  parameters</strong></h3>
+
+  <p>By default, the required grant_type parameter must be <code>x-www-form-urlencoded</code> and
+  specified in the request body (as shown in the sample above); however, it is possible to change
+  this default by configuring the <code>&lt;GrantType&gt;</code> element in the OAuthV2 policy that
+  is attached to this <code>/accesstoken</code> endpoint. For example, you could elect to pass the
+  parameter in a query parameter. For details, see <a href=
+  "/api-platform/reference/policies/oauthv2-policy.html">OAuthV2 policy</a>.</p>
+
+  <ul>
+    <li><strong>grant_type</strong> - Must be set to the value
+    <code>client_credentials</code>.</li>
+  </ul>
+
+  <h3 id="requestinganaccesstokenclientcredentialsgranttype-optionalparameters"><strong>Optional
+  parameters</strong></h3>
+
+  <ul>
+    <li><strong>state</strong> - A string that will be sent back with the response. Typically used
+    to prevent cross-site request forgery attacks.</li>
+
+    <li><strong>scope</strong> - Allows you to filter the list of API products with which the
+    minted token can be used. For detailed information on scope, see <a href=
+    "/api-platform/security/oauth/working-scopes.html">Working with OAuth2 scopes</a>.</li>
+  </ul>
+
+  <h3 id="requestinganaccesstokenclientcredentialsgranttype-authentication">
+  <strong>Authentication</strong></h3>
+
+  <p>You must pass the Client ID and Client Secret either as a Basic Authentication header
+  (Base64-encoded) or as form parameters <code>client_id</code> and
+  <code>client_secret</code>. You obtain these values from the registered developer app
+  associated with the request. See also "<a href="#encoding">Encoding basic authentication
+  credentials</a>".</p>
+
+  <h3 id="requestinganaccesstokenclientcredentialsgranttype-sampleendpoint">Sample endpoint</h3>
+
+  <p>Here's a sample endpoint configuration for generating an access token. It'll execute the
+  GenerateAccessToken policy, which must be configured to support the client_credentials grant
+  type.</p>
+  <pre class="prettyprint">
+...   
+       &lt;Flow name="generate-access-token"&gt;
+            &lt;Request&gt;
+                &lt;Step&gt;
+                    &lt;Name&gt;GenerateAccessToken&lt;/Name&gt;
+                &lt;/Step&gt;
+            &lt;/Request&gt;
+            &lt;Response/&gt;
+            &lt;Condition&gt;(proxy.pathsuffix MatchesPath "/token") and (request.verb = "POST")&lt;/Condition&gt;
+        &lt;/Flow&gt;
+...
+</pre>
+
+  <h3 id="requestinganaccesstokenclientcredentialsgranttype-samplepolicy">Sample policy</h3>
+
+  <p>This is a basic GenerateAccessToken policy that is configured to accept the
+  <code>client_credentials</code> grant type. For information on optional configuration elements
+  that you can configure with this policy, see <a href=
+  "/api-platform/reference/policies/oauthv2-policy.html">OAuthV2 policy</a>.</p>
+  <pre class="prettyprint">
+&lt;OAuthV2 name="GenerateAccessToken"&gt;
+    &lt;Operation&gt;GenerateAccessToken&lt;/Operation&gt;
+    &lt;ExpiresIn&gt;1800000&lt;/ExpiresIn&gt; &lt;!-- 30 minutes --&gt;
+    &lt;SupportedGrantTypes&gt;
+      &lt;GrantType&gt;client_credentials&lt;/GrantType&gt;
+    &lt;/SupportedGrantTypes&gt;
+    &lt;GenerateResponse enabled="true"/&gt;
+&lt;/OAuthV2&gt;
+</pre>
+
+  <h3 id="requestinganaccesstokenclientcredentialsgranttype-returns"><strong>Returns</strong></h3>
+
+  <p>With <code>&lt;GenerateResponse&gt;</code> enabled, the policy returns a JSON response. Note
+  that with the <code>client_credentials</code> grant type, refresh tokens are not supported. Only
+  an access token is minted. For example:</p>
+  <pre class="prettyprint">
+{
+    "issued_at": "1420260525643",
+    "application_name": "ce1e94a2-9c3e-42fa-a2c6-1ee01815476b",
+    "scope": "READ",
+    "status": "approved",
+    "api_product_list": "[PremiumWeatherAPI]",
+    "expires_in": "1799", //--in seconds
+    "developer.email": "tesla@weathersample.com",
+    "organization_id": "0",
+    "token_type": "BearerToken",
+    "client_id": "5jUAdGv9pBouF0wOH5keAVI35GBtx3dT",
+    "access_token": "XkhU2DFnMGIVL2hvsRHLM00hRWav",
+    "organization_name": "docs"
+}
+</pre>
+
+  <p>If <code>&lt;GenerateResponse&gt;</code> is set to false, the policy does not return a
+  response. Instead, it populates the following set of flow variables with data pertaining to the
+  access token grant.</p>
+  <pre class="prettyprint">
+oauthv2accesstoken.{policy-name}.access_token   
+oauthv2accesstoken.{policy-name}.expires_in //--in seconds
+</pre>
+
+  <p>For example:</p>
+  <pre class="prettyprint">
+oauthv2accesstoken.GenerateAccessToken.access_token     
+oauthv2accesstoken.GenerateAccessToken.expires_in     //--in seconds     
+</pre>
+
+  <h2 id="requestinganaccesstokenpasswordgranttype"><a id="passwordgranttype" name=
+  "passwordgranttype"></a>Requesting an access token: password grant type</h2>
+
+  <p>This section explains how to request an access token using the resource owner password
+  credentials (password) grant type flow. For an introduction to OAuth 2.0 grant types, see
+  <a href="/api-platform/security/oauth/oauth-introduction.html">Introduction to OAuth 2.0</a>.</p>
+
+  <p>For more details on the password grant type, including a 4-minute video showing how to
+  implement it, see <a href=
+  "/api-platform/security/oauth/implementing-password-grant-type.html">Implementing the password
+  grant type</a>.</p>
+
+  <h3 id="requestinganaccesstokenpasswordgranttype-samplerequest"><strong>Sample
+  request</strong></h3>
+
+  <p>For information on encoding the basic authentication header in the following call, see
+  "<a href="#encoding">Encoding basic authentication credentials</a>". </p>
+  <pre class="prettyprint">
+$ curl -i -H 'Content-Type: application/x-www-form-urlencoded' \
+  -H 'Authorization: Basic c3FIOG9vSGV4VHo4QzAySVg5T1JvNnJoZ3ExaVNyQWw6WjRsanRKZG5lQk9qUE1BVQ' \
+  -X POST https://docs-test.apigee.net/oauth/token \
+  -d 'grant_type=password&amp;username=the-user-name&amp;password=the-users-password'
+</pre>
+
+  <h3 id="requestinganaccesstokenpasswordgranttype-requiredparameters"><strong>Required
+  parameters</strong></h3>
+
+  <p>By default, these parameters must be <code>x-www-form-urlencoded</code> and specified in the
+  request body (as shown in the sample above); however, it is possible to change this default by
+  configuring the <code>&lt;GrantType&gt;</code>, <code>&lt;Username&gt;</code>, and
+  <code>&lt;Password&gt;</code> elements in the OAuthV2 policy that is attached to this
+  <code>/token</code> endpoint. For details, see <a href=
+  "/api-platform/reference/policies/oauthv2-policy.html">OAuthV2 policy</a>.</p>
+
+  <p>User credentials are typically validated against a credential store using an LDAP or
+  JavaScript policy.</p>
+
+  <ul>
+    <li><strong>grant_type</strong> - Must be set to the value <code>password</code>.</li>
+
+    <li><strong>username</strong> - The resource owner's user name.</li>
+
+    <li><strong>password</strong> - The resource owner's password.</li>
+  </ul>
+
+  <h3 id="requestinganaccesstokenpasswordgranttype-optionalparameters"><strong>Optional
+  parameters</strong></h3>
+
+  <ul>
+    <li><strong>state</strong> - A string that will be sent back with the response. Typically used
+    to prevent cross-site request forgery attacks.</li>
+
+    <li><strong>scope</strong> - Allows you to filter the list of API products with which the
+    minted token can be used. For detailed information on scope, see <a href=
+    "/api-platform/security/oauth/working-scopes.html">Working with OAuth2 scopes</a>.</li>
+  </ul>
+
+  <h3 id="requestinganaccesstokenpasswordgranttype-authentication">
+  <strong>Authentication</strong></h3>
+
+  <p>You must pass the Client ID and Client Secret either as a Basic Authentication header
+  (Base64-encoded) or as form parameters <code>client_id</code> and
+  <code>client_secret</code>. You obtain these values from the registered developer app
+  associated with the request. See also "<a href="#encoding">Encoding basic authentication
+  credentials</a>".</p>
+
+  <h3 id="requestinganaccesstokenpasswordgranttype-sampleendpoint">Sample endpoint</h3>
+
+  <p>Here's a sample endpoint configuration for generating an access token. It'll execute the
+  GenerateAccessToken policy, which must be configured to support the password grant type.</p>
+  <pre class="prettyprint">
+...   
+       &lt;Flow name="generate-access-token"&gt;
+            &lt;Request&gt;
+                &lt;Step&gt;
+                    &lt;Name&gt;GenerateAccessToken&lt;/Name&gt;
+                &lt;/Step&gt;
+            &lt;/Request&gt;
+            &lt;Response/&gt;
+            &lt;Condition&gt;(proxy.pathsuffix MatchesPath "/token") and (request.verb = "POST")&lt;/Condition&gt;
+        &lt;/Flow&gt;
+...
+</pre>
+
+  <h3 id="requestinganaccesstokenpasswordgranttype-samplepolicy">Sample policy</h3>
+
+  <p>This is a basic GenerateAccessToken policy that is configured to accept the password grant
+  type. For information on optional configuration elements that you can configure with this policy,
+  see <a href="/api-platform/reference/policies/oauthv2-policy.html">OAuthV2 policy</a>.</p>
+  <pre class="prettyprint">
+&lt;OAuthV2 name="GenerateAccessToken"&gt;
+    &lt;Operation&gt;GenerateAccessToken&lt;/Operation&gt;
+    &lt;ExpiresIn&gt;1800000&lt;/ExpiresIn&gt; &lt;!-- 30 minutes --&gt;
+    &lt;RefreshTokenExpiresIn&gt;28800000&lt;/RefreshTokenExpiresIn&gt; &lt;!-- 8 hours --&gt;
+    &lt;SupportedGrantTypes&gt;
+      &lt;GrantType&gt;password&lt;/GrantType&gt;
+    &lt;/SupportedGrantTypes&gt;
+    &lt;GenerateResponse enabled="true"/&gt;
+&lt;/OAuthV2&gt;
+</pre>
+
+  <h3 id="requestinganaccesstokenpasswordgranttype-returns"><strong>Returns</strong></h3>
+
+  <p>With <code>&lt;GenerateResponse&gt;</code> enabled, the policy returns a JSON response. Note
+  that with the password grant type, both an access token and refresh token are minted. For
+  example:</p>
+  <pre class="prettyprint">
+{
+    "issued_at": "1420258685042",
+    "scope": "READ",
+    "application_name": "ce1e94a2-9c3e-42fa-a2c6-1ee01815476b",
+    "refresh_token_issued_at": "1420258685042",
+    "status": "approved",
+    "refresh_token_status": "approved",
+    "api_product_list": "[PremiumWeatherAPI]",
+    "expires_in": "1799", //--in seconds
+    "developer.email": "tesla@weathersample.com",
+    "organization_id": "0",
+    "token_type": "BearerToken",
+    "refresh_token": "IFl7jlijYuexu6XVSSjLMJq8SVXGOAAq",
+    "client_id": "5jUAdGv9pBouF0wOH5keAVI35GBtx3dT",
+    "access_token": "I6daIgMSiUgYX1K2qgQWPi37ztS6",
+    "organization_name": "docs",
+    "refresh_token_expires_in": "28799", //--in seconds
+    "refresh_count": "0"
+}
+</pre>
+
+  <p>If <code>&lt;GenerateResponse&gt;</code> is set to false, the policy does not return a
+  response. Instead, it populates the following set of flow variables with data pertaining to the
+  access token grant.</p>
+  <pre class="prettyprint">
+oauthv2accesstoken.{policy-name}.access_token   
+oauthv2accesstoken.{policy-name}.expires_in   //--in seconds    
+oauthv2accesstoken.{policy-name}.refresh_token    
+oauthv2accesstoken.{policy-name}.refresh_token_expires_in  //--in seconds     
+oauthv2accesstoken.{policy-name}.refresh_token_issued_at        
+oauthv2accesstoken.{policy-name}.refresh_token_status
+</pre>
+
+  <p>For example:</p>
+  <pre class="prettyprint">
+oauthv2accesstoken.GenerateAccessToken.access_token     
+oauthv2accesstoken.GenerateAccessToken.expires_in         
+oauthv2accesstoken.GenerateAccessToken.refresh_token    
+oauthv2accesstoken.GenerateAccessToken.refresh_token_expires_in         
+oauthv2accesstoken.GenerateAccessToken.refresh_token_issued_at  
+oauthv2accesstoken.GenerateAccessToken.refresh_token_status     
+</pre>
+
+  <h2 id="requestinganaccesstokenimplicitgranttype">Requesting an access token: implicit grant
+  type</h2>
+
+  <p>This section explains how to request an access token using the implicit grant type flow. For
+  an introduction to OAuth 2.0 grant types, see <a href=
+  "/api-platform/security/oauth/oauth-introduction.html">Introduction to OAuth 2.0</a>.</p>
+
+  <h3 id="requestinganaccesstokenimplicitgranttype-samplerequest"><strong>Sample
+  request</strong></h3>
+  <pre class="prettyprint">
+$ curl -X POST -H 'Content-Type: application/x-www-form-urlencoded' \
+  'https://docs-test.apigee.net/oauth/implicit?response_type=token&amp;client_id=ABC123&amp;redirect_uri=http://callback-example.com'
+</pre>
+
+  <h3 id="requestinganaccesstokenimplicitgranttype-requiredparameters"><strong>Required
+  parameters</strong></h3>
+
+  <p>By default, these parameters must be query parameters (as shown in the sample above); however,
+  it is possible to change this default by configuring the <code>&lt;ResponseType&gt;</code>,
+  <code>&lt;ClientId&gt;</code>, and <code>&lt;RedirectUri&gt;</code> elements in the OAuthV2
+  policy that is attached to this <code>/token</code> endpoint. For details, see <a href=
+  "/api-platform/reference/policies/oauthv2-policy.html">OAuthV2 policy</a>.</p>
+
+  <p>User credentials are typically validated against a credential store using an LDAP service
+  callout or JavaScript policy.</p>
+
+  <ul>
+    <li><strong>response_type</strong> - Must be set to the value <code>token</code>.</li>
+
+    <li><strong>client_id</strong> - The client ID of a registered developer app.</li>
+
+    <li><strong>redirect_uri</strong> - This parameter is mandatory if a Callback URI was not
+    provided when the client developer app was registered. If a Callback URL was provided at client
+    registration, it will be compared to this value and must match exactly.</li>
+  </ul>
+
+  <h3 id="requestinganaccesstokenimplicitgranttype-optionalparameters"><strong>Optional
+  parameters</strong></h3>
+
+  <ul>
+    <li><strong>state</strong> - A string that will be sent back with the response. Typically used
+    to prevent cross-site request forgery attacks.</li>
+
+    <li><strong>scope</strong> - Allows you to filter the list of API products with which the
+    minted token can be used. For detailed information on scope, see <a href=
+    "/api-platform/security/oauth/working-scopes.html">Working with OAuth2 scopes</a>.</li>
+  </ul>
+
+  <h3 id="requestinganaccesstokenimplicitgranttype-authentication">
+  <strong>Authentication</strong></h3>
+
+  <p>The implicit grant does not require basic authentication. You do need to pass a client ID as a
+  request parameter, as explained here. </p>
+
+  <h3 id="requestinganaccesstokenimplicitgranttype-sampleendpoint">Sample endpoint</h3>
+
+  <p>Here's a sample endpoint configuration for generating an access token. It'll execute the
+  GenerateAccessTokenImplicitGrant policy.</p>
+  <pre class="prettyprint">
+...   
+       &lt;Flow name="generate-access-token-implicit"&gt;
+            &lt;Request&gt;
+                &lt;Step&gt;
+                    &lt;Name&gt;GenerateAccessTokenImplicitGrant&lt;/Name&gt;
+                &lt;/Step&gt;
+            &lt;/Request&gt;
+            &lt;Response/&gt;
+            &lt;Condition&gt;(proxy.pathsuffix MatchesPath "/implicit") and (request.verb = "POST")&lt;/Condition&gt;
+        &lt;/Flow&gt;
+...
+
+</pre>
+
+  <h3 id="requestinganaccesstokenimplicitgranttype-samplepolicy">Sample policy</h3>
+
+  <p>This is a basic GenerateAccessTokenImplicitGrant policy that processes token requests for the
+  implicit grant type flow. For information on optional configuration elements that you can
+  configure with this policy, see <a href=
+  "/api-platform/reference/policies/oauthv2-policy.html">OAuthV2 policy</a>.</p>
+  <pre class="prettyprint">
+&lt;?xml version="1.0" encoding="UTF-8" standalone="yes"?&gt;
+&lt;OAuthV2 name="GenerateAccessTokenImplicit"&gt;
+    &lt;DisplayName&gt;GenerateAccessTokenImplicit&lt;/DisplayName&gt;
+    &lt;Operation&gt;GenerateAccessTokenImplicitGrant&lt;/Operation&gt;
+    &lt;GenerateResponse enabled="true"/&gt;
+&lt;/OAuthV2&gt;
+</pre>
+
+  <h3 id="requestinganaccesstokenimplicitgranttype-returns"><strong>Returns</strong></h3>
+
+  <p>With <code>&lt;GenerateResponse&gt;</code> enabled, the policy returns a 302 Location redirect
+  in the response header. The redirect points to the URL specified in the <code>redirect_uri</code>
+  parameter and is appended with the access token and token expiration time. Note that the implicit
+  grant type does not support refresh tokens. For example:</p>
+  <pre class="prettyprint">
+https://callback-example.com#expires_in=1799&amp;access_token=In4dKm4ueoGZRbIYJhC9yZCmTFw5
+</pre>
+
+  <p>If <code>&lt;GenerateResponse&gt;</code> is set to false, the policy does not return a
+  response. Instead, it populates the following set of flow variables with data pertaining to the
+  access token grant.</p>
+  <pre class="prettyprint">
+oauthv2accesstoken.{policy-name}.access_token   
+oauthv2accesstoken.{policy-name}.expires_in  //--in seconds
+        
+</pre>
+
+  <p>For example:</p>
+  <pre class="prettyprint">
+oauthv2accesstoken.GenerateAccessToken.access_token     
+oauthv2accesstoken.GenerateAccessToken.expires_in   //--in seconds      
+</pre>
+
+  <h2 id="requestinganauthorizationcode"><a id="requestAuthCode" name=
+  "requestAuthCode"></a>Requesting an authorization code</h2>
+
+  <p>If you're using the authorization code grant type flow, you need to obtain an authorization
+  code before you can request an access token.</p>
+
+  <h3 id="requestinganauthorizationcode-samplerequest"><strong>Sample request</strong></h3>
+  <pre class="prettyprint">
+$ curl -X POST -H 'Content-Type: application/x-www-form-urlencoded' \
+  'http://myorg-test.apigee.net/oauth/authorize?client_id={consumer_key}&amp;response_type=code'
+</pre>
+
+  <p>where an OAuthV2 GenerateAuthorizationCode policy is attached at the
+  <code>/oauth/authorize</code> proxy endpoint (see the sample endpoint below).</p>
+
+  <h3 id="requestinganauthorizationcode-requiredparameters"><strong>Required
+  parameters</strong></h3>
+
+  <p>By default, these parameters must be query parameters (as shown in the sample above); however,
+  it is possible to change this default by configuring the <code>&lt;ResponseType&gt;</code>,
+  <code>&lt;ClientId&gt;</code>, and <code>&lt;RedirectUri&gt;</code> elements in the OAuthV2
+  policy that is attached to this <code>/authorize</code> endpoint. For details, see <a href=
+  "/api-platform/reference/policies/oauthv2-policy.html">OAuthV2 policy</a>.</p>
+
+  <aside class="note"><b>Note:</b> The authorization code flow takes place between a third-party
+  user authentication service and Apigee Edge. The intent of the authorization code grant type flow
+  is that the client app never sees the user's credentials for the resource server.</aside>
+
+  <aside class="note"><b>Note:</b> For a detailed look at this flow, see <a href=
+  "/api-platform/security/oauth/oauth-v2-policy-authorization-code-grant-type.html">Implementing
+  the authorization code grant type</a>.</aside>
+
+  <ul>
+    <li><strong>response_type</strong> - Must be set to the value <code>code</code>.</li>
+
+    <li><strong>client_id</strong> - The client ID of a registered developer app.</li>
+  </ul>
+
+  <h3 id="requestinganauthorizationcode-optionalparameters"><strong>Optional
+  parameters</strong></h3>
+
+  <ul>
+    <li><strong>redirect_uri</strong> - If a full (not partial) Callback URI is specified in
+    the registered client app, this parameter is optional; otherwise, it is required. The callback
+    is the URL where Edge sends the newly minted auth code. See also <a href=
+    "/api-platform/publish/creating-apps-surface-your-api.html">Register apps and manage API
+    keys</a>.</li>
+
+    <li><strong>state</strong> - A string that will be sent back with the response. Typically used
+    to prevent cross-site request forgery attacks.</li>
+
+    <li><strong>scope</strong> - Allows you to filter the list of API products with which the
+    minted token can be used. For detailed information on scope, see <a href=
+    "/api-platform/security/oauth/working-scopes.html">Working with OAuth2 scopes</a>.</li>
+  </ul>
+
+  <h3 id="requestinganauthorizationcode-authentication"><strong>Authentication</strong></h3>
+
+  <p>Does not require basic authentication, however the client ID of the registered client app must
+  be supplied in the request.</p>
+
+  <h3 id="requestinganauthorizationcode-sampleendpoint">Sample endpoint</h3>
+
+  <p>Here's a sample endpoint configuration for generating an authorization code:</p>
+  <pre class="prettyprint">
+ ...      
+       &lt;Flow name="generate-auth-code"&gt;
+            &lt;Request&gt;
+                &lt;Step&gt;
+                    &lt;Name&gt;GenerateAuthorizationCode&lt;/Name&gt;
+                &lt;/Step&gt;
+            &lt;/Request&gt;
+            &lt;Response/&gt;
+            &lt;Condition&gt;(proxy.pathsuffix MatchesPath "/authorize") and (request.verb = "POST")&lt;/Condition&gt;
+       &lt;/Flow&gt;
+...
+</pre>
+
+  <h3 id="requestinganauthorizationcode-samplepolicy">Sample policy</h3>
+
+  <p>This is a basic GenerateAuthorizationCode policy. For information on optional configuration
+  elements that you can configure with this policy, see <a href=
+  "/api-platform/reference/policies/oauthv2-policy.html">OAuthV2 policy</a>.</p>
+  <pre class="prettyprint">
+&lt;OAuthV2 name="GenerateAuthorizationCode"&gt;
+    &lt;Operation&gt;GenerateAuthorizationCode&lt;/Operation&gt;
+    &lt;GenerateResponse enabled="true"/&gt;
+&lt;/OAuthV2&gt;
+</pre>
+
+  <h3 id="requestinganauthorizationcode-returns"><strong>Returns</strong></h3>
+
+  <p>With <code>&lt;GenerateResponse&gt;</code> enabled, the policy returns <code>?code</code>
+  query parameter to the <code>redirect_uri</code> (Callback URI) location with the authorization
+  code attached. It is sent via a 302 browser redirect with the URL in the Location header of the
+  response. For example: <code>?code=123456</code>.</p>
+
+  <p>If <code>&lt;GenerateResponse&gt;</code> is set to <code>false</code>, the policy does not
+  return a response. Instead, it populates the following set of flow variables with data pertaining
+  to the authorization code.</p>
+  <pre class="prettyprint">
+oauthv2authcode.{policy-name}.code      
+oauthv2authcode.{policy-name}.scope     
+oauthv2authcode.{policy-name}.redirect_uri      
+oauthv2authcode.{policy-name}.client_id
+</pre>
+
+  <p>For example:</p>
+  <pre class="prettyprint">
+oauthv2authcode.GenerateAuthorizationCode.code  
+oauthv2authcode.GenerateAuthorizationCode.scope         
+oauthv2authcode.GenerateAuthorizationCode.redirect_uri  
+oauthv2authcode.GenerateAuthorizationCode.client_id
+</pre>
+
+  <aside class="note"><b>Note:</b> You can also set custom attributes in the OAuthV2 policy. Custom
+  attributes will be returned in the same format pattern as the other variables:
+  <code>oauthv2.{policy_name}.{attribute_name}</code>. When you generate an access token from the
+  auth code, the access token will inherit any custom variables set in the auth code. See also
+  <a href="/api-platform/reference/policies/oauthv2-policy.html">OAuthV2 policy</a>.</aside>
+
+  <h2 id="refreshinganaccesstoken">Refreshing an access token</h2>
+
+  <p>A refresh token is a credential you use to obtain an access token, typically after the access
+  token has expired or becomes invalid. A refresh token is returned in the response when you
+  receive an access token.</p>
+
+  <p>To request a new access token using a refresh token:</p>
+
+  <h3 id="refreshinganaccesstoken-samplerequest"><strong>Sample request</strong></h3>
+
+  <p>For information on encoding the basic authentication header in the following call, see
+  "<a href="#encoding">Encoding basic authentication credentials</a>". </p>
+  <pre class="prettyprint">
+$ curl -X POST \
+  -H "Content-type: application/x-www-form-urlencoded" \
+  -H 'Authorization: Basic c3FIOG9vSGV4VHo4QzAyg5T1JvNnJoZ3ExaVNyQWw6WjRsanRKZG5lQk9qUE1BVQ' \
+  https://myorg-test.apigee.net/my_oauth_endpoint/refresh_accesstoken \
+  -d 'grant_type=refresh_token&amp;refresh_token=my-refresh-token' 
+</pre>
+
+  <h3 id="refreshinganaccesstoken-requiredparameters"><strong>Required parameters</strong></h3>
+
+  <ul>
+    <li><strong>grant_type</strong> - Must be set to the value <code>refresh_token</code>.</li>
+
+    <li><strong>refresh_token</strong> - The refresh token associated with the access token you
+    wish to renew.</li>
+  </ul>
+
+  <p>By default, the policy looks for these as <code>x-www-form-urlencoded</code> parameters
+  specified in the request body, as shown in the example above. To configure an alternate location
+  for these inputs, you can use the <code>&lt;GrantType&gt;</code> and
+  <code>&lt;RefreshToken&gt;</code> elements in the OAuthV2 policy. For details, see <a href=
+  "/api-platform/reference/policies/oauthv2-policy.html">OAuthV2 policy</a>.</p>
+
+  <h3 id="refreshinganaccesstoken-optionalparameters"><strong>Optional parameters</strong></h3>
+
+  <ul>
+    <li><strong>state</strong> - A string that will be sent back with the response. Typically used
+    to prevent cross-site request forgery attacks.</li>
+
+    <li><strong>scope</strong> - Allows you to filter the list of API products with which the
+    minted token can be used. For detailed information on scope, see <a href=
+    "/api-platform/security/oauth/working-scopes.html">Working with OAuth2 scopes</a>.</li>
+  </ul>
+
+  <h3 id="refreshinganaccesstoken-authentication"><strong>Authentication</strong></h3>
+
+  <ul>
+    <li><strong>client_id</strong></li>
+
+    <li><strong>client_secret</strong></li>
+  </ul>
+
+  <p>You must pass the Client ID and Client Secret either as a Basic Authentication header
+  (Base64-encoded) or as form parameters <code>client_id</code> and <code>client_secret</code>. See
+  also "<a href="#encoding">Encoding basic authentication credentials</a>".</p>
+
+  <p>When refreshing an access token, there is no re-authentication of the user.</p>
+
+  <p>Here's a sample endpoint configuration for generating an access token using a refresh token.
+  It'll execute the RefreshAccessToken policy.</p>
+  <pre class="prettyprint">
+ ...      
+       &lt;Flow name="generate-refresh-token"&gt;
+            &lt;Request&gt;
+                &lt;Step&gt;
+                    &lt;Name&gt;RefreshAccessToken&lt;/Name&gt;
+                &lt;/Step&gt;
+            &lt;/Request&gt;
+            &lt;Response/&gt;
+            &lt;Condition&gt;(proxy.pathsuffix MatchesPath "/refresh") and (request.verb = "POST")&lt;/Condition&gt;
+       &lt;/Flow&gt;
+...
+</pre>
+
+  <h3 id="refreshinganaccesstoken-samplepolicy">Sample policy</h3>
+
+  <p>This is a basic RefreshAccessToken policy that is configured to accept the
+  <code>refresh_token</code> grant type. For information on optional configuration elements that
+  you can configure with this policy, see <a href=
+  "/api-platform/reference/policies/oauthv2-policy.html">OAuthV2 policy</a>.</p>
+  <pre class="prettyprint">
+&lt;?xml version="1.0" encoding="UTF-8" standalone="yes"?&gt;
+&lt;OAuthV2 name="RefreshAccessToken"&gt;
+    &lt;Operation&gt;RefreshAccessToken&lt;/Operation&gt;
+    &lt;GenerateResponse enabled="true"/&gt;
+    &lt;ExpiresIn&gt;1800000&lt;/ExpiresIn&gt; &lt;!-- 30 minutes --&gt;
+    &lt;RefreshTokenExpiresIn&gt;28800000&lt;/RefreshTokenExpiresIn&gt; &lt;!-- 8 hours --&gt;
+&lt;/OAuthV2&gt;
+</pre>
+
+  <h3 id="refreshinganaccesstoken-returns"><strong>Returns</strong></h3>
+
+  <p>With <code>&lt;GenerateResponse&gt;</code> enabled, the policy returns a JSON response
+  containing the new access token. The <code>refresh_token</code> grant type supports minting both
+  access and new refresh tokens. For example:</p>
+  <pre class="prettyprint">
+{
+    "issued_at": "1420301470489",
+    "application_name": "ce1e94a2-9c3e-42fa-a2c6-1ee01815476b",
+    "scope": "READ",
+    "refresh_token_issued_at": "1420301470489",
+    "status": "approved",
+    "refresh_token_status": "approved",
+    "api_product_list": "[PremiumWeatherAPI]",
+    "expires_in": "1799", //--in seconds
+    "developer.email": "tesla@weathersample.com",
+    "token_type": "BearerToken",
+    "refresh_token": "8fKDHLryAD9KFBsrpixlq3qPJnG2fdZ5",
+    "client_id": "5jUAdGv9pBouF0wOH5keAVI35GBtx3dT",
+    "access_token": "jmZ2Hqv3iNsABUtAAsfWR3QGNctw",
+    "organization_name": "docs",
+    "refresh_token_expires_in": "28799", //--in seconds
+    "refresh_count": "2"
+}
+</pre>
+
+  <aside class="note"><b>Note:</b> The expiry of the access token and the refresh token noted in
+  the response are 1 second less than specified in the policy configuration. This is due to transit
+  time, and a margin of safety. And yes, it's kind of unusual to specify the expiry values in
+  milliseconds in the policy, but receive them in seconds in the response payload. We are
+  aware.</aside>
+
+  <p>You should know that after a new refresh token is minted, the original is no longer valid.</p>
+
+  <p>The above response is what yyou get if <code>&lt;GenerateResponse&gt;</code> is set to true.
+  If <code>&lt;GenerateResponse&gt;</code> is set to false, the policy does not return a response.
+  Instead, it populates the following set of context (flow) variables with data pertaining to the
+  access token grant.</p>
+  <pre class="prettyprint">
+oauthv2accesstoken.{policy-name}.access_token   
+oauthv2accesstoken.{policy-name}.expires_in   //--in seconds    
+oauthv2accesstoken.{policy-name}.refresh_token    
+oauthv2accesstoken.{policy-name}.refresh_token_expires_in  //--in seconds     
+oauthv2accesstoken.{policy-name}.refresh_token_issued_at        
+oauthv2accesstoken.{policy-name}.refresh_token_status
+</pre>
+
+  <p>For example:</p>
+  <pre class="prettyprint">
+oauthv2accesstoken.RefreshAccessToken.access_token
+oauthv2accesstoken.RefreshAccessToken.expires_in
+oauthv2accesstoken.RefreshAccessToken.refresh_token
+oauthv2accesstoken.RefreshAccessToken.refresh_token_expires_in
+oauthv2accesstoken.RefreshAccessToken.refresh_token_issued_at
+oauthv2accesstoken.RefreshAccessToken.refresh_token_status
+</pre>
+
+  <h2 id="encodingbasicauthenticationcredentials"><a id="encoding" name="encoding"></a>Encoding
+  basic authentication credentials</h2>
+
+  <p>When you make an API call to request a token or auth code, it's a good practice, and is
+  recommended by the OAuth 2.0 specification to pass the client_id and client_secret values as
+  an HTTP-Basic Authentication header, as described in <a href=
+  "https://tools.ietf.org/html/rfc2617#section-2">IETF RFC 2617</a>. To do this, you must
+  base64-encode the result of joining the two values together with a colon separating them.</p>
+
+  <p>In pseudo-code:</p>
+  <pre class="prettyprint">
+result = Base64Encode(concat('ns4fQc14Zg4hKFCNaSzArVuwszX95X', ':', 'ZIjFyTsNgQNyxI'))
+</pre>
+
+  <p>In this example, <code>ns4fQc14Zg4hKFCNaSzArVuwszX95X</code> is the client_id and
+  <code>ZIjFyTsNgQNyxI</code> is the client secret.</p>
+
+  <p>Regardless of the programming language you use to compute the base64-encoded value, for those
+  given client credentials, the base64-encoded result is:
+  <code>bnM0ZlFjMTRaZzRoS0ZDTmFTekFyVnV3c3pYOTVYOlpJakZ5VHNOZ1FOeXhJOg==</code></p>
+
+  <p>Then, you can make the token request as follows:</p>
+  <pre class="terminal">
+$ curl -i -H 'Content-Type: application/x-www-form-urlencoded' \
+  -H 'Authorization: Basic bnM0ZlFjMTRaZzRoS0ZDTmFTekFyVnV3c3pYOTVYOlpJakZ5VHNOZ1FOeXhJOg==' \
+  -X POST 'https://docs-test.apigee.net/oauth/accesstoken' \
+  -d 'grant_type=client_credentials' 
+</pre>
+
+  <p>The <code>curl</code> utility will actually create the HTTP Basic header for you, if you use
+  the -u option. The following is equivalent to the above:</p>
+  <pre class="terminal">
+$ curl -i -H 'Content-Type: application/x-www-form-urlencoded' \
+  -u 'ns4fQc14Zg4hKFCNaSzArVuwszX95X:ZIjFyTsNgQNyxI' \
+  -X POST 'https://docs-test.apigee.net/oauth/accesstoken' \
+  -d 'grant_type=client_credentials' 
+</pre>
+
+  <p>Other programming environments may have similar shortcuts that automatically generate the
+  base64-encoded header.</p>
+
+  <h2 id="hashing">Hashing tokens in the database</h2>
+
+  <p>To protect OAuth access and refresh tokens in the event of a database security breach, you can
+  enable automatic token hashing in your Edge organization. When the feature is enabled, Edge
+  automatically creates a hashed version of newly generated OAuth access and refresh tokens using
+  the algorithm you specify. (Information about bulk-hashing existing tokens follows.) The
+  un-hashed tokens are used in API calls, and Edge validates them against the hashed versions in
+  the database.</p>
+
+  <p>The following organization-level properties control OAuth token hashing.</p>
+  <pre class="prettyprint">
+features.isOAuthTokenHashingEnabled = true
+features.OAuthTokenHashingAlgorithm = SHA1 | SHA256 | SHA384 | SHA512 | PLAIN
+</pre>
+
+  <p>If you have existing hashed tokens and want to retain them until they expire, set the
+  following properties in your organization, where the hashing algorithm matches the existing
+  algorithm (for example, SHA1, the former Edge default). If the tokens were un-hashed, use
+  PLAIN.</p>
+  <pre class="prettyprint">
+features.isOAuthTokenFallbackHashingEnabled = true
+features.OAuthTokenFallbackHashingAlgorithm = SHA1 | SHA256 | SHA384 | SHA512 | PLAIN
+</pre>
+
+  <p>If you're an Edge cloud customer, contact <a href=
+  "https://community.apigee.com/content/apigee-customer-support">Apigee Support</a> to set these
+  properties on your organization and optionally to bulk hash existing tokens.</p>
+
+  <aside class="note">
+    <b>Private Cloud:</b> For Edge for Private Cloud customers, use the following API call with
+    system administrator credentials.
+
+    <aside class="warning"><b>Warning:</b> When you update the organization with the API call, be
+    sure to include all the existing organization properties in the payload. If you don't, all
+    existing organization properties are overwritten by only the properties you set with this
+    call.</aside>
+    <pre class="prettyprint">
+curl -u email:password -X PUT -H "Content-Type: application/xml" https://host:port/v1/o/{myorg} \
+  -d '&lt;Organization type="trial" name="MyOrganization"&gt;
+    &lt;Properties&gt;
+        &lt;Property name="features.isOAuthTokenHashingEnabled"&gt;true&lt;/Property&gt;
+        &lt;Property name="features.OAuthTokenHashingAlgorithm"&gt;SHA256&lt;/Property&gt;
+        &lt;Property name="features.isOAuthTokenFallbackHashingEnabled"&gt;true&lt;/Property&gt;
+        &lt;Property name="features.OAuthTokenFallbackHashingAlgorithm"&gt;SHA1&lt;/Property&gt;
+        &lt;Property...(an existing property)
+        &lt;Property...(an existing property)
+        &lt;Property...(an existing property)
+    &lt;/Properties&gt;
+  &lt;/Organization&gt;'
+</pre>
+
+    <h3>Bulk hashing existing tokens</h3>
+
+    <p>Edge also provides a script you can run to hash existing tokens. For more information, see
+    the <em>Edge for Private Cloud Operations Guide</em> version 4.15.07.00 and later.</p>
+  </aside>
+
+  <h2 id="relatedtopics">Related topics</h2>
+
+  <ul>
+    <li><a href=
+    "/api-platform/security/oauth/oauth-20-client-credentials-grant-type.html">Implementing the
+    client credentials grant type</a></li>
+
+    <li><a href=
+    "/api-platform/security/oauth/oauth-v2-policy-authorization-code-grant-type.html">Implementing
+    the authorization code grant type</a></li>
+
+    <li><a href=
+    "https://academy.apigee.com/index.php/courses/elearning/foundation_training/Foundation_training/security/oauth-client-credentials"
+    target="_blank">OAuth V2 - Client Credentials</a> in the <a href=
+    "https://academy.apigee.com/courses/elearning/foundation_training" target="_blank">Apigee
+    Foundation training</a></li>
+
+    <li><a href="/api-platform/reference/policies/oauthv2-policy.html">OAuthV2 policy</a> -- Has
+    lots of examples showing how to make requests to the authorization server and how to configure
+    the OAuthV2 policy.</li>
+  </ul>{% endblock %}

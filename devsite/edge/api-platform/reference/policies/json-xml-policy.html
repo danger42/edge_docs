@@ -1,0 +1,431 @@
+  {% extends "_base.html" %} {% block title %}JSON to XML policy{% endblock %} {% block body %}
+  <img src="/api-platform/images/icon_policy_json-to-xml.jpg">
+
+  <h3>What</h3>
+
+  <p>This policy converts messages from the JavaScript Object Notation (JSON) format to extensible
+  markup language (XML), giving you several options for controlling how messages are converted.</p>
+
+  <p>The policy is particularly useful if you want to transform messages using XSL. After
+  converting a JSON payload to XML, use the XSL Transform policy with a custom style sheet to
+  perform the transformation you need.</p>
+
+  <aside class="note"><b>Note:</b> The HTTP Content-type header of the source message must be set
+  to <code>application/json</code>, otherwise the policy is not enforced, meaning it is
+  skipped during processing.</aside>
+
+  <p>Assuming that the intent is to convert a JSON-formatted request into an XML-formatted request,
+  the policy would be attached to a request Flow (for example, Request / ProxyEndpoint /
+  PostFlow).</p>
+
+  <h3 id="samples">Samples</h3>
+
+  <p>For a detailed discussion on converting between JSON and XML, see <a href=
+  "https://community.apigee.com/articles/1839/converting-between-xml-and-json-what-you-need-to-k.html">http://community.apigee.com/articles/1839/converting-between-xml-and-json-what-you-need-to-k.html</a>.</p><!-- Begin tab list -->
+  <!-- End tab list --><!-- Begin tabbed region -->
+
+  <div class="ds-selector-tabs">
+    <section>
+      <h3 class="two-line-tab">Converting a request</h3>
+      <pre class="prettyprint">
+&lt;JSONToXML name="jsontoxml"&gt;
+    &lt;Source&gt;request&lt;/Source&gt;
+    &lt;OutputVariable&gt;request&lt;/OutputVariable&gt;
+&lt;/JSONToXML&gt;
+</pre>
+
+      <p>This configuration takes JSON-formatted request message as the source, and then creates an
+      XML-formatted message that is populated in the <code>request</code> OutputVariable. Edge
+      automatically uses the content of this variable as the message for next processing step.</p>
+    </section>
+  </div><!-- End tabbed region. -->
+  <hr>
+
+  <h2 id="elements">Element reference</h2>
+
+  <p>Following are elements and attributes you can configure on this policy.</p>
+  <pre class="prettyprint">
+&lt;JSONToXML async="false" continueOnError="false" enabled="true" name="JSON-to-XML-1"&gt;
+    &lt;DisplayName&gt;JSON to XML 1&lt;/DisplayName&gt;
+    &lt;<a href="#source">Source</a>&gt;request&lt;/Source&gt;
+    &lt;<a href="#outputvariable">OutputVariable</a>&gt;request&lt;/OutputVariable&gt;
+    &lt;Options&gt;
+        &lt;<a href="#namespace">NamespaceBlockName</a>&gt;#namespaces&lt;/NamespaceBlockName&gt;
+        &lt;<a href=
+"#namespace">DefaultNamespaceNodeName</a>&gt;$default&lt;/DefaultNamespaceNodeName&gt;
+        &lt;<a href="#namespace">NamespaceSeparator</a>&gt;:&lt;/NamespaceSeparator&gt;
+        &lt;<a href="#attributes">AttributeBlockName</a>&gt;#attrs&lt;/AttributeBlockName&gt;
+        &lt;<a href="#attributes">AttributePrefix</a>&gt;@&lt;/AttributePrefix&gt;
+        &lt;<a href=
+"#optionsobjectrootelementname">ObjectRootElementName</a>&gt;Root&lt;/ObjectRootElementName&gt;
+        &lt;<a href="#array">ArrayRootElementName</a>&gt;Array&lt;/ArrayRootElementName&gt;
+        &lt;<a href="#array">ArrayItemElementName</a>&gt;Item&lt;/ArrayItemElementName&gt;
+        &lt;<a href="#textnodename">TextNodeName</a>&gt;#text&lt;/TextNodeName&gt;
+        &lt;<a href="#nullvalue">NullValue</a>&gt;I_AM_NULL&lt;/NullValue&gt;
+        &lt;<a href=
+"#invalidcharsreplacement">InvalidCharsReplacement</a>&gt;_&lt;/InvalidCharsReplacement&gt;
+    &lt;/Options&gt;
+&lt;/JSONToXML&gt;
+</pre>
+
+  <h2 id="jsontoxmlattributes">&lt;JSONToXML&gt; attributes</h2>{% dynamic include /includes/___policies-parent-element-attributes %}
+
+  <h2 id="source">&lt;Source&gt; element</h2>
+
+  <p>The variable, request or response, that contains the JSON message that you want to convert to
+  XML.</p>
+
+  <aside class="note"><b>Note:</b> The HTTP Content-type header of the source message must be set
+  to <code>application/json</code>, otherwise the policy is not enforced, meaning it is skipped
+  during processing.</aside>
+
+  <p>If <code>&lt;Source&gt;</code> is not defined, then it is treated as message (which resolves
+  to request when the policy is attached to a request flow, or response when the policy is attached
+  to a response flow).</p>
+
+  <p>If the source variable cannot be resolved, or resolves to a non-message type, the policy
+  throws an error.</p>
+  <pre class="prettyprint">
+&lt;Source&gt;request&lt;/Source&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default</b></td>
+
+        <td>request or response, determined by where the policy is added to the API proxy flow</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type</b></td>
+
+        <td>message</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="outputvariable">&lt;OutputVariable&gt; element</h2>
+
+  <p>Stores the output of the JSON to XML format conversion. This is usually the same value as the
+  source, that is, usually a JSON request is converted to an XML request.</p>
+
+  <p>The payload of the JSON message is parsed and converted into XML, and the HTTP Content-type
+  header of the XML-formatted message is set to <code>text/xml;charset=UTF-8</code>.</p>
+
+  <p>If <code>OutputVariable</code> is not specified, the <code>source</code> is treated as
+  <code>OutputVariable</code>. For example, if the <code>source</code> is <code>request</code>,
+  then <code>OutputVariable</code> defaults to <code>request</code>.</p>
+  <pre class="prettyprint">
+&lt;OutputVariable&gt;request&lt;/OutputVariable&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default</b></td>
+
+        <td>request or response, determined by where the policy is added to the API proxy flow</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type</b></td>
+
+        <td>message</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="namespace">&lt;Options&gt;/&lt;NamespaceBlockName&gt;<br>
+  &lt;Options&gt;/&lt;DefaultNamespaceNodeName&gt;<br>
+  &lt;Options&gt;/&lt;NamespaceSeparator&gt; elements</h2>
+
+  <p>JSON has no support for namespaces, while XML documents often require them. The
+  NamespaceBlockName enables you to define a JSON property that serves as the source of a namespace
+  definition in the XML that is produced by the policy. (This means that the source JSON must
+  provide a property that can be mapped into a namespace that is expected by application that
+  consumes the resulting XML.)</p>
+
+  <p>For example, the following settings:</p>
+  <pre class="prettyprint">
+&lt;NamespaceBlockName&gt;#namespaces&lt;/NamespaceBlockName&gt;
+&lt;DefaultNamespaceNodeName&gt;$default&lt;/DefaultNamespaceNodeName&gt;
+&lt;NamespaceSeparator&gt;:&lt;/NamespaceSeparator&gt;
+</pre>
+
+  <p>indicates that a property called <code>#namespaces</code> exists in the source JSON that
+  contains at least one namespace designated as the default. For example:</p>
+  <pre class="prettyprint">
+{
+   "population": {
+       "#namespaces": {
+           "$default": "http://www.w3.org/1999/people",
+           "exp": "http://www.w3.org/1999/explorers"
+       },
+       "person": "John Smith",
+       "exp:person": "Pedro Cabral"
+   }
+}
+</pre>
+
+  <p>converts to:</p>
+  <pre class="prettyprint">
+&lt;population xmlns="http://www.w3.org/1999/people" xmlns:exp="http://www.w3.org/1999/explorers"&gt;
+  &lt;person&gt;John Smith&lt;/person&gt;
+  &lt;exp:person&gt;Pedro Cabral&lt;/exp:person&gt;
+&lt;/population&gt;
+</pre>
+
+  <h2 id="optionsobjectrootelementname">&lt;Options&gt;/&lt;ObjectRootElementName&gt;</h2>
+
+  <p><span style="font-family:courier new,courier,monospace;">&lt;ObjectRootElementName&gt;</span>
+  specifies the root element name when you convert from JSON, which does not have a named root
+  element, to XML.</p>
+
+  <p>For example, if the JSON appears as:</p>
+  <pre class="prettyprint">
+{
+  "abc": "123",
+  "efg": "234"
+}
+</pre>
+
+  <p>And you set <span style=
+  "font-family:courier new,courier,monospace;">&lt;ObjectRootElementName&gt;</span> as:</p>
+  <pre class="prettyprint">
+&lt;ObjectRootElementName&gt;Root&lt;/ ObjectRootElementName&gt;
+</pre>
+
+  <p>The resultant XML appears as:</p>
+  <pre class="prettyprint">
+&lt;Root&gt;
+   &lt;abc&gt;123&lt;/abc&gt;
+   &lt;efg&gt;234&lt;/efg&gt;
+&lt;/Root&gt;
+</pre>
+
+  <h2 id="attributes">&lt;Options&gt;/&lt;AttributeBlockName&gt;<br>
+  &lt;Options&gt;/&lt;AttributePrefix&gt; elements</h2>
+
+  <p><code>&lt;AttributeBlockName&gt;</code> enables you to specify when JSON elements are
+  converted into XML attributes (rather than XML elements).</p>
+
+  <p>For example, the following setting converts properties inside an object named
+  <code>#attrs</code> into XML attributes:</p>
+  <pre class="prettyprint">
+&lt;AttributeBlockName&gt;#attrs&lt;/AttributeBlockName&gt;
+</pre>
+
+  <p>The following JSON object:</p>
+  <pre class="prettyprint">
+{
+    "person" : {
+        "#attrs" : {
+            "firstName" : "John",
+            "lastName" : "Smith"
+        },        
+        "occupation" : "explorer",
+    }
+}
+</pre>
+
+  <p>is converted to the following XML structure:</p>
+  <pre class="prettyprint">
+&lt;person firstName="John" lastName="Smith"&gt;
+  &lt;occupation&gt;explorer&lt;/occupation&gt;
+&lt;/person&gt;
+</pre>
+
+  <p><code>&lt;AttributePrefix&gt;</code> converts the property starting with the specified prefix
+  into XML attributes. Where the attribute prefix is set to <code>@</code>, for example:</p>
+  <pre class="prettyprint">
+&lt;AttributePrefix&gt;@&lt;/AttributePrefix&gt;
+</pre>
+
+  <p>Converts the following JSON object:</p>
+  <pre class="prettyprint">
+{
+"person" : {
+   "@firstName" : "John",
+   "@lastName" : "Smith"
+   "occupation" : "explorer",
+
+ }
+}
+</pre>
+
+  <p>to the following XML structure:</p>
+  <pre class="prettyprint">
+&lt;person firstName="John" lastName="Smith"&gt;
+  &lt;occupation&gt;explorer&lt;/occupation&gt;
+&lt;/person&gt;
+</pre>
+
+  <h2 id="array">&lt;Options&gt;/&lt;ArrayRootElementName&gt;<br>
+  &lt;Options&gt;/&lt;ArrayItemElementName&gt; element</h2>
+
+  <p>Converts a JSON array into a list of XML elements with specified parent and child element
+  names.</p>
+
+  <p>For example, the following settings:</p>
+  <pre class="prettyprint">
+&lt;ArrayRootElementName&gt;Array&lt;/ArrayRootElementName&gt;
+&lt;ArrayItemElementName&gt;Item&lt;/ArrayItemElementName&gt;
+</pre>
+
+  <p>converts the following JSON array:</p>
+  <pre class="prettyprint">
+[
+"John Cabot",
+{
+ "explorer": "Pedro Cabral"
+},
+"John Smith"
+]
+</pre>
+
+  <p>into the following XML structure:</p>
+  <pre class="prettyprint">
+&lt;Array&gt;
+  &lt;Item&gt;John Cabot&lt;/Item&gt;
+  &lt;Item&gt;
+    &lt;explorer&gt;Pedro Cabral&lt;/explorer&gt;
+  &lt;/Item&gt;
+  &lt;Item&gt;John Smith&lt;/Item&gt;
+&lt;/Array&gt;
+</pre>
+
+  <h2 id="textnodename">&lt;Options&gt;/&lt;TextNodeName&gt; element</h2>
+
+  <p>Converts a JSON property into an XML text node with the specified name. For example, the
+  following setting:</p>
+  <pre class="prettyprint">
+&lt;TextNodeName&gt;age&lt;/TextNodeName&gt;
+</pre>
+
+  <p>converts this JSON:</p>
+  <pre class="prettyprint">
+{
+    "person": {
+        "firstName": "John",
+        "lastName": "Smith",
+        "age": 25
+    }
+}
+</pre>
+
+  <p>to this XML structure:</p>
+  <pre class="prettyprint">
+&lt;person&gt;
+  &lt;firstName&gt;John&lt;/firstName&gt;25&lt;lastName&gt;Smith&lt;/lastName&gt;
+&lt;/person&gt;
+</pre>
+
+  <p>If <code>TextNodeName</code> is not specified, the XML is generated, using the default setting
+  for a text node:</p>
+  <pre class="prettyprint">
+&lt;person&gt;
+  &lt;firstName&gt;John&lt;/firstName&gt;
+  &lt;age&gt;25&lt;/age&gt;
+  &lt;lastName&gt;Smith&lt;/lastName&gt;
+&lt;/person&gt;
+</pre>
+
+  <h2 id="nullvalue">&lt;Options&gt;/&lt;NullValue&gt; element</h2>
+
+  <p>Indicates a null value. By default the value is <code>NULL</code>.</p>
+
+  <p>For example the following setting:</p>
+  <pre class="prettyprint">
+&lt;NullValue&gt;I_AM_NULL&lt;/NullValue&gt;
+</pre>Converts the following JSON object:
+  <pre class="prettyprint">
+{"person" : "<span style=
+"font-family: Arial, Verdana, sans-serif; font-size: 12px;">I_AM_NULL</span><span style=
+"font-family: Arial, Verdana, sans-serif; font-size: 12px;">"}</span>
+</pre>
+
+  <p>to the following XML element:</p>
+  <pre class="prettyprint">
+&lt;person&gt;&lt;/person&gt;
+</pre>
+
+  <p>Where no value (or a value other than <code>I_AM_NULL</code>) is specified for the Null value,
+  then the same payload converts to:</p>
+  <pre class="prettyprint">
+&lt;person&gt;I_AM_NULL&lt;/person&gt;
+</pre>
+
+  <h2 id="invalidcharsreplacement">&lt;Options&gt;/&lt;InvalidCharsReplacement&gt; element</h2>
+
+  <p>To assist with handling invalid XML that may cause issues with a parser, this setting replaces
+  any JSON elements that produce invalid XML with the string. For example, the following
+  setting:</p>
+  <pre class="prettyprint">
+&lt;InvalidCharsReplacement&gt;_&lt;/InvalidCharsReplacement&gt;
+</pre>
+
+  <p>Converts this JSON object</p>
+  <pre class="prettyprint">
+{
+    "First%%%Name": "John"
+}
+</pre>
+
+  <p>to this XML structure:</p>
+  <pre class="prettyprint">
+&lt;First_Name&gt;John&lt;First_Name&gt;
+</pre>
+  <hr>
+
+  <h2 id="usage">Usage notes</h2>
+
+  <p>In a typical mediation scenario, a JSON to XML policy on the inbound request flow is often
+  paired with an XMLtoJSON policy on the outbound response flow. By combining policies this way, a
+  JSON API can be exposed for services that natively support only XML.</p>
+
+  <p>It is often useful to apply the default (empty) JSON to XML policy and iteratively add
+  configuration elements as required.</p>
+
+  <p>For scenarios where APIs are consumed by diverse clients apps which may require either JSON
+  and XML, the format of the response can be dynamically set by configuring JSON to XML and XML to
+  JSON policies to execute conditionally. See <a href=
+  "/api-platform/fundamentals/flow-variables-and-conditions.html">Flow variables and conditions</a>
+  for an implementation of this scenario.</p>
+
+  <h2 id="schemas">Schemas</h2>
+
+  <aside class="note"><b>Sample:</b> See our <a href=
+  "https://github.com/apigee/api-platform-samples/tree/master/schemas/policy">GitHub
+  repository</a> samples for the most recent schemas.</aside>
+
+  <h2 id="errors">Error reference</h2>
+
+  <p>{% dynamic include /includes/___xml-json-policy-error-codes %}</p>
+
+  <h2 id="relatedtopics">Related topics</h2>
+
+  <aside class="note"><b>Sample:</b> For working samples of API proxies, see the <a href=
+  "/api-platform/samples/samples-reference.html">Samples list</a>.</aside>
+
+  <ul>
+    <li>XML to JSON: <a href="/api-platform/reference/policies/xml-json-policy.html">XML to JSON
+    policy</a></li>
+
+    <li>XSL transformation: <a href=
+    "/api-platform/reference/policies/xsl-transform-policy.html">XSL Transform policy</a></li>
+  </ul>
+
+  {% endblock %}

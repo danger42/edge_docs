@@ -1,0 +1,230 @@
+  {% extends "_base.html" %} {% block title %}Convert the response to uppercase with a Java
+  callout{% endblock %} {% block body %}
+
+  <p>If you're trying out Java callout for the first time, we recommend you begin with <a href=
+  "/api-platform/samples/cookbook/how-create-java-callout.html">How to create a Java
+  callout</a>.</p>
+
+  <p>This cookbook sample demonstrates how to create a simple <a href=
+  "/api-platform/reference/policies/java-callout-policy.html">JavaCallout policy</a> that executes
+  custom Java code within the context of a proxy flow.</p>
+
+  <p>{% dynamic include /includes/___edge-price-plan-note %}</p>
+
+  <aside class="note"><b>Note:</b> For the supported versions of Java, see <a href=
+  "/release/supported-software.html">Supported software and supported versions</a>.</aside>
+
+  <h2 id="whatdoesthesamplecodedo">What does the sample code do?</h2>
+
+  <p>The API proxy in this sample calls a target service that returns a simple JSON response. The
+  Java Callout policy is placed on the target response flow. The Java code converts the headers and
+  content of the response to uppercase letters. It's a simple example; however, it illustrates how
+  to get custom Java code working in the context of an API proxy on Edge.</p>
+
+  <h2 id="trythesample">Try the sample</h2>
+
+  <h3 id="trythesample-downloadtheproject">Download the project</h3>
+
+  <p>To make things simple, you can download this project from the Apigee <a href=
+  "https://github.com/apigee/api-platform-samples">api-platform-samples</a> repository on
+  GitHub.</p>
+
+  <ol>
+    <li>Download or clone <a href=
+    "https://github.com/apigee/api-platform-samples">api-platform-samples</a> to your system.</li>
+
+    <li>In a terminal or code editor of your choice, go to the
+    <code>api-platform-samples/doc-samples/java-cookbook</code> project.</li>
+  </ol>
+
+  <h3 id="trythesample-compileyourcodewithmaven">Compile your code with Maven</h3>
+
+  <p>The project is set up so that you can compile with Maven. If you want to use
+  <code>javac</code>, we'll include an example as well following the Maven example.</p>
+
+  <ol>
+    <li>Be sure that you have Maven installed:
+      <pre class="prettyprint">
+mvn -version
+</pre>
+    </li>
+
+    <li>Execute the script <code>java-cookbook/buildsetup.sh</code>. This script installs the
+    required JAR dependencies in your local Maven repo.</li>
+
+    <li>cd to the <code>java-cookbool/callout</code> directory.</li>
+
+    <li>Execute Maven:
+      <pre class="prettyprint">
+mvn clean package
+</pre>
+
+      <aside class="note"><b>Note:</b> If you get a Maven error, be sure that you are in the
+      <code>java-cookbook/callout</code> directory.</aside>
+    </li>
+
+    <li>If you wish, verify that the JAR file <code>edge-custom-policy-java-cookbook.jar</code> was
+    copied to <code>java-cookbook/apiproxy/resources/java</code>. This is the required location for
+    JAR files that you wish to deploy with a proxy.</li>
+  </ol>
+
+  <h3 id="trythesample-compilewithjavac">Compile with javac</h3>
+
+  <p>If you want to use <code>javac</code> to compile the code, you can do something similar to the
+  following (from the <code>java-cookbook</code> directory). The required JAR files are provided
+  for you in the <code>java-cookbook/lib</code> directory.</p>
+
+  <ol>
+    <li>cd to <code>api-platform-samples/doc-samples/java-cookbook</code>.</li>
+
+    <li>Be sure you have javac in your path.<br>
+      <br>
+      <pre class="prettyprint">
+javac -version
+</pre>
+    </li>
+
+    <li>Execute the following javac command:<br>
+      <br>
+      <pre class="prettyprint">
+javac -d . -classpath ./lib/expressions-1.0.0.jar:./lib/message-flow-1.0.0.jar:. callout/src/main/java/ResponseUppercase.java
+</pre>
+    </li>
+
+    <li>Copy the JAR file to the apiproxy/resources/java directory. This is the required location
+    for JAR files that you wish to deploy with a proxy.<br>
+      <br>
+      <pre class="prettyprint">
+cp com/apigeesample/ResponseUppercase.class apiproxy/resources/java
+</pre>
+    </li>
+  </ol>
+
+  <h3 id="trythesample-deployandcalltheproxy">Deploy and call the proxy</h3>
+
+  <p>A deploy script is provided in the <code>./java-cookbook</code> directory. But before you run
+  it, you need to do a quick setup.</p>
+
+  <ol>
+    <li>cd to <code>api-platform-samples/doc-samples/java-cookbook</code></li>
+
+    <li>If you haven't already done so, open the file <code>../../setup/setenv.sh</code> and edit
+    it as indicated with your Apigee account information: your username (the email address
+    associated with your account), your organization name, and the domain you use to make API
+    management calls. For example, for Edge cloud, the domain is
+    <code>https://api.enterprise.apigee.com</code>; however, your domain may be different if you're
+    using Edge Private Cloud.</li>
+
+    <li>Save the <code>setenv.sh</code> file.</li>
+
+    <li>Execute the deploy script:
+      <pre class="prettyprint">
+./deploy.sh
+</pre>
+    </li>
+
+    <li>If the deploy succeeds, execute the invoke script:
+      <pre class="prettyprint">
+./invoke.sh
+</pre>
+
+      <p>The invoke script calls a cURL command that looks like this:</p>
+      <pre class="prettyprint">
+curl  http://$org-$env.$api_domain/java-cookbook/json
+</pre>
+    </li>
+  </ol>
+
+  <p>The response looks something like this:</p>
+  <pre class="prettyprint">
+&lt; HTTP/1.1 200 OK
+&lt; Date: Tue, 09 May 2017 20:31:08 GMT
+&lt; Content-Type: APPLICATION/JSON; CHARSET=UTF-8
+&lt; Content-Length: 68
+&lt; Connection: keep-alive
+&lt; Access-Control-Allow-Origin: *
+&lt; ETag: W/"44-RA5ERT/MMLIK54NVBWBSZG"
+&lt; X-Powered-By: APIGEE
+&lt; Server: Apigee Router
+&lt;
+* Curl_http_done: called premature == 0
+* Connection #0 to host willwitman-test.apigee.net left intact
+{"FIRSTNAME":"JOHN","LASTNAME":"DOE","CITY":"SAN JOSE","STATE":"CA"}
+</pre>
+
+  <h2 id="proxyflow">Proxy flow</h2>
+
+  <p>This is a shot of the trace tool showing the flow of the proxy:</p>
+
+  <p><img alt="" src="/api-platform/images/java-trace.png"></p>
+
+  <h2 id="proxystructure">Proxy structure</h2>
+
+  <p>This is the structure of the proxy. Note that it includes a JAR file in the
+  <code>apiproxy/resources/java</code> directory. The JAR is required. We provide it for the
+  sample, but if you are doing custom work, you need to build it yourself and copy it into this
+  location. For guidance on compiling and deploying a Java callout, see <a href=
+  "/api-platform/samples/cookbook/how-create-java-callout.html">How to create a Java
+  callout</a>.</p>
+  <pre class="prettyprint">
+java-cookbook
+
+    apiproxy
+        java-cookbook.xml
+    policies
+        responseUppercase.xml
+    proxies
+        default.xml
+    resources
+        java
+            ResponseUppercase.jar
+    targets
+        default.xml
+</pre>
+
+  <h2 id="aboutthejavacode">About the Java code</h2>
+
+  <p>The Java Callout policy runs the following Java code, which converts response headers and the
+  response body to uppercase. Note that the program uses Apigee-specific packages. These packages
+  provide objects and methods that you can use to interact directly with the proxy flow. Methods
+  exist that let you get and set flow variables, headers, message content, and more.</p>
+  <pre class="prettyprint">
+package com.apigeesample;
+
+import com.apigee.flow.execution.ExecutionContext;
+import com.apigee.flow.execution.ExecutionResult;
+import com.apigee.flow.execution.spi.Execution;
+import com.apigee.flow.message.MessageContext;
+
+import java.util.Set; 
+
+public class ResponseUppercase implements Execution{
+    public ExecutionResult execute(MessageContext messageContext, ExecutionContext executionContext) {
+        try {
+            Set headers = messageContext.getMessage().getHeaderNames();
+            for (String header : headers) {
+                String h = messageContext.getMessage().getHeader(header).toUpperCase();
+                messageContext.getMessage().setHeader(header, h);
+            }
+            String content = messageContext.getMessage().getContent();
+            messageContext.getMessage().setContent(content.toUpperCase());
+            return ExecutionResult.SUCCESS;
+        } catch (Exception e) {
+                return ExecutionResult.ABORT;
+        }
+    }
+}
+</pre>
+
+  <h2 id="examinethesampleproxy">Examine the sample proxy</h2>
+
+  <p>We leave it to you to open the proxy and examine the files. Here is the Java Callout policy.
+  Note how it references the class that the callout executes and the JAR file. All Java Callout
+  policies follow this pattern. See also <a href=
+  "/api-platform/reference/policies/java-callout-policy.html">Java Callout policy</a>.</p>
+  <pre class="prettyprint">
+&lt;JavaCallout name="responseUppercase"&gt;         
+    &lt;ClassName&gt;com.apigeesample.ResponseUppercase&lt;/ClassName&gt;         
+    &lt;ResourceURL&gt;java://ResponseUppercase.jar&lt;/ResourceURL&gt; 
+&lt;/JavaCallout&gt;
+</pre>{% endblock %}

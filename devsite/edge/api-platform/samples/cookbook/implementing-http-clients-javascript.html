@@ -1,0 +1,365 @@
+  {% extends "_base.html" %} {% block title %}Implementing HTTP clients in JavaScript{% endblock %}
+  {% block body %}
+
+  <p>In this cookbook example, you will learn how to create a <strong>mashup</strong> by attaching
+  a JavaScript HTTP client to a proxy. This useful pattern lets you combine results from multiple
+  backend targets using JavaScript to process requests and responses.</p>
+
+  <p>For a general overview of the HTTP client pattern, see "The JavaScript HTTP client pattern" in
+  <a href="/api-platform/samples/cookbook/api-proxy-cookbook-patterns.html">API Proxy Cookbook
+  patterns</a>. </p>
+
+  <h2 id="downloadandtryoutthesamplecode">Download and try out the sample code</h2>
+
+  <aside class="note"><b>Sample:</b> We recommend that you download and try out this topic's sample
+  code. The sample is called <strong>javascript-mashup-cookbook</strong>, which you can
+  find in the <a href="https://github.com/apigee/api-platform-samples/tree/master/doc-samples"
+  target="_blank">doc-samples folder</a> in the Apigee Edge API Services samples
+  repository in GitHub. For information on downloading Apigee samples, see <a href=
+  "/api-platform/samples/using-samples.html">Using the sample API proxies</a>. Instructions
+  for deploying and calling this cookbook sample API are provided in the README file that comes
+  with the sample. You can also find brief deployment instructions here: <a href=
+  "/api-platform/samples/using-samples.html">Using the sample API proxies</a>.</aside>
+
+  <h2 id="aboutthiscookbookexample">About this cookbook example</h2>
+
+  <p>This cookbook example illustrates an API proxy pattern that uses a JavaScript HTTP client
+  object to call multiple backend services directly. As you will see, the JavaScript HTTP client
+  code is attached as a policy to the ProxyEndpoint. In this case, the pattern does not require a
+  TargetEndpoint; the HTTP client handles all communication with the backend targets. For a general
+  overview of this pattern and other related ones, see <a href=
+  "/api-platform/samples/cookbook/api-proxy-cookbook-patterns.html">API Proxy Cookbook
+  patterns</a>.</p>
+
+  <aside class="note"><b>Note:</b> When using this mashup API, app developers may be unaware of
+  where the backend data comes from. All an app developer knows about is how to call your proxy.
+  The details of how the data is retrieved and mashed up are not necessarily exposed.</aside>
+
+  <p>The example discussed here uses a custom HTTP client written in JavaScript to mash up data
+  from these two separate public APIs:</p>
+
+  <ul>
+    <li><a href="https://developers.google.com/maps/documentation/geocoding/">The Google Geocoding
+    API</a>: This API converts addresses (like "1600 Amphitheatre Parkway, Mountain View, CA")
+    into geographic coordinates (like latitude 37.423021 and longitude -122.083739).<br>
+     </li>
+
+    <li><a href="https://developers.google.com/maps/documentation/elevation/">The Google Elevation
+    API</a>: This API provides a simple interface to query locations on the earth for
+    elevation data. In this example, the coordinates returned from the Geocoding API will be used
+    as input into this API. This is a typical pattern where APIs are chained together using
+    proxies.</li>
+  </ul>
+
+  <p><img src="/api-platform/images/jsCookbook1.png" width="480"></p>
+
+  <p>The API surfaced through this proxy to app developers takes two query parameters: a postal
+  code and a country ID. An app developer calls this proxy API like this:</p>
+
+  <div id="well">
+    <pre class="prettyprint">
+$ curl "http://{myorg}-test.apigee.net/javascript-mashup-cookbook?country=us&amp;postalcode=80503"
+</pre>
+
+    <p>The response is a JSON object that includes the geocoded location (latitude/longitude) for
+    the center of the supplied postal code area combined with the elevation at that geocoded
+    location. </p>
+  </div>
+
+  <div id="well">
+    <pre class="prettyprint">
+{
+  "country": "us",
+  "postalcode": 80503,
+  "location": {
+    "latitude": 40.1724007,
+    "longitude": -105.1960795
+  },
+  "altitude": {
+    "meters": 1570.249755859375,
+    "feet": 5151.7380519886965
+  }
+}
+</pre>
+
+    <h2 id="beforeyoubegin">Before you begin</h2>
+
+    <p>If you'd like to read a brief overview of the HTTP client pattern illustrated in this
+    cookbook topic, see "The JavaScript HTTP client pattern" in <a href=
+    "/api-platform/samples/cookbook/api-proxy-cookbook-patterns.html">API Proxy Cookbook
+    patterns</a>.</p>
+
+    <p>Before you explore this cookbook example, you should also be familiar with these fundamental
+    concepts:</p>
+
+    <ul>
+      <li>What policies are and how to attach them to proxies. In this example, we build a single
+      policy that wraps a JavaScript application. For a good introduction to policies, see <a href=
+      "/api-platform/develop/policy-attachment-and-enforcement.html">What's a
+      policy?</a>. </li>
+
+      <li>The structure of an API proxy flow, as explained in <a href=
+      "/api-platform/fundamentals/flow-configurations.html">Configuring flows</a>. Flows let you
+      specify the sequence in which policies are executed by an API proxy. In this example, a
+      JavaScript policy is attached to the flow's ProxyEndpoint. </li>
+
+      <li>How an API proxy project is organized on your filesystem, as explained in <a href=
+      "/api-platform/reference/policies/api-proxy-configuration-reference.html">API proxy
+      configuration reference</a>. This cookbook topic demonstrates local development (file
+      system-based) as opposed to cloud-based development where you could use the management UI to
+      develop the API proxy.</li>
+
+      <li>As you will see, this example uses two out-of-the-box API platform components: variables
+      and the Apigee JavaScript Object Model. If you'd like to review details about these
+      components now, see <a href="/api-platform/reference/variables-reference.html">Variables
+      reference</a> and <a href=
+      "/api-platform/reference/javascript-object-model.html">JavaScript object model</a>.</li>
+
+      <li>A working knowledge of JavaScript and XML.</li>
+    </ul>
+
+    <p>If you have downloaded the sample code, you can locate all of the files discussed in this
+    topic in the <strong>mashup-policy-cookbook</strong> sample folder. The following sections
+    discuss the sample code in detail. </p>
+
+    <h2 id="goingwiththeflow">Going with the flow</h2>
+
+    <p>Before moving to the JavaScript code, let's take a look a the main flow of our example API
+    proxy. The flow XML, shown below, tells us a lot about this API proxy, and how the JavaScript
+    application is integrated into the flow. </p>
+
+    <aside class="note"><b>Note:</b> The important thing to notice about this API proxy is that the
+    TargetEndpoint definition is not invoked by the RouteRule. In this case, the JavaScript
+    application itself handles all of the mashup activities and populates the response object. No
+    further processing in the API proxy "pipeline" is required. </aside>
+
+    <p>If you downloaded the sample from GitHub, you can find this API proxy definition in the file
+    <code>doc-samples/javascript-mashup-cookbook/apiproxy/proxies/default.xml</code>.</p>
+    <pre class="prettyprint">
+&lt;ProxyEndpoint name="default"&gt;
+  &lt;Flows&gt;
+    &lt;Flow name="default"&gt;
+      &lt;Request/&gt;
+      &lt;Response&gt;
+        &lt;!-- Call the JavaScript that invokes both APIs and returns a response --&gt;
+        &lt;Step&gt;&lt;Name&gt;MashItUp&lt;/Name&gt;&lt;/Step&gt;
+      &lt;/Response&gt;
+    &lt;/Flow&gt;
+  &lt;/Flows&gt;
+
+  &lt;HTTPProxyConnection&gt;
+    &lt;!-- Add a base path to the proxy to distinguish from others in the environment --&gt;
+    &lt;BasePath&gt;/javascript-mashup-cookbook&lt;/BasePath&gt;
+    &lt;VirtualHost&gt;default&lt;/VirtualHost&gt;
+  &lt;/HTTPProxyConnection&gt;
+  &lt;RouteRule name="default"&gt;
+    &lt;!-- No route. The proxy will return the request and not call a backend service. --&gt;
+  &lt;/RouteRule&gt;
+&lt;/ProxyEndpoint&gt;
+</pre>
+
+    <p>Here's a summary of the flow's elements:</p>
+
+    <aside class="note"><b>Note:</b> This is a ProxyEndpoint flow. The ProxyEndpoint
+    configuration defines the inbound (app-facing) interface for an API proxy. When you configure a
+    ProxyEndpoint, you define how apps invoke the proxied API.</aside>
+
+    <ul>
+      <li><strong>&lt;Request&gt;</strong> - This API proxy does not use the &lt;Request&gt;
+      element of the flow. In this pattern, the request is handled within the JavaScript
+      application itself.</li>
+
+      <li><strong>&lt;Response&gt;</strong> - The response part of the pipeline simply calls the
+      JavaScript application, which handles the request from the client and all of the backend API
+      calls. </li>
+
+      <li><strong>&lt;HttpProxyConnection&gt;</strong> - Specifies details about how apps will
+      connect to this API proxy, including the &lt;BasePath&gt;, which specifies how this API will
+      be called. </li>
+
+      <li><strong>&lt;RouteRule&gt;</strong> - The interesting thing about the
+      &lt;RouteRule&gt; is that we don't specify one! That is, we don't specify a TargetEndpoint to
+      invoke with &lt;RouteRule&gt;. With this pattern, there is no need to call the
+      TargetEndpoint. The JavaScript application creates a response object that is returned to the
+      client app. </li>
+    </ul>
+  </div>
+
+  <div id="well">
+    <h2 id="codingthejavascriptapplication">Coding the JavaScript application</h2>
+
+    <p>Here's the complete listing of our example JavaScript application. For the most part, it is
+    straightforward JavaScript, with some Apigee-specific objects and variables mixed in. For
+    convenience, these objects and variables are shown in bold type in the code. We'll discuss the
+    Apigee-specific parts and how the are made available to the application immediately following
+    the code. </p>
+    <pre class="prettyprint">
+// Initialize the response 
+<strong>response.content</strong> = '';
+<strong>response.headers</strong>['Content-Type'] = 'application/json';
+
+try {
+   if ((<strong>request.queryParams</strong>.postalcode == undefined) ||
+       (<strong>request.queryParams</strong>.country == undefined)) {
+     throw '"postalcode" and "country" query parameters are required';
+   }
+
+   // Send an HTTP GET to the URL that we construct
+   <strong>var geocoding = httpClient.get(
+        'http://maps.googleapis.com/maps/api/geocode/json?address=' +
+        request.queryParams.postalcode +
+        '&amp;region=' + request.queryParams.country +
+        '&amp;sensor=false');</strong>
+
+    geocoding.<strong>waitForComplete()</strong>;
+
+    if (!geocoding.isSuccess()) {
+        throw 'Error contacting geocoding web service';
+    }
+
+    // We got a response. Parse the JSON into a JavaScript object.
+    geocodeResponse = geocoding.getResponse().content.asJSON;
+
+    if (geocodeResponse.status != 'OK') {
+        throw 'Error returned from geocoding web service: ' + geocodeResponse.status;
+    }
+
+    // Go through the JavaScript returned by Google and get the results
+    var lat = geocodeResponse.results[0].geometry.location.lat;
+    var lng = geocodeResponse.results[0].geometry.location.lng;
+
+    // Send another HTTP GET to the other service
+    <strong>var altitude = httpClient.get(
+        'http://maps.googleapis.com/maps/api/elevation/json?sensor=false&amp;locations=' +
+            lat + ',' + lng);</strong>
+
+    altitude.<strong>waitForComplete()</strong>;
+
+    if (!altitude.isSuccess()) {
+        throw 'Error contacting altitude web service';
+    }
+
+    altitudeResponse = altitude.getResponse().content.asJSON;
+
+    if (altitudeResponse.status != 'OK') {
+        throw 'Error returned from altitude web service: ' + altitudeResponse.status;
+    }
+
+    var alt = altitudeResponse.results[0].elevation;    
+
+    // Final assembly of the JSON object
+
+    var body = <strong>response.content.asJSON</strong>;
+    body.country = <strong>request.queryParams</strong>.country;
+    body.postalcode = <strong>request.queryParams</strong>.postalcode;
+    body.location = { latitude: lat, longitude: lng}; 
+    body.altitude = { meters : alt, feet : alt * 3.2808399};
+
+} catch (err) {
+
+    // Handle any error that may have happened previously by generating a response
+    <strong>response.content.asJSON.error</strong> = err;
+}
+</pre>
+
+    <div>
+      As mentioned previously, this code includes Apigee-specific variables and objects. The
+      variables are included through the API proxy runtime environment. They include
+      <strong>request</strong>, <strong>response</strong>, <strong>request.queryParams</strong>,
+      <strong>response.content</strong>, and <strong>response.headers</strong>. These variables are
+      populated whenever an app submits a request to the API proxy. For more information about
+      variables and how they participate in the API proxy environment, see <a href=
+      "/api-platform/reference/variables-reference.html">Variables reference</a>.
+    </div>
+
+    <div>
+       
+    </div>
+
+    <p>The other Apigee-specific object is <strong>httpClient</strong> (Apigee's JavaScript
+    HTTP Client). This object is part of the Apigee JavaScript Object Model. This object model
+    defines request, response, and context objects with associated properties. It's purpose in this
+    example is to make requests to backend services (the Google APIs) and return responses from
+    those services. As with variables, the HTTP client is made available out-of-the-box to
+    JavaScript applications that are deployed in an API proxy. For more detailed information
+    on httpClient, see <a href="/api-platform/reference/javascript-object-model.html">JavaScript
+    object model</a>.</p>
+
+    <aside class="note"><b>Sample:</b> The <a href=
+    "https://github.com/apigee/api-platform-samples/tree/master/sample-proxies/iterate-headers">Iterate
+    through response headers in JavaScript</a> sample API proxy on GitHub demonstrates how to
+    iterate through the response headers returned by an <code>httpClient.get()</code> call. See
+    also <a href=
+    "https://community.apigee.com/questions/40579/how-to-access-httpclient-response-headers-in-javas.html">
+    this related post</a> on the Apigee community. </aside>
+
+    <h2 id="creatingthejavascriptpolicy">Creating the JavaScript policy</h2>
+
+    <p>To work within the context of an API proxy, we need to wrap the JavaScript application in a
+    policy. The proxy references this policy at the point of attachment and immediately executes
+    the JavaScript. (If you wish, refer back to the section "Going with the flow" to see where this
+    policy is attached to the flow.)</p>
+
+    <p>If you downloaded the sample from GitHub, you can find this policy in the file
+    <code>doc-samples/javascript-mashup-cookbook/apiproxy/policies/MashItUp.xml</code>.</p>
+    <pre class="prettyprint">
+&lt;JavaScript name="MashItUp" timeout="10000"&gt;
+    &lt;ResourceURL&gt;jsc://MashItUp.js&lt;/ResourceURL&gt;
+&lt;/JavaScript&gt;
+</pre>
+
+    <p>Just a policy name and a reference to the JavaScript source file. Pretty simple.  </p>
+
+    <h2 id="testingtheexample">Testing the example</h2>
+
+    <p>If you have not already done so, try to download, deploy, and run the
+    <strong>javascript-mashup-cookbook</strong> sample, which you can find in the <a href=
+    "https://github.com/apigee/api-platform-samples/tree/master/doc-samples" target=
+    "_blank">doc-samples folder</a> in the Apigee Edge samples repository on GitHub. Just
+    follow the instructions in the README file in
+    the <strong>javascript-mashup-cookbook</strong> folder. Or, follow the brief
+    instructions here: <a href="/api-platform/samples/using-samples.html">Using the sample API
+    proxies</a>.</p>
+
+    <p>To summarize, you can call the API as follows. Substitute your {myorg} with your
+    organization name:</p>
+
+    <div id="well">
+      <pre class="prettyprint">
+$ curl "http://{myorg}-test.apigee.net/javascript-mashup-cookbook?country=us&amp;postalcode=80503"
+</pre>
+
+      <p>The response is a JSON object that includes the geocoded location (latitude/longitude) for
+      the center of the supplied postal code area combined with the elevation at that geocoded
+      location. It also includes a conversion of the elevation from meters to feet. The data
+      was retrieved from two backend APIs, mashed up inside the JavaScript application, massaged a
+      bit, and returned to the client in a single response. </p>
+    </div>
+
+    <div id="well">
+      <pre class="prettyprint">
+{
+  "country": "us",
+  "postalcode": 80503,
+  "location": {
+    "latitude": 40.1724007,
+    "longitude": -105.1960795
+  },
+  "altitude": {
+    "meters": 1570.249755859375,
+    "feet": 5151.7380519886965
+  }
+}
+</pre>
+
+      <h2 id="summary">Summary</h2>
+
+      <p>This cookbook topic explained how to attach an HTTP client written in JavaScript to an
+      Apigee API proxy. One use for a pattern like this is to create a mashup of data pulled from
+      multiple backend services. At the same time, because the JavaScript is attached to the API
+      proxy as a policy, it can participate in Apigee Edge features like traffic management,
+      security, mediation, and analytics.</p>
+    </div>
+
+    
+  </div>{% endblock %}

@@ -1,0 +1,775 @@
+  {% extends "_base.html" %} {% block title %}Message Logging policy{% endblock %} {% block body %}
+  <img src="/api-platform/images/icon_policy_message-logging.jpg">
+
+  <h3>What</h3>
+
+  <p>One of the best ways to track down problems in the API runtime environment is to log messages.
+  You can attach and configure a Message Logging policy on your API to log custom messages to a
+  local disk (Edge for Private Cloud only) or to syslog.</p>
+
+  <aside class="note"><b>Private Cloud:</b> File logging is supported only in Apigee Edge for
+  Private Cloud deployments. It's not available in Edge cloud. However, Syslog is available in both
+  Edge Cloud and Edge for Private Cloud.</aside>
+
+  <h3>Watch a quick how-to video </h3>
+
+  <div class="video">
+    <p><strong>Video:</strong> Check out this short video on using the Message Logging policy
+    from the Four Minute Video For Developers (4MV4D) series.</p>
+
+    <div style="text-align: left; margin:15px">
+      <iframe allowfullscreen="" frameborder="0" height="480" src=
+      "https://www.youtube.com/embed/R2HO3XsC9ZU?list=PLIXjuPlujxxxe3iTmLtgfIBgpMo7iD7fk" width=
+      "854"></iframe>
+
+      <p><a href=
+      "https://www.youtube.com/embed/R2HO3XsC9ZU?list=PLIXjuPlujxxxe3iTmLtgfIBgpMo7iD7fk">4MV4D
+      PostClientFlow</a>.</p>
+    </div>
+  </div>
+
+  <h3 id="samples">Samples</h3><!-- Begin tab list -->
+  <!-- End tab list --><!-- Begin tabbed region -->
+
+  <div class="ds-selector-tabs">
+    <section>
+      <h3 class="two-line-tab">Syslog</h3>
+      <pre class="prettyprint">
+&lt;MessageLogging name="LogToSyslog"&gt;
+  &lt;Syslog&gt;
+    &lt;Message&gt;[3f509b58 tag="{organization.name}.{apiproxy.name}.{environment.name}"] Weather request for WOEID {request.queryparam.w}.&lt;/Message&gt;
+    &lt;Host&gt;logs-01.loggly.com&lt;/Host&gt;
+    &lt;Port&gt;514&lt;/Port&gt;
+    &lt;Protocol&gt;TCP&lt;/Protocol&gt;
+    &lt;FormatMessage&gt;true&lt;/FormatMessage&gt;
+  &lt;/Syslog&gt;
+  &lt;logLevel&gt;ALERT&lt;/logLevel&gt;
+&lt;/MessageLogging&gt;
+</pre>
+
+      <p>A common usage of the MessageLogging policy type is to log to a syslog account. When
+      configured for syslog, an API proxy will forward log messages from Apigee Edge to a remote
+      syslog server. You must already have a syslog server available. If not, public log management
+      services, such a Splunk, Sumo Logic, and Loggly, are available. see <a href=
+      "#thirdparty">Configuring third-party log management services</a>.</p>
+
+      <p>For example, imagine that you need to log information about each request message that your
+      API receives from consumer apps. The value <code>3f509b58</code> represents a key value
+      specific to the loggly service. If you have a loggly account, substitute your loggly key. The
+      log message that is generated will be populated with four values: the organization, API
+      proxy, and environment name associated with the transaction, along with the value for a query
+      parameter on the request message.</p>
+
+      <aside class="note"><b>Note:</b> <code>Host</code> and <code>Port</code> elements cannot
+      refer to variables. They must contain static values.</aside>
+
+      <p>If you have an Edge for Private Cloud deployment, you can also write log messages to a
+      file.</p>
+    </section>
+
+    <section>
+      <h3 class="two-line-tab">Syslog over TLS/SSL</h3>
+      <pre class="prettyprint">
+&lt;MessageLogging name="LogToSyslog"&gt;
+  &lt;Syslog&gt;
+    &lt;Message&gt;[3f509b58 tag="{organization.name}.{apiproxy.name}.{environment.name}"] Weather request for WOEID {request.queryparam.w}.&lt;/Message&gt;
+    &lt;Host&gt;logs-01.loggly.com&lt;/Host&gt;
+    &lt;Port&gt;6514&lt;/Port&gt;
+    &lt;Protocol&gt;TCP&lt;/Protocol&gt;
+    &lt;FormatMessage&gt;true&lt;/FormatMessage&gt;
+    <strong>&lt;SSLInfo&gt;
+        &lt;Enabled&gt;true&lt;/Enabled&gt;
+    &lt;/SSLInfo&gt;</strong>
+  &lt;/Syslog&gt;
+  &lt;logLevel&gt;WARN&lt;/logLevel&gt;
+&lt;/MessageLogging&gt;
+</pre>
+
+      <p>You can send messages to third-party message logging providers over TLS/SSL by adding the
+      <code>&lt;SSLInfo&gt;</code> block.</p>
+    </section>
+
+    <section>
+      <h3 class="two-line-tab">File rotation: size</h3>
+      <pre class="prettyprint">
+&lt;MessageLogging name="LogPolicy"&gt;
+  &lt;File&gt;
+    &lt;Message&gt;This is a test message. Message id : {request.header.messageId}&lt;/Message&gt;
+      &lt;FileName&gt;test.log&lt;/FileName&gt;
+      &lt;FileRotationOptions rotateFileOnStartup="true"&gt;
+        &lt;FileRotationType&gt;SIZE&lt;/FileRotationType&gt;
+        &lt;MaxFileSizeInMB&gt;10&lt;/MaxFileSizeInMB&gt;
+        &lt;MaxFilesToRetain&gt;10&lt;/MaxFilesToRetain&gt;
+      &lt;/FileRotationOptions&gt;
+  &lt;/File&gt;
+  &lt;logLevel&gt;ERROR&lt;/logLevel&gt;
+&lt;/MessageLogging&gt;
+</pre>
+
+      <p>File rotation based on file size.</p>
+    </section>
+
+    <section>
+      <h3 class="two-line-tab">File rotation: time</h3>
+      <pre class="prettyprint">
+&lt;MessageLogging name="LogPolicy"&gt;
+  &lt;File&gt;
+    &lt;Message&gt;This is a test message. Message id : {request.header.messageId}&lt;/Message&gt;
+    &lt;FileName&gt;test.log&lt;/FileName&gt;
+    &lt;FileRotationOptions rotateFileOnStartup="true"&gt;
+      &lt;FileRotationType&gt;TIME&lt;/FileRotationType&gt;
+      &lt;RotationFrequency unit="minute"&gt;10&lt;/RotationFrequency&gt;
+      &lt;MaxFilesToRetain&gt;10&lt;/MaxFilesToRetain&gt;
+    &lt;/FileRotationOptions&gt;
+  &lt;/File&gt;
+  &lt;logLevel&gt;ERROR&lt;/logLevel&gt;
+&lt;/MessageLogging&gt;
+</pre>
+
+      <p>File rotation based on time.</p>
+    </section>
+
+    <section>
+      <h3 class="two-line-tab">File rotation: time &amp; size</h3>
+      <pre class="prettyprint">
+&lt;MessageLogging name="LogPolicy"&gt;
+  &lt;File&gt;
+    &lt;Message&gt;This is a test message. Message id : {request.header.messageId}&lt;/Message&gt;
+    &lt;FileName&gt;test.log&lt;/FileName&gt;
+    &lt;FileRotationOptions rotateFileOnStartup="true"&gt;
+      &lt;FileRotationType&gt;TIME_SIZE&lt;/FileRotationType&gt;
+      &lt;MaxFileSizeInMB&gt;10&lt;/MaxFileSizeInMB&gt;
+      &lt;MaxFilesToRetain&gt;10&lt;/MaxFilesToRetain&gt;
+      &lt;RotationFrequency unit="minute"&gt;10&lt;/RotationFrequency&gt;
+    &lt;/FileRotationOptions&gt;
+  &lt;/File&gt;
+  &lt;logLevel&gt;ERROR&lt;/logLevel&gt;
+&lt;/MessageLogging&gt;
+</pre>
+
+      <p>File rotation based on time and size.</p>
+    </section>
+
+    <section>
+      <h3 class="two-line-tab">Stream-enabled</h3>
+      <pre class="prettyprint">
+&lt;MessageLogging name="LogPolicy"&gt;
+  &lt;File&gt;
+  ....
+  ....
+  &lt;/File&gt;
+  &lt;BufferMessage&gt;true&lt;/BufferMessage&gt;
+&lt;/MessageLogging&gt;
+</pre>
+
+      <p>Stream-enabled message logging</p>
+
+      <aside class="note"><b>Note:</b> If HTTP streaming is enabled in an API proxy, neither
+      request nor response messages will be buffered by processing pipeline. When you need to log
+      parsed message content, set BufferMessage to <code>true</code>.</aside>
+    </section>
+  </div><!-- End tabbed region. -->
+  <hr>
+
+  <h2 id="elements">Element reference</h2>
+
+  <p>Use the following elements to configure the MessageLogging policy type.</p>
+
+  <aside class="note"><b>Note:</b> The <code>name</code> attribute for this policy is restricted to
+  these characters: <code>A-Z0-9._\-$ %</code>. However, the Management UI enforces additional
+  restrictions, such as automatically removing characters that are not alphanumeric.</aside>
+
+  
+
+  <table>
+    <thead>
+      <tr>
+        <th colspan="2">Field Name</th>
+
+        <th>Field Description</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td colspan="1" rowspan="8" style="vertical-align: top;">
+          <p><code>File</code></p>
+
+          <p>Local file destination. (File logging is only supported in Edge for Private Cloud
+          deployments.) For information on where files are stored, see <a href="#location">Log file
+          location in Edge for Private Cloud</a>.</p>
+
+          
+        </td>
+
+        <td style="vertical-align: top;"><code>Message</code></td>
+
+        <td style="vertical-align: top;">Build the message to be sent to the log file, combining
+        text with variables to capture the information you want. See the <a href=
+        "#samples">Samples</a>.
+        <aside class="note">The <code>&lt;Message&gt;</code> element supports the dynamic string substitution feature called
+  <a href="/api-platform/reference/message-template-intro.html">message templating</a>.</aside>
+        </td>
+      </tr>
+
+      <tr>
+        <td style="vertical-align: top;"><code>FileName</code></td>
+
+        <td style="vertical-align: top;">Name of the log file where the message is logged.</td>
+      </tr>
+
+      <tr>
+        <td colspan="2" style="vertical-align: top;"><code>FileRotationOptions</code></td>
+      </tr>
+
+      <tr>
+        <td style="vertical-align: top;"><code>rotateFileOnStartup</code></td>
+
+        <td style="vertical-align: top;">
+          <p>Attribute. Valid values: <code>true</code>/<code>false</code></p>
+
+          <p>If set to true, then the log file is rotated every time the messaging engine
+          restarts.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td style="vertical-align: top;"><code>FileRotationType</code></td>
+
+        <td style="vertical-align: top;">Specifies the rotation policy (<code>size</code> or
+        <code>time</code>) of a log file.</td>
+      </tr>
+
+      <tr>
+        <td style="vertical-align: top;"><code>MaxFileSizeInMB</code></td>
+
+        <td style="vertical-align: top;">(On selecting <code>size</code> as rotation type)
+        Specifies the size of a log file that triggers the server to move log messages to a
+        separate file. After the log file reaches the specified size, the server renames the
+        current log file.</td>
+      </tr>
+
+      <tr>
+        <td style="vertical-align: top;"><code>RotationFrequency</code></td>
+
+        <td style="vertical-align: top;">(On selecting <code>time</code> as rotation type)
+        Specifies the time in minutes that triggers the server to move log messages to a separate
+        file. After the specified interval elapses, the current log file is renamed.</td>
+      </tr>
+
+      <tr>
+        <td style="vertical-align: top;"><code>MaxFilesToRetain</code></td>
+
+        <td style="vertical-align: top;">
+          <p>Specifies the maximum number of files to be retained in the context of your rotation
+          settings.</p>
+
+          <p>If you specify zero (0), log files are retained indefinitely, but subject to your file
+          rotation settings, though none of the files are deleted or renamed. Therefore, to avoid
+          future disk-full errors, set this to a value greater than zero, or implement a regular,
+          automated system of purging or archiving older retained log files.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td colspan="1" style="vertical-align: top;"> </td>
+
+        <td style="vertical-align: top;"><code>BufferMessage</code></td>
+
+        <td style="vertical-align: top;">
+          <p>If <a href="/api-platform/develop/enabling-streaming.html">HTTP streaming is
+          enabled</a> for your proxy, request/response messages are not buffered. If you want to
+          log content that requires the flow message to be parsed, then set BufferMessage to true.
+          See the "Stream-enabled" sample tab for an example. Default: false</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td colspan="1" rowspan="6" style="vertical-align: top;">
+          <p><code>Syslog</code> destination</p>
+
+          <p>To send syslog to Splunk, Sumo Logic, or Loggly, see <a href="#thirdparty">Configuring
+          third-party log management services</a>.</p>
+
+        </td>
+
+        <td style="vertical-align: top;"><code>Message</code></td>
+
+        <td style="vertical-align: top;">
+          <p>Build the message to be sent to the syslog, combining text with variables to capture
+          the information you want. See the <a href="#Samples">Samples</a>.</p>
+          <aside class="note">The <code>&lt;Message&gt;</code> element supports the dynamic string substitution feature called
+  <a href="/api-platform/reference/message-template-intro.html">message templating</a>.</aside>
+
+          <p><strong>Note:</strong> <a href=
+          "/api-platform/reference/variables-reference.html#response">Response variables</a> will
+          not be available in PostClientFlow following an Error Flow. Use <a href=
+          "/api-platform/reference/variables-reference.html#messagevariables">message variables</a>
+          to log response information for both error and success situations. See also <a href=
+          "#usagenotes">Usage notes</a>. </p>
+        </td>
+      </tr>
+
+      <tr>
+        <td style="vertical-align: top;"><code>Host</code></td>
+
+        <td style="vertical-align: top;">The hostname or IP address of the server where the syslog
+        should be sent. If you don't include this element, the default is localhost.</td>
+      </tr>
+
+      <tr>
+        <td style="vertical-align: top;"><code>Port</code></td>
+
+        <td style="vertical-align: top;">Port where the syslog is running. If you don't include
+        this element, the default is 514.</td>
+      </tr>
+
+      <tr>
+        <td style="vertical-align: top;"><code>Protocol</code></td>
+
+        <td style="vertical-align: top;">TCP or UDP (default). While UDP is more performant, the
+        TCP protocol guarantees message log delivery to the syslog server. For sending syslog
+        messages over TLS/SSL, only TCP is supported.</td>
+      </tr>
+
+      <tr>
+        <td style="vertical-align: top;"><code>FormatMessage</code></td>
+
+        <td style="vertical-align: top;">
+          <p><code>true</code> or <code>false</code> (default)</p>
+
+          <p>Optional, but <code>&lt;FormatMessage&gt;true&lt;/FormatMessage&gt;</code> is required
+          for use with Loggly.</p>
+
+          <p>This element lets you control the format of Apigee-generated content prepended to the
+          message. If set to true, the syslog message is prepended by a fixed number of characters,
+          which lets you filter out that information from messages. Here's an example for the fixed
+          format:</p>
+
+          <p><code>&lt;14&gt;1 2016-02-23T09:24:39.039+0000 e49cd3a9-4cf6-48a7-abb9-7ftfe4d97d00
+          Apigee-Edge - - - Message starts here</code></p>
+
+          <p>The Apigee-generated information includes:</p>
+
+          <ul>
+            <li>&lt;14&gt; - A priority score (see the <a href=
+            "https://tools.ietf.org/html/rfc5424" target="_blank">Syslog Protocol</a>) based on the
+            log level and facility level of the message.</li>
+
+            <li>1 - The current syslog version.</li>
+
+            <li>Date with a UTC offset (UTC = +0000).</li>
+
+            <li>Message processor UUID.</li>
+
+            <li>"Apigee Edge - - - "</li>
+          </ul>
+
+          <p>If set to false (default), the message is not prepended with those fixed
+          characters.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td style="vertical-align: top;"><code>SSLInfo</code></td>
+
+        <td style="vertical-align: top;">
+          <p>Lets you log messages through SSL/TLS. Use with
+          sub-element <code>&lt;Enabled&gt;true&lt;/Enabled&gt;</code>.</p>
+
+          <p>If you don't include this element or leave it empty, the default value is false (no
+          TLS/SSL).</p>
+          <pre class="prettyprint">
+&lt;SSLInfo&gt;
+    &lt;Enabled&gt;true&lt;/Enabled&gt;
+&lt;/SSLInfo&gt;
+</pre>
+
+          <p>You can configure the <span style=
+          "font-family:courier new,courier,monospace;">&lt;SSLInfo&gt;</span> tag the same as you
+          can on a TargetEndpoint, including enabling two-way TLS/SSL, as described in <a href=
+          "/api-platform/reference/policies/api-proxy-configuration-reference.html">API proxy
+          configuration reference</a>. Only the <strong>TCP</strong> protocol is
+          supported.</p>
+
+          <aside class="warning"><b>Warning:</b> TLS/SSL on the syslog server must be configured
+          with a valid CA certificate. Self-signed certificates are not currently
+          supported.</aside>
+        </td>
+      </tr>
+
+      <tr>
+        <td><code>logLevel</code></td>
+
+        <td colspan="2">
+          <p>Optional.</p>
+
+          <p>Valid values: <code>INFO</code> (default), <code>ALERT</code>, <code>WARN</code>,
+          <code>ERROR</code></p>
+
+          <p>Set a specific level of information to be included in the message log.</p>
+
+          <p>If you're using the <code>FormatMessage</code> element (setting it to true), your
+          <code>logLevel</code> setting affects the calculated priority score (the number inside
+          the angle brackets) in the Apigee-generated information prepended to the message.</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="elementreference-schemas">Schemas</h3>
+
+  <aside class="note"><b>Sample:</b> See our <a href=
+  "https://github.com/apigee/api-platform-samples/tree/master/schemas/policy">GitHub
+  repository</a> samples for the most recent schemas.</aside>
+  <hr>
+
+  <h2 id="usage"><a id="usagenotes" name="usagenotes"></a>Usage notes</h2>
+
+  <p>When attaching a Message Logging policy to an API proxy flow, consider placing it in the
+  ProxyEndpoint response, in a special flow called PostClientFlow. The PostClientFlow executes
+  after the response is sent to the requesting client, which ensures that all metrics are available
+  for logging. For details on using PostClientFlow, see <a href=
+  "/api-platform/reference/policies/api-proxy-configuration-reference.html">API proxy configuration
+  reference</a>.</p>
+
+  <aside class="note"><b>Note:</b> It's important to note that the <strong>response</strong> flow
+  variable is not available in the PostClientFlow once processing enters the error state. Instead,
+  you can use the <strong>message</strong> variable to set values in the MessageLogging
+  policy in the PostClientFlow, ensuring that they will be set whether or not the error state was
+  the previous context. For more information and examples, see "<a href=
+  "/api-platform/reference/variables-reference.html#messagevariables-usesformessagevariables">Uses
+  for message variables</a>".  </aside>
+
+  <p>The PostClientFlow is special in two ways:</p>
+
+  <ol>
+    <li>It only executed as part of the response flow.</li>
+
+    <li>It is the only flow executed after the proxy enters the error state.</li>
+  </ol>
+
+  <p>Because it is executed regardless of whether the proxy succeeded or failed, you can put
+  Message Logging policies in the PostClientFlow and be guaranteed that they always execute.</p>
+
+  <p>The following Trace image shows a Message Logging policy executing as part of the
+  PostClientFlow, after the DefaultFaultRule executes:</p>
+
+  <p><img alt="" src="/api-platform/images/postClientFlow.png"></p>
+
+  <p>In this example, the Verify API Key policy caused the fault because of an invalid
+  key. </p>
+
+  <p>Shown below is the ProxyEndpoint definition that includes the PostClientFlow:</p>
+  <pre class="prettyprint">
+&lt;ProxyEndpoint name="default"&gt;
+  ...
+  &lt;PostClientFlow&gt;
+    &lt;Response&gt;
+      &lt;Step&gt;
+        &lt;Name&gt;Message-Logging-1&lt;/Name&gt;
+      &lt;/Step&gt;
+    &lt;/Response&gt;
+  &lt;/PostClientFlow&gt;
+  ...
+&lt;/ProxyEndpoint&gt;
+</pre>
+
+  <p>Edge logs messages as simple text, and you can configure logging to include variables, such as
+  the date and time when the request or response was received, the user identity on the request,
+  the source IP address from which the request was sent, and so on. Edge logs message
+  asynchronously, meaning that no latency that might be caused by blocking callouts is introduced
+  to your API.</p>
+
+  <p>The Message Logging policy writes logged messages in memory to a buffer. The message logger
+  reads messages from the buffer and then writes to the destination that you configure. Each
+  destination has its own buffer.</p>
+
+  <aside class="note">
+    <b>Note:</b> <strong>Proxy calls succeed when logging fails</strong>
+
+    <p>Because message logging is first written to buffer, the API proxy will continue successful
+    execution even if message logging ultimately fails (for example, if there's a connection
+    failure to the external syslog provider).</p>
+  </aside>
+
+  <p>If the write rate to the buffer increases beyond the read rate, the buffer overflows and
+  logging will fail. If this happens, you might find a message containing the following in the log
+  file:</p>
+  <pre class="prettyprint">
+Log message size exceeded. Increase the max message size setting
+</pre>
+
+  <p>If you encounter this issue in Edge for Private Cloud 4.15.07 and earlier, locate the
+  <code>message-logging.properties</code> file and use this solution:</p>
+
+  <p>Increase the <code>max.log.message.size.in.kb</code> property (default value = 128 KB) in the
+  <code>message-logging.properties</code> file.</p>
+
+  <p>For Edge for Private Cloud 4.16.01 and later, set
+  the <code>conf_message-logging_max.log.message.size.in.kb</code> property in the
+  <span style=
+  "font-family:courier new,courier,monospace;">/opt/apigee/customer/application/message-processor.properties</span>
+  file and restart the Message Processor.</p>
+
+  <p><strong>Note:</strong> The <a href=
+  "/api-platform/reference/variables-reference.html#response">response message
+  variables</a> in Edge are not available from the Error Flow. These variables are also not
+  available in PostClientFlow if the preceding flow was the Error Flow. If you want to log response
+  information from the PostClientFlow, use the <strong>message</strong> object. You can
+  use this object to get at headers and other information from the response whether or not there
+  was an error. See <a href=
+  "/api-platform/reference/variables-reference.html#messagevariables">Message
+  variables</a> for more information and an example.</p>
+
+  <h3 id="usagenotes-controllinglogmessagetimestampinedgeforprivatecloud">Controlling log message
+  timestamp in Edge for Private Cloud</h3>
+
+  <p>By default, the timestamp in log messages has the format:</p>
+  <pre class="prettyprint">
+yyyy-MM-dd'T'HH:mm:ss.sssZ
+</pre>
+
+  <p>For example:</p>
+  <pre class="prettyprint">
+2017-05-08T13:33:00.000+0000
+</pre>
+
+  <p>You can use the <span style=
+  "font-family:courier new,courier,monospace;">conf_system_apigee.syslogger.dateFormat</span>
+  property on the Edge Message Processor to control that format. For example, changing the message
+  format to:</p>
+  <pre class="prettyprint">
+yy/MM/dd'T'HH:mm:ss.sssZ
+</pre>
+
+  <p>Records a timestamp in the form:</p>
+  <pre class="prettyprint">
+17/09/01T22:38:11.011+0000
+</pre>
+
+  <p>To change the format:</p>
+
+  <ol>
+    <li>Open the <span style=
+    "font-family:courier new,courier,monospace;">message-processor.properties</span> file in an
+    editor. If the file does not exist, create it:<br>
+    <span style="font-family: &quot;courier new&quot;, courier, monospace;">&gt; vi
+    /opt/apigee/customer/application/message-processor.properties</span></li>
+
+    <li>Set the properties as desired:<br>
+    <span style=
+    "font-family:courier new,courier,monospace;">conf_system_apigee.syslogger.dateFormat=yy/MM/dd'T'HH:mm:ss.sssZ</span></li>
+
+    <li>Save your changes.</li>
+
+    <li>Make sure the properties file is owned by the 'apigee' user:<br>
+    <span style="font-family: &quot;courier new&quot;, courier, monospace;">&gt;
+    chown apigee:apigee /opt/apigee/customer/application/message-processor.properties</span></li>
+
+    <li>Restart the Edge Message Processor:<br>
+    <span style="font-family: &quot;courier new&quot;, courier, monospace;">&gt;
+    /opt/apigee/apigee-service/bin/apigee-service edge-message-processor restart</span></li>
+  </ol>
+
+  <h3 id="location">Log file location in Edge for Private Cloud</h3>
+
+  <h4>Edge for Private Cloud 4.16.01 and later</h4>
+
+  <p>By default, message logs are located in the following location on Message
+  Processors: </p>
+  <pre class="prettyprint">
+/opt/apigee/var/log/messagelogging/{org}/{environment}/{api_proxy_name}/{revision}/{logging_policy_name}/
+</pre>
+
+  <p>You can change the default log location by modifying properties in the
+  message-logging.properties file on the Message Processors:</p>
+
+  <ul>
+    <li><span style="font-family:courier new,courier,monospace;">bin_setenv_data_dir</span> -
+    Sets the root path for log file storage. For example,
+    <code>bin_setenv_data_dir=/opt/apigee/var/log</code></li>
+
+    <li><span style=
+    "font-family:courier new,courier,monospace;">conf_message-logging_log.root.dir</span> - If
+    you set this to a relative path, such as <code><span style=
+    "font-family:courier new,courier,monospace;"><code>conf/message-logging.properties+log.root.dir=custom/folder/</code></span><span style="font-family: Arial, Verdana, sans-serif;">,
+    the path is appended to the</span> <span style=
+    "font-family: &quot;courier new&quot;, courier, monospace;">bin_setenv_data_dir</span>
+    <span style="font-family: Arial, Verdana, sans-serif;">location.</span></code><br>
+    <br>
+    If you set this to an absolute path, such as
+    <code>conf/message-logging.properties+log.root.dir=/opt/apigee/var/log/messages</code>, message
+    logs will be stored in <code>/opt/apigee/var/log/messages/messagelog/</code>. An absolute path
+    takes precedence over <code>bin_setenv_data_dir</code>.<br>
+    <br>
+    Note that you have to reference the property as <span style=
+    "font-family:courier new,courier,monospace;">conf/message-logging.properties+log.root.dir</span> because
+    it is commented out be default. See <a href=
+    "/private-cloud/latest/how-configure-edge#settingatokenthatiscurrentlycommentedout">Setting a
+    token that is currently commented out</a> for more. </li>
+  </ul>
+
+  <p>If you want to store log files in a flat file structure so that all log files are put in the
+  same directory, set the <span style=
+  "font-family:courier new,courier,monospace;">conf/message-logging.properties+enable.flat.directory.structure</span> to
+  true in the message-logging.properties file. Messages are stored in the directory specified by
+  the properties above, and the file names take the form of
+  <code>{org}_{environment}_{api_proxy_name}_{revision}_{logging_policy_name}_{filename}</code>.</p>
+
+  <p>To set these properties:</p>
+
+  <ol>
+    <li>Open the <span style=
+    "font-family:courier new,courier,monospace;">message-processor.properties</span> file in an
+    editor. If the file does not exist, create it:<br>
+    <span style="font-family: &quot;courier new&quot;, courier, monospace;">&gt; vi
+    /opt/apigee/customer/application/message-processor.properties</span></li>
+
+    <li>Set the properties as desired:<br>
+    <span style=
+    "font-family: &quot;courier new&quot;, courier, monospace;">conf/message-logging.properties+log.root.dir=</span><span style="font-family:courier new,courier,monospace;">/opt/apigee/var/log/messages</span></li>
+
+    <li>Save your changes.</li>
+
+    <li>Make sure the properties file is owned by the 'apigee' user:<br>
+    <span style="font-family: &quot;courier new&quot;, courier, monospace;">&gt;
+    chown apigee:apigee /opt/apigee/customer/application/message-processor.properties</span></li>
+
+    <li>Restart the Edge component:<br>
+    <span style="font-family: &quot;courier new&quot;, courier, monospace;">&gt;
+    /opt/apigee/apigee-service/bin/apigee-service edge-message-processor restart</span></li>
+  </ol>
+
+  <h4>Edge for Private Cloud 4.15.07 and earlier</h4>
+
+  <p>By default, message logs are located in the following location on message
+  processors: </p>
+  <pre class="prettyprint">
+/opt/apigee4/var/log/apigee/message-processor/messagelog/{org}/{environment}/{api_proxy_name}/{revision}/{logging_policy_name}/
+</pre>
+
+  <p>You can change the default log location by modifying the following properties in the
+  message-logging.properties file on the message processors:</p>
+
+  <ul>
+    <li><span style="font-family:courier new,courier,monospace;">data.dir</span> - Sets the root
+    path for log file storage. For example, data.dir=/opt/apigee4/var/log</li>
+
+    <li><span style="font-family:courier new,courier,monospace;">log.root.dir</span> - If you set
+    this to a relative path, such as log.root.dir=custom/folder/, the path is appended to the
+    data.dir location.</li>
+  </ul>
+
+  <p>For example, the combination of the two properties would set the logging directory at
+  /opt/apigee4/var/log/custom/folder/messagelog/ (note that /messagelog is added
+  automatically).</p>
+
+  <p>If you set this to an absolute path, such as <span style=
+  "font-family:courier new,courier,monospace;">log.root.dir=/opt/apigee4/var/log/messages</span>,
+  message logs will be stored in /opt/apigee4/var/log/messages/messagelog/. An absolute path in
+  log.root.dir takes precedence over <span style=
+  "font-family:courier new,courier,monospace;">data.dir</span>.</p>
+
+  <p>If you want to store log files in a flat file structure so that all log files are put in the
+  same directory, set the <span style=
+  "font-family:courier new,courier,monospace;">enable.flat.directory.structure property</span> to
+  true in the <span style=
+  "font-family:courier new,courier,monospace;">message-logging.properties</span> file on Message
+  Processors. Messages are stored in the directory specified by the properties above, and the file
+  names take the form of <span style=
+  "font-family:courier new,courier,monospace;">{org}_{environment}_{api_proxy_name}_{revision}_{logging_policy_name}_{filename}</span>.</p>
+
+  <h3 id="usagenotes-defaultvaluesforvariablesinmessagetemplate">Default values for variables in
+  message template</h3>
+
+  <p>Default values can be specified for each variable in message template separately. For example,
+  if the variable <code>request.header.id</code> cannot be resolved, then its value is replaced
+  with the value <code>unknown</code>.</p>
+  <pre class="prettyprint">
+&lt;Message&gt;This is a test message. id = {request.header.id:unknown}&lt;/Message&gt;
+</pre>
+
+  <p>A common default value can be specified for all the unresolved variables by setting the
+  <code>defaultVariableValue</code> attribute on the the <code>Message</code> element:</p>
+  <pre class="prettyprint">
+&lt;Message defaultVariableValue="unknown"&gt;This is a test message. id = {request.header.id}&lt;/Message&gt;
+</pre>
+
+  <aside class="note"><b>Note:</b> The default variable value cannot contain spaces.</aside>
+
+  <h3 id="thirdparty">Configuring third-party log management services</h3>
+
+  <p>The Message Logging policy lets you send syslog messages to third-party log management
+  services, such as Splunk, Sumo Logic, and Loggly. If you want to send syslog to one of those
+  services, see that service's documentation to configure the service's host, port, and protocol,
+  then set the Syslog element on this policy accordingly.</p>
+
+  <p>See the following documentation for third-party log management configuration:</p>
+
+  <ul>
+    <li><a href="https://docs.splunk.com/Documentation/Splunk/6.2.0/Data/SyslogTCP" target=
+    "_blank">Splunk</a> (select the product version)<br>
+    Also see this Apigee Community post: <a href=
+    "https://community.apigee.com/content/kbentry/13298/log-messages-into-splunk.html">https://community.apigee.com/content/kbentry/13298/log-messages-into-splunk.html</a></li>
+
+    <li>
+      <a href="https://help.sumologic.com/Send_Data/Sources/Syslog_Source" target="_blank">Sumo
+      Logic</a>
+
+      <ul>
+        <li>Also see this Apigee Community post: <a href=
+        "https://community.apigee.com/questions/5226/setting-up-logging-with-sumo-logic-which-host-shou.html">
+        https://community.apigee.com/questions/5226/setting-up-logging-with-sumo-logic-which-host-shou.html</a></li>
+
+        <li>For a complete example using Sumo Logic as the logging service, see the following
+        Apigee Community post. The solution uses a single JavaScript policy to make HTTP POST
+        requests to Sumo Logic HTTP Source Collector:  <a href=
+        "https://community.apigee.com/articles/32286/logging-to-sumo-logic-using-javascript-and-http.html">https://community.apigee.com/articles/32286/logging-to-sumo-logic-using-javascript-and-http.html</a></li>
+      </ul>
+    </li>
+
+    <li><a href="https://www.loggly.com/docs/streaming-syslog-without-using-files/" target=
+    "_blank">Loggly</a><br>
+    When using Loggly, <code>&lt;FormatMessage&gt;true&lt;/FormatMessage&gt;</code> is required in
+    the policy as a child of the <code>&lt;Syslog&gt;</code> element.<br>
+    Also see this Apigee Community post for more information about message logging to Loggly:
+    <a href=
+    "https://community.apigee.com/content/kbentry/14798/log-messages-into-loggly.html">https://community.apigee.com/content/kbentry/14798/log-messages-into-loggly.html</a></li>
+  </ul>
+
+  <h2 id="errorreference">Error reference</h2>
+
+  <p>{% dynamic include /includes/___message-logging-policy-error-codes %}</p>
+  <hr>
+
+  <h2 id="variables">Flow variables</h2>
+
+  <p>The following variables are populated on policy failure.</p>
+
+  <ul>
+    <li><code>messagelogging.failed</code></li>
+
+    <li><code>messagelogging.{stepdefinition-name}.failed</code></li>
+  </ul>
+
+  <aside class="note">
+    <b>Note:</b> <strong>Proxy calls succeed when logging fails</strong>
+
+    <p>There's a difference between policy errors and message logging errors. The flow variables
+    here are populated only when the policy itself fails, not when message logging fails. Because
+    message logging is first written to buffer, the API proxy will continue successful execution
+    even if message logging ultimately fails (for example, if there's a connection failure to the
+    external syslog provider). Be sure to check your logs on a regular basis to make sure logging
+    is happening as expected.</p>
+  </aside>
+  <hr>
+
+  <h2 id="relatedtopics">Related topics</h2>
+
+  <ul>
+    <li>Variables exposed by Edge: <a href=
+    "/api-platform/reference/variables-reference.html">Variables reference</a></li>
+  </ul>
+
+  {% endblock %}

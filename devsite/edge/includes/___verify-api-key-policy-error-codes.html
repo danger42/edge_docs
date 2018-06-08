@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html devsite>
+  <head>
+    <title>Verify API Key Policy Error Codes</title>
+  </head>
+  <body>
+  <p>This section describes the error messages and flow variables that are set when this policy
+  triggers an error. This information is important to know if you are developing fault rules for a
+  proxy. To learn more, see <a href=
+  "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html">What you need to know
+  about policy errors</a> and <a href="/api-platform/fundamentals/fault-handling.html">Handling
+  faults</a>.</p>
+
+  <h3>Error code prefix <span style="font-size: 10pt">(<a href=
+  "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html#aboutthedefaultpolicyerrorresponse">What's
+  this?</a>)</span></h3>
+
+  <p>The errorcode prefix is <code><strong>oauth.v2</strong></code> for the errors
+  <code>FailedToResolveAPIKey</code>, <code>InvalidApiKey</code>, and
+  <code>InvalidApiKeyForGivenResource</code>.</p>
+
+  <p>The prefix is <code><strong>keymanagement.service</strong></code> for the errors
+  <code>CompanyStatusNotActive</code>, <code>DeveloperStatusNotActive</code>, and
+  <code>invalid_client-app_not_approved</code>. See the Example error responses at the end of this
+  section.</p>
+
+  <h3>Runtime errors</h3>
+
+  <p>These errors can occur when the policy executes.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th scope="col" width="271">Error name</th>
+
+        <th scope="col" width="58">HTTP status</th>
+
+        <th scope="col" width="379">Cause</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td><code>CompanyStatusNotActive</code></td>
+
+        <td>401</td>
+
+        <td>The Company associated with the Developer App that has the API key you are using has an
+        inactive status. When a Company's status is set to inactive,  you cannot access the
+        developers or apps associated with that Company. An org admin can change a Company's status
+        using the management API. See <a href=
+        "/management/apis/put/organizations/{org_name}/companies/{company_name}-0">Set the Status
+        of a Company</a>.</td>
+      </tr>
+
+      <tr>
+        <td><code>DeveloperStatusNotActive</code></td>
+
+        <td>401</td>
+
+        <td>
+          <p>The developer who created the the Developer App that has the API key you are using has
+          an inactive status. When an App Developer's status is set to inactive, any Developer Apps
+          created by that developer are deactivated. An admin user with appropriate permissions
+          (such as Organization Administrator) can change a developer's status in the following
+          ways:</p>
+
+          <ul>
+            <li>Management API: <a href=
+            "/management/apis/post/organizations/{org_name}/developers/{developer_email_or_id}">Set
+            Developer Status</a></li>
+
+            <li>Management UI: In <a href=
+            "/api-platform/publish/adding-developers-your-api-product.html">Managing app
+            developers</a>, see the instructions for deactivating (and activating) a
+            developer.</li>
+          </ul>
+        </td>
+      </tr>
+
+      <tr>
+        <td><code>FailedToResolveAPIKey</code></td>
+
+        <td>401</td>
+
+        <td>The policy expects to find the API key in a variable that is specified in the policy's
+        <a href="/api-platform/reference/policies/verify-api-key-policy.html#apikey">&lt;APIKey&gt;
+        element</a>.<font face="monospace"> </font>This error arises when the expected
+        variable does not exist (it cannot be resolved).</td>
+      </tr>
+
+      <tr>
+        <td><code>InvalidApiKey</code></td>
+
+        <td>401</td>
+
+        <td>An API key was received by Edge, but it is invalid. When Edge looks up the key in its
+        database, it must exactly match the on that was sent in the request. If the API worked
+        previously, make sure the key was not regenerated. If the key was regenerated, you will see
+        this error if you try to use the old key. For details, see <a href=
+        "/api-platform/publish/creating-apps-surface-your-api.html">Register apps and manage API
+        keys</a>.</td>
+      </tr>
+
+      <tr>
+        <td><code>InvalidApiKeyForGivenResource</code></td>
+
+        <td>401</td>
+
+        <td>An API key was received by Edge, and it is valid; however, it does not match an
+        approved key in the Developer App associated with your API proxy through a Product.</td>
+      </tr>
+
+      <tr>
+        <td><code>invalid_client-app_not_approved</code></td>
+
+        <td>401</td>
+
+        <td>The Developer App associated with the API key is revoked.  A revoked app cannot
+        access any API products and cannot invoke any API managed by Apigee Edge. An org admin can
+        change the status of a Developer App using the management API. See <a href=
+        "/management/apis/post/organizations/{org_name}/developers/{developer_email_or_id}/apps/{app_name}">
+        Approve or Revoke Developer App</a>.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3> </h3>
+
+  <aside class="note"><b>Note:</b> Currently Edge does not report the
+  <code>ApiKeyNotApproved</code> error accurately. Instead, if a key is not approved (its status is
+  set to "revoked" or "pending"), you will get the FailedToResolveAPIKey error instead. For more
+  information and a possible workaround, see <a href=
+  "https://community.apigee.com/questions/25203/verify-api-key-not-reporting-api-key-not-approved.html">
+  this post on the Apigee Community</a>. </aside>
+
+  <h3>Deployment errors</h3>
+
+  <p>These errors can occur when you deploy a proxy containing this policy.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th scope="col" width="271">Error name</th>
+
+        <th scope="col" width="379">Cause</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td><code>SpecifyValueOrRefApiKey</code></td>
+
+        <td>The <code>&lt;APIKey&gt;</code> element does not have a value or key specified.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  
+
+  <h3>Fault variables</h3>
+
+  <p>These variables are set when a runtime error occurs. For more information, see <a href=
+  "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html">What you need to know
+  about policy errors</a>.</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <th width="324">Variables set <code><span style="font-size: 10pt">(<a href=
+        "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html">Learn
+        more</a>)</span></code></th>
+
+        <th width="428">Where</th>
+
+        <th width="428">Example</th>
+      </tr>
+
+      <tr>
+        <td width="324"><code>[prefix].[policy_name].failed</code></td>
+
+        <td width="428">
+          <p>The fault variable <code>[prefix]</code> is
+          <code><strong>oauthV2</strong>.</code></p>The <code>[policy_name]</code> is the name of
+          the policy that threw the error.
+        </td>
+
+        <td width="428"><code>oauthV2.VK-VerifyAPIKey.failed = true</code></td>
+      </tr>
+
+      <tr>
+        <td><code>fault.[error_name]</code></td>
+
+        <td><code>[error_name]</code> = The specific error name to check for as listed in the table
+        above.</td>
+
+        <td><code>fault.name Matches "FailedToResolveAPIKey"</code></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Example error responses</h3>
+
+  <aside class="note"><b>Note:</b> For error handling, the best practice is to trap the
+  <code>errorcode</code> part of the error response. Do not rely on the text in the
+  <code>faultstring</code>, because it could change.</aside>
+  <pre class="prettyprint">
+{  
+   "fault":{  
+      "faultstring":"Invalid ApiKey",
+      "detail":{  
+         "errorcode":"oauth.v2.InvalidApiKey"
+      }
+   }
+}
+</pre>
+  <pre class="prettyprint">
+{  
+   "fault":{  
+      "detail":{  
+         "errorcode":"keymanagement.service.DeveloperStatusNotActive"
+      },
+      "faultstring":"Developer Status is not Active"
+   }
+}
+</pre>
+
+  <h3>Example fault rule</h3>
+  <pre class="prettyprint">
+&lt;FaultRule name="FailedToResolveAPIKey"&gt;
+    &lt;Step&gt;
+        &lt;Name&gt;AM-FailedToResolveAPIKey&lt;/Name&gt;
+    &lt;/Step&gt;
+    &lt;Condition&gt;(fault.name Matches "FailedToResolveAPIKey") &lt;/Condition&gt;
+&lt;/FaultRule&gt;
+</pre>
+  </body>
+</html>

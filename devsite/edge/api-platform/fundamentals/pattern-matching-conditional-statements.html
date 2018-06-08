@@ -1,0 +1,540 @@
+  {% extends "_base.html" %} {% block title %}Pattern matching in conditional statements{% endblock %} {% block body %}
+
+  <p>This topic explains how to use these pattern matching operators in conditional statements in
+  Apigee Edge:</p>
+
+  <ul>
+    <li>Matches operator</li>
+
+    <li>JavaRegex operator</li>
+
+    <li>MatchesPath operator</li>
+  </ul>
+
+  <p>Conditional statements are used in conditional flows, routes, and steps. You can read
+  more about conditional statements in the <a href=
+  "/api-platform/reference/conditions-reference.html">Conditions reference</a>.</p>
+
+  <h2 id="experiment">Experiment</h2>
+
+  <p>You can experiment with the conditions described in this topic, and make up and test your own
+  conditions, using the <a href=
+  "https://github.com/apigee/api-platform-samples/tree/master/sample-proxies/condition-pattern-matching">
+  condition-pattern-matching proxy</a> in our api-platform-samples repository in GitHub. See the
+  README for details. </p>
+
+  <h2 id="simplematchingwiththematchesoperator">Simple matching with the Matches operator</h2>
+
+  <p>Let's look at the "Matches" or "~" conditional operator first. These two operators are the
+  same -- the English version, "Matches", is considered to be a more readable option.</p>
+
+  <p><strong>Summary:</strong> The "Matches" operator gives you two possiblities. Either match the
+  string literally, or do a wildcard match with "*". As you might expect, the wildcard matches zero
+  or more characters. Let's see how this works.</p>
+
+  <p>The following XML shows a Step condition. It executes the SomePolicy policy when the condition
+  evaluates to true. In this example, we test the variable <code>proxy.pathsuffix</code>, a
+  built-in variable in Edge that stores the path suffix of the request. Note, however, you can test
+  the value of any flow variable that contains a string. So, in this case, if the base path of the
+  incoming request is <code>/animals</code>, and the request is <code>/animals/cat</code>, then the
+  path suffix is the literal string "<code>/cat</code>".</p>
+  <pre class="prettyprint">
+    &lt;PreFlow name="PreFlow"&gt;
+        &lt;Request&gt;
+            &lt;Step&gt;
+                &lt;Condition&gt;(proxy.pathsuffix Matches "/cat")&lt;/Condition&gt;
+                &lt;Name&gt;SomePolicy&lt;/Name&gt;
+            &lt;/Step&gt;
+        &lt;/Request&gt;
+        &lt;Response/&gt;
+    &lt;/PreFlow&gt;
+</pre>
+
+  <p><strong>Question:</strong> What proxy path suffix will cause SomePolicy to execute? There's
+  only one possibility.</p>
+
+  <p><strong>API call:</strong></p>
+
+  <p><code>GET http://artomatic-test.apigee.net/matchtest/cat</code></p>
+
+  <p>Does the policy execute? Yes, because the proxy path suffix matches "<code>/cat</code>"
+  exactly. It will not execute if the suffix is <code>/bat</code> or <code>/dog</code> or
+  "<code>/</code>" or anything else.</p>
+
+  <p>Now, consider this conditional statement where we use the wildcard character
+  "<code>*</code>":</p>
+  <pre class="prettyprint">
+&lt;Condition&gt;(proxy.pathsuffix Matches "/*at")&lt;/Condition&gt;
+</pre>
+
+  <p><strong>API call:</strong></p>
+
+  <p><code>GET http://artomatic-test.apigee.net/matchtest/cat</code></p>
+
+  <p>Does the policy execute? Yes, because the wildcard matches any character, and
+  <code>"/cat</code>" is a match.</p>
+
+  <p><strong>API Call:</strong></p>
+
+  <p><code>GET http://artomatic-test.apigee.net/matchtest/bat</code></p>
+
+  <p>Does the policy execute? Yes, because the wildcard matches any character, <code>"/bat"</code>
+  is a match.</p>
+
+  <p><strong>API Call:</strong></p>
+
+  <p><code>GET http://artomatic-test.apigee.net/matchtest/owl</code></p>
+
+  <p>Does the policy execute? Certainly not -- although the wildcard matches the "<code>o</code>",
+  the letters "<code>wl</code>" are not matched.</p>
+
+  <p>Now, lets move the wildcard to the end of the suffix:</p>
+  <pre class="prettyprint">
+&lt;Condition&gt;(proxy.pathsuffix Matches "/cat*")&lt;/Condition&gt;
+</pre>
+
+  <p><strong>API call:</strong></p>
+
+  <p><code>GET http://artomatic-test.apigee.net/matchtest/cat</code></p>
+
+  <p>Does the policy execute? Yes, because the wildcard matches zero or more of any characters.</p>
+
+  <p><strong>API Call:</strong></p>
+
+  <p><code>GET http://artomatic-test.apigee.net/matchtest/bat</code></p>
+
+  <p>Does the policy execute? No, "<code>/bat</code>" is not a match.</p>
+
+  <p><strong>API call:</strong></p>
+
+  <p><code>GET http://artomatic-test.apigee.net/matchtest/cat123</code></p>
+
+  <p>Does the policy execute? Yes, the wildcard matches zero or more of any characters, therefore
+  "<code>123</code>" produces a match.</p>
+
+  <p><strong>API call:</strong></p>
+
+  <p><code>GET http://artomatic-test.apigee.net/matchtest/cat/bird/mouse</code></p>
+
+  <p>Does the policy execute? Yes, because the wildcard matches zero or more of any characters, so
+  "<code>/bird/mouse</code>" produces a match. Note how an expression like this can get you into
+  trouble because it matches everything after the literal characters!</p>
+
+  <h3 id="simplematchingwiththematchesoperator-isthematchesoperatorcasesensitive">Is the Matches
+  operator case sensitive?</h3>
+
+  <p>Yes. Assume you have a condition like this:</p>
+  <pre class="prettyprint">
+&lt;Condition&gt;(proxy.pathsuffix Matches "/*At")&lt;/Condition&gt;
+</pre>
+
+  <p><strong>API call:</strong></p>
+
+  <p><code>GET http://artomatic-test.apigee.net/matchtest/cat</code></p>
+
+  <p>Does the policy execute? No, the wildcard matches any letter (regardless of case), but the
+  lowercase "a" does not match "A". </p>
+
+  <p><strong>API call:</strong></p>
+
+  <p><code>GET http://artomatic-test.apigee.net/matchtest/bAt</code></p>
+
+  <p>Does the policy execute? Yes, the case matches. </p>
+
+  <h3 id="simplematchingwiththematchesoperator-howdoiescapecharacterswiththematchesoperator">How do
+  I escape characters with the Matches operator?</h3>
+
+  <p>Use the percent "%" character to escape reserved characters. For example:</p>
+  <pre class="prettyprint">
+&lt;Condition&gt;(proxy.pathsuffix Matches "/c%*at")&lt;/Condition&gt;
+</pre>
+
+  <p><strong>API call:</strong></p>
+
+  <p><code>GET http://artomatic-test.apigee.net/matchtest/cat</code></p>
+
+  <p>Does the policy execute? No, the Matches operator is looking for the literal string
+  "c*at". </p>
+
+  <p><strong>API call:</strong></p>
+
+  <p><code>GET http://artomatic-test.apigee.net/matchtest/c*at</code></p>
+
+  <p>Does the policy execute? Yes, this path, although a bit unusual, matches.</p>
+
+  
+
+  <h2 id="finercontrolwithjavaregex">Finer control with JavaRegex</h2>
+
+  <p>As you can see, the "Matches" operator is great for simple situations. But you can use another
+  operator, the "JavaRegex" or "~~" operator. These two are the same operator, except JavaRegex is
+  considered to be more readable. It's called JavaRegex because it allows regular expression
+  pattern matching, and Edge follows the same rules as the classes in the <a href=
+  "https://docs.oracle.com/javase/7/docs/api/java/util/regex/Pattern.html">java.util.regex
+  package</a> in the Java language. The way the JavaRegex operator works is very different from the
+  Matches operator, so it's important not to confuse the two!</p>
+
+  <aside class="note"><b>Note:</b> If you're used to doing Regex in Perl scripts, it's important to
+  note that the JavaRegex operator in Edge tests the <strong>entire</strong> subject string. For
+  example, if the subject is "abc" and the regex is "[a-z]" , there is no match because "[a-z]"
+  matches exactly ONE alpha character. The expression "[a-z]+" would work, as would "[a-z]{3}".
+  This matching differs from the usual application of regular expressions in tools like Perl or
+  grep or Apache's mod_rewrite. JavaRegex uses <code>java.util.regex.Pattern.matches(str)</code>,
+  which is defined to return positive if the entire string (str) matches the pattern. The regex in
+  Perl or mod_rewrite are applied to "any" part of the string. They return true if the pattern
+  matches anywhere. See the example <a href="#arbitrary">Matching arbitrary strings with
+  JavaRegex</a>.</aside>
+
+  <aside class="note"><b>Note:</b> This section is not intended to be a detailed introduction to
+  regular expressions. The main intent is to illustrate a few simple examples, and highlight the
+  difference between the Matches and JavaRegex operators. If you'd like to know more about regular
+  expressions, many resources exist for you to explore. </aside>
+
+  <p><strong>Summary:</strong> The "JavaRegex" operator lets you use regular expression syntax in
+  conditional statements.</p>
+
+  <p>The following code shows a Step condition. It executes the SomePolicy policy if the condition
+  evalutes to true. In this example, we test the variable <code>proxy.pathsuffix</code>, a built-in
+  variable in Edge that stores the path suffix of the request. Note, however, you can test the
+  value of any flow variable that contains a string. So, in this case, if the base path of the
+  incoming request is <code>/animals</code>, and the request is <code>/animals/cat</code>, then the
+  path suffix is the literal string "<code>/cat</code>".</p>
+  <pre class="prettyprint">
+    &lt;PreFlow name="PreFlow"&gt;
+        &lt;Request&gt;
+            &lt;Step&gt;
+                &lt;Condition&gt;(proxy.pathsuffix JavaRegex "/cat")&lt;/Condition&gt;
+                &lt;Name&gt;SomePolicy&lt;/Name&gt;
+            &lt;/Step&gt;
+        &lt;/Request&gt;
+        &lt;Response/&gt;
+    &lt;/PreFlow&gt;
+</pre>
+
+  <p><strong>Question:</strong> What proxy path suffix will cause SomePolicy to execute? Just like
+  with the Matches operator, there's only one possibility in this case.</p>
+
+  <p><strong>API call:</strong></p>
+
+  <p><code>GET http://artomatic-test.apigee.net/matchtest/cat</code></p>
+
+  <p>Does the policy execute? Yes, because the proxy path suffix matches "<code>/cat</code>"
+  exactly. It will not execute if the suffix is <code>/bat</code> or <code>/dog</code> or anything
+  else.</p>
+
+  <p>Now, let's create a regular expression using "*" quantifier. This quantifier matches zero or
+  more of the preceeding character.</p>
+  <pre class="prettyprint">
+&lt;Condition&gt;(proxy.pathsuffix JavaRegex "/c*t")&lt;/Condition&gt;
+</pre>
+
+  <p><strong>API call:</strong></p>
+
+  <p><code>GET http://artomatic-test.apigee.net/matchtest/cat</code></p>
+
+  <p>Does the policy execute? No! The "*" quantifier matches zero or more of the
+  <strong>preceeding</strong> <strong>character</strong>, which is a "<code>c</code>".</p>
+
+  <p><strong>API Call:</strong></p>
+
+  <p><code>GET http://artomatic-test.apigee.net/matchtest/ccccct</code></p>
+
+  <p>Does the policy execute? Yes, because the wildcard matches zero or more of the preceeding
+  character.</p>
+
+  <p><br>
+  Next, we use the "<code>?</code>" quantifier, which matches the preceeding character once, or not
+  at all.</p>
+  <pre class="prettyprint">
+&lt;Condition&gt;(proxy.pathsuffix JavaRegex "/ca?t")&lt;/Condition&gt;
+</pre>
+
+  <p><strong>API call:</strong></p>
+
+  <p><code>GET http://artomatic-test.apigee.net/matchtest/cat</code></p>
+
+  <p>Does the policy execute? Yes. The "<code>?</code>" quantifier matches zero or one occurance of
+  the <strong>preceeding</strong> character, which is an "<code>a</code>".</p>
+
+  <p><strong>API Call:</strong></p>
+
+  <p><code>GET http://artomatic-test.apigee.net/matchtest/ct</code></p>
+
+  <p>Does the policy execute? Yes. The "<code>?</code>" quantifier matches one <strong>or
+  none</strong> of the preceeding character. In this case, there is no "a" character, so the
+  condition evaluates to true.</p>
+
+  <p><strong>API Call:</strong></p>
+
+  <p><code>GET http://artomatic-test.apigee.net/matchtest/caat</code></p>
+
+  <p>Does the policy execute? No. The "?" quantifier matches <strong>one</strong> of the preceeding
+  character, which is an "<code>a</code>".</p>
+
+  
+
+  <p>Next, we use the "<code>[abc]</code>" or "grouping" style of regex expression. It matches the
+  characters "<code>a</code>" or "<code>b</code>" or "<code>c</code>".</p>
+  <pre class="prettyprint">
+&lt;Condition&gt;(proxy.pathsuffix JavaRegex "/[cbr]at")&lt;/Condition&gt;
+</pre>
+
+  <p><strong>API call:</strong></p>
+
+  <p><code>GET http://artomatic-test.apigee.net/matchtest/cat</code></p>
+
+  <p>Does the policy execute? Yes. We're using regular expressions here, and the
+  "<code>[cbr]</code>" expression matches a "c", "b", OR "r". These calls are also matches:</p>
+
+  <p><code>GET http://artomatic-test.apigee.net/matchtest/bat</code></p>
+
+  <p><code>GET http://artomatic-test.apigee.net/matchtest/rat</code></p>
+
+  <p>But this is not a match:</p>
+
+  <p><code>GET http://artomatic-test.apigee.net/matchtest/mat</code></p>
+
+  
+
+  <h3 id="finercontrolwithjavaregex-isthejavaregexoperatorcasesensitive">Is the JavaRegex operator
+  case sensitive?</h3>
+
+  <p>Yes. Assume you have a condition like this:</p>
+  <pre class="prettyprint">
+&lt;Condition&gt;(proxy.pathsuffix JavaRegex "/ca?t")&lt;/Condition&gt;
+</pre>
+
+  <p><strong>API call:</strong></p>
+
+  <p><code>GET http://artomatic-test.apigee.net/matchtest/cat</code></p>
+
+  <p>Does the policy execute? Yes, the regex matches zero or one of the preceeding character, which
+  is "a".  </p>
+
+  <p><strong>API call:</strong></p>
+
+  <p><code>GET http://artomatic-test.apigee.net/matchtest/cAt</code></p>
+
+  <p>Does the policy execute? No, because the capital "A" does not match lowercase "a".</p>
+
+  <h2 id="matchingpathfragmentswiththematchespathoperator">Matching path fragments with the
+  MatchesPath operator</h2>
+
+  <p>The MatchesPath operator can also be specified like this "~/". It looks a little bit like the
+  Matches (~) and the JavaRegex (~~) operators. But MatchesPath is entirely different.</p>
+
+  <p>Just remember that this operator looks at a path as a series of parts. Therefore, if the path
+  is: <code>/animals/cats/wild</code>, you can think of the path as consisting of the parts
+  "<code>/animals</code>", "<code>/cats</code>", and "<code>/wild</code>".</p>
+
+  <p>The MatchesPath operator lets you use two wildcard notations: a single asterisk (*) and a
+  double asterisk (**). The single asterisk matches one path element. The double asterisk matches
+  one or many path elements.</p>
+
+  <p>Let's look at an example. In this example, we test the variable <code>proxy.pathsuffix</code>,
+  a built-in variable in Edge that stores the path suffix of the request. Note, however, you can
+  test the value of any flow variable that contains a string.</p>
+  <pre class="prettyprint">
+    &lt;PreFlow name="PreFlow"&gt;
+        &lt;Request&gt;
+            &lt;Step&gt;
+                &lt;Condition&gt;(proxy.pathsuffix MatchesPath "/animals/*")&lt;/Condition&gt;
+                &lt;Name&gt;SomePolicy&lt;/Name&gt;
+            &lt;/Step&gt;
+        &lt;/Request&gt;
+        &lt;Response/&gt;
+    &lt;/PreFlow&gt;
+</pre>
+
+  <p><strong>Question:</strong> What proxy path suffix will cause SomePolicy to execute?</p>
+
+  <p><strong>API call:</strong></p>
+
+  <p><code>GET http://artomatic-test.apigee.net/matchtest/animals</code></p>
+
+  <p>Does the policy execute? No, because condition requires another path element after
+  "<code>/animals</code>", as specified by "<code>/*</code>".</p>
+
+  <p><strong>API call:</strong></p>
+
+  <p><code>GET http://artomatic-test.apigee.net/matchtest/animals</code>/</p>
+
+  <p>Does the policy execute? Yes, the path does have another path element (the part after
+  "<code>/animals/</code>"), but it's just empty.</p>
+
+  <p><strong>API Call:</strong></p>
+
+  <p><code>GET http://artomatic-test.apigee.net/matchtest/animals/cats</code></p>
+
+  <p>Does the policy execute? Yes, because the path clearly has an element ("<code>/cats</code>")
+  that comes after "<code>/animals</code>"</p>
+
+  <p><strong>API Call:</strong></p>
+
+  <p><code>GET http://artomatic-test.apigee.net/matchtest/animals/cats/wild</code></p>
+
+  <p>Does the policy execute? No, because the single asterisk only matches one path element, and
+  this API has more than one element after "<code>/animals</code>".</p>
+
+  <p>Now let's use the double asterisk:</p>
+  <pre class="prettyprint">
+    &lt;PreFlow name="PreFlow"&gt;
+        &lt;Request&gt;
+            &lt;Step&gt;
+                &lt;Condition&gt;(proxy.pathsuffix MatchesPath "/animals/**")&lt;/Condition&gt;
+                &lt;Name&gt;SomePolicy&lt;/Name&gt;
+            &lt;/Step&gt;
+        &lt;/Request&gt;
+        &lt;Response/&gt;
+    &lt;/PreFlow&gt;
+</pre>
+
+  <p><strong>Question:</strong> What proxy path suffix will cause SomePolicy to execute?</p>
+
+  <p><strong>API call:</strong></p>
+
+  <p><code>GET http://artomatic-test.apigee.net/matchtest/animals</code></p>
+
+  <p>Does the policy execute? No, because condition requires at least one following path element
+  specified by "<code>/**</code>".</p>
+
+  <p><strong>API call:</strong></p>
+
+  <p><code>GET http://artomatic-test.apigee.net/matchtest/animals</code>/</p>
+
+  <p>Does the policy execute? Yes, the path does have another path element (the part after
+  "<code>/animals/</code>"), but it's just empty.</p>
+
+  <p><strong>API Call:</strong></p>
+
+  <p><code>GET http://artomatic-test.apigee.net/matchtest/animals/cats</code></p>
+
+  <p>Does the policy execute? Yes, because the path has at least one element that comes after
+  "<code>/animals</code>"</p>
+
+  <p><strong>API Call:</strong></p>
+
+  <p><code>GET http://artomatic-test.apigee.net/matchtest/animals/cats/wild</code></p>
+
+  <p>Does the policy execute? Yes, because the path has more than one element that comes after
+  "<code>/animals</code>"</p>
+
+  <h3 id="matchingpathfragmentswiththematchespathoperator-mixingasterisks">Mixing asterisks</h3>
+
+  <p>You can use combinations of the single (*) and double (**) asterisk to further refine your
+  path matching.</p>
+  <pre class="prettyprint">
+    &lt;PreFlow name="PreFlow"&gt;
+        &lt;Request&gt;
+            &lt;Step&gt;
+                &lt;Condition&gt;(proxy.pathsuffix MatchesPath "/animals/*/wild/**")&lt;/Condition&gt;
+                &lt;Name&gt;SomePolicy&lt;/Name&gt;
+            &lt;/Step&gt;
+        &lt;/Request&gt;
+        &lt;Response/&gt;
+    &lt;/PreFlow&gt;
+</pre>
+
+  <p><strong>API call:</strong></p>
+
+  <p>All of these API calls will produce a match:</p>
+
+  <p><code>GET http://artomatic-test.apigee.net/matchtest/animals/cats/wild/</code><br>
+  <br>
+  and</p>
+
+  <p><code>GET http://artomatic-test.apigee.net/matchtest/animals/dogs/wild/austrailian</code><br>
+  <br>
+  and<br>
+  <br>
+  <code>GET
+  http://artomatic-test.apigee.net/matchtest/animals/birds/wild/american/finches</code></p>
+
+  <h2 id="examples">Examples</h2>
+
+  <h3 id="examples-apracticalexampleignoreattheendofapath">A practical example: Ignore "/" at the
+  end of a path</h3>
+
+  <p>Edge developers commonly want to handle both of these path suffixes: "<code>/cat</code>" and
+  "<code>/cat/</code>". This is because some users or clients might call your API with the extra
+  slash on the end of the path, and you need to be able to handle that in your conditional
+  statements. This exact use case <a href=
+  "https://community.apigee.com/questions/4284/how-do-you-override-at-the-end-of-the-url-when-you.html">
+  has been discussed on the Apigee Community</a>.</p>
+
+  <p>If you prefer, you can achieve this without using Regex like this:</p>
+  <pre class="prettyprint">
+    &lt;PreFlow name="PreFlow"&gt;
+        &lt;Request&gt;
+            &lt;Step&gt;
+                &lt;Condition&gt;((proxy.pathsuffix = "/cat") OR (proxy.pathsuffix = "/cat/")&lt;/Condition&gt;
+                &lt;Name&gt;SomePolicy&lt;/Name&gt;
+            &lt;/Step&gt;
+        &lt;/Request&gt;
+        &lt;Response/&gt;
+    &lt;/PreFlow&gt;
+</pre>
+
+  <p>This is a good option. It is clear and readable.</p>
+
+  <p>You can do the same thing with Regex, however, like this. The parentheses are used to group
+  the regex part of the statement, but they are not required.</p>
+  <pre class="prettyprint">
+&lt;Condition&gt;(proxy.pathsuffix JavaRegex "/cat(/?)"&lt;/Condition&gt;
+</pre>
+
+  <p><strong>API Calls:</strong></p>
+
+  <p><code>GET http://artomatic-test.apigee.net/matchtest/cat<br>
+  or </code><br>
+  <code>GET http://artomatic-test.apigee.net/matchtest/cat</code>/</p>
+
+  <p>Does the policy execute? Yes. Note that in a regular expression, the "<code>?</code>"
+  character means: match zero or one of the preceeding character. Therefore, both
+  "<code>/cat</code>" and "<code>/cat/</code>" are matches.</p>
+
+  <p>API Call:</p>
+
+  <p><code>GET http://artomatic-test.apigee.net/matchtest/cat/spotted</code></p>
+
+  <p>Does the policy execute? No. The regular expression matches zero or only one occurance of the
+  preceeding character, and nothing else is allowed.</p>
+
+  <h3 id="examples-matchingarbitrarystringswithjavaregex"><a id="arbitrary" name=
+  "arbitrary"></a>Matching arbitrary strings with JavaRegex</h3>
+
+  <p>In all of the examples in this topic, we show how to match one of the built-in flow variables:
+  proxy.pathsuffix. It's good to know that you can do pattern matching on any arbitrary string or
+  flow variable, whether or not it's a built-in flow variable like proxy.pathsuffix. </p>
+
+  <p>If for example you have a condition that tests an arbitrary string, perhaps a string returned
+  in a backend payload, or a string returned from an authentication server lookup, you can use
+  matching operators to test it. If you use JavaRegex, the regular expression will be compared
+  against the entire subject string. If the subject is "abc" and the regular expression is "[a-z]",
+  there is no match, because "[a-z]" matches exactly <strong>one</strong> alpha character. The
+  expression "[a-z]+" works, as does "[a-z]*", and "[a-z]{3}.</p>
+
+  <p>Let's look at a concrete example. Suppose the authentication server returns a list of roles as
+  a comma-delimted string: "editor, author, guest".</p>
+
+  <p>To test the presence of the editor role, this construction will not work, because "editor" is
+  only part of the entire string.</p>
+
+  <p><code>&lt;Condition&gt;returned_roles ~~ "editor"&lt;/Condition&gt;</code></p>
+
+  <p>However, this construction will work:</p>
+
+  <p><code>&lt;Condition&gt;returned_roles ~~ ".*\beditor\b.*")&lt;/Condition&gt;</code></p>
+
+  <p>It works because it takes into account word breaks and any other parts of the string with the
+  .* prefix and suffix. </p>
+
+  <p>In this example, you can also test for "editor" with the Matches operator:</p>
+
+  <p><code>&lt;Condition&gt;returned_roles ~~ "*editor*")&lt;/Condition&gt;</code></p>
+
+  <p>However, in cases where you need more precision, JavaRegex is often a better choice. </p>
+
+  
+
+  {% endblock %}

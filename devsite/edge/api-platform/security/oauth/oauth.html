@@ -1,0 +1,412 @@
+  {% extends "_base.html" %} {% block title %}OAuth{% endblock %} {% block body %}
+
+  <p>OAuth has emerged as the leading <strong>authorization</strong> protocol for APIs. The version
+  of OAuth that is covered in detail in this topic is defined in the<span style=
+  "font-size: 12px;"> </span><a href=
+  "https://tools.ietf.org/html/draft-ietf-oauth-v2-31#section-1.3.4" style="font-size: 12px;">OAuth
+  2.0 Specification</a>. </p>
+
+  <p>OAuth is a protocol that enables <strong>app end users</strong> to authorize
+  <strong>apps</strong> to act on their behalf. Apps do so by obtaining <strong>access
+  tokens</strong> from <strong>API providers</strong>. The API provider authenticates the app end
+  user's credentials, ensures that the user has authorized the app, and then issues an access token
+  to the app. When the app consumes a protected API, Apigee Edge checks the access token to ensure
+  that it is valid and that it has not expired. As an API provider, you need to expose endpoints
+  that enable apps to get access tokens.</p>
+
+  <p><span style="font-size: 12px;">To make it easy for you to start using OAuth, Apigee Edge
+  enables you to configure and enforce OAuth using </span><strong style=
+  "font-size: 12px;">policies</strong><span style="font-size: 12px;">, without requiring you to
+  write any code. In this topic you will learn how to protect your APIs, how to obtain access
+  tokens, and how to use those access tokens to access protected APIs.</span></p>
+
+  <h2 id="thedefaultoauthconfigurationforyourorganization">The default OAuth configuration for your
+  organization</h2>
+
+  <p>For convenience, all organizations on Apigee Edge come preconfigured with a set of OAuth 2.0
+  endpoints that implement the <strong>client credentials grant type</strong>. The client
+  credentials grant type defines a procedure for issuing access tokens in exchange for <strong>app
+  credentials</strong>. These app credentials are simply the consumer key and secret pair that
+  Apigee Edge issues for each app that is registered in an organization. 'Client credentials'
+  refers to the consumer key and secret pair itself.</p>
+
+  <p>To learn more about issuing credentials to apps using Edge Developer Services, see
+    <a href="/api-platform/publish/creating-apps-surface-your-api.html">Register apps and manage keys</a>.</p>
+
+  <p>For this reason, it is relatively simple to 'step up' your API security scheme from API key
+  validation to OAuth client credentials. Both schemes use the same consumer key and secret to
+  validate the client app. The difference is that client credentials provides an extra layer of
+  control, since you can easily revoke an access token when needed, without requiring you to revoke
+  the app's consumer key. To work with the default OAuth endpoints, you can use any consumer key
+  and secret generated for app in your organization to retrieve access tokens from the token
+  endpoint. (You can even enable client credentials for apps that already have consumer keys and
+  secrets.)</p>
+
+  <p>The full specification for the client credentials grant can be found in the <a href=
+  "https://tools.ietf.org/html/draft-ietf-oauth-v2-31#section-1.3.4">OAuth 2.0
+  Specification</a>.</p>
+
+  <aside class="note"><b>Note:</b> Client credentials are sometimes also called "API key and
+  secret" or "app key and secret". The terms are interchangeable and refer to the same
+  credentials.</aside>
+
+  <h2 id="protectyourapiwithapolicy">Protect your API with a policy</h2>
+
+  <p>Before you can use access tokens, you need to configure your APIs to validate OAuth access
+  tokens at runtime. To do this<span style="font-size: 12px;">, you configure an API proxy to
+  <strong>validate</strong> access tokens. This means that every time an app makes a request to
+  consume one of your APIs, the app must present a valid access token along with the API request.
+  Apigee Edge handles the complexity behind generating, storing, and validating the access tokens
+  that are presented.</span></p>
+
+  <p><span style="font-size: 12px;">You can easily add OAuth verification to an API when you create
+  a new API proxy. When you are creating a new API proxy, you can <strong>Add Features</strong>. As
+  shown below, you can add verification of OAuth 2.0 access tokens by selecting the radio button
+  next to <strong>Secure with OAuth v2.0 Access Tokens</strong>. When you select this option, two
+  policies will be attached to the newly created API proxy, one to verify access tokens and another
+  to strip the access token after it has been verified.</span></p>
+
+  <p><img alt="" src="/api-platform/images/new-api-proxy-new_0.png"></p>
+
+  <p>In addition, when you select the <strong>Secure with OAuth v2.0 Access Tokens</strong> option,
+  the <strong>Publish API Product</strong> checkbox becomes selectable and is automatically
+  selected. Check this if you want to automatically generate a product when you build the new API
+  proxy. The autogenerated product will be created with an association to the new API proxy. If you
+  have an existing product with which you want to associate this new API, be sure to clear this
+  checkbox so that you don't create an unnecessary product. For information about products, see
+  <a href="/api-platform/publish/what-api-product.html">What is an API product?</a></p>
+
+  <p><span style="font-size: 12px;">If you need to enable access token verification for API proxy
+  that already exists, all you need to do is attach a policy of type OAuthV2 to the API that you
+  want to protect. OAuthV2 policies work by specifying an <strong>operation</strong>. If you want
+  to validate access tokens, you specify the operation called </span><span style=
+  "font-size: 12px;"><strong>VerifyAccessToken</strong>. (Other types of operations that are
+  supported by the OAuthV2 policy type are GenerateAccessToken and </span><span style=
+  "font-size: 12px;">GenerateRefreshToken. You will learn about those operations when you set up
+  OAuth endpoints.)</span></p>
+
+  <h3 id="protectyourapiwithapolicy-verifyoauthtokenspolicyoftypeoauthv2">VerifyOAuthTokens policy
+  of type OAuthV2</h3>
+
+  <p>An example policy to validate access tokens looks like the following. (The settings are
+  explained in the table below.)</p>
+  <pre class="prettyprint">
+&lt;OAuthV2 name="VerifyOAuthTokens"&gt; 
+  &lt;Operation&gt;VerifyAccessToken&lt;/Operation&gt; 
+&lt;/OAuthV2&gt;
+</pre>
+
+  <h3 id="protectyourapiwithapolicy-policysettings">Policy settings</h3>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+
+        <th>Description</th>
+
+        <th>Default</th>
+
+        <th>Required?</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td><b><code>OAuthV2</code></b></td>
+
+        <td colspan="3">The policy type</td>
+      </tr>
+
+      <tr>
+        <td><code>name</code></td>
+
+        <td>The name of the policy, which is referenced in the API proxy Endpoint
+        configuration.</td>
+
+        <td>N/A</td>
+
+        <td>Yes</td>
+      </tr>
+
+      <tr>
+        <td><code>Operation</code></td>
+
+        <td>The operation to be executed by the OAuthV2 policy. By specifying VerifyAccessToken,
+        you configure the policy to check requests for access tokens, and to verify that the access
+        token is valid, has not expired, and is approved to consume the requested API resource
+        (URI). (To make this check, the policy reads the API product that the app is approved to
+        consume.)</td>
+
+        <td>N/A</td>
+
+        <td>Yes</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>To create this policy in the management UI, navigate to <strong>APIs &gt; API
+  Proxies</strong>.</p>
+
+  <p>From the list of API proxies, select <strong>weatherapi</strong>.</p>
+
+  <p>From the <strong>Overview</strong> for the weatherapi, select the <strong>Develop</strong>
+  view.</p>
+
+  <p>From the drop-down menu, select <strong>New Policy &gt; OAuth v2.0</strong></p>
+
+  <p><img alt="" src="/api-platform/images/create-oauthv2-policy.png"></p>
+
+  <p>After you select the OAuth v2.0 policy, the <strong>New Policy</strong> configuration menu
+  will display.</p>
+
+  <p>Give your policy a descriptive name, and be sure to select <strong>Attach Policy</strong>,
+  <strong>Flow PreFlow</strong>, and <strong>Request</strong> as policy attachment settings.</p>
+
+  <p>Select <strong>Add</strong> and the policy is created and attached to the weatherapi's request
+  PreFlow.</p>
+
+  <p><img alt="" src="/api-platform/images/configure-oauth-policy.png"></p>
+
+  <p>After you add the policy, the request PreFlow configuration below will display in the
+  <strong>Designer</strong> pane.</p>
+
+  <p><img alt="" src="/api-platform/images/oauth-flow.png"></p>
+
+  <p><span style="font-size: 12px;">If you are working locally in a text editor or IDE, you attach
+  the Policy to the request PreFlow of the API proxy that you want to protect:</span></p>
+  <pre class="prettyprint">
+&lt;PreFlow&gt;
+  &lt;Request&gt;
+    &lt;Step&gt;&lt;Name&gt;VerifyOAuthTokens&lt;/Name&gt;&lt;/Step&gt;
+  &lt;/Request&gt;
+&lt;/PreFlow&gt;
+</pre>
+
+  <p>By attaching the policy to the request PreFlow, you ensure that the policy is always enforced
+  on all request messages.</p>
+
+  <p>You have now secured an API with OAuth 2.0 client credentials. The next step is to learn how
+  to obtain an access token, and use it to access the secure API.</p>
+
+  <h2 id="usinganaccesstokentoaccessaprotectedresource">Using an access token to access a protected
+  resource</h2>
+
+  <p>Now that the weatherapi is secured with OAuth 2.0, apps must present access tokens to consume
+  the API. To access a protected resource, the app presents an access token in the request as an
+  <strong>"Authorization" HTTP header</strong> as follows:</p>
+  <pre class="terminal">
+$ curl -H "Authorization: Bearer ylSkZIjbdWybfs4fUQe9BqP0LH5Z" http://{org_name}-test.apigee.net/weather/forecastrss?w=12797282
+</pre>
+
+  <p>Because the API has an OAuthV2 policy attached, Apigee Edge will verify that the access token
+  presented is valid, and then grants access to the API, returning the weather report to the app
+  that made the request.</p>
+
+  <p>But how do apps get access tokens? We will cover that in the next section.</p>
+
+  <h2 id="howtoexchangeclientcredentialsforanaccesstoken">How to exchange client credentials for an
+  access token</h2>
+
+  <p>Apps obtain access tokens by presenting their consumer key/secret pairs to the <strong>token
+  endpoint</strong>. The token endpoint is configured in the API proxy called
+  <strong>oauth</strong>. So apps need to call the API exposed by the <strong>oauth</strong> API
+  proxy to get an access token. After the app has an access token, it then can call the weatherapi
+  repeatedly, until the access token expires, or the access token is revoked.</p>
+
+  <p>Now you need to shift gears to think of yourself as an app developer. You want to call the
+  weatherapi, so you need to get an access token for your app. The first thing you need to do is
+  get a <strong>consumer key and secret pair</strong> (otherwise known as an <strong>API
+  key</strong> or an <strong>app key</strong>).</p>
+
+  <p>You can get a consumer key and secret by registering an app in your organization on Apigee
+  Edge.</p>
+
+  <p>You can see all of the apps in your organization in the Apigee Edge <a href=
+  "https://enterprise.apigee.com">management UI</a>.</p>
+
+  <p><img alt="" src="/api-platform/images/main-menu-apps.png"></p>
+
+  <p>The list of apps that are registered in your organization will display.</p>
+
+  <p>(If no apps display, you can learn how to register an app in the topic called <a href=
+  "/api-platform/publish/creating-apps-surface-your-api.html">Register apps and manage API
+  keys</a>.)</p>
+
+  <p>Select an app from the list to view its detailed profile.</p>
+
+  <p>In the detail view for the app you selected, note the fields for <strong>Consumer Key</strong>
+  and <strong>Consumer Secret</strong>. These two values are the <strong>client
+  credentials</strong> that you will use to obtain an OAuth access token.</p>
+
+  <p><img alt="" src="/api-platform/images/developer-app-details.png"></p>
+
+  <aside class="key-point"><b>Tip:</b> <span style="font-size: 12px;">You can also obtain the
+  consumer key and secret for an app by calling the management API. First, get the list of apps in
+  your organization by making the following API call:</span></aside>
+  <pre class="terminal">
+$ curl https://api.enterprise.apigee.com/v1/o/{org_name}/apps \
+-u myname:mypass 
+</pre>
+
+  <p>This call returns a list of apps by <strong>app ID</strong>.</p>
+  <pre class="prettyprint">
+[ "da496fae-2a04-4a5c-b2d0-709278a6f9db", "50e3e831-175b-4a05-8fb6-05a54701af6e" ]
+</pre>
+
+  <p>You can retrieve an app's profile by making a simple GET call on the app ID:</p>
+  <pre class="terminal">
+$ curl https://api.enterprise.apigee.com/v1/o/{org_name}/apps/{app_id} \
+-u myname:mypass 
+</pre>
+
+  <p>For example:</p>
+  <pre class="terminal">
+$ curl https://api.enterprise.apigee.com/v1/o/{org_name}/apps/da496fae-2a04-4a5c-b2d0-709278a6f9db \
+-u myname:mypass 
+</pre>
+
+  <p>The API call returns the profile of the app you specified. For example, an app profile for
+  <strong>weatherapp</strong> has the following JSON representation:</p>
+  <pre class="prettyprint">
+{
+  "accessType" : "read",
+  "apiProducts" : [ ],
+  "appFamily" : "default",
+  "appId" : "da496fae-2a04-4a5c-b2d0-709278a6f9db",
+  "attributes" : [ ],
+  "callbackUrl" : "http://weatherapp.com",
+  "createdAt" : 1380290158713,
+  "createdBy" : "noreply_admin@apigee.com",
+  "credentials" : [ {
+    "apiProducts" : [ {
+      "apiproduct" : "PremiumWeatherAPI",
+      "status" : "approved"
+    } ],
+    "attributes" : [ ],
+    "consumerKey" : "bBGAQrXgivA9lKu7NMPyoYpVKNhGar6K",
+    "consumerSecret" : "hAr4Gn0gA9vAyvI4",
+    "expiresAt" : -1,
+    "issuedAt" : 1380290161417,
+    "scopes" : [ ],
+    "status" : "approved"
+  } ],
+  "developerId" : "5w95xGkpnjzJDBT4",
+  "lastModifiedAt" : 1380290158713,
+  "lastModifiedBy" : "noreply_admin@apigee.com",
+  "name" : "weatherapp",
+  "scopes" : [ ],
+  "status" : "approved"
+}
+</pre>
+
+  <p>Note the values for <code>consumerKey</code> and <code>consumerSecret</code>. You use these
+  credentials to obtain an access token by presenting them as Basic Authentication credentials in
+  an HTTP request, as shown below. The grant type is presented as a query parameter to the request.
+  (Be sure to change the value of the variable {org_name} to reflect the name of your organization
+  on Apigee Edge.)</p>
+
+  <h3 id="howtoexchangeclientcredentialsforanaccesstoken-createarequesttoobtainanaccesstoken">
+  Create a request to obtain an access token</h3>
+
+  <p>In the following request, substitute the value of your <code>consumerKey</code> for
+  <code>client_id</code>. Substitute the value of the associated <code>consumerSecret</code> for
+  <code>client_secret</code>.</p>
+  <pre class="terminal">
+$ curl https://{org_name}-test.apigee.net/oauth/client_credential/accesstoken?grant_type=client_credentials -X POST -d 'client_id=bBGAQrXgivA9lKu7NMPyoYpVKNhGar6K&amp;client_secret=hAr4Gn0gA9vAyvI4'
+</pre>
+
+  <p>API Services verifies the consumer key and secret and then generates a response containing the
+  access token for this app:</p>
+  <pre class="prettyprint">
+{
+  "issued_at" : "1380892555397",
+  "application_name" : "957aa73f-25c2-4ead-8021-adc01f0d2c6b",
+  "scope" : "",
+  "status" : "approved",
+  "api_product_list" : "[oauth-test]",
+  "expires_in" : "3599",
+  "developer.email" : "tesla@weathersample.com",
+  "organization_id" : "0",
+  "client_id" : "bBGAQrXgivA9lKu7NMPyoYpVKNhGar6K",
+  "access_token" : "ylSkZIjbdWybfs4fUQe9BqP0LH5Z",
+  "organization_name" : "rqa",
+  "refresh_token_expires_in" : "0",
+  "refresh_count" : "0"
+}
+</pre>
+
+  <p>Note the <code>access_token</code> value in the response above. This is the access token that
+  the app will use to gain runtime access to protected resources. The access token for this app is
+  <code>ylSkZIjbdWybfs4fUQe9BqP0LH5Z</code>.</p>
+
+  <p>You now have a valid access token, <code>ylSkZIjbdWybfs4fUQe9BqP0LH5Z</code>, that can be used
+  to access protected APIs.</p>
+
+  <h3 id="howtoexchangeclientcredentialsforanaccesstoken-workingwiththedefaultoauthconfiguration">
+  Working with the default OAuth configuration</h3>
+
+  <p>Each organization (even a free trial org) on Apigee Edge is provisioned with an OAuth token
+  endpoint. The endpoint is preconfigured with policies in the API proxy called
+  <strong>oauth</strong>. You can begin using the token endpoint as soon as you create an account
+  on <a href="https://accounts.apigee.com/accounts/sign_up">Apigee Edge</a>.</p>
+
+  <p>The default OAuth endpoint exposes the following endpoint URI:</p>
+  <pre class="prettyprint">
+/oauth/client_credential/accesstoken
+</pre>
+
+  <p>Publish this URI to developers who need to obtain access tokens. App developers configure
+  their apps to call this endpoint, presenting their consumer key and secret pairs to obtain access
+  tokens.</p>
+
+  <p>The default client credentials token endpoint is exposed over the network at the following
+  URL:</p>
+  <pre class="prettyprint">
+https://{org_name}-{env_name}.apigee.net/oauth/client_credential/accesstoken
+</pre>
+
+  <p>For example, if your organization name is "apimakers", the URL would be:</p>
+  <pre class="prettyprint">
+https://apimakers-test.apigee.net/oauth/client_credential/accesstoken
+</pre>
+
+  <p>This is the URL that developers call to obtain access tokens.</p>
+
+  <aside class="key-point"><b>Tip:</b> By default, out-of-the-box OAuth endpoints are only deployed
+  in the test environment. Before they are available in prod, you must explicitly deploy the API
+  proxy called <code>oauth</code> to <code>prod</code>.</aside>
+
+  <h2 id="3leggedoauthconfigurations">3-legged OAuth configurations</h2>
+
+  <p>Three-legged OAuth configurations (<strong>authorization code, implicit and password grant
+  types</strong>) require you, the API provider, to authenticate app end users. Since every
+  organization authenticates users in different ways, some policy customization or code is required
+  to integrate OAuth with your user store. For example, all of your users may be stored in Active
+  Directory, in an LDAP, or some other user store. To get three-legged OAuth up and running, you
+  need to integrate a check against this user store into the overall OAuth flow.</p>
+
+  <aside class="note">
+    <b>Sample:</b> You can see an example of how to do this in a sample API proxy on GitHub. For a
+    fully configured API proxy that supports authorization code, implicit, and client credentials
+    grant types, along with a sample login app, see the <a href=
+    "https://github.com/apigee/api-platform-samples/tree/master/sample-proxies/oauth-login-app">OAuth
+    Login App</a> sample on GitHub.
+
+    <p>To learn how to configure 3-Legged OAuth endpoints, see <a href=
+    "/api-platform/security/oauth/configuring-oauth-endpoints-and-policies.html">OAuth endpoints.</a>.</p>
+  </aside>
+
+  <h2 id="oauth10a">OAuth 1.0a</h2>
+
+  <p>For details on the OAuth 1.0a policy, see <a href=
+  "/api-platform/reference/policies/oauth-10-policy.html">OAuth v1.0a policy</a>.</p>
+
+  <aside class="note"><b>Sample:</b> A fully-functional <a href=
+  "https://github.com/apigee/api-platform-samples/tree/master/sample-proxies/oauth10a-3legged">3-legged
+  OAuth 1.0a sample</a> is available in the API Platform samples on GitHub.</aside>
+
+  <h2 id="gethelp">Get help</h2>
+
+  <p>For help, see <a href="https://community.apigee.com/content/apigee-customer-support">Apigee
+  Customer Support</a>.</p>{% endblock %}

@@ -1,0 +1,76 @@
+  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}Customizing Edge Email
+  Templates{% endblock %} {% block body %}
+
+  <p>Edge automatically sends emails in response to certain events. For each of these events, Edge
+  defines a default email template in <span style=
+  "font-family:courier new,courier,monospace;">/opt/apigee/edge-ui/email-templates</span>. To
+  customize these emails, you can edit the default templates.</p>
+
+  <aside class="note"><b>Note:</b> These events are triggered when modifying users in the Edge
+  management UI. If you use a script to add or modify a user, no email is sent.</aside>
+
+  <p>The events where an email is sent, and the default template file for the generated email,
+  are:</p>
+
+  <ul>
+    <li>New user is added: <span style=
+    "font-family:courier new,courier,monospace;">user-added-new.html</span></li>
+
+    <li>Existing user requests a password reset: <span style=
+    "font-family:courier new,courier,monospace;">password-reset.html</span></li>
+
+    <li>A user is added to an organization: <span style=
+    "font-family:courier new,courier,monospace;">user-added-existing.html</span></li>
+  </ul>
+
+  <aside class="note"><b>Note:</b> The next installation of Edge overwrites these files, so make
+  sure to backup any customizations that you make.</aside>
+
+  <p>The "From" field of the email can be set by using the <span style=
+  "font-family:courier new,courier,monospace;">conf_apigee_apigee.mgmt.mailfrom</span> property in
+   <span style=
+  "font-family: 'courier new', courier, monospace;">/opt/apigee/customer/application/ui.properties</span> (if
+  that file does not exist, create it). For example:</p>
+  <pre class="prettyprint">
+conf_apigee_apigee.mgmt.mailfrom="My Company &lt;myCo@company.com&gt;"
+</pre>
+
+  <aside class="note"><b>Note:</b> Use the <span style=
+  "font-family:courier new,courier,monospace;">SMTPMAILFROM</span> property in the
+  installation configuration file to set the "From" field at install time. The <span style=
+  "font-family:courier new,courier,monospace;">SMTPMAILFROM</span> property is required at install
+  time. See <a href="edge-configuration-file-reference.html">Edge Configuration File Reference</a>
+  for more. </aside>
+
+  <p>The email subjects are customizable by editing the following properties in <span style=
+  "font-family:courier new,courier,monospace;">/opt/apigee/customer/application/ui.properties</span>
+  (if that file does not exist, create it):</p>
+
+  <ul>
+    <li><span style=
+    "font-family:courier new,courier,monospace;">conf_apigee-base_apigee.emails.passwordreset.subject</span></li>
+
+    <li><span style=
+    "font-family:courier new,courier,monospace;">conf_apigee-base_apigee.emails.useraddedexisting.subject</span></li>
+
+    <li><span style=
+    "font-family:courier new,courier,monospace;">conf_apigee-base_apigee.emails.useraddednew.subject</span></li>
+  </ul>
+
+  <p>Several email properties reference the <span style=
+  "font-family:courier new,courier,monospace;">{companyNameShort}</span> placeholder, which
+  defaults to a value of "Apigee". You can set the value of the placeholder by using the
+  <span style=
+  "font-family:courier new,courier,monospace;">conf_apigee_apigee.branding.companynameshort</span>
+  property in <span style="font-family:courier new,courier,monospace;">ui.properties</span>. For
+  example:</p>
+  <pre class="prettyprint">
+conf_apigee_apigee.branding.companynameshort="My Company"
+</pre>
+
+  <p>After setting any properties in <span style=
+  "font-family:courier new,courier,monospace;">/opt/apigee/customer/application/ui.properties</span>,
+  you must restart the Edge UI:</p>
+  <pre class="prettyprint">
+&gt; /opt/apigee/apigee-service/bin/apigee-service edge-ui restart
+</pre>{% endblock %}

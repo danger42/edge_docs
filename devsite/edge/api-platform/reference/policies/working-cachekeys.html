@@ -1,0 +1,227 @@
+  {% extends "_base.html" %} {% block title %}Working with cache keys{% endblock %} {% block body %}
+
+  <p>When using cache policies, you ensure the uniqueness of cached value keys by configuring cache
+  keys. A cache key, along with other values you can configure, gives you a reliable way to get out
+  the same data that you put in. You use cache keys with the <a href=
+  "/api-platform/reference/policies/populate-cache-policy.html">Populate Cache policy</a>, <a href=
+  "/api-platform/reference/policies/lookup-cache-policy.html">LookupCache policy</a>, <a href=
+  "/api-platform/reference/policies/invalidate-cache-policy.html">InvalidateCache policy</a>, and
+  <a href="/api-platform/reference/policies/response-cache-policy.html">Response Cache
+  policy</a>.</p>
+
+  <p>The values of configuration elements --
+  <code>&lt;CacheKey&gt;</code>/<code>&lt;KeyFragment&gt;</code>, <code>&lt;Scope&gt;</code>, and
+  <code>&lt;Prefix&gt;</code> -- are concatenated to create an identifier that is associated with
+  the value you put into the cache. You use this same configuration to retrieve the value.</p>
+
+  <p>With the following cache policy configuration elements, you can create a cache key:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Cache Configuration Element</th>
+
+        <th>Description</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td><code>&lt;CacheKey&gt;</code> / <code>&lt;KeyFragment&gt;</code></td>
+
+        <td>Use <code>&lt;CacheKey&gt;</code> <code>&lt;KeyFragment&gt;</code> elements combined to
+        specify a unique identifier for cache entries. KeyFragment values can be static literals or
+        set from variables.</td>
+      </tr>
+
+      <tr>
+        <td><code>&lt;Scope&gt;</code> or <code>&lt;Prefix&gt;</code></td>
+
+        <td>Use the <code>&lt;Scope&gt;</code> or <code>&lt;Prefix&gt;</code> elements to further
+        namespace cache keys. <code>&lt;Scope&gt;</code> enumerates a list of predefined values.
+        The <code>&lt;Prefix&gt;</code> element overrides <code>&lt;Scope&gt;</code> with a value
+        of your own choosing.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>These values are concatenated in the following form, with <code>&lt;Scope&gt;</code> or
+  <code>&lt;Prefix&gt;</code> values separated from KeyFragment values by double-underscores.
+  Multiple KeyFragment values are also separated by double underscores.</p>
+
+  <blockquote>
+    <i>scope</i> | <i>prefix__keyfragment</i>[<i>__keyfragment</i>]
+  </blockquote>
+
+  <p>With the <a href="/api-platform/reference/policies/response-cache-policy.html">Response Cache
+  policy</a>, you can optionally append this cache key with values from the response Accept
+  header.</p>
+
+  <h2 id="usingcachekey">Using &lt;CacheKey&gt;</h2>
+
+  <p>The <code>&lt;CacheKey&gt;</code> element configures how Edge will create a unique identifier
+  (a key) for each cache entry it creates. When Edge retrieves the cached value, it uses the cache
+  key to locate the correct value. In the ResponseCache policy, one configuration defines the key
+  for both caching and retrieval. In the PopulateCache and LookupCache policies, each policy must
+  have identical <code>&lt;CacheKey&gt;</code>elements to ensure that a value retrieved from the
+  cache corresponds to a value put there.</p>
+
+  <p>The <code>&lt;CacheKey&gt;</code> element can include multiple
+  <code>&lt;KeyFragment&gt;</code> elements. At runtime, the values specified by
+  <code>&lt;KeyFragment&gt;</code> elements are concatenated with two underscores between them in
+  to make up part of the cache key.</p>
+
+  <p>For example, the following configuration creates a value of <code>hello__world</code> for use
+  in the cache key:</p>
+  <pre class="prettyprint">
+&lt;CacheKey&gt;
+    &lt;KeyFragment&gt;hello&lt;/KeyFragment&gt;
+    &lt;KeyFragment&gt;world&lt;/KeyFragment&gt;
+&lt;CacheKey&gt;
+</pre>
+
+  <p>You can also use a variable values in a cache key by referencing the variable in a
+  <code>&lt;KeyFragment&gt;</code> element, as shown here:</p>
+  <pre class="prettyprint">
+&lt;KeyFragment ref="<i>variable_name</i>"/&gt;
+</pre>
+
+  <p>For example, to make the cache key value incorporate the Content-Type of the request message,
+  you do as follows:</p>
+  <pre class="prettyprint">
+&lt;KeyFragment ref="request.header.Content-Type"/&gt;
+</pre>
+
+  <p>In the following configuration, the <code>request.header.Content-Type</code> variable has the
+  value <code>application/json</code>.</p>
+  <pre class="prettyprint">
+&lt;CacheKey&gt;
+  &lt;KeyFragment&gt;apiAccessToken&lt;/KeyFragment&gt;
+  &lt;KeyFragment ref="request.header.Content-Type" /&gt;
+  &lt;KeyFragment&gt;bar&lt;/KeyFragment&gt;
+&lt;/CacheKey&gt;
+</pre>
+
+  <p>This result a cache key ending with <code>apiAccessToken__application/json__bar</code>.</p>
+
+  <p>For a list of the variables you can use, see <a href=
+  "/api-platform/reference/variables-reference.html">Variables reference</a>.</p>
+
+  <h3 id="usingcachekey-cachekeysderivedfromqueryparameters">Cache keys derived from query
+  parameters</h3>
+
+  <p>Using variables such as request.queryparam.&lt;queryparam_name&gt; and request.querystring,
+  you can configure a cache key so that the key includes parts of a request's query string. For
+  example, the following URL uses two query parameters -- param1 and param2 -- that you can use in
+  your cache key:</p>
+  <pre class="prettyprint">
+http://myaccount.apigee.net/mydata?param1=value1&amp;param2=value2
+</pre>
+
+  <p>Your <code>&lt;CacheKey&gt;</code> element can incorporate these values with a configuration
+  such as the following:</p>
+  <pre class="prettyprint">
+&lt;CacheKey&gt;
+    &lt;KeyFragment ref="request.queryparam.param1" /&gt;
+    &lt;KeyFragment ref="request.queryparam.param2" /&gt;
+&lt;CacheKey&gt;
+</pre>
+
+  <p>At runtime, the cache key would include the param values concatenated, as in the
+  following:</p>
+
+  <p><em>other_key_parts</em>__value1__value2</p>
+
+  <p>Keep in mind that when you use variables to insert values from parameters, the values will be
+  concatenated in the order suggested by the <code>&lt;KeyFragment&gt;</code> element order. Also,
+  note that Edge will use only those values that you specifically reference with
+  <code>&lt;KeyFragment&gt;</code> elements. If your request query parameter lists vary, the
+  variations won't be accounted for in the cache key.</p>
+
+  <p>An alternative is to use the request.querystring variable, which inserts the entire string of
+  parameters literally as part of the cache key. Keep in mind that while this method accounts for
+  all of the parameters, if the order of parameters varies from one request to the next then the
+  key will be different. In other words, <code>param1=value1&amp;param2=value2</code> and
+  <code>param2=value2&amp;param1=value1</code> don't result in the same cache key value.</p>
+
+  <p>For a list of the variables you can use, see <a href=
+  "/api-platform/reference/variables-reference.html">Variables reference</a>.</p>
+
+  <h2 id="usingscopeandprefix">Using &lt;Scope&gt; and &lt;Prefix&gt;</h2>
+
+  <p>The <code>&lt;Scope&gt;</code> and <code>&lt;Prefix&gt;</code> elements provide a way to
+  augment the key with a namespace prefix. The values they represent are prepended to your cache
+  key.</p>
+
+  <p>The <code>&lt;Scope&gt;</code> element is used by default. It is an enumeration whose values
+  range from broad to narrow, with the narrowest as the default. This default value is used unless
+  you specify another value or specify a <code>&lt;Prefix&gt;</code> element value. You can
+  override the <code>&lt;Scope&gt;</code> value by using a <code>&lt;Prefix&gt;</code> element, and
+  so specify a custom value for namespacing.</p>
+
+  <p>For example, the <code>&lt;Scope&gt;</code> value "Global" -- the broadest scope -- represents
+  the organization and environment name. So if your proxy is deployed in an organization called
+  'mycompany' and an environment named 'prod', the resulting preprended value will be the
+  following:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Configuration</th>
+
+        <th>Result</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td><code>&lt;Scope&gt;Global&lt;/Scope&gt;</code></td>
+
+        <td><code>mycompany__prod__</code>.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>If you're using the Global scope with the cache key defined above, the result is as
+  follows:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Configuration</th>
+
+        <th>Result</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td>
+          <pre class="prettyprint">
+&lt;Scope&gt;Global&lt;/Scope&gt;
+&lt;CacheKey&gt;
+    &lt;KeyFragment&gt;hello&lt;/KeyFragment&gt;
+    &lt;KeyFragment&gt;world&lt;/KeyFragment&gt;
+&lt;CacheKey&gt;
+</pre>
+        </td>
+
+        <td><code>mycompany__prod__hello__world</code>.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>As described in <a href=
+  "/api-platform/reference/policies/lookup-cache-policy.html">LookupCache policy</a>, the scope can
+  be configured for increasing specificity from Global to Exclusive. An Exclusive scope is the most
+  specific, and therefore represents minimal risk of namespace collisions within a given cache.
+  Each cache entry with an Exclusive scope is prefixed in the following form:</p>
+  <pre class="prettyprint">
+orgName__envName__apiProxyName__deployedRevisionNumber__proxy|TargetName__[serializedCacheKey]
+</pre>
+
+  <p>For example, a cache key created from using the Exclusive value for <code>&lt;Scope&gt;</code>
+  would look like the following:</p>
+  <pre class="prettyprint">
+apifactory__test__weatherapi__16__default__apiAccessToken
+</pre>{% endblock %}

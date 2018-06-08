@@ -1,0 +1,222 @@
+  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}Configuring TLS between a
+  Router and a Message Processor{% endblock %} {% block body %}
+
+  <p>By default, TLS between the Router and Message Processor is disabled.</p>
+
+  <aside class="note"><b>Note:</b> Port 8082 on the Message Processor has to be open for access by
+  the Router to perform health checks when you configure TLS/SSL between the Router and Message
+  Processor. If you do not configure TLS/SSL between the Router and Message Processor, the default
+  configuration, port 8082 still must be open on the Message Processor to manage the component, but
+  the Router does not require access to it.</aside>
+
+  <p>Use the following procedure to enable TLS encryption between a Router and the Message
+  Processor:</p>
+
+  <ol>
+    <li>Ensure that port 8082 on the Message Processor is accessible by the Router.</li>
+
+    <li>Generate the keystore JKS file containing your TLS certification and private key. For more,
+    see <a href="configuring-ssl-edge-premises.html">Configuring TLS/SSL for Edge On
+    Premises</a>.</li>
+
+    <li>Copy the keystore JKS file to a directory on the Message Processor server, such
+    as <span style=
+    "font-family: &quot;courier new&quot;, courier, monospace;">/opt/apigee/customer/application</span>.</li>
+
+    <li>Change permissions and ownership of the JKS file:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt; chown apigee:apigee
+    /opt/apigee/customer/application/keystore.jks<br>
+    &gt; chmod 600 /opt/apigee/customer/application/keystore.jks</span><br>
+    <br>
+    where <span style="font-family:courier new,courier,monospace;">keystore.jks</span> is the name
+    of your keystore file.</li>
+
+    <li>Edit the file <span style=
+    "font-family:courier new,courier,monospace;">/opt/apigee/customer/application/message-processor.properties</span>.
+    If the file does not exist, create it.</li>
+
+    <li>Set the following properties in the <span style=
+    "font-family:courier new,courier,monospace;">message-processor.properties</span> file:<br>
+    <span style=
+    "font-family:courier new,courier,monospace;">conf_message-processor-communication_local.http.ssl=true<br>
+
+    conf/message-processor-communication.properties+local.http.port=8443<br>
+    conf/message-processor-communication.properties+local.http.ssl.keystore.type=jks<br>
+    conf/message-processor-communication.properties+local.http.ssl.keystore.path=/opt/apigee/customer/application/keyStore.jks<br>
+
+    conf/message-processor-communication.properties+local.http.ssl.keyalias=apigee-devtest<br>
+    # Enter the obfuscated keystore password below.<br>
+    conf/message-processor-communication.properties+local.http.ssl.keystore.password=OBF:<em><strong>obsPword</strong></em></span><br>
+
+    <br>
+    where <em><strong>keyStore.jks</strong></em> is your keystore file, and
+    <em><strong>obsPword</strong></em> is your obfuscated keystore and keyalias password. See
+    <a href="configuring-ssl-edge-premises.html">Configuring TLS/SSL for Edge On Premises</a> for
+    information on generating an obfuscated password. </li>
+
+    <li>Ensure that the <span style=
+    "font-family: &quot;courier new&quot;, courier, monospace;">message-processor.properties</span> file
+    is owned by the 'apigee' user:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt;
+    chown apigee:apigee /opt/apigee/customer/application/message-processor.properties</span></li>
+
+    <li>Stop the Message-Processors and Routers:<br>
+    <span style=
+    "font-family: &quot;courier new&quot;, courier, monospace;">/opt/apigee/apigee-service/bin/apigee-service edge-message-processor
+    stop<br>
+    /opt/apigee/apigee-service/bin/apigee-service edge-router stop</span></li>
+
+    <li>On the Router, delete any files in <span style=
+    "font-family:courier new,courier,monospace;">/opt/nginx/conf.d</span>:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt; rm -f
+    /opt/nginx/conf.d/*</span></li>
+
+    <li>Start the Message-Processors and Routers:<br>
+    <span style=
+    "font-family:courier new,courier,monospace;">/opt/apigee/apigee-service/bin/apigee-service
+    edge-message-processor start<br>
+    /opt/apigee/apigee-service/bin/apigee-service edge-router start</span></li>
+
+    <li>Repeat for any additional Message Processors.</li>
+  </ol>
+
+  <p>After TLS is enabled between the Router and Message Processor, the Message Processor log file
+  contains this INFO message:</p>
+  <pre class="prettyprint">
+MessageProcessorHttpSkeletonFactory.configureSSL() : Instantiating Keystore of type: jks
+</pre>
+
+  <p>This INFO statement confirms that TLS is working between the Router and Message Processor.</p>
+
+  <p>The following table lists all of the available properties in message-processor.properties:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>
+          <p><strong>Properties</strong></p>
+        </th>
+
+        <th>
+          <p><strong>Description</strong></p>
+        </th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td>
+          <p><span style=
+          "font-family:courier new,courier,monospace;">conf_message-processor-communication_local.http.host=&lt;localhost
+          or IP address&gt;</span></p>
+
+          <p>           </p>
+        </td>
+
+        <td>
+          <p>Optional. Hostname to listen on for router connections. This will override the host
+          name configured at registration.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><span style=
+          "font-family:courier new,courier,monospace;">conf/message-processor-communication.properties+local.http.port=8998</span></p>
+        </td>
+
+        <td>
+          <p>Optional. Port to listen on for router connections. Default is 8998.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><span style=
+          "font-family:courier new,courier,monospace;">conf_message-processor-communication_local.http.ssl=&lt;false
+          | true&gt;</span></p>
+        </td>
+
+        <td>
+          <p>Set this to true to enable TLS/SSL. Default is false. When TLS/SSL is enabled, you
+          must set <span style=
+          "font-family:courier new,courier,monospace;">local.http.ssl.keystore.path</span> and
+          <span style=
+          "font-family:courier new,courier,monospace;">local.http.ssl.keyalias</span>.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><span style=
+          "font-family:courier new,courier,monospace;">conf/message-processor-communication.properties+local.http.ssl.keystore.path=</span></p>
+        </td>
+
+        <td>
+          <p>Local file system path to the keystore (JKS or PKCS12). Mandatory when <span style=
+          "font-family:courier new,courier,monospace;">local.http.ssl=true</span>.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><span style=
+          "font-family:courier new,courier,monospace;">conf/message-processor-communication.properties+local.http.ssl.keyalias=</span></p>
+        </td>
+
+        <td>
+          <p>Key alias from the keystore to be used for TLS/SSL connections. Mandatory when
+          <span style="font-family:courier new,courier,monospace;">local.http.ssl=true</span>.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><span style=
+          "font-family:courier new,courier,monospace;">conf/message-processor-communication.properties+local.http.ssl.keyalias.password=</span></p>
+        </td>
+
+        <td>
+          <p>Password used for encrypting the key inside the keystore. Use an obfuscated password
+          in this format: OBF:xxxxxxxxxx</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><span style=
+          "font-family:courier new,courier,monospace;">conf/message-processor-communication.properties+local.http.ssl.keystore.type=jks</span></p>
+        </td>
+
+        <td>
+          <p>Keystore type. Only JKS and PKCS12 are currently supported. Default is JKS.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><span style=
+          "font-family:courier new,courier,monospace;">conf/message-processor-communication.properties+local.http.ssl.keystore.password=</span></p>
+        </td>
+
+        <td>
+          <p>Optional. Obfuscated password for the keystore. Use an obfuscated password in this
+          format: OBF:xxxxxxxxxx</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><span style=
+          "font-family:courier new,courier,monospace;">conf_message-processor-communication_local.http.ssl.ciphers=&lt;cipher1,cipher2&gt;</span></p>
+        </td>
+
+        <td>
+          <p>Optional. When configured, only the ciphers listed are allowed. If omitted, use all
+          ciphers supported by the JDK.</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  {% endblock %}

@@ -1,0 +1,227 @@
+  {% extends "_base.html" %} {% block title %}Understanding routes{% endblock %} {% block body %}
+
+  <p>A route determines the path of a request from the ProxyEndpoint to the TargetEndpoint.
+  Included in the route is the URL used to access the API ProxyEndpoint and the URL of the backend
+  service defined by the TargetEndpoint.</p>
+
+  <div class="video">
+    <p>Watch this video for an introduction to routes, describing the relationship between the
+    ProxyEndpoint and the TargetEndpoint.</p>
+
+    <div style="text-align: left;">
+      <iframe allowfullscreen="" frameborder="0" height="315" src=
+      "https://www.youtube.com/embed/Lg3C-CPYcIo" width="560"></iframe>
+    </div>
+  </div>
+
+  <h2 id="determiningtheurloftheapiproxyendpoint">Determining the URL of the API proxy
+  endpoint</h2>
+
+  <p>The following image shows a request coming in to the ProxyEndpoint from an app, and that
+  request being directed to the backend service: </p>
+
+  <p><img alt="" src="/api-platform/images/ApigeeProxyRoute_v2.png"></p>
+
+  <p>After you create an API proxy on Edge, the default URL that an app uses to access the proxy
+  has the form:</p>
+  <pre class="prettyprint">
+http://{org-name}-{env-name}.apigee.net/{base-path}/{resource-path}
+
+https://{org-name}-{env-name}.apigee.net/{base-path}/{resource-path}
+</pre>
+
+  <p>where:</p>
+
+  <ul>
+    <li><span style="font-family: 'courier new', courier, monospace;">{org-name}</span> is
+    your organization name. This name is created when you create an account on Edge. </li>
+
+    <li><span style="font-family: 'courier new', courier, monospace;">{env-name}</span> is the
+    Edge environment name. By default, all Apigee organizations created in the cloud are
+    provisioned with two environments: '<span style=
+    "font-family: 'courier new', courier, monospace;">test</span>' and '<span style=
+    "font-family: 'courier new', courier, monospace;">prod</span>'. When deploying an API proxy,
+    you can choose to deploy it to one or both environments.</li>
+
+    <li><span style=
+    "font-family: 'courier new', courier, monospace;">{base-path}</span> and <span style=
+    "font-family: 'courier new', courier, monospace;">{resource-path}</span> are defined when
+    you create the API proxy.</li>
+  </ul>
+
+  <p>When a request comes in to Edge, Edge parses the URL to direct the request to the correct
+  ProxyEndpoint.  For example, the following URL is used to access an API proxy on Edge:</p>
+  <pre class="prettyprint">
+http://myOrg-prod.apigee.net/v1/weather/forecastrss
+</pre>
+
+  <p>If you examine the ProxyEndpoint definition for the API proxy in the figure above, you can see
+  how this URL is parsed by Edge:</p>
+
+  <ol>
+    <li>The domain portion of the URL, <span style=
+    "font-family:courier new,courier,monospace;">http://myOrg-prod.apigee.net</span>, corresponds
+    to a <em>virtual host</em> on Edge. In the ProxyEndpoint definition above, the API proxy
+    uses the <span style=
+    "font-family: 'courier new', courier, monospace;">&lt;VirtualHost&gt;</span> tag to
+    reference a virtual host named <span style=
+    "font-family: 'courier new', courier, monospace;">default</span>. You can have multiple virtual
+    hosts defined in your environment.<br>
+    <br>
+    A virtual host defines the domains and ports on which an API proxy is exposed. A virtual host
+    also defines whether the API proxy is accessed by using the HTTP protocol, or by the encrypted
+    HTTPS protocol. For detailed information on virtual hosts, see <a href=
+    "/api-platform/fundamentals/virtual-hosts.html">About virtual hosts (Beta)</a>.</li>
+
+    <li>The second part of the URL, <span style=
+    "font-family:courier new,courier,monospace;">/v1/weather</span>, is determined by the
+    <span style="font-family:courier new,courier,monospace;">&lt;BasePath&gt;</span> element in the
+    ProxyEndpoint. The base path must be unique to the API proxy for the environment so that two
+    API proxies do not have the same base path.</li>
+
+    <li>The third part of the URL, <span style=
+    "font-family:courier new,courier,monospace;">/forecastrss</span>, is a resource defined by the
+    API proxy with the corresponding Conditional Flow defined by the <span style=
+    "font-family:courier new,courier,monospace;">&lt;Flows&gt;</span> tag.</li>
+  </ol>
+
+  <div class="video">
+    <p><strong>Video:</strong> Watch a short video to learn more about API proxy endpoints.</p>
+
+    <div style="text-align: left; margin:15px">
+      <iframe allowfullscreen="" frameborder="0" height="480" src=
+      "https://www.youtube.com/embed/tjpqYUbhPec" width="560"></iframe>
+    </div>
+  </div>
+
+  <h2 id="determiningtheurlofthetargetendpoint">Determining the URL of the target endpoint</h2>
+
+  <p>The <span style="font-family:courier new,courier,monospace;">&lt;RouteRule&gt;</span> tag in a
+  ProxyEndpoint definition determines the target of the API proxy, and is evaluated after all
+  policies in the PreFlow, Conditional Flows, and PostFlow of the ProxyEndpoint are processed.</p>
+
+  <p>A ProxyEndpoint can define the target as:</p>
+
+  <ul>
+    <li>A direct URL to a backend service.</li>
+
+    <li>A single TargetEndpoint definition.</li>
+
+    <li>Multiple TargetEndpoints where the API proxy delegates the request to a target
+    endpoint based on a condition.</li>
+
+    <li>Null route or target, meaning the request is not forwarded to a target. Instead, all of the
+    processing of the request, and the generation of the response, occurs on Edge.</li>
+  </ul>
+
+  <div class="video">
+    <p><strong>Video:</strong> Watch a short video to learn more about target endpoints.</p>
+
+    <div style="text-align: left; margin:15px">
+      <iframe allowfullscreen="" frameborder="0" height="480" src=
+      "https://www.youtube.com/embed/ITPOsjZGVfc" width="560"></iframe>
+    </div>
+  </div>
+
+  <h3 id="determiningtheurlofthetargetendpoint-directurl">Direct URL</h3>
+
+  <p>A ProxyEndpoint can directly invoke a backend service, bypassing any named TargetEndpoint
+  configuration. For example, the following <span style=
+  "font-family:courier new,courier,monospace;">&lt;RouteRule&gt;</span> always makes an HTTP
+  call to <span style=
+  "font-family:courier new,courier,monospace;">http://api.mycompany.com/myAPI:</span></p>
+  <pre class="prettyprint">
+&lt;RouteRule name="default"&gt;
+  &lt;URL&gt;http://api.mycompany.com/myAPI&lt;/URL&gt; 
+&lt;/RouteRule&gt;
+</pre>
+
+  <p>However, because there is no TargetEndpoint, you can only add policies to the flows defined
+  by the ProxyEndpoint.</p>
+
+  <h3 id="determiningtheurlofthetargetendpoint-singletarget">Single target</h3>
+
+  <p>In a single target definition, the ProxyEndpoint references a single TargetEndpoint definition
+  by name, as shown in the figure above:</p>
+  <pre class="prettyprint">
+&lt;RouteRule name="default"&gt;
+  &lt;TargetEndpoint&gt;default&lt;/TargetEndpoint&gt;
+&lt;/RouteRule&gt;
+</pre>
+
+  <p>All requests to this API proxy are directed to the same TargetEndpoint definition. The
+  <span style="font-family:courier new,courier,monospace;">&lt;URL&gt;</span> tag in the
+  TargetEndpoint determines the location of the backend service. in the figure above, the target
+  URL is <span style=
+  "font-family:courier new,courier,monospace;">http://weather.yahooapis.com</span>.</p>
+
+  <h3 id="determiningtheurlofthetargetendpoint-conditionaltargets">Conditional targets</h3>
+
+  <p>The <span style="font-family:courier new,courier,monospace;">&lt;RouteRule&gt;</span> tag lets
+  you direct a request to a target based on a condition. You can use flow variables, query
+  parameters, HTTP headers, message content, or contextual information such time of day and locale
+  to determine the target endpoint. For example, you might include a geographical area, such as US
+  and UK, in a request URL. You can then route a request to a target endpoint based on the
+  region.</p>
+
+  <p>The following route rule evaluates an HTTP header in a request. If the HTTP header
+  <span style="font-family:courier new,courier,monospace;">routeTo</span> has the value
+  <span style="font-family:courier new,courier,monospace;">TargetEndpoint1</span>, then the request
+  is forwarded to the TargetEndpoint named TargetEndpoint1. If not, then the request is forwarded
+  to TargetEndpoint2.</p>
+  <pre class="prettyprint">
+&lt;RouteRule name="MyRoute"&gt;
+  &lt;Condition&gt;request.header.routeTo = "TargetEndpoint1"&lt;/Condition&gt;
+  &lt;TargetEndpoint&gt;TargetEndpoint1&lt;/TargetEndpoint&gt;
+&lt;/RouteRule&gt;
+&lt;RouteRule name="default"&gt;
+ &lt;TargetEndpoint&gt;TargetEndpoint2&lt;/TargetEndpoint&gt;
+&lt;/RouteRule&gt;
+</pre>
+
+  <p>If you have multiple route rules, create one as the 'default', that is, as a route
+  rule with no condition. Ensure that the default route rule is defined last in the list
+  of conditional Routes because rules are evaluated top-down in the ProxyEndpoint.</p>
+
+  <aside class="note"><b>Note:</b> <strong>Order is important</strong>: If you have more than one
+  RouteRule in a ProxyEndpoint, their order in the XML configuration is important. The first
+  RouteRule to "match" gets executed. (RouteRules with no condition always match.) In the previous
+  example, if the unconditional "default" RouteRule came first, it would be executed even if the
+  condition of the "MyRoute" rule would have matched. So list your conditional RouteRules before an
+  unconditional RouteRule. </aside>
+
+  <div class="video">
+    <p><strong>Video:</strong> Watch a short video to learn how to route to a target endpoint using
+    conditional targets.</p>
+
+    <div style="text-align: left; margin:15px">
+      <iframe allowfullscreen="" frameborder="0" height="480" src=
+      "https://www.youtube.com/embed/URxpF9iWRaA" width="560"></iframe>
+    </div>
+  </div>
+
+  <h3 id="determiningtheurlofthetargetendpoint-nullroute">Null route</h3>
+
+  <p>A null route supports scenarios in which the request message does not need to be forwarded to
+  a TargetEndpoint. This is useful when the ProxyEndpoint performs all of the necessary processing,
+  for example by using JavaScript to call an external service.</p>
+
+  <p>The following example defines a null route:</p>
+  <pre class="prettyprint">
+&lt;RouteRule name="GoNowhere"/&gt;
+</pre>
+
+  <h2 id="learnmore">Learn more</h2>
+
+  <ul>
+    <li><a href="/api-platform/fundamentals/virtual-hosts.html">About virtual hosts (Beta)</a></li>
+
+    <li><a href="/api-platform/reference/policies/api-proxy-configuration-reference.html">API proxy
+    configuration reference</a></li>
+
+    <li><a href="/api-platform/reference/policies/endpoint-properties-reference.html">Endpoint
+    properties reference</a></li>
+
+    <li><a href="/api-platform/deploy/load-balancing-across-backend-servers.html">Load balancing
+    across backend servers</a></li>
+  </ul>{% endblock %}

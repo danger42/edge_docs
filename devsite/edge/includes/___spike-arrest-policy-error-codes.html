@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html devsite>
+  <head>
+    <title>Spike Arrest Policy Error Codes</title>
+  </head>
+  <body>
+  <p>This section describes the error messages and flow variables that are set when this policy
+  triggers an error. This information is important to know if you are developing fault rules for a
+  proxy. To learn more, see <a href=
+  "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html">What you need to know
+  about policy errors</a> and <a href="/api-platform/fundamentals/fault-handling.html">Handling
+  faults</a>.</p>
+
+  <h3>Error code prefix</h3>
+
+  <p><code>policies.ratelimit</code> <span style="font-size: 10pt">(<a href=
+  "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html#aboutthedefaultpolicyerrorresponse">What's
+  this?</a>)</span></p>
+
+  <h3>Runtime errors</h3>
+
+  <p>These errors can occur when the policy executes.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th scope="col" width="273">Error name</th>
+
+        <th scope="col" width="60">HTTP status</th>
+
+        <th scope="col" width="601">Occurs when</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td><code>SpikeArrestViolation</code></td>
+
+        <td>500</td>
+
+        <td>The rate limit is exceeded.</td>
+      </tr>
+
+      <tr>
+        <td><code>InvalidMessageWeight</code></td>
+
+        <td>500</td>
+
+        <td>The message weight value must be an integer.</td>
+      </tr>
+
+      <tr>
+        <td><code>FailedToResolveSpikeArrestRate</code></td>
+
+        <td>500</td>
+
+        <td>The referenced variable used to specify the rate can't be resolved.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Deployment errors</h3>
+
+  <p>These errors can occur when you deploy a proxy containing this policy.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th scope="col" width="273">Error name</th>
+
+        <th scope="col" width="603">Occurs when</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td><code>InvalidAllowedRate</code></td>
+
+        <td>Valid values are [int]ps or [int]pm.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Other errors</h3>
+
+  <table>
+    <thead>
+      <tr>
+        <th scope="col" width="273">Error name</th>
+
+        <th scope="col" width="605">Occurs when</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td><code>ErrorLoadingProperties</code></td>
+
+        <td>See fault string.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Fault variables</h3>
+
+  <p>These variables are set when a runtime error occurs. For more information, see <a href=
+  "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html">What you need to know
+  about policy errors</a>.</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <th width="324">Variables set <code><span style="font-size: 10pt">(<a href=
+        "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html">Learn
+        more</a>)</span></code></th>
+
+        <th width="428">Where</th>
+
+        <th width="428">Example</th>
+      </tr>
+
+      <tr>
+        <td width="324"><code>[prefix].[policy_name].failed</code></td>
+
+        <td width="428">The fault variable <code>[prefix]</code> is
+        <code><strong>ratelimit</strong>.</code><br>
+        The <code>[policy_name]</code> is the name of the policy that threw the error.</td>
+
+        <td width="428"><code>ratelimit.SA-SpikeArrestPolicy.failed = true</code></td>
+      </tr>
+
+      <tr>
+        <td><code>fault.[error_name]</code></td>
+
+        <td><code>[error_name]</code> = The specific error name to check for as listed in the table
+        above.</td>
+
+        <td><code>fault.name Matches "SpikeArrestViolation"</code></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Example error response</h3>
+
+  <aside class="note"><b>Note:</b> For error handling, the best practice is to trap the
+  <code>errorcode</code> part of the error response. Do not rely on the text in the
+  <code>faultstring</code>, because it could change.</aside>
+  <pre class="prettyprint">
+<span id="s-1">{  </span>
+   <span id="s-2">"fault"</span><span id="s-3">:</span><span id="s-4">{  </span>
+      <span id="s-5">"detail"</span><span id="s-6">:</span><span id="s-7">{  </span>
+         <span id="s-8">"errorcode"</span><span id="s-9">:</span><span id=
+"s-10">"policies.ratelimit.SpikeArrestViolation"</span>
+      <span id="s-11">}</span><span id="s-12">,</span>
+      <span id="s-13">"faultstring"</span><span id="s-14">:</span><span id=
+"s-15">"Spike arrest violation. Allowed rate : 10ps"</span>
+   <span id="s-16">}</span>
+<span id="s-17">}</span>
+</pre>
+
+  <h3>Example fault rule</h3>
+  <pre class="prettyprint">
+&lt;FaultRules&gt;
+    &lt;FaultRule name="Spike Arrest Errors"&gt;
+        &lt;Step&gt;
+            &lt;Name&gt;JavaScript-1&lt;/Name&gt;
+            &lt;Condition&gt;(fault.name Matches "SpikeArrestViolation") &lt;/Condition&gt;
+        &lt;/Step&gt;
+        &lt;Condition&gt;ratelimit.Spike-Arrest-1.failed=true&lt;/Condition&gt;
+    &lt;/FaultRule&gt;
+&lt;/FaultRules&gt;
+</pre>
+  </body>
+</html>

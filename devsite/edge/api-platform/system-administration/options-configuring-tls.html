@@ -1,0 +1,484 @@
+  {% extends "_base.html" %} {% block title %}Options for configuring TLS{% endblock %} {% block body %}
+
+  <p>This document contains an overview of how you configure TLS on Edge for two functional
+  areas:</p>
+
+  <ol>
+    <li>Access to your API proxies by API clients. Use <strong>virtual hosts</strong> on the Edge
+    Router to configure TLS.</li>
+
+    <li>Access to your backend services by Edge. Use <strong>target endpoints and target
+    servers</strong> on the Edge Message Processor to configure TLS.</li>
+  </ol>
+
+  <p>Both of these access types are shown below:</p>
+
+  <p><img alt="" src="/api-platform/images/EdgeSSL_self_service.png"></p>
+
+  <aside class="note"><b>Note:</b> For TLS configuration information for all other areas of the
+  Private Cloud, see <a href=
+  "/private-cloud/latest/configuring-ssl-edge-premises.html">Configuring TLS/SSL for Edge On
+  Premises</a>.</aside>
+
+  <h2 id="about-setting-tls-options-in-a-virtual-host-or-target-endpoint-target-server">About
+  setting TLS options in a virtual host or target endpoint/target server</h2>
+
+  <p>A virtual host can be represented by an XML object, in the form:</p>
+  <pre class="prettyprint">
+&lt;VirtualHost name="secure"&gt;
+    ...
+<strong>    &lt;SSLInfo&gt; 
+        &lt;Enabled&gt;true&lt;/Enabled&gt; 
+        &lt;ClientAuthEnabled&gt;true&lt;/ClientAuthEnabled&gt; 
+        &lt;KeyStore&gt;ref://myKeystoreRef&lt;/KeyStore&gt; 
+        &lt;KeyAlias&gt;myKeyAlias&lt;/KeyAlias&gt; 
+        &lt;TrustStore&gt;ref://myTruststoreRef&lt;/TrustStore&gt; 
+        &lt;IgnoreValidationErrors&gt;false&lt;/IgnoreValidationErrors&gt;
+    &lt;/SSLInfo&gt;
+</strong>&lt;/VirtualHost&gt;
+</pre>
+
+  <p>The area of the virtual host that a you modify to configure TLS is defined by the <span style=
+  "font-family:courier new,courier,monospace;">&lt;SSLInfo&gt;</span> tag. You use the
+  same <span style=
+  "font-family:courier new,courier,monospace;">&lt;SSLInfo&gt;</span> tag to configure a
+  target endpoint or target server.</p>
+
+  <p>The following table describes the TLS configuration elements used by the <span style=
+  "font-family:courier new,courier,monospace;">&lt;SSLInfo&gt;</span> tag:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th><strong>Element</strong></th>
+
+        <th><strong>Description</strong></th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td><span style="font-family:courier new,courier,monospace;">&lt;Enabled&gt;</span></td>
+
+        <td>
+          Enables one-way TLS between Edge and the API client, or between Edge and the target
+          backend.
+
+          <p>For a virtual host, you must define a keystore containing the cert and private
+          key.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td><span style=
+        "font-family:courier new,courier,monospace;">&lt;ClientAuthEnabled&gt;</span></td>
+
+        <td>
+          Enables two-way TLS between Edge and the API client, or between Edge and the target
+          backend.
+
+          <p>Enabling two-way TLS typically requires that you set up a truststore on Edge and a
+          truststore.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td><span style="font-family:courier new,courier,monospace;">&lt;KeyStore&gt;</span></td>
+
+        <td>The keystore.</td>
+      </tr>
+
+      <tr>
+        <td><span style="font-family:courier new,courier,monospace;">&lt;KeyAlias&gt;</span></td>
+
+        <td>The alias specified when you uploaded a cert and private key to the keystore.</td>
+      </tr>
+
+      <tr>
+        <td><span style="font-family:courier new,courier,monospace;">&lt;TrustStore&gt;</span></td>
+
+        <td>The truststore.</td>
+      </tr>
+
+      <tr>
+        <td><span style=
+        "font-family:courier new,courier,monospace;">&lt;IgnoreValidationErrors&gt;</span></td>
+
+        <td>If true, specifies to ignore TLS certificate errors. Valid when configuring TLS for
+        Target Servers and Target Endpoints, and when configuring virtual hosts that use 2-way
+        TLS.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="about-setting-the-&lt;keystore&gt;-and-&lt;truststore&gt;-elements">About setting the
+  &lt;KeyStore&gt; and &lt;TrustStore&gt; elements</h2>
+
+  <p>In the virtual host example above, the keystore and truststore are specified by using
+  <strong>references</strong>, in the form:</p>
+  <pre class="prettyprint">
+&lt;KeyStore&gt;<strong>ref://myKeystoreRef</strong>&lt;/KeyStore&gt;
+&lt;TrustStore&gt;<strong>ref://myTruststoreRef</strong>&lt;/TrustStore&gt;
+</pre>
+
+  <p>Apigee strongly recommends that you always use references to the keystore and truststore. A
+  reference is a variable that contains the name of the keystore or truststore, rather than
+  specifying the keystore name directly. In this example:</p>
+
+  <ul>
+    <li><strong><code>myKeystoreRef</code></strong> is a reference that contains the name of the
+    keystore. In this example, the name of the keystore is <strong>myKeystore</strong>.</li>
+
+    <li><strong><code>myTruststoreRef</code></strong> is a reference that contains the name of the
+    truststore. In this example, the name of the truststore is <strong>myTruststore</strong>.</li>
+  </ul>
+
+  <p>When a cert expires, you have to update the virtual host or target endpoint/target server to
+  specify the keystore or truststore containing the new cert. The advantage to a reference is that
+  you can modify the value of the reference to change the keystore or truststore without having to
+  modify the virtual host or target endpoint/target server itself:</p>
+
+  <ul>
+    <li><strong>For Cloud customers</strong>: Changing the value of the reference does not require
+    you to contact <a href="https://community.apigee.com/content/apigee-customer-support">Apigee
+    support</a>.</li>
+
+    <li><strong>For Private Cloud customers</strong>: Changing the value of the reference does not
+    require you to restart Edge components, such as Routers and Message Processors.</li>
+  </ul>
+
+  <p>Alternatively, you can specify the keystore name and truststore name directly:</p>
+  <pre class="prettyprint">
+&lt;KeyStore&gt;<strong>myKeystore</strong>&lt;/KeyStore&gt;
+&lt;TrustStore&gt;<strong>myTruststore</strong>&lt;/TrustStore&gt; 
+</pre>
+
+  <p>If you directly specify the name of the keystore or truststore, then Cloud customers must
+  contact <a href="https://community.apigee.com/content/apigee-customer-support">Apigee support</a>
+  and Private Cloud customers must restart certain Edge components to update the cert.</p>
+
+  <p>A third option, for target endpoints/target server only, is to use flow variables:</p>
+  <pre class="prettyprint">
+&lt;KeyStore&gt;{<strong>ssl.keystore</strong>}&lt;/KeyStore&gt;
+&lt;TrustStore&gt;{<strong>ssl.truststore</strong>}&lt;/TrustStore&gt; 
+</pre>
+
+  <p>Flow variables work for target endpoints/target servers and let you update the keystore or
+  truststore like references. However, they do not work with virtual hosts, and require you to pass
+  information about the keystore, alias, and truststore on every request.</p>
+
+  <h3 id="restrictions-in-using-references-to-keystores-and-truststore">Restrictions in using
+  references to keystores and truststore</h3>
+
+  <p>Paid Cloud customers and all Private Cloud customers configuring TLS must take into account
+  the following restriction when using references to keystores and truststores:</p>
+
+  <ul>
+    <li>You can only use keystore and truststore references in virtual hosts if you terminate TLS
+    on the Apigee Routers.</li>
+  </ul>
+
+  <ul>
+    <li>If you have a load balancer in front of the Apigee Routers, and you terminate TLS on the
+    load balancer, then you cannot use keystore and truststore references in virtual hosts. Please
+    contact <a href="https://community.apigee.com/content/apigee-customer-support">Apigee
+    Support</a> to configure TLS.</li>
+  </ul>
+
+  <h3 id=
+  "aboutsettingthekeystoreandtruststoreelements-ifyourexistingvirtualhostusesaliteralkeystoreortruststorename">
+  If your existing virtual host uses a literal keystore or truststore name</h3>
+
+  <p>Existing virtual hosts on Edge might not be configured to use references for keystores and
+  truststores. In this case, you can update the virtual host to use a reference.</p>
+
+  <ol>
+    <li><strong>Edge for the Cloud</strong><br>
+    To change the virtual host to use a reference to the keystore you must work with <a href=
+    "https://community.apigee.com/content/apigee-customer-support">Apigee Support</a>.</li>
+
+    <li>
+      <strong>Edge for the Private Cloud</strong><br>
+      To convert the virtual host to use a reference:
+
+      <ol>
+        <li>Update the virtual host to use a reference.</li>
+
+        <li>Restart the Routers. See <a href=
+        "/api-platform/system-administration/creating-virtual-host.html">Configuring TLS access to
+        an API for the Private Cloud</a> for more.</li>
+      </ol><br>
+      See "Modifying a virtual host to use references to the keystore and truststore" in <a href=
+      "/api-platform/system-administration/creating-virtual-host.html">Configuring TLS access to an
+      API for the Private Cloud</a> for more.
+    </li>
+  </ol>
+
+  <h2 id="about-configuring-tls">About configuring TLS</h2>
+
+  <p>Two main factors determine how you perform TLS configuration:</p>
+
+  <ul>
+    <li>Are you an Edge Cloud or Private Cloud customer?</li>
+
+    <li>How are you going to update expired or expiring certs?</li>
+  </ul>
+
+  <h3 id="cloud-and-private-cloud-configuration-options">Cloud and Private Cloud configuration
+  options</h3>
+
+  <p>The following table shows the different configuration options for Cloud and Private Cloud
+  customers:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th> </th>
+
+        <th><strong>Private Cloud</strong></th>
+
+        <th><strong>Cloud</strong></th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td><strong>Virtual host</strong></td>
+
+        <td>Complete control</td>
+
+        <td>Complete control for paid accounts only</td>
+      </tr>
+
+      <tr>
+        <td><strong>Target endpoint/target server</strong></td>
+
+        <td>Complete control</td>
+
+        <td>Complete control</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>Private Cloud customers have complete control over the configuration of both virtual hosts and
+  target endpoints/target servers. That control includes the ability to create and delete virtual
+  hosts, and set all properties on a virtual host.</p>
+
+  <p>All Cloud customers, both paid and trial, have complete control over the configuration of
+  target endpoints/target servers. In addition, paid Cloud customers have complete control of
+  virtual hosts, including TLS properties.</p>
+
+  <aside class="note"><b>Note:</b> Trial customers do not have the ability to configure a virtual
+  host. Instead, Apigee automatically provides a TLS certificate and private key to support HTTPS
+  on a secure virtual host so that trial customers can get started developing and testing
+  APIs.</aside>
+
+  <h3 id="handling-expired-certificates">Handling expired certificates</h3>
+
+  <p>If a TLS certificate expires, or if your system configuration changes such that the
+  certificate is no longer valid, then you need to update the certificate. When configuring TLS for
+  a virtual host or target endpoint/target server, you should decide how you are going to perform
+  that update before you perform any configuration.</p>
+
+  <aside class="note"><b>Note:</b> You cannot update an existing keystore or truststore to add a
+  new certificate. You must create a new keystore/truststore when updating a certificate.
+  Typically, you create the new keystore/truststore and upload the new cert before the cert in the
+  old keystore/truststore expires. This lets you test the new keystore/truststore and rollback to
+  the old keystore/truststore if there are any issues.</aside>
+
+  <h3 id="when-a-cert-expires">When a cert expires</h3>
+
+  <p>On Edge, you store certs in one of two places:</p>
+
+  <ul>
+    <li><strong>Keystore</strong> - Contains the TLS certificate and private key used to identify
+    the entity during TLS handshaking.</li>
+
+    <li><strong>Truststore</strong> - Contains trusted certificates on an TLS client used to
+    validate a TLS server's certificate presented to the client. These certificates are typically
+    self-signed certificates, certificates signed by a trusted CA, or certs used as part of two-way
+    TLS.</li>
+  </ul>
+
+  <p><strong>When a cert in a keystore expires, and you are using a reference to the
+  keystore</strong>, you cannot upload a new cert to the keystore. Instead, you:</p>
+
+  <ol>
+    <li>Create a new keystore.</li>
+
+    <li>Upload the new cert to the new keystore <strong>using the same alias name</strong> as in
+    the old keystore.</li>
+
+    <li>Update the reference in your virtual host or target server/target endpoint to use the new
+    keystore.</li>
+  </ol>
+
+  <p><strong>When a cert in a truststore expires, and you are using a reference to the
+  truststore</strong>, you:</p>
+
+  <ol>
+    <li>Create a new truststore.</li>
+
+    <li>Upload the new cert to the new truststore. The alias name does not matter for truststores.
+    <strong>Note</strong>: If a cert is part of a chain, then you must either create a single file
+    containing all the certs and upload that file to a single alias, or upload all certs in the
+    chain separately to the truststore using a different alias for each cert.</li>
+
+    <li>Update the reference in your virtual host or target server/target endpoint to use the new
+    truststore.</li>
+  </ol>
+
+  <h3 id="summary-of-methods-of-updating-an-expired-cert">Summary of methods of updating an expired
+  cert</h3>
+
+  <p>The method that you use to specify the name of the keystore and truststore in the virtual host
+  or target endpoint/target server determines how you perform the cert update. You can use:</p>
+
+  <ul>
+    <li>References</li>
+
+    <li>Direct names</li>
+
+    <li>Flow variables</li>
+  </ul>
+
+  <p>Each of these methods has different repercussions on the update process, as described in the
+  following table. As you can see, references provide the greatest flexibility for both Cloud and
+  Private Cloud customers:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th><strong>Config type</strong></th>
+
+        <th><strong>How to update/replace cert</strong></th>
+
+        <th><strong>Private Cloud</strong></th>
+
+        <th><strong>Cloud</strong></th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td>Reference (Recommended)</td>
+
+        <td>
+          For a keystore, create new keystore with a <strong>new name</strong> and an alias with
+          <strong>same name</strong> as the old alias.
+
+          <p>For a truststore, create a truststore with a <strong>new name</strong>.</p>
+        </td>
+
+        <td>
+          Update the reference to the keystore or truststore.
+
+          <p>No Router or Message Processor restart is necessary.</p>
+        </td>
+
+        <td>
+          Update the reference to the keystore or truststore.
+
+          <p>No need to contact <a href=
+          "https://community.apigee.com/content/apigee-customer-support">Apigee support</a>.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Flow vars (target endpoint only)</td>
+
+        <td>
+          For a keystore, create new keystore with a <strong>new name</strong> and an alias with
+          the same name or with a new name.
+
+          <p>For a truststore, create a truststore with a <strong>new name</strong>.</p>
+        </td>
+
+        <td>
+          Pass updated flow var on each request with the name of the new keystore, alias, or
+          truststore.
+
+          <p>No Router or Message Processor restart is necessary.</p>
+        </td>
+
+        <td>
+          Pass updated flow var on each request with the name of the new keystore, alias, or
+          truststore.
+
+          <p>No need to contact <a href=
+          "https://community.apigee.com/content/apigee-customer-support">Apigee support</a>.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Direct</td>
+
+        <td>Create a new keystore, alias, truststore.</td>
+
+        <td>
+          Update the virtual host and restart the Routers.
+
+          <p>If the truststore is used by a target endpoint/target server, redeploy the proxy.</p>
+        </td>
+
+        <td>
+          For virtual hosts, <strong>contact <a href=
+          "https://community.apigee.com/content/apigee-customer-support">Apigee
+          support</a></strong> to restart the Routers.
+
+          <p>If the truststore is used by a target endpoint/target server, redeploy the proxy.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Direct</td>
+
+        <td>Delete the keystore or truststore and recreate it with same name.</td>
+
+        <td>
+          No virtual host update required, no Router restart necessary. However, API requests fail
+          until the new keystore and alias are set.
+
+          <p>If the keystore is used for two-way TLS between Edge and the backend service, restart
+          the Message Processors.</p>
+        </td>
+
+        <td>
+          No virtual host update required. However, API requests fail until the new keystore and
+          alias are set.
+
+          <p>If the keystore is used for two-way TLS between Edge and the backend service,
+          <strong>contact <a href=
+          "https://community.apigee.com/content/apigee-customer-support">Apigee
+          support</a></strong> to restart the Message Processors.</p>
+
+          
+        </td>
+      </tr>
+
+      <tr>
+        <td>Direct</td>
+
+        <td>For truststore only, upload a new cert to the truststore.</td>
+
+        <td>
+          If the truststore is used by a virtual host, restart the Routers.
+
+          <p>If the truststore is used by a target endpoint/target server, restart the Message
+          Processors.</p>
+        </td>
+
+        <td>
+          For virtual hosts, <strong>contact <a href=
+          "https://community.apigee.com/content/apigee-customer-support">Apigee
+          support</a></strong> to restart the Edge Routers.
+
+          <p>If the truststore is used by a target endpoint/target server, <strong>contact <a href=
+          "https://community.apigee.com/content/apigee-customer-support">Apigee
+          support</a></strong> to restart the Message Processors.</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  {% endblock %}

@@ -1,0 +1,1268 @@
+  {% extends "_base.html" %} {% block title %}Response Cache policy{% endblock %} {% block body %}
+  <img src="/api-platform/images/icon_policy_traffic-management.jpg">
+
+  <h3>What</h3>
+
+  <p>Caches data from a backend resource, reducing the number of requests to the resource. As apps
+  make requests to the same URI, you can use this policy to return cached responses instead of
+  forwarding those requests to the backend server. The ResponseCache policy can improve your API's
+  performance through reduced latency and network traffic.</p>
+
+  <p>You'll likely find ResponseCache most useful when backend data used by your API is updated
+  only periodically. For example, imagine you have an API that exposes weather report data
+  refreshed only every ten minutes. By using ResponseCache to return cached responses between
+  refreshes, you can decrease the number of requests reaching the backend. This also reduces the
+  number of network hops.</p>
+
+  <div class="video">
+    <p>Watch this video for an introduction to the Response Cache policy.</p>
+
+    <div style="text-align: left;">
+      <iframe allowfullscreen="" frameborder="0" height="315" src=
+      "https://www.youtube.com/embed/pEF_cnHCUzM" width="560"></iframe>
+    </div>
+  </div>
+
+  <aside class="key-point"><b>Tip:</b> For a discussion of antipatterns for the Response Cache
+  policy, see <a href=
+  "https://community.apigee.com/content/kbentry/44662/the-book-of-apigee-edge-antipatterns.html"
+  target="_blank">this community post</a>.</aside>
+
+  <aside class="note"><b>Note:</b> You are limited to attaching this policy once in the proxy
+  request flow and once in the response flow. For a video tutorial, see <a href=
+  "https://community.apigee.com/articles/17971/implementing-responsecaching-within-edge.html">this
+  Apigee Community post</a>. See also <a href="#ErrorCodes">Error Codes</a> below. </aside>
+
+  <aside class="note"><b>Note:</b> You can attach a ResponseCache policy to a conditional flow by
+  adding the policy XML to the flow XML.</aside><!--This is the start of the expand/collapse div-->
+
+  <h3 id="samples">Samples</h3>
+
+  <div class="ds-selector-tabs">
+    <section>
+      <h3 class="two-line-tab">10-minute cache</h3>
+
+      <p><a id="Sample1" name="Sample1"></a>This sample shows how to have cached responses kept for
+      10 minutes.</p>
+
+      <p>Imagine that you have an API at the following URL:</p>
+      <pre class="prettyprint">
+http://{org_name}-test.apigee.net/weather/forecastrss?w=23424778
+</pre>
+
+      <p>You're using the query parameter <code>w</code> as a cache key. Apigee Edge checks the
+      value of the query parameter <code>w</code> whenever a request is received. If a valid (that
+      is, non-expired) response is present in the cache, then the cached response message is
+      returned to the requesting client.</p>
+
+      <p>Now imagine that you have a ResponseCache policy configured as follows.</p>
+      <pre class="prettyprint">
+&lt;ResponseCache name="ResponseCache"&gt;
+    &lt;CacheKey&gt;
+        &lt;KeyFragment ref="request.queryparam.w" /&gt;
+    &lt;/CacheKey&gt;
+    &lt;ExpirySettings&gt;
+        &lt;TimeoutInSec&gt;600&lt;/TimeoutInSec&gt;
+    &lt;/ExpirySettings&gt;
+&lt;/ResponseCache&gt;
+</pre>
+
+      <p>The first time the API proxy receives a request message for the following URL, the
+      response is cached. On the second request within 10 minutes, a cache lookup occurs -- the
+      cached response is returned to the app with no request forwarded to the backend service.</p>
+      <pre class="prettyprint">
+http://{org_name}-test.apigee.net/weather/forecastrss?w=23424778
+</pre>
+
+      <aside class="key-point"><b>Tip:</b> HTTP headers and query parameters are automatically
+      populated as variables when a request is received. Any HTTP header is available as
+      <code>request.header.{header_name}</code>, for example
+      <code>request.header.user-agent</code>. Any query parameter is available as
+      <code>request.queryparam.{queryparam_name}</code>, for example
+      <code>request.queryparam.action</code>.</aside>
+    </section>
+
+    <section>
+      <h3 class="two-line-tab">Skip cache lookup</h3>
+
+      <p>The following example shows how to have the cache lookup skipped and have the cache
+      refreshed. See also <a href=
+      "https://community.apigee.com/articles/19671/using-the-responsecache-policy-responsibly-or-dont.html">
+      this video</a> on the use of SkipCacheLookup. </p>
+
+      <p>The optional SkipCacheLookup condition (if configured) is evaluated in the request path.
+      If the condition evaluates to true, then the cache look up is skipped and the cache is
+      refreshed.</p>
+
+      <p>A common use of conditional cache refresh is a condition that defines a specific HTTP
+      header that causes the condition to evaluate to true. A scripted client application could be
+      configured to periodically submit a request with the appropriate HTTP header, explicitly
+      causing the response cache to refresh.</p>
+
+      <p>For example, imagine a call to an API at the following URL:</p>
+      <pre class="prettyprint">
+'http://{org_name}-test.apigee.net/weather/forecastrss?w=23424778' -H "bypass-cache:true"
+</pre>
+
+      <p>Now imagine the following ResponseCache policy configured on that proxy. Note that the
+      bypass-cache condition is set to true.</p>
+      <pre class="prettyprint">
+&lt;ResponseCache name="ResponseCache"&gt;
+    &lt;CacheKey&gt;
+        &lt;KeyFragment ref="request.queryparam.w" /&gt;
+    &lt;/CacheKey&gt;
+    &lt;!-- Explicitly refresh the cached response --&gt;
+    &lt;SkipCacheLookup&gt;request.header.bypass-cache = "true"&lt;/SkipCacheLookup&gt;
+    &lt;ExpirySettings&gt;
+        &lt;TimeoutInSec&gt;600&lt;/TimeoutInSec&gt;
+    &lt;/ExpirySettings&gt;
+&lt;/ResponseCache&gt;
+</pre>
+
+      <p>For more information about conditions, see <a href=
+      "/api-platform/fundamentals/flow-variables-and-conditions.html">Flow variables and
+      conditions</a>.</p>
+    </section>
+  </div>
+
+  <h2 id="element_reference">Element reference</h2>
+
+  <p>The element reference describes the elements and attributes of the policy.</p>
+  <pre class="prettyprint">
+&lt;?xml version="1.0" encoding="UTF-8" standalone="yes"?&gt;
+&lt;ResponseCache async="false" continueOnError="false" enabled="true" name="Response-Cache-1"&gt;
+    &lt;DisplayName&gt;Response Cache 1&lt;/DisplayName&gt;
+    &lt;Properties/&gt;
+    &lt;CacheKey&gt;
+        &lt;Prefix/&gt;
+        &lt;KeyFragment ref="request.uri" /&gt;
+    &lt;/CacheKey&gt;
+    &lt;Scope&gt;Exclusive&lt;/Scope&gt;
+    &lt;ExpirySettings&gt;
+        &lt;ExpiryDate/&gt;
+        &lt;TimeOfDay/&gt;
+        &lt;TimeoutInSec ref="flow.variable.here"&gt;300&lt;/TimeoutInSec&gt;
+    &lt;/ExpirySettings&gt;
+    &lt;CacheResource&gt;cache_to_use&lt;/CacheResource&gt;
+    &lt;CacheLookupTimeoutInSeconds/&gt;
+    &lt;ExcludeErrorResponse/&gt;
+    &lt;SkipCacheLookup/&gt;
+    &lt;SkipCachePopulation/&gt;
+    &lt;UseAcceptHeader/&gt;
+    &lt;UseResponseCacheHeaders/&gt;
+&lt;/ResponseCache&gt;
+</pre>
+
+  <h2 id="responsecacheattributes">&lt;ResponseCache&gt; attributes</h2>
+  <pre class="prettyprint">
+&lt;ResponseCache async="false" continueOnError="false" enabled="true" name="Response-Cache-1"&gt;
+</pre>{% dynamic include /includes/___policies-parent-element-attributes %}
+
+  <h2 id="CacheKeyElement">&lt;CacheKey&gt; element</h2>
+
+  <p>Configures a unique pointer to a piece of data stored in the cache.</p>
+
+  <p>Cache keys are limited to a size of 2 KB.</p>
+
+  <aside class="note"><b>Note:</b> You can further augment the cache key configured here by using
+  values from response headers. For more information, see <a href=
+  "#configuring_cache_key">Configuring a cache key</a>.</aside>
+  <pre class="prettyprint">
+&lt;CacheKey&gt;
+    &lt;Prefix&gt;<i>string</i>&lt;/Prefix&gt;
+    &lt;KeyFragment ref="<i>variable_name</i>" /&gt;
+    &lt;KeyFragment&gt;<em>literal_string</em>&lt;/KeyFragment&gt;
+&lt;/CacheKey&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td style="width:90px">
+          <p><strong>Default:</strong></p>
+        </td>
+
+        <td>
+          <p>N/A</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Presence:</strong></p>
+        </td>
+
+        <td>Required</td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Type:</strong></p>
+        </td>
+
+        <td>
+          <p>N/A</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p><code>&lt;CacheKey&gt;</code> constructs the name of each piece of data stored in the cache.
+  The key is often set using a value from entity headers or query params. In those cases, you would
+  have the element's ref attribute specify a variable containing the key value.</p>
+
+  <p>At runtime, <code>&lt;KeyFragment&gt;</code> values are prepended with either the
+  <code>&lt;Scope&gt;</code> element value or <code>&lt;Prefix&gt;</code> value. For example, the
+  following results in a cache key of
+  <code>UserToken__apiAccessToken__</code>&lt;<i>value_of_client_id&gt;</i>:</p>
+  <pre class="prettyprint">
+&lt;CacheKey&gt;
+    &lt;Prefix&gt;UserToken&lt;/Prefix&gt;
+    &lt;KeyFragment&gt;apiAccessToken&lt;/KeyFragment&gt;
+    &lt;KeyFragment ref="request.queryparam.client_id" /&gt;
+&lt;/CacheKey&gt;
+</pre>
+
+  <p>You use the <code>&lt;CacheKey&gt;</code> element in conjunction with
+  <code>&lt;Prefix&gt;</code> and <code>&lt;Scope&gt;</code>. For more information, see <a href=
+  "/api-platform/reference/policies/working-cachekeys.html">Working with cache keys</a>.</p>
+
+  <h2 id="CacheLookupTimeoutInSeconds">&lt;CacheLookupTimeoutInSeconds&gt; element</h2>
+
+  <p>Specifies the number of seconds after which an unsuccessful cache lookup will be considered a
+  cache miss. If this occurs, flow resumes along the cache-miss path.</p>
+  <pre class="prettyprint">
+&lt;CacheLookupTimeoutInSeconds&gt;30&lt;/CacheLookupTimeoutInSeconds&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td style="width:90px">
+          <p><strong>Default:</strong></p>
+        </td>
+
+        <td>
+          <p>30</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Presence:</strong></p>
+        </td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Type:</strong></p>
+        </td>
+
+        <td>
+          <p>Integer</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="CacheResourceElement">&lt;CacheResource&gt; element</h2>
+
+  <p>Specifies the cache where messages should be stored. Omit this element to use the included
+  shared cache. You should specify a CacheResource by name if you wish to be able to
+  administratively clear entries contained in the cache. For more on that, see <a href=
+  "/api/caches">Caches</a>.</p>
+  <pre class="prettyprint">
+&lt;CacheResource&gt;<i>cache_to_use</i>&lt;/CacheResource&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td style="width:90px">
+          <p><strong>Default:</strong></p>
+        </td>
+
+        <td>
+          <p>N/A</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Presence:</strong></p>
+        </td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Type:</strong></p>
+        </td>
+
+        <td>
+          <p>String</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>For more about configuring caches, see <a href=
+  "/api-platform/cache/manage-caches-environment.html">Creating and editing an environment
+  cache</a>.</p>
+
+  <h2 id="Ca">&lt;ExcludeErrorResponse&gt; element</h2>
+
+  <p>Currently, by default, this policy caches HTTP responses with <strong>any</strong> possible
+  Status code. That means both success and error responses are cached. For example, responses with
+  both 2xx and 3xx status codes are cached by default.</p>
+
+  <p>Set this element to <code>true</code> if you do <i>not</i> wish to cache target
+  responses with HTTP error status codes; only responses with status codes from 200 to 205 will be
+  cached if this element is true. These are the only HTTP status codes that Edge counts as
+  "success" codes, and you cannot change this association.</p>
+
+  <p>For a discussion of Response Cache patterns in which this element is useful, see <a href=
+  "https://community.apigee.com/content/kbentry/44662/the-book-of-apigee-edge-antipatterns.html"
+  target="_blank">this community post</a>.</p>
+
+  <p><strong>Note:</strong> In a future release (to be determined), the default setting of this
+  element will change to true. See <a href="/release/notes/apigee-release-notes.html">Apigee
+  Release Notes</a> for details.</p>
+  <pre class="prettyprint">
+&lt;ExcludeErrorResponse&gt;true&lt;/ExcludeErrorResponse&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td style="width:90px">
+          <p><strong>Default:</strong></p>
+        </td>
+
+        <td>
+          <p>false</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Presence:</strong></p>
+        </td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Type:</strong></p>
+        </td>
+
+        <td>
+          <p>Boolean</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="ExpiryDateElement"><i>&lt;ExpirySettings&gt;</i>/&lt;ExpiryDate&gt; element</h2>
+
+  <p>Specifies the date on which a cache entry should expire. Use the form <code>mm-dd-yyyy</code>.
+  When present, this element's sibling, <code>&lt;TimeoutInSec&gt;</code>, overrides
+  <code>&lt;ExpiryDate&gt;</code>.</p>
+  <pre class="prettyprint">
+&lt;ExpirySettings&gt;
+    &lt;ExpiryDate ref="{<i>date_variable</i>}"&gt;<i>expiration_date</i>&lt;/ExpiryDate&gt;
+&lt;/ExpirySettings&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td style="width:90px">
+          <p><strong>Default:</strong></p>
+        </td>
+
+        <td>
+          <p>N/A</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Presence:</strong></p>
+        </td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Type:</strong></p>
+        </td>
+
+        <td>
+          <p>String</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="expirysettingsexpirydateelement-attributes">Attributes</h3>
+  <pre class="prettyprint">
+&lt;ExpiryDate ref="" /&gt;
+</pre>
+
+  <table width="700">
+    <tbody>
+      <tr>
+        <th scope="col" width="118">Attribute</th>
+
+        <th scope="col" width="382">Description</th>
+
+        <th scope="col" width="382">Default</th>
+
+        <th scope="col" width="92">Presence</th>
+
+        <th scope="col" width="88">Type</th>
+      </tr>
+
+      <tr>
+        <td>ref</td>
+
+        <td>
+          <p>The variable from which to get the value. Should not be used if this element contains
+          a literal value.</p>
+        </td>
+
+        <td>N/A</td>
+
+        <td>Optional</td>
+
+        <td>String</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="ExpirySettingsElement">&lt;ExpirySettings&gt; element</h2>
+
+  <p>Specifies when a cache entry should expire. When present, <code>&lt;TimeoutInSec&gt;</code>
+  overrides both <code>&lt;TimeOfDay&gt;</code> and <code>&lt;ExpiryDate&gt;</code>.</p>
+  <pre class="prettyprint">
+&lt;ExpirySettings&gt;
+  &lt;TimeOfDay ref="time_variable"&gt;expiration_time&lt;/TimeOfDay&gt;
+  &lt;TimeoutInSec ref="duration_variable"&gt;seconds_until_expiration&lt;/TimeoutInSec&gt;
+  &lt;ExpiryDate ref="date_variable"&gt;expiration_date&lt;/ExpiryDate&gt;
+&lt;/ExpirySettings&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td style="width:90px">
+          <p><strong>Default:</strong></p>
+        </td>
+
+        <td>
+          <p>N/A</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Presence:</strong></p>
+        </td>
+
+        <td>Required</td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Type:</strong></p>
+        </td>
+
+        <td>
+          <p>N/A</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="KeyFragmentElement">&lt;CacheKey&gt;/&lt;KeyFragment&gt; element</h2>
+
+  <p>Specifies a value that should be included in the cache key, creating a namespace for matching
+  requests to cached responses.</p>
+  <pre class="prettyprint">
+&lt;KeyFragment ref="<i>variable_name</i>"/&gt;
+&lt;KeyFragment&gt;<i>literal_string</i>&lt;/KeyFragment&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td style="width:90px">
+          <p><strong>Default:</strong></p>
+        </td>
+
+        <td>
+          <p>N/A</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Presence:</strong></p>
+        </td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Type:</strong></p>
+        </td>
+
+        <td>
+          <p>N/A</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>This can be a key (a static name that you provide) or a value (a dynamic entry set by
+  referencing a variable). All specified fragments combined (plus the prefix) are concatenated to
+  create the cache key.</p>
+  <pre class="prettyprint">
+&lt;KeyFragment&gt;apiAccessToken&lt;/KeyFragment&gt;
+&lt;KeyFragment ref="request.queryparam.client_id" /&gt;
+</pre>
+
+  <p>You use the <code>&lt;KeyFragment&gt;</code> element in conjunction with
+  <code>&lt;Prefix&gt;</code> and <code>&lt;Scope&gt;</code>. For more information, see <a href=
+  "/api-platform/reference/policies/working-cachekeys.html">Working with cache keys</a>.</p>
+
+  <h3 id="cachekeykeyfragmentelement-attributes">Attributes</h3>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Attribute</th>
+
+        <th>Type</th>
+
+        <th>Default</th>
+
+        <th>Required</th>
+
+        <th>Description</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td>ref</td>
+
+        <td>string</td>
+
+        <td> </td>
+
+        <td>No</td>
+
+        <td>
+          <p>The variable from which to get the value. Should not be used if this element contains
+          a literal value.</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="PrefixElement">&lt;CacheKey&gt;/&lt;Prefix&gt; element</h2>
+
+  <p>Specifies a value to use as a cache key prefix.</p>
+  <pre class="prettyprint">
+&lt;Prefix&gt;<i>prefix_string</i>&lt;/Prefix&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td style="width:90px">
+          <p><strong>Default:</strong></p>
+        </td>
+
+        <td>
+          <p>N/A</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Presence:</strong></p>
+        </td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Type:</strong></p>
+        </td>
+
+        <td>
+          <p>String</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>Use this value instead of <code>&lt;Scope&gt;</code> when you want to specify your own value
+  rather than a <code>&lt;Scope&gt;</code> -enumerated value. If defined,
+  <code>&lt;Prefix&gt;</code> prepends the cache key value for entries written to the cache. A
+  <code>&lt;Prefix&gt;</code> element value overrides a <code>&lt;Scope&gt;</code> element
+  value.</p>
+
+  <p>You use the <code>&lt;Prefix&gt;</code> element in conjunction with
+  <code>&lt;CacheKey&gt;</code> and <code>&lt;Scope&gt;</code>. For more information, see <a href=
+  "/api-platform/reference/policies/working-cachekeys.html">Working with cache keys</a>.</p>
+
+  <h2 id="ScopeElement">&lt;Scope&gt; element</h2>
+
+  <p>Enumeration used to construct a prefix for a cache key when a <code>&lt;Prefix&gt;</code>
+  element is not provided in the <code>&lt;CacheKey&gt;</code> element.</p>
+  <pre class="prettyprint">
+&lt;Scope&gt;<i>scope_enumeration</i>&lt;/Scope&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td style="width:90px">
+          <p><strong>Default:</strong></p>
+        </td>
+
+        <td>
+          <p>"Exclusive"</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Presence:</strong></p>
+        </td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Type:</strong></p>
+        </td>
+
+        <td>
+          <p>String</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>The <code>&lt;Scope&gt;</code> setting determines a cache key that is prepended according to
+  the <code>&lt;Scope&gt;</code> value. For example, a cache key would take the following form when
+  scope is set to <code>Exclusive</code> :
+  <i>orgName__envName__apiProxyName__deployedRevisionNumber__proxy|TargetName__</i> [
+  <i>serializedCacheKey</i> ].</p>
+
+  <p>If a <code>&lt;Prefix&gt;</code> element is present in <code>&lt;CacheKey&gt;</code>, it
+  supercedes a <code>&lt;Scope&gt;</code> element value. Valid values include the enumerations
+  below.</p>
+
+  <p>You use the <code>&lt;Scope&gt;</code> element in conjunction with
+  <code>&lt;CacheKey&gt;</code> and <code>&lt;Prefix&gt;</code>. For more information, see <a href=
+  "/api-platform/reference/policies/working-cachekeys.html">Working with cache keys</a>.</p>
+
+  <h3 id="scopeelement-acceptablevalues">Acceptable values</h3>
+
+  <table width="922">
+    <colgroup>
+      <col width="95pt">
+      <col width="825pt">
+    </colgroup>
+
+    <tbody>
+      <tr>
+        <th scope="col">Scope Value</th>
+
+        <th scope="col">Description</th>
+      </tr>
+
+      <tr>
+        <td><code>Global</code></td>
+
+        <td>
+          <p>Cache key is shared across all API proxies deployed in the environment. Cache key is
+          prepended in the form  <i>orgName</i> __ <i>envName</i> __.</p>
+
+          <p>If you define a <code>&lt;CacheKey&gt;</code> entry with the
+          <code>&lt;KeyFragment&gt;</code> apiAccessToken and a <code>&lt;Global&gt;</code> scope,
+          each entry is stored as <code>orgName__envName__apiAccessToken</code>, followed by the
+          serialized value of the access token. For an API proxy deployed in an environment called
+          'test' in an organization called 'apifactory', access tokens would be stored under the
+          following cache key: <code>apifactory__test__apiAccessToken</code>.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td><code>Application</code></td>
+
+        <td>
+          <p>API proxy name is used as the prefix.</p>
+
+          <p>Cache key is prepended in the form <i>orgName__envName__apiProxyName</i>.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td><code>Proxy</code></td>
+
+        <td>
+          <p>ProxyEndpoint configuration is used as the prefix.</p>
+
+          <p>Cache key is prepended in the form
+          <i>orgName__envName__apiProxyName__deployedRevisionNumber__proxyEndpointName</i> .</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td><code>Target</code></td>
+
+        <td>
+          <p>TargetEndpoint configuration is used as the prefix.</p>
+
+          <p>Cache key prepended in the form
+          <i>orgName__envName__apiProxyName__deployedRevisionNumber__targetEndpointName</i> .</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td><code>Exclusive</code></td>
+
+        <td>
+          <p>Default. This is the most specific, and therefore presents minimal risk of namespace
+          collisions within a given cache.</p>
+
+          <p>Prefix is one of two forms:</p>
+
+          <ul>
+            <li>If the policy is attached to the <code>ProxyEndpoint</code> flow, prefix is of the
+            form <i>ApiProxyName_ProxyEndpointName</i>.</li>
+
+            <li>If the policy is attached at <code>TargetEndpoint</code>, prefix is of the form
+            <i>ApiProxyName_TargetName</i>.</li>
+          </ul>
+
+          <p>Cache key prepended in the form
+          <i>orgName__envName__apiProxyName__deployedRevisionNumber__proxyNameITargetName</i></p>
+
+          <p>For example, the full string might look like this:</p>
+          <pre class="prettyprint">
+apifactory__test__weatherapi__16__default__apiAccessToken
+</pre>.
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="SkipCacheLookupElement">&lt;SkipCacheLookup&gt; element</h2>
+
+  <p>Defines an expression that, if it evaluates to true at runtime, specifies that cache lookup
+  should be skipped and the cache should be refreshed. See also <a href=
+  "https://community.apigee.com/articles/19671/using-the-responsecache-policy-responsibly-or-dont.html">this
+  video</a> on the use of SkipCacheLookup.</p>
+  <pre class="prettyprint">
+&lt;SkipCacheLookup&gt;<i>variable_condition_expression</i>&lt;/SkipCacheLookup&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td style="width:90px">
+          <p><strong>Default:</strong></p>
+        </td>
+
+        <td>
+          <p>N/A</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Presence:</strong></p>
+        </td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Type:</strong></p>
+        </td>
+
+        <td>
+          <p>String</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>From the following example, if the bypass-cache variable is set to true in an incoming header,
+  cache lookup is skipped and the cache is refreshed.</p>
+  <pre class="prettyprint">
+&lt;SkipCacheLookup&gt;request.header.bypass-cache = "true"&lt;/SkipCacheLookup&gt;
+</pre>
+
+  <h2 id="SkipCachePopulationElement">&lt;SkipCachePopulation&gt; element</h2>
+
+  <p>Defines an expression that, if it evaluates to true at runtime, specifies that a write to the
+  cache should be skipped. See also <a href=
+  "https://community.apigee.com/articles/19671/using-the-responsecache-policy-responsibly-or-dont.html">this
+  video</a> on the use of SkipCachePopulation.</p>
+  <pre class="prettyprint">
+&lt;SkipCachePopulation&gt;<i>variable_condition_expression</i>&lt;/SkipCachePopulation&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td style="width:90px">
+          <p><strong>Default:</strong></p>
+        </td>
+
+        <td>
+          <p>N/A</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Presence:</strong></p>
+        </td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Type:</strong></p>
+        </td>
+
+        <td>
+          <p>String</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>For example, the following would skip the cache write if the response status code was 400 or
+  higher:</p>
+  <pre class="prettyprint">
+&lt;SkipCachePopulation&gt;response.status.code &gt;= 400&lt;/SkipCachePopulation&gt;
+</pre>
+
+  <h2 id="TimeOfDayElement"><i>&lt;ExpirySettings&gt;</i>/&lt;TimeOfDay&gt; element</h2>
+
+  <p>The time of day at which a cache entry should expire. Use the form <code>hh:mm:ss</code> .
+  When present, this element's sibling, <code>&lt;TimeoutInSec&gt;</code>, overrides
+  <code>&lt;TimeOfDay&gt;</code>.</p>
+
+  <p>Enter time of day in the format HH:mm:ss, where HH represents the hour on a 24-hour clock. For
+  example, 14:30:00 for 2:30 in the afternoon.</p>
+
+  <p>For the time of day, the default locale and time zone will vary depending on where the code is
+  running (which isn't knowable when you configure the policy). For information on configuring your
+  locale, see <a href="/api-platform/cache/manage-caches-environment.html">Creating and editing an
+  environment cache</a>.</p>
+  <pre class="prettyprint">
+&lt;ExpirySettings&gt;
+    &lt;TimeOfDay ref="<i>time_variable</i>"&gt;<i>expiration_time</i>&lt;/TimeOfDay&gt;
+&lt;/ExpirySettings&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td style="width:90px">
+          <p><strong>Default:</strong></p>
+        </td>
+
+        <td>
+          
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Presence:</strong></p>
+        </td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Type:</strong></p>
+        </td>
+
+        <td>
+          <p>String</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="expirysettingstimeofdayelement-attributes">Attributes</h3>
+
+  <table width="700">
+    <tbody>
+      <tr>
+        <th scope="col" width="118">Attribute</th>
+
+        <th scope="col" width="382">Description</th>
+
+        <th scope="col" width="382">Default</th>
+
+        <th scope="col" width="92">Presence</th>
+
+        <th scope="col" width="88">Type</th>
+      </tr>
+
+      <tr>
+        <td>ref</td>
+
+        <td>Variable with the expiration time value.</td>
+
+        <td>N/A</td>
+
+        <td>Optional</td>
+
+        <td>String<br>
+         </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="TimeoutInSecondsElement"><i>&lt;ExpirySettings&gt;</i>/&lt;TimeoutInSec&gt; element</h2>
+
+  <p>The number of seconds after which a cache entry should expire. When present, this element
+  overrides its siblings, <code>&lt;TimeOfDay&gt;</code> and <code>&lt;ExpiryDate&gt;</code>.</p>
+  <pre class="prettyprint">
+&lt;ExpirySettings&gt;
+    &lt;TimeoutInSec ref="<i>duration_variable</i>"&gt;<i>seconds_until_expiration</i>&lt;/TimeoutInSec&gt;
+&lt;/ExpirySettings&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td style="width:90px">
+          <p><strong>Default:</strong></p>
+        </td>
+
+        <td>
+          <p>N/A</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Presence:</strong></p>
+        </td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Type:</strong></p>
+        </td>
+
+        <td>
+          <p>String</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="expirysettingstimeoutinsecelement-attributes">Attributes</h3>
+
+  <table width="700">
+    <tbody>
+      <tr>
+        <th scope="col" width="118">Attribute</th>
+
+        <th scope="col" width="382">Description</th>
+
+        <th scope="col" width="382">Default</th>
+
+        <th scope="col" width="92">Presence</th>
+
+        <th scope="col" width="88">Type</th>
+      </tr>
+
+      <tr>
+        <td>ref</td>
+
+        <td>Variable with the timeout value.</td>
+
+        <td style="vertical-align: top;">
+          <div>
+            N/A
+          </div>
+        </td>
+
+        <td>Optional</td>
+
+        <td>String</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="UseAcceptHeader">&lt;UseAcceptHeader&gt; element</h2>
+
+  <p>Set to <code>true</code> to have a reponse cache entry's cache key appended with values from
+  response Accept headers.</p>
+
+  <p>Edge uses the <code>Accept</code>, <code>Accept-Encoding</code>, <code>Accept-Language</code>
+  and <code>Accept-Charset</code> request headers when calculating the cache key. This approach
+  prevents a client from getting a media type they did not ask for.</p>
+
+  <p>For example, consider if two requests come in from the same URL, where the first request
+  accepts gzip and the second does not. The first request will be cached, and the cached entry will
+  (probably) be a gzipped response. The second request will read the cached value and may then
+  return a gzipped entry to a client that is not capable of reading gzip.</p>
+
+  <p>See <a href="#configuring_cache_key">Configuring a cache key</a> for more.</p>
+  <pre class="prettyprint">
+&lt;UseAcceptHeader&gt;false&lt;/UseAcceptHeader&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td style="width:90px">
+          <p><strong>Default:</strong></p>
+        </td>
+
+        <td>
+          <p>false</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Presence:</strong></p>
+        </td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Type:</strong></p>
+        </td>
+
+        <td>
+          <p>Boolean</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="UseResponseCacheHeaders">&lt;UseResponseCacheHeaders&gt; element</h2>
+
+  <p>Set to <code>true</code> to have HTTP response headers considered when setting the "time to
+  live" (TTL) of the response in the cache. When this is true, Edge considers the values of the
+  following response headers, comparing the values with those set by
+  <code>&lt;ExpirySettings&gt;</code> when setting time to live:</p>
+
+  <ul>
+    <li><code>Cache-Control s-maxage</code></li>
+
+    <li><code>Cache-Control max-age</code></li>
+
+    <li><code>Expires</code></li>
+  </ul>
+
+  <p>See <a href="#setting_cache_entry_expiration">Setting cache entry expiration</a> for more
+  details.</p>
+  <pre class="prettyprint">
+&lt;UseResponseCacheHeaders&gt;false&lt;/UseResponseCacheHeaders&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td style="width:90px">
+          <p><strong>Default:</strong></p>
+        </td>
+
+        <td>
+          <p>false</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Presence:</strong></p>
+        </td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Type:</strong></p>
+        </td>
+
+        <td>
+          <p>Boolean</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="Usage_Notes">Usage notes</h2>
+
+  <p>The maximum size for each cached object is 512 kb. (For detailed information on how Edge
+  processes cache, see <a href="/api-platform/cache/cache-internals.html">Cache
+  internals</a>.) </p>
+
+  <p>Through configuration in the ResponseCache policy, you can have Edge include HTTP response
+  headers in setting cache entry expiration and cache keys. This section describes you can use the
+  policy with headers to manage cache expiration and cache keys.</p>
+
+  <p>For more about how Edge handles response headers with the ResponseCache policy, see <a href=
+  "/api-platform/cache/http-response-caching.html">Support for HTTP response headers</a>.</p>
+
+  <aside class="note"><b>Note:</b> For other best practice suggestions related to the ResponseCache
+  policy, see <a href=
+  "/api-platform/fundamentals/best-practices-api-proxy-design-and-development.html">Best practices
+  for API proxy design and development</a>.</aside>
+
+  <h3 id="setting_cache_entry_expiration">Setting cache entry expiration</h3>
+
+  <p>As with the <a href="/api-platform/reference/policies/populate-cache-policy.html">Populate
+  Cache policy</a>, you can set a response cache entry's expiration (its time to live) using the
+  <code>&lt;ExpirySettings&gt;</code> element. In the ResponseCache policy, you can also have Edge
+  consider response headers when they're present.</p>
+
+  <p>To use response headers, you set the <a href=
+  "#UseResponseCacheHeaders"><code>&lt;UseResponseCacheHeaders&gt;</code></a> element value to
+  true. That setting causes Edge to consider the response headers, compare them with the value set
+  by <code>&lt;ExpirySettings&gt;</code>, then use the lowest value between the two. When
+  considering the response headers, Edge chooses the value available as described in the
+  following:</p>
+
+  <p><img src="/api-platform/images/responsecache_ttl3.png" title=""></p>
+
+  <p>For example, imagine a response is cached with the following values:</p>
+
+  <ul>
+    <li>No <code>Cache-Control s-maxage</code> value</li>
+
+    <li>A <code>Cache-Control max-age</code> value of 300</li>
+
+    <li>An <code>Expires</code> date in three days</li>
+
+    <li>An <code>&lt;ExpirySettings&gt;</code> <code>TimeOutInSec</code> value of 600.</li>
+  </ul>
+
+  <p>In this case, the <code>Cache-Control</code> <code>max-age</code> value would be used for the
+  TTL because it is lower than the <code>&lt;ExpirySettings&gt;</code> value and because there is
+  no <code>Cache-Control s-maxage</code> value (which takes precedence over
+  <code>max-age</code>).</p>
+
+  <h3 id="configuring_cache_key">Configuring a cache key</h3>
+
+  <p>As with general purpose cache policies such as the <a href=
+  "/api-platform/reference/policies/populate-cache-policy.html">Populate Cache policy</a>, with
+  ResponseCache you use <code>&lt;CacheKey&gt;</code> and <code>&lt;Scope&gt;</code> elements to
+  configure cache key creation for cache entries. With ResponseCache you can also make cache keys
+  more meaningful by having response Accept headers appended to key values.</p>
+
+  <p>For general information about configuring cache keys, see <a href=
+  "/api-platform/reference/policies/working-cachekeys.html">Working with cache keys</a>. For
+  information about using Accept headers, see <a href=
+  "#UseAcceptHeader"><code>&lt;UseAcceptHeader&gt;</code></a>.</p>
+
+  <h2 id="flow_variables">Flow variables</h2>
+
+  <p>The following predefined Flow variables are populated when a ResponseCache policy is executed.
+  For more information about Flow variables, see <a href=
+  "/api-platform/reference/variables-reference.html">Variables reference</a>.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Variables</th>
+
+        <th>Type</th>
+
+        <th>Permission</th>
+
+        <th>Description</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td><code>responsecache.{policy_name}.cachename</code></td>
+
+        <td>String</td>
+
+        <td>Read-Only</td>
+
+        <td>Returns the cache used in the policy</td>
+      </tr>
+
+      <tr>
+        <td><code>responsecache.{policy_name}.cachekey</code></td>
+
+        <td>String</td>
+
+        <td>Read-Only</td>
+
+        <td>Returns the key used</td>
+      </tr>
+
+      <tr>
+        <td><code>responsecache.{policy_name}.cachehit</code></td>
+
+        <td>Boolean</td>
+
+        <td style="vertical-align: top;">Read-Only</td>
+
+        <td>True if the policy execution is successful</td>
+      </tr>
+
+      <tr>
+        <td><code>responsecache.{policy_name}.invalidentry</code></td>
+
+        <td>Boolean</td>
+
+        <td>Read-Only</td>
+
+        <td>True if the cache entry in not valid</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="error_codes"><a id="ErrorCodes" name="ErrorCodes"></a>Error codes</h2>
+
+  <p>{% dynamic include /includes/___response-cache-policy-error-codes %}</p>
+
+  <h2 id="schema"><a name="schema" id="schema"></a>Schema</h2>
+
+  <p>Each policy type is defined by an XML schema (<code>.xsd</code>). For reference, <a href=
+  "https://github.com/apigee/api-platform-samples/tree/master/schemas/policy">policy schemas</a>
+  are available on GitHub.</p>{% endblock %}

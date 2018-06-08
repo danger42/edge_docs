@@ -1,0 +1,254 @@
+  {% extends "_base.html" %} {% block title %}Using SNI with Edge{% endblock %} {% block body %}
+
+  <p>Server Name Indication (SNI) allows multiple HTTPS targets to be served off the same IP
+  address and port without requiring those targets to use the same TLS certificate. When SNI is
+  enabled on a client, the client passes the hostname of the target endpoint as part of the initial
+  TLS handshake. That allows the TLS server to determine which TLS cert should be used to validate
+  the request. </p>
+
+  <p>For example, if the request target is <code>https://<strong>example.com</strong>/request/path</code>,
+  then the TLS client adds the <code>server_name</code> extension to the TLS handshake
+  request, as shown below:</p>
+
+  <p><img alt="" src="/release/notes/images/SNI.png"></p>
+
+  <p>Edge supports SNI for:</p>
+
+  <ul>
+    <li>Requests from a client app to an API proxy. In this scenario, Edge acts as the TLS
+    server</li>
+
+    <li>Requests from Edge to the backend. In this scenario, Edge acts as the TLS client.</li>
+  </ul>
+
+  <p>For additional information on SNI, see:</p>
+
+  <ul>
+    <li><a href=
+    "https://en.wikipedia.org/wiki/Server_Name_Indication">https://en.wikipedia.org/wiki/Server_Name_Indication </a></li>
+
+    <li><a href=
+    "https://blog.layershift.com/sni-ssl-production-ready/">http://blog.layershift.com/sni-ssl-production-ready/ </a></li>
+  </ul>
+
+  <h2 id="supportingsniforarequesttoapiproxyonedge">Supporting SNI for a request to API proxy on
+  Edge</h2>
+
+  <p>SNI support for requests to API proxies is controlled by hosts aliases and virtual
+  hosts. </p>
+
+  <h3 id="supportingsniforarequesttoapiproxyonedge-aboutvirtualhostsandhostaliases">About virtual
+  hosts and host aliases</h3>
+
+  <p>With Edge, a <em>virtual host</em> defines the IP address and port, or DNS name and port, on
+  which an API proxy is exposed and, by extension, the URL that apps use to access an API proxy.
+  The IP address/DNS name corresponds to an Edge Router, and the port number is an open port on the
+  Router. </p>
+
+  <p>When you create the virtual host, you also specify the host alias of the virtual host.
+  Typically this is the DNS name of the virtual host. As part of determining the API proxy that
+  handles the request, the Router compares the <code>Host</code> header of the incoming request to the
+  list of available host aliases defined by all virtual hosts. </p>
+
+  <p>The combination of host alias and port number for the virtual host must be unique for all
+  virtual hosts in the Edge installation. That means <strong>multiple virtual hosts can use the
+  same port number</strong> if they have different host aliases.</p>
+
+  <p>A virtual host also defines whether the API proxy is accessed by using the HTTP protocol, or
+  by the encrypted HTTPS protocol using TLS. When configuring a virtual host to use HTTPS,
+  associate the virtual host with a keystore that contains the cert and private key used by the
+  virtual host during TLS handshaking.</p>
+
+  <p>For additional information on virtual hosts, see:</p>
+
+  <ul>
+    <li><a href="/api-platform/fundamentals/virtual-hosts">About virtual hosts</a></li>
+
+    <li><a href="creating-virtual-host">Configuring TLS
+    access to an API for the Private Cloud</a> </li>
+
+    <li><a href="keystores-and-truststores">Keystores and
+    Truststores</a> </li>
+  </ul>
+
+  <h3 id="supportingsniforarequesttoapiproxyonedge-howsniworkswithhostaliases">How SNI works with
+  host aliases</h3>
+
+  <p>SNI allows you to have multiple virtual hosts defined on the same port, each with different
+  TLS certs and keys. Edge then determines the virtual host, and the cert/key pair used by TLS,
+  based on the <code>server_name</code>
+  extension in the TLS handshake request.</p>
+
+  <p>The Edge Router reads the <code>server_name</code> extension in the TLS handshake
+  request, and then uses it to search against the <strong>host aliases</strong> from all virtual
+  hosts. If the Router detects a match with a host alias, the Router uses the TLS cert and key from
+  the virtual host associated with the host alias. If no match is found, TLS handshaking fails.</p>
+
+  <p>Rather than having the TLS handshake fail, you can define a default cert/key pair, as
+  described in the next sections. </p>
+
+  <h3 id="supportingsniforarequesttoapiproxyonedge-definingadefaultcertkeypairinedgeforthecloud">
+  Defining a default cert/key pair in Edge for the Cloud</h3>
+
+  <p>Apigee provides a TLS certificate and private key to support HTTPS. While many customers
+  prefer to use their own certificate and private key at deployment time, you can deploy your APIs
+  using the Apigee cert and key.</p>
+
+  <aside class="note"><b>Note:</b> All Apigee Cloud customers use the same Apigee-provided cert.
+  Therefore, if you are a Cloud customer and are doing two-way TLS to the backend, you should not
+  use the Apigee-provided cert because it cannot be used to uniquely identify the owner of the API
+  proxy connecting to the backend. </aside>
+
+  <p>In Edge for the Cloud, if the Router cannot match the SNI header to a host alias or if the
+  client does not support SNI, then the Router uses the default certificate provided by Apigee,
+  which is *.apigee.net.</p>
+
+  <h3 id=
+  "supportingsniforarequesttoapiproxyonedge-definingadefaultcertkeypairinedgefortheprivatecloud">
+  Defining a default cert/key pair in Edge for the Private Cloud</h3>
+
+  <aside class="note"><b>Note:</b> This functionality is available for Edge for Private Cloud
+  version 4.16.01 and later. </aside>
+
+  <p>In Edge for the Private Cloud, if no match is found between the <code>server_name</code> extension and the host aliases
+  from all virtual hosts, or if the requesting client does not support SNI, you can configure the
+  Router to use the cert/key from a default virtual host on the port. The default virtual host is
+  defined by a combination of organization name, environment name, and virtual host name, in the
+  form:</p>
+
+  <pre class="prettyprint"><var>orgName_envName_vhName</var></pre>
+
+  <p>The Router uses the cert/key from the combination of <var>orgName_envName_vhName</var> that
+  comes first in alphabetical order. For example, the request comes in on port 443, and there are
+  two virtual hosts defined for the org <code>example</code> in the environment <code>prod</code>:</p>
+
+  <ul>
+    <li>virtual host name = <code>default</code></li>
+    <li>virtual host name = <code>test</code></li>
+  </ul>
+
+  <p>In this example, the Router uses the cert/key from the virtual host named <code>default</code>
+    because <code>example_prod_default</code> comes alphabetically before <code>example_prod_test</code>.</p>
+
+  <p>To enable the default virtual host:</p>
+
+  <ol>
+    <li>On the first Router node, edit <code>/opt/apigee/customer/application/router.properties</code>.
+    If that file does not exist, create it.</li>
+
+    <li>Add the following property to the file to enable you to define a default virtual host:
+
+    <pre class="prettyprint">conf_load_balancing_load.balancing.driver.nginx.fallback.conf.enabled=true</pre></li>
+
+    <li>Restart the Router:
+    <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-router restart</pre></li>
+
+    <li>Repeat these steps on all remaining Routers. </li>
+  </ol>
+
+  <p>Rather than use the cert/key from the default virtual host, you can explicitly define the
+  default cert/key on the Router. Use the following procedure to define an explicit default
+  cert/key pair:</p>
+
+  <ol>
+    <li>On the first Router node, copy the cert and private key to a location on the Router node
+    that is accessible by the apigee user. For example, <code>/opt/apigee/customer/application</code>.</li>
+
+    <li>Change ownership of the files to the 'apigee. user:
+
+<pre class="devsite-terminal">chown apigee:apigee /opt/apigee/customer/application/myCert.pem</pre>
+<pre class="devsite-terminal">chown apigee:apigee /opt/apigee/customer/application/myKey.pem</pre>
+    </li>
+
+    <li>Edit <code>/opt/apigee/customer/application/router.properties</code>.
+    If that file does not exist, create it.</li>
+
+    <li>Add the following properties to the file to enable you to specify the default cert/key:<br>
+    <code>conf_load_balancing_load.balancing.driver.nginx.fallback.server.default.ssl.template.enabled=true<br>
+
+    conf_load_balancing_load.balancing.driver.nginx.fallback.conf.enabled=true</code></li>
+
+    <li>Set the followng properties in <code>router.properties</code> to specify the location
+    of the certy and key:
+
+<pre class="prettyprint">conf_load_balancing_load.balancing.driver.nginx.ssl.cert=/opt/apigee/customer/application/myCert.pem
+conf_load_balancing_load.balancing.driver.nginx.ssl.key=/opt/apigee/customer/application/myKey.pem</pre>
+    </li>
+
+    <li>Restart the Router:
+
+    <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-router restart</pre>
+    </li>
+
+    <li>Repeat these steps on all remaining Routers. </li>
+  </ol>
+
+  <h2 id="supportingsniforrequestsfromedgetothebackend">Supporting SNI for requests from Edge to
+  the backend </h2>
+
+  <p>Edge supports the use of SNI from Message Processors to target endpoints in Apigee Edge for
+  Cloud and for Private Cloud deployments. By default, SNI is enabled on Edge Message Processors
+  for the Cloud and disabled in the Private Cloud.</p>
+
+  <aside class="note"><b>Note:</b> Leaving SNI disabled can prevent the download of NPM packages.
+  For example, a request in the form <code>/v1/o/org/apis/api/revisions/revision/npm</code> to
+  download NPM packages fails with an error message in the form "Hostname/IP doesn't match
+  certificate's altnames". If the target endpoint is SNI compliant, you can enable SNI, which also
+  allows you to download NPM packages. </aside>
+
+  <h3 id=
+  "supportingsniforrequestsfromedgetothebackend-usingsnitothebackendinedgefortheprivatecloud">Using
+  SNI to the backend in Edge for the Private Cloud</h3>
+
+  <p>For Edge for the Private Cloud, to be backward compatible with existing target backends,
+  Apigee disabled SNI by default. If your target backend is configured to support SNI, you can
+  enable this feature as described below for your version of Edge.</p>
+
+  <p>No other Edge-specific configuration is required. If your target environment is configured for
+  SNI, Edge supports it. Edge automatically extracts the hostname from the request URL and adds it
+  to the TLS handshake request. </p>
+
+  <h4>Enable SNI between Edge and the backend for Edge version 4.15.07.0x</h4>
+
+  <aside class="note"><b>Note:</b> For Edge for the Private Cloud, Java 1.7 is required.</aside>
+
+  <p>Use the following procedure to enable SNI:</p>
+
+  <ol>
+    <li>On the first Message Processor node, open the file
+      <code>/opt/apigee4/conf/apigee/message-processor/system.properties</code> in an editor.</li>
+
+    <li>Set the following property to true in <code>system.properties</code>:
+
+<pre class="prettyprint">jsse.enableSNIExtension=true</pre>
+    </li>
+
+    <li>Restart the Message Processors:
+
+<pre class="devsite-terminal">/opt/apigee4/bin/apigee-service message-processor restart</pre></li>
+
+    <li>Repeat these steps on all remaining Message Processors. </li>
+  </ol>
+
+  <h4>Enable SNI between Edge and the backend for Edge version 4.16.01 and later</h4>
+
+  <p>Use the following procedure to enable SNI:</p>
+
+  <ol>
+    <li>On the first Message Processor node, edit <code>/opt/apigee/customer/application/message-processor.properties</code>.
+    If that file does not exist, create it.</li>
+
+    <li>Add the following property to the file:
+
+<pre class="prettyprint">conf_system_jsse.enableSNIExtension=true</pre></li>
+
+    <li>Restart the Message Processor:
+
+<pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-message-processor restart</pre></li>
+
+    <li>Repeat these steps on all remaining Message Processors. </li>
+  </ol>
+
+  <div>
+     
+  </div>{% endblock %}

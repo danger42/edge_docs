@@ -1,0 +1,621 @@
+  {% extends "_base.html" %} {% block title %}Deploy API proxies using the management API{% endblock %} {% block body %}
+
+  <p>Every organization has a unique software development lifecycle (SDLC). It is often necessary
+  to synchronize and align API proxy deployment with the processes used for backend services.</p>
+
+  <p>The Edge management API methods demonstrated in this topic can be used to integrate API proxy
+  management into your organization's SDLC. A common usage of this API is to write scripts or code
+  that deploy API proxies, or that migrate API proxies from one environment to another, as part of
+  a larger automated process that also deploys or migrates other applications.</p>
+
+  <p>The management API makes no assumptions about your SDLC (or anyone else's, for that matter).
+  Rather, it exposes atomic functions that can be coordinated by your development team to automate
+  and optimize your API development lifecycle.</p>
+
+  <p>All of the management APIs are documented in <a href="/api/apis-0">APIs</a>. This topic
+  focuses on the set of APIs that are for managing API proxies.</p>
+
+  <div class="video">
+    <p><strong>Video:</strong> Check out this short video to learn how to deploy an API.</p>
+
+    <div style="text-align: left; margin:15px">
+      <iframe allowfullscreen="" frameborder="0" height="480" src=
+      "https://www.youtube.com/embed/3BEKp6DrmTo?list=PLIXjuPlujxxxe3iTmLtgfIBgpMo7iD7fk" width=
+      "854"></iframe>
+
+      <p><a href=
+      "https://www.youtube.com/embed/3BEKp6DrmTo?list=PLIXjuPlujxxxe3iTmLtgfIBgpMo7iD7fk">4MV4D
+      Deploy an API Proxy Revision using the Edge Management API</a>.</p>
+    </div>
+  </div>
+
+  <h2 id="interactingwiththeapi">Interacting with the API</h2>The following steps walk you through
+  simple interactions with the APIs.
+
+  <h3 id="interactingwiththeapi-listapisinyourorganization">List APIs in your organization</h3>
+
+  <p>You can begin by listing all of the API proxies in your organization. (Remember to substitute
+  entries for <code>email:password</code> and <code>{org_name}</code>. For instructions, see
+  <a href="/api-platform/reference/apis/api-reference-getting-started.html">API reference getting
+  started</a>.</p>
+  <pre class="terminal">
+$ curl -u email:password https://api.enterprise.apigee.com/v1/o/{org_name}/apis
+</pre>
+
+  <p>Sample Response:</p>
+  <pre class="prettyprint">
+[ "weatherapi" ]
+</pre>
+
+  <h3 id="interactingwiththeapi-getanapi">Get an API</h3>
+
+  <p>You can call the GET method on any API proxy in your organization. This call returns a list of
+  all available revisions of the API proxy.</p>
+  <pre class="terminal">
+$ curl -u email:password -H "Accept: application/json" https://api.enterprise.apigee.com/v1/o/{org_name}/apis/weatherapi
+</pre>
+
+  <p>Sample Response:</p>
+  <pre class="prettyprint">
+{
+  "name" : "weatherapi",
+  "revision" : [ "1" ]
+}
+</pre>
+
+  <p>The only detail returned by this method is the name of the API proxy along with the associated
+  'revision', which has an associated number. API proxies consist of a bundle of configuration
+  files. Revisions provide a lightweight mechanism for managing your updates of the configuration
+  as you iterate. Revisions are sequentially numbered, enabling you to revert a change by deploying
+  a previous revision of your API proxy. Also, you can deploy a revision of an API proxy into the
+  prod environment, while continuing to create new revisions of that API proxy in the test
+  environment. When you are ready, you can 'promote' the higher revision of your API proxy from the
+  test environment over the prior revision of the API proxy in the prod environment.</p>
+
+  <p>In this example, there is only one revision because the API proxy was just created. As an API
+  proxy moves through the lifecycle of iterative configuration and deployment, the revision number
+  increments by integers. Using direct API calls to deploy, you can optionally increment the
+  revision number of the API proxy. Sometimes when you make minor changes, you might not want to
+  increment the revision.</p>
+
+  <h3 id="interactingwiththeapi-getapirevision">Get API Revision</h3>
+
+  <aside class="warning"><b>Warning:</b> Don't confuse the <i>version</i> of an API (that is, the
+  public interface) with the <i>revision</i> of an API proxy (that is, the internal number
+  associated with a configuration). The two numbers are unrelated, and the revision number of an
+  API proxy is totally opaque to apps that consume your API.</aside>
+
+  <p>The API <i>version</i> (for example, <code>api.company.com/v1</code>) should change very
+  infrequently. When you do increment the API version, it signifies to developers that there has
+  been a significant change in the signature of the external interface exposed by the API.</p>
+
+  <p>The API proxy <i>revision</i> is an incremented number associated with an API proxy
+  configuration. API Services maintains revisions of your configurations so that you can revert a
+  configuration when something goes wrong. By default, an API proxy's revision is automatically
+  incremented every time you import an API proxy by using the <a href=
+  "/management/apis/post/organizations/{org_name}/apis-0">Import a new API Proxy</a> API. If you
+  don't want to increment an API proxy's revision, use the <a href=
+  "/management/apis/post/organizations/{org_name}/apis/{api_name}/revisions/{revision_number}-0">Update
+  API Proxy Revision</a> API. If you're using Maven to deploy, use the <code>clean</code> or
+  <code>update</code> options, as described in the <a href=
+  "https://github.com/apigee/apigee-deploy-maven-plugin" target="_blank">Maven plugin
+  readme</a>.</p>
+
+  <aside class="key-point"><b>Best practice:</b> To obtain the detailed profile of an API proxy
+  configuration, you call the GET method on a specific revision number.</aside>
+
+  <p>For example, you can call the GET method on API proxy revision 1 to get a detailed view.</p>
+  <pre class="terminal">
+$ curl -u email:password -H "Accept:application/json" https://api.enterprise.apigee.com/v1/o/{org_name}/apis/weatherapi/revisions/1
+</pre>
+
+  <p><b>Sample Response</b></p>
+  <pre class="prettyprint">
+{
+  "configurationVersion" : {
+    "majorVersion" : 4,
+    "minorVersion" : 0
+  },
+  "contextInfo" : "Revision 1 of application weatherapi, in organization {org_name}",
+  "createdAt" : 1343178905169,
+  "createdBy" : "andrew@apigee.com",
+  "lastModifiedAt" : 1343178905169,
+  "lastModifiedBy" : "andrew@apigee.com",
+  "name" : "weatherapi",
+  "policies" : [ ],
+  "proxyEndpoints" : [ ],
+  "resources" : [ ],
+  "revision" : "1",
+  "targetEndpoints" : [ ],
+  "targetServers" : [ ],
+  "type" : "Application"
+}
+</pre>
+
+  <p>These API proxy configuration elements are documented in detail in the <a href=
+  "/api-platform/reference/policies/api-proxy-configuration-reference.html">API proxy configuration
+  reference</a>.</p>
+
+  <h3 id="interactingwiththeapi-deployinganapitoanenvironment">Deploying an API to an
+  environment</h3>
+
+  <p>Once your API proxy is configured to receive and forward requests properly, you can deploy it
+  to one or more environments. Usually, you iterate on API proxies in 'test' and then, when ready,
+  you 'promote' the API proxy revision to 'prod'. Often, you will find that you have many more
+  revisions of an API proxy in the test environment, primarily because you will do much less
+  iteration in the prod environment.</p>
+
+  <p>An API proxy cannot be invoked until is has been deployed to an environment. Once you have
+  deployed the API proxy revision to prod, you can then publish the 'prod' URL to external
+  developers.</p>
+
+  <aside class="key-point"><b>Tip:</b> As you've seen, you deploy the API <b>revision</b> to an
+  environment, so the first step in deploying API proxy revisions is to verify the list of
+  environments in your organization.</aside>
+
+  <h3 id="interactingwiththeapi-howtolistenvironments">How to list environments</h3>
+
+  <p>Every organization in Apigee Edge has at least two environments: 'test' and 'prod'. The
+  distinction is arbitrary. The goal is to provide you with an area to verify that your API proxy
+  is working properly before you open it up to outside developers.</p>
+
+  <p>Each environment is really just a network address, enabling you segregate traffic between the
+  API proxies that you are working on, and those that are being accessed by apps at runtime.</p>
+
+  <p>Environments also provide segregation of data and resources. You can for example, set up
+  different caches in test and prod, which can be accessed only by API proxies executing in that
+  environment.</p>
+
+  <h3 id="interactingwiththeapi-viewenvironmentsinanorganization">View environments in an
+  organization</h3>
+  <pre class="terminal">
+$ curl -u email:password https://api.enterprise.apigee.com/v1/o/{org_name}/environments
+</pre>
+
+  <p>Sample Response</p>
+  <pre class="prettyprint">
+[ "test", "prod" ]
+</pre>
+
+  <aside class="note"><b>Note:</b> If you have an on-premises installation of Apigee Edge, you may
+  see a different list of environments.</aside>
+
+  <h3 id="interactingwiththeapi-exploredeployments">Explore Deployments</h3>
+
+  <p>A "deployment" is a revision of an API proxy that has been deployed in an environment. An API
+  proxy that is in the 'deployed' state is accessible over the network, at the addresses defined in
+  the VirtualHost for that environment.</p>
+
+  <aside class="key-point"><b>Tip:</b> It is often useful to check to see in which environment (and
+  if!) your API is deployed. For example, you might find requests to your API proxy are failing.
+  One troubleshooting step is to ensure that the API proxy is deployed as expected.</aside>
+
+  <h2 id="deployingapiproxies">Deploying API proxies</h2>
+
+  <p>API proxies cannot be invoked until they have been deployed. API Services exposes RESTful APIs
+  that provide control over the deployment process.</p>
+
+  <aside class="key-point"><b>Best practice:</b> The following APIs are called on your behalf by
+  the Python deploy tool. The deploy tool provides support for packaging and importing API proxies
+  that you develop locally, and it also manages undeployment of existing API proxy revisions. Use
+  the direct API calls described below when you need additional control over the deployment
+  process.</aside>
+
+  <p>Only one revision of an API proxy can be deployed in an environment at a given time. Therefore
+  the deployed revision needs to be undeployed. You can control whether the new bundle is deployed
+  as a new revision or whether it overwrites the existing revision.</p>
+
+  <p>{% dynamic include /includes/___proxy-bundle-size-limit-note %}</p>
+
+  <p>First undeploy the existing revision. Specify the environment name and the revision number of
+  the API proxy you want to undeploy:</p>
+  <pre class="terminal">
+$ curl -X DELETE \
+https://api.enterprise.apigee.com/v1/o/{org_name}/environments/{env-name}/apis/{api_name}/revisions/{revision_number}/deployments \
+-u email:password
+</pre>
+
+  <p>Then deploy the new revision. The new revision of the API proxy must already exist: </p>
+  <pre class="terminal">
+$ curl -X POST -H "Content-type:application/x-www-form-urlencoded" \
+https://api.enterprise.apigee.com/v1/o/{org_name}/environments/{env-name}/apis/{api_name}/revisions/{revision_number}/deployments \
+-u email:password
+</pre>
+
+  <aside class="warning"><b>Warning:</b> Using this approach, there will inevitably be some lag
+  between the time when the first revision is undeployed and the new revision is deployed. During
+  this interval, calls from apps may be rejected with an HTTP code 5xx. If this is a problem, as it
+  usually is in production deployments, use the seamless deployment option, described
+  below.</aside>
+
+  <h3 id="seamless">Seamless deployment (zero downtime)</h3>
+
+  <p>To minimize the potential for downtime during deployment, use the <code>override</code> option
+  on the deployment method, and set it to <code>true</code>.</p>
+
+  <p>You cannot deploy one revision of an API proxy on top of another. The first must always be
+  undeployed. By setting <code>override</code> to <code>true</code>, you indicate that one revision
+  of an API proxy should be deployed over the currently deployed revision. The result is that the
+  deployment sequence is reversed--the new revision is deployed, and once the deployment is
+  complete, the already deployed revision is undeployed.</p>
+  <pre class="terminal">
+$ curl -X POST -H "Content-type:application/x-www-form-urlencoded" \
+https://api.enterprise.apigee.com/v1/o/{org_name}/environments/{env-name}/apis/{api_name}/revisions/{revision_number}/deployments?"override=true" \
+-u email:password
+</pre>
+
+  <p>You can further optimize deployment by setting the <code>delay</code> parameter. The
+  <code>delay</code> parameter specifies a time interval, in seconds, before which the previous
+  revision should be undeployed. The effect is that in-flight transactions have a time interval in
+  which to complete before the API proxy processing their transaction is undeployed. Following is
+  what occurs with <code>override=true</code> and the <code>delay</code> parameter set:</p>
+
+  <ul>
+    <li>Revision 1 is handling requests.</li>
+
+    <li>Revision 2 is being deployed in parallel.</li>
+
+    <li>When Revision 2 is fully deployed, new traffic is sent to Revision 2. No new traffic is
+    sent to Revision 1.</li>
+
+    <li>However, Revision 1 may still be processing existing transactions. By setting the
+    <code>delay</code> parameter (for example, 15 seconds), you give Revision 1 15 seconds to
+    finish processing existing transactions.</li>
+
+    <li>After the delay interval, Revision 1 is undeployed.</li>
+  </ul>
+
+  <aside class="note"><b>Note:</b> With override set to <code>true</code>, Apigee will not undeploy
+  Revision 1 if the basepath of Revision 1 differs from that of Revision 2. In such a scenario, you
+  will end up having two revisions deployed in the same environment. This can break other plugins
+  and wrappers that make use of the seamless deployment API if you are not accommodating for this
+  scenario in your assertion.</aside>
+  <pre class="terminal">
+$ curl -X POST -H "Content-type:application/x-www-form-urlencoded" \
+https://api.enterprise.apigee.com/v1/o/{org_name}/environments/{env-name}/apis/{api_name}/revisions/{revision_number}/deployments?"override=true&amp;delay=15" \
+-u email:password
+</pre>
+
+  <table>
+    <thead>
+      <tr>
+        <th scope="col">Query Parameter</th>
+
+        <th scope="col">Description</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td><code>override</code></td>
+
+        <td>
+          <p>Default is false (normal deployment behavior: existing revision is undeployed,
+          then new revision is deployed).</p>
+
+          <p>Set to true to override the normal deployment behavior and provide seamless
+          deployment. The existing revision remains deployed while the new revision is also being
+          deployed. When the new revision is deployed, the old revision is undeployed. Use in
+          conjunction with the <code>delay</code> parameter to control when undeployment
+          occurs.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td><code>delay</code></td>
+
+        <td>
+          <p>To allow transaction processing to complete on the existing revision before it is
+          undeployed&#8212;and eliminate the possibility of 502 Bad Gateway or 504 Gateway Timeout
+          errors&#8212;set this parameter to the number of seconds you want undeployment to be
+          delayed. There is no limit to the number of seconds you can set, and there are no
+          performance ramifications for setting a large number of seconds. During the delay, no new
+          traffic is sent to the old revision.</p>
+
+          <p>Default is 0 (zero) seconds. When <code>override</code> is set to true and
+          <code>delay</code> is 0, the existing revision is undeployed immediately after the new
+          revision is deployed. Negative values are treated as 0 (zero) seconds.</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>When <code>override=true</code> is used along with a <code>delay</code>, HTTP 5xx
+  responses during deployment can be eliminated. This is because both API proxy revisions will be
+  deployed simultaneously, with the older revision undeployed after the delay.</p>
+
+  <h3 id="deployingapiproxies-seealldeploymentsofanapirevision">See all deployments of an API
+  Revision</h3>
+
+  <p>Sometimes it's necessary to fetch a list of all of the currently deployed revisions of an API
+  proxy.</p>
+  <pre class="terminal">
+$ curl https://api.enterprise.apigee.com/v1/o/{org_name}/apis/weatherapi/revisions/1/deployments \
+-u email:password 
+</pre>
+  <pre class="prettyprint">
+{
+  "aPIProxy" : "weatherapi",
+  "environment" : [ {
+    "configuration" : {
+      "basePath" : "",
+      "steps" : [ ]
+    },
+    "name" : "test",
+    "server" : [ {
+      "status" : "deployed",
+      "type" : [ "message-processor" ],
+      "uUID" : "90096dd1-1019-406b-9f42-fbb80cd01200"
+    }, {
+      "status" : "deployed",
+      "type" : [ "message-processor" ],
+      "uUID" : "7d6e2eb1-581a-4db0-8045-20d9c3306549"
+    }, {
+      "status" : "deployed",
+      "type" : [ "router" ],
+      "uUID" : "1619e2d7-c822-45e0-9f97-63882fb6a805"
+    }, {
+      "status" : "deployed",
+      "type" : [ "router" ],
+      "uUID" : "8a5f3d5f-46f8-4e99-b4cc-955875c8a8c8"
+    } ],
+    "state" : "deployed"
+  } ],
+  "name" : "1",
+  "organization" : "org_name"
+}
+</pre>
+
+  <p>The response above contains many properties specific to the internal infrastructure of Apigee
+  Edge. Unless you are using Apigee Edge on-premise, you can't change these settings.</p>
+
+  <p>The important properties contained in the response are <code>organization</code>,
+  <code>environment</code>, <code>aPIProxy</code>, <code>name</code>, and <code>state</code>. By
+  reviewing these property values, you can confirm that a specific revision of an API proxy is
+  deployed in an environment.</p>
+
+  <h3 id="deployingapiproxies-seealldeploymentsinthetestenvironment">See all deployments in the
+  test environment</h3>
+
+  <p>You can also retrieve the deployment status for a specific environment (including the revision
+  number of the currently deployed API proxy) using the following call:</p>
+  <pre class="terminal">
+$ curl -u email:password https://api.enterprise.apigee.com/v1/o/{org_name}/environments/test/deployments
+</pre>
+
+  <p>This returns the same result as above for every API deployed in the test environment</p>
+
+  <h3 id="deployingapiproxies-seealldeploymentsinyourorganization">See all deployments in your
+  organization</h3>
+
+  <p>To fetch a list of all currently deployed revisions of all API proxies in all environments,
+  use the following API method:</p>
+  <pre class="terminal">
+$ curl https://api.enterprise.apigee.com/v1/o/{org_name}/deployments -u email:password 
+</pre>
+
+  <p>This returns the same result as above for all API proxies deployed in all environments.</p>
+
+  <p>Since the API is RESTful, you can simply use the POST method, along with a JSON or XML
+  payload, against the same resource to create an API proxy.</p>
+
+  <p>A profile for your API proxy is generated. The default representation of an API proxy is in
+  JavaScript object notation (JSON). Below is the default JSON response to the POST request above,
+  which created an API proxy called 'weatherapi'. A description of each element in the profile
+  follows:</p>
+  <pre class="prettyprint">
+{
+  "configurationVersion" : {
+    "majorVersion" : 4,
+    "minorVersion" : 0
+  },
+  "contextInfo" : "Revision 1 of application weatherapi, in organization {org_name}",
+  "createdAt" : 1357172145444,
+  "createdBy" : "you@yourcompany.com",
+  "displayName" : "weatherapi",
+  "lastModifiedAt" : 1357172145444,
+  "lastModifiedBy" : "you@yourcompany.com",
+  "name" : "weatherapi",
+  "policies" : [ ],
+  "proxyEndpoints" : [ ],
+  "resources" : [ ],
+  "revision" : "1",
+  "targetEndpoints" : [ ],
+  "targetServers" : [ ],
+  "type" : "Application"
+}
+</pre>
+
+  <aside class="key-point"><b>Tip:</b> Keep in mind that the response payload merely contains a
+  representation of an API resource &#8212; you can create an API proxy using JSON or XML, and you
+  can also retrieve representations of the API proxy as XML or JSON, depending on your
+  needs.</aside>
+
+  <p>The API proxy profile that is generated demonstrates the complete structure of an API
+  proxy:</p>
+
+  <ul>
+    <li><code>APIProxy revision</code>: The sequentially numbered iteration of the API proxy
+    configuration, as maintained by API Services</li>
+
+    <li><code>APIProxy name</code>: The unique name of the API proxy</li>
+
+    <li><code>ConfigurationVersion</code>: API Services version to which the API proxy
+    configuration conforms</li>
+
+    <li><code>CreatedAt</code>: Time when the API proxy was generated, formatted in UNIX time</li>
+
+    <li><code>CreatedBy</code>: Email address of the Apigee Edge user who created the API
+    proxy</li>
+
+    <li><code>DisplayName</code>: A user-friendly name for the API proxy</li>
+
+    <li><code>LastModifiedAt</code>: Time when the API proxy was generated, formatted in UNIX
+    time</li>
+
+    <li><code>LastModifiedBy</code>: Email address of the Apigee Edge user who created the API
+    proxy</li>
+
+    <li><code>Policies</code>: A list of policies that have been added to this API proxy</li>
+
+    <li><code>ProxyEndpoints</code>: A list of named ProxyEndpoints</li>
+
+    <li><code>Resources</code>: A list of resources (JavaScript, Python, Java, XSLT) available to
+    be executed in this API proxy</li>
+
+    <li><code>TargetServers</code>: A list of named TargetServers (that can be created using the
+    management API), used in advanced configurations for load balancing purposes</li>
+
+    <li><code>TargetEndpoints</code>: A list of named TargetEndpoints</li>
+  </ul>
+
+  <p>Note that many of the elements of the API proxy configuration created using the simple POST
+  method above are empty. In the following topics, you will learn how to add and configure the key
+  components of an API proxy.</p>
+
+  <p>You can also read about these configuration elements in the <a href=
+  "/api-platform/reference/policies/api-proxy-configuration-reference.html">API proxy configuration
+  reference</a>.</p>
+
+  <h2 id="scriptingagainsttheapi">Scripting against the API</h2>
+
+  <p>The <a href="/api-platform/samples/using-samples.html">Using the sample API proxies</a>,
+  available on GitHub provide shell scripts that wrap the Apigee deploy tool. If for some reason
+  you cannot use the Python deploy tool, then you can call the API directly. Both approaches are
+  demonstrated in the sample scripts below.</p>
+
+  <h3 id="scriptingagainsttheapi-wrappingthedeploytool">Wrapping the Deploy Tool</h3>
+
+  <p>First, make sure the <a href=
+  "https://github.com/apigee/api-platform-samples/tree/master/tools">Python deploy tool</a> is
+  available in your local environment.</p>
+
+  <p>Then create a file to hold your credentials. The deployment scripts that you write will import
+  these settings, helping you to centrally manage the credentials for your account. In the API
+  Platform sample, this file is called <a href=
+  "https://github.com/apigee/api-platform-samples/tree/master/setup"><code>setenv.sh</code></a>.</p>
+  <pre class="prettyprint">
+#!/bin/bash
+
+org="Your ORG on enterprise.apigee.com"
+username="Your USERNAME on enterprise.apigee.com"
+
+# While testing, it's not necessary to change the setting below
+env="test"
+# Change the value below only if you have an on-premise deployment
+url="https://api.enterprise.apigee.com"
+# Change the value below only if you have a custom domain
+api_domain="apigee.net"
+
+export org=$org
+export username=$username
+export env=$env
+export url=$url
+export api_domain=$api_domain
+</pre>
+
+  <p>The file above makes all of your settings available to the shell scripts that wrap the deploy
+  tool.</p>
+
+  <p>Now create a shell script that imports those settings and uses them to call the deploy tool.
+  (You can see an example <a href=
+  "https://github.com/apigee/api-platform-samples/tree/master/setup">here</a>.)</p>
+  <pre class="prettyprint">
+#!/bin/bash
+
+source path/to/setenv.sh
+
+echo "Enter your password for the Apigee Enterprise organization $org, followed by [ENTER]:"
+
+read -s password
+
+echo Deploying $proxy to $env on $url using $username and $org
+
+path/to/deploy.py -n {api_name} -u $username:$password -o $org -h $url -e $env -p / -d path/to/apiproxy
+</pre>
+
+  <p>To make your life really easy, also create a script to invoke and test the API, as
+  follows:</p>
+  <pre class="prettyprint">
+#!/bin/bash
+
+echo Using org and environment configured in /setup/setenv.sh
+
+source /path/to/setenv.sh
+
+set -x
+
+curl "http://$org-$env.apigee.net/{api_basepath}"
+</pre>
+
+  <h3 id="scriptingagainsttheapi-directlyinvokingtheapi">Directly invoking the API</h3>
+
+  <p>It can be useful to write simple shell scripts that automate the process of uploading and
+  deploying API proxies.</p>
+
+  <p>The script below directly invokes the management API. It undeploys the existing revision of
+  the API proxy that you are updating, creates a ZIP file from the <code>/apiproxy</code> directory
+  containing your proxy configuration files, and then uploads, imports, and deploys the
+  configuration.</p>
+  <pre class="prettyprint">
+#!/bin/bash
+
+#This sets the name of the API proxy and the basepath where the API will be available
+api=api
+        
+source /path/to/setenv.sh
+
+echo Delete the DS_store file on OSX
+
+echo find . -name .DS_Store -print0 | xargs -0 rm -rf
+find . -name .DS_Store -print0 | xargs -0 rm -rf
+
+echo "Enter your password for the Apigee Enterprise organization $org, followed by [ENTER]:"
+
+read -s password
+
+echo Undeploy and delete the previous revision
+
+# Note that you need to explicitly update the revision to be undeployed. One benefit of the Python deploy tool is that it manages this for you.
+
+curl -k -u $username:$password "$url/v1/o/$org/e/$env/apis/$api/revisions/1/deployments" -X DELETE
+
+curl -k -u $username:$password -X DELETE "$url/v1/o/$org/apis/$api/revisions/1"
+
+rm -rf $api.zip
+
+echo Create the API proxy bundle and deploy
+
+zip -r $api.zip apiproxy
+
+echo Import the new revision to $env environment 
+
+curl -k -v -u $username:$password "$url/v1/o/$org/apis?action=import&amp;name=$api" -T $api.zip -H "Content-Type: application/octet-stream" -X POST
+
+echo Deploy the new revision to $env environment 
+
+curl -k -u $username:$password "$url/v1/o/$org/e/$env/apis/$api/revisions/1/deployments" -X POST
+</pre>
+
+  <h2 id="securityguidelines">Security guidelines</h2>
+
+  <p>The Edge management  API relies on HTTP Basic Authentication. You need to provide a
+  username and password for each API call.</p>
+
+  <p>In some situations, it is not practical to collect the password when the script runs. For
+  example, you may need to run a cron job that fires when no administrators are present. In these
+  situations, you need to make the password available to the script without any human
+  intervention.</p>
+
+  <p>Follow these guidelines:</p>
+
+  <ol>
+    <li>Centralize credentials in a single file that is used as a source for the programs and
+    scripts that you write</li>
+
+    <li>Protect the credentials source file to the extent possible using file system security and
+    permissions</li>
+
+    <li>Create an automation client with highly restricted permissions on specific resources in
+    your organization.</li>
+  </ol>{% endblock %}

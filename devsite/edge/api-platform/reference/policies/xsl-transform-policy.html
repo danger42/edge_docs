@@ -1,0 +1,302 @@
+  {% extends "_base.html" %} {% block title %}XSL Transform policy{% endblock %} {% block body %}
+  <img src="/api-platform/images/icon_policy_mediation.jpg">
+
+  <h3>What</h3>
+
+  <p>The XSL Transform policy applies custom <a href=
+  "https://en.wikipedia.org/wiki/XSLT">Extensible stylesheet language transformations (XSLT)</a> to
+  XML messages, letting you transform them from XML to another format, such as XML, HTML, or plain
+  text. The policy is often used to integrate applications that support XML, but that require
+  different XML-formats for the same data.</p>
+
+  <aside class="note"><b>Note:</b> This policy will transform XML only if the Content-Type header
+  on the message to be transformed is set to XML. For example, <code>text/xml</code> or
+  <code>application/xml</code>.</aside>
+
+  <h3 id="samples">Samples</h3>
+
+  <p>The following samples show all the resources in an XSL transformation flow.</p>
+  <!-- Begin tab list -->
+  <!-- End tab list --><!-- Begin tabbed region -->
+
+  <div class="ds-selector-tabs">
+    <section>
+      <h3 class="two-line-tab">XSL policy -&gt;</h3>
+      <pre class="prettyprint">
+&lt;XSL name="TransformXML"&gt;
+  &lt;ResourceURL&gt;xsl://my_transform.xsl&lt;/ResourceURL&gt;
+  &lt;Source&gt;request&lt;/Source&gt;
+&lt;/XSL&gt;
+</pre>
+
+      <p>Simple XSL policy. Go to the next example to see the XSLT stylesheet referenced in the
+      policy (<code>my_transform.xsl</code>). The <code>&lt;Source&gt;</code> element is important.
+      For example, if the XML you want to transform is in the response, the transformation won't
+      occur unless you set the Source to <code>response</code> (and the policy is attached to
+      the response flow). But in this case, the XML to be transformed is in the request.</p>
+    </section>
+
+    <section>
+      <h3 class="two-line-tab">XSLT stylesheet -&gt;</h3>
+      <pre class="prettyprint">
+&lt;xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0"&gt;
+  &lt;xsl:output method="text"/&gt;
+  &lt;xsl:variable name="newline"&gt;
+  &lt;xsl:text&gt;
+  &lt;/xsl:text&gt;
+  &lt;/xsl:variable&gt;
+  &lt;xsl:template match="/"&gt;
+  &lt;xsl:text&gt;&amp;lt;Life&amp;gt;&lt;/xsl:text&gt;
+    &lt;xsl:value-of select="$newline"/&gt;
+    &lt;xsl:text&gt;Here are the odd-numbered items from the list:&lt;/xsl:text&gt;
+    &lt;xsl:value-of select="$newline"/&gt;
+    &lt;xsl:for-each select="list/listitem"&gt;
+      &lt;xsl:if test="(position() mod 2) = 1"&gt;
+        &lt;xsl:number format="1. "/&gt;
+        &lt;xsl:value-of select="."/&gt;
+        &lt;xsl:value-of select="$newline"/&gt;
+      &lt;/xsl:if&gt;
+    &lt;/xsl:for-each&gt;
+  &lt;xsl:text&gt;&amp;lt;/Life&amp;gt;&lt;/xsl:text&gt;
+&lt;/xsl:template&gt;
+&lt;/xsl:stylesheet&gt;
+</pre>
+
+      <p>The <code>my_transform.xsl</code> stylesheet referenced in the policy. Go to the next
+      sample to see an example of an incoming XML message.</p>
+    </section>
+
+    <section>
+      <h3 class="two-line-tab">Message -&gt;</h3>
+      <pre class="prettyprint">
+&lt;?xml version="1.0"?&gt;
+&lt;list&gt;
+  &lt;title&gt;A few of my favorite albums&lt;/title&gt;
+  &lt;listitem&gt;A Love Supreme&lt;/listitem&gt;
+  &lt;listitem&gt;Beat Crazy&lt;/listitem&gt;
+  &lt;listitem&gt;Here Come the Warm Jets&lt;/listitem&gt;
+  &lt;listitem&gt;Kind of Blue&lt;/listitem&gt;
+  &lt;listitem&gt;London Calling&lt;/listitem&gt;
+  &lt;listitem&gt;Remain in Light&lt;/listitem&gt;
+  &lt;listitem&gt;The Joshua Tree&lt;/listitem&gt;
+  &lt;listitem&gt;The Indestructible Beat of Soweto&lt;/listitem&gt;
+&lt;/list&gt;
+</pre>
+
+      <p>Sample message in the request (indicated in the policy's
+      <code>&lt;Source&gt;request&lt;/Source&gt;</code> element in the first sample).</p>
+    </section>
+
+    <section>
+      <h3 class="two-line-tab">Transformed message</h3>
+      <pre class="prettyprint">
+&lt;Life&gt;
+Here are the odd-numbered items from the list:
+1. A Love Supreme
+3. Here Come the Warm Jets
+5. London Calling
+7. The Joshua Tree
+&lt;/Life&gt;
+</pre>
+
+      <p>The transformed message after the XSLT stylesheet from these samples is applied to the XML
+      message.</p>
+    </section>
+  </div><!-- End tabbed region. -->
+  <hr>
+
+  <h2 id="elements">Element reference</h2>
+
+  <p>Configure an XSL Transformation policy using the following elements.</p>
+
+  <aside class="note"><b>Note:</b> <code>&lt;xsl:include&gt;</code> and
+  <code>&lt;xsl:import&gt;</code> are not supported.</aside>
+
+  <table>
+    <thead>
+      <tr>
+        <th colspan="3" rowspan="1" style="text-align: left;">Field Name</th>
+
+        <th colspan="2" style="text-align: left;">Description</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td colspan="3" rowspan="1">Name (<span style=
+        "color: rgb(169, 169, 169);">Mandatory</span>)</td>
+
+        <td>
+          Name of the policy. Characters you can use in the name are restricted to:
+          <code>A-Z0-9._\-$ %</code>. However, the Management UI enforces additional restrictions,
+          such as automatically removing characters that are not alphanumeric.
+
+          
+        </td>
+      </tr>
+
+      <tr>
+        <td colspan="3" rowspan="1">Source (<span style=
+        "color: rgb(169, 169, 169);">Optional</span>)</td>
+
+        <td>
+          Contains the message from which information needs to be extracted. Usually this value is
+          set to <code>request</code> or <code>response</code>, depending on whether the message to
+          be transformed is inbound or outbound.
+
+          <ul>
+            <li>If source is missing, it is treated as a simple message. For example, <span style=
+            "font-family: courier new,courier,monospace;">&lt;Source&gt;message&lt;/Source&gt;</span></li>
+
+            <li>If the source variable cannot be resolved, or resolves to a non-message type, the
+            transformation step fails.</li>
+          </ul>
+        </td>
+      </tr>
+
+      <tr>
+        <td colspan="3" rowspan="1">OutputVariable (<span style=
+        "color: rgb(169, 169, 169);">Optional</span>)</td>
+
+        <td>
+          <p>A variable that stores the output of the transformation. The OutputVariable cannot be
+          of Message type, that is, it cannot be 'message', 'request', or 'response'. You should
+          set this element to be a custom variable, and then consume that variable.</p>
+
+          <p>To replace the message content with the output of the transformation, delete this
+          element. For example, if you're transforming a message to HTML, don't include this
+          element.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td colspan="3" rowspan="1">ResourceURL (<span style=
+        "color: rgb(169, 169, 169);">Mandatory</span>)</td>
+
+        <td>The XSLT file to be used for transforming the message.</td>
+      </tr>
+
+      <tr>
+        <td colspan="1" rowspan="4">Parameters (<span style=
+        "color: rgb(169, 169, 169);">Optional</span>)</td>
+
+        <td colspan="2" rowspan="1">ignoreUnresolvedVariables (<span style=
+        "color: rgb(169, 169, 169);">Optional</span>)</td>
+
+        <td>
+          <div>
+            Ignores any unresolved variable errors in the XSLT script instructions.
+          </div>
+
+          <div>
+            Valid values: true/false
+          </div>
+
+          <div>
+            Default value: false
+          </div>
+        </td>
+      </tr>
+
+      <tr>
+        <td colspan="1" rowspan="3">Parameter (<span style=
+        "color: rgb(169, 169, 169);">Optional</span>)</td>
+
+        <td>name (<span style="color: rgb(169, 169, 169);">Mandatory</span>)</td>
+
+        <td>
+          <p>Parameters support the use of XSL param in your stylesheets, where the name you add
+          here in the policy is the name of the XSL param. For example, if you enter a name of
+          "uid", your XSL might look something like this: <code>&lt;xsl:param
+          <strong>name</strong>="uid" select="''"/&gt;</code>).</p>
+
+          <p>The param gets its value either from a reference to a context variable (identified by
+          the <code>ref</code> attribute) or with an explicit <code>value</code>.</p>
+
+          <p>For an example and more information, see <a href=
+          "https://community.apigee.com/questions/1860/how-should-the-the-optional-parameters-on-the-xsl.html#answer-1864">http://community.apigee.com/questions/1860/how-should-the-the-optional-parameters-on-the-xsl.html#answer-1864</a>.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>ref (Optional)</td>
+
+        <td>
+          <p>Specifies the reference that sources the value from a variable. For example, if a
+          "uid" parameter needs to get its value from a variable called "authn.uid", the Parameter
+          element would look like this: <code>&lt;Parameter name="uid"
+          ref="authn.uid"/&gt;</code></p>
+
+          <p>If you use this attribute, don't use the value attribute.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>value (Optional)</td>
+
+        <td>
+          <p>You can use this attribute to hard code the value of the parameter.</p>
+
+          <p>If you use this attribute, don't use the ref attribute.</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <aside class="note"><b>Sample:</b> See our <a href=
+  "https://github.com/apigee/api-platform-samples/tree/master/schemas/policy">GitHub
+  repository</a> samples for the most recent schemas.</aside>
+  <hr>
+
+  <h2 id="usage">Usage notes</h2>
+
+  <aside class="note"><b>Note:</b> This policy will transform XML only if the Content-Type header
+  on the message to be transformed is set to XML. For example, <code>text/xml</code> or
+  <code>application/xml</code>.</aside>
+
+  <p>The XSLT is implemented in a stand-alone <code>.xsl</code> file, which is stored in the API
+  proxy under <code>/resources/xsl</code>. The XSL policy merely references the XSL file. See
+  <a href="/api-platform/develop/resource-files.html">Resource files</a> for more.</p>
+
+  <p>The XSL policy requires two inputs:</p>
+
+  <ul>
+    <li>The name of an XSLT stylesheet, which contains a set of transformation rules) stored in the
+    API proxy under <code>/resources/xsl</code></li>
+
+    <li>The source of the XML to be transformed (typically a request or response message)</li>
+  </ul>
+
+  <p><code>&lt;xsl:include&gt;</code> and <code>&lt;xsl:import&gt;</code> are not supported.</p>
+
+  <p>Apigee Edge relies on the <a href="http://saxon.sourceforge.net/">Saxon XSLT
+  processor</a>, and supports XSLT 1.0 and 2.0.</p>
+  <hr>
+
+  <h2 id="errors">Error codes</h2>
+
+  <p>Errors returned from Edge policies follow a consistent format as described in the <a href=
+  "/api-platform/reference/policies/error-code-reference.html">Error code reference</a>.</p>
+
+  <p>{% dynamic include /includes/___create-multiple-entities-generic-json-response %}</p>
+
+  <h2 id="relatedtopics">Related topics</h2>
+
+  <aside class="note">
+    <b>Sample:</b> For working samples of API proxies that use this policy, see the <a href=
+    "/api-platform/samples/samples-reference.html">Samples list</a>. Or just go straight to Github:
+
+    <ul>
+      <li><a href=
+      "https://github.com/apigee/api-platform-samples/tree/master/sample-proxies/jira-release-notes">
+      jira-release-notes</a></li>
+
+      <li><a href=
+      "https://github.com/apigee/api-platform-samples/tree/master/sample-proxies/pagination">pagination</a></li>
+
+      <li><a href=
+      "https://github.com/apigee/api-platform-samples/tree/master/sample-proxies/soap">soap</a></li>
+    </ul>
+  </aside>
+
+  {% endblock %}

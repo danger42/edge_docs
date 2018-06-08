@@ -1,0 +1,369 @@
+  {% extends "_base.html" %} {% block title %}How to create a Java callout{% endblock %} {% block body %}
+
+  <h2 id="whatisajavacallout">What is a Java callout?</h2>
+
+  <p>Apigee Edge provides a range of policies that address common API management requirements such
+  as security, data transformation, traffic management, and others.</p>
+
+  <p>However, there are some cases where your API requires custom behavior that is not implemented
+  in a standard policy. In these cases, Apigee provides several options that enable you to script
+  or code customized API behavior. One approach is to implement the desired behavior in Java.</p>
+
+  <p>{% dynamic include /includes/___edge-price-plan-note %}</p>
+
+  <p>For the supported versions of Java, see <a href="/release/supported-software.html">Supported
+  software and supported versions</a>.</p>
+
+  <aside class="note"><b>Note:</b> <strong>Important:</strong> If you are developing Java Callout
+  policies, you need to know which permission policies are in effect in the Edge JVM and how they
+  will affect your code. See <a href="/api-platform/reference/java-permission-reference.html">Java
+  permission reference</a>. .</aside>
+
+  <h2 id="howdoiusejavacodeinaproxy">How do I use Java code in a proxy?</h2>
+
+  <p>A Java callout policy lets you call Java code from within an executing proxy flow. Your Java
+  code needs to implement certain Edge-specific Java interfaces that allow the code to interact
+  with the executing proxy. For example, Java methods exist for getting and setting headers, query
+  parameters, flow variables, and other entities within the current flow context of the proxy.</p>
+
+  <h2 id="whenshouldiuseajavacallout">When should I use a Java callout?</h2>
+
+  <p>Let's look at situations where Java callouts are useful, and situations where you should
+  consider other approaches.</p>
+
+  <h3 id="whenshouldiuseajavacallout-firstconsideralternativeapproaches">First, consider
+  alternative approaches</h3>
+
+  <p>Before using a Java callout, note that there may be alternative approaches that you can use
+  instead. For example:</p>
+
+  <ul>
+    <li>For lightweight operations, such as HTTP API calls to remote services, consider using the
+    ServiceCallout policy. See <a href=
+    "/api-platform/reference/policies/service-callout-policy.html">Service Callout policy</a>.</li>
+
+    <li>For relatively simple interactions with message content, such as modifying or extracting
+    HTTP headers, parameters, or message content, you can use JavaScript or Python languages.</li>
+  </ul>
+
+  <h3 id="whenshouldiuseajavacallout-whatyoucandoinjavacode">What you can do in Java code</h3>
+
+  <p>A Java callout supports these basic operations:</p>
+
+  <ul>
+    <li>Examining or manipulating request or response messages</li>
+
+    <li>Getting and setting flow variables. You can use Java methods to access Edge flow variables.
+      If you want to access Key Value Map (KVM) information, use a KVM policy,
+      assign KVM values to flow variables, and then you can access the flow variables from
+      within the Java callout. </li>
+
+    <li>Calling external services</li>
+
+    <li>Raising faults</li>
+
+    <li>Manipulating error messages and status codes</li>
+  </ul>
+
+  <h3 id="whenshouldiuseajavacallout-whatyoucannotdoinjavacode">What you cannot do in Java
+  code</h3>
+
+  <p>Most system calls are disallowed. You <strong>cannot</strong>:</p>
+
+  <ul>
+    <li>Make internal file system reads or writes.  This means that you cannot use any of the
+      Java packages to read/write into internal file systems; however, you can make external
+      remote calls.</li>
+
+    <li>Get information about the current process, the process list, or CPU/memory utilization on
+    the machine.</li>
+
+    <li>Access the source code in `expressions-1.0.0.jar` and `message-flow-1.0.0.jar`.</li>
+  </ul>
+
+  <p>Although some such calls may work, they are unsupported and liable to be actively disabled at
+  any time. Avoid making such calls in your code.</p>
+
+  <p>Do not use or rely on Java libraries that are included with Apigee Edge. Those libraries are
+  for Edge product functionality only, and there's no guarantee that a library will be available
+  from release to release. If you use such libraries, use them in non-production demonstrations
+  only.</p>
+
+  <h2 id="hellojavacallout">Hello Java callout</h2>
+
+  <p>Let's walk through a basic hello world Java callout example. In this example, we create a
+  simple proxy with a Java callout that returns a "hello world" response. The proxy can return one
+  of two possible responses:</p>
+
+  <ul>
+    <li>If you pass in a "username" header with a "name" value, the proxy returns:<br>
+      <br>
+      <pre class="prettyprint">
+Hello, &lt;name&gt;!
+</pre>
+    </li>
+
+    <li>If you omit the header, the proxy just returns:<br>
+      <br>
+      <pre class="prettyprint">
+"Hello, Guest!"
+</pre>
+    </li>
+  </ul>
+
+  <h3 id="hellojavacallout-downloadthestarterproject">Download the starter project</h3>
+
+  <p>To make things simple, we have a basic project prepared for you on GitHub in the Apigee
+  <a href="https://github.com/apigee/api-platform-samples">api-platform-samples</a> repository.</p>
+
+  <ol>
+    <li>Download or clone <a href=
+    "https://github.com/apigee/api-platform-samples">api-platform-samples</a> to your system.</li>
+
+    <li>In a terminal or code editor of your choice, go to the
+    <code>api-platform-samples/doc-samples/java-hello</code> project.</li>
+  </ol>
+
+  <h3 id="hellojavacallout-writethejavacode">Write the Java code</h3>
+
+  <ol>
+    <li>Open the Java source file: <code>java-hello/callout/src/main/java/HelloJava.java</code>.
+    This file is a skeleton version of the main Java class that we will implement. The imported
+    packages are required for Edge Java Callout code. These classes provide methods that allow you
+    to access the proxy execution context. We'll walk through the steps for compiling and deploying
+    this code shortly.<br>
+      <pre class="prettyprint">
+package com.apigeesample;
+
+import com.apigee.flow.execution.ExecutionContext;
+import com.apigee.flow.execution.ExecutionResult;
+import com.apigee.flow.execution.spi.Execution;
+import com.apigee.flow.message.MessageContext;
+
+
+public class HelloJava implements Execution {
+
+        public ExecutionResult execute(MessageContext messageContext, ExecutionContext executionContext) {
+                
+                try {
+
+                        // Your code here.
+            
+            return ExecutionResult.SUCCESS;
+
+                } catch (Exception e) {
+                        return ExecutionResult.ABORT;
+                }
+        }
+
+}
+</pre>
+    </li>
+
+    <li>Replace the commented line <code>// Your code here</code> with the following code:<br>
+      <br>
+      <pre class="prettyprint">
+String name = messageContext.getMessage().getHeader("username");
+
+if (name != null &amp;&amp; name.length()&gt;0) {
+        messageContext.getMessage().setContent("Hello, " + name + "!");
+        messageContext.getMessage().removeHeader("username");
+} else {
+        messageContext.getMessage().setContent("Hello, Guest!");
+}
+</pre>
+
+      <aside class="note"><b>Note:</b> <strong>Note:</strong> The <strong>MessageContext</strong>
+      object lets you access entities inside the flow where the Java Callout policy executes. Let's
+      say the Java Callout policy is attached to the Proxy Endpoint Response flow. The code listed
+      above gets the HTTP Message object for that flow context. The <strong>Message</strong>
+      object, in turn, gives you access to headers, query parameters, body content, and flow
+      variables.</aside>
+    </li>
+
+    <li>Save the file.</li>
+  </ol>
+
+  <h3 id="hellojavacallout-compileyourcodewithmaven"><br>
+  Compile your code with Maven</h3>
+
+  <aside class="note"><b>Note:</b> The POM file and configuration for the Maven compile should
+  work, but are offered in the Git repository as an example only. You may need to make adjustments
+  for your environment. If you make changes to the sample code, you may also need to adjust the
+  Maven configuration. </aside>
+
+  <p>The project is set up so that you can compile with Maven. If you want to use
+  <code>javac</code>, we'll include an example following the Maven example.</p>
+
+  <ol>
+    <li>Be sure that you have Maven installed:<br>
+      <br>
+      <pre class="prettyprint">
+mvn -version
+</pre>
+    </li>
+
+    <li>Execute the script <code>java-hello/buildsetup.sh</code>. This script installs the required
+    JAR dependencies in your local Maven repo.</li>
+
+    <li>cd to the <code>java-hello/callout</code> directory.</li>
+
+    <li>Execute Maven:<br>
+      <br>
+      <pre class="prettyprint">
+mvn clean package
+</pre>
+
+      <aside class="note"><b>Note:</b> If you get a Maven error, be sure that you are in the
+      <code>java-hello/callout</code> directory.</aside>
+    </li>
+
+    <li>If you wish, verify that the JAR file <code>edge-custom-policy-java-hello.jar</code> was
+    copied to <code>java-hello/apiproxy/resources/java</code>. This is the required location for
+    JAR files that you wish to deploy with a proxy.</li>
+  </ol>
+
+  <h3 id="hellojavacallout-compilewithjavac">Compile with javac</h3>
+
+  <p>If you want to use <code>javac</code> to compile the code, you can do something similar to the
+  following (from the <code>java-hello</code> directory). The required JAR files are provided for
+  you in the <code>java-hello/lib</code> directory.</p>
+
+  <ol>
+    <li>cd to <code>api-platform-samples/doc-samples/java-hello</code>.</li>
+
+    <li>Be sure you have javac in your path.<br>
+      <br>
+      <pre class="prettyprint">
+javac -version
+</pre>
+    </li>
+
+    <li>Execute the following javac command:<br>
+      <br>
+      <pre class="prettyprint">
+javac -d . -classpath ./lib/expressions-1.0.0.jar:./lib/message-flow-1.0.0.jar:. callout/src/main/java/HelloJava.java
+</pre>
+    </li>
+
+    <li>Copy the JAR file to the apiproxy/resources/java directory. This is the required location
+    for JAR files that you wish to deploy with a proxy.<br>
+      <br>
+      <pre class="prettyprint">
+cp com/apigeesample/HelloJava.class apiproxy/resources/java
+</pre>
+    </li>
+  </ol>
+
+  <h3 id="hellojavacallout-deployandcalltheproxy">Deploy and call the proxy</h3>
+
+  <p>A deploy script is provided in the <code>./java-hello</code> directory. But before you run it,
+  you need to do a quick setup.</p>
+
+  <ol>
+    <li>cd to <code>api-platform-samples/doc-samples/java-hello</code></li>
+
+    <li>If you haven't already done so, open the file <code>../../setup/setenv.sh</code> and edit
+    it as indicated with your Apigee account information: your username (the email address
+    associated with your account), your organization name, and the domain you use to make API
+    management calls. For example, for Edge cloud, the domain is
+    <code>https://api.enterprise.apigee.com</code>; however, your domain may be different if you're
+    using Edge Private Cloud.</li>
+
+    <li>Save the <code>setenv.sh</code> file.</li>
+
+    <li>Execute the deploy script:<br>
+      <br>
+      <pre class="prettyprint">
+./deploy.sh
+</pre>
+    </li>
+
+    <li>If the deploy succeeds, execute the invoke script:<br>
+      <br>
+      <pre class="prettyprint">
+./invoke.sh
+</pre>
+
+      <p>The invoke script calls a cURL command that looks like this:</p>
+      <pre class="prettyprint">
+curl  http://$org-$env.$api_domain/java-hello -H "username:Will"
+</pre>
+
+      <p>Which returns "Hello, Will!</p>
+
+      <p>You can edit the <code>invoke.sh</code> script to change the name, or if you change the
+      cURL call to remove the header, then the command returns "Hello, Guest!"</p>
+    </li>
+  </ol>
+
+  <h3 id="hellojavacallout-abouttheproxy">About the proxy</h3>
+
+  <p>Let's quickly examine the policies used in this proxy. Pay attention to where the policies are
+  positioned in the proxy flow and why.</p>
+
+  <p><strong>The Assign message policy</strong></p>
+
+  <p>An Assign message policy is attached to the ProxyEndpoint <strong>request flow</strong>. It
+  copies the username header from the request and assigns it to the response. This operation allows
+  the Java Callout policy, which is attached to the response flow, to access the username header
+  and build a custom response body using the value of that header.</p>
+  <pre class="prettyprint">
+&lt;AssignMessage async="false" continueOnError="false" enabled="true" name="CopyHeader"&gt;     
+    &lt;DisplayName&gt;CopyHeader&lt;/DisplayName&gt;     
+    &lt;Copy source="request"&gt;         
+        &lt;Headers&gt;             
+          &lt;Header name="username"/&gt;         
+        &lt;/Headers&gt;     
+    &lt;/Copy&gt;     
+    &lt;IgnoreUnresolvedVariables&gt;true&lt;/IgnoreUnresolvedVariables&gt;     
+    &lt;AssignTo createNew="false" transport="http" type="response"/&gt; 
+&lt;/AssignMessage&gt;
+</pre>
+
+  <p><strong>The Java callout policy</strong></p>
+
+  <p>The Java callout policy is attached to the <strong>response flow</strong>. This is because the
+  custom Java code makes changes to the response headers and message. The policy's ClassName
+  element specifies the main class that is executed by the policy. The ResourceURL element is the
+  name of the JAR file that you built and added to the <code>resources/java</code> directory of the
+  proxy.</p>
+  <pre class="prettyprint">
+&lt;JavaCallout name="hello-java"&gt;         
+    &lt;ClassName&gt;com.apigeesample.HelloJava&lt;/ClassName&gt;         
+    &lt;ResourceURL&gt;java://edge-custom-policy-java-hello.jar&lt;/ResourceURL&gt; 
+&lt;/JavaCallout&gt;
+</pre>
+
+  <h2 id="whatyouneedtoknowaboutjavacallout">What you need to know about Java callout</h2>
+
+  <p>Important things to note about implementing a Java callout are:</p>
+
+  <ul>
+    <li>Imports classes from the <code>com.apigee.flow.execution</code> and
+    <code>com.apigee.flow.message</code> packages. These packages must be included in the JAR file
+    that is packaged and deployed. You can upload your Java JAR through the Management UI proxy
+    editor, or you can include it in the <code>/resources/java</code> directory in API proxies that
+    you develop locally.</li>
+
+    <li>Implements the Execution interface. Any Java code that is executed within an API proxy must
+    implement Execution. </li>
+
+    <li>A Java Callout policy contains no actual code. Instead, a Java Callout policy references a
+    Java 'resource', which you must package in a JAR.</li>
+
+    <li>Package names to avoid: Do not use <strong>io.apigee</strong> or
+    <strong>com.apigee</strong> as package names in Java Callouts. Those are reserved and used by
+    other Apigee modules.</li>
+
+    <li>If your Java Callout relies on additional third-party libraries packaged as independent JAR
+    files, then place those JAR files in the <code>/resources/java</code> directory as well to
+    ensure that they are loaded correctly at runtime.</li>
+
+    <li>If there are multiple JARs, simply add them as additional resources. You do not need to
+    modify the policy configuration to refer to additional JAR files. Putting them in
+    <code>/resources/java</code> is sufficient.</li>
+
+    <li>For additional information on uploading Java JARs, see <a href=
+    "/api-platform/develop/resource-files.html">Resource files</a>.</li>
+  </ul>{% endblock %}

@@ -1,0 +1,218 @@
+  {% extends "_base.html" %} {% block title %}Creating roles with the API{% endblock %} {% block body %}
+
+  <p>This topic discusses how to create custom roles and assign roles to users through the
+  management API. We also show how to test role assignments through the API. (For an overview of
+  custom roles, see <a href=
+  "/api-platform/system-administration/creating-custom-roles.html">Creating custom roles in the
+  UI</a>.)</p>
+
+  <h2 id="aboutpermissionsetting">About permission setting</h2>
+
+  <p>Role permissions are set on management API URIs (not management UI URIs). For example, if you
+  want to set PUT, GET, and/or DELETE permissions on the app developer entities in your Edge
+  organization, you'd set permissions on the <code>/developers</code> resource, because the
+  management API path for <a href=
+  "/management/apis/get/organizations/%7Borg_name%7D/developers">developers</a> is
+  <code>https://api.enterprise.apigee.com/v1/organizations/{org_name}<strong>/developers</strong></code>.
+  (You don't need to include the organization part of the path when defining permissions, because
+  permissions are scoped to a specific organization, as the management API calls in this topic
+  illustrate.)</p>
+
+  <p>You can also set permissions on specific entities. For example:</p>
+
+  <ul>
+    <li>If you wanted to set permissions on a single developer, set them on
+    <code>/developers/steve@example.com</code></li>
+
+    <li>For a specific API product, such as free-api-product, set them
+    on <code>/apiproducts/free-api-product</code></li>
+
+    <li>For a key value map in a specific environment, you'd set permission on something like
+    <code>/environments/test/keyvaluemaps/fooMap</code>, or
+    <code>/environments/test/keyvaluemaps/*</code> for all key value maps in the test
+    environment.</li>
+  </ul>
+
+  <aside class="note"><b>Note:</b> Names of entities, such as API products, apps, etc. should not
+  contain spaces.</aside>
+
+  <p>The permissions you set using the API:</p>
+
+  <ul>
+    <li>Allow users in a custom role to make <a href="/management/apis">management API
+    calls</a> according to their permissions. For example, if a role allows read-only access
+    to all API proxies, a user in that role could use the <a href=
+    "/management/apis/get/organizations/{org_name}/apis">List API Proxies</a> API but not the
+    <a href="/management/apis/post/organizations/{org_name}/apis">Create an API Proxy</a> API.</li>
+
+    <li>Determine what users in a custom role can see and do in the management UI. For example,
+    read-only access to API proxies disables access to the +API Proxy and Delete buttons on the API
+    Proxies page.</li>
+  </ul>
+
+  <p>To see the resources and paths that you can set permissions on, look through the <a href=
+  "/management/apis">management API reference</a> at the different resource URLs.</p>
+
+  <p>See the <a href="/api/user-roles">User roles</a> API for complete reference information on
+  role management.</p>
+
+  <h3 id="aboutpermissionsetting-syntaxandprecedence">Syntax and precedence</h3>
+
+  <p>You can use the asterisk wild card (*) to indicate "everything after" in a permission setting.
+  However, if you set permissions only on a parent resource (such as on /developers) without
+  setting any more specific permissions (such as /developers/*), the permission applies to
+  everything from /developers and after.</p>
+
+  <p>PUT also serves as POST in permissions.</p>
+
+  <p>You can mix general with more granular permissions on resources. The more granular settings
+  take precedence where there is a permissions overlap. For example, assume the following
+  permissions are set on a "developeradmin" role:</p>
+
+  <ul>
+    <li>PUT on /developers</li>
+
+    <li>GET on /developers/*</li>
+  </ul>
+
+  <p>This means the developeradmin can:</p>
+
+  <ul>
+    <li>Create a developer, but not update any specific developers or any sub-entities (because of
+    the more specific GET permission on that path).</li>
+
+    <li>Get any developer or sub-entity, but not get a list of all developers.</li>
+  </ul>
+
+  <h2 id="createanewcustomrolecalleddevelopment">Create a new custom role called "development"</h2>
+
+  <p>Create a 'development' role to enable developers to view, create, and update API proxies.</p>
+  <pre class="prettyprint">
+$ curl -u email:password https://api.enterprise.apigee.com/v1/o/{org_name}/userroles -H "Content-type:application/json" -X POST -d'{ "role" : [ { "name" : "development" } ] }'
+</pre>
+
+  <h2 id="addpermissionstothedevelopmentrole">Add permissions to the development role</h2>
+
+  <p>The permissions that can be set on an entire group of Edge artifacts (such as all /apps,
+  /apis, /apiproducts, and so on) as well as on individual artifacts (such as a specific app, API
+  proxy, or API product) are GET, PUT, and DELETE. </p>
+
+  <p>GET enables users to view any APIs, including API proxy configuration files, associated
+  policies, Javascript, XSLT files, and so on. The PUT permission on APIs enables developers to
+  create, modify, import, export, deploy and undeploy API proxies.</p>
+
+  <p>The path attribute specifies the artifact on which you set the permissions. For example,
+   /applications, /apps, /apiproducts, /developers, or /reports.</p>
+  <pre class="prettyprint">
+curl -u email:password https://api.enterprise.apigee.com/v1/o/{org_name}/userroles/development/permissions -H "Content-type:application/json" -X POST -d'{"path" : "/applications","permissions" : [ "put", "get" ]}'
+</pre>
+
+  <aside class="note"><b>Note:</b> The role resource path for all proxies is <span style=
+  "font-family:courier new,courier,monospace;">/applications</span> and for a specific API proxy it
+  is <code>/applications/&lt;proxy_name&gt;</code>.</aside>
+
+  <h2 id="createaroletesting">Create a role: testing</h2>
+
+  <p>Create a 'testing' role to enable quality engineers to view API proxies and their contents
+  (including, for example, policies).</p>
+  <pre class="prettyprint">
+$ curl -u email:password https://api.enterprise.apigee.com/v1/o/{org_name}/userroles -H "Content-type:application/json" -X POST -d'{ "role" : [ { "name" : "testing" } ] }'
+</pre>
+
+  <h2 id="addpermissionstotestingrole">Add permissions to testing role</h2>
+
+  <p>GET enables users to view any APIs, including their configuration files, as well as any
+  associated policies, JavaScript, XSLT files, and so on. By adding this permission to the
+  'testing' role, we enable quality engineers to view the contents of the APIs that they are
+  testing. Users in this role will not, however, be able to create, modify, import, export, deploy
+  and undeploy API proxies.</p>
+  <pre class="prettyprint">
+$ curl -u email:password https://api.enterprise.apigee.com/v1/o/{org_name}/userroles/testing/permissions -H "Content-type:application/json" -X POST -d'{"path" : "/applications","permissions" : [ "get" ]}'
+</pre>
+
+  <p>For an on-premises installation of Edge, the minimum set of permissions that have to be set to
+  allow the user to log in to the Edge UI are:</p>
+  <pre class="prettyprint">
+{"path" : "/","permissions" : [ "get" ]}
+{"path" : "/*","permissions" : [ ]}
+{"path" : "/environments","permissions" : [ "get" ]}
+{"path" : "/userroles","permissions" : [ "get" ]}
+</pre>
+
+  <p>Use the following cURL command to set these permissions:</p>
+  <pre class="prettyprint">
+curl -H "Content-Type:application/json" -u email:password \
+-X POST \
+http://&lt;<em>ms-IP</em>&gt;:8080/v1/organizations/{org_name}/userroles/testing/resourcepermissions  \
+-d '{
+ "resourcePermission" : [ 
+   {
+    "path" : "/",
+    "permissions" : [ "get" ]
+   }, 
+{
+    "path" : "/*",
+    "permissions" : []
+   },
+{
+    "path" : "/environments",
+    "permissions" : [ "get" ]
+   },
+   {
+    "path" : "/userroles",
+    "permissions" : [ "get"]
+   }
+  ]
+}'
+</pre>
+
+  <p>where <span style="font-family:courier new,courier,monospace;"><em>&lt;ms-IP&gt;</em></span>
+  is the IP address or DNS name of the Edge Management Server.</p>
+
+  <h2 id="addusertotestingrole">Add user to testing role</h2>
+
+  <p>To provision a user with a user role:</p>
+  <pre class="prettyprint">
+$ curl -u email:password https://api.enterprise.apigee.com/v1/o/{org_name}/users/justauser@apigee.com/userroles -H "Content-type:application/json" -X POST -d'{"role" : [ {"name" : "testing"} ] }'
+</pre>
+
+  <h2 id="viewapisasuser">View APIs as user</h2>Impersonate the user and make a request to API
+  Services to view API proxies. The user should be able to view APIs, along with their contents.
+  <pre class="prettyprint">
+$ curl -u justauser@apigee.com:secret https://api.enterprise.apigee.com/v1/o/{org_name}/apis
+</pre>
+  <pre class="prettyprint">
+$ curl -u justauser@apigee.com:secret https://api.enterprise.apigee.com/v1/o/{org_name}/apis/{api_name}/policies
+</pre>
+
+  <h2 id="createapiasuserintestingrole">Create API as user in testing role</h2>
+
+  <p>Impersonate the user and make a request to API Services to create an API proxy. The request
+  will be rejected by API Services, as the role 'testing' does not permit the user to create
+  APIs.</p>
+  <pre class="prettyprint">
+$ curl -u justauser@apigee.com:secret -H "Content-Type: application/json" https://api.enterprise.apigee.com/v1/o/{org_name}/apis -X POST -d'{"name" : "rbacTestApi"}'
+</pre>
+
+  <h2 id="addusertodevelopmentrole">Add user to development role</h2>
+
+  <p>Now provision the user with the 'development' role.</p>
+  <pre class="prettyprint">
+$ curl -u email:password https://api.enterprise.apigee.com/v1/o/{org_name}/users/justauser@apigee.com/userroles -H "Content-type:application/json" -X POST -d'{"role" : [ {"name" : "development"} ] }'
+</pre>
+
+  <h2 id="createapiasuserindevelopmentrole">Create API as user in development role</h2>
+
+  <p>Impersonate the user and repeat the request to the API Platform to create an API proxy. The
+  request will be successful, as the role 'development' does permit the user to create APIs.</p>
+  <pre class="prettyprint">
+$ curl -u justauser@apigee.com:secret -H "Content-Type: application/json" https://api.enterprise.apigee.com/v1/o/{org_name}/apis -X POST -d'{"name" : "rbacTestApi"}'
+</pre>
+
+  <h2 id="getuserrolesforauser">Get user roles for a user</h2>
+
+  <p>As an organization administrator, you can check the list of user roles for a user (across all
+  organizations) at any time:</p>
+  <pre class="prettyprint">
+$ curl -u email:password -X GET https://api.enterprise.apigee.com/v1/users/justauser@apigee.com/userroles
+</pre>{% endblock %}

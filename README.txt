@@ -1,0 +1,111 @@
+******************************
+*           README           *
+******************************
+This GitHub repo contains the source documentation for the SAP release of Apigee
+Edge. It contains a subset of files used by the Apigee docs developer site
+(https://docs.apigee.com).
+
+Doc drop:
+https://github.com/danger42/edge_docs.git
+
+******************************
+*       What’s included      *
+******************************
+
+This archive includes the following files:
+
+  1. /devsite/*
+
+     Devsite source files, beginning with their state as of 
+     Private Cloud release version 4.18.05. Content files in our CMS
+     ("devsite") contain a mixture of the following markup:
+       - HTML
+       - Django (https://docs.djangoproject.com)
+       - Markdown (https://daringfireball.net/projects/markdown/syntax)
+
+     This directory also includes PDFs, images, CSS, "helper" files, and included
+     files. Helper files are at the root that begin with an "_" (underscore).
+     Includes are described in detail below.
+
+  2. /drupal-node-to-file-mapping.csv
+
+     Maps Drupal nodes to new files in CSV format. Columns are:
+       - node_id          Drupal node ID in old system
+       - title            Page title
+       - old_alias        Drupal alias in old system
+       - old_path         Drupal path in old system
+       - new_alias        File location in new CMS
+       - new_path
+
+  3. A license.txt file.
+  
+  4. /devsite/_localvars.html (see below)
+
+This may not be a comprehensive list of all files included in the archive; it's
+provided as informational.
+
+******************************
+*     What’s NOT included    *
+******************************
+The following files are not included in this archive:
+1. Release info (such as release notes and deprecation policy)
+2. Older versions of OPDK
+3. Metadata files (such as base, project, and redirects)
+4. Monetization Services docs
+5. API BaaS docs
+6. Sense docs
+7. AWS and Cloud Foundry integrations docs
+8. Advisory docs
+9. Management API docs
+
+As with the included files, this is informational and not mean to be a
+complete list.
+
+******************************
+*      Formatting Notes      *
+******************************
+This section describes some of our formatting, so that you might make better
+sense out of it if you look at the source.
+
+1. SSIs/includes:
+   {% include ... %}
+   {% dynamic include ... %}
+   {% includecode ... %}
+
+   These directives insert the contents of another file into the current file.
+   Included files are in the /___shared-files directory of the repo. In some
+   cases, an included file is used more than once.
+
+2. Variable values:
+   {{ variable_name }}
+
+   Variable names in double braces {{ ... }} are replace by their values that
+   are defined in the _localvars.html file (at /devsite).
+
+3. Custom tags:
+   <var>...</var>                  Bold, red, italic character style
+   <aside>                         Notes/warning/tip with icons & inside boxes
+   <section class='expandable'>    "Zippys" or drop down panels
+   <dl><dd>...</dd></dl>           "Definition lists", which are a sort of list
+                                   without bullets
+
+4. Metadata/page wrappers:
+   {% extends "_base.html" %}{% block title %}some_title{% endblock %}{% block body %}
+
+   Django header that defines the opening <html> and <body> tags.
+
+   {% endblock %}
+
+   Django footer that defines the closing </body> and </html> tags.
+
+5. Styles:
+   Apigee-specific CSS styles include:
+     devsite-terminal      Inserts a "$" for commands inside <pre> tags
+     prettyprint           Adds colorization for <pre> tags
+     external              Adds a "linkbox" prompt to <a> tags
+     hide-from-toc         Prevents <h2> and <h3> values from showing up in TOC
+
+******************************
+*        Questions?          *
+******************************
+Feel free to reach out to nickdanger@google.com with questions.

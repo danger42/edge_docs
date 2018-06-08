@@ -1,0 +1,326 @@
+  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}How to Configure Edge{% endblock %} {% block body %}
+
+  <p>To configure Edge after installation, you use a combination of <span style=
+  "font-family:courier new,courier,monospace;">.properties</span> files and Edge utilities. For
+  example, to configure TLS/SSL on the Edge UI, you edit <span style=
+  "font-family:courier new,courier,monospace;">.properties</span> files to set the necessary
+  properties. Changes to <span style=
+  "font-family:courier new,courier,monospace;">.properties</span> files require you to restart the
+  affected Edge component.</p>
+
+  <p>Apigee refers to the technique of editing <span style=
+  "font-family: 'courier new', courier, monospace;">.properties</span> files as <em>code with
+  config</em>. Essentially, code with config is a key/value lookup tool based on settings in
+  the <span style=
+  "font-family: 'courier new', courier, monospace;">.properties</span> files. In code with
+  config, the keys are referred to as <em>tokens</em>. Therefore, to configure Edge, you set tokens
+  in <span style=
+  "font-family: 'courier new', courier, monospace;">.properties</span> files.</p>
+
+  <aside class="warning"><b>Warning:</b> The Edge documentation contains information on how to set
+  tokens for the different Edge components. However, many tokens are used internally and are not
+  meant to be updated. Do not modify any undocumented token without first contacting <a href=
+  "https://support.apigee.com/">Apigee Support</a> to ensure that you do not cause any unforeseen
+  side effects.   </aside>
+
+  <p>Code with config allows Edge components to set default values that are shipped with the
+  product, lets the installation team override those settings based on the installation topology,
+  and then lets customers override any properties they choose. </p>
+
+  <p>If you think of it as a hierarchy, then the settings are arranges as follows with customer
+  settings having the highest priority to override any settings from the installer team or
+  Apigee:</p>
+
+  <ol>
+    <li>Customer</li>
+
+    <li>Installer</li>
+
+    <li>Apigee</li>
+  </ol>
+
+  <h2 id="howtousepropertiesfiles">How to use .properties files</h2>
+
+  <p>As a customer, you can only modify the <span style=
+  "font-family: 'courier new', courier, monospace;">.properties</span> files in the
+  <span style="font-family:courier new,courier,monospace;">/opt/apigee/customer/application</span>
+  directory. Each component has its own <span style=
+  "font-family: 'courier new', courier, monospace;">.properties</span> file in that directory.
+  For example, <span style="font-family:courier new,courier,monospace;">router.properties</span>
+  and <span style=
+  "font-family:courier new,courier,monospace;">management-server.properties</span>. </p>
+
+  <aside class="note"><b>Note:</b> If you have not set any properties for a component, the
+  <span style="font-family:courier new,courier,monospace;">/opt/apigee/customer/application</span>
+  directory might not contain a <span style=
+  "font-family: 'courier new', courier, monospace;">.properties</span> file for the component.
+  In that case, create one. The only requirement on a <span style=
+  "font-family: 'courier new', courier, monospace;">.properties</span> file is that it must be
+  accessible, or readable, by the "apigee" user.</aside>
+
+  <p>For example, to create a <span style=
+  "font-family: 'courier new', courier, monospace;">.properties</span> file:</p>
+
+  <ol>
+    <li>Create the file in an editor as any user. </li>
+
+    <li>Chown the owner of the file to <span style=
+    "font-family:courier new,courier,monospace;">apigee:apigee</span> or, if you changed the user
+    running the Edge service from the <span style=
+    "font-family:courier new,courier,monospace;">apigee</span> user, chown the file to the user who
+    is running the Edge service.</li>
+  </ol>
+
+  <p>To set a property for a component, edit the corresponding <span style=
+  "font-family: 'courier new', courier, monospace;">.properties</span> file to set a token,
+  and then restart the component:</p>
+  <pre class="prettyprint">
+&gt; /opt/apigee/apigee-service/bin/apigee-service <em><strong>component</strong></em> restart
+</pre>
+
+  <p>For example, after editing <span style=
+  "font-family:courier new,courier,monospace;">router.properties</span>, restart the Router:</p>
+  <pre class="prettyprint">
+&gt; /opt/apigee/apigee-service/bin/apigee-service edge-router restart
+</pre>
+
+  <p>When you upgrade Edge, the <span style=
+  "font-family: 'courier new', courier, monospace;">.properties</span> files in the
+  <span style="font-family:courier new,courier,monospace;">/opt/apigee/customer/application</span>
+  directory are read. That means the upgrade will retain any properties that you set on the
+  component.  </p>
+
+  <h2 id="locationofpropertiesfiles">Location of .properties files</h2>
+
+  <p>There are three top-level directories for <span style=
+  "font-family: 'courier new', courier, monospace;">.properties</span> files for Edge
+  components: installation owner, and customers. The default locations are shown in the following
+  table:</p>
+
+  <p><strong>Warning</strong>: Edge customers can only modify the <span style=
+  "font-family: 'courier new', courier, monospace;">.properties</span> files under
+  <span style="font-family:courier new,courier,monospace;">/opt/apigee/customer</span>. While you
+  can view files under the component and installation directories, do not modify any files.
+   </p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>
+          <p><strong>Owner</strong></p>
+        </th>
+
+        <th>
+          <p><strong>Default Token Root Directory</strong></p>
+        </th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td>
+          <p>Component</p>
+        </td>
+
+        <td>
+          <p><span style=
+          "font-family:courier new,courier,monospace;">/opt/apigee/&lt;<strong><em>prefix</em></strong>&gt;-&lt;<strong><em>component</em></strong>&gt;/conf</span></p>
+
+          <p>where
+          /&lt;<strong><em>prefix</em></strong>&gt;-&lt;<strong><em>component</em></strong>&gt;
+          identifies the component, such as edge-router or apigee-cassandra.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>Installation</p>
+        </td>
+
+        <td>
+          <p><span style="font-family:courier new,courier,monospace;">/opt/apigee/token</span></p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>Customer</p>
+        </td>
+
+        <td>
+          <p><span style=
+          "font-family:courier new,courier,monospace;">/opt/apigee/customer</span></p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="determiningthecurrentvalueofatoken">Determining the current value of a token</h2>
+
+  <p>Before you set a token in the <span style=
+  "font-family: 'courier new', courier, monospace;">.properties</span> file for the component,
+  you can first determine its current value by using the following command:</p>
+  <pre class="prettyprint">
+&gt; /opt/apigee/apigee-service/bin/apigee-service <em><strong>comp</strong></em> configure -search <em><strong>token</strong></em>
+</pre>
+
+  <p>where <em><strong>comp</strong></em> is the name of the  component, and
+  <em><strong>token</strong></em> is the token to inspect.</p>
+
+  <p>This command searches the hierarchy of <span style=
+  "font-family: 'courier new', courier, monospace;">.properties</span> files to determine the
+  current value of the token.</p>
+
+  <p>For example, to check the current value of the <span style=
+  "font-family:courier new,courier,monospace;">conf_http_HTTPRequest.line.limit</span> token for
+  the Router: </p>
+  <pre class="prettyprint">
+&gt; /opt/apigee/apigee-service/bin/apigee-service edge-router configure -search conf_http_HTTPRequest.line.limit
+</pre>
+
+  <p>You should see output in the form:</p>
+  <pre class="prettyprint">
+Found key conf_http_HTTPRequest.line.limit, with value, 4k, in /opt/apigee/edge-router/token/default.properties
+</pre>
+
+  <h2 id="settingtokensinpropertiesfiles">Setting tokens in .properties files</h2>
+
+  <p>To override the value of a token:</p>
+
+  <ol>
+    <li>Edit the <span style=
+    "font-family: 'courier new', courier, monospace;">.properties</span> file for the
+    component to set the token value. If the file does not exist, then create it.</li>
+
+    <li>Restart the component.</li>
+
+    <li>Check the token value.</li>
+  </ol>
+
+  <p>For example, to set the request line limit for the Edge Router:</p>
+
+  <ol>
+    <li>Edit the <span style=
+    "font-family:courier new,courier,monospace;">/opt/apigee/customer/application/router.properties</span>
+    file to set the <span style=
+    "font-family:courier new,courier,monospace;">conf_http_HTTPRequest.line.limit</span> token:<br>
+    <br>
+    <span style=
+    "font-family:courier new,courier,monospace;">conf_http_HTTPRequest.line.limit=8k</span></li>
+
+    <li>Restart the Edge Router:<br>
+    <br>
+    <span style="font-family:courier new,courier,monospace;">&gt;
+    /opt/apigee/apigee-service/bin/apigee-service edge-router restart</span></li>
+
+    <li>Check the value of the token:<br>
+    <br>
+    <span style="font-family:courier new,courier,monospace;">&gt;
+    /opt/apigee/apigee-service/bin/apigee-service edge-router configure -search
+    conf_http_HTTPRequest.line.limit</span></li>
+  </ol>
+
+  <h2 id="settingatokenthattakesmultiplevalues">Setting a token that takes multiple values</h2>
+
+  <p>Some tokens take a comma separated list of values. For example, the <span style=
+  "font-family:courier new,courier,monospace;">conf_security_rbac.restricted.resources</span> token
+  takes a list of URIs restricted so that only the sysadmin can call them. To see the
+  value of <span style=
+  "font-family:courier new,courier,monospace;">conf_security_rbac.restricted.resources</span>:</p>
+  <pre class="prettyprint">
+&gt; cd /opt/apigee/edge-management-server
+&gt; grep -ri "conf_security_rbac.restricted.resources" *
+</pre>
+
+  <p>The output contains the following:</p>
+  <pre class="prettyprint">
+<strong>token/default.properties:conf_security_rbac.restricted.resources</strong>=/environments,/environments/*,/environments/*/virtualhosts,/environments/*/virtualhosts/*,/pods,/environments/*/servers,/rebuildindex,/users/*/status
+</pre>
+
+  <p>To set a token that takes a list of values, append any new values to the current value of the
+  token in the <span style="font-family:courier new,courier,monospace;">.properties</span> file.
+  Therefore, to add the URI <strong><span style=
+  "font-family:courier new,courier,monospace;">/myuri/*</span></strong> to <span style=
+  "font-family: &quot;courier new&quot;, courier, monospace;">conf_security_rbac.restricted.resources</span>,
+  edit the <span style=
+  "font-family: &quot;courier new&quot;, courier, monospace;">/opt/apigee/customer/application/management-server.properties</span>
+  file as shown below:</p>
+  <pre class="prettyprint">
+conf_security_rbac.restricted.resources=/environments,/environments/*,/environments/*/virtualhosts,/environments/*/virtualhosts/*,/pods,/environments/*/servers,/rebuildindex,/users/*/status,<strong>/myuri/*</strong>
+</pre>
+
+  <h2 id="locatingatoken">Locating a token</h2>
+
+  <p>In most cases, the tokens you need to set are identified in this guide. However, if you need
+  to determine the token used to override a property, perform a <span style=
+  "font-family:courier new,courier,monospace;">grep</span> in the <span style=
+  "font-family:courier new,courier,monospace;">source</span> folder of the component. </p>
+
+  <p>For example, if you know that in a previous release of Edge you set the <span style=
+  "font-family:courier new,courier,monospace;">session.maxAge</span> property and want to know the
+  token value used to set it, then <span style=
+  "font-family:courier new,courier,monospace;">grep</span> for the property in the <span style=
+  "font-family:courier new,courier,monospace;">/opt/apigee/edge-ui/source</span> directory:</p>
+  <pre class="prettyprint">
+&gt; grep -ri "session.maxAge" /opt/apigee/edge-ui/source
+</pre>
+
+  <p>You should see a result in the form:</p>
+  <pre class="prettyprint">
+/opt/apigee/edge-ui/source/conf/application.conf:session.maxAge=<strong>{T}conf_application_session.maxage{/T}</strong>
+</pre>
+
+  <p>The string between the <strong>{T}{/T}</strong> tags is the token that you set in
+  the <span style=
+  "font-family: 'courier new', courier, monospace;">.properties</span> file.</p>
+
+  <h2 id="settingatokenthatiscurrentlycommentedout">Setting a token that is currently commented
+  out</h2>
+
+  <p>Some tokens are commented out in the Edge configuration files. If you try to set a token that
+  is commented out, the setting is ignored.</p>
+
+  <p>To set a token that is commented out, you use a special syntax, in the form:</p>
+  <pre class="prettyprint">
+conf/<em>file.extension</em>+<em>propertyName</em>=<em>propertyValue</em>
+</pre>
+
+  <p>For example, you want to set the property named <span style=
+  "font-family:courier new,courier,monospace;">HTTPClient.proxy.host</span> on the Message
+  Processor. You then <span style="font-family:courier new,courier,monospace;">grep</span> for the
+  property to determine its token:</p>
+  <pre class="prettyprint">
+&gt; cd /opt/apigee/edge-message-processor
+&gt; grep -ri "HTTPClient.proxy.host" *
+</pre>
+
+  <p>The <span style="font-family:courier new,courier,monospace;">grep</span> command returns
+  results in the form that includes the token value. Notice how the property name is commented out,
+  as indicated by the <strong>#</strong> prefix on the property name:</p>
+  <pre class="prettyprint">
+source/conf/http.properties:<strong>#HTTPClient.proxy.host</strong>={T}conf_http_HTTPClient.proxy.host{/T}
+token/default.properties:conf_http_HTTPClient.proxy.host=
+conf/http.properties:<strong>#HTTPClient.proxy.host=</strong>
+</pre>
+
+  <p>To set the property, edit <span style=
+  "font-family:courier new,courier,monospace;">/opt/apigee/customer/application/message-processor.properties</span>
+  to set the property as:</p>
+  <pre class="prettyprint">
+conf/http.properties+HTTPClient.proxy.host=myhost.name.com
+</pre>
+
+  <p>Notice how the property name is prefixed by <span style=
+  "font-family:courier new,courier,monospace;">conf/http.properties+</span>, the location and name
+  of the configuration file containing the property followed by "+".</p>
+
+  <p>After you restart the Message Processor, examine the file <span style=
+  "font-family:courier new,courier,monospace;">/opt/apigee/edge-message-processor/conf/http.properties</span>:</p>
+  <pre class="prettyprint">
+&gt; cat /opt/apigee/edge-message-processor/conf/http.properties
+</pre>
+
+  <p>At the end of the file, you will see the property set, in the form:</p>
+  <pre class="prettyprint">
+conf/http.properties:HTTPClient.proxy.host=myhost.name.com
+</pre>{% endblock %}

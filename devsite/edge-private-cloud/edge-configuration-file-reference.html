@@ -1,0 +1,347 @@
+{% extends "private-cloud/v4.18.01/_base.html" %}
+{% block title %}Edge Configuration File Reference{% endblock %}
+{% block body %}
+
+  <p>Shown below is an example of a complete silent configuration file for a 9 node Edge
+  installation. Edit this file as necessary for your configuration. Use the <code>-f</code> option
+  to <code>setup.sh</code> to include this file. Also shown below are example configuration files
+  for each Edge topology.</p>
+
+  <aside class="note"><strong>Note:</strong> The definition of the IP# variables for the Router, Message
+  Processor, Qpid, and Postgres nodes are for illustrating the node configuration; they are not
+  actually used.</aside>
+
+  <pre class="prettyprint">
+# IP address or DNS name of nodes.
+IP1=192.168.1.1  # Management Server, OpenLDAP, UI, ZooKeeper, Cassandra
+IP2=192.168.1.2  # ZooKeeper, Cassandra
+IP3=192.168.1.3  # ZooKeeper, Cassandra
+IP4=192.168.1.4  # Router, Message Processor
+IP5=192.168.1.5  # Router, Message Processor
+IP6=192.168.1.6  # Qpid
+IP7=192.168.1.7  # Qpid
+IP8=192.168.1.8  # Postgres
+IP9=192.168.1.9  # Postgres
+
+# Must resolve to IP address or DNS name of host - not to 127.0.0.1 or localhost.
+HOSTIP=$(hostname -i)
+
+# Specify "y" to check that the system meets the CPU and memory requirements
+# for the component being installed. See <a href="installation-requirements">Installation Requirements</a> for requirements
+# for each component. The default value is "n" to disable check.
+ENABLE_SYSTEM_CHECK=n
+
+# When "hostname -i" returns multiple IP addresses,
+# set to "y", to have the installer prompt you to select the IP address to use.
+ENABLE_DYNAMIC_HOSTIP=n
+
+# Set Edge sys admin credentials.
+ADMIN_EMAIL=your@email.com
+APIGEE_ADMINPW=yourPassword    # If omitted, you are prompted for it.
+
+# Location of Edge license file.
+LICENSE_FILE=/tmp/license.txt
+
+# Management Server information.
+MSIP=$IP1    # IP or DNS name of Management Server node. 
+# Specify the port the Management Server listens on for API calls.
+# APIGEE_PORT_HTTP_MS=8080    # Default is 8080.
+
+#
+# OpenLDAP information.
+#
+# Set to y if you are connecting to a remote LDAP server.
+# If n, Edge installs OpenLDAP when it installs the Management Server.
+USE_LDAP_REMOTE_HOST=n 
+
+# If connecting to remote OpenLDAP server, specify the IP/DNS name and port.
+# LDAP_HOST=$IP1    # IP or DNS name of OpenLDAP node.
+# LDAP_PORT=10389   # Default is 10389.
+APIGEE_LDAPPW=yourLdapPassword
+
+# Specify OpenLDAP without replication, 1, or with replication, 2.
+LDAP_TYPE=1 
+
+# Set only if using replication.
+# LDAP_SID=1    # Unique ID for this LDAP server.
+# LDAP_PEER=    # IP or DNS name of LDAP peer.
+
+# The Message Processor and Router pod.
+MP_POD=gateway 
+
+# The name of the region, corresponding to the data center name.
+REGION=dc-1 # Use dc-1 unless installing in a
+            # multi-data center environment.
+
+# ZooKeeper information.
+# See table below if installing in a multi-data center environment.
+ZK_HOSTS="$IP1 $IP2 $IP3"         # IP/DNS names of all ZooKeeper nodes. 
+ZK_CLIENT_HOSTS="$IP1 $IP2 $IP3"  # IP/DNS names of all ZooKeeper nodes.
+
+# Cassandra information.
+CASS_CLUSTERNAME=Apigee    # Default name is Apigee.
+
+# IP (not DNS names) of the Cassandra hosts separated by spaces.
+CASS_HOSTS="$IP1:1,1 $IP2:1,1 $IP3:1,1"
+
+# Set to enable Cassandra authentication.
+# CASS_AUTH=y    # The default value is n.
+# Cassandra uname/pword required if you enabled Cassandra authentication.
+# CASS_USERNAME=
+# CASS_PASSWORD=
+
+# Postgres username and password as set when you installed Edge.
+# Default is apigee:postgres.
+PG_USER=apigee
+PG_PWD=postgres
+
+# Use to enable Postgres master-standby replication
+# when you have multiple Postgres nodes. 
+# PG_MASTER=IPorDNSofNewMaster
+# PG_STANDBY=IPorDNSofOldMaster
+
+# SMTP information.
+SKIP_SMTP=n       # Skip now and configure later by specifying "y".
+SMTPHOST=smtp.gmail.com
+SMTPUSER=your@email.com
+SMTPPASSWORD=yourEmailPassword
+SMTPSSL=y
+SMTPPORT=465      # If no SSL, use a different port, such as 25.
+SMTPMAILFROM="My Company &lt;myco@company.com&gt;"
+</pre>
+
+  <p>The following table contains additional information about these properties:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Property</th>
+        <th>Note</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>IP/DNS names</td>
+        <td>Do not use a host name mapping to 127.0.0.1 or an IP address of 127.0.0.1 when
+          specifying the IP address of a node.</td>
+      </tr>
+      <tr>
+        <td><code>ENABLE_SYSTEM_CHECK</code></td>
+        <td>
+          <p>If "y", check that the system meets the CPU and memory requirements for the component
+          being installed. See <a href="installation-requirements">Installation
+          Requirements</a> for requirements for each component.</p>
+          <p>The default value is "n" to disable check.</p>
+        </td>
+      </tr>
+      <tr>
+        <td><code>ENABLE_DYNAMIC_HOSTIP</code></td>
+        <td>
+          <p>If a server has multiple interface cards, the "hostname -i" command returns a
+          space-separated list of IP addresses's. By default, the Edge installer uses the first IP
+          address returned, which might not be correct in all situations. As an alternative, you
+          can set the following property in the installation configuration file.</p>
+          <p>When set to "y", the installer prompts you to select the IP address to use in the
+          install. The default value is "n".</p>
+          <aside class="caution"><strong>Caution:</strong> If you set
+          <code>ENABLE_DYNAMIC_HOSTIP=y</code>, ensure that your property file does not set
+          <code>HOSTIP</code>.</aside>
+        </td>
+      </tr>
+      <tr>
+        <td><code>ADMIN_EMAIL</code><br/><code>APIGEE_ADMINPW</code>
+        </td>
+        <td>
+          <p>The system administrator's password must be at least 8 characters long and contain one
+          uppercase letter, one lowercase letter, one digit or one special character. If you omit
+          the password, you will be prompted for it.</p>
+        </td>
+      </tr>
+      <tr>
+        <td><code>LICENSE_FILE</code></td>
+        <td>
+          <p>The location of the license file, which must be accessible to the  "apigee" user.
+          For example, store it in the /tmp directory and chmod 777 on the file. The file is copied
+          to the Edge installation directory.</p>
+        </td>
+      </tr>
+      <tr>
+        <td><code>APIGEE_LDAPPW</code></td>
+        <td>Specifies the OpenLDAP password.</td>
+      </tr>
+      <tr>
+        <td><code>USE_LDAP_REMOTE_HOST<br/>
+          <code>LDAP_HOST</code><br/>
+          <code>LDAP_PORT</code>
+        </td>
+        <td>
+          <p>If <code>USE_LDAP_REMOTE_HOST</code> is n, Edge
+          automatically installs OpenLDAP when it installs the Management Server.</p>
+          <p>Set <code>USE_LDAP_REMOTE_HOST</code> to y if you are
+          connecting to a remote LDAP server. OpenLDAP is not installed with the Management
+          Server.</p>
+          <p>If you are connecting to a remote OpenLDAP server, use <code>LDAP_HOST</code> and
+          <code>LDAP_PORT</code> to specify the IP address
+          or DNS name and port number of the host.</p>
+        </td>
+      </tr>
+      <tr>
+        <td><code>LDAP_TYPE</code><br/>
+          <code>LDAP_SID</code><br/>
+          <code>LDAP_PEER</code>
+        </td>
+        <td>
+          <p>Set <code>LDAP_TYPE</code>=1 for
+          OpenLDAP with no replication. <code>LDAP_TYPE</code>=2 corresponds to OpenLDAP
+          with replication.</p>
+          <p>If your Edge topology uses a single OpenLDAP server, specify 1. If your Edge
+          installation uses multiple OpenLDAP nodes, such as in a 13-node production installation,
+          specify 2.</p>
+          <p>If you enable replication, set the following properties:</p>
+          <ul>
+            <li><code>LDAP_SID</code>=1 - Unique
+            ID for this LDAP server. Each LDAP node uses a different ID. For example, set to 2 for
+            LDAP peer.</li>
+
+            <li><code>LDAP_PEER</code>=10.0.0.1 - IP or DNS name of LDAP peer.</li>
+          </ul>
+        </td>
+      </tr>
+      <tr>
+        <td><code>MP_POD</code></td>
+        <td>Specify the name of the Message Processor and Router pod. By default, the name is
+          gateway.</td>
+      </tr>
+      <tr>
+        <td><code>REGION</code></td>
+        <td>
+          <p>Region name. By convention, names are typically in the form dc-# where # corresponds
+          to an integer value. For example, dc-1, dc-2, etc. You can use dc-1 unless installing in
+          a multi-data center environment.</p>
+          <p>In a multiple data center installation, the value is dc-1, or dc-2, etc. depending on
+          which data center you are installing. However, you are not restricted to using only names
+          in the form dc-#. You can use any name for the region.</p>
+        </td>
+      </tr>
+      <tr>
+        <td><code>ZK_HOSTS</code></td>
+        <td>
+          <p>The IP addresses or DNS names of the ZooKeeper nodes. The IP addresses or DNS names
+          must be listed in the same order on all ZooKeeper nodes.</p>
+          <p>Use the same format for <code>HOSTIP</code> as you use for
+          <code>ZK_HOSTS</code>. That is, if you
+          specify the IP address for <code>ZK_HOSTS</code> use an IP address for
+          <code>HOSTIP</code>. If you use a DNS,
+          then use a DNS name for both. </p>
+          <p>In a multi-data center environment, list all ZooKeeper nodes from both data
+          centers.</p>
+          <p>Specify the ":observer" modifier on ZooKeeper nodes only when
+          creating multiple data centers as described in a 12-host installation. In a single data
+          center installation, omit that modifier. For more information, see
+          <a href="install-edge-components-node#installedgecomponents-12hostclusteredinstallation">12-host clustered installation</a>.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td><code>ZK_CLIENT_HOSTS</code></td>
+        <td>
+          <p>The IP addresses or DNS names of the ZooKeeper nodes used by this data center. The IP
+          addresses or DNS names must be listed in the same order on all ZooKeeper nodes.</p>
+          <p>Use the same format for <code>HOSTIP</code> as you use for
+          <code>ZK_CLIENT_HOSTS</code>. That is,
+          if you specify the IP address for <code>ZK_CLIENT_HOSTS</code> use an IP
+          address for <code>HOSTIP</code>. If
+          you use a DNS, then use a DNS name for both. </p>
+          <p>In a single data center installation, these are the same nodes as specified by
+          <code>ZK_HOSTS</code>.</p>
+          <p>In a multi-data center environment, list only the ZooKeeper nodes in this data center.
+          For more information, see
+          <a href="install-edge-components-node#installedgecomponents-12hostclusteredinstallation">12-host clustered installation</a>.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td><code>CASS_CLUSTERNAME</code></td>
+        <td>Optionally species the name of the Cassandra cluster. The default name is "Apigee".</td>
+      </tr>
+
+      <tr>
+        <td><code>CASS_HOSTS</code></td>
+        <td>
+          <p>The IP addresses (not DNS names) of the Cassandra nodes. The first two nodes will be
+          used as seed servers. The IP addresses must be listed in the same order on all Cassandra
+          nodes.</p>
+
+          <p>Cassandra nodes can have an optional ":dc,ra" suffix that specifies the
+          data center and rack of the Cassandra node. Specify this modifier only when creating
+          multiple data centers as described in a 12-host installation. In a single data center
+          installation, omit that modifier.</p>
+
+          <p>For example '192.168.124.201:1,1 = datacenter 1 and rack/availability zone 1, and
+          '192.168.124.204:2,1 = datacenter 2 and rack/availability zone 1.</p>
+
+          <p>In a multi-datacenter environment, to overcome firewall issues, CASS_HOSTS have to be
+          ordered in a manner (as shown in above example) such that the nodes of the current
+          datacenter are placed at the beginning. For more information, see
+          <a href="install-edge-components-node##installedgecomponents-12hostclusteredinstallation">12-host clustered installation</a>.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td><code>CASS_AUTH</code><br/>
+          <code>CASS_USERNAME</code><br/>
+          <code>CASS_PASSWORD</code>
+        </td>
+        <td>
+          <p>If you enable Cassandra authentication, CASS_AUTH=y, you can pass the Cassandra user
+          name and password by using these properties.</p>
+        </td>
+      </tr>
+      <tr>
+        <td><code>PG_USER</code><br/>
+        <code>PG_PWD</code></td>
+        <td>
+          <p>By default, the PostgreSQL database has two users defined: 'postgres' and
+          'apigee'.</p>
+          <p><code>PG_USER</code> lets you change the username of the 'apigee' user. You cannot
+          change the name of the 'postgres' user.</p>
+          <p>By default, the PostgreSQL database has two users defined: 'postgres' and 'apigee'.
+          Both users have a default password of 'postgres'. Use <code>PG_PWD</code> to set the
+          password to a different value for both users at install time.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <code>PG_MASTER</code><br/>
+          <code>PG_STANDBY</code>
+        </td>
+
+        <td>
+          <p>Set to enable Postgres master-standby replication, in the form:</p>
+          <p>PG_MASTER=<var>IPorDNSofNewMaster</var></p>
+          <p>PG_STANDBY=<var>IPorDNSofOldMaster</var></p>
+        </td>
+      </tr>
+
+      <tr>
+        <td><code>SKIP_SMTP</code><br>
+          <code>SMTPHOST</code><br>
+          <code>SMTPUSER</code><br>
+          <code>SMTPPASSWORD</code><br>
+          <code>SMTPSSL</code><br>
+          <code>SMTPPORT</code><br>
+          <code>SMTPMAILFROM</code>
+        </td>
+
+        <td>
+          <p>Configure SMTP so Edge can send emails for lost passwords and other notifications.</p>
+          <p>If SMTP user credentials are not required, omit <code>SMTPUSER</code> and
+          <code>SMTPPASSWORD</code>.</p>
+          <p><code>SMTPMAILFROM</code> is required.</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  {% endblock %}

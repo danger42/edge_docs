@@ -1,0 +1,119 @@
+  {% extends "_base.html" %} {% block title %}Setting up API key validation{% endblock %} {% block body %}
+
+  <p>You can set up API key validation for an API by attaching a policy of type Verify API Key. The
+  only required setting for a Verify API Key policy is the expected location of the API key in the
+  client request. The API proxy will check the location that you specify, and extract the API key.
+  If the API key is not present in the expected location, then an error is thrown and the request
+  is rejected. API keys can be located in a query parameter, a form parameter, or an HTTP
+  header.</p>
+
+  <p>For example, the policy configuration below defines the expected key location as a query
+  parameter named <code>apikey</code>. A successful request must present the API key as a query
+  parameter appended to the request, for example,<code>?apikey=Y7yeiuhcbKJHD790</code>.</p>
+
+  <p>To verify API keys, create the following policy:</p>
+  <pre class="prettyprint">
+&lt;VerifyAPIKey name="APIKeyValidation"&gt;
+  &lt;APIKey ref="request.queryparam.apikey"/&gt;
+&lt;/VerifyAPIKey&gt;
+</pre>
+
+  <p>This policy can be attached to any API that you need to protect.</p>
+
+  <p>Comprehensive documentation of this policy type can be found in the policy reference topic,
+  <a href="/api-platform/reference/policies/verify-api-key-policy.html">Verify API Key
+  policy</a>.</p>
+
+  <p>API proxies automatically passthrough all HTTP headers and query parameters that are present
+  on the request. Therefore, after the API key has been verified, it's a good idea to strip it from
+  the message so that the API key is not sent over the wire to the backend service. You can do that
+  using a policy of type AssignMessage as follows:</p>
+  <pre class="prettyprint">
+&lt;AssignMessage name="StripApiKey"&gt;
+    &lt;DisplayName&gt;Remove Query Param&lt;/DisplayName&gt;
+    &lt;Remove&gt;
+        &lt;QueryParams&gt;
+            &lt;QueryParam name="apikey"/&gt;
+        &lt;/QueryParams&gt;
+    &lt;/Remove&gt;
+    &lt;IgnoreUnresolvedVariables&gt;true&lt;/IgnoreUnresolvedVariables&gt;
+    &lt;AssignTo createNew="false" transport="http" type="request"&gt;&lt;/AssignTo&gt;
+&lt;/AssignMessage&gt;
+</pre>
+
+  <h2 id="policyattachment">Policy attachment</h2>
+
+  <p>The policies must be attached to an API proxy Flow as processing Steps. By applying the policy
+  to the request PreFlow, API keys are verified on every request received by the API proxy from a
+  client app. After verification, the API key is stripped from the outbound request.</p>
+
+  <p>Attach the policies to the ProxyEndpoint of the API proxy to be protected as follows:</p>
+
+  <div id="well">
+    <pre class="prettyprint">
+&lt;ProxyEndpoint name="default"&gt;
+  &lt;PreFlow&gt;
+    &lt;Request&gt;
+      &lt;Step&gt;&lt;Name&gt;APIKeyValidation&lt;/Name&gt;&lt;/Step&gt;
+      &lt;Step&gt;&lt;Name&gt;StripApiKey&lt;/Name&gt;&lt;/Step&gt;
+    &lt;/Request&gt;
+  &lt;/PreFlow&gt;
+<!-- Remainder of ProxyEndpoint configuration -->
+</pre>
+  </div>
+
+  <p>After you attach the policy, deploy the API proxy.</p>
+
+  <h2 id="submittingarequestwithavalidapikey">Submitting a request with a valid API key</h2>
+
+  <p>As an admin in your organization, you can retrieve any app's API key as follows:</p>
+  <pre class="prettyprint">
+$ curl https://api.enterprise.apigee.com/v1/o/{myorg}/developers/{developer_email}/apps/{app_name} -u email:password 
+</pre>
+
+  <aside class="key-point"><b>Tip:</b> Remember to substitute your organization for
+  <code>{myorg}</code> and your Apigee Edge email address and password for
+  <code>email:password</code>.</aside>
+
+  <p>The app profile that is returned for this call provides the consumer key (API key) and secret.
+  The consumer key value is the value you use for the API key in your request to the protected
+  API.</p>
+
+  <p>For example, a request that does not include an API key results in an authorization
+  failure.</p>
+  <pre class="prettyprint">
+$ curl http://{org_name}-test.apigee.net/weather/forecastrss?w=12797282
+</pre>
+
+  <p>The failure message indicates that the policy checked for an API key but did not find a valid
+  key:</p>
+  <pre class="prettyprint">
+OAuth Failure : Could not resolve the app key with variable request.queryparam.apikey
+</pre>
+
+  <p>When the consumer key for the app is included as a query parameter, the expected result is
+  successful authorization:</p>
+  <pre class="prettyprint">
+$ curl http://{org_name}-test.apigee.net/weather/forecastrss?w=12797282&amp;"apikey=PulSCqMnXGchW0pC0s5o9ngHVTWMeLqk"
+</pre>
+
+  <p>The expected result is a successful response from the weather service.</p>
+
+  <p>Modifying the value of the API key value in the request results in an authorization
+  failure:</p>
+  <pre class="prettyprint">
+$ curl http://{org_name}-test.apigee.net/weather?forecastrss?w=12797282&amp;"apikey=PulSCqMnXGchW0"
+</pre>
+
+  <p>Results in:</p>
+  <pre class="prettyprint">
+OAuth Failure : Consumer Key is Invalid
+</pre>
+
+  <p>Remember, as an admin for your organization, you can retrieve the consumer key for any app
+  registered in an organization:</p>
+  <pre class="prettyprint">
+$ curl https://api.enterprise.apigee.com/v1/o/{myorg}/developers/{developer_email}/apps/{app_name} -u email:password 
+</pre>
+<!-- Pending tutorial update<p>A tutorial that demonstrates step-by-step API key configuration is available. See <a href="/node/8398.html">8398</a>.</p>-->
+  {% endblock %}

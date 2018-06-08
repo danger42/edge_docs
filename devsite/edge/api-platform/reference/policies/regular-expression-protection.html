@@ -1,0 +1,1133 @@
+  {% extends "_base.html" %} {% block title %}Regular Expression Protection policy{% endblock %} {% block body %} <img src="/api-platform/images/icon_policy_threat-protection.jpg">
+
+  <h3>What</h3>
+
+  <p>Extracts information from a message (for example, URI Path, Query Param, Header, Form Param,
+  Variable, XML Payload, or JSON Payload) and evaluates that content against predefined regular
+  expressions. If any specified regular expressions evaluate to true, the message is considered a
+  threat and is rejected.</p>
+
+  <aside class="note"><b>Note:</b> This policy topic is not intended to include a detailed
+  introduction to regular expressions. The main intent is to illustrate the structure and usage of
+  this policy. If you'd like to know more about regular expressions, many resources exist for you
+  to explore.  You can find regular expression examples and other guidance in the topic
+  <a href="/api-platform/fundamentals/pattern-matching-conditional-statements.html">Pattern
+  matching in conditional statements</a>. </aside>
+
+  <h3 id="videos">Videos</h3>
+
+  <p>Watch the following videos to learn more about the Regular Expression Protection policy.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Video</th>
+
+        <th>Description</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td><a href="https://www.youtube.com/watch?v=NLg_LE3u-vM" target="_blank">Protecting
+        against SQL injection attacks</a> (New Edge)</td>
+
+        <td>Protect against SQL injection attacks using the Regular Expression Protection policy in
+        the New Edge experience UI.</td>
+      </tr>
+
+      <tr>
+        <td><a href="https://www.youtube.com/watch?v=rC8kZJgwBFM" target="_blank">Protecting
+        against SQL injection attacks</a> (Classic Edge)</td>
+
+        <td>Protect against SQL injection attacks using the Regular Expression Protection policy in
+        the Classic Edge UI.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="samples">Samples</h3><!-- Begin tab list -->
+  <!-- End tab list --><!-- Begin tabbed region -->
+
+  <div class="ds-selector-tabs">
+    <section>
+      <h3 class="two-line-tab">GitHub</h3>
+
+      <p>The <a href=
+      "https://github.com/apigee/api-platform-samples/tree/master/sample-proxies/regex-protection">regex-protection
+      sample on GitHub</a> illustrates how to trap potential SQL injection attacks issued through a
+      query parameter.  Also, the sample illustrates a good practice of setting a generic 400
+      error status to prevent hackers from gaining any useful information from the response.</p>
+    </section>
+
+    <section>
+      <h3 class="two-line-tab">JavaScript include attack protection </h3>
+      <pre class="prettyprint">
+&lt;RegularExpressionProtection name="JsonPathRegExProtection"&gt;
+    &lt;DisplayName&gt;Regular Expression Protection 1&lt;/DisplayName&gt;
+    &lt;Source&gt;request&lt;/Source&gt;
+    &lt;JSONPayload escapeSlashCharacter="true"&gt;
+       &lt;JSONPath&gt;
+          &lt;Expression&gt;$.&lt;/Expression&gt;
+          &lt;Pattern&gt;&amp;lt;\s*script\b[^&amp;gt;]*&amp;gt;[^&amp;lt;]+&amp;lt;\s*\/\s*script\s*&amp;gt;
+          &lt;/Pattern&gt;
+          &lt;Pattern&gt;n\s*\\\\\s*slash&lt;/Pattern&gt;
+          &lt;Pattern&gt;n\s*\/\s*slash&lt;/Pattern&gt;
+          &lt;Pattern&gt;n\s*\\"\s*quotes&lt;/Pattern&gt;
+          &lt;Pattern&gt;n\s*\\b\s*space&lt;/Pattern&gt;
+          &lt;Pattern&gt;n\s*\\f\s*forwardfeed&lt;/Pattern&gt;
+          &lt;Pattern&gt;n\s*\\n\s*newline&lt;/Pattern&gt;
+          &lt;Pattern&gt;n\s*\\r\s*carria&lt;/Pattern&gt;
+          &lt;Pattern&gt;n\s*\\t\s*tab&lt;/Pattern&gt;
+          &lt;Pattern&gt;n\s*\\uFFFF\s*hex&lt;/Pattern&gt;
+       &lt;/JSONPath&gt;
+    &lt;/JSONPayload&gt;
+ &lt;/RegularExpressionProtection&gt;
+</pre>
+
+      <p>The sample above illustrates how to use the RegularExpressionProtection policy to evaluate
+      JSON payloads for JavaScript include attacks. Specifically, the content extracted by
+      <code>&lt;JSONPath&gt;</code>/<code>&lt;Expression&gt;</code> is evaluated against the
+      regular expression in <code>&lt;JSONPath&gt;</code>/<code>&lt;Pattern&gt;</code>.</p>
+
+      <p>If the regular expression in your
+      <code>&lt;JSONPath&gt;</code>/<code>&lt;Pattern&gt;</code> includes XML-reserved characters
+      (", &amp;, ', &lt;, or .), you must XML-encode it before you include it in the policy XML
+      configuration file. For example, in the sample above, the regular expression
+      <code>&lt;\s*script\b[^&gt;]*&gt;[^&lt;]+&lt;\s*\/\s*script\s*&gt;</code> has been
+      XML-encoded as
+      <code>&amp;lt;\s*script\b[^&amp;gt;]*&amp;gt;[^&amp;lt;]+&amp;lt;\s*\/\s*script\s*&amp;gt;</code>.</p>
+
+      <p>Additionally, if your regular expression includes forward slashes (/), you must escape
+      them by setting the <code>&lt;JSONPayload&gt;</code> <code>escapeSlashCharacter</code>
+      attribute to <code>true</code>.</p>
+    </section>
+
+    <section>
+      <h3 class="two-line-tab">Case insensitive matching</h3>
+
+      <p>It's a common use case to do case-insensitive matching. Here's an example of how you can
+      accomplish that in a regular expression using the construct <code>(?i)</code>. In this
+      example, for instance, <code>DELETE</code>, <code>delete</code>, and <code>Delete</code> will
+      evaluate to true. </p>
+      <pre class="prettyprint">
+&lt;Pattern&gt;[\s]*(?i)((delete)|(exec)|(drop\s*table)|(insert)|(shutdown)|(update)|(\bor\b))&lt;/Pattern&gt;
+</pre>
+    </section>
+  </div><!-- End tabbed region. -->
+  <hr>
+
+  <h2 id="usagenotes">About the Regular Expression Protection policy</h2>
+
+  <p>Apigee Edge enables you to configure <em>regular expressions</em> that can be
+  evaluated against API traffic at runtime to identify common content-level threats that follow
+  certain patterns.</p>
+
+  <p>A <em>regular expression</em>, or <em>regex</em> for short, is a set of strings
+  that specify a pattern in a string. Regular expressions enable content to be programmatically
+  evaluated for patterns. Regular expressions can be used, for example, to evaluate entered a
+  properly structured email address. For more information, see <a href=
+  "https://docs.oracle.com/javase/tutorial/essential/regex/intro.html">Regular
+  Expressions</a> in the Java Tutorials.</p>
+
+  <p>The most common usage of RegularExpressionProtection is the evaluation of JSON and XML
+  payloads for malicious content.</p>
+
+  <p>No regular expression can eliminate all content-based attacks, and multiple mechanisms should
+  be combined to enable defense-in-depth. With this in mind, some recommended patterns for
+  blacklisting content:</p>
+
+  <h3 id="abouttheregularexpressionprotectionpolicy-exampleblacklistpatterns">Example blacklist
+  patterns</h3>
+
+  <p>Regular expressions must be XML-encoded in the policy's XML configuration file.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="text-align: left;">Name</th>
+
+        <th style="text-align: left;">Regular Expression</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td>SQL Injection</td>
+
+        <td>
+          <pre class="prettyprint">
+[\s]*((delete)|(exec)|(drop\s*table)|(insert)|(shutdown)|(update)|(\bor\b))
+</pre>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Server-Side Include Injection</td>
+
+        <td>
+          <pre class="prettyprint">
+&lt;!--#(include|exec|echo|config|printenv)\s+.*
+</pre>
+
+          <p>XML encoded:</p>
+
+          <p><code>&amp;lt;!--#(include|exec|echo|config|printenv)\s+.*</code></p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>XPath Abbreviated Syntax Injection</td>
+
+        <td>
+          <pre class="prettyprint">
+(/(@?[\w_?\w:\*]+(\[[^]]+\])*)?)+
+</pre>
+        </td>
+      </tr>
+
+      <tr>
+        <td>XPath Expanded Syntax Injection</td>
+
+        <td>
+          <pre class="prettyprint">
+/?(ancestor(-or-self)?|descendant(-or-self)?|following(-sibling))
+</pre>
+        </td>
+      </tr>
+
+      <tr>
+        <td>JavaScript Injection</td>
+
+        <td>
+          <pre class="prettyprint">
+&lt;\s*script\b[^&gt;]*&gt;[^&lt;]+&lt;\s*/\s*script\s*&gt;
+</pre>
+
+          <p>XML
+          encoded: <code>&amp;lt;\s*script\b[^&amp;gt;]*&amp;gt;[^&amp;lt;]+&amp;lt;\s*/\s*script\s*&amp;gt;</code></p>
+
+          <p>See also <a href=
+          "https://community.apigee.com/questions/27198/xss-threat-protection-patterns.html#answer-27465">this
+          community post</a> on XSS threat protection patterns. </p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Java Exception Injection</td>
+
+        <td>
+          <pre class="prettyprint">
+.*Exception in thread.*
+</pre>
+
+          <div>
+             
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id=
+  "abouttheregularexpressionprotectionpolicy-settingthecontenttypeheaderinarequestwithanxmlorjsonpayload">
+  Setting the Content-type header in a request with an XML or JSON payload</h3>
+
+  <p>The payload of the Regular Expression Protection policy can include the following
+  elements: </p>
+
+  <ul>
+    <li>
+      <span style="font-family:courier new,courier,monospace;">&lt;XMLPayload&gt;</span> element -
+      Specifies that information needs to be extracted from an XML payload and evaluated against
+      the regular expression provided. <br>
+      <br>
+
+      <p>If you use <span style=
+      "font-family: &quot;courier new&quot;, courier, monospace;">&lt;XMLPayload&gt;</span> in
+      the policy, the <span style=
+      "font-family: &quot;courier new&quot;, courier, monospace;">Content-Type</span> header
+      of the request must be an XML content-type such as <span style=
+      "font-family: &quot;courier new&quot;, courier, monospace;">application/xml</span> or <span style="font-family: &quot;courier new&quot;, courier, monospace;">text/xml</span>. </p>
+    </li>
+
+    <li>
+      <span style="font-family:courier new,courier,monospace;">&lt;JSONPayload&gt;</span> element -
+      Specifies that information needs to be extracted from a JSON payload and evaluated against
+      the regular expression provided.<br>
+      <br>
+
+      <p>If you use <span style=
+      "font-family: &quot;courier new&quot;, courier, monospace;">&lt;JSONPayload&gt;</span> in
+      the policy, the <span style=
+      "font-family: &quot;courier new&quot;, courier, monospace;">Content-Type</span> header
+      of the request must be a JSON content-type such as <span style=
+      "font-family: &quot;courier new&quot;, courier, monospace;">application/json</span>. </p>
+    </li>
+  </ul>
+
+  <p>Typically you design an API to accept either XML or JSON. However, there could be a scenario
+  where the API accepted both. You could then define a Regular Expression Protection policy
+  that uses both the <span style=
+  "font-family: &quot;courier new&quot;, courier, monospace;">&lt;XMLPayload&gt;</span> and <span style="font-family: &quot;courier new&quot;, courier, monospace;">&lt;JSONPayload&gt;</span> elements.
+  Only one element would apply for a specific request based on the value of the <span style=
+  "font-family:courier new,courier,monospace;">Content-Type</span> header.  </p>
+
+  <h2 id="elementreference">Element reference</h2>
+
+  <p>The element reference describes the elements and attributes of the RegularExpressionProtection
+  policy.</p>
+
+  <aside class="note"><b>Note:</b> In this topic "<code>REGEX PATTERN</code>" stands in for a valid
+  Regular Expression pattern used to perform the desired matching. Edge follows the same Regex
+  rules as the classes in the <a href=
+  "https://docs.oracle.com/javase/7/docs/api/java/util/regex/Pattern.html">java.util.regex
+  package</a> in the Java language.</aside>
+  <pre class="prettyprint">
+&lt;RegularExpressionProtection async="false" continueOnError="false" enabled="true" name="Regular-Expression-Protection-1"&gt;
+     &lt;DisplayName&gt;Regular Expression Protection 1&lt;/DisplayName&gt;
+     &lt;Source&gt;response&lt;/Source&gt;
+     &lt;IgnoreUnresolvedVariables&gt;false&lt;/IgnoreUnresolvedVariables&gt;
+     &lt;URIPath&gt;
+         &lt;Pattern&gt;REGEX PATTERN&lt;/Pattern&gt;
+         &lt;Pattern&gt;REGEX PATTERN&lt;/Pattern&gt;
+     &lt;/URIPath&gt;
+     &lt;QueryParam name="a-query-param"&gt;
+         &lt;Pattern&gt;REGEX PATTERN&lt;/Pattern&gt;
+         &lt;Pattern&gt;REGEX PATTERN&lt;/Pattern&gt;
+     &lt;/QueryParam&gt;
+     &lt;Header name="a-header"&gt;
+         &lt;Pattern&gt;REGEX PATTERN&lt;/Pattern&gt;
+         &lt;Pattern&gt;REGEX PATTERN&lt;/Pattern&gt;
+     &lt;/Header&gt;
+     &lt;FormParam name="a-form-param"&gt;
+         &lt;Pattern&gt;REGEX PATTERN&lt;/Pattern&gt;
+         &lt;Pattern&gt;REGEX PATTERN&lt;/Pattern&gt;
+     &lt;/FormParam&gt;
+     &lt;Variable name="request.content"&gt;
+         &lt;Pattern&gt;REGEX PATTERN&lt;/Pattern&gt;
+         &lt;Pattern&gt;REGEX PATTERN&lt;/Pattern&gt;
+     &lt;/Variable&gt;
+     &lt;XMLPayload&gt;
+         &lt;Namespaces&gt;
+             &lt;Namespace prefix="apigee"&gt;http://www.apigee.com&lt;/Namespace&gt;
+         &lt;/Namespaces&gt;
+         &lt;XPath&gt;
+             &lt;Expression&gt;/apigee:Greeting/apigee:User&lt;/Expression&gt;
+             &lt;Type&gt;string&lt;/Type&gt;
+             &lt;Pattern&gt;REGEX PATTERN&lt;/Pattern&gt;
+             &lt;Pattern&gt;REGEX PATTERN&lt;/Pattern&gt;
+         &lt;/XPath&gt;
+     &lt;/XMLPayload&gt;
+     &lt;JSONPayload&gt;
+         &lt;JSONPath&gt;
+             &lt;Expression&gt;$.store.book[*].author&lt;/Expression&gt;
+             &lt;Pattern&gt;REGEX PATTERN&lt;/Pattern&gt;
+             &lt;Pattern&gt;REGEX PATTERN&lt;/Pattern&gt;
+         &lt;/JSONPath&gt;
+        &lt;/JSONPayload&gt;
+&lt;/RegularExpressionProtection&gt;
+</pre>
+
+  <h2 id="regularexpressionprotectionattributes">&lt;RegularExpressionProtection&gt;
+  attributes</h2>
+  <pre class="prettyprint">
+&lt;RegularExpressionProtection async="false" continueOnError="false" enabled="true" name="Regular-Expression-Protection-1"&gt; 
+</pre>{% dynamic include /includes/___policies-parent-element-attributes %}
+
+  <h2 id="sourceelement">&lt;Source&gt; element</h2>
+
+  <p>Indicates the message from which information needs to be extracted.</p>
+
+  <p>If the <code>&lt;Source&gt;</code> element is omitted, the value defaults to
+  <code>message</code>. For example, <code>&lt;Source&gt;message&lt;/Source&gt;</code>. When set to
+  <code>message</code>, the policy uses the request message as source when attached to a request
+  flow. Likewise, the policy uses the response message when attached to a response flow.</p>
+
+  <p>If the source message cannot be resolved or if it resolves to a non-message type, the policy
+  returns an error.</p>
+  <pre class="prettyprint">
+&lt;Source&gt;response&lt;/Source&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>String</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="ignoreunresolvedvariableselement">&lt;IgnoreUnresolvedVariables&gt; element</h2>
+
+  <p>If set to <code>true</code> and any variable is unresolvable, the policy returns an error. If
+  set to <code>true</code> and any variable is unresolvable, the unresolved variable is treated as
+  empty string (Null).</p>
+  <pre class="prettyprint">
+&lt;IgnoreUnresolvedVariables&gt;false&lt;/IgnoreUnresolvedVariables&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>false</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>Boolean</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="uripathelement">&lt;URIPath&gt; element</h2>
+
+  <p>Specifies that information needs to be extracted from the request URI path and evaluated
+  against the regular expressions provided. You must provide at least one
+  <code>&lt;Pattern&gt;</code> element specifying a regular expression pattern to match.</p>
+  <pre class="prettyprint">
+&lt;URIPath&gt;
+   &lt;Pattern&gt;REGEX PATTERN&lt;/Pattern&gt;
+   &lt;Pattern&gt;REGEX PATTERN&lt;/Pattern&gt;
+&lt;/URIPath&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>N/A</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="queryparamelement">&lt;QueryParam&gt; element</h2>
+
+  <p>Specifies that information needs to be extracted from the request query parameter and
+  evaluated against the regular expressions provided. You must provide at least one
+  <code>&lt;Pattern&gt;</code> element specifying a regular expression pattern to match.</p>
+  <pre class="prettyprint">
+&lt;QueryParam name="a-query-param"&gt;
+   &lt;Pattern&gt;REGEX PATTERN&lt;/Pattern&gt;
+   &lt;Pattern&gt;REGEX PATTERN&lt;/Pattern&gt;     
+&lt;/QueryParam&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>N/A</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="queryparamelement-attributes">Attributes</h3>
+
+  <table width="650">
+    <tbody>
+      <tr>
+        <th scope="col">Attribute</th>
+
+        <th scope="col">Description</th>
+
+        <th scope="col">Default</th>
+
+        <th scope="col">Presence</th>
+      </tr>
+
+      <tr>
+        <td>name</td>
+
+        <td>
+          <p>Name of the request query parameter from which information needs to be extracted for
+          evaluation against the regular expressions provided.</p>
+        </td>
+
+        <td>N/A</td>
+
+        <td style="width: 50px;">Required</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="headerelement">&lt;Header&gt; element</h2>
+
+  <p>Specifies that information needs to be extracted from the request and response headers and
+  evaluated against the regular expressions provided. You must provide at least one
+  <code>&lt;Pattern&gt;</code> element specifying a regular expression pattern to match.</p>
+  <pre class="prettyprint">
+&lt;Header name="a-header"&gt;
+   &lt;Pattern&gt;REGEX PATTERN&lt;/Pattern&gt;
+   &lt;Pattern&gt;REGEX PATTERN&lt;/Pattern&gt;     
+&lt;/Header&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>N/A</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="headerelement-attributes">Attributes</h3>
+
+  <table width="650">
+    <tbody>
+      <tr>
+        <th scope="col">Attribute</th>
+
+        <th scope="col">Description</th>
+
+        <th scope="col">Default</th>
+
+        <th scope="col">Presence</th>
+      </tr>
+
+      <tr>
+        <td>name</td>
+
+        <td>
+          <p>Name of the request and response header from which information needs to be extracted
+          for evaluation against the regular expressions provided.</p>
+        </td>
+
+        <td>N/A</td>
+
+        <td style="width: 50px;">Required</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="formparamelement">&lt;FormParam&gt; element</h2>
+
+  <p>Specifies that information needs to be extracted from the request form parameter and evaluated
+  against the regular expressions provided. You must provide at least one
+  <code>&lt;Pattern&gt;</code> element specifying a regular expression pattern to match.</p>
+  <pre class="prettyprint">
+&lt;FormParam name="a-form-param"&gt;
+   &lt;Pattern&gt;REGEX PATTERN&lt;/Pattern&gt;
+   &lt;Pattern&gt;REGEX PATTERN&lt;/Pattern&gt;     
+&lt;/FormParam&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>N/A</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="formparamelement-attributes">Attributes</h3>
+
+  <table width="650">
+    <tbody>
+      <tr>
+        <th scope="col">Attribute</th>
+
+        <th scope="col">Description</th>
+
+        <th scope="col">Default</th>
+
+        <th scope="col">Presence</th>
+      </tr>
+
+      <tr>
+        <td>name</td>
+
+        <td>
+          <p>Name of the request form parameter from which information needs to be extracted for
+          evaluation against the regular expressions provided.</p>
+        </td>
+
+        <td>N/A</td>
+
+        <td style="width: 50px;">Required</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="variableelement">&lt;Variable&gt; element</h2>
+
+  <p>Specifies that information needs to be extracted from the given variable and evaluated against
+  the regular expressions provided.</p>
+  <pre class="prettyprint">
+&lt;Variable name="request.content"&gt;
+   &lt;Pattern&gt;REGEX PATTERN&lt;/Pattern&gt;
+   &lt;Pattern&gt;REGEX PATTERN&lt;/Pattern&gt;
+&lt;/Variable&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>N/A</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="variableelement-attributes">Attributes</h3>
+
+  <table width="650">
+    <tbody>
+      <tr>
+        <th scope="col">Attribute</th>
+
+        <th scope="col">Description</th>
+
+        <th scope="col">Default</th>
+
+        <th scope="col">Presence</th>
+      </tr>
+
+      <tr>
+        <td>name</td>
+
+        <td>
+          <p>Name of the variable from which information needs to be extracted for evaluation
+          against the regular expressions provided.</p>
+        </td>
+
+        <td>N/A</td>
+
+        <td style="width: 50px;">Required</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="xmlpayloadelement">&lt;XMLPayload&gt; element</h2>
+
+  <p>Specifies that information needs to be extracted from an XML payload and evaluated against the
+  regular expressions provided.</p>
+  <pre class="prettyprint">
+&lt;XMLPayload&gt;
+   &lt;Namespaces&gt;
+      &lt;Namespace prefix="apigee"&gt;http://www.apigee.com&lt;/Namespace&gt;
+   &lt;/Namespaces&gt;
+   &lt;XPath&gt;
+      &lt;Expression&gt;/apigee:Greeting/apigee:User&lt;/Expression&gt;
+      &lt;Type&gt;string&lt;/Type&gt;
+      &lt;Pattern&gt;REGEX PATTERN&lt;/Pattern&gt;
+      &lt;Pattern&gt;REGEX PATTERN&lt;/Pattern&gt;
+   &lt;/XPath&gt;
+&lt;/XMLPayload&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>N/A</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="xmlpayloadnamespaceselement">&lt;XMLPayload&gt;/&lt;Namespaces&gt; element</h2>
+
+  <p>Specifies the namespaces to be used in the XPath evaluation.</p>
+  <pre class="prettyprint">
+&lt;XMLPayload&gt;
+   &lt;Namespaces&gt;
+      &lt;Namespace prefix="apigee"&gt;http://www.apigee.com&lt;/Namespace&gt;
+   &lt;/Namespaces&gt;
+   &lt;XPath&gt;
+      &lt;Expression&gt;/apigee:Greeting/apigee:User&lt;/Expression&gt;
+      &lt;Type&gt;string&lt;/Type&gt;
+      &lt;Pattern&gt;REGEX PATTERN&lt;/Pattern&gt;
+      &lt;Pattern&gt;REGEX PATTERN&lt;/Pattern&gt;
+   &lt;/XPath&gt;
+&lt;/XMLPayload&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>String</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="xmlpayloadnamespacesnamespaceelement">
+  &lt;XMLPayload&gt;/&lt;Namespaces&gt;/&lt;Namespace&gt; element</h2>Specifies each namespace to
+  be used in the XPath evaluation.<br>
+  <pre class="prettyprint">
+&lt;Namespaces&gt;
+   &lt;Namespace prefix="apigee"&gt;http://www.apigee.com&lt;/Namespace&gt;
+&lt;/Namespaces&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>String</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="xmlpayloadnamespacesnamespaceelement-attributes">Attributes</h3>
+
+  <table width="650">
+    <tbody>
+      <tr>
+        <th scope="col">Attribute</th>
+
+        <th scope="col">Description</th>
+
+        <th scope="col">Default</th>
+
+        <th scope="col">Presence</th>
+      </tr>
+
+      <tr>
+        <td>prefix</td>
+
+        <td>
+          <p>Provides a prefix to help qualify a given namespace.</p>
+        </td>
+
+        <td>N/A</td>
+
+        <td style="width: 50px;">Required</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="xmlpayloadxpathelement">&lt;XMLPayload&gt;/&lt;XPath&gt; element</h2>Specifies the XPath
+  to be evaluated.<br>
+  <pre class="prettyprint">
+&lt;XPath&gt;
+   &lt;Expression&gt;/apigee:Greeting/apigee:User&lt;/Expression&gt;
+   &lt;Type&gt;string&lt;/Type&gt;
+   &lt;Pattern&gt;REGEX PATTERN&lt;/Pattern&gt;
+   &lt;Pattern&gt;REGEX PATTERN&lt;/Pattern&gt;
+&lt;/XPath&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>N/A</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="xmlpayloadxpathexpressionelement">&lt;XMLPayload&gt;/&lt;XPath&gt;/&lt;Expression&gt;
+  element</h2>Specifies the XPath expression defined for the variable. Only XPath 1.0 expressions
+  are supported. For example,
+  <code>&lt;Expression&gt;/company/employee[@age&gt;=$request.header.age]&lt;/Expression&gt;</code>
+  extracts details for employees whose age is greater than or equal to the value specified in
+  <code>request.header.age</code>.<br>
+  <pre class="prettyprint">
+&lt;XPath&gt;
+   &lt;Expression&gt;/apigee:Greeting/apigee:User&lt;/Expression&gt;
+   &lt;Type&gt;string&lt;/Type&gt;
+   &lt;Pattern&gt;REGEX PATTERN&lt;/Pattern&gt;
+   &lt;Pattern&gt;REGEX PATTERN&lt;/Pattern&gt;
+&lt;/XPath&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>String</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="xmlpayloadxpathtypeelement">&lt;XMLPayload&gt;/&lt;XPath&gt;/&lt;Type&gt;
+  element</h2>Specifies the datatype.<br>
+  <pre class="prettyprint">
+&lt;XPath&gt;
+   &lt;Expression&gt;/apigee:Greeting/apigee:User&lt;/Expression&gt;
+   &lt;Type&gt;string&lt;/Type&gt;
+   &lt;Pattern&gt;REGEX PATTERN&lt;/Pattern&gt;
+   &lt;Pattern&gt;REGEX PATTERN&lt;/Pattern&gt;
+&lt;/XPath&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>string</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>String</td>
+      </tr>
+
+      <tr>
+        <td><b>Valid values:</b></td>
+
+        <td>
+          <p>String. Valid values include <code>string</code>, <code>boolean</code>,
+          <code>int</code>, <code>long</code>, <code>float</code>, <code>double</code>, and
+          <code>nodeset</code>.</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="xmlpayloadxpathpatternelement">&lt;XMLPayload&gt;/&lt;XPath&gt;/&lt;Pattern&gt;
+  element</h2>
+
+  <p>Defines the regular expression pattern. If a regular expression in
+  your<code>&lt;Pattern&gt;</code> element includes XML-reserved characters (", &amp;, ', &lt;, or
+  .), you must XML-encode it before you include it.</p>
+  <pre class="prettyprint">
+&lt;XPath&gt;
+   &lt;Expression&gt;/apigee:Greeting/apigee:User&lt;/Expression&gt;
+   &lt;Type&gt;string&lt;/Type&gt;
+   &lt;Pattern&gt;REGEX PATTERN&lt;/Pattern&gt;
+   &lt;Pattern&gt;REGEX PATTERN&lt;/Pattern&gt;
+&lt;/XPath&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Required</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>String</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="jsonpayloadelement">&lt;JSONPayload&gt; element</h2>
+
+  <p>Specifies that information needs to be extracted from a JSON payload and evaluated against the
+  regular expressions provided.</p>
+  <pre class="prettyprint">
+&lt;JSONPayload&gt;
+   &lt;JSONPath&gt;
+      &lt;Expression&gt;$.store.book[*].author&lt;/Expression&gt;
+      &lt;Pattern&gt;REGEX PATTERN&lt;/Pattern&gt;
+      &lt;Pattern&gt;REGEX PATTERN&lt;/Pattern&gt;
+   &lt;/JSONPath&gt;
+&lt;/JSONPayload&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>N/A</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="jsonpayloadelement-attributes">Attributes</h3>
+
+  <table>
+    <tbody>
+      <tr>
+        <th>Attribute</th>
+
+        <th>Description</th>
+
+        <th>Default</th>
+
+        <th>Presence</th>
+      </tr>
+
+      <tr>
+        <td>escapeSlashCharacter</td>
+
+        <td>
+          <p>Set to <code>true</code> to escape any forward slash (/) characters in the regular
+          expressions in <code>&lt;JSONPath&gt;</code>/<code>&lt;Pattern&gt;</code>.</p>
+        </td>
+
+        <td>true</td>
+
+        <td>Optional</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="jsonpayloadjsonpathexpressionelement">
+  &lt;JSONPayload&gt;/&lt;JSONPath&gt;/&lt;Expression&gt; element</h2>
+
+  <p>Specifies the JSONPath expression defined for the variable.</p>
+  <pre class="prettyprint">
+&lt;JSONPath&gt;
+   &lt;Expression&gt;$.store.book[*].author&lt;/Expression&gt;
+   &lt;Pattern&gt;REGEX PATTERN&lt;/Pattern&gt;
+   &lt;Pattern&gt;REGEX PATTERN&lt;/Pattern&gt;
+&lt;/JSONPath&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>String</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="jsonpayloadjsonpathpatternelement">&lt;JSONPayload&gt;/&lt;JSONPath&gt;/&lt;Pattern&gt;
+  element</h2>
+
+  <p>Defines the regular expression pattern. If a regular expression in your
+  <code>&lt;Pattern&gt;</code> element includes XML-reserved characters (", &amp;, ', &lt;, or .),
+  you must XML-encode it before you include it.</p>
+  <pre class="prettyprint">
+&lt;JSONPath&gt;
+   &lt;Expression&gt;$.store.book[*].author&lt;/Expression&gt;
+   &lt;Pattern&gt;REGEX PATTERN&lt;/Pattern&gt;
+   &lt;Pattern&gt;REGEX PATTERN&lt;/Pattern&gt;
+&lt;/JSONPath&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Required</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>String</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="usagenotes">Error codes</h2>
+
+  <p>Errors returned from Edge policies follow a consistent format as described in the <a href=
+  "/api-platform/reference/policies/error-code-reference.html">Error code reference</a>.</p>
+
+  <p>{% dynamic include /includes/___regular-expression-protection-policy-error-codes %}</p>
+
+  <h2 id="schemas">Schemas</h2>
+
+  <aside class="note"><b>Sample:</b> See our <a href=
+  "https://github.com/apigee/api-platform-samples/tree/master/schemas/policy">GitHub
+  repository</a> samples for the most recent schemas.</aside>
+
+  <h2 id="relatedtopics">Related topics</h2>
+
+  <p><a href="/api-platform/reference/policies/json-threat-protection-policy.html">JSON Threat
+  Protection policy</a></p>
+
+  <p><a href="/api-platform/reference/policies/xml-threat-protection-policy.html">XML Threat
+  Protection policy</a></p>{% endblock %}

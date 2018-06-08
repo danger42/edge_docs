@@ -1,0 +1,153 @@
+  {% extends "_base.html" %} {% block title %}API development lifecycle{% endblock %} {% block body %}
+
+  <p>Every organization has a unique software development lifecycle (SDLC). It is often necessary
+  to synchronize and align API proxy deployment with the same processes that you use today for
+  developing, testing, and deploying other applications.</p>
+
+  <p>API Services provides tools and RESTful APIs that enable you to integrate API proxy deployment
+  and management into your organization's SDLC. A common usage of the RESTful API is to write
+  scripts or code that programmatically deploy API proxies, or that migrate API proxies from one
+  environment to another, as part of a larger automated process that also deploys or migrates other
+  applications. API Services makes no assumptions about your SDLC (or anyone else's, for that
+  matter). Rather, it exposes atomic functions that can be coordinated by your development team to
+  automate and optimize your API development lifecycle.</p>
+
+  <p>API Services APIs are documented in the API Reference. See
+  <a href="/api-platform/reference/apis/api-reference-getting-started">API reference getting
+  started</a>.</p>
+
+  <div class="video">
+    <p>Watch this video for an introduction to API environments and the API development
+    lifecycle.</p>
+
+    <div style="text-align: left;">
+      <iframe allowfullscreen="" frameborder="0" height="315"
+      src="https://www.youtube.com/embed/5jzV-JVJskw" width="560">
+      </iframe>
+    </div>
+  </div>
+
+  <h2 id="environments">Environments</h2>
+
+  <p>Every organization on Apigee Edge has at least two deployment environments that are available
+  for API proxies: 'test' and 'prod'. The distinction between the two environments is arbitrary
+  &#8212; each environment is simply identified by a different set of network addresses (URLs). The
+  goal is to provide you with a domain in which you can build and verify API proxies before the API
+  is exposed to external developers.</p>
+
+  <p>You can leverage these environments to synchronize API proxy development processed with your
+  SDLC. Each environment is defined by a network address, enabling you to segregate traffic between
+  the API proxies that you are working on, and those that are being accessed by apps at runtime.
+  The network addresses available for each environment is defined in the set of VirtualHosts
+  available in that environment.</p>
+
+  <p>Inbound, server TLS/SSL is automatically enabled for each environment. Two VirtualHosts are
+  pre-defined in each environment: <code>default</code> and <code>secure</code>. Default defines an
+  HTTP address, while secure defines an HTTP/S address, with pre-configured server-side TLS/SSL. In
+  an API proxy configuration, you indicate which VirtualHosts the ProxyEndpoint should listen on.
+  When promoting to prod, you typically disable HTTP by removing the <code>default</code>
+  VirtualHost from the API proxy configuration.</p>
+
+  <p>For example, the following ProxyEndpoint listens on HTTP and HTTPS.</p>
+  <pre class="prettyprint">
+&lt;HTTPProxyConnection&gt;
+  &lt;BasePath&gt;/v0/weather&lt;/BasePath&gt;
+  &lt;Properties/&gt;
+  &lt;VirtualHost&gt;default&lt;/VirtualHost&gt;
+  &lt;VirtualHost&gt;secure&lt;/VirtualHost&gt;
+&lt;/HTTPProxyConnection&gt;
+</pre>
+
+  <p>By deleting the <code>default</code> VirtualHost from the ProxyEndpoint configuration, you
+  create an API proxy that listens only on HTTPS and not on HTTP.</p>
+  <pre class="prettyprint">
+&lt;HTTPProxyConnection&gt;
+  &lt;BasePath&gt;/v0/weather&lt;/BasePath&gt;
+  &lt;Properties/&gt;
+  &lt;VirtualHost&gt;secure&lt;/VirtualHost&gt;
+&lt;/HTTPProxyConnection&gt;
+</pre>
+
+  <p>You can see which VirtualHosts are available in an environment by selecting
+  <b>Environments</b> in the management UI main menu.</p>
+
+  <p>Environments also provide segregation of data and resources. You can, for example, set up
+  different caches in test and prod, which can be accessed only by API proxies executing in that
+  environment. Additionally, API keys that are issued in the test environment are not valid in the
+  prod environment, and vice-versa.</p>
+
+  <h2 id="deployingapiproxiestoenvironments">Deploying API proxies to environments</h2>
+
+  <p>When you create an API proxy you'll need to decide which environment you'll be working in. You
+  can choose to create a new API proxy on production, but that is not recommended as you may expose
+  an API to developers before it's ready. In general, start by creating an API proxy in
+  <code>test</code> which, after testing, you then <em>promote</em> to
+  <code>prod</code>.</p>
+
+  <aside class="note"><strong>Note:</strong> Depending on your role, you may not be able to deploy to all
+  environments. For example, the 'user' role can only deploy to the <code>test</code> environment.
+  If you're an administrator you can deploy to any environment.</aside>
+
+  <p>For more information, see
+  <a href="/api-platform/deploy/understanding-deployment">Understanding deployment</a>.</p>
+
+  <h2 id="iterativedevelopmentintest">Iterative development in test</h2>
+
+  <p>As you work on an API proxy, API Services saves iterations of your configuration as
+  <i>revisions</i>. When you deploy an API proxy, you choose a specific revision to deploy.
+  Typically, you deploy the most recent revision, and, if necessary, revert to the previous
+  revision number. You can choose where to deploy those revisions. For instance, you can promote a
+  revision to prod to allow developers to start working with your API. At the same time, you may be
+  iterating multiple revisions on test, where you're adding features or fine-tuning policies. Then,
+  when you're ready, you can deploy the new revision to prod, overwriting the existing revision on
+  that environment. Using this method, you can always have a live revision of your API available to
+  developers while you're developing.</p>
+
+  <h2 id="promotiontoprod">Promotion to prod</h2>
+
+  <p>When an API proxy has been fully implemented and tested, it is ready to be promoted to 'prod'.
+  The revision of the API proxy in test will be used to overwrite the revision of the API proxy
+  deployed on prod.</p>
+
+  <p>API Services provides capabilities to ensure seamless deployment of API proxies, minimizing
+  the impact on apps and end users during the deployment procedure.</p>
+
+  <h3 id="promotiontoprod-scriptingdeployment">Scripting deployment</h3>
+
+  <p>The Apigee Edge management UI enables you to deploy API proxies to prod directly from the API
+  proxy builder. However, in many situations the requirements for security, reliability, and
+  consistency will mandate that development teams script deployment procedures. To do so, you can
+  write code and scripts that invoke the RESTful API exposed by API Services.</p>
+
+  <h3 id="promotiontoprod-environmentresources">Environment resources</h3>
+
+  <p>For additional control during promotion, it is recommended that you only iterate on API
+  proxies in test, and make as few changes as necessary to API proxies deployed in prod.</p>
+
+  <p>To do so, you need to ensure that certain resources associated with each environment are
+  configured in such a way that they can remain static in an API proxy configuration.</p>
+
+  <ul>
+    <li>Target URLs: It is common for API proxies to call different backend URLs during testing and
+    production. You can use TargetServer configurations to create environment-independent
+    TargetEndpoint configurations. See
+    <a href="/api-platform/deploy/load-balancing-across-backend-servers">Load balancing across backend servers</a>.</li>
+
+    <li>Caches and Key/value maps: Both persistence resources are scoped by environment. You should
+    ensure that naming conventions are used to enable API proxies to store data without requiring
+    configuration changes during promotion. See
+    <a href="/api-platform/cache/manage-caches-environment">Creating and editing an environment cache</a>.</li>
+
+    <li>ServiceCallout targets: Service callouts may use different targets depending on the
+    environment, if, for example, a ServiceCallout in the test environment consumes a demo service.
+    See <a href="/api-platform/reference/policies/service-callout-policy">Service Callout policy</a>.</li>
+  </ul>
+
+  <p>To make API proxy configurations environment-independent, you can also use conditional
+  statements. Conditional statement built with the <code>environment.name</code> variable can be
+  used to evaluate the current environment before enforcing a policy or before routing to a URL on
+  the backend.</p>
+
+  <p>For more information, see <a href=
+  "/api-platform/deploy/understanding-deployment.html">Understanding deployment</a>.</p>
+{% endblock %}

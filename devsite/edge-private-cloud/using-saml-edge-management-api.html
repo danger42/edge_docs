@@ -1,0 +1,164 @@
+  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}Using SAML with the Edge
+  management API{% endblock %} {% block body %}
+
+  <p>Basic Auth is one way to authenticate when making calls to the Edge management API. For
+  example, you can make the following cURL request to the Edge management API to access information
+  about your organization:</p>
+  <pre class="prettyprint">
+&gt; curl -u <em><strong>userName:pWord</strong></em> https://<em><strong>ms_IP_DNS</strong></em>:8080/v1/organizations/orgName
+</pre>
+
+  <p>In this example, you use the cURL -u option to pass Basic Auth credentials. Alternatively, you
+  can pass an OAuth2 token in the <span style=
+  "font-family:courier new,courier,monospace;">Bearer</span> header to make Edge management API
+  calls. For example:</p>
+  <pre class="prettyprint">
+&gt; curl -H "Authorization: Bearer <em><strong>&lt;access_token&gt;</strong></em>" https://<em><strong>ms_IP_DNS</strong></em>:8080/v1/organizations/orgName
+</pre>
+
+  <p>After you enable SAML, you can optionally disable Basic Auth. if you disable Basic Auth, all
+  scripts (Maven scripts, shell scripts, <span style=
+  "font-family:courier new,courier,monospace;">apigeetool</span>, etc.) that rely on Edge
+  management API calls supporting Basic Auth no longer work. You must update any API calls and
+  scripts that use Basic Auth to pass OAuth2 access tokens in the Bearer header.</p>
+
+  <h2 id="usingget_tokentogetandrefreshtokens">Using get_token to get and refresh tokens</h2>
+
+  <p>The <span style="font-family:courier new,courier,monospace;">get_token</span> utility
+  exchanges your Basic Auth credentials and a passcode for an OAuth2 access and refresh token. The
+  <span style="font-family:courier new,courier,monospace;">get_token</span> utility accepts your
+  credentials and prints a valid access token. If a token can be refreshed, it will refresh it and
+  print it out. If the refresh token expires, it will prompt for user credentials.</p>
+
+  <p>The <span style="font-family:courier new,courier,monospace;">get_token</span> utility stores
+  the tokens on disk, ready for use when required. It also prints a valid access token to stdout.
+  From there, you can use Postman or embed it in an environment variable for use in curl.</p>
+
+  <p>The following procedure describes how to use <span style=
+  "font-family:courier new,courier,monospace;">get_token</span> to obtain an OAuth2 access token to
+  make Edge management API calls:</p>
+
+  <ol>
+    <li>Download the <span style="font-family:courier new,courier,monospace;">sso-cli</span>
+    bundle:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt; curl
+    http://<strong><em>edge_sso_IP_DNS:</em></strong>9099/resources/scripts/sso-cli/ssocli-bundle.zip
+    -o "ssocli-bundle.zip"</span><br>
+    <br>
+    where <strong><em>edge_sso_IP_DNS</em></strong> is the IP address of DNS name of the machine
+    hosting the Edge SSO module. If you configured TLS on Edge SSO, use <span style=
+    "font-family:courier new,courier,monospace;">https</span> and the correct TLS port number.</li>
+
+    <li>Unzip the <span style="font-family:courier new,courier,monospace;">ssocli-bundle.zip</span>
+    bundle:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt; unzip
+    ssocli-bundle.zip</span></li>
+
+    <li>Install <span style="font-family:courier new,courier,monospace;">get_token</span> in
+    <span style="font-family:courier new,courier,monospace;">/usr/local/bin</span>:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt; ./install</span> Use the
+    <span style="font-family:courier new,courier,monospace;">-b</span> option to specify a
+    different location: <span style="font-family:courier new,courier,monospace;">&gt; ./install -b
+    <strong><em>path</em></strong></span></li>
+
+    <li>Set the <span style="font-family:courier new,courier,monospace;">SSO_LOGIN_URL</span>
+    environment variable to your login URL, in the form:<br>
+    <span style="font-family:courier new,courier,monospace;">export
+    SSO_LOGIN_URL="http://<strong><em>edge_sso_IP_DNS</em></strong>:9099"</span><br>
+    <br>
+    where <strong><em>edge_sso_IP_DNS</em></strong> is the IP address of DNS name of the machine
+    hosting the Edge SSO module. If you configured TLS on Edge SSO, use <span style=
+    "font-family:courier new,courier,monospace;">https</span> and the correct TLS port number.</li>
+
+    <li>In a browser, go to the following URL to obtain a one-time passcode:<br>
+    <span style=
+    "font-family:courier new,courier,monospace;">http://<strong><em>edge_sso_IP_DNS</em></strong>:9099/passcode</span><br>
+
+    <br>
+    If you configured TLS on Edge SSO, use <span style=
+    "font-family:courier new,courier,monospace;">https</span> and the correct TLS port number.<br>
+    <br>
+    <strong>Note</strong>: If you are not currently logged in by your identity provider, you will
+    be prompted to log in.<br>
+    <br>
+    This URL returns a one-time passcode that remains valid until you refresh that URL to obtain a
+    new passcode, or you use the passcode with <span style=
+    "font-family:courier new,courier,monospace;">get_token</span> to generate an access token.</li>
+
+    <li>Invoke <span style="font-family:courier new,courier,monospace;">get_token</span> to obtain
+    the OAuth2 access token:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt; get_token -u
+    <strong><em>emailAddress</em></strong></span><br>
+    <br>
+    where <strong><em>emailAddress</em></strong> is the email address of an Edge user. You are
+    prompted to enter the one-time passcode that you obtained in step 3:<br>
+    <span style="font-family:courier new,courier,monospace;">One Time Code ( Get one at
+    https://edge_sso_IP.com/passcode )<br>
+    Enter the passcode if SAML is enabled or press ENTER:</span><br>
+    <br>
+    Enter the passcode. The <span style=
+    "font-family:courier new,courier,monospace;">get_token</span> utility obtains the OAuth2 access
+    token, prints it to the screen, and writes it and the refresh token to <span style=
+    "font-family:courier new,courier,monospace;">~/.sso-cli</span>.<br>
+    <br>
+    You can enter the passcode on the command line using a <span style=
+    "font-family:courier new,courier,monospace;">get_token</span> command in the form:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt; get_token -u
+    <strong><em>emailAddress</em></strong> -p <strong><em>passcode</em></strong></span></li>
+
+    <li>Pass the access token to an Edge management API call as the Bearer header:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt; curl -H "Authorization: Bearer
+    <em><strong>access_token</strong></em>"
+    https://<strong><em>ms_IP</em></strong>:8080/v1/organizations/<strong><em>orgName</em></strong></span><br>
+
+    <br>
+    After you obtain a new access token for the first time, you can obtain the access token and
+    pass it to an API call in a single command, as shown below:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt; header=`get_token` &amp;&amp;
+    curl -H "Authorization: Bearer $header"
+    https://<strong><em>ms_IP</em></strong>:8080/v1/o/<strong><em>orgName</em></strong></span><br>
+    <br>
+    With this form of the command, if the access token has expired, it is automatically refreshed
+    until the refresh token expires.</li>
+  </ol>
+
+  <p>After the refresh token expires, <span style=
+  "font-family:courier new,courier,monospace;">get_token</span> prompts you for a new passcode. You
+  must go to the URL shown above in Step 3 and generate a new passcode before you can generate a
+  new OAuth access token</p>
+
+  <h2 id="usingthemanagementapitogetandrefreshtokens">Using the management API to get and refresh
+  tokens</h2>
+
+  <p><a href="/api-services/content/using-oauth2-security-apigee-edge-management-api">Using OAuth2
+  security with the Apigee Edge management API</a> contains instructions that show how to use the
+  Edge management API to obtain and refresh tokens. You can also use Edge API calls to for tokens
+  generated from SAML assertions.</p>
+
+  <p>The only difference between the API calls documented in <a href=
+  "/api-services/content/using-oauth2-security-apigee-edge-management-api">Using OAuth2 security
+  with the Apigee Edge management API</a> is that the URL of the call must reference your zone
+  name. In addition, for generating the initial access token, you must include the passcode, as
+  shown in step 3 of the procedure above.</p>
+
+  <p>For example, use the following API call to generate the initial access and refresh tokens:</p>
+  <pre class="prettyprint">
+curl -H "Content-Type: application/x-www-form-urlencoded;charset=utf-8" /
+  -H "accept: application/json;charset=utf-8" /
+  -H "Authorization: Basic ZWRnZWNsaTplZGdlY2xpc2VjcmV0" -X POST /
+  https://<em><strong>edge_sso_IP_DNS</strong></em>:9099/oauth/token -s /
+  -d 'grant_type=password&amp;response_type=token&amp;passcode=<em><strong>passcode</strong></em>'  
+</pre>
+
+  <p>For authorization, pass a reserved OAuth2 client credential in the <span style=
+  "font-family:courier new,courier,monospace;">Authorization</span> header. The call prints the
+  access and refresh tokens to the screen.</p>
+
+  <p>To later refresh the access token, use the following call that includes the refresh token:</p>
+  <pre class="prettyprint">
+curl -H "Content-Type:application/x-www-form-urlencoded;charset=utf-8" /
+-H "Accept: application/json;charset=utf-8" /
+-H "Authorization: Basic ZWRnZWNsaTplZGdlY2xpc2VjcmV0" -X POST /
+https://<em><strong>edge_sso_IP_DNS</strong></em>:9099/oauth/token /
+-d 'grant_type=refresh_token&amp;refresh_token=<em><strong>refreshToken</strong></em>'  
+</pre>{% endblock %}

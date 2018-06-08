@@ -1,0 +1,209 @@
+  {% extends "_base.html" %} {% block title %}How to use properties in a Java callout{% endblock %}
+  {% block body %}
+
+  <h2 id="whatisajavacallout">What is a Java callout?</h2>
+
+  <p>If you're new to Java callouts, we recommend that you start with <a href=
+  "/api-platform/samples/cookbook/how-create-java-callout.html">How to create a Java
+  callout</a>.</p>
+
+  <h2 id="usingpropertiesinajavacallout">Using properties in a Java callout</h2>
+
+  <p>Properties let you specify name/value pairs in a Java callout policy that you can access from
+  your Java code at runtime. You must specify a literal string value for each property; you cannot
+  reference flow variables in this element.</p>
+
+  <p>Let's walk through a simple Java callout example that uses properties. In this example, we
+  create a proxy with that includes a Java callout policy. The policy uses the
+  <code>&lt;Properties&gt;</code> element to specify a name/value pair. In the Java code, we
+  retrieve the value and use it to set a response header.</p>
+
+  <h3 id="usingpropertiesinajavacallout-downloadtheproject">Download the project</h3>
+
+  <p>To make things simple, you can download this project from the Apigee <a href=
+  "https://github.com/apigee/api-platform-samples">api-platform-samples</a> repository on
+  GitHub.</p>
+
+  <ol>
+    <li>Download or clone <a href=
+    "https://github.com/apigee/api-platform-samples">api-platform-samples</a> to your system.</li>
+
+    <li>In a terminal or code editor of your choice, go to the
+    <code>api-platform-samples/doc-samples/java-properties</code> project.</li>
+  </ol>
+
+  <h3 id="usingpropertiesinajavacallout-thejavacalloutpolicy">The Java callout policy</h3>
+
+  <p>The policy uses the <code>&lt;Properties&gt;</code> element. This element lets you specify
+  name/value pairs. At runtime, your Java code can access the values of the properties specified in
+  the policy, as we'll see shortly.</p>
+  <pre class="prettyprint">
+&lt;JavaCallout name="java-callout"&gt;         
+    &lt;ClassName&gt;com.apigeesample.JavaProperties&lt;/ClassName&gt;         
+    &lt;ResourceURL&gt;java://edge-custom-policy-java-properties.jar&lt;/ResourceURL&gt;         
+    &lt;Properties&gt;              
+        &lt;Property name="prop"&gt;WORLD!&lt;/Property&gt;             
+    &lt;/Properties&gt; 
+&lt;/JavaCallout&gt;
+</pre>
+
+  <h3 id="usingpropertiesinajavacallout-thesamplejavacode">The sample Java code</h3>
+
+  <p>The Java code for this sample shows you how to retrieve a property that was specified in the
+  Java callout policy. In the sample project, you can find the source code in
+  <code>java-properties/callout/src/main/java/JavaProperties.java</code>. We'll walk through the
+  steps for compiling and deploying this code later in this topic.</p>
+  <pre class="prettyprint">
+package com.apigeesample;
+
+import com.apigee.flow.execution.ExecutionContext;
+import com.apigee.flow.execution.ExecutionResult;
+import com.apigee.flow.execution.spi.Execution;
+import com.apigee.flow.message.MessageContext;
+
+import java.util.Map;
+
+public class JavaProperties implements Execution {
+
+        private Map &lt;string,string&gt; properties; // read-only
+
+        public JavaProperties(Map &lt;string,string&gt; properties) {
+                this.properties = properties;
+        }
+
+        public ExecutionResult execute(MessageContext messageContext, ExecutionContext executionContext) {
+                
+                try {
+
+                    messageContext.getMessage().setHeader("X-PROPERTY-HELLO", this.properties.get("prop"));
+            
+            return ExecutionResult.SUCCESS;
+
+                } catch (Exception e) {
+                        return ExecutionResult.ABORT;
+                }
+        }
+}
+</pre>
+
+  <aside class="note"><b>Note:</b> To retrieve the properties specified in the policy, all you need
+  to do is implement the Execution class constructor as shown above. Then, in the Java code, you
+  can get the property value you want by name.</aside>
+
+  <h3 id="usingpropertiesinajavacallout-compileyourcodewithmaven"><br>
+  Compile your code with Maven</h3>
+
+  <p>The project is set up so that you can compile with Maven. If you want to use
+  <code>javac</code>, we'll include an example as well.</p>
+
+  <aside class="note"><b>Note:</b> The POM file and configuration for the Maven compile should
+  work, but are offered in the Git repository as an example only. You may need to make adjustments
+  for your environment. If you make changes to the sample code, you may also need to adjust the
+  Maven configuration. </aside>
+
+  <ol>
+    <li>Be sure that you have Maven installed:
+      <pre class="prettyprint">
+mvn -version
+</pre>
+    </li>
+
+    <li>Execute the script <code>java-properties/buildsetup.sh</code>. This script installs the
+    required JAR dependencies in your local Maven repo.</li>
+
+    <li>cd to the <code>java-properties/callout</code> directory.</li>
+
+    <li>Execute Maven:
+      <pre class="prettyprint">
+mvn clean package
+</pre>
+
+      <aside class="note"><b>Note:</b> If you get a Maven error, be sure that you are in the
+      <code>java-properties/callout</code> directory.</aside>
+    </li>
+
+    <li>If you wish, verify that the JAR file <code>edge-custom-policy-java-properties.jar</code>
+    was copied to <code>java-properties/apiproxy/resources/java</code>. This is the required
+    location for JAR files that you wish to deploy with a proxy.</li>
+  </ol>
+
+  <h3 id="usingpropertiesinajavacallout-compilewithjavac">Compile with javac</h3>
+
+  <p>If you want to use <code>javac</code> to compile the code, you can do something similar to the
+  following (from the <code>java-properties</code> directory). The required JAR files are provided
+  for you in the <code>java-properties/lib</code> directory.</p>
+
+  <ol>
+    <li>cd to <code>api-platform-samples/doc-samples/java-properties</code>.</li>
+
+    <li>Be sure you have javac in your path.<br>
+      <br>
+      <pre class="prettyprint">
+javac -version
+</pre>
+    </li>
+
+    <li>Execute the following javac command:<br>
+      <br>
+      <pre class="prettyprint">
+javac -d . -classpath ./lib/expressions-1.0.0.jar:./lib/message-flow-1.0.0.jar:. callout/src/main/java/JavaProperties.java
+</pre>
+    </li>
+
+    <li>Create a JAR file:<br>
+    <br>
+    <code>jar -cvf edge-custom-policy-java-properties.jar
+    ./com/apigeesample/JavaProperties.class</code><br>
+     </li>
+
+    <li>Copy the JAR file to the apiproxy/resources/java directory. This is the required location
+    for JAR files that you wish to deploy with a proxy.<br>
+      <br>
+      <pre class="prettyprint">
+cp edge-custom-policy-java-properties.jar apiproxy/resources/java
+</pre>
+    </li>
+  </ol>
+
+  <h3 id="usingpropertiesinajavacallout-deployandcalltheproxy">Deploy and call the proxy</h3>
+
+  <p>A deploy script is provided in the <code>./java-properties</code> directory. But before you
+  run it, you need to do a quick setup.</p>
+
+  <ol>
+    <li>cd to <code>api-platform-samples/doc-samples/java-properties</code></li>
+
+    <li>If you haven't already done so, open the file <code>../../setup/setenv.sh</code> and edit
+    it as indicated with your Apigee account information: your username (the email address
+    associated with your account), your organization name, and the domain you use to make API
+    management calls. For example, for Edge cloud, the domain is
+    <code>https://api.enterprise.apigee.com</code>; however, your domain may be different if you're
+    using Edge Private Cloud.</li>
+
+    <li>Save the <code>setenv.sh</code> file.</li>
+
+    <li>Execute the deploy script:
+      <pre class="prettyprint">
+./deploy.sh
+</pre>
+    </li>
+
+    <li>If the deploy succeeds, execute the invoke script:
+      <pre class="prettyprint">
+./invoke.sh
+</pre>
+
+      <p>The invoke script calls a cURL command that looks like this:</p>
+      <pre class="prettyprint">
+curl  http://$org-$env.$api_domain/java-properties
+</pre>
+
+      <p>The proxy returns the header: <code>X-PROPERTY-HELLO: WORLD!</code>. Remember that in the
+      policy, we added a property name/value pair <code>"prop/WORLD!"</code>. The Java callout
+      retrieves the value <code>"WORLD!"</code> and sets it in a header called
+      <code>X-PROPERTY-HELLO</code>:</p>
+      <pre class="prettyprint">
+messageContext.getMessage().setHeader("X-PROPERTY-HELLO", this.properties.get("prop")); 
+</pre>
+    </li>
+  </ol>{% endblock %}

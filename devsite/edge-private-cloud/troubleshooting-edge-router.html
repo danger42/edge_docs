@@ -1,0 +1,70 @@
+  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}Troubleshooting the Edge
+  Router{% endblock %} {% block body %}
+
+  <p>The Edge Router is implemented by using the Nginx router. During the Edge upgrade process, or
+  when changing the configuration of the Router, you might see Nginx configuration errors. When
+  these errors occur, Edge writes the Nginx configuration files that caused the issue to
+  <span style="font-family:courier new,courier,monospace;">/opt/nginx/conf.d</span>. You can then
+  use the Nginx <span style="font-family:courier new,courier,monospace;">configtest</span> tool to
+  determine the reason for the error.</p>
+
+  <p>For example, you examine the <span style=
+  "font-family:courier new,courier,monospace;">/opt/nginx/conf.d</span> and see the following
+  files: </p>
+  <pre class="prettyprint">
+-rw-r--r-- 1 apigee apigee 522 Jul 20 08:41 0-default.conf.<strong>bad </strong>
+-rw-r--r-- 1 apigee apigee 577 Jul 20 08:42 0-fallback.conf 
+-rw-r--r-- 1 apigee apigee 1062 Jul 20 08:18 0-map.conf 
+-rw-r--r-- 1 apigee apigee 1887 Jul 20 08:42 custorg_test_default.conf.<strong>bad</strong>
+</pre>
+
+  <p>Notice how several files have the suffix <strong>.bad</strong>.</p>
+
+  <p>Typically these errors are caused because you made incorrect changes on the <span style=
+  "font-family:courier new,courier,monospace;">/opt/apigee/customer/application/router.properties</span>
+  file or you made incorrect changes to a virtual host. For example, you added the following:</p>
+  <pre class="prettyprint">
+conf_load_balancing_load.balancing.driver.proxy.busy.buffer.size=32k 
+</pre>
+
+  <p>This value is not allowed.</p>
+
+  <p>To fix the error:</p>
+
+  <ol>
+    <li>Remove the <strong>.bad</strong> suffix from the file names in the <span style=
+    "font-family: &quot;courier new&quot;, courier, monospace;">/opt/nginx/conf.d</span> folder
+    so they end in <strong>.conf</strong>.</li>
+
+    <li>Run the Nginx <span style="font-family:courier new,courier,monospace;">configtest</span>
+    tool to display the reason for the failure:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt; /opt/nginx/scripts/apigee-nginx
+    configtest</span><br>
+    <br>
+    You see output in the form:<br>
+    <span style="font-family:courier new,courier,monospace;">nginx: [emerg]
+    "proxy_busy_buffers_size" must be equal to or greater than the maximum of the value of
+    "proxy_buffer_size" and one of the "proxy_buffers" in /opt/nginx/conf/nginx.conf:47</span></li>
+
+    <li>Edit <span style=
+    "font-family:courier new,courier,monospace;">/opt/apigee/customer/application/router.properties</span>
+    to set <span style=
+    "font-family:courier new,courier,monospace;">conf_load_balancing_load.balancing.driver.proxy.busy.buffer.size</span>
+    to 128k.</li>
+
+    <li>Removed the <span style=
+    "font-family:courier new,courier,monospace;">/opt/nginx/conf.d</span> folder:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt;
+    rm -rf /opt/nginx/conf.d</span></li>
+
+    <li>Restart the Router:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt;
+    /opt/apigee/apigee-service/bin/apigee-servce edge-router restart</span></li>
+
+    <li>You should not longer see bad config files in the <span style=
+    "font-family: &quot;courier new&quot;, courier, monospace;">/opt/nginx/conf.d</span> folder.</li>
+  </ol>
+
+  <div>
+     
+  </div>{% endblock %}

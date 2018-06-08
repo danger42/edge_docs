@@ -1,0 +1,308 @@
+  {% extends "_base.html" %} {% block title %}Mapping conditional flows to backend API resources{% endblock %} {% block body %}
+
+  <h2 id="understandingapiresourcesandconditionalflows">Understanding API resources and conditional
+  flows</h2>
+
+  <div class="video">
+    <p>Check out this short video for an introduction to the relationship between your RESTful
+    backend resources and Edge proxy resources, or conditional flows.</p>
+
+    <table>
+      <tbody>
+        <tr>
+          <td>
+            <div style="text-align: left; margin:15px">
+              <iframe allowfullscreen="" frameborder="0" height="281" mozallowfullscreen="" src=
+              "https://player.vimeo.com/video/116021624" webkitallowfullscreen="" width=
+              "500"></iframe>
+            </div>
+          </td>
+
+          <td>
+            <h4>Related</h4>
+            <ul>
+              <li><a href="/api-platform/fundamentals/uri-based-configurations.html">Mapping
+                conditional flows to backend API resources</a></li>
+              <li>Tutorial: {{gs_tutorial}}</li>
+            </ul>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>RESTful services are collections of <em>API resources</em>. An API resource is a URI path
+  fragment that identifies some entity that developers can access by calling your API. For example,
+  if your service provides weather reports and weather forecasts, your backend service might define
+  two API resources:</p>
+
+  <ul>
+    <li>http://mygreatweatherforecast.com<strong>/reports</strong></li>
+
+    <li>http://mygreatweatherforecast.com<strong>/forecasts</strong></li>
+  </ul>
+
+  <p>When you create an API proxy (as shown in the {{gs_tutorial}}), at a minimum you're creating an
+  alias base URL that maps to your backend service. For example:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Backend base URL</th>
+
+        <th>New/equivalant API proxy URL</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td>http://mygreatweatherforecast.com</td>
+
+        <td>http://{your_org}-{environment}.apigee.net/mygreatweatherforecast</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>At this point you can make API calls to your backend using either base URL. But when you use
+  the API proxy URL, things start to get interesting.</p>
+
+  <p>In addition to API analytics that Edge starts to collect when you use the API proxy, proxies
+  also let you define conditional flows that map to the resources on your backend. In essence, "If
+  a GET call comes in to the /reports resource, Edge should do something."</p>
+
+  <p>The following image shows the behavior difference between two URLs that ultimately access the
+  same backend. One is the un-proxied resource URL, the other is an Edge API proxy with a
+  conditional flow to the same backend resource. We'll describe conditional flows in more detail
+  below.</p>
+
+  <p><img alt="" src="/api-platform/images/resource_conditional_flow3.png"></p>
+
+  <h3 id="understandingapiresourcesandconditionalflows-howapiproxiesmaptospecificbackendresources">
+  How API proxies map to specific backend resources</h3>
+
+  <p>With an API proxy URL mapped to the base URL of the backend service (when you create the
+  proxy), you can add conditional flows to specific resources, such as the <code>/reports</code>
+  and <code>/forecasts</code> resources mentioned earlier.</p>
+
+  <p>Let's say you wanted to have Edge "do something" when calls come in to the
+  <code>/reports</code> or <code>/forecasts</code> resources. At this point you're not telling Edge
+  <em>what</em> to do, just that it should be listening for calls to those resources. You do this
+  with conditions. In your Edge API proxy, you can create conditional flows for
+  <code>/reports</code> and <code>/forecasts</code>. For conceptual purposes, the following API
+  proxy XML shows what those conditions might look like.</p>
+  <pre class="prettyprint">
+&lt;Flows&gt;
+    &lt;Flow name="reports"&gt;
+        &lt;Description/&gt;
+        &lt;Request/&gt;
+        &lt;Response/&gt;
+        <strong>&lt;Condition&gt;(proxy.pathsuffix MatchesPath "/reports") and (request.verb = "GET")&lt;/Condition&gt;</strong>
+    &lt;/Flow&gt;
+    &lt;Flow name="forecasts"&gt;
+        &lt;Description/&gt;
+        &lt;Request/&gt;
+        &lt;Response/&gt;
+        <strong>&lt;Condition&gt;(proxy.pathsuffix MatchesPath "/forecasts") and (request.verb = "GET")&lt;/Condition&gt;</strong>
+    &lt;/Flow&gt;
+&lt;/Flows&gt;
+</pre>
+
+  <p>Those conditions say, "When a GET request comes in with <code>/reports</code> and
+  <code>/forecasts</code> in the URL, Edge will do whatever you (the API developer) tell it to,
+  through the policies you attach to those flows.</p>
+
+  <p>Now here's an example of telling Edge what to do when a condition is met. In the following API
+  proxy XML, when a GET request is sent to
+   <code>https://yourorg-test.apigee.net/mygreatweatherforecast/reports</code>, Edge executes
+  the "XML-to-JSON-1" policy in the response.</p>
+  <pre class="prettyprint">
+&lt;Flows&gt;
+    &lt;Flow name="reports"&gt;
+        &lt;Description/&gt;
+        &lt;Request/&gt;
+        &lt;Response&gt;
+            <strong>&lt;Step&gt;
+                &lt;Name&gt;XML-to-JSON-1&lt;/Name&gt;
+            &lt;/Step&gt;</strong>
+        &lt;/Response&gt;
+        <strong>&lt;Condition&gt;(proxy.pathsuffix MatchesPath "/reports") and (request.verb = "GET")&lt;/Condition&gt;</strong>
+&lt;/Flow&gt;
+</pre>
+
+  <h3 id="understandingapiresourcesandconditionalflows-noteaboutdefaultflows">Note about default
+  flows</h3>
+
+  <p>In addition to those optional conditional flows, each API proxy also comes with two default
+  flows: a <code>&lt;PreFlow&gt;</code> executed before your conditional flows, and a
+  <code>&lt;PostFlow&gt;</code> executed after your conditional flows. Those are useful for
+  executing policies when <em>any</em> call is made to an API proxy. For example, if you want to
+  verify an app's API key with every call, regardless of the backend resource being accessed, you
+  could put a Verify API Key policy on the <code>&lt;PreFlow&gt;</code>. For more on flows, see
+  <a href="/api-platform/fundamentals/flow-configurations.html">Configuring flows</a>.</p>
+
+  <aside class="note"><b>Note:</b> For a discussion of best practices when designing your base URLs
+  and resources, see <a href=
+  "https://blog.apigee.com/detail/restful_api_design_nouns_are_good_verbs_are_bad/">RESTful API
+  Design: nouns are good, verbs are bad</a>.</aside>
+
+  <h2 id="creatingconditionalflowstobackendresources">Creating conditional flows to backend
+  resources</h2>
+
+  <p>Defining conditional flows to backend resources in an API proxy is completely optional.
+  However, those conditional flows give you the ability to apply fine-grained management and
+  monitoring.</p>
+
+  <p>You will be able to:</p>
+
+  <ul>
+    <li>Apply management in way that reflects the semantics of your API model</li>
+
+    <li>Apply policies and scripted behavior to individual resource paths (URIs)</li>
+
+    <li>Collect fine-grained metrics for Analytics Services</li>
+  </ul>
+
+  <p>For example, imagine that you need to apply different types of logic to your backend
+  /developers to /apps resources.</p>
+
+  <p>To do so, you add two conditional flows in your API proxy: <code>/developers</code> and
+  <code>/apps</code>.</p>
+
+  <p>In the Develop view of the API proxy editor Navigator pane, click the <strong>+ icon</strong>
+  next to default in the Proxy Endpoints.</p>
+
+  <p><img alt="" src="/api-platform/images/add_conditional_flow_icon.png"></p>
+
+  <p>In the "New Conditional Flow" window, you'd enter the following key configurations:</p>
+
+  <ul>
+    <li><strong>Flow name</strong>: Developers</li>
+
+    <li><strong>Condition Type</strong>: Path</li>
+
+    <li><strong>Path</strong>: /developers</li>
+  </ul>
+
+  <p><img alt="" src="/api-platform/images/add_conditional_flow_developers.png"></p>
+
+  <p>The condition will be triggered (and policies will be executed) if a call is sent to the proxy
+  with /developers at the end of the URI.</p>
+
+  <p>Now add a conditional flow for /apps, and assume you want the condition to be triggered on
+  both the URI and the POST verb in a request. The configuration involves setting the
+  following:</p>
+
+  <ul>
+    <li><strong>Flow Name</strong>: Apps</li>
+
+    <li><strong>Condition Type</strong>: Path and Verb</li>
+
+    <li><strong>Path</strong>: /apps</li>
+
+    <li><strong>Verb</strong>: POST</li>
+  </ul>
+
+  <p><img alt="" src="/api-platform/images/add_conditional_flow_apps.png"></p>
+
+  <p>The condition will be triggered (and policies will be executed) if a call is sent to the proxy
+  with /apps at the end of the URI and a POST verb.</p>
+
+  <p>In the Navigator pane, you'll see new flows for <strong>Apps</strong> and
+  <strong>Developers</strong>.</p>
+
+  <p><img alt="" src="/api-platform/images/add_conditional_flow_navigator_apps_developers.png"></p>
+
+  <p>Select one of the flows to view the conditional flow configuration in the API proxy editor
+  code view:</p>
+  <pre class="prettyprint">
+&lt;Flow name="Apps"&gt;
+    &lt;Description&gt;Developer apps registered in Developer Services&lt;/Description&gt;
+    &lt;Request/&gt;
+    &lt;Response/&gt;
+    &lt;Condition&gt;(proxy.pathsuffix MatchesPath "/apps") and (request.verb = "POST")&lt;/Condition&gt;
+&lt;/Flow&gt;
+</pre>
+
+  <p>As you can see, API resources are simply conditional Flows that evaluate the URI path of the
+  inbound request. (The proxy.pathsuffix variable identifies the URI of the request that follows
+  the BasePath configured in the ProxyEndpoint configuration.)</p>
+
+  <p>Each API resource that you define is implemented by a conditional Flow in the API proxy. (See
+  <a href="/api-platform/fundamentals/flow-configurations.html">Configuring flows</a>.)</p>
+
+  <p>Once you deploy the API proxy to the test environment, the following request:</p>
+  <pre class="prettyprint">
+http://{org_name}-test.apigee.net/{proxy_path}/apps
+</pre>
+
+  <p>will cause the condition to evaluate to true, and this flow, along with any associated
+  policies, will execute.</p>
+
+  <h3 id="creatingconditionalflowstobackendresources-buildingconditions">Building conditions</h3>
+
+  <p>For more information on building conditions, see the <a href=
+  "/api-platform/reference/conditions-reference.html">Conditions reference</a>. For example, the
+  following condition uses a Java regular expression to recognize calls made to the
+  <code>/apps</code> resource with or without a trailing forward slash (<code>/apps</code> or
+  <code>/apps/**</code>):</p>
+  <pre class="prettyprint">
+&lt;Condition&gt;(proxy.pathsuffix JavaRegex "/apps(/?)") and (request.verb = "POST")&lt;/Condition&gt;
+</pre>
+
+  <p>For more about this type of condition, see the follwing Apigee Community thread:</p>
+
+  <p><a href=
+  "https://community.apigee.com/questions/4284/how-do-you-override-at-the-end-of-the-url-when-you.html">
+  https://community.apigee.com/questions/4284/how-do-you-override-at-the-end-of-the-url-when-you.html</a></p>
+
+  <h3 id="creatingconditionalflowstobackendresources-modelinghierarchicaluris">Modeling
+  hierarchical URIs</h3>
+
+  <p>In some cases, you will have hierarchical API resources. For example, the Developer Services
+  API provides a method for listing all apps that belong to a developer. The URI path is:</p>
+  <pre class="prettyprint">
+/developers/{developer_email}/apps
+</pre>
+
+  <p>You may have resources where a unique ID is generated for each entity in a collection, which
+  is sometimes annotated as follows:</p>
+  <pre class="prettyprint">
+/genus/:id/species
+</pre>
+
+  <p>This path applies equally to the following two URIs:</p>
+  <pre class="prettyprint">
+/genus/18904/species
+/genus/17908/species
+</pre>
+
+  <p>To represent this structure in an API resource, you can use wildcards. For example:</p>
+  <pre class="prettyprint">
+/developers/*/apps
+</pre>
+  <pre class="prettyprint">
+/developers/*example.com/apps
+</pre>
+  <pre class="prettyprint">
+/genus/*/species
+</pre>
+
+  <p>will resolve these hierarchical URIs as API resources appropriately.</p>In some cases,
+  especially for deeply hierarchical APIs, you may simply want to resolve everything below a
+  certain URI fragment. To do so, use a double asterisk wildcard in your resource defintiion. For
+  example, if you define the following API resource:
+  <pre class="prettyprint">
+/developers/**
+</pre>
+
+  <p>That API resource will resolve the following URI paths:</p>
+  <pre class="prettyprint">
+/developers/{developer_email}/apps
+/developers/{developer_email}/keys
+/developers/{developer_email}/apps/{app_id}/keys
+</pre>
+
+  <p>Here's what the conditional flow condition would look like in the API proxy definition:</p>
+  <pre class="prettyprint">
+&lt;Condition&gt;(proxy.pathsuffix MatchesPath "/developers/**") and (request.verb = "POST")&lt;/Condition&gt;
+</pre>{% endblock %}

@@ -1,0 +1,65 @@
+  {% extends "_base.html" %} {% block title %}Advanced OAuth 2.0 topics{% endblock %} {% block body %}
+
+  <h2 id="usingthirdpartyoauthtokens">Using third-party OAuth tokens</h2>
+
+  <p>See <a href="/api-platform/security/oauth/use-third-party-oauth-system.html">Using Third-Party
+  OAuth Tokens</a>.</p>
+
+  <h2 id="designatingmultiplecallbackurls">Designating multiple callback URLs</h2>
+
+  <p>When using the authorization code grant type, you must specify a callback URL when you
+  register your developer app. The callback URL typically specifies the URL of an app that is
+  designated to receive an authorization code on behalf of the client app. In addition, this URL
+  string is used for validation. The client is required to send this URL to Apigee Edge when
+  requesting authorization codes and access tokens, and the redirect_uri parameter must match the
+  one that is registered. See also <a href=
+  "/api-platform/security/oauth/access-tokens.html">Requesting access tokens and authorization
+  codes</a>.</p>
+
+  <p>For example:</p>
+  <pre class="prettyprint">
+http://myorg-test.apigee.net/weather/oauth/authorizationcode?client_id=123456&amp;response_type=code&amp;redirect_uri=http://example.com/callback&amp;scope=scope1%20scope2&amp;state=abc
+</pre>
+
+  <p>There is a use case for specifying multiple callback URLs in a single proxy application. For
+  example, you may want to authenticate for multiple domains. For instance: </p>
+
+  <ul>
+    <li>http://myexample.com/callback</li>
+
+    <li>http://myexample.uk/callback</li>
+
+    <li>http://myexample.ja/callback</li>
+  </ul>
+
+  <p>Edge does not support specifying multiple callback URLs or using wildcard characters when a
+  developer app is registered. To accomplish this use case, you can specify an empty callback URL
+  when you register a developer app, and then put a logic in a JavaScript policy to validate
+  incoming redirect URIs. </p>
+
+  <h2 id="changingthedefaultreturnbehaviorofagenerateauthcodeoperation">Changing the default return
+  behavior of a GenerateAuthCode operation</h2>
+
+  <p>By default, the GenerateAuthCode operation of the OAuthV2 policy returns a 302 redirect to the
+  callback URL with a ?code query parameter containing the authorization code. </p>
+
+  <p>In some cases, you may wish to change this behavior. For example, you may want to return a 200
+  response with structured JSON containing the code. </p>
+
+  <p>To accomplish this use case, use an ExtractVariable policy to retrieve the code, and an
+  AssignMessage policy to return the code in a JSON payload with a status of 200. </p>
+
+  <h2 id="auditingappenduserconsent">Auditing app end user consent</h2>
+
+  <p>You may be required to verify that an app end user authorized an app. You can use the Apigee
+  Edge <a href="/api/audits-0">Audit API</a> to do so.</p>
+
+  <h2 id="outboundoauthsample">Outbound OAuth sample</h2>
+
+  <p>See the <a href=
+  "https://github.com/apigee/api-platform-samples/tree/master/sample-proxies/outbound-oauth">outbound-oauth</a> sample
+  in the Apigee api-platform-samples repository on GitHub. You can clone the sample, deploy it, and
+  run it. This sample uses the Microsoft Azure translator API to translate tweets. To do so, it
+  makes an outbound call to obtain an OAuth access token, and then caches the token using the API
+  Services caching policies, reusing the cached token each time an outbound call is made. Also,
+  includes a demonstration browser app used to invoke the API proxy.</p>{% endblock %}

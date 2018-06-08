@@ -1,0 +1,83 @@
+  {% extends "_base.html" %} {% block title %}Understanding OAuth endpoints{% endblock %} {% block body %}
+
+  <p>As the authorization server, Apigee Edge needs to have appropriate OAuth endpoints set up so
+  that clients can request authorization codes and access tokens. This topic offers a quick
+  introduction to endpoints. For details on combining endpoints with policies to perform specific
+  OAuth tasks, see <a href="/api-platform/security/oauth/access-tokens.html">Requesting access
+  tokens and authorization codes</a>.</p>
+
+  <h2 id="whatisanoauthendpoint">What is an OAuth endpoint?</h2>
+
+  <p>An OAuth endpoint is a URL that is exposed by Apigee Edge in your organization. OAuth defines
+  token endpoints, authorization endpoints, and refresh endpoints. Apps call these endpoints to get
+  access tokens, to refresh access tokens, and, in some cases, to get authorization codes. These
+  endpoints refer to specific OAuth 2.0 policies that execute when the endpoint is called.</p>
+
+  <p>Here's an example. In this flow, the GenerateAccessToken policy is executed when the proxy
+  path matches <code>/token</code>.</p>
+  <pre class="prettyprint">
+        &lt;Flow name="generate-access-token"&gt;
+            &lt;Description/&gt;
+            &lt;Request&gt;
+                &lt;Step&gt;
+                    &lt;FaultRules/&gt;
+                    &lt;Name&gt;GenerateAccessToken&lt;/Name&gt;
+                &lt;/Step&gt;
+            &lt;/Request&gt;
+            &lt;Response/&gt;
+            &lt;Condition&gt;(proxy.pathsuffix MatchesPath &amp;quot;/token&amp;quot;) and (request.verb = &amp;quot;POST&amp;quot;)&lt;/Condition&gt;
+        &lt;/Flow&gt;
+</pre>
+
+  <p>For more information about conditional flows, see <a href=
+  "/api-platform/fundamentals/flow-configurations.html">Configuring flows</a>.</p>
+
+  <p>Here's an example API call to the <code>/token</code> endpoint on Apigee Edge. For more
+  examples, see <a href="/api-platform/security/oauth/access-tokens.html">Requesting access
+  tokens and authorization codes</a>.</p>
+  <pre class="terminal">
+$ curl -i -H 'ContentType: x-www-form-urlencoded' -X POST 'https://docs-test.apigee.net/oauth/token' -d 'grant_type=client_credentials' -H 'Authorization: Basic c3FIOG9vSGV4VHo4QzAySVg5T1JvNnJoZ3ExaVNyQWw6WjRsanRKZG5lQk9qUE1BVQ'
+</pre>
+
+  <h2 id="usingthedefaultendpoints">Using the default endpoints</h2>
+
+  <p>The quickest way to see how endpoints are set up is to examine the default "oauth" proxy. This
+  proxy is installed for you when you create a new Apigee Edge organization. It sets up OAuth
+  endpoints that support the client credentials grant type. Let's take a look.</p>
+
+  <aside class="note"><b>Note:</b> If for some reason you can't locate this proxy, you find a
+  <a href="https://github.com/apigee/api-platform-samples/tree/master/default-proxies">version that
+  you can deploy</a> on GitHub.</aside>
+
+  <ol>
+    <li>Log in to your Apigee Edge account.</li>
+
+    <li>Select <strong>APIs &gt; API Proxies</strong> from the main menu.</li>
+
+    <li>In the list of proxies, select the one called <strong>oauth</strong>.</li>
+
+    <li>In the proxy overview page, select the Develop tab to bring up the proxy
+    editor. You'll see in this tab the policies and flows that are configured to support this
+    OAuth grant type flow.</li>
+  </ol>
+
+  <p><img alt="" src="/api-platform/images/oauth-proxy-ui-1.png"></p>
+
+  <p> </p>
+
+  <h2 id="bestpracticecreateyourownoauthproxy">Best practice: Create your own OAuth proxy</h2>
+
+  <p>The default oauth proxy is only supports the client credentials grant type, and is mainly
+  provisioned to support examples. For your OAuth 2.0 implementation, it's a common practice to
+  create your own OAuth endpoint proxy where you define your specific set of conditional flows and
+  attach OAuthV2 policies.</p>
+
+  <p>The OAuth proxy that you create does not make any backend calls. Instead, the OAuth proxy acts
+  as a standalone service. Once you have set up the conditional flows and attached the policies,
+  app developers can call the URLs exposed by your API proxy to get access tokens, refresh access
+  tokens, and, in the case of the authorization code grant type, authorization codes.</p>
+
+  <h2 id="relatedtopics">Related topics</h2>
+
+  <p><a href="/api-platform/security/oauth/access-tokens.html">Requesting access tokens and
+  authorization codes</a></p>{% endblock %}

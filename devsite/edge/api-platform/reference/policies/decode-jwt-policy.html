@@ -1,0 +1,190 @@
+  {% extends "_base.html" %} {% block title %}Decode JWT policy{% endblock %} {% block body %} <img src="/api-platform/images/icon_policy_security.jpg">
+
+  <h3 id="decode-jwt-policy">What</h3>
+
+  <p>Decodes a JWT without verifying the signature on the JWT. This is most useful when used in
+  concert with the Verify JWT Policy, when the value of a claim from within the JWT must be known
+  before verifying the signature of the JWT.</p>
+
+  <p>The JWT Decode policy works regardless of the algorithm that was used to sign the JWT.</p>
+
+  <h3 id="sample">Sample: Decode a JWT</h3>
+
+  <p>The policy shown below decodes a JWT found in the flow variable <strong>var.jwt</strong>. This
+  variable must be present and contain a viable (decodable) JWT. The policy can obtain the JWT from
+  any flow variable.</p>
+  <pre class="prettyprint">
+&lt;DecodeJWT name="JWT-Decode-HS256"&gt;
+    &lt;DisplayName&gt;JWT Verify HS256&lt;/DisplayName&gt;
+    &lt;Source&gt;var.jwt&lt;/Source&gt;
+    &lt;IgnoreUnresolvedVariables&gt;false&lt;/IgnoreUnresolvedVariables&gt;
+&lt;/DecodeJWT&gt;
+</pre>
+
+  <h2 id="element-reference-for-decode-jwt">Element reference for Decode JWT</h2>
+
+  <p>The policy reference describes the elements and attributes of the Decode JWT policy.</p>
+
+  <h3 id="elementreferencefordecodejwt-attributesthatapplytothetoplevelelement">Attributes that
+  apply to the top-level element</h3>
+  <pre class="prettyprint">
+&lt;DecodeJWT name="JWT" continueOnError="false" enabled="true" async="false"&gt;
+</pre>
+
+  <p>The following attributes are common to all policy parent elements.</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <th><strong>Attribute</strong></th>
+
+        <th><strong>Description</strong></th>
+
+        <th><strong>Default</strong></th>
+
+        <th><strong>Presence</strong></th>
+      </tr>
+
+      <tr>
+        <td>name</td>
+
+        <td>
+          The internal name of the policy. Characters you can use in the name are restricted to:
+          <code>A-Z0-9._\-$ %</code>. However, the Edge management UI enforces additional
+          restrictions, such as automatically removing characters that are not alphanumeric.
+
+          <p>Optionally, use the <code>&lt;displayname&gt;&lt;/displayname&gt;</code> element to
+          label the policy in the management UI proxy editor with a different, natural-language
+          name.</p>
+        </td>
+
+        <td>N/A</td>
+
+        <td>Required</td>
+      </tr>
+
+      <tr>
+        <td>continueOnError</td>
+
+        <td>
+          Set to <code>false</code> to return an error when a policy fails. This is expected
+          behavior for most policies.
+
+          <p>Set to <code>true</code> to have flow execution continue even after a policy
+          fails.</p>
+        </td>
+
+        <td>false</td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td>enabled</td>
+
+        <td>
+          Set to <code>true</code> to enforce the policy.
+
+          <p>Set to <code>false</code> to "turn off" the policy. The policy will not be enforced
+          even if it remains attached to a flow.</p>
+        </td>
+
+        <td>true</td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td>async</td>
+
+        <td>This attribute is deprecated.</td>
+
+        <td>false</td>
+
+        <td>Deprecated</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="displayname">&lt;DisplayName&gt;</h2>
+  <pre class="prettyprint">
+&lt;DisplayName&gt;Policy Display Name&lt;/DisplayName&gt;
+</pre>
+
+  <p>Use in addition to the name attribute to label the policy in the management UI proxy editor
+  with a different, natural-language name.</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <td><strong>Default</strong></td>
+
+        <td>If you omit this element, the value of the policy's name attribute is used.</td>
+      </tr>
+
+      <tr>
+        <td><strong>Presence</strong></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><strong>Type</strong></td>
+
+        <td>String</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="source">&lt;Source&gt;</h2>
+  <pre class="prettyprint">
+&lt;Source&gt;jwt-variable&lt;/Source&gt;
+</pre>
+
+  <p>If present, specifies the flow variable in which the policy expects to find the JWT to
+  decode.</p>
+
+  <p><strong>Important Note:</strong> By default, the JWT is retrieved from the variable
+  <strong>request.header.authorization</strong>. In this case, Edge looks for the JWT in the
+  request Authorization header. If you pass the JWT in the Authorization header, you do not need to
+  include the Source element in the policy; however, you <strong>must</strong> include
+  <strong>Bearer</strong> in the auth header. For example, you would pass the JWT in the
+  Authorization header like this:</p>
+  <pre class="prettyprint">
+curl -v http://52.200.92.187:9001/doctest-jwt/verify-rs256 -H "Authorization: Bearer &lt;your JWT&gt;"
+</pre>
+
+  <p>You can configure to policy to retrieve the JWT from a form or query parameter variable or any
+  other variable. If the variable does not exist or if the policy otherwise can't find the JWT, the
+  policy returns an error.</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <td><strong>Default</strong></td>
+
+        <td><code>request.header.authorization</code> (See the note above for important information
+        about the default).</td>
+      </tr>
+
+      <tr>
+        <td><strong>Presence</strong></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><strong>Type</strong></td>
+
+        <td>String</td>
+      </tr>
+
+      <tr>
+        <td><strong>Valid values</strong></td>
+
+        <td>An Edge flow variable name</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>{% dynamic include /includes/___jwt-policy-error-codes %}</p>{% endblock %}

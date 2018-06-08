@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html devsite>
+  <head>
+    <title>Raise Fault Policy Error Codes</title>
+  </head>
+  <body>
+
+  <p>This section describes the error messages and flow variables that are set when this policy
+  triggers an error. This information is important to know if you are developing fault rules to
+  handle errors. To learn more, see <a href=
+  "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html">What you need to know
+  about policy errors</a> and <a href="/api-platform/fundamentals/fault-handling.html">Handling
+  faults</a>.</p>
+
+  <h3>Error code prefix</h3>
+
+  <p><code>steps.raisefault</code> <span style="font-size: 10pt">(<a href=
+  "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html#aboutthedefaultpolicyerrorresponse">What's
+  this?</a>)</span></p>
+
+  <h3>Runtime errors</h3>
+
+  <p>These errors can occur when the policy executes.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th height="45" scope="col" width="312">Error name</th>
+
+        <th scope="col" width="69">HTTP status</th>
+
+        <th scope="col" width="360">Cause</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td><code>RaiseFault</code></td>
+
+        <td>500</td>
+
+        <td>See fault string.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Deployment errors</h3>
+
+  <p>None.</p>
+
+  <h3>Fault variables</h3>
+
+  <p>These variables are set when a runtime error occurs. For more information, see <a href=
+  "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html">What you need to know
+  about policy errors</a>.</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <th width="324">Variables set <code><span style="font-size: 10pt">(<a href=
+        "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html">Learn
+        more</a>)</span></code></th>
+
+        <th width="428">Where</th>
+
+        <th width="428">Example</th>
+      </tr>
+
+      <tr>
+        <td width="324"><code>[prefix].[policy_name].failed</code></td>
+
+        <td width="428">The <code>[prefix]</code> is <code><strong>raisefault</strong>.</code><br>
+        The <code>[policy_name]</code> is the name of the policy that threw the error.</td>
+
+        <td width="428"><code>raisefault.RF-ThrowError.failed = true</code></td>
+      </tr>
+
+      <tr>
+        <td><code>fault.[error_name]</code></td>
+
+        <td><code>[error_name]</code> = The specific error name to check for as listed in the table
+        above.</td>
+
+        <td><code>fault.name = "RaiseFault"</code></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Example error response</h3>
+
+  <aside class="note"><b>Note:</b> For error handling, the best practice is to trap the
+  <code>errorcode</code> part of the error response. Do not rely on the text in the
+  <code>faultstring</code>, because it could change.</aside>
+  <pre class="prettyprint">
+{
+   "fault":{
+      "detail":{
+         "errorcode":"steps.raisefault.RaiseFault"
+      },
+      "faultstring":"Raising fault. Fault name: [name]"
+   }
+}
+</pre>
+
+  <h3>Example fault rule</h3>
+  <pre class="prettyprint">
+&lt;FaultRule name="RaiseFault"&gt;
+    &lt;Step&gt;
+        &lt;Name&gt;RF-ThrowError&lt;/Name&gt;
+        &lt;Condition&gt;(fault.name Matches "RaiseFault") &lt;/Condition&gt;
+    &lt;/Step&gt;
+&lt;/FaultRule&gt;
+</pre>
+  </body>
+</html>

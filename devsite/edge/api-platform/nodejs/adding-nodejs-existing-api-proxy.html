@@ -1,0 +1,236 @@
+  {% extends "_base.html" %} {% block title %}Adding Node.js to an existing API proxy{% endblock %}
+  {% block body %}
+
+  <h2 id="introduction">Introduction</h2>
+
+  <p>This topic explains how to add a Node.js application to an existing proxy on your local file
+  system and how to deploy the proxy to Apigee Edge. </p>
+
+  <h2 id="preparingyourdevelopmentenvironment">Preparing your development environment</h2>
+
+  <p>In this topic, we assume you already have a proxy development environment set up on your local
+  system and that you want to integrate a Node.js application into it.</p>
+
+  <aside class="note"><b>Note:</b> If you don't have an existing proxy on your system, you can
+  always download the <a href="https://github.com/apigee/node-samples">Apigee Node.js samples from
+  GitHub</a>. The sample proxy in <span style=
+  "font-family: monospace;">node-samples/apigee/hello</span> follows the same organizational
+  pattern discussed in this topic.</aside>
+
+  <p>The basic structure of a proxy application that includes a Node.js app follows the pattern
+  shown in the figure below, with a base <span style="font-family: monospace;">/apiproxy</span>
+  folder and sub-folders for <span style="font-family: monospace;">resources</span>, <span style=
+  "font-family: monospace;">targets</span>, and <span style=
+  "font-family: monospace;">proxies</span>. The <span style=
+  "font-family: monospace;">apiproxy/resources/node</span> folder is where Node.js files must be
+  placed. The other folders contain XML files that define proxy and target endpoints, proxy flow,
+  conditional flows, and so on. For a more complete description of the API proxy structure,
+  see <a href="/api-platform/reference/policies/api-proxy-configuration-reference.html">API proxy
+  configuration reference</a>.<br>
+   </p>
+
+  <p><img src="/api-platform/images/proxy-structure.png" width="261"></p>
+
+  <p>Just remember that any Node.js code that is part of the proxy must be placed under
+  <span style="font-family: monospace;">/apiproxy/resources/node</span>. That's where Edge expects
+  to find it when it is deployed.</p>
+
+  <h2 id="specifythenodejstargetwithscripttarget">Specify the Node.js target with ScriptTarget</h2>
+
+  <p>The key to integrating Node.js into a proxy is specifying the &lt;ScriptTarget&gt; element in
+  the target endpoint's XML file. In the proxy file structure, this XML file is located in
+  <span style="font-family: monospace;">apiproxy/targets</span>. By default, the filename is
+  <span style="font-family: monospace;">default.xml.</span></p>
+
+  <p>For context, consider that a target endpoint usually points to a backend service of some kind.
+  In this case, we hit the Apigee mock target service. A target endpoint definition looks like
+  this:</p>
+  <pre class="prettyprint">
+&lt;TargetEndpoint name="default"&gt;
+    &lt;Description/&gt;
+    &lt;Flows/&gt;
+    &lt;PreFlow name="PreFlow"&gt;
+        &lt;Request/&gt;
+        &lt;Response/&gt;
+    &lt;/PreFlow&gt;
+<span style="font-weight: bold;">    &lt;HTTPTargetConnection&gt;</span>
+<span style=
+"font-weight: bold;">        &lt;URL&gt;</span><strong>http://mocktarget.apigee.net/</strong><span style="font-weight: bold;">&lt;/URL&gt;</span>
+<span style="font-weight: bold;">    &lt;/HTTPTargetConnection&gt;</span>
+    &lt;PostFlow name="PostFlow"&gt;
+        &lt;Request/&gt;
+        &lt;Response/&gt;
+    &lt;/PostFlow&gt;
+&lt;/TargetEndpoint&gt;
+</pre>
+
+  <p>The &lt;HTTPTargetConnection&gt; element specifies the URL of the backend service, the Apigee
+  mock target service.</p>
+
+  <p>However, in the case of Node.js, <span style="font-style: italic; font-weight: bold;">the
+  Node.js application</span><span style=
+  "font-weight: bold;"> <em>itself</em> </span><span style=
+  "font-style: italic; font-weight: bold;">is</span> <span style=
+  "font-style: italic; font-weight: bold;">the target</span>. You specify this with
+  &lt;ScriptTarget&gt; in the <span style=
+  "font-family: monospace;">apiproxy/targets/default.xml</span> file. </p>
+
+  <p>Instead of the target using the &lt;HTTPTargetConnection&gt; element to specify the URL of a
+  backend service, the Node.js application is referenced directly using a &lt;ScriptTarget&gt;
+  element, like this:</p>
+  <pre class="prettyprint">
+&lt;TargetEndpoint name="default"&gt;
+<span style="font-weight: bold;">    &lt;ScriptTarget&gt;</span>
+<span style=
+"font-weight: bold;">         &lt;ResourceURL&gt;node://server.js&lt;/ResourceURL&gt;</span>
+<span style="font-weight: bold;">    &lt;/ScriptTarget&gt;</span>
+    &lt;PreFlow name="PreFlow"&gt;
+        &lt;Request/&gt;
+        &lt;Response/&gt;
+    &lt;/PreFlow&gt;
+&lt;/TargetEndpoint&gt;
+
+</pre>
+
+  <p>The &lt;ResourceURL&gt; parameter must always be prefixed with <code>node://</code>,
+  followed by the name of the main Node.js script. And, as noted previously, Node.js resources must
+  reside in <code>/apiproxy/resources/node</code> at the API proxy scope.</p>
+
+  <p>You can set additional parameters in ScriptTarget. For details, see <a href=
+  "/api-platform/nodejs/understanding-edge-support-nodejs-modules.html#advancedscripttargetconfiguration">
+  Advanced ScriptTarget configuration</a>. </p>
+
+  <aside class="note"><b>Note:</b> The main script is the name of the script that you'd normally
+  pass to the <code>node</code> command. As long as the main Node.js script uses the
+  <code>http</code> module to listen for incoming requests, it will respond whenever an API call is
+  routed to the target. </aside>
+
+  <p>For the purpose of this example, here is the source code for the main Node.js file, called
+  <span style="font-family:courier new,courier,monospace;">server.js</span>. It's the basic HTTP
+  server that returns "Hello World!" when it receives a request:</p>
+  <pre class="prettyprint">
+var http = require('http');
+console.log('node.js application starting...');
+var svr = http.createServer(function(req, resp) {
+    resp.end('Hello, Node!');
+});
+
+svr.listen(process.env.PORT || 9000, function() {
+    console.log('Node HTTP server is listening');
+});
+</pre>
+
+  <aside class="key-point"><b>Tip:</b> Note how the port number is coded as a conditional in the
+  <span style=
+  "margin: 0px; padding: 0px; font-family: 'courier new', courier, monospace;">http.listen() </span>method.
+  Coding the listening port in this way, so that it can be obtained from a system variable, if
+  defined, is considered a best practice by Apigee.</aside>
+
+  <p>To summarize, assuming that the <em>main</em> Node.js application is implemented in a file
+  called <code style="font-size: 12px;">server.js</code>, and that the endpoint configurations are
+  both named <code style="font-size: 12px;">default.xml</code>, then the API Proxy containing the
+  Node.js script has the following structure:</p>
+  <pre class="prettyprint">
+/apiproxy/<em>proxyName</em>.xml
+/apiproxy/proxies/default.xml
+/apiproxy/targets/default.xml
+/apiproxy/resources/node/server.js
+</pre>
+
+  <h2 id="preparetodeploytheapplication">Prepare to deploy the application</h2>
+
+  <p>Most Node.js apps have dependency files and include a <span style=
+  "font-family: monospace;">package.json</span> file in the base directory. In this case, the best
+  practice is to run the <span style="font-family: monospace;">npm</span> utility to ensure that
+  the top-level <span style="font-family: monospace;">node_modules</span> directory is populated
+  with the dependencies before you deploy. If there are any remote dependencies that are not
+  included in <span style="font-family: monospace;">node_modules</span>, your Node.js application
+  will not run on Edge.</p>
+
+  <p>You can easily retrieve all dependencies onto your file system using the <span style=
+  "font-family: monospace;">npm</span> utility:</p>
+
+  <ol>
+    <li>From the base directory of your Node.js application, run:</li>
+  </ol>
+  <pre class="terminal">
+$ npm install 
+</pre>
+
+  <p>or</p>
+  <pre class="terminal">
+$ npm update
+</pre>
+
+  <p>When the dependencies are installed, you are ready to deploy your proxy to Edge.</p>
+
+  <h2 id="deploythenodejsapptoapigeeedge">Deploy the Node.js app to Apigee Edge</h2>
+
+  <p>Before you deploy, you'll need to know your organization name, user name, and password for
+  your <a href="https://enterprise.apigee.com/">Apigee Edge account</a>. You need this information
+  to correctly form the deployment tool command.</p>
+
+  <p>Here's the command. It assumes (with the -d flag) that you are in the root directory of your
+  proxy. If your proxy is called <span style=
+  "font-family:courier new,courier,monospace;">foo</span>, then enter this command from the
+  <span style="font-family:courier new,courier,monospace;">foo</span> directory:</p>
+  <pre class="terminal">
+$ apigeetool deployproxy -u <em>username</em> -p <em>password</em> -o <em>org</em> -e test -n hellonode -d .
+</pre>For information on what each of the command flags mean, do this:<br>
+  <br>
+  <pre class="prettyprint">
+$ apigeetool deployproxy -h
+</pre>
+
+  <p>For a quick summary:</p>
+
+  <ul>
+    <li><span style="font-family: Courier New,Courier,monospace;">-n</span> This flag lets you
+    specify the name of the proxy that will be created when the app is deployed. You'll see this
+    name in the management UI.</li>
+
+    <li><span style="font-family: Courier New,Courier,monospace;">-d</span>  Specifies the
+    root directory of the API proxy. </li>
+
+    <li><span style="font-family: Courier New,Courier,monospace;">-o</span>, <span style=
+    "font-family: Courier New,Courier,monospace;">-e</span>, <span style=
+    "font-family: Courier New,Courier,monospace;">-u</span>, and <span style=
+    "font-family: Courier New,Courier,monospace;">-p</span> specify the organization name,
+    deployment environment, user name and password.</li>
+  </ul>That's it. Your Node.js app is wrapped in an API proxy, deployed to Edge, and executed. It
+  is waiting for requests and ready to be tested.<br>
+
+  <h2 id="testthenewapiproxy">Test the new API proxy</h2>
+
+  <p>You have just added a Node.js app to an existing API proxy and deployed the proxy to Apigee
+  Edge! To test it, run this cURL command. We assume the default base path (/) is used (base path
+  is specified in the proxy endpoint configuration file). Be sure to substitute your organization
+  name for <span style="font-family: monospace; font-style: italic;">org_name</span>. If you do not
+  have cURL installed, you can enter the URL in a browser.</p>
+  <pre class="terminal">
+$ curl http://<span style="font-style: italic;">org_name</span>-test.apigee.net/
+Hello, Node!
+</pre>
+
+  <h2 id="viewthenewproxyinthemanagementui">View the new proxy in the management UI</h2>
+
+  <p>Log in to your your <a href="https://enterprise.apigee.com/">Apigee Edge account</a> and go to
+  the API Proxies page. You will see the proxy called "hellonode" listed there.</p>
+
+  <p><img src="/api-platform/images/node-cli-hello.png"></p>
+
+  <p>Click on "hellonode" to view details about the proxy. In the Develop view, you can see the
+  source code you uploaded, add policies, edit flows, and so on.</p>
+
+  <p><img src="/api-platform/images/node-cli-develop_1.png"></p>
+
+  <h2 id="nextsteps">Next steps</h2>
+
+  <p>For information on debugging Node.js applications running on Apigee Edge, see <a href=
+  "/api-platform/nodejs/debugging-nodejs-proxies.html">Debugging and troubleshooting Node.js
+  proxies</a>.</p>
+
+  <h2 id="gethelp">Get help</h2>
+
+  <p>For help, see <b><a href="https://community.apigee.com/content/apigee-customer-support">Apigee
+  Customer Support</a></b>.</p>{% endblock %}

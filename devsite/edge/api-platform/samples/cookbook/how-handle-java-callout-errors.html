@@ -1,0 +1,208 @@
+  {% extends "_base.html" %} {% block title %}How to handle Java Callout errors{% endblock %} {% block body %}
+
+  <h2 id="whatisajavacallout">What is a Java callout?</h2>
+
+  <p>If you're new to Java callouts, we recommend that you start with <a href=
+  "/api-platform/samples/cookbook/how-create-java-callout.html">How to create a Java
+  callout</a>.</p>
+
+  <h2 id="handlingerrorsinajavacallout">Handling errors in a Java Callout</h2>
+
+  <p>When you write a Java Callout, you may want to do custom error handling in your Java code. For
+  example, you may wish to return custom error messages and headers and/or set flow variables with
+  error information in the proxy flow on Edge.</p>
+
+  <p>Let's walk through a simple Java Callout example that illustrates basic custom error handling
+  patterns. The sample returns a custom error message when an exception occurs. It also places the
+  error stacktrace into a flow variable, which can be a handy debugging technique.</p>
+
+  <aside class="key-point"><b>Tip:</b> See also <a href=
+  "https://community.apigee.com/articles/5314/debugging-java-callouts.html">this community post</a>
+  about handling errors in Java Callout code. </aside>
+
+  <h3 id="handlingerrorsinajavacallout-downloadtheproject">Download the project</h3>
+
+  <p>To make things simple, you can download this project from the Apigee <a href=
+  "https://github.com/apigee/api-platform-samples">api-platform-samples</a> repository on
+  GitHub.</p>
+
+  <ol>
+    <li>Download or clone <a href=
+    "https://github.com/apigee/api-platform-samples">api-platform-samples</a> to your system.</li>
+
+    <li>In a terminal or code editor of your choice, go to the
+    <code>api-platform-samples/doc-samples/java-error</code> project.</li>
+  </ol>
+
+  <h3 id="handlingerrorsinajavacallout-"> </h3>
+
+  <h3 id="handlingerrorsinajavacallout-thesamplejavacode">The sample Java code</h3>
+
+  <p>The error handling patterns are straightforward. You can set flow variables in the current
+  Edge flow context with the <code>messageContext.setVariable()</code> method. To return custom
+  error information, construct an <code>ExecutionResult</code> instance and call methods on it to
+  set the error response and headers.</p>
+  <pre class="prettyprint">
+package com.apigeesample;
+
+import com.apigee.flow.execution.ExecutionContext;
+import com.apigee.flow.execution.ExecutionResult;
+import com.apigee.flow.execution.spi.Execution;
+import com.apigee.flow.message.MessageContext;
+import com.apigee.flow.execution.Action;
+
+import org.apache.commons.lang.exception.ExceptionUtils;
+
+
+public class JavaError implements Execution {
+    public ExecutionResult execute(MessageContext messageContext, ExecutionContext executionContext) {
+                
+        try {
+
+                String name = messageContext.getMessage().getHeader("username");
+
+                if (name != null &amp;&amp; name.length()&gt;0) {
+                        messageContext.getMessage().setContent("Hello, " + name + "!");
+                        messageContext.getMessage().removeHeader("username");
+
+                } else {
+                        throw new RuntimeException("Please specify a name parameter!");
+                }
+            
+                return ExecutionResult.SUCCESS;
+
+        } catch (RuntimeException ex) {
+
+            ExecutionResult executionResult = new ExecutionResult(false, Action.ABORT);
+            
+            //--Returns custom error message and header
+            executionResult.setErrorResponse(ex.getMessage());
+            executionResult.addErrorResponseHeader("ExceptionClass", ex.getClass().getName());
+            
+            //--Set flow variables -- may be useful for debugging. 
+            messageContext.setVariable("JAVA_ERROR", ex.getMessage());
+            messageContext.setVariable("JAVA_STACKTRACE", ExceptionUtils.getStackTrace(ex));
+            return executionResult;
+        }
+    }
+}
+</pre>
+
+  <h3 id="handlingerrorsinajavacallout-compileyourcodewithmaven"><br>
+  Compile your code with Maven</h3>
+
+  <p>The project is set up so that you can compile with Maven. If you want to use
+  <code>javac</code>, we'll include an example as well.</p>
+
+  <aside class="note"><b>Note:</b> The POM file and configuration for the Maven compile should
+  work, but are offered in the Git repository as an example only. You may need to make adjustments
+  for your environment. If you make changes to the sample code, you may also need to adjust the
+  Maven configuration. </aside>
+
+  <ol>
+    <li>Be sure that you have Maven installed:
+      <pre class="prettyprint">
+mvn -version
+</pre>
+    </li>
+
+    <li>Execute the script <code>java-error/buildsetup.sh</code>. This script installs the required
+    JAR dependencies in your local Maven repo.</li>
+
+    <li>cd to the <code>java-error/callout</code> directory.</li>
+
+    <li>Execute Maven:
+      <pre class="prettyprint">
+mvn clean package
+</pre>
+
+      <aside class="note"><b>Note:</b> If you get a Maven error, be sure that you are in the
+      <code>java-error/callout</code> directory.</aside>
+    </li>
+
+    <li>If you wish, verify that the JAR file <code>edge-custom-policy-java-error.jar</code> was
+    copied to <code>java-error/apiproxy/resources/java</code>. This is the required location for
+    JAR files that you wish to deploy with a proxy.</li>
+  </ol>
+
+  <h3 id="handlingerrorsinajavacallout-compilewithjavac">Compile with javac</h3>
+
+  <p>If you want to use <code>javac</code> to compile the code, you can do something similar to the
+  following (from the <code>java-error</code> directory). The required JAR files are provided for
+  you in the <code>java-error/lib</code> directory.</p>
+
+  <ol>
+    <li>cd to <code>api-platform-samples/doc-samples/java-error</code>.</li>
+
+    <li>Be sure you have javac in your path.<br>
+      <br>
+      <pre class="prettyprint">
+javac -version
+</pre>
+    </li>
+
+    <li>Execute the following javac command:<br>
+      <br>
+      <pre class="prettyprint">
+javac -d . -classpath ./lib/expressions-1.0.0.jar:./lib/message-flow-1.0.0.jar:. callout/src/main/java/JavaProperties.java
+</pre>
+    </li>
+
+    <li>Copy the JAR file to the apiproxy/resources/java directory. This is the required location
+    for JAR files that you wish to deploy with a proxy.<br>
+      <br>
+      <pre class="prettyprint">
+cp com/apigeesample/JavaProperties.class apiproxy/resources/java
+</pre>
+    </li>
+  </ol>
+
+  <h3 id="handlingerrorsinajavacallout-deployandcalltheproxy">Deploy and call the proxy</h3>
+
+  <p>A deploy script is provided in the <code>./java-error</code> directory. But before you run it,
+  you need to do a quick setup.</p>
+
+  <ol>
+    <li>cd to <code>api-platform-samples/doc-samples/java-error</code></li>
+
+    <li>If you haven't already done so, open the file <code>../../setup/setenv.sh</code> and edit
+    it as indicated with your Apigee account information: your username (the email address
+    associated with your account), your organization name, and the domain you use to make API
+    management calls. For example, for Edge cloud, the domain is
+    <code>https://api.enterprise.apigee.com</code>; however, your domain may be different if you're
+    using Edge Private Cloud.</li>
+
+    <li>Save the <code>setenv.sh</code> file.</li>
+
+    <li>Execute the deploy script:
+      <pre class="prettyprint">
+./deploy.sh
+</pre>
+    </li>
+
+    <li>If the deploy succeeds, execute the invoke script:
+      <pre class="prettyprint">
+./invoke.sh
+</pre>
+
+      <p>The invoke script calls a cURL command that looks like this:</p>
+      <pre class="prettyprint">
+curl  http://$org-$env.$api_domain/java-error
+</pre>
+
+      <p>Because the call does not include a "name" query parameter, the Java code throws a runtime
+      error. The proxy returns this message and header:</p>
+    </li>
+  </ol>
+
+  <ul>
+    <li>Error message: <code>Please specify a name parameter!</code></li>
+
+    <li>Header: <code>ExceptionClass: java.lang.RuntimeException</code></li>
+  </ul>
+
+  <aside class="note"><b>Note:</b> If you look a the Trace Tool in Edge, you'll see that a flow
+  variable is set called JAVA_STACKTRACE. This is a useful technique for debugging, rather than
+  returning a stacktrace to the client.</aside>
+
+  {% endblock %}

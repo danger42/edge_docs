@@ -1,0 +1,204 @@
+  {% extends "_base.html" %} {% block title %}Creating a developer portal{% endblock %} {% block body %}
+
+  <p>This topic describes how to create your portal using <strong>Drupal portal development
+  tools</strong>. For information about creating a portal using the simplified portal development
+  tools provided with the New Edge experience, see <a href=
+  "/api-platform/publish/portal/building-your-developer-portal.html">Building your developer portal
+  (New Edge)</a>.</p>
+
+  <aside class="note"><b>Note:</b> Support for portal development using Drupal is available by
+  request for paid accounts only. Contact <a href=
+  "https://community.apigee.com/content/apigee-customer-support">Apigee Support</a> for assistance
+  if you wish to use Drupal for your portal development.</aside>
+  <!--<h2>Request your portal (cloud only)</h2>
+<div class="note">
+        <p>You must have an Apigee Edge account, as described in <a href="/node/14712.html">14712</a>.</p>
+        <p>This section applies to cloud customers only. If you're an Edge for Private Cloud customer, you'll install and configure your own portal. For information on where to download the product installers, see the <a href="/node/8408.html">8408</a>.</p>
+</div>
+<p>If you're a cloud customer, complete the <a href="http://apigee.com/docs/content/developer-services-portal-request" target="_blank">developer services portal request</a> form to request your developer portal. You must provide your enterprise.apigee.com organization name and email address. If you don't know your organization name, sign in to <a href="https://enterprise.apigee.com">http://enterprise.apigee.com</a>&nbsp;and select <strong>your username &gt; User Settings</strong>. In the User Settings window, you can see your organization name.</p>
+<p><img alt="" src="/images/user-settings-organization.png" style="width: 319px; height: 212px; border-width: 1px; border-style: solid; margin-top: 15px; margin-bottom: 15px;" /></p>
+<p>After you request the portal, an Apigee representative will respond with more information, typically within one or two business days, but it may be as long as five business days. The response will contain links to&nbsp;your portal, a ready-to-use <a href="https://drupal.org/">Drupal</a> instance with the following default pages: homepage, Blog, Forum</p>
+<p>(Apigee Edge customers on paid accounts receive multiple sites with duplicate portal environments: Dev, Test, and Live.)</p>
+-->
+
+  <h2 id="logintoyourportal">Log in to your portal</h2>
+
+  <p>For Pantheon, the URL to your portal will be in the following form:</p>
+  <pre class="prettyprint">
+http://{<em>environment</em>}-{<em>your-org-name</em>}.devportal.apigee.io/
+</pre>
+
+  <aside class="note">
+    <b>Note:</b> For portals created prior to June 15, 2017 that have not been migrated, the URL to
+    your portal will be in the following form:
+    <pre class="prettyprint">
+http://{<em>environment</em>}-{<em>your-org-name</em>}.devportal.apigee.com/
+</pre>
+  </aside>
+
+  <p>For example, for the dev version of the myorg portal: </p>
+  <pre class="prettyprint">
+http://dev-myorg.devportal.apigee.io/
+</pre>
+
+  <aside class="note"><b>Note:</b> For a list of default portal URLs for Acquia, see <a href=
+  "/api-platform/publish/drupal/working-acquia.html#managing-your-environments">Managing your
+  environments</a>.</aside>
+
+  <p>When you log in with the administrator credentials you're given, you'll see something like
+  this:</p>
+
+  <p><img alt="" src="/api-platform/images/myApps_v24_1_v2.png" width="500"></p>
+
+  <p>Notice:</p>
+
+  <ul>
+    <li>Menu items for the pre-built Blog and Forum pages.</li>
+
+    <li>A Drupal administration menu only available to Drupal administrators of your portal. This
+    is where portal administrators perform much of the site's configuration. </li>
+  </ul>
+
+  <p>If you click the Apigee logo on your portal, you'll get to the home page.</p>
+
+  <p><img alt="" src="/api-platform/images/portal-home-page_v24_2.png.png" width="500"></p>
+
+  <h2 id="configuretheconnectionbetweentheportalandedge">Configure the connection between the
+  portal and Edge</h2>
+
+  <p>The portal acts as a client for Apigee Edge. That means the portal does not function as a
+  stand-alone system. Instead, much of the information used by the portal is actually stored on
+  Edge. When necessary, the portal makes an HTTP or HTTPS request to retrieve information from Edge
+  or to send information to Edge.</p>
+
+  <p>There are three pieces of information that the portal needs to communicate with Edge:</p>
+
+  <ul>
+    <li><strong>URL of the Edge</strong> <strong>endpoint</strong><br>
+    <br>
+    The default endpoint for the cloud-based version of Edge is <span style=
+    "font-family:courier new,courier,monospace;">https://api.enterprise.apigee.com/v1</span>. <br>
+
+    <br>
+    For Private Cloud installation, the URL is in the form: <span style=
+    "font-family:courier new,courier,monospace;">http://<em>EdgePrivateCloudIp</em>:8080/v1
+    <span style=
+    "font-family:arial,helvetica,sans-serif;">or </span>https://<em>EdgePrivateCloudIp</em>:<em>TLSport</em>/v1</span>.<br>
+
+    <br>
+    Where <em>EdgePrivateCloudIp</em> is the IP address of the Edge Management Server server and
+    <em>TLSport</em> is the TLS/SSL port for the Edge management API. For example, 8443. </li>
+
+    <li><strong>Apigee organization name</strong><br>
+    <br>
+    This is the name of your organization on Edge. You set up the organization when you create your
+    account on Edge. </li>
+
+    <li>
+      <strong>Username and password of a developer administrator</strong><br>
+      <br>
+      The calls from the portal to Edge are authenticated and require a user with <strong>Developer
+      Administrator</strong> privileges. When a Developer Portal is provisioned for you, the
+      Developer Administrator role is added to your organization. This role, which includes a
+      single user called <code>devadmin+{org_name}@apigee.com</code>, is solely for the purpose of
+      connecting your Developer Portal to your Edge organization. Because the portal displays your
+      Edge developer apps, API products, and so on, it must stay in sync with your Edge
+      organization by making management API calls that require authentication. The devadmin "user"
+      has the necessary permissions.<br>
+
+      <aside class="note"><b>Note:</b> Don't add real users to the Developer Administrator role.
+      (In fact, the management UI and API shouldn't let you.) That role should contain only the
+      devadmin user.</aside>
+    </li>
+  </ul>
+
+  <p><strong>To view the connection information:</strong></p>
+
+  <ol>
+    <li>In the Drupal administration menu, select <strong>Configuration &gt; Dev Portal &gt;
+    Application Settings</strong>.</li>
+  </ol>
+
+  <p><strong>To change the configuration:</strong></p>
+
+  <p>How you change the configuration depends on your portal installation and portal version:</p>
+
+  <ul>
+    <li><strong>Cloud-based installation of portal version 15.01.06 and later</strong>: You must
+    make a request to <a href="https://community.apigee.com/content/apigee-customer-support">Apigee
+    Support</a> to change the connection information. For example, if you want to change the name
+    of the organization.</li>
+
+    <li><strong>On-premises installation and cloud-based portal previous to version
+    15.01.06</strong>: Change the connection information as described below:</li>
+  </ul>
+
+  <ol style="margin-left: 40px;">
+    <li>In the Drupal administration menu, select <strong>Configuration &gt; Dev Portal
+    Settings</strong>.</li>
+
+    <li>Enter your organization name in <strong>Management API Organization</strong>.</li>
+
+    <li>Enter the URL of the Edge endpoint in <strong>Management API Endpoint URL</strong>.</li>
+
+    <li>Enter the organization administrator credentials in <strong>Endpoint Authenticated
+    User</strong> and <strong>Authenticated User's Password</strong>.</li>
+
+    <li>Select <strong>Test Connection</strong> to make sure the connection is successful.</li>
+
+    <li>Select <strong>Save Configuration</strong>.</li>
+  </ol>
+
+  <h2 id="createadminusers">Create admin users</h2>
+
+  <p>If you want to add more administrators to your portal:</p>
+
+  <ol>
+    <li>In the Drupal administration menu, select <strong>People &gt; Add User</strong>.</li>
+
+    <li>Enter the required information about the new user, and provide a temporary password.</li>
+
+    <li>Be sure to select <strong>Active</strong> and <strong>administrator</strong>. To have an
+    automatic email sent to the user with a link to the new portal, select <strong>Notify user of
+    new account</strong>.<br>
+    When a new administrator logs in, they will have the same administrator rights as you.<br>
+    <img alt="" src="/api-platform/images/portal-admin-user-settings.png"></li>
+  </ol>
+
+  <h2 id="configureansmtpserver">Configure an SMTP server</h2>
+
+  <p>The developer portal requires that you configure an SMTP server to send email messages. To
+  configure the SMTP server, you must first enable the <a href=
+  "https://drupal.org/project/smtp">Drupal SMTP Authentication Support module</a> on the developer
+  portal.</p>
+
+  <p>See <a href="/api-platform/publish/drupal/configuring-email.html">Configuring email</a> for
+  more.</p>
+
+  <h2 id="configureyourportal">Configure your portal</h2>
+
+  <p>Drupal runs almost entirely on modules&#8212;self-contained code plug-ins to the Drupal
+  framework. Anything you do or configure in Drupal is controlled by a module, from menu control,
+  to layout configuration, to reports. To see a list of modules that are installed in your portal,
+  select <strong>Modules</strong> in the Drupal menu.</p>
+
+  <p>To start configuring your portal, see <a href=
+  "/api-platform/publish/drupal/add-and-edit-content.html">Add and edit content</a>.</p>
+
+  <h2 id="createapiproducts">Create API products</h2>
+
+  <p>Before you send developers to your portal, be sure you have API products (bundles of APIs) to
+  select when they create apps on your portal. For more information, see <a href=
+  "/api-platform/publish/create-api-products.html">Create API products</a>.</p>
+
+  <h2 id="senddeveloperstoyourportal">Send developers to your portal</h2>
+
+  <p>When your portal is ready for public consumption, start sending developers to it. When they
+  register, they're added as simply "authenticated users" (not Drupal administrators), and their
+  user information is automatically added to Drupal&#8212;and to your enterprise.apigee.com
+  environment, where they are registered as "developers". When developers register apps in your
+  developer portal, where they select API products to use in their apps, those apps are also
+  registered on your enterprise.apigee.com site. Your developer portal and enterprise site are
+  connected.</p>
+
+  {% endblock %}

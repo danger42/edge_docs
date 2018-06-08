@@ -1,0 +1,41 @@
+{% extends "private-cloud/v4.18.01/_base.html" %}
+{% block title %}Configuring the Router timeout{% endblock %}
+{% block body %}
+
+  <p>You can configure the Router timeout when accessing Message Processors as part of an API proxy
+  request.</p>
+
+  <p>The Edge Router has a preset timeout of 57 seconds when attempting to access a Message
+  Processor as part of handling a request through an API proxy. When that timeout expires, the
+  Router will attempt to connect to another Message Processor, if one is available. Otherwise, it
+  will return an error.</p>
+
+  <p>You can use two properties to control this timeout:</p>
+
+  <ul>
+    <li><code>conf_load_balancing_load.balancing.driver.proxy.read.timeout</code> specifies
+      the wait time, in seconds, for a single Message Processor. The default value is 57
+      seconds.</li>
+    <li><code>conf_load_balancing_load.balancing.driver.nginx.upstream_next_timeout</code> specifies
+      the total wait time for all Message Processors, in seconds, when your Edge installation has
+      multiple Message Processors. It has a default value of the current value of
+      <code>conf_load_balancing_load.balancing.driver.proxy.read.timeout</code>, or 57 seconds.</li>
+  </ul>
+
+  <p>To configure the Router:</p>
+  <ol>
+    <li>Edit the <code>/opt/apigee/customer/application/router.properties</code> file (if the file
+      does not exist, create it).</li>
+    <li>Set the properties as shown below:
+      <pre>conf_load_balancing_load.balancing.driver.proxy.read.timeout=120
+conf_load_balancing_load.balancing.driver.nginx.upstream_next_timeout=240</pre>
+    </li>
+    <li>Make sure the properties file is owned by the 'apigee' user:
+      <pre class="devsite-terminal">chown apigee:apigee /opt/apigee/customer/application/router.properties</pre>
+    </li>
+    <li>Restart the Router:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-router restart</pre>
+    </li>
+  </ol>
+
+{% endblock %}

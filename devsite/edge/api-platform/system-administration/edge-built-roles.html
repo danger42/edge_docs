@@ -1,0 +1,93 @@
+  {% extends "_base.html" %} {% block title %}Edge built-in roles{% endblock %} {% block body %}
+
+  <p>Each Apigee Edge organization comes with a few built-in roles that you can assign to
+  administrative users:</p>
+
+  <ul>
+    <li><strong>Organization Administrator</strong> - Super user. Has full CRUD access to resources
+    in the organization. In an Edge for Private Cloud installation, the most powerful role is the
+    <a href="/api-platform/system-administration/system-administrator-role.html">System
+    administrator role</a>, which also has access to system-level functions that the Organization
+    Administrator doesn't.</li>
+
+    <li><strong>Read-only Organization Administrator</strong> - Has read-only access to resources
+    in the organization.</li>
+
+    <li><strong>Operations Administrator</strong> - Deploys and tests APIs; has read-only access to
+    other resources.</li>
+
+    <li><strong>Business User</strong> - Creates and manages API products, developers, developer
+    apps, and companies; creates custom reports on API usage; has read-only access to other
+    resources.</li>
+
+    <li><strong>User</strong> - Creates API proxies and tests them in the test environment; has
+    read-only access to other resources.</li>
+  </ul>
+
+  <p>The built-in roles control the level of access in both the management UI and the management
+  API.</p>
+
+  <p>To see the permissions set for each built-in role (as an Organization Administrator or a
+  Read-only Organization Administrator), select <strong>Admin &gt; Organization Roles &gt;
+  name_of_role</strong> in the management UI.</p>
+
+  <h2 id="examplerolepermission">Example role permission</h2>
+
+  <p>The following example in the management UI shows the permissions for the User role. Notice
+  that it has different deployment permissions:</p>
+
+  <ul>
+    <li>/deployments URI (GET)</li>
+
+    <li>/environments/*/applications/*/revisions/*/deployments (GET)</li>
+
+    <li>/environments/test/applications/*/revisions/*/deployments (GET, PUT, DELETE)</li>
+  </ul>
+
+  <p><img alt=
+  "Users role permissions for deployment, showing PUT permissions on only deployments to the test environment."
+  src="/api-platform/images/role_users_deploy.png"></p>
+
+  <p>So what does this mean? What can someone in the User role deploy?</p>
+
+  <ul>
+    <li>First, the PUT permission is what allows deployment.</li>
+
+    <li>Second, the more granular (specific) permission takes precedence where there is a
+    permissions overlap, as there is with multiple deployment permissions here. (Precedence in
+    permissions that overlap is described more fully in <a href=
+    "/api-platform/system-administration/managing-roles-api.html">Creating roles with the
+    API</a>).</li>
+  </ul>
+
+  <p>In this example, the most granular permission is the "Deploy API to test environment
+  permission" with a URI of /environments/test/applications/*/revisions/*/deployments. It's the
+  /test/ part that makes it the most specific. It means someone in the User role can deploy any API
+  proxy (/applications/*) with any revision (/revisions/*) to the test environment (/test/).</p>
+
+  <p>Someone in this role, on the other hand, would not be able to deploy to any other environment,
+  because of the GET (read-only) permission on /environments/*/, where the wildcard (*) signifies
+  <em>any</em>. (The GET permission on /deployments allows the user to get deployment details with
+  the <a href="/api/deployments" target="_blank">API</a>).</p>
+
+  <h2 id="aboutthedeveloperadministratorrole">About the Developer Administrator role</h2>
+
+  <p>When a Developer Portal is provisioned for you, another role is added to your organization
+  called <strong>Developer Administrator</strong>. This role, which includes a single user called
+  <code>devadmin+{org_name}@apigee.com</code>, is solely for the purpose of connecting your
+  Developer Portal to your Edge organization. Because the portal displays your Edge developer apps,
+  API products, and so on, it must stay in sync with your Edge organization by making management
+  API calls that require authentication. The devadmin "user" has the necessary permissions.</p>
+
+  <p>The connection between the portal and your Edge organization is configured in Drupal under
+  <strong>Configuration &gt; Dev Portal</strong> in the Drupal admin menu (you must be logged into
+  Drupal as an administrator). If the Connection Status is shown as "Connection Successful," you
+  won't see the devadmin user in the configuration. However, if the connection is shown as failed,
+  you must make a request to <a href=
+  "https://community.apigee.com/content/apigee-customer-support">Apigee Support</a> to change
+  the connection information. See <a href=
+  "/api-platform/publish/drupal/creating-developer-portal.html">Creating a developer portal</a> for
+  more. </p>
+
+  <p>Don't add real users to the Developer Administrator role. (In fact, the management UI and API
+  shouldn't let you.) That role should contain only the devadmin user.</p>{% endblock %}

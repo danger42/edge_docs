@@ -1,0 +1,234 @@
+  {% extends "_base.html" %} {% block title %}Update a TLS certificate for the Private Cloud{% endblock %} {% block body %}
+
+  <p>The method that you use to specify the name of the keystore and truststore in the virtual host
+  or target endpoint/target server determines how you perform the cert update. You can specify the
+  name of the keystore and truststore by using:</p>
+
+  <ul>
+    <li>References - <strong>preferred</strong></li>
+    <li>Direct names</li>
+    <li>Flow variables</li>
+  </ul>
+
+  <p>Each of these methods has different repercussions on the cert update process, as described in
+  the following table.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th><strong>Config type</strong></th>
+
+        <th><strong>How to update/replace a cert</strong></th>
+
+        <th><strong>How to update the virtual host, target endpoint/target server</strong></th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td>Reference (recommended)</td>
+
+        <td>
+          For a keystore, create new keystore with a <strong>new name</strong> and an alias with
+          <strong>same name</strong> as the old alias.
+
+          <p>For a truststore, create a truststore with a <strong>new name</strong>.</p>
+        </td>
+
+        <td>
+          Update the reference to the keystore or truststore.
+
+          <p>No Router or Message Processor restart is necessary.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Flow vars (target endpoint only)</td>
+
+        <td>
+          For a keystore, create new keystore with a <strong>new name</strong> and an alias with
+          the same name or with a new name.
+
+          <p>For a truststore, create a truststore with a <strong>new name</strong>.</p>
+        </td>
+
+        <td>
+          Pass updated flow var on each request with the name of the new keystore, alias, or
+          truststore.
+
+          <p>No Router or Message Processor restart is necessary.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Direct</td>
+
+        <td>Create a new keystore, alias, truststore.</td>
+
+        <td>
+          Update the virtual host and restart the Routers.
+
+          <p>If the truststore is used by a target endpoint/target server, redeploy the proxy.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Direct</td>
+
+        <td>Delete the keystore or truststore and recreate it with same name.</td>
+
+        <td>
+          No virtual host update required, no Router restart necessary. However, API requests fail
+          until the new keystore and alias are set.
+
+          <p>If the keystore is used for two-way TLS between Edge and the backend service, restart
+          the Message Processors.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Direct</td>
+
+        <td>For truststore only, upload a new cert to the truststore.</td>
+
+        <td>
+          If the truststore is used by a virtual host, restart the Routers.
+
+          <p>If the truststore is used by a target endpoint/target server, restart the Message
+          Processors.</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="testing-the-cert-before-and-after-the-update">Testing the cert before and after the
+  update</h2>
+
+  <p>Use the following <code>openssl</code> commands to test the current cert before you update
+  it:</p>
+
+<pre class="devsite-terminal">echo | openssl s_client -servername <em><strong>hostAlias</strong></em> -connect <em><strong>hostAlias</strong></em>.apigee.net:443 2&gt;/dev/null | openssl x509 -noout -dates -subject
+</pre>
+
+  <p>Where <strong><em>hostAlias</em></strong> the host alias of the virtual host or IP address.
+  For example:</p>
+
+<pre class="devsite-terminal">echo | openssl s_client -servername <em><strong>api.myCompany.com</strong></em> -connect <em><strong>api.myCompany.com</strong></em>:443 2&gt;/dev/null | openssl x509 -noout -dates -subject
+</pre>
+
+  <p>You should see output in the form:</p>
+
+  <pre class="prettyprint">
+notBefore=Dec 30 22:11:38 2015 GMT
+notAfter=Dec 30 22:11:38 2016 GMT
+subject= /OU=Domain Control Validated/CN=*.apigee.net
+</pre>
+
+  <p>Use the same command after you update the cert to test it.</p>
+
+  <h2 id="update-a-tls-certificate-in-a-keystore">Update a TLS certificate in a keystore</h2>
+
+  <p>For an on-premises deployment of Edge:</p>
+
+  <ol>
+    <li>Create a new keystore and upload a cert and key as described at
+      <a href="keystores-and-truststores">Keystores and Truststores</a>.
+
+    In the new keystore, ensure that you use the same same for the key alias as was used in the
+    existing key store.<br>
+    <br>
+    <strong>Note</strong>: You can delete the current keystore and create a new one with the same
+    name and alias. No Router restart necessary. However, API requests fail until the new keystore
+    and alias are set.</li>
+
+    <li>
+      <strong>For a virtual host</strong> used by an inbound connections, meaning an API request
+      into Edge:
+
+      <ol style="list-style: lower-alpha outside">
+        <li>If your virtual host uses a reference to the keystore, update the reference as
+        described in <a href="working-references">Working
+        with references</a>.</li>
+
+        <li>If your virtual host uses a direct reference to the keystore:
+
+          <ol>
+            <li>Update any virtual hosts that referenced the old keystore and key alias to
+            reference the new keystore and key alias.</li>
+
+            <li>Restart the Routers, one at a time. Note that if you deleted the old keystore and
+            created a new keystore with the same name, then no Router restart is necessary.<br>
+            <br>
+            No proxy redeployment required.</li>
+          </ol>
+        </li>
+      </ol>
+    </li>
+
+    <li>
+      <strong>For a target endpoint/target server</strong> used by an outbound connections, meaning
+      from Apigee to a backend server:
+
+      <ol style="list-style: lower-alpha outside">
+        <li>If the target endpoint/target server uses a references to the keystore, update the
+        reference as described in <a href="working-references">Working with references</a>.
+        No proxy redeployment is necessary.</li>
+
+        <li>If the target endpoint/target server uses a flow variable, update the flow variable. No
+        proxy redeployment is necessary.</li>
+
+        <li>If the target endpoint/target server uses a direct reference to the keystore:
+
+          <ol>
+            <li>Update the target endpoint/target server configuration for any API proxies that
+            referenced the old keystore and key alias to reference the new keystore and key
+            alias.</li>
+
+            <li>For any API proxies that reference the keystore from a TargetEndpoint definition,
+            you must redeploy the proxy.<br>
+            <br>
+            If the TargetEndpoint references a TargetServer definition, and the TargetServer
+            definition references the keystore, then no proxy redeployment is necessary.</li>
+
+            <li>If the keystore is used for two-way TLS between Edge and the backend service, and
+            you deleted/recreated the keystore with the same name, you must restart the Edge
+            Message Processors.</li>
+          </ol>
+        </li>
+      </ol>
+    </li>
+
+    <li>After you have confirmed that your new keystore is working correctly, delete the old
+    keystore with the expired cert and key as described above.</li>
+  </ol>
+
+  <h2 id="update-a-tls-certificate-in-a-truststore">Update a TLS certificate in a truststore</h2>
+
+  <p>If you are using references to the truststore, the process of updating a cert in a truststore
+  is the same as for a keystore as shown above. The only differences are:</p>
+
+  <ul>
+    <li>When you upload the new cert to the new truststore the alias name does not matter for
+    truststores.</li>
+
+    <li>If a cert is part of a chain, then you must either create a single file containing all the
+    certs and upload that file to a single alias, or upload all certs in the chain separately to
+    the truststore using a different alias for each cert.</li>
+  </ul>
+
+  <p>If you are using direct names to your keystores and truststores:</p>
+
+  <ol>
+    <li>Upload a new cert to the truststore as described in
+      <a href="keystores-and-truststores">Keystores and Truststores</a>.
+      There is no need to delete the old cert.</li>
+
+    <li><strong>For a virtual host</strong> used by an inbound connections, meaning an API request
+    into Edge, restart the Routers one at a time.</li>
+
+    <li><strong>For a target endpoint/target server</strong> used by an outbound connections,
+    meaning from Apigee to a backend server, restart the Edge Message Processors one at a
+    time.</li>
+
+    <li>Confirm that your new truststore is working correctly.</li>
+  </ol>{% endblock %}

@@ -1,0 +1,134 @@
+{% extends "_base.html" %}
+{% block title %}Using the apigee-access module{% endblock %}
+{% block body %}
+
+  <p>The <code>apigee-access</code> module lets you access API proxy flow variables and caches from
+  within Node.js application code. The module is included with the Apigee Edge platform; you do not
+  need to install it as you would with other Node.js modules.</p>
+
+  <h2 id="obtainingapigeeaccess">Obtaining apigee-access</h2>
+
+  <p>The <code>apigee-access</code> module is integrated into the Apigee Edge platform. When you
+  deploy Node.js code to Edge, this module is available to you. You simply need to require it in
+  any Node.js code that you deploy. For example:</p>
+  <pre class="prettyprint">
+var access=require('apigee-access');
+</pre>
+
+  <h2 id="accessingflowvariables">Accessing flow variables</h2>
+
+  <p>When you deploy a Node.js application to Edge, you can access any of the supported
+  "out-of-the-box" flow variables, flow variables created by policies, and any flow variables that
+  you create yourself from within your Node.js code. Flow variables are created and exist within
+  the context of an API proxy running on Edge. For detailed information, see
+  <a href="/api-platform/nodejs/access-flow-variables-nodejs">Accessing flow variables in
+  Node.js</a>.</p>
+
+  <h2 id="accessingthecache">Accessing the cache</h2>
+
+  <p>The <code>apigee-access</code> module lets you access the Apigee Edge distributed cache from
+  your Node.js code. For detailed information, see <a href=
+  "/api-platform/nodejs/access-cache-nodejs">Accessing the cache in Node.js</a>.</p>
+
+  <h2 id="usingthequotaservice">Using the quota service</h2>
+
+  <p>The <code>apigee-access</code> module lets you access the Apigee Edge quota service from your
+  Node.js code. For detailed information, see
+  <a href="/api-platform/nodejs/accessing-quota-service-nodejs">Accessing the quota service in
+  Node.js</a>.</p>
+
+  <h2 id="runninginlocalmodevsdeployedmode">Running in local mode vs deployed mode</h2>
+
+  <p>To support local development and testing, the <code>apigee-access</code> module
+  works in a <a href="#LocalMode">local mode</a> with no dependencies on Apigee Edge; however,
+  when the module is used with an API proxy that is <a href="#DeployedMode">deployed to
+  Edge</a>, the "local" functionality is replaced by native Edge functionality. For example, the
+  full compliment of flow variables are accessible in deployed mode, while only a small subset are
+  available when you run the Node.js application locally. For a list of these local-mode variables,
+  see <a href="#LocalMode">Running in local mode</a>.</p>
+
+    <h3>Determining the mode in which the module is running</h3>
+
+    <p>To determine which mode you are running apigee-access in:</p>
+    <pre class="prettyprint">
+var access = require('apigee-access')
+console.log('The deployment mode is ' + access.getMode());
+</pre>
+
+    <p>The return value of getMode() tells you whether or not the Node.js application is deployed
+    to Apigee Edge or is running in standalone mode. The method returns one of these two string
+    results:</p>
+
+    <ul>
+      <li><code>apigee</code> - The Node.js application is running on Apigee Edge and all
+      functionality is supported.</li>
+
+      <li><code>standalone</code> - The Node.js application is running outside the Apigee Edge
+      environment, and the default functionality described at the top of the document takes
+      effect.</li>
+    </ul>
+
+    <h3><a id="DeployedMode" name="DeployedMode"></a>Running in deployed mode</h3>
+
+    <p>When deployed to Edge, variables set by policies are visible to <code>apigee-access</code>,
+    and variables added or modified by this module's methods are visible to subsequent policies in
+    the proxy flow.</p>
+
+    <p>You can find the link of supported variables in the
+    <a href="/api-platform/reference/variables-reference">Variables Reference</a>. These variables,
+    and any that you create with your own names, are visible to <code>apigee-access</code>. Note
+    that some variables are read-only. They are identified in the
+    <a href="/api-platform/reference/variables-reference">Variables Reference</a>.</p>
+
+    <h3><a id="LocalMode" name="LocalMode"></a>Running in local mode</h3>
+
+    <p>In "local mode," you are running your Node.js code outside the context of Apigee Edge. In
+    this mode, most of the the pre-defined flow variables are not accessible within your Node.js
+    code. This table shows the small subset of flow variables that are available. These variables
+    are supported here in order to support local development and testing of Node.js applications
+    for Apigee Edge.</p>
+
+    <table>
+      <tbody>
+        <tr>
+          <td><strong>Variable</strong></td>
+          <td><strong>Read-Only</strong></td>
+          <td><strong>Type</strong></td>
+          <td><strong>Notes</strong></td>
+        </tr>
+        <tr>
+          <td><code>client.received.start.time</code></td>
+          <td>Yes</td>
+          <td>String</td>
+          <td>Time at which the request was received</td>
+        </tr>
+        <tr>
+          <td><code>client.received.end.time</code></td>
+          <td>Yes</td>
+          <td>String</td>
+          <td>Time at which the request was received</td>
+        </tr>
+        <tr>
+          <td><code>client.received.start.timestamp</code></td>
+          <td>Yes</td>
+          <td>Integer</td>
+          <td>Time at which the request was received</td>
+        </tr>
+        <tr>
+          <td><code>client.received.end.timestamp</code></td>
+          <td>Yes</td>
+          <td>Integer</td>
+          <td>Time at which the request was received</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>Again, on the Apigee Edge platform, a much larger set of pre-defined variables is supported.
+    Refer to the Apigee Edge <a href="/api-platform/reference/variables-reference">Variables
+    Reference</a> for the complete list.</p>
+
+    <aside class="note"><strong>Note:</strong> Missing a variable that you need for a test? Open a
+    <a href="https://github.com/apigee/apigee-access" class="external">GitHub issue</a> and we can
+    add it, or send a pull request.</aside>
+
+{% endblock %}

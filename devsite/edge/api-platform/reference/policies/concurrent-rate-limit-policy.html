@@ -1,0 +1,348 @@
+  {% extends "_base.html" %} {% block title %}Concurrent Rate Limit policy{% endblock %} {% block body %}
+<img src="/api-platform/images/icon_policy_quota.jpg">
+
+  <h3>What</h3>
+
+  <p>Throttles inbound connections from your API proxies running on Apigee Edge to your backend
+  services.</p>
+
+  <p>Need help deciding which rate limiting policy to use? See <a href=
+  "/api-platform/develop/comparing-quota-spike-arrest-and-concurrent-rate-limit-policies.html">Comparing
+  Quota, Spike Arrest, and Concurrent Rate Limit Policies</a>.</p>
+
+  <aside class="note">
+    <b>Note:</b> {# per APIRT-1397 #}
+
+    <p>Use of the Concurrent Rate Limit policy is known to impact performance and will result in
+    lower throughputs.</p>
+  </aside>
+
+  <h2 id="video">Video</h2>
+
+  <div class="video">
+    <p>To learn how to restrict concurrent connections to the backend using the Concurrent Rate
+    Limit policy, watch this video.</p>
+
+    <div style="text-align: left;">
+      <iframe allowfullscreen="" frameborder="0" height="315" src=
+      "https://www.youtube.com/embed/lv9XQklW03E" width="560"></iframe>
+    </div>
+  </div>
+
+  <h2 id="sample">Sample</h2>
+  <pre class="prettyprint">
+&lt;ConcurrentRatelimit name="ConnectionThrottler" &gt;
+   &lt;AllowConnections count="200" ttl="5" /&gt;
+   &lt;Distributed&gt;true&lt;/Distributed&gt;
+   &lt;StrictOnTtl&gt;false&lt;/StrictOnTtl&gt;<tt>
+</tt>   &lt;TargetIdentifier name="MyTargetEndpoint"  ref="header/qparam/flow variables" /&gt; 
+&lt;/ConcurrentRatelimit&gt;
+</pre>
+
+  <h2 id="elementreference">Element reference</h2>
+
+  <p>The element reference describes the elements and attributes of the ConcurrentRatelimit
+  policy.</p>
+  <pre class="prettyprint">
+&lt;ConcurrentRatelimit async="false" continueOnError="false" enabled="true" name="Concurrent-Rate-Limit-1"&gt;
+   &lt;DisplayName&gt;Concurrent Rate Limit 1&lt;/DisplayName&gt;
+   &lt;AllowConnections count="200" ttl="5"/&gt;
+   &lt;Distributed&gt;true&lt;/Distributed&gt;
+   &lt;StrictOnTtl&gt;false&lt;/StrictOnTtl&gt;
+   &lt;TargetIdentifier name="default"&gt;&lt;/TargetIdentifier&gt; 
+&lt;/ConcurrentRatelimit&gt;
+</pre>
+
+  <h2 id="concurrentratelimitattributes">&lt;ConcurrentRatelimit&gt; attributes</h2>
+  <pre class="prettyprint">
+&lt;ConcurrentRatelimit async="false" continueOnError="false" enabled="true" name="Concurrent-Rate-Limit-1"&gt;
+</pre>{% dynamic include /includes/___policies-parent-element-attributes %}
+
+  <h2 id="allowconnectionselement">&lt;AllowConnections&gt; element</h2>
+
+  <p>Provides the number of concurrent connections between Apigee Edge and a backend service that
+  are allowed at any given time.</p>
+  <pre class="prettyprint">
+&lt;AllowConnections count="200" ttl="5"/&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Required</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>N/A</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="allowconnectionselement-attributes">Attributes</h3>
+
+  <table width="650">
+    <tbody>
+      <tr>
+        <th scope="col">Attribute</th>
+
+        <th scope="col">Description</th>
+
+        <th scope="col">Default</th>
+
+        <th scope="col">Presence</th>
+      </tr>
+
+      <tr>
+        <td>count</td>
+
+        <td>Specifies the number of concurrent connections between Apigee Edge and a backend
+        service that are allowed at any given time.</td>
+
+        <td>N/A</td>
+
+        <td style="width: 50px;">Required</td>
+      </tr>
+
+      <tr>
+        <td>ttl</td>
+
+        <td>
+          <p>Include to automatically decrement the counter after the number of seconds specified.
+          This can help to clean up any connections that were not decremented properly in the
+          response path. </p>
+        </td>
+
+        <td>N/A</td>
+
+        <td style="width: 50px;">Required</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="distributedelement">&lt;Distributed&gt; element</h2>
+
+  <p>Specify whether counter values are shared across instances of Apigee Edge's server
+  infrastructure.</p>
+  <pre class="prettyprint">
+&lt;Distributed&gt;true&lt;/Distributed&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>false</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>Boolean</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="strictonttlelement">&lt;StrictOnTtl&gt; element</h2>
+
+  <p>Set to true to honor the <code>&lt;AllowConnections&gt; ttl</code> attribute setting
+  regardless of backend server throughput. Consider setting this property to <code>true</code> for
+  high throughput or low latency backend services.</p>
+  <pre class="prettyprint">
+&lt;StrictOnTtl&gt;false&lt;/StrictOnTtl&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>false</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>Boolean</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="targetidentifierelement">&lt;TargetIdentifier&gt; element</h2>
+
+  <p>Provides the name of the TargetEndpoint to which the throttling should be applied.</p>
+  <pre class="prettyprint">
+&lt;TargetIdentifier name="default"&gt;&lt;/TargetIdentifier&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>N/A</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="targetidentifierelement-attributes">Attributes</h3>
+
+  <table width="650">
+    <tbody>
+      <tr>
+        <th scope="col">Attribute</th>
+
+        <th scope="col">Description</th>
+
+        <th scope="col">Default</th>
+
+        <th scope="col">Presence</th>
+      </tr>
+
+      <tr>
+        <td>name</td>
+
+        <td>Specifies the name of the TargetEndpoint to which the throttling should be
+        applied.</td>
+
+        <td>N/A</td>
+
+        <td style="width: 50px;">Optional</td>
+      </tr>
+
+      <tr>
+        <td>ref</td>
+
+        <td>
+          
+        </td>
+
+        <td>N/A</td>
+
+        <td style="width: 50px;">Optional</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="flowvariables">Flow variables</h2>
+
+  <p>A set of predefined flow variables are populated each time the policy executes:</p>
+
+  <ul>
+    <li><code>concurrentratelimit.{policy_name}.allowed.count</code></li>
+
+    <li><code>concurrentratelimit.{policy_name}.used.count</code></li>
+
+    <li><code>concurrentratelimit.{policy_name}.available.count</code></li>
+
+    <li><code>concurrentratelimit.{policy_name}.identifier</code></li>
+  </ul>
+
+  <h2 id="errorcodes">Error codes</h2>
+
+  <p>{% dynamic include /includes/___concurrent-rate-limit-policy-error-codes %}</p>
+
+  <h2 id="schemas">Schemas</h2>
+
+  <aside class="note"><b>Sample:</b> See our <a href=
+  "https://github.com/apigee/api-platform-samples/tree/master/schemas/policy">GitHub
+  repository</a> samples for the most recent schemas.</aside>
+
+  <h2 id="usagenotes">Usage notes</h2>
+
+  <p>In distributed environments, app traffic may be managed by many replicated API proxies. While
+  each API proxy might be handling just a few connections, collectively, a set of API proxies,
+  running in redundant message processors across multiple datacenters, all of which point to the
+  same backend service, might swamp the capacity of that backend service. Use this policy to limit
+  the aggregate traffic to a manageable number of connections.</p>
+
+  <p>When the number of requests being processed by Apigee Edge exceeds the connection limit
+  configured in the policy, Apigee Edge will return the HTTP response code 503: Service
+  Unavailable.</p>
+
+  <p>{# b/67179002 #}This policy is known to slow performance in API proxies that handle a high number of
+  transactions per second (TPS). For high-TPS API proxies, if Concurrent Rate Limit slows
+  performance to unacceptable levels, try using Spike Arrest instead.</p>
+
+  <h3 id="usagenotes-policyattachmentdetails">Policy attachment details</h3>
+
+  <p>The ConcurrentRatelimit policy must be attached as a Step to three Flows on a TargetEndpoint:
+  request, response, and DefaultFaultRule. (A validation error will be thrown at deployment time if
+  the policy is attached to any other Flows, including any ProxyEndpoint Flows.) See also this
+  <a href=
+  "https://community.apigee.com/questions/4366/why-concurrent-rate-limit-policy-in-response-pre-f.html">
+  Apigee Community post</a>. </p>
+
+  <p>For example to attach a ConcurrentRatelimit policy called ConnectionThrottler to a
+  TargetEndpoint called MyTargetEndpoint, create the following TargetEndpoint configuration. Note
+  that the policy must also be included in the DefaultFaultRule to ensure that the rate limit
+  counters are maintained correctly in the event of an error.</p>
+  <pre class="prettyprint">
+&lt;TargetEndpoint name="MyTargetEndpoint"&gt;
+  &lt;DefaultFaultRule name="DefaultFaultRule"&gt;
+    &lt;Step&gt;&lt;Name&gt;ConnectionThrottler&lt;/Name&gt;&lt;/Step&gt;
+    &lt;AlwaysEnforce&gt;true&lt;/AlwaysEnforce&gt;
+  &lt;/DefaultFaultRule&gt;
+  &lt;PreFlow name="PreFlow"&gt;
+    &lt;Request&gt;
+      &lt;Step&gt;&lt;Name&gt;ConnectionThrottler&lt;/Name&gt;&lt;/Step&gt;
+    &lt;/Request&gt;
+  &lt;/PreFlow&gt;
+  &lt;PostFlow name="PostFlow"&gt;
+    &lt;Response&gt;
+      &lt;Step&gt;&lt;Name&gt;ConnectionThrottler&lt;/Name&gt;&lt;/Step&gt;
+    &lt;/Response&gt;
+  &lt;/PostFlow&gt;
+  &lt;HTTPTargetConnection&gt;
+    &lt;URL&gt;http://api.mybackend.service.com&lt;/URL&gt;
+  &lt;/HTTPTargetConnection&gt;
+&lt;/TargetEndpoint&gt;
+</pre>
+
+  <aside class="note"><b>Note:</b> Counters are reset when the API proxy is redeployed.</aside>
+
+  <h2 id="relatedtopics">Related topics</h2>
+
+  <p><a href="/api-platform/reference/policies/quota-policy.html">Quota policy</a></p>
+
+  <p><a href="/api-platform/reference/policies/spike-arrest-policy.html">Spike Arrest
+  policy</a></p>
+
+  <p><a href=
+  "/api-platform/develop/comparing-quota-spike-arrest-and-concurrent-rate-limit-policies.html">Comparing
+  Quota, Spike Arrest, and Concurrent Rate Limit Policies</a></p><br>
+  {% endblock %}

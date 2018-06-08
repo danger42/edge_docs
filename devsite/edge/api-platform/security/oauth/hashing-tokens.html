@@ -1,0 +1,57 @@
+  {% extends "_base.html" %} {% block title %}Hashing tokens for extra security{% endblock %} {% block body %}
+
+  <p>To protect OAuth access and refresh tokens in the event of a database security breach, you can
+  enable automatic token hashing in your Edge organization. When the feature is enabled, Edge
+  automatically creates a hashed version of newly generated OAuth access and refresh tokens using
+  the algorithm you specify. (Information about bulk-hashing existing tokens follows.) The
+  non-hashed tokens are used in API calls, and Edge validates them against the hashed versions in
+  the database.</p>
+
+  <h2 id="ifyouareanedgecloudcustomer">If you are an Edge cloud customer</h2>
+
+  <p>If you're an Edge cloud customer, contact Apigee Support to enable hashing on your
+  organization and optionally to bulk hash existing tokens. </p>
+
+  <h2 id="ifyouareanedgeforprivatecloudcustomer">If you are an Edge for Private Cloud customer</h2>
+
+  <p>Edge for Private Cloud administrators can enable token hashing by setting these
+  organization-level properties using the management API call shown below:</p>
+  <pre class="prettyprint">
+features.isOAuthTokenHashingEnabled = true
+
+features.OAuthTokenHashingAlgorithm = SHA1 | SHA256 | SHA384 | SHA512 | PLAIN
+</pre>
+
+  <p>If you have existing hashed tokens and want to retain them until they expire, set the
+  following properties in your organization, where the hashing algorithm matches the existing
+  algorithm (for example, SHA1, the former Edge default). If the tokens were not hashed, use
+  PLAIN.</p>
+  <pre class="prettyprint">
+features.isOAuthTokenFallbackHashingEnabled = true
+
+features.OAuthTokenFallbackHashingAlgorithm = SHA1 | SHA256 | SHA384 | SHA512 | PLAIN
+</pre>
+
+  <div>
+    <p>Here's a sample API call for enabling token hashing. Be sure to include all the existing
+    organization properties in the payload. If you don't, all existing organization properties are
+    overwritten by only the properties you set with this call.</p>
+    <pre class="prettyprint">
+curl -u email:password -X PUT -H "Content-type:application/xml" https://host:port/v1/o/{myorg} -d \
+"&lt;Organization type="trial" name="MyOrganization"&gt;
+    &lt;Properties&gt;
+        &lt;Property name="features.isOAuthTokenHashingEnabled"&gt;true&lt;/Property&gt;
+        &lt;Property name="features.OAuthTokenHashingAlgorithm"&gt;SHA256&lt;/Property&gt;
+        &lt;Property name="features.isOAuthTokenFallbackHashingEnabled"&gt;true&lt;/Property&gt;
+        &lt;Property name="features.OAuthTokenFallbackHashingAlgorithm"&gt;SHA1&lt;/Property&gt;
+        &lt;Property...(an existing property)
+        &lt;Property...(an existing property)
+        &lt;Property...(an existing property)
+    &lt;/Properties&gt;
+&lt;/Organization&gt;"
+</pre>
+
+    <h2 id=""> </h2>
+  </div>
+
+  {% endblock %}

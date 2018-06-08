@@ -1,0 +1,198 @@
+  {% extends "_base.html" %} {% block title %}Understanding the handling of request and response
+  data{% endblock %} {% block body %}
+
+  <p>When you make a request to an API proxy, you can pass any or all of the following information,
+  depending on the way the API proxy is configured:</p>
+
+  <ul>
+    <li>Request headers</li>
+
+    <li>Query params</li>
+
+    <li>Form data</li>
+
+    <li>XML or JSON payloads</li>
+
+    <li>Resource URIs</li>
+  </ul>
+
+  <p>By default, all data in a request is passed unchanged from the ProxyEndpoint to the
+  TargetEndpoint. Therefore, when the TargetEndpoint makes the request to the backend server, all
+  information in the original request is passed to the backend service.</p>
+
+  <p>The same is true for the response received by Edge from the backend service. By default, all
+  data received in the response is passed unchanged to the app that originated the
+  request. </p>
+
+  <h2 id="howrequestdatapassedtothebackendserver">How request data passed to the backend
+  server?</h2>
+
+  <p>The following image shows an API proxy definition:</p>
+
+  <p><img alt="" src="/api-platform/images/ApigeeProxyRoute_v2.png"></p>
+
+  <p>For this API proxy:</p>
+
+  <ul>
+    <li>API proxy virtual host: <span style=
+    "font-family:courier new,courier,monospace;">default</span></li>
+
+    <li>Domain defined by the virtual host: <span style=
+    "font-family:courier new,courier,monospace;">http://myOrg-prod.apigee.net</span></li>
+
+    <li>Proxy base path: <span style=
+    "font-family:courier new,courier,monospace;">/v1/weather</span></li>
+
+    <li>TargetEndpoint specifid by route rule: <span style=
+    "font-family:courier new,courier,monospace;">default</span></li>
+
+    <li>Target URL: <span style=
+    "font-family:courier new,courier,monospace;">http://weather.yahooapis.com</span></li>
+  </ul>
+
+  <p>A client app then makes a GET request to the API proxy by using the following cURL
+  command:</p>
+  <pre class="prettyprint">
+curl -X GET http://myOrg-prod.apigee.net/v1/weather/forecastrss?w=12797282
+</pre>
+
+  <p>Notice that this request contains the resource "<span style=
+  "font-family:courier new,courier,monospace;">forecastrss</span>" and one query param,
+  "<span style="font-family:courier new,courier,monospace;">w</span>". Edge parses the request as
+  shown below and assigns parts of the request to flow variables:</p>
+  <pre class="prettyprint">
+{request.verb} {proxy.basepath}/{proxy.pathsuffix}?{request.querystring}
+</pre>
+
+  <p>The flow variables are set with the following values:</p>
+
+  <ul>
+    <li>
+      <p><span style="font-family:courier new,courier,monospace;">request.verb</span>: <span style=
+      "font-family:courier new,courier,monospace;">GET</span></p>
+    </li>
+
+    <li>
+      <p><span style="font-family:courier new,courier,monospace;">proxy.basepath</span>:
+      <span style="font-family:courier new,courier,monospace;">/v1/weather</span></p>
+    </li>
+
+    <li>
+      <p><span style=
+      "font-family:courier new,courier,monospace;">proxy.pathsuffix</span>: <span style=
+      "font-family:courier new,courier,monospace;">forecastrss</span></p>
+    </li>
+
+    <li>
+      <p><span style=
+      "font-family:courier new,courier,monospace;">request.querystring</span>: <span style=
+      "font-family:courier new,courier,monospace;">w=12797282</span></p>
+    </li>
+  </ul>
+
+  <aside class="note"><b>Note:</b> There are many different flow variables created during the
+  processing of a request and response. See <a href=
+  "/api-platform/reference/variables-reference.html">Variables reference</a> for more.</aside>
+
+  <p>The TargetEndpoint then makes a request to the backend service using information from the
+  request:</p>
+  <pre class="prettyprint">
+{request.verb} {<strong>target.basepath</strong>}/{proxy.pathsuffix}?{request.querystring}
+</pre>
+
+  <p>Notice how the resource and query params specified in the request are automatically included
+  in the request to the backend server. From the definition of the TargetEndpoint, the request then
+  has the form:</p>
+  <pre class="prettyprint">
+curl -X GET http://weather.yahooapis.com/forecastrss?w=12797282
+</pre>
+
+  <p>Like query params, any headers or form params that you include in the request to the API
+  proxy are passed on to the backend server. For example, you make the request below that includes
+  a header:</p>
+  <pre class="prettyprint">
+curl -X GET -H 'Content-type:application/xml' http://myOrg-prod.apigee.net/v1/weather/forecastrss?w=12797282
+</pre>
+
+  <p>Or a request in the form below to include a header and form data:</p>
+  <pre class="prettyprint">
+curl -X POST -H "Content-type:application/json" -d \
+'{"email" : "janetutorialxml@example.com", 
+  "firstName" : "Jane", 
+  "lastName" : "Tutorial", 
+  "userName" : "jtutorialxml"
+}' \
+http://myOrg-prod.apigee.net/v1/register/user
+</pre>
+
+  <p>In both examples, the headers and form data are passed unchanged to the backend service. The
+  headers are represented by flow variables such as <span style=
+  "font-family:courier new,courier,monospace;">request.headers.count</span> and <span style=
+  "font-family:courier new,courier,monospace;">request.headers.names</span>. The form data is
+  represented by flow variables such as <span style=
+  "font-family:courier new,courier,monospace;">request.formparam.count</span> and <span style=
+  "font-family:courier new,courier,monospace;">request.formparam.names</span>.</p>
+
+  <h2 id="howisresponsedatareturned">How is response data returned?</h2>
+
+  <p>By default, all data received by Edge from the backend service in the response is passed
+  unchanged to the app that originated the request. As described above for the request, the data
+  returned in the response is accessible through flow variables on Edge. See <a href=
+  "/api-platform/reference/variables-reference.html">Variables reference</a> for more.</p>
+
+  <h2 id="manipulatingrequestandresponsedatainanapiproxy">Manipulating request and response data in
+  an API proxy</h2>
+
+  <p>There are many times where you want to modify request data before sending it to the backend
+  server. For example:</p>
+
+  <ul>
+    <li>To remove security information used by Edge to validate requests. That information is not
+    required by the backend service.</li>
+
+    <li>To add data sent to the backend service, for example to track users or to gather
+    analytics.</li>
+
+    <li>To conditionally process the request based on request data. For example, an API proxy can
+    have multiple TargetEndpoints. The TargetEndpoint used by the request is determined by request
+    data. You then strip that data from the request before sending it to the backend service.</li>
+  </ul>
+
+  <p>The same is true for data in the response. As part of processing the response, the API proxy
+  might want to modify the data before returning it to the requesting app.</p>
+
+  <p>Edge defines several policies that you can use to process the request and response data. These
+  policies include:</p>
+
+  <ul>
+    <li><a href="/api-platform/reference/policies/assign-message-policy.html">Assign Message
+    policy</a>: Creates or modifies HTTP request or response messages during an API proxy
+    flow. Also creates and populates new flow variables.</li>
+
+    <li><a href="/api-platform/reference/policies/extract-variables-policy.html">Extract Variables
+    policy</a>: Extract content from messages, including headers, URI paths, payloads, and
+    query parameters, for use in a condition statement. The policy then applies a text pattern to
+    message content and upon finding a match sets a designated variable.</li>
+
+    <li><a href="/api-platform/reference/policies/json-xml-policy.html">JSON to XML policy</a> and
+    <a href="/api-platform/reference/policies/xml-json-policy.html">XML to JSON policy</a>:
+    Converts messages from JavaScript Object Notation (JSON) to the extensible markup language
+    (XML) format, or vice versa. </li>
+
+    <li><a href="/api-platform/reference/policies/java-callout-policy.html">Java Callout
+    policy</a>, <a href="/api-platform/reference/policies/javascript-policy.html">JavaScript
+    policy</a>, <a href="/api-platform/reference/policies/python-script-policy.html">Python Script
+    policy</a>, <a href=
+    "/api-platform/reference/policies/regular-expression-protection.html">Regular Expression
+    Protection policy</a>: These policies let you write a script to access flow variables
+    containing request and response data.</li>
+  </ul>
+
+  <h2 id="learnmore">Learn more</h2>
+
+  <ul>
+    <li><a href="/api-platform/reference/variables-reference.html">Variables reference</a></li>
+
+    <li><a href="/api-platform/develop/policy-attachment-and-enforcement.html">What's a
+    policy?</a></li>
+  </ul>{% endblock %}

@@ -1,0 +1,362 @@
+  {% extends "_base.html" %} {% block title %}Working with OAuth2 scopes{% endblock %} {% block body %}
+
+  <p>This topic discusses how to use OAuth 2.0 scopes on Apigee Edge.</p>
+
+  <h2 id="whatisoauth2scope">What is OAuth2 scope?</h2>
+
+  <p>OAuth 2.0 scopes provide a way to limit the amount of access that is granted to an access
+  token. For example, an access token issued to a client app may be granted READ and WRITE access
+  to protected resources, or just READ access. You can implement your APIs to enforce any scope or
+  combination of scopes you wish. So, if a client receives a token that has READ scope, and it
+  tries to call an API endpoint that requires WRITE access, the call will fail.</p>
+
+  <p>In this topic, we'll discuss how scopes are assigned to access tokens and how Apigee Edge
+  enforces OAuth 2.0 scopes. After reading this topic, you'll be able to use scopes with
+  confidence.</p>
+
+  <h2 id="howarescopesassignedtoaccesstokens">How are scopes assigned to access tokens?</h2>
+
+  <p>When Edge generates an access token, it may assign a scope to that token. To understand how
+  this happens, you must first be familiar with these Apigee Edge entities: API products,
+  developers, and developer apps. For an introduction, see <a href=
+  "/api-platform/publish/publishing-overview.html">Introduction to publishing</a>. We recommend
+  that you review this material if you need to before continuing.</p>
+
+  <p>An <strong>access token</strong> is a long string of random-looking characters that
+  allows Edge to verify incoming API requests (think of it as a stand-in for typical
+  username/password credentials). Technically, the token is a key that refers to a collection of
+  metadata that that looks like this:</p>
+  <pre class="prettyprint">
+{
+  "issued_at" : "1416962591727",
+  "application_name" : "0d3e1d41-a59f-4d74-957e-d4e3275d4781",
+  "scope" : "A",
+  "status" : "approved",
+  "api_product_list" : "[scopecheck1-bs0cSuqS9y]",
+  "expires_in" : "1799", //--in seconds
+  "developer.email" : "scopecheck1-AdBmANhsag@apigee.com",
+  "organization_id" : "0",
+  "token_type" : "BearerToken",
+  "client_id" : "eTtB7w5lvk3DnOZNGReBlvGvIAeAywun",
+  "access_token" : "ODm47ris5AlEty8TDc1itwYPe5MW",
+  "organization_name" : "wwitman",
+  "refresh_token_expires_in" : "0", //--in seconds
+  "refresh_count" : "0"
+}
+</pre>
+
+  <p>The token's metadata includes the actual access token string, expiry information,
+  identification of the developer app, developer, and products associated with the token. You'll
+  also notice that the metadata also includes "scope".</p>
+
+  <p>How does the token get its scope?</p>
+
+  <p>The first key to understanding scope is to remember that each product in a developer app can
+  have zero or more scopes assigned to it. These scopes can be assigned when the product is
+  created, or they can be added later. They exist as a list of names and are included in the
+  "metadata" associated with each product.</p>
+
+  <aside class="key-point">
+    <b>Best practice:</b>
+
+    <div>
+      You can name your scopes anything you wish.  In simple cases, it is fine to use simple
+      names like READ, WRITE, or DELETE.  In more complex scenarios where there are multiple
+      API products, each with multiple resources which each support multiple distinct actions, a
+      WRITE on one resource is not equivalent to a WRITE on another resource. In these cases,
+       it's a best practice to assign each scope a unique name, in the form of an URN.
+      Examples of URNs include:
+      <code>https://www.examplecompany.com/private_catalog.readonly</code> and
+      <code>urn:examplecompany:product_price:update</code>.
+    </div>
+
+    <div>
+      Learn more about URNs in <a href="https://tools.ietf.org/html/rfc3986">RFC3986</a>.
+    </div>
+  </aside>
+
+  <p>When you create a developer app and add products to it, Edge looks at all of the products in
+  the developer app and creates a list of all of the scopes for those products (the app's master or
+  global scope list -- a union of all recognized scopes). </p>
+
+  <aside class="note"><b>Note:</b> There is a case where the master list is overridden. It is
+  possible to create a developer app using the Edge API. Using the API, you can specify OAuth
+  scopes for the app. App-specific scopes override the master list of scopes taken from the
+  products that are included in the app. For information about the API, see <a href=
+  "/management/apis/post/organizations/{org_name}/developers/{developer_email}/apps">Create
+  Developer App</a>. Note that the Edge management UI does not let you specify app-specific scopes.
+  It is only possible if you use the API to create an app. </aside>
+
+  <p>When a client app requests an access token from Apigee Edge, it can optionally specify which
+  scopes it would like to have associated with that token. For example, the following request asks
+  for the scope "A". That is, the client is asking that the authorization server (Edge) generate an
+  access token that has scope "A" (giving the app authorization to call APIs that have scope "A").
+  The app sends a POST request like this:</p>
+  <pre class="prettyprint">
+curl -i -X POST -H Authorization: Basic Mg12YTk2UkEIyIBCrtro1QpIG -H content-type:application/x-www-form-urlencoded http://myorg-test.apigee.net/oauth/token?grant_type=client_credentials&amp;scope=A
+</pre>
+
+  <p>What happens?</p>
+
+  <p>When Edge receives this request it knows which app is making the request and it knows which
+  developer app the client registered (the client ID and client secret keys are encoded in the
+  basic auth header). Because the <code>scope</code> query parameter is included, Edge needs to
+  decide if any of the API products associated with the developer app have scope "A". If they do,
+  then an access token is generated with scope "A". Another way to look at this is that the scope
+  query parameter is a kind of filter. If the developer app recognizes scopes "A, B, X", and the
+  query parameter specifies "scope=X Y Z", then only scope "X" will be assigned to the
+  token. </p>
+
+  <aside class="note">
+    <b>Note:</b>
+
+    <ul>
+      <li>If the value of the scope parameter matches <strong>none</strong> of the recognized
+      scopes, then a token is still generated; however, that token will not be granted any scopes
+      (it's scope metadata will be empty). </li>
+
+      <li>Only scopes that are specified in products are allowed. If no scopes are specified in any
+      of the products associated with a developer app, then you cannot generate a token that
+      contains a scope simply by requesting it in the call to generate the token. You can only
+      generate a token with a scope (or scopes) if the relevant developer app includes products
+      that specify the requested scope (or scopes). </li>
+    </ul>
+  </aside>
+
+  <p>What if the client does not attach a scope parameter? In this case, Edge generates a token
+  that includes <strong>all of the scopes</strong> recognized by the developer app. It's
+  important to understand that the default behavior is to return an access token that contains the
+  union of all scopes for all of the products included in the developer app.</p>
+
+  <p>If none of the products associated with a developer app specify scopes, and a token does have
+  a scope, then calls made with that token will fail. </p>
+
+  <p>Let's say a developer app recognizes these scopes: A B C D. This is the app's master list of
+  scopes. It could be that one product in the app has scope A and B, and a second one has scope C
+  and D, or any combination. If the client does not specify a <code>scope</code> parameter (or if
+  it specifies scope parameter with no value) the token will be granted all four scopes: A, B, C,
+  and D. Again, the token receives a set of scopes that is the union of all the scopes recognized
+  by the developer app.</p>
+
+  <p>There is one more case where the default behavior is to return an access token with all of the
+  recognized scopes, and that is when the GenerateAccessToken policy (the Apigee Edge policy that
+  generates access tokens) does <strong>not</strong> specify a <code>&lt;Scope&gt;</code> element.
+  For example, here's a GenerateAccessToken policy where <code>&lt;Scope&gt;</code>
+  <strong>is</strong> specified. If that <code>&lt;Scope&gt;</code> element is missing (or if it is
+  present but empty), then the default behavior is executed. </p>
+  <pre class="prettyprint">
+&lt;?xml version="1.0" encoding="UTF-8" standalone="yes"?&gt;
+&lt;OAuthV2 async="false" continueOnError="false" enabled="true" name="OAuthV2-GenerateAccessToken"&gt;
+    &lt;DisplayName&gt;OAuthV2 - Generate Access Token&lt;/DisplayName&gt;
+    &lt;Attributes&gt;
+      &lt;Attribute name='hello' ref='system.time' display='false'&gt;value1&lt;/Attribute&gt;
+    &lt;/Attributes&gt;
+    <strong>&lt;Scope&gt;request.queryparam.scope&lt;/Scope&gt;</strong><span style=
+"font-family: Arial, Verdana, sans-serif;"> </span>
+    &lt;GrantType&gt;request.formparam.grant_type&lt;/GrantType&gt;
+    &lt;ExternalAuthorization&gt;false&lt;/ExternalAuthorization&gt;
+    &lt;Operation&gt;GenerateAccessToken&lt;/Operation&gt;
+    &lt;SupportedGrantTypes&gt;
+      &lt;GrantType&gt;client_credentials&lt;/GrantType&gt;
+    &lt;/SupportedGrantTypes&gt;
+  &lt;GenerateResponse enabled="true"/&gt;
+&lt;/OAuthV2&gt;
+</pre>
+
+  <h2 id="howarescopesenforced">How are scopes enforced?</h2>
+
+  <p>First, remember that on Apigee Edge, access tokens are validated with the OAuthV2 policy
+  (typically placed at the very beginning of a proxy flow). The policy must have the
+  VerifyAccessToken operation specified. Let's look at this policy:</p>
+  <pre class="prettyprint">
+&lt;OAuthV2 async="false" continueOnError="false" enabled="true" name="OAuthV2-VerifyAccessTokenA"&gt;
+    &lt;DisplayName&gt;Verify OAuth v2.0 Access Token&lt;/DisplayName&gt;
+    &lt;ExternalAuthorization&gt;false&lt;/ExternalAuthorization&gt;
+    &lt;Operation&gt;VerifyAccessToken&lt;/Operation&gt;
+    &lt;Scope&gt;A&lt;/Scope&gt; &lt;!-- Optional: space-separated list of scope names. --&gt;
+    &lt;GenerateResponse enabled="true"/&gt;
+&lt;/OAuthV2&gt;
+</pre>
+
+  <p>Note the <code>&lt;Scope&gt;</code> element. It is used to specify which scopes the policy
+  will accept.</p>
+
+  <aside class="note"><b>Note:</b> If more than one scope is specified (for example, &lt;Scope&gt;A
+  B C&lt;/Scope&gt;), then the policy will succeed if the access token includes any one of those
+  scopes (like a logical 'OR' evaluation). If you want to enforce an 'AND' type of operation, where
+  multiple scopes on a token are enforced, you can do that by creating multiple VeryifyAccessToken
+  policies, each with a single distinct scope.</aside>
+
+  <p>In this example, the policy will succeed only if the access token includes scope "A". If this
+  &lt;Scope&gt; element is omitted or if it has no value, then the policy ignores the scope of the
+  access token.</p>
+
+  <p>Now, with the ability to validate access tokens based on scope, you can design your APIs to
+  enforce specific scopes. You do this by designing custom flows with scope-aware VerifyAccessToken
+  policies attached to them.</p>
+
+  <p>Let's say your API has a flow defined for the endpoint <code>/resourceA</code>:</p>
+  <pre class="prettyprint">
+&lt;Flow name="resourceA"&gt;
+            &lt;Condition&gt;(proxy.pathsuffix MatchesPath "/resourceA") and (request.verb = "GET")&lt;/Condition&gt;
+            &lt;Description&gt;Get a resource A&lt;/Description&gt;
+            &lt;Request&gt;
+                &lt;Step&gt;
+                    &lt;Name&gt;OAuthV2-VerifyAccessTokenA&lt;/Name&gt;
+                &lt;/Step&gt;
+            &lt;/Request&gt;
+            &lt;Response&gt;
+                &lt;Step&gt;
+                    &lt;Name&gt;AssignMessage-CreateResponse&lt;/Name&gt;
+                &lt;/Step&gt;
+            &lt;/Response&gt;
+        &lt;/Flow&gt;
+</pre>
+
+  <p>When this flow is triggered (a request comes in with <code>/resourceA</code> in the path
+  suffix), the OAuthV2-VerifyAccessTokenA policy is called immediately. This policy verifies that
+  the access token is valid and it looks to see what scope(s) the token supports. If the policy is
+  configured as the example below, with &lt;Scope&gt;A&lt;/Scope&gt;, the policy will only succeed
+  if the access token has scope "A". Otherwise, it will return an error.</p>
+  <pre class="prettyprint">
+&lt;OAuthV2 async="false" continueOnError="false" enabled="true" name="OAuthV2-VerifyAccessTokenA"&gt;
+    &lt;DisplayName&gt;Verify OAuth v2.0 Access Token&lt;/DisplayName&gt;
+    &lt;ExternalAuthorization&gt;false&lt;/ExternalAuthorization&gt;
+    &lt;Operation&gt;VerifyAccessToken&lt;/Operation&gt;
+    &lt;Scope&gt;A&lt;/Scope&gt;
+    &lt;GenerateResponse enabled="true"/&gt;
+&lt;/OAuthV2&gt;
+</pre>
+
+  <p>To summarize, API developers are responsible for designing scope enforcement into their APIs.
+  They do this by creating custom flows to handle specific scopes, and attaching VerifyAccessToken
+  policies to enforce those scopes.</p>
+
+  <h2 id="codeexamples">Code examples</h2>
+
+  <p>Finally, let's take a look at some example API calls to help illustrate how tokens receive
+  scopes and how scopes are enforced.</p>
+
+  <h3 id="codeexamples-defaultcase">Default case</h3>
+
+  <p>Let's say you have a developer app with products, and that the union of those products' scopes
+  are: A, B, and C. This API call requests an access token, but does not specify a scope query
+  parameter. </p>
+  <pre class="prettyprint">
+curl -X POST -H content-type:application/x-www-form-urlencoded http://wwitman-test.apigee.net/scopecheck1/token?grant_type=client_credentials
+</pre>
+
+  <p>In this case, the generated token will be given scopes A, B, and C (the default behavior). The
+  token's metadata would look something like this:</p>
+  <pre class="prettyprint">
+{
+  "issued_at" : "1417016208588",
+  "application_name" : "eb1a0333-5775-4116-9eb2-c36075ddc360",
+  <strong>"scope" : "A B C"</strong>,
+  "status" : "approved",
+  "api_product_list" : "[scopecheck1-yEgQbQqjRR]",
+  "expires_in" : "1799", //--in seconds
+  "developer.email" : "scopecheck1-yxiuHuZcDW@apigee.com",
+  "organization_id" : "0",
+  "token_type" : "BearerToken",
+  "client_id" : "atGFvl3jgA0pJd05rXKHeNAC69naDmpW",
+  "access_token" : "MveXpj4UYXol38thNoJYIa8fBGlI",
+  "organization_name" : "wwitman",
+  "refresh_token_expires_in" : "0", //--in seconds
+  "refresh_count" : "0"
+}
+</pre>
+
+  <p>Now, let's say you have an API endpoint that has scope "A" (that is, it's VerifyAccessToken
+  requires scope "A"). Here's the VerifyAccessToken policy:</p>
+  <pre class="prettyprint">
+&lt;OAuthV2 async="false" continueOnError="false" enabled="true" name="OAuthV2-VerifyAccessTokenA"&gt;
+    &lt;DisplayName&gt;Verify OAuth v2.0 Access Token&lt;/DisplayName&gt;
+    &lt;ExternalAuthorization&gt;false&lt;/ExternalAuthorization&gt;
+    &lt;Operation&gt;VerifyAccessToken&lt;/Operation&gt;
+    &lt;Scope&gt;A&lt;/Scope&gt;
+    &lt;GenerateResponse enabled="true"/&gt;
+&lt;/OAuthV2&gt;
+</pre>
+
+  <p>Here's a sample call to and endpoint that enforces scope A:</p>
+  <pre class="prettyprint">
+curl -X GET -H Authorization: Bearer MveXpj4UYXol38thNoJYIa8fBGlI http://wwitman-test.apigee.net/scopecheck1/resourceA 
+</pre>
+
+  <p>This GET call succeeds:</p>
+  <pre class="prettyprint">
+ {
+   "hello" : "Tue, 25 Nov 2014 01:35:53 UTC"
+ }
+</pre>
+
+  <p>It succeeds because the VerifyAccessToken policy that is triggered when the endpoint is called
+  requires scope A, and the access token was granted scopes A, B, and C -- the default
+  behavior.</p>
+
+  <h3 id="codeexamples-filteringcase">Filtering case</h3>
+
+  <p>Let's say you have a developer app with products that have scopes A, B, C, and X. You request
+  an access token and include the <code>scope</code> query parameter, like this:</p>
+  <pre class="prettyprint">
+curl -i -X POST -H content-type:application/x-www-form-urlencoded 'http://myorg-test.apigee.net/oauth/token?grant_type=client_credentials&amp;scope=A X'
+</pre>
+
+  <p>In this case, the generated token will be given scopes A and X, because both A and X are a
+  valid scopes. Remember that the developer app recognizes scopes A, B, C, and X. In this case,
+  you're filtering the list of API products based on these scopes. If a product has scope A or X,
+  you can configure API endpoints that will enforce these scopes. If a product does not have scope
+  A or X (let's say it has B,C, and Z), then the APIs that enforce scopes A or X cannot be called
+  with the token.</p>
+
+  <p>When you call the API with the new token:</p>
+  <pre class="prettyprint">
+curl -X GET -H Authorization: Bearer Rkmqo2UkEIyIBCrtro1QpIG http://wwitman-test.apigee.net/scopecheck1/resourceX
+</pre>
+
+  <p>The access token is validated by the API proxy. For example:</p>
+  <pre class="prettyprint">
+&lt;OAuthV2 async="false" continueOnError="false" enabled="true" name="OAuthV2-VerifyAccessTokenX"&gt;
+    &lt;DisplayName&gt;Verify OAuth v2.0 Access Token&lt;/DisplayName&gt;
+    &lt;ExternalAuthorization&gt;false&lt;/ExternalAuthorization&gt;
+    &lt;Operation&gt;VerifyAccessToken&lt;/Operation&gt;
+    &lt;Scope&gt;A X&lt;/Scope&gt;
+    &lt;GenerateResponse enabled="true"/&gt;
+&lt;/OAuthV2&gt;
+</pre>
+
+  <p>The GET call triggers succeeds and it returns a response. For example:</p>
+  <pre class="prettyprint">
+ {
+   "hello" : "Tue, 25 Nov 2014 01:35:53 UTC"
+ }
+ 
+</pre>
+
+  <p>It succeeds because the VerifyAccessToken policy requires scope A or X, and the access token
+  includes scope A and X. Of course, if the <code>&lt;Scope&gt;</code> element were set to "B",
+  this call would fail.</p>
+
+  <h2 id="summary">Summary</h2>
+
+  <p>It's important to understand how Apigee Edge handles OAuth 2.0 scopes. Here are key takeaway
+  points:</p>
+
+  <ul>
+    <li>A developer app "recognizes" the union of all scopes defined for all of its products.</li>
+
+    <li>When an app requests an access token, it has the chance to specify which scopes it would
+    like to have. It's up to Apigee Edge (the authorization server) to figure out which scopes it
+    will actually assign to the access token based on (a) the scope(s) that are requested and (b)
+    the ones that are recognized by the developer app.</li>
+
+    <li>If Apigee Edge is not configured to check for scope (the <code>&lt;Scope&gt;</code> element
+    is missing from the VerifyAccessToken policy or it is empty), then the API call will succeed as
+    long as the scope embedded in the access token matches one of the scopes recognized by the
+    registered developer app (one of the scopes in the app's "master" list of scopes).</li>
+
+    <li>If an access token does not have any scopes associated with it, then it will only succeed
+    in cases where Edge does not consider scope (the <code>&lt;Scope&gt;</code> element is missing
+    from the VerifyAccessToken policy or it is empty).</li>
+  </ul>{% endblock %}

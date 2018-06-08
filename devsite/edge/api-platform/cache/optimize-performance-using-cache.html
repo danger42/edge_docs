@@ -1,0 +1,115 @@
+  {% extends "_base.html" %} {% block title %}Example: General purpose caching{% endblock %} {% block body %}
+
+  <p>You can use policies to store data in a general purpose cache for faster retrieval. Using the
+  following policies, your proxy can store and retrieve cached data at runtime:</p>
+
+  <ul>
+    <li><a href="/api-platform/reference/policies/populate-cache-policy.html">Populate Cache
+    policy</a> to add data to the cache.</li>
+
+    <li><a href="/api-platform/reference/policies/lookup-cache-policy.html">LookupCache policy</a>
+    to access cached data.</li>
+
+    <li><a href="/api-platform/reference/policies/invalidate-cache-policy.html">InvalidateCache
+    policy</a> to flush the cache.</li>
+  </ul>
+
+  <aside class="note"><b>Note:</b> This topic describes general purpose caching. For information
+  about response caching, see <a href=
+  "/api-platform/reference/policies/response-cache-policy.html">Response Cache policy</a>, a
+  reference with examples on the Response Cache policy.</aside>
+
+  <p>These policies are designed for general caching of data used by your proxies.</p>
+
+  <p>The sample code in this topic is based on the Outbound OAuth sample proxy in on Github (see
+  <a href="/api-platform/samples/samples-reference.html">Samples list</a>). This sample uses the
+  cache policy to store an OAuth access token for re-use across multiple outbound calls.</p>
+
+  <p>Each policy type is defined by an XML schema (.xsd). For reference, <a href=
+  "https://github.com/apigee/api-platform-samples/tree/master/schemas/policy">policy schemas</a>
+  are available on GitHub.</p>
+
+  <p>In the following example, an OAuth access token is written to the cache using a PopulateCache
+  policy. The OAuth token is retrieved for subsequent requests by a LookupCache policy. Once the
+  access token expires, JavaScript is used to retrieve a new access token, which is in turn cached
+  by the PopulateCache policy.</p>
+
+  <h2 id="populatethecache">Populate the cache</h2>
+
+  <p>Use the PopulateCache policy to write data to the cache. This example writes an OAuth access
+  token to the cache. For policy reference information, see <a href=
+  "/api-platform/reference/policies/populate-cache-policy.html">Populate Cache policy</a>.</p>
+
+  <aside class="note"><b>Note:</b> Cache keys are limited to a size of 2 KB.</aside>
+  <pre class="prettyprint">
+&lt;PopulateCache name="token-cache"&gt;
+    &lt;!-- The cache to write to. --&gt;
+    &lt;CacheResource&gt;mycache&lt;/CacheResource&gt;
+    &lt;!-- The source of the data, a variable containing the value. --&gt;
+    &lt;Source&gt;twitter-translate.apiAccessToken&lt;/Source&gt;
+    &lt;!-- An enumeration representing a prefix for namespace scope. --&gt;
+    &lt;Scope&gt;Exclusive&lt;/Scope&gt;
+    &lt;!-- A unique pointer (a flow variable value) to the data. Use this later to retrieve it. --&gt;
+    &lt;CacheKey&gt;
+        &lt;KeyFragment&gt;apiAccessToken&lt;/KeyFragment&gt;
+        &lt;KeyFragment ref="request.queryparam.client_id"&gt;&lt;/KeyFragment&gt;
+    &lt;/CacheKey&gt;
+    &lt;!-- Entries placed into the cache with this policy will expire after 600 seconds. --&gt;
+    &lt;ExpirySettings&gt;
+        &lt;TimeoutInSec&gt;600&lt;/TimeoutInSec&gt;
+    &lt;/ExpirySettings&gt;
+&lt;/PopulateCache&gt;
+</pre>
+
+  <p>Variables can be populated by policies or by code. The <code>Source</code> variable in this
+  example is populated by the following JavaScript call:
+  <code>context.setVariable('twitter-translate.apiAccessToken', getAccessToken());</code></p>
+
+  <p>For more on cache keys, see <a href=
+  "/api-platform/reference/policies/working-cachekeys.html">Working with cache keys</a>.</p>
+
+  <h2 id="lookupcacheddata">Lookup cached data</h2>
+
+  <p>You can retrieve cached values with the LookupCache policy. The following LookupCache policy
+  reads a value from <code>mycache</code> and writes the value to the
+  variable <code>twitter-translate.apiAccessToken</code>. For policy reference
+  information, see <a href="/api-platform/reference/policies/lookup-cache-policy.html">LookupCache
+  policy</a>.</p>
+  <pre class="prettyprint">
+&lt;LookupCache name="token-cache"&gt;
+    &lt;!-- The cache to read from. --&gt;
+    &lt;CacheResource&gt;mycache&lt;/CacheResource&gt;
+    &lt;!-- Where to assign the retrieved value - here, a variable. --&gt;
+    &lt;AssignTo&gt;twitter-translate.apiAccessToken&lt;/AssignTo&gt;
+    &lt;!-- An enumeration representing a prefix for namespace scope. --&gt;
+    &lt;Scope&gt;Exclusive&lt;/Scope&gt;
+    &lt;!-- The unique pointer (a flow variable value) that was used to store the data in the cache. --&gt;
+
+    &lt;CacheKey&gt;
+        &lt;KeyFragment&gt;apiAccessToken&lt;/KeyFragment&gt;
+        &lt;KeyFragment ref="request.queryparam.client_id"&gt;&lt;/KeyFragment&gt;
+    &lt;/CacheKey&gt;
+&lt;/LookupCache&gt;
+</pre>
+
+  <h2 id="invalidatethecache">Invalidate the cache</h2>
+
+  <p>The cache can be invalidated explicitly by specifying an HTTP header. When a request that
+  contains the specified HTTP header is received, the cache will be flushed. For policy
+  reference information, see <a href=
+  "/api-platform/reference/policies/invalidate-cache-policy.html">InvalidateCache policy</a>.</p>
+  <pre class="prettyprint">
+&lt;InvalidateCache name="InvalidateMyCache"&gt;
+    &lt;!-- The cache to invalidate. --&gt;
+    &lt;CacheResource&gt;test-cache&lt;/CacheResource&gt;
+    &lt;!-- An enumeration representing a prefix for namespace scope. --&gt;
+    &lt;Scope&gt;Exclusive&lt;/Scope&gt;
+    &lt;!-- Fragments constructing the unique pointer used when 
+        the data was put into the cache. --&gt;
+    &lt;CacheKey&gt;
+        &lt;KeyFragment&gt;apiAccessToken&lt;/KeyFragment&gt;
+        &lt;KeyFragment ref="request.queryparam.client_id" /&gt;
+    &lt;/CacheKey&gt;
+    &lt;PurgeChildEntries&gt;true&lt;/PurgeChildEntries&gt;
+&lt;/InvalidateCache&gt;
+</pre>{% endblock %}

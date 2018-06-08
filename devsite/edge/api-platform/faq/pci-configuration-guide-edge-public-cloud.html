@@ -1,0 +1,258 @@
+  {% extends "_base.html" %} {% block title %}PCI Configuration Guide for Edge Public Cloud{% endblock %} {% block body %}
+
+  <p>For a customer to be PCI compliant on Apigee Edge Public Cloud, there are some actions and
+  processes the customer owns under the "Shared Responsibility Model." The following items should
+  be reviewed by customers who have purchased the PCI compliance pack and are required to be PCI
+  compliant. These items are self-service within Edge and need to be addressed for the customer
+  organization (org) to be PCI compliant. The overarching concept is "Google secures the platform,
+  the customer secures their data."</p>
+
+  <h2 id="pcirequirementsmapping">PCI Requirements Mapping</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th><strong><a href=
+        "https://www.pcisecuritystandards.org/documents/PCI%20SSC%20Quick%20Reference%20Guide.pdf"
+        target="_blank">PCI Requirement</a></strong></th>
+
+        <th><strong>Section</strong></th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td>Requirement 7: Restrict access to cardholder data by business need to know</td>
+
+        <td>
+          <p id="gdcalert1"><a href="#authorizations">Use/Authorizations</a></p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Requirement 3: Protect stored cardholder data</td>
+
+        <td>
+          <p id="gdcalert2"><a href="#masking">Data masking</a></p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Requirement 10: Track and monitor all access to network resources and cardholder
+        data</td>
+
+        <td>
+          <p id="gdcalert3"><a href="#audit">Audit trail</a></p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Requirement 8: Assign a unique ID to each person with computer access</td>
+
+        <td>
+          <p id="gdcalert4"><a href="#passwords">Complex password requirements or SAML</a></p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Requirement 11: Regularly test security systems and processes</td>
+
+        <td>
+          <p id="gdcalert5"><a href="#scanning">Endpoint scanning</a></p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Requirement 4: Encrypt transmission of cardholder data across open, public
+        networks</td>
+
+        <td>
+          <p id="gdcalert6"><a href="#tls">TLS configuration</a></p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Requirement 3: Protect stored cardholder data</td>
+
+        <td>
+          <p id="gdcalert7"><a href="#storage">Data storage</a></p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Requirement 4: Encrypt transmission of cardholder data across open, public
+        networks</td>
+
+        <td>
+          <p id="gdcalert8"><a href="#encryption">Data encryption</a></p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="trace">Trace / Debug</h2>
+
+  <p>Trace/Debug is a troubleshooting tool that allows the user to view the status and contents of
+  an API call as it is processed through the Apigee Message Processor. Trace and Debug are two
+  names for the same service but accessed through different mechanisms. Trace is the name of this
+  service inside of the Edge UI. Debug is the name of the same service when used through API calls.
+  Use of the term Trace in this document is valid for both Trace and Debug.</p>
+
+  <p>During a Trace session, "Data Masking" is enforced. This tool can block data from being
+  displayed during a Trace. See the <a href="#masking">Data Masking</a> section below.</p>
+
+  <p>Encrypted Key Value Maps (KVMs) may be used for PCI customers. If an encrypted KVM is in use,
+  Trace may still be used, but some variables will not be visible in the Trace display screen. It
+  is possible to take additional steps to also display these variables during a Trace.</p>
+
+  <p>Detailed instructions on the use of Trace are available at <a href=
+  "/api-platform/debug/using-trace-tool-0.html">Using the Trace tool</a>.</p>
+
+  <p>Details on KVMs, including encrypted KVMs, are available at <a href=
+  "/api-platform/cache/key-value-maps.html">Working with key value maps</a>.</p>
+
+  <h2 id="authorizations">Use/Authorizations</h2>
+
+  <p>Access to Trace is managed through the RBAC (Role-Based Access Control) system for user
+  accounts within Edge. Detailed instructions on using the RBAC system to give and revoke Trace
+  privileges are available at <a href=
+  "/api-platform/system-administration/understanding-roles.html">Assigning roles</a> and <a href=
+  "/api-platform/system-administration/creating-custom-roles.html">Creating custom roles in the
+  UI</a>. Trace permissions allow the user to launch a Trace, stop a Trace, access the output from
+  a Trace session.</p>
+
+  <p>Since Trace has access to the payload of API calls (formally called the "Message Body"), it's
+  important to consider who has access to run a Trace. Because user management is a customer
+  responsibility, the granting of Trace permissions is also a customer responsibility. Apigee, as
+  the platform owner, does have the ability to add a user to a customer org and to assign the
+  privileges. This ability is only used upon customer request for support in a situation where it
+  appears that the customer service is failing and reviewing a Trace session is believed to provide
+  the best information on the root cause.</p>
+
+  <h2 id="masking">Data masking</h2>
+
+  <p>Data masking prevents the display of sensitive data during a Trace/Debug session only, both in
+  the Trace (Edge UI) and in the backend by Debug (Edge API). Details of how to set up masking are
+  available at <a href="/api-platform/security/data-masking.html">Data masking and hiding</a>.
+  Masking sensitive data is part of <a href=
+  "https://www.pcisecuritystandards.org/documents/PCI%20SSC%20Quick%20Reference%20Guide.pdf">PCI
+  Requirement 3 - Protect stored cardholder data</a></p>
+
+  <p>Data masking does NOT prevent the data from being visible in log files, the cache, analytics,
+  etc. For help with data masking in logs, consider adding a regex pattern to logback.xml file.
+  Sensitive data should typically not be written to cache or analytics without a strong business
+  justification and review by customer security and legal teams.</p>
+
+  <h2 id="cache">L1 &amp; L2 cache</h2>
+
+  <p>Caching is available to PCI customers for use with non-regulated data only. Cache should not
+  be used for PCI Card Holder Data (CHD); it is not approved by the Apigee PCI Compliance audit as
+  a storage location for CHD. Per PCI guidance (<a href=
+  "https://www.pcisecuritystandards.org/documents/PCI%20SSC%20Quick%20Reference%20Guide.pdf">Requirement
+  3: Protect stored cardholder data</a>) , PCI data should be stored only in a PCI compliant
+  location. Use of the L1 cache will automatically use the L2 cache also. The L1 cache is "memory
+  only" while the L2 cache writes data to disk to synchronize across multiple L1 caches. L2 cache
+  is what keeps multiple Message Processors in sync within a region and globally. It is not
+  currently possible to have L1 cache enabled without an L2 cache behind it. The L2 cache writes
+  data to disk so that it can be synced to other message processors for the customer org. Because
+  L2 Cache writes the data to disk, use of cache for CHD or other restricted data is not
+  supported.</p>
+
+  <p>Use of cache by customers is permitted for non-CHD and other unrestricted data. <strong>We do
+  not disable the cache by default for PCI customers, because some customers run both PCI and
+  non-PCI related API calls through a single org.</strong> Because the capability is still enabled
+  for PCI customers, it is the customer's responsibility to use the service appropriately and train
+  their users to not use cache when PCI data is likely to be in the API call. The Apigee PCI
+  Compliance audit does not support CHD stored in the cache.</p>
+
+  <p>Detailed instructions on using the Cache are available at <a href=
+  "/api-platform/cache/caching-edge.html">Adding caching and persistence</a>.</p>
+
+  <h2 id="audit">Audit trail</h2>
+
+  <p>Customers have the ability to review the audit trail of all administrative activities
+  performed within the customer's org, including the use of Trace. Detailed instructions are
+  available <a href=
+  "https://community.apigee.com/articles/27175/apigee-edge-auditing.html">here</a> and at <a href=
+  "/api-platform/debug/using-trace-tool-0.html">Using the Trace tool</a>. (<a href=
+  "https://www.pcisecuritystandards.org/documents/PCI%20SSC%20Quick%20Reference%20Guide.pdf">PCI
+  Requirement 10: Track and monitor all access to network resources and cardholder data</a>)</p>
+
+  <h2 id="passwords">Complex password requirements or SAML</h2>
+
+  <p>For PCI customers, user passwords are configured to meet advanced requirements as mandated by
+  PCI DSS. These password requirements are the minimum necessary settings for PCI compliance. Edge
+  also offers multi-factor authentication (<a href=
+  "https://www.pcisecuritystandards.org/documents/PCI%20SSC%20Quick%20Reference%20Guide.pdf">PCI
+  Requirement 8: Assign a unique ID to each person with computer access</a>), described at <a href=
+  "/api-platform/system-administration/enable-two-factor-auth-your-apigee-account.html">Enable
+  two-factor auth for your Apigee account</a>, and SAML, described at <a href=
+  "/api-platform/system-administration/enabling-saml-authentication-edge.html">Enabling SAML
+  Authentication for Edge</a>, as alternatives for authentication controls.</p>
+
+  <h2 id="endpoint">Endpoint security</h2>
+
+  <h3 id="scanning">Endpoint scanning</h3>
+
+  <p>Scanning and testing of hosts is required for PCI compliance (<a href=
+  "https://www.pcisecuritystandards.org/documents/PCI%20SSC%20Quick%20Reference%20Guide.pdf">Requirement
+  11: Regularly test security systems and processes</a>). For Edge Cloud, customers are responsible
+  for the scanning and testing of their API endpoints (sometimes called the "runtime components")
+  in Edge. Customer testing should cover the actual API proxy services hosted on Edge where API
+  traffic is sent into Edge prior to being processed and then delivered to the customer datacenter.
+  Testing of shared resources, such as the management portal UI, is not approved for individual
+  customers (a third party report covering testing of the shared services is available to customers
+  under a non-disclosure agreement and upon request).</p>
+
+  <p>Customers should, and are encouraged to, test their API endpoints. Your agreement with Apigee
+  does not prohibit testing of your API endpoints, but we don't permit you to test the shared
+  management UI. Although if additional clarification is required, please open a support request
+  referencing your planned testing. Notification to Apigee in advance is appreciated so that we can
+  be aware of the testing traffic.</p>
+
+  <p>Customers testing their endpoints should look for any API-specific issues, any issues related
+  to Apigee services, and also check on the TLS and other configurable items. Any items that are
+  found related to Apigee services should be communicated to Apigee through a support request.</p>
+
+  <p>Most items related to the endpoint are customer self-service items and can be fixed by
+  reviewing the Edge documentation. If there are items where it is unclear how to fix them, please
+  open a support request.</p>
+
+  <h3 id="tls">TLS configuration</h3>
+
+  <p>As per <a href="https://blog.pcisecuritystandards.org/migrating-from-ssl-and-early-tls">PCI
+  standards</a>, SSL and early TLS need to be migrated to secured versions. Customers are
+  responsible for defining and configuring their own TLS endpoints for API proxies. This is a
+  self-service feature in Edge. Customer requirements around encryption, protocol, and algorithm
+  selections are widely variable and specific to individual use cases. Because Apigee does not know
+  the details of every customer's API design and data payloads, customers have the responsibility
+  to determine appropriate encryption for data in transit. Detailed instructions on TLS
+  configuration are available at <a href=
+  "/api-platform/system-administration/ssl.html">TLS/SSL</a>.</p>
+
+  <h2 id="storage">Data storage</h2>
+
+  <p>Storage of data within Edge is not required for Edge to function properly. However, there are
+  services available for data storage in Edge. Customers may choose to use the cache, BaaS
+  (Backend-as-a-Service), or analytics for data storage. None of these services are authorized for
+  storage of CHD per the Apigee PCI audit. Per <a href=
+  "https://www.pcisecuritystandards.org/documents/PCI%20SSC%20Quick%20Reference%20Guide.pdf">PCI
+  Requirement 3 (Protect stored cardholder data)</a>, PCI data should be stored only in PCI
+  compliant locations. Use of these services is available to customers for storing non-PCI data or
+  other unrestricted data subject to the customer's security and legal requirements. These services
+  are customer self-service items, so it is customer's responsibility to configure them not to
+  capture or store CHD. Reviews of configuration, policies, and deployments by customer
+  administrators is recommended to avoid an accidental or malicious use of data storage services in
+  Edge in a non-compliant manner .</p>
+
+  <h2 id="encryption">Data encryption</h2>
+
+  <p>Data encryption tools are not offered to customers for their use inside of Edge. However,
+  customers are free to encrypt their PCI data prior to sending to Edge. <a href=
+  "https://www.pcisecuritystandards.org/documents/PCI%20SSC%20Quick%20Reference%20Guide.pdf">PCI
+  Requirement 4: (Encrypt transmission of cardholder data across open, public networks)</a>
+  recommend to encrypt cardholder data across open, public networks. Encrypted data in the payload
+  (or Message Body) does not prevent Edge from functioning. Some Edge policies may be unable to
+  interact with the data if it is received encrypted by the customer. For example, a transformation
+  is not possible if the data itself is not available to Edge to change. But other policies and
+  customer-built policies and bundles will work even if the data payload is encrypted.</p>{% endblock %}

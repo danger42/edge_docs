@@ -1,0 +1,109 @@
+{% extends "_base.html" %}
+{% block title %}Step 4: Change your target endpoint{% endblock %}
+{% block body %}
+
+  <p>Now that you've <a href="test-proxy">tested your new proxy</a>, you're almost ready to add a
+  policy to it. Before you do that, though, you should change your proxy's target endpoint to
+  one that returns some data.</p>
+
+  <p>Recall that in <a href="create-proxy">Step 2: Create an API proxy</a>, you set the
+  target endpoint (in the <strong>Existing API</strong> field) to "https://mocktarget.apigee.net".
+  Well, that endpoint doesn't return any data, so now you'll change the endpoint to one that returns
+  some XML.</p>
+
+  <p><strong>To change your proxy's target endpoint:</strong></p>
+
+  <ol>
+    <li>Log in to the {{mgmt_ui}} and click API Proxies.</li>
+    <li>Select your getstarted proxy from the list. If you don't see your proxy in the list, be
+      sure that you selected the right organization, as described in <a href="create-account#orgs">A
+      word about organizations</a>.</li>
+    <li><p>Click the <strong>Develop</strong> tab:</p>
+      <p><img class="screenshot" src="/api-platform/images/DevelopTab_v1.png"/></p>
+      <p>This takes you to the API Proxy Editor. The Proxy Editor lets you see the structure of your
+      API proxy and configure its flow. (Don't panic. Other tutorials will cover the concept of
+      <em>flows</em>.)</p>
+    </li>
+    <li>In the <strong>Navigator</strong> pane, select <strong>Target Endpoints &gt;
+      default</strong>:
+      <p><img class="screenshot" width="30%" src="/api-platform/images/proxy-navigator.png"/></p>
+      <p>Edge displays the endpoint settings in the <strong>Code</strong> pane:</p>
+      <pre class="prettyprint">&lt;TargetEndpoint name="default"&gt;
+  &lt;Description/&gt;
+  &lt;FaultRules/&gt;
+  &lt;PreFlow name="PreFlow"&gt;
+    &lt;Request/&gt;
+    &lt;Response/&gt;
+  &lt;/PreFlow&gt;
+  &lt;PostFlow name="PostFlow"&gt;
+    &lt;Request/&gt;
+    &lt;Response/&gt;
+  &lt;/PostFlow&gt;
+  &lt;Flows/&gt;
+  <strong>&lt;HTTPTargetConnection&gt;
+    &lt;Properties/&gt;
+    &lt;URL&gt;https://mocktarget.apigee.net&lt;/URL&gt;
+  &lt;/HTTPTargetConnection&gt;</strong>
+&lt;/TargetEndpoint&gt;</pre>
+      <p>The target endpoint is defined by the <code>&lt;HTTPTargetConnection&gt;</code>
+      element.</p>
+    </li>
+    <li><p>Change the URL to "https://mocktarget.apigee.net<strong>/xml</strong>". (Append "/xml"
+      to the existing URL.)</p>
+      <p>The new URL returns a small block of XML in the body of the response.</p>
+      <p>Your endpoint configuration should now look like the following:</p>
+      <pre class="prettyprint">...
+&lt;HTTPTargetConnection&gt;
+  &lt;Properties/&gt;
+  &lt;<strong>URL&gt;https://mocktarget.apigee.net/xml</strong>&lt;/URL&gt;
+&lt;/HTTPTargetConnection&gt;
+...</pre>
+    </li>
+    <li><p>To save your changes to the proxy configuration, click the <strong>Save</strong>
+      button.</p>
+      <p>Edge saves your changes and automatically deploys them.
+      <p>If there is an error, Edge will save your changes but not deploy the proxy.</p>
+      <ol>
+        <li>Fix your proxy configuration. Edge may provide syntax guidance as a pop-up.</li>
+        <li>Deploy your changes to the <code>test</code> environment by clicking
+          <strong>Deployment &gt; test</strong>.</li>
+      </ol>
+      <p>You can check if your proxy was deployed successfully by selecting the
+      <strong>Deployment</strong> drop-down above the Flow editor. A green button indicates that
+      the proxy was deployed to that environment successfully:</p>
+      <p><img class="screenshot" width="25%" src="/api-platform/images/deployment-indicator.png"></p>
+    </li>
+    <li><p>Test your changes by sending a request to your proxy, just like you did in
+      <a href="test-proxy">Step 3: Test your new proxy</a>. For example:</p>
+      <pre class="devsite-terminal">curl https://<var>org_name</var>-test.apigee.net/getstarted</pre>
+      <aside class="key-point"><h3>TIP</h3>
+        <p>Use an XML prettifier such as <code>xmllint</code> to make your output look better in a
+        terminal.</p></aside>
+      <p>For example:</p>
+      <pre class="devsite-terminal">curl https://ahamilton-eval-test.apigee.net/getstarted | xmllint --format -</pre>
+      <p>This time, the mocktarget endpoint returns XML in the body of the response:</p>
+      <pre class="prettyprint">{% htmlescape %}<?xml version="1.0" encoding="UTF-8"?>
+<root>
+  <city>San Jose</city>
+  <firstName>John</firstName>
+  <lastName>Doe</lastName>
+  <state>CA</state>
+</root>{% endhtmlescape %}</pre>
+    </li>
+  </ol>
+
+  <aside class="success"><h3>Congratulations!</h3> You've successfully changed the target
+  endpoint of your API proxy. The new endpoint will return XML. Now you're ready to add a policy
+  that converts XML to JSON.</aside>
+
+  <h3>Next step</h3>
+  <p><a class="button button-disabled" href="create-account">Step 1</a>
+  <a class="button button-disabled" href="create-proxy">Step 2</a>
+  <a class="button button-disabled" href="test-proxy">Step 3</a>
+  <a class="button button-disabled" href="change-endpoint">Step 4</a>
+  <a class="button button-primary" href="add-policy">Step 5: Add a policy</a></p>
+
+  <h2>Discussion</h2>
+  {% include "comment-widget.html" %}
+
+{% endblock %}

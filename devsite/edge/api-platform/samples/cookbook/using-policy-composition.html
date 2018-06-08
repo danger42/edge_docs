@@ -1,0 +1,535 @@
+  {% extends "_base.html" %} {% block title %}Using policy composition{% endblock %} {% block body %}
+
+  <p>In this topic, you will learn how to create a mashup using <em>policy composition</em>.
+  Policy composition is an Apigee proxy pattern that lets you combine results from multiple backend
+  targets into a single response using policies. </p>
+
+  <p>For a general overview of policy composition, see  "The policy composition pattern"
+  in <a href="/api-platform/samples/cookbook/api-proxy-cookbook-patterns.html">API Proxy Cookbook
+  patterns</a>.</p>
+
+  <h2 id="downloadandtryoutthesamplecode">Download and try out the sample code</h2>
+
+  <aside class="note">
+    <b>Sample:</b> We recommend that you download and try out this topic's sample code. The sample
+    is called <strong>policy-mashup-cookbook</strong>, which you can find in the <a href=
+    "https://github.com/apigee/api-platform-samples/tree/master/doc-samples" target=
+    "_blank">doc-samples folder</a> in the Apigee Edge API Services samples repository in
+    GitHub. For information on downloading Apigee samples, see <a href=
+    "/api-platform/samples/using-samples.html">Using the sample API proxies</a>. 
+
+    <p>Instructions for deploying and calling the sample API proxy are provided in the README file
+    that comes with the sample. You can also find brief deployment instructions here: <a href=
+    "/api-platform/samples/using-samples.html">Using the sample API proxies</a>.</p>
+  </aside>
+
+  <h2 id="aboutthiscookbookexample">About this cookbook example</h2>
+
+  <p>This cookbook example illustrates an API proxy pattern called <em>policy composition</em>.
+  This pattern provides one way (there are others) to mash up data from multiple backend sources.
+  More generally, this topic demonstrates how policies can be combined and chained together to
+  produce a desired result. For a general overview of this pattern and other related ones, see
+  <a href="/api-platform/samples/cookbook/api-proxy-cookbook-patterns.html">API Proxy Cookbook
+  patterns</a>.</p>
+
+  <aside class="note"><b>Note:</b> When using this API proxy, app developers may be unaware of
+  where the backend data comes from. All an app developer knows about is how to call your API
+  proxy. The details of how the data is retrieved and mashed up are not necessarily
+  exposed.</aside>
+
+  <p>The example discussed here uses policy composition to mash up data from these two separate
+  public APIs:</p>
+
+  <ul>
+    <li><a href="https://developers.google.com/maps/documentation/geocoding/">The Google Geocoding
+    API</a>: This API converts addresses (like "1600 Amphitheatre Parkway, Mountain View, CA")
+    into geographic coordinates (like latitude 37.423021 and longitude -122.083739).</li>
+
+    <li><a href="https://developers.google.com/maps/documentation/elevation/">The Google Elevation
+    API</a> This API provides a simple interface to query locations on the earth for elevation
+    data. In this example, the coordinates returned from the Geocoding API will be used as input
+    into this API. </li>
+  </ul>
+
+  <p><img src="/api-platform/images/policyComp1.png" width="480"></p>
+
+  <p>App developers will call this API proxy with two query parameters, a postal code and a country
+  ID:</p>
+
+  <div id="well">
+    <pre class="prettyprint">
+$ curl "http://{myorg}-test.apigee.net/policy-mashup-cookbook?country=us&amp;postalcode=08008"
+</pre>
+
+    <p>The response is a JSON object that includes the geocoded location (latitude/longitude) for
+    the center of the supplied postal code area combined with the elevation at that geocoded
+    location. </p>
+  </div>
+
+  <div id="well">
+    <pre class="prettyprint">
+{  
+   "ElevationResponse":{  
+      "status":"OK",
+      "result":{  
+         "location":{  
+            "lat":"39.7500713",
+            "lng":"-74.1357407"
+         },
+         "elevation":"0.5045232",
+         "resolution":"76.3516159"
+      }
+   }
+}
+</pre>
+
+    <h2 id="beforeyoubegin">Before you begin</h2>
+
+    <p>If you'd like to read a brief overview of the policy composition pattern, see "The policy
+    composition pattern" in <a href=
+    "/api-platform/samples/cookbook/api-proxy-cookbook-patterns.html">API Proxy Cookbook
+    patterns</a>.</p>
+
+    <p>Before you explore this cookbook example, you should also be familiar with these fundamental
+    concepts:</p>
+
+    <ul>
+      <li>What policies are and how to attach them to proxies. For a good introduction to policies,
+      see <a href="/api-platform/develop/policy-attachment-and-enforcement.html">What's a
+      policy?</a>. </li>
+
+      <li>The structure of an API proxy flow, as explained in <a href=
+      "/api-platform/fundamentals/flow-configurations.html">Configuring flows</a>. Flows let you
+      specify the sequence in which policies are executed by an API proxy. In this example, several
+      policies are created and added to the API proxy's flow. </li>
+
+      <li>How an API proxy project is organized on your filesystem, as explained in <a href=
+      "/api-platform/reference/policies/api-proxy-configuration-reference.html">API proxy
+      configuration reference</a>. This cookbook topic demonstrates local development (file
+      system-based) as opposed to cloud-based development where you could use the management UI to
+      develop the API proxy.</li>
+
+      <li>A working knowledge of XML. In this example, we build out the API proxy and its
+      policies with XML files that reside on the filesystem. </li>
+    </ul>
+
+    <p>If you have downloaded the sample code, you can locate all of the files discussed in this
+    topic in the <strong>mashup-policy-cookbook</strong> sample folder. The following sections
+    discuss the sample code in detail. </p>
+
+    <h2 id="goingwiththeflow">Going with the flow</h2>
+
+    <p>Before moving to the policies, let's take a look a the main flow of our example
+    API proxy. The flow XML, shown below, tells us a lot about this proxy, the policies it
+    uses, and where those policies are called. </p>
+
+    <p>In the sample download, you can find this XML in the file
+    <code>doc-samples/policy-mashup-cookbook/apiproxy/proxies/default.xml</code>.</p>
+    <pre class="prettyprint">
+&lt;ProxyEndpoint name="default"&gt;
+  &lt;Flows&gt;
+    &lt;Flow name="default"&gt;
+      &lt;Request&gt;
+            &lt;!-- Generate request message for the Google Geocoding API --&gt;
+            &lt;Step&gt;&lt;Name&gt;GenerateGeocodingRequest&lt;/Name&gt;&lt;/Step&gt;
+            &lt;!-- Call the Google Geocoding API --&gt;
+            &lt;Step&gt;&lt;Name&gt;ExecuteGeocodingRequest&lt;/Name&gt;&lt;/Step&gt;
+            &lt;!-- Parse the response and set variables --&gt;
+            &lt;Step&gt;&lt;Name&gt;ParseGeocodingResponse&lt;/Name&gt;&lt;/Step&gt;
+            &lt;!-- Generate request message for the Google Elevation API --&gt;
+            &lt;Step&gt;&lt;Name&gt;AssignElevationParameters&lt;/Name&gt;&lt;/Step&gt;
+      &lt;/Request&gt;
+      &lt;Response&gt;
+            &lt;!-- Parse the response message from the Elevation API --&gt;
+            &lt;Step&gt;&lt;Name&gt;ParseElevationResponse&lt;/Name&gt;&lt;/Step&gt;
+            &lt;!-- Generate the final JSON-formatted response with JavaScript --&gt;
+            &lt;Step&gt;&lt;Name&gt;GenerateResponse&lt;/Name&gt;&lt;/Step&gt;
+      &lt;/Response&gt;
+    &lt;/Flow&gt;
+  &lt;/Flows&gt;
+
+  &lt;HTTPProxyConnection&gt;
+    &lt;!-- Add a base path to the ProxyEndpoint for URI pattern matching--&gt;
+    &lt;BasePath&gt;/policy-mashup-cookbook&lt;/BasePath&gt;
+    &lt;!-- Listen on both HTTP and HTTPS endpoints --&gt;
+    &lt;VirtualHost&gt;default&lt;/VirtualHost&gt;
+    &lt;VirtualHost&gt;secure&lt;/VirtualHost&gt;
+  &lt;/HTTPProxyConnection&gt;
+  &lt;RouteRule name="default"&gt;
+    &lt;!-- Connect ProxyEndpoint to named TargetEndpoint under /targets --&gt;
+    &lt;TargetEndpoint&gt;default&lt;/TargetEndpoint&gt;
+  &lt;/RouteRule&gt;
+&lt;/ProxyEndpoint&gt;
+</pre>
+
+    <p>Here's a summary of the flow's elements.</p>
+
+    <aside class="note"><b>Note:</b> This is a ProxyEndpoint flow. The ProxyEndpoint
+    configuration defines the inbound (app-facing) interface for an API proxy. When you configure a
+    ProxyEndpoint, you define how apps invoke the proxied API.</aside>
+
+    <ul>
+      <li><strong>&lt;Request&gt;</strong> - The &lt;Request&gt; element consists of several
+      &lt;Step&gt; elements. Each step calls one of the policies that we'll create through the rest
+      of this topic. These policies are concerned with creating a request message, sending it, and
+      parsing the response. By the end of this topic, you'll understand the role of each of these
+      policies.</li>
+
+      <li><strong>&lt;Response&gt;</strong> - The &lt;Response&gt; element also includes
+      &lt;Steps&gt;. These steps also call policies that are responsible for processing the final
+      response from the target endpoint (the Google Elevation API). </li>
+
+      <li><strong>&lt;HttpProxyConnection&gt;</strong> - This element specifies details about
+      how apps will connect to this API proxy, including the &lt;BasePath&gt;, which specifies how
+      this API will be called. </li>
+
+      <li><strong>&lt;RouteRule&gt;</strong> - This element specifies what happens immediately
+      after the inbound request messages are processed. In this case, the TargetEndpoint is called.
+      We'll discuss more about this important step later in this topic.</li>
+    </ul>
+
+    <h2 id="creatingthepolicies">Creating the policies</h2>
+
+    <p>The following sections discuss each of the policies that make up this policy composition
+    example. </p>
+
+    <h3 id="creatingthepolicies-createthefirstassignmessagepolicy">Create the first AssignMessage
+    policy</h3>
+
+    <p>The first <a href=
+    "/api-platform/reference/policies/assign-message-policy.html">AssignMessage</a> policy,
+    listed below, creates a request message that will be sent to the Google Geocoding
+    service. </p>
+
+    <p><img src="/api-platform/images/policyComp2.png" width="480"></p>
+
+    <p>Let's start with the policy code, and then we'll explain its elements in more detail. In the
+    sample download, you can find this XML in the file
+    <code>doc-samples/policy-mashup-cookbook/apiproxy/policies/GenerateGeocodingRequest.xml</code>.</p>
+
+    <div id="well">
+      <pre class="prettyprint">
+&lt;AssignMessage name="GenerateGeocodingRequest"&gt;
+  &lt;AssignTo createNew="true" type="request"&gt;GeocodingRequest&lt;/AssignTo&gt;
+  &lt;Set&gt;
+    &lt;QueryParams&gt;
+      &lt;QueryParam name="address"&gt;{request.queryparam.postalcode}&lt;/QueryParam&gt;
+      &lt;QueryParam name="region"&gt;{request.queryparam.country}&lt;/QueryParam&gt;
+      &lt;QueryParam name="sensor"&gt;false&lt;/QueryParam&gt;
+    &lt;/QueryParams&gt;
+    &lt;Verb&gt;GET&lt;/Verb&gt;
+  &lt;/Set&gt;
+  &lt;!-- Set variables for use in the final response --&gt;
+  &lt;AssignVariable&gt;
+    &lt;Name&gt;PostalCode&lt;/Name&gt;
+    &lt;Ref&gt;request.queryparam.postalcode&lt;/Ref&gt;
+  &lt;/AssignVariable&gt;
+  &lt;AssignVariable&gt;
+    &lt;Name&gt;Country&lt;/Name&gt;
+    &lt;Ref&gt;request.queryparam.country&lt;/Ref&gt;
+  &lt;/AssignVariable&gt;
+&lt;/AssignMessage&gt;
+</pre>
+
+      <p>Here's a brief description of the elements in this policy. You can read more about this
+      policy in <a href="/api-platform/reference/policies/assign-message-policy.html">Assign
+      Message policy</a>.</p>
+
+      <ul>
+        <li><strong>&lt;AssignMessage name&gt;</strong> - Gives this policy a name. The name is
+        used when the policy is referenced in a flow. </li>
+
+        <li><strong>&lt;AssignTo&gt;</strong> - Creates a named variable called GeocodingRequest.
+        This variable encapsulates the request object that will be sent to the backend by the
+        ServiceCallout policy.</li>
+
+        <li><strong>&lt;QueryParams&gt;</strong> - Sets the query parameters that are needed by the
+        backend API call. In this case, the Geocoding API needs to know the location, which is
+        expressed with a postal code, and a country ID. The app user supplies this information, and
+        we simply extract it here. The <code>sensor</code> param is required by the API, and is
+        either true or false, and we just hardcode it to false here.</li>
+
+        <li><strong>&lt;Verb&gt;</strong> - In this case, we are making a simple GET request to the
+        API.</li>
+
+        <li><strong>&lt;AssignVariable&gt;</strong> - These variables store the values we are
+        passing to the API. In this example, the variables will be accessed later in the response
+        returned to the client. </li>
+      </ul>
+
+      <h3>Send the request with ServiceCallout</h3>
+
+      <p>The next step in the policy composition sequence is to create a <a href=
+      "/api-platform/reference/policies/service-callout-policy.html">ServiceCallout</a> policy. The
+      ServiceCallout policy, listed below, sends the request object that we created in the
+      previous AssignMessage policy to the Google Geocoding service, and saves the result in a
+      variable called GeocodingResponse. </p>
+    </div>
+
+    <p><img src="/api-platform/images/policyComp3.png" width="480"></p>
+
+    <p>As before, let's take a look at the code first. A detailed explanation follows. You can read
+    more about this policy in <a href=
+    "/api-platform/reference/policies/service-callout-policy.html">Service Callout
+    policy</a>. In the sample download, you can find this XML in the file
+    <code>doc-samples/policy-mashup-cookbook/apiproxy/policies/ExecuteGeocodingRequest.xml</code>.</p>
+
+    <div id="well">
+      <pre class="prettyprint">
+&lt;ServiceCallout name="ExecuteGeocodingRequest"&gt;
+  &lt;Request variable="GeocodingRequest"/&gt;
+  &lt;Response&gt;GeocodingResponse&lt;/Response&gt;
+  &lt;HTTPTargetConnection&gt;
+    &lt;URL&gt;http://maps.googleapis.com/maps/api/geocode/json&lt;/URL&gt;
+  &lt;/HTTPTargetConnection&gt;
+&lt;/ServiceCallout&gt;
+</pre>
+
+      <p>Here's a brief description of this policy's elements. </p>
+
+      <ul>
+        <li><strong>&lt;ServiceCallout&gt;</strong> - As with the previous policy, this one has a
+        name. </li>
+
+        <li><strong>&lt;Request variable&gt;</strong> - This is the variable that was created in
+        the AssignMessage policy. It encapsulates the request going to the backend API.</li>
+
+        <li><strong>&lt;Response&gt;</strong> - This element names a variable in which the response
+        is stored. As you will see, this variable will be accessed later by the ExtractVariables
+        policy.</li>
+
+        <li><strong>&lt;HTTPTargetConnection&gt;</strong> - Specifies the target URL of the backend
+        API. In this case, we specify that the API return a JSON response. </li>
+      </ul>
+
+      <p>Now we have two policies, one that specifies the request information needed to use the
+      backend API (Google's Geocoding API), and the second one that actually sends the request to
+      the backend API. Next, we'll handle the response. </p>
+    </div>
+
+    <h3 id="creatingthepolicies-parsetheresponsewithextractvariables">Parse the response with
+    ExtractVariables</h3>
+
+    <p>The ExtractVariables policy provides a simple mechanism for parsing content from the
+    response message obtained by a ServiceCallout policy. ExtractVariables can be used to parse
+    JSON or XML, or it can be used to extract content from URI paths, HTTP headers, query
+    parameters, and form parameters.</p>
+
+    <p><img src="/api-platform/images/policyComp4.png" width="480"></p>
+
+    <p>Here's a listing of the ExtractVariables policy. You can read more about this policy in
+    <a href="/api-platform/reference/policies/extract-variables-policy.html">Extract Variables
+    policy</a>. In the sample download, you can find this XML in the file
+    <code>doc-samples/policy-mashup-cookbook/apiproxy/policies/ParseGeocodingResponse.xml</code>.</p>
+
+    <div id="well">
+      <pre class="prettyprint">
+&lt;ExtractVariables name="ParseGeocodingResponse"&gt;
+  &lt;Source&gt;GeocodingResponse&lt;/Source&gt;
+  &lt;VariablePrefix&gt;geocoderesponse&lt;/VariablePrefix&gt;
+  &lt;JSONPayload&gt;
+    &lt;Variable name="latitude"&gt;
+       &lt;JSONPath&gt;$.results[0].geometry.location.lat&lt;/JSONPath&gt;
+    &lt;/Variable&gt;
+    &lt;Variable name="longitude"&gt;
+       &lt;JSONPath&gt;$.results[0].geometry.location.lng&lt;/JSONPath&gt;
+    &lt;/Variable&gt;
+  &lt;/JSONPayload&gt;
+&lt;/ExtractVariables&gt;
+</pre>
+
+      <p>The key elements of the ExtractVariable policy are:</p>
+
+      <ul>
+        <li><strong>&lt;ExtractVariables name&gt;</strong> - Again, the policy name is used to
+        refer to the policy when it is used in a flow. </li>
+
+        <li><strong>&lt;Source&gt;</strong> - Specifies the response variable that we created in
+        the ServiceCallout policy. This is the variable from which this policy extracts data.</li>
+
+        <li><strong>&lt;VariablePrefix&gt;</strong> - The variable prefix specifies a namespace for
+        other variables created in this policy. The prefix can be any name, except for the reserved
+        names defined by <a href="/api-platform/reference/variables-reference.html">Edge's
+        predefined variables</a>.</li>
+
+        <li><strong>&lt;JSONPayload&gt;</strong> - This element retrieves the response data that is
+        of interest to us and puts it into named variables. In fact, the Geocoding API returns much
+        more information than latitude and longitude. However, these are the only values we need
+        for this sample. You can see a complete rendering of the JSON returned by the Geocoding API
+        in the <a href="https://developers.google.com/maps/documentation/geocoding/">API's
+        documentation</a>. The values of geometry.location.lat and geometry.location.lng are simply
+        two of the many fields in the returned JSON object.</li>
+      </ul>
+
+      <p>It may not be obvious, but it's important to see that ExtractVariables produces two
+      variables whose names consist of the variable prefix (geocoderesponse) and the actual
+      variable names that are specified in the policy. These variables are stored in the
+      API proxy and will be available to other policies within the proxy flow, as you will
+      see. The variables are:</p>
+
+      <ul>
+        <li>geocoderesponse.latitude</li>
+
+        <li>geocoderesponse.longitude</li>
+      </ul>
+
+      <p>Most of the work is now done. We have created a composite of three policies that form a
+      request, call a backend API, and parse the returned JSON data. In the final steps, we'll feed
+      data from this part of the flow into another AssignMessage policy, call the second backend
+      API (Google Elevation API), and return our mashed up data to the app developer. </p>
+    </div>
+
+    <h3 id="creatingthepolicies-generatethesecondrequestwithassignmessage">Generate the second
+    request with AssignMessage</h3>
+
+    <p>The following AssignMessage policy uses variables returned from the first backend (Google
+    Geocoding) that we stored, and plugs them into a request destined for the second API (Google
+    Elevation). As noted previously, these variables are geocoderesponse.latitude and
+    geocoderesponse.longitude. </p>
+
+    <p>In the sample download, you can find this XML in the file
+    <code>doc-samples/policy-mashup-cookbook/apiproxy/policies/AssignElevationParameters.xml</code>.</p>
+
+    <div id="well">
+      <pre class="prettyprint">
+&lt;AssignMessage name="AssignElevationParameters"&gt;
+&lt;Remove&gt;
+    &lt;QueryParams&gt;
+      &lt;QueryParam name="country"/&gt;
+      &lt;QueryParam name="postalcode"/&gt;
+    &lt;/QueryParams&gt;
+  &lt;/Remove&gt;
+  &lt;Set&gt;
+    &lt;QueryParams&gt;
+      &lt;QueryParam name="locations"&gt;{geocoderesponse.latitude},{geocoderesponse.longitude}&lt;/QueryParam&gt;
+      &lt;QueryParam name="sensor"&gt;false&lt;/QueryParam&gt;
+    &lt;/QueryParams&gt;
+  &lt;/Set&gt;
+&lt;/AssignMessage&gt;
+</pre>
+
+      <p>If you examine the Google Elevation API, you will see that it takes two query parameters.
+      The first is called <code>locations</code> and its value is the latitude and longitude
+      (comma-separated values). The other param is <code>sensor</code>, which is required and must
+      be either true or false. The most important thing to note at this point is that the request
+      message we create here does not require a ServiceCallout. We don't need to call the second
+      API from a ServiceCallout at this point because we can call the backend API from the proxy's
+      TargetEndpoint. If you think about it, we have all the data we need to call Google Elevations
+      API The request message generated in this step does not require a ServiceCallout, as the
+      request generated for the main request pipeline, and so will simply be forwarded by the
+      ProxyEndpoint to the TargetEndpoint, following the RouteRule configured for this API proxy.
+      The TargetEndpoint manages the connection with the remote API. (Recall that the URL for the
+      elevation API is defined in the HTTPConnection for the TargetEndpoint. Elevation API
+      documentation if you would like to know more. The QueryParams that we stored previously,
+      <code>country</code> and <code>postalcode</code>, are no longer needed, so we remove them
+      here. </p>
+
+      <h3>Brief pause: Back to the flow</h3>
+
+      <p>At this point, you may wonder why we aren't creating another ServiceCallout policy. After
+      all, we created another message. How does that message get sent to the target, the Google
+      Elevation API? The answer is in the &lt;RouteRule&gt; element of the flow. &lt;RouteRule&gt;
+      specifies what to do with any remaining request messages after the &lt;Request&gt; part of
+      the flow has executed. The TargetEndpoint specified by this &lt;RouteRule&gt; tells the
+      API proxy to deliver the message
+      to <code>http://maps.googleapis.com/maps/api/elevation/xml</code>. </p>
+
+      <p>If you downloaded the sample API proxy, you can find the TargetProxy XML in the file
+      <code>doc-samples/policy-mashup-cookbook/apiproxy/targets/default.xml</code>.</p>
+      <pre class="prettyprint">
+&lt;TargetEndpoint name="default"&gt;
+  &lt;HTTPTargetConnection&gt;
+    &lt;!-- This is where we define the target. For this sample we just use a simple URL. --&gt;
+    &lt;URL&gt;http://maps.googleapis.com/maps/api/elevation/xml&lt;/URL&gt;
+  &lt;/HTTPTargetConnection&gt;
+&lt;/TargetEndpoint&gt;
+</pre>
+
+      <p>Now, we just need to process the response from the Google Elevation API and we're
+      done. </p>
+    </div>
+
+    <h3 id="creatingthepolicies-converttheresponsefromxmltojson">Convert the response from XML to
+    JSON</h3>
+
+    <p>In this example, the response from the Google Elevation API is returned as XML. For "extra
+    credit," let's add one more policy to our composite to transform the response from XML to
+    JSON.</p>
+
+    <p>This example uses the JavaScript policy named GenerateResponse, with a resource file
+    containing the JavaScript code, to perform the conversion. Shown below is
+    the GenerateResponse policy definition:</p>
+    <pre class="prettyprint">
+&lt;Javascript name="GenerateResponse" timeout="10000"&gt;
+  &lt;ResourceURL&gt;jsc://GenerateResponse.js&lt;/ResourceURL&gt;
+&lt;/Javascript&gt;
+</pre>
+
+    <p>The GenerateResponse.js resource file includes the JavaScript used to perform the
+    conversion. You can see that code in the
+    file <code>doc-samples/policy-mashup-cookbook/apiproxy/resources/JSC/GenerateResponse.js</code>.</p>
+
+    <p>Apigee also provides an out-of-the-box policy, XMLToJSON, to convert XML to JSON. You can
+    edit the ProxyEndpoint to use the <code>xmltojson</code> policy shown below
+    instead. </p>
+    <pre class="prettyprint">
+&lt;XMLToJSON name="xmltojson"&gt;
+  &lt;Options&gt;
+  &lt;/Options&gt;
+  &lt;OutputVariable&gt;response&lt;/OutputVariable&gt;
+  &lt;Source&gt;response&lt;/Source&gt;
+&lt;/XMLToJSON&gt;
+</pre>
+
+    <aside class="note"><b>Note:</b> Don't forget to refer back to the section "Going with the
+    flow" to see how all of these policies fit together!</aside>
+
+    <h2 id="testingtheexample">Testing the example</h2>
+
+    <p>If you have not already done so, try to download, deploy, and run the
+    <strong>policy-mashup-cookbook</strong> sample, which you can find in the <a href=
+    "https://github.com/apigee/api-platform-samples/tree/master/doc-samples" target=
+    "_blank">doc-samples folder</a> in the Apigee Edge samples repository GitHub. Just
+    follow the instructions in the README file in the policy-mashup-cookbook folder. Or,
+    follow the brief instructions here: <a href="/api-platform/samples/using-samples.html">Using
+    the sample API proxies</a>.</p>
+
+    <p>To summarize, you can call the composite API as follows. Substitute your {myorg} with your
+    organization name:</p>
+
+    <div id="well">
+      <pre class="prettyprint">
+$ curl "http://{myorg}-test.apigee.net/policy-mashup-cookbook?country=us&amp;postalcode=08008"
+</pre>
+
+      <p>The response includes the geocoded location for the center of the postal code provided by
+      the app end user, combined with the elevation at that geocoded location. The data was
+      retrieved from two backend APIs, mashed up with policies attached to the API proxy, and
+      returned to the client in a single response. </p>
+    </div>
+
+    <div id="well">
+      <pre class="prettyprint">
+{  
+   "country":"us",
+   "postalcode":"08008",
+   "elevation":{  
+      "meters":0.5045232,
+      "feet":1.6552599030345978
+   },
+   "location":{  
+      "latitude":39.75007129999999,
+      "longitude":-74.1357407
+   }
+}
+</pre>
+
+      <h2 id="summary">Summary</h2>
+
+      <p>This cookbook topic explained how to use the policy composition pattern to create a mashup
+      of data from multiple backend sources. Policy composition is a common pattern used in API
+      proxy development for adding creative functionality to your API.</p>
+    </div>
+  </div>
+
+  {% endblock %}

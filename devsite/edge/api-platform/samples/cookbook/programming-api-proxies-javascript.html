@@ -1,0 +1,295 @@
+  {% extends "_base.html" %} {% block title %}Programming API proxies with JavaScript{% endblock %}
+  {% block body %}
+
+  <p>In this topic you will learn how to use JavaScript to dynamically add HTTP headers to a
+  response message and how to parse a JSON response and return a subset of its properties to the
+  the requesting app.</p>
+
+  <h2 id="downloadandtryoutthesamplecode">Download and try out the sample code</h2>
+
+  <aside class="note">
+    <b>Sample:</b> <strong>Sample code:</strong> We recommend that you download and try out this
+    topic's sample code from Github. The sample is called <strong>javascript-cookbook</strong>,
+    which you can find in the <a href=
+    "https://github.com/apigee/api-platform-samples/tree/master/doc-samples" target=
+    "_blank">doc-samples folder</a> in the Apigee Edge API Services samples repository in
+    Github. For information on downloading Apigee samples, see <a href=
+    "/api-platform/samples/using-samples.html">Using the sample API proxies</a>. 
+
+    <p>Instructions for deploying the API proxy and consuming the API are provided in the <a href=
+    "https://github.com/apigee/api-platform-samples/blob/master/doc-samples/javascript-cookbook/README.md">
+    README</a> file that comes with the sample. You can also find brief deployment
+    instructions here: <a href="/api-platform/samples/using-samples.html">Using the sample API
+    proxies</a>.</p>
+  </aside>
+
+  <h2 id="aboutthiscookbookexample">About this cookbook example</h2>
+
+  <p>This cookbook example illustrates an API proxy pattern in which you implement API behavior in
+  JavaScript. The JavaScript examples are designed to show you how to work with simple variables
+  and message content. One sample shows you how to <i>get</i> and <i>set</i> variables. The second
+  example shows you how to parse JSON and construct a message from the result.</p>
+
+  <p>Two JavaScript samples are in the API proxy:</p>
+
+  <ul>
+    <li><b><code>setHeaders.js</code></b>: This JavaScript gets the values of a few variables that
+    are set when an API proxy is invoked. The JavaScript adds those variables to the response
+    message so that you can see their values for each request that you make.</li>
+
+    <li><b><code>minimize.js</code></b>: This JavaScript shows you how to work with message
+    content. The idea behind this sample is that a service often returns more data than is
+    necessary. So, the JavaScript parses the response message, extracts a few interesting
+    properties, and then uses them to build the content of the response message.</li>
+  </ul>
+
+  <p>The code for <code>setHeader.js</code>:</p>
+  <pre class="prettyprint">
+context.setVariable("response.header.X-Apigee-Target", context.getVariable("target.name"));
+context.setVariable("response.header.X-Apigee-ApiProxyName", context.getVariable("apiproxy.name"));
+context.setVariable("response.header.X-Apigee-ProxyName", context.getVariable("proxy.name"));
+context.setVariable("response.header.X-Apigee-ProxyBasePath", context.getVariable("proxy.basepath"));
+context.setVariable("response.header.X-Apigee-ProxyPathSuffix", context.getVariable("proxy.pathsuffix"));
+context.setVariable("response.header.X-Apigee-ProxyUrl", context.getVariable("proxy.url"));
+</pre>
+
+  <p>The code for <code>minimize.js</code>:</p>
+  <pre class="prettyprint">
+//Parse the respose from the target.
+var res = JSON.parse(context.proxyResponse.content);
+
+//Pull out only the information we want to see in the response.
+var minimizedResponse = { city: res.root.city,
+                          state: res.root.state };
+          
+//Set the response variable. 
+context.proxyResponse.content = JSON.stringify(minimizedResponse);
+</pre>
+
+  <p>You can access flow variables in JavaScript through the context object. This object is part of
+  the Edge JavaScript object model. For details about the object model, see <a href=
+  "/api-platform/reference/javascript-object-model.html">JavaScript object model</a>.</p>
+
+  <aside class="key-point"><b>Tip:</b> A useful exercise once you have the JavaScript working, is
+  to modify these fields to use other values. For example, you can try changing the variable that
+  sets the HTTP header by selecting a different variable from the list of <a href=
+  "/api-platform/reference/variables-reference.html">Variables reference</a>.</aside>
+
+  <aside class="note"><b>Note:</b> The sample proxy uses a policy of type XMLToJSON to convert the
+  XML-formatted response into JSON. When working with JavaScript, you can always use this policy
+  type to transform XML into JSON, making it easier for you to work with message content in
+  JavaScript.</aside>
+
+  <h2 id="beforeyoubegin">Before you begin</h2>
+
+  <p>Before you explore this cookbook example, you should also be familiar with these fundamental
+  concepts:</p>
+
+  <ul>
+    <li>What policies are and how to attach them to proxies. For a good introduction to policies,
+    see <a href="/api-platform/develop/policy-attachment-and-enforcement.html">What's a
+    policy?</a>.</li>
+
+    <li>The structure of a proxy flow, as explained in <a href=
+    "/api-platform/fundamentals/flow-configurations.html">Configuring flows</a>. Flows let you
+    specify the sequence in which policies are executed by an API proxy. In this example, several
+    policies are created and added to an API proxy flow.</li>
+
+    <li>How an API proxy project is organized on your filesystem, as explained in <a href=
+    "/api-platform/reference/policies/api-proxy-configuration-reference.html">API proxy
+    configuration reference</a>.</li>
+
+    <li>A working knowledge of XML, JSON and JavaScript. In this example, you build out the API
+    proxy and its policies with XML files that reside on the filesystem.</li>
+  </ul>
+
+  <p>If you have downloaded the sample code, you can locate all of the files discussed in this
+  topic in the <strong>javascript-cookbook</strong> sample folder. The following sections discuss
+  the sample code in detail.</p>
+
+  <h2 id="understandingtheproxyflow">Understanding the proxy flow</h2>
+
+  <p>To get JavaScript to execute in an API proxy, you have to attach it to a flow using a policy
+  attachment called a 'Step'. A policy of type Javascript (note capitalization) simply contains a
+  reference to the name of a JavaScript file. You point the policy to a JavaScript file using the
+  ResourceURL element.</p>
+
+  <aside class="warning"><b>Warning:</b> The Policy type must be capitalized appropriately in the
+  Policy definition. Although "JavaScript" is the accepted spelling of the name of the programming
+  language, in the Policy it must be capitalized as "Javascript".</aside>
+
+  <p>For example, the following policy references the JavaScript file called
+  <code>setHeader.js</code>.</p>
+  <pre class="prettyprint">
+&lt;Javascript name='setHeaders' timeLimit='200'&gt;
+    &lt;ResourceURL&gt;setHeaders.js&lt;/ResourceURL&gt;
+&lt;/Javascript&gt;
+</pre>
+
+  <aside class="key-point"><b>Best practice:</b> Always use the extension <code>.js</code> for
+  JavaScript resources.</aside>
+
+  <aside class="warning"><b>Warning:</b> The maximum time limit permitted for JavaScript policies
+  to execute in environments in free trial organization is 200 milliseconds.</aside>
+
+  <p>You can attach this policy to an API proxy flow as you would any other policy type. By
+  attaching the policy to the API proxy flow, you indicate where the JavaScript should be executed.
+  This enables you to execute JavaScript that interacts with request messages or response message
+  as those messages 'flow' through the API proxy. In this example, both JavaScripts execute in the
+  response flow, since the policies do two things: set HTTP headers on the response message and
+  'minimize' the response message that Apigee Edge returns to the requesting app.</p>
+
+  <p>If you open this flow configuration in the management UI, you will see the flow configuration
+  below.</p>
+
+  <p>Select <strong>Proxy Endpoints &gt; default &gt; PostFlow</strong> in the <strong>Navigator
+  pane</strong>.</p>
+
+  <p><img src="/api-platform/images/javascript-cookbook-flow-ui.png" width="480"></p>
+
+  <p>The corresponding XML configuration for the ProxyEndpoint named 'default' is shown
+  below. </p>
+  <pre class="prettyprint">
+&lt;ProxyEndpoint name="default"&gt;
+  &lt;PostFlow&gt;
+    &lt;Response&gt;
+      &lt;!-- Steps reference policies under /apiproxy/policies --&gt;
+      &lt;!-- First, set a few HTTP headers with variables for this transaction. --&gt;
+      &lt;Step&gt;&lt;Name&gt;setHeaders&lt;/Name&gt;&lt;/Step&gt;
+      &lt;!-- Next, transform the response from XML to JSON for easier parsing with JavaScript --&gt;
+      &lt;Step&gt;&lt;Name&gt;transform&lt;/Name&gt;&lt;/Step&gt;
+      &lt;!-- Finally, use JavaScript to create minimized response with just city and state. --&gt;
+      &lt;Step&gt;&lt;Name&gt;minimize&lt;/Name&gt;&lt;/Step&gt;
+    &lt;/Response&gt;
+  &lt;/PostFlow&gt;
+  &lt;HTTPProxyConnection&gt;
+        &lt;!-- BasePath defines the network address for this API proxy. See the script 'invoke.sh' to see how the complete URL for this API proxy is constructed.--&gt;
+    &lt;BasePath&gt;/javascript-cookbook&lt;/BasePath&gt;
+     &lt;!-- Set VirtualHost to 'secure' to have this API proxy listen on HTTPS. --&gt;
+    &lt;VirtualHost&gt;default&lt;/VirtualHost&gt;
+  &lt;/HTTPProxyConnection&gt;
+  &lt;RouteRule name="default"&gt;
+    &lt;TargetEndpoint&gt;default&lt;/TargetEndpoint&gt;
+  &lt;/RouteRule&gt;
+&lt;/ProxyEndpoint&gt;
+</pre>
+
+  <p>Here's a summary of the flow's elements.</p>
+
+  <aside class="note"><b>Note:</b> This is a ProxyEndpoint flow. The ProxyEndpoint
+  configuration defines the inbound (app-facing) interface for an API proxy. When you configure a
+  ProxyEndpoint, you define how apps invoke the proxied API.</aside>
+
+  <ul>
+    <li><strong>&lt;Request&gt;</strong> - The &lt;Request&gt; element consists of several
+    &lt;Step&gt; elements. Each step calls one of the policies that you create through the rest of
+    this topic. These policies attach a JavaScript to the API proxy flow, and the location of the
+    policy attachment determines when the JavaScript executes.</li>
+
+    <li><strong>&lt;Response&gt;</strong> - The &lt;Response&gt; element also includes
+    &lt;Steps&gt;. These steps also call policies that are responsible for processing the final
+    response from the target (which in this example is Apigee's mock service target--note the
+    HTTPTargetConnection setting in under <code>/apiproxy/targets/default.xml</code>.)</li>
+
+    <li><strong>&lt;HTTPProxyConnection&gt;</strong> - Specifies the host and URI path that
+    define the network address that apps call to consume this API.<br>
+     </li>
+
+    <li><strong>&lt;RouteRule&gt;</strong> - This element specifies which TargetEndpoint
+    configuration is invoked by the ProxyEndpoint.</li>
+  </ul>
+
+  <h2 id="addingjavascriptcodetoaproxy">Adding JavaScript code to a proxy</h2>
+
+  <p>JavaScript (like Python scripts, Java JAR files, XSLT files, and so on) are stored as
+  <i>resources</i>. When you are just starting to work with JavaScript it is easiest to store your
+  JavaScript files in the API proxy. As you advance, JavaScript should be made as generic and
+  reusable as possible, and then stored at the <i>environment</i> or <i>organization</i> level.
+  This prevents you from having to store the same JavaScript files in multiple API proxies, which
+  can quickly become unmanageable.</p>
+
+  <p>To learn about storing resources at the organization and environment level, see <a href=
+  "/api-platform/develop/resource-files.html">Resource files</a>.</p>
+
+  <p>Try it out</p>
+
+  <p>For instructions on deploying and calling the proxy, see the <a href=
+  "https://github.com/apigee/api-platform-samples/blob/master/doc-samples/javascript-cookbook/README.md">
+  JavaScript cookbook README</a>. </p>
+
+  <h3 id="addingjavascriptcodetoaproxy-importinganddeployingtheapiproxy">Importing and deploying
+  the API proxy</h3>
+
+  <p>After you make changes, you can <strong>Save</strong> the API proxy in the API proxy builder
+  tool in <a href="https://enterprise.apigee.com">management UI</a>.</p>
+
+  <p>Or you can run the following command in the directory
+  <code>/api-platform-samples/doc-samples/javascript-cookbook</code>.</p>
+  <pre class="prettyprint">
+$ sh deploy.sh
+</pre>
+
+  <h3 id="addingjavascriptcodetoaproxy-testingjavascript">Testing JavaScript</h3>
+
+  <p>Run the following command in the directory
+  <code>/api-platform-samples/doc-samples/javascript-cookbook</code>.</p>
+  <pre class="prettyprint">
+$ sh invoke.sh
+</pre>
+
+  <p>The curl flag <code>-v</code> is used in the shell script to view HTTP headers on the response
+  message modified by the JavaScript.</p>
+
+  <p>You can directly submit a request as follows:</p>
+  <pre class="prettyprint">
+$ curl -v http://{org_name}-test.apigee.net/javascript-cookbook 
+</pre>
+
+  <p>If the JavaScript executes properly, you will see a response like the following:</p>
+  <pre class="prettyprint">
+&lt; X-Apigee-Demo-Target: default
+&lt; X-Apigee-Demo-ApiProxyName: simple-javascript
+&lt; X-Apigee-Demo-ProxyName: default
+&lt; X-Apigee-Demo-ProxyBasePath: /javascript-cookbook
+&lt; X-Apigee-Demo-ProxyPathSuffix: /xml
+&lt; X-Apigee-Demo-ProxyUrl: http://rrt331ea.us-ea.4.apigee.com/javascript-cookbook/xml
+ 
+{"city":"San Jose","state":"CA"}
+</pre>
+
+  <p>You can now modify the JavaScript to try new things, redeploy the API proxy, and verify the
+  results by submitting the same request. Always make sure you deploy the API proxy that contains
+  your JavaScript to have your changes take effect.</p>
+
+  <h2 id="scripterrors">Script errors</h2>
+
+  <p>You will inevitably see errors when writing JavaScript. The format of JavaScript errors that
+  you will see issued by an API proxy is shown below.</p>
+  <pre class="prettyprint">
+{  
+   "fault":{  
+      "faultstring":"Execution of rewriteTargetUrl failed with error: Javascript runtime error: \"TypeError: Cannot find function getVariable in object TARGET_REQ_FLOW. (rewriteTargetUrl_js#1). at line 1 \"",
+      "detail":{  
+         "errorcode":"steps.javascript.ScriptExecutionFailed"
+      }
+   }
+}
+</pre>
+
+  <h2 id="whentousejavascript">When to use JavaScript</h2>
+
+  <p>On Apigee Edge, there is usually more than one way to implement specific functionality. Use
+  out-of-the-box policies where possible, and avoid the temptation to code all of your API proxy
+  logic in JavaScript. Even though Apigee Edge leverages compiled JavaScript to improve
+  performance, it is unlikely that JavaScript will perform as well as Policies. JavaScript may be
+  more difficult to maintain and debug. Reserve JavaScript for functionality that is unique to your
+  requirements.</p>
+
+  <p>If performance is a concern for custom functionality, use Java where possible.</p>
+
+  <h2 id="summary">Summary</h2>
+
+  <p>In this cookbook topic, you learned how JavaScript can be included in an API proxy
+  configuration to implement custom behavior. The custom behavior implemented by the samples
+  demonstrate how to get and variables, and how to parse JSON and construct custom response
+  messages.</p>{% endblock %}

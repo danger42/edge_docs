@@ -1,0 +1,146 @@
+  {% extends "_base.html" %} {% block title %}Understanding deployment{% endblock %} {% block body %}
+
+  <p>This topic provides a quick overview of proxy deployment. You can deploy proxies using the
+  mangement UI, command-line scripts, or with APIs. </p>
+
+  <div class="video">
+    <p><strong>Video:</strong> Watch a short video to learn about best practices for zero down-time
+    during API proxy deployment.</p>
+
+    <div style="text-align: left; margin:15px">
+      <iframe allowfullscreen="" frameborder="0" height="480" src=
+      "https://www.youtube.com/embed/Hgr6PtZpqIg" width="560"></iframe>
+    </div>
+  </div>
+
+  <h2 id="whentodeployaproxy">When to deploy a proxy</h2>
+
+  <p>A proxy must be deployed before it can be invoked. Generally, it's up to you when you deploy.
+  When you are working in a test environment, you may deploy iteratively many times. On the other
+  hand, the decision to deploy a proxy from the test environment to a production environment
+  usually depends on lifecycle rules established by your development team. </p>
+
+  <p>Deploy or redeploy a proxy when you:</p>
+
+  <ul>
+    <li>Create a new proxy (deployment happens automatically)</li>
+
+    <li>Modify an existing proxy </li>
+
+    <li>Create a new revision of  a proxy</li>
+
+    <li>Create a new version of a proxy</li>
+
+    <li>Push a proxy from one environment to another, such as from a test environment to a
+    production environment. </li>
+
+    <li>Delete and recreate a <a href=
+    "/api-platform/system-administration/configuring-ssl-edge-backend-service.html">keystore</a>.</li>
+  </ul>
+
+  <h2 id="wheretodeployaproxy">Where to deploy a proxy</h2>
+
+  <p>You deploy a proxy to an <em>environment</em>. All organizations in Apigee Edge, by default,
+  have two environments called <em>test</em> and <em>prod</em>. These environments are merely
+  designed to provide you with one area to work on and test API changes, and another area where
+  APIs are exposed to apps. The following figure shows a proxy that is deployed to the
+  <code>test</code> environment, as indicated by the green dot. </p>
+
+  <p><img alt="" src="/api-platform/images/proxy_deployed.png"></p>
+
+  <aside class="note"><b>Note:</b> Depending on your role, you may not be able to deploy to all
+  environments. Users can only deploy to the <span style=
+  "font-family: 'courier new', courier, monospace;">test</span> environment. If you're an
+  administrator you can deploy to any environment.</aside>
+
+  <h2 id="howtodeployaproxy">How to deploy a proxy</h2>
+
+  <p>How you deploy a proxy depends on where you are developing the proxy. If you are working in
+  the UI, you can easily deploy a proxy with just a couple of mouse clicks. A new proxy is
+  automatically deployed when you create it; you don't have to do anything special. The
+  procedure for redeploying an existing proxy is almost as simple. Just select which deployment
+  environment to deploy to, and the management UI takes care of the rest. For more information, see
+  <a href="/api-platform/deploy/deploying-proxies-ui.html">Deploying proxies in the UI</a>.</p>
+
+  <p>If you are developing proxies and related components offline (that is, working with proxy XML
+  files and other code directly on your filesystem), Apigee Edge provides a convenient command-line
+  deployment tool that you can use. You can also obtain a sample shell script that you can
+  configure and run to upload and deploy your proxy files. For more information, see <a href=
+  "/api-platform/deploy/deploying-proxies-command-line.html">Deploying proxies from the command
+  line</a>.</p>
+
+  <p>Finally, you can use the Edge management API to deploy proxies. The deployment APIs expose
+  atomic functions that your development team can coordinate to automate and optimize your API
+  development lifecycle. See <a href=
+  "/api-platform/deploy/deploy-api-proxies-using-management-api.html">Deploy API proxies using the
+  management API</a>.</p>
+
+  <h2 id="whatisanapiproxyrevision">What is an API Proxy Revision?</h2>
+
+  <p>Revisions let you manage API proxy updates as you create and deploy them to an
+  environment. Revisions are sequentially numbered, enabling you to revert a change by
+  deploying a previous revision of your API proxy. Only one revision of an API proxy can be
+  deployed in an environment at a given time if revisions share the same API proxy base path.
+  However, by changing the base path, you can deploy multiple versions of an API proxy in the same
+  environment. For more information, see <a href=
+  "/api-platform/deploy/deploying-proxies-ui.html">Deploying proxies in the UI</a>.</p>
+
+  <p>Typically, an existing revision must be undeployed before a new one can be deployed. Other
+  advanced options include overwriting a deployed revision or opting not to increment a revision at
+  all. For example, sometimes when you make minor changes, you might not want to increment the
+  revision. These advanced options can be accomplished through direct calls to the Edge
+  management API. See <a href=
+  "/api-platform/deploy/deploy-api-proxies-using-management-api.html">Deploy API proxies using the
+  management API</a>.</p>
+
+  <p>You can deploy a revision of an API proxy into the <code>prod</code> environment, while
+  continuing to create new revisions of that API proxy in the <code>test</code> environment. When
+  you are ready, you can "promote" the higher revision of your API proxy from the <code>test</code>
+  environment over the prior revision of the API proxy in the <code>prod</code> environment.</p>
+
+  <p>For more information on revisions, see <a href=
+  "/api-platform/deploy/deploy-api-proxies-using-management-api.html">Deploy API proxies using the
+  management API</a> and <a href="/api-platform/deploy/deploying-proxies-ui.html">Deploying proxies
+  in the UI</a>.</p>
+
+  <div class="video">
+    <p><strong>Video:</strong> Watch a short video to learn more about API revisions.</p>
+
+    <div style="text-align: left; margin:15px">
+      <iframe allowfullscreen="" frameborder="0" height="480" src=
+      "https://www.youtube.com/embed/V0RuFJdHN-o" width="560"></iframe>
+    </div>
+  </div><!--<h2>What is an API Version?</h2>
+<p>While a revision usually represents a relatively minor update, made in the course of a development cycle, the version of an API should change relatively infrequently. Typically, a version reflects a significant change in the signature of an API and requires developers to modify their code accordingly. Versions are usually reflected directly in the API proxy's base URI. For example:</p>
+<ul>
+        <li>api.company.com/v1/...</li>
+        <li>api.company.com/v2/...</li>
+        <li>api.company.com/v3/...</li>
+</ul>
+<div class="note">
+        <p>Don't confuse the version of an API (that is, the public interface) with the revision of an API proxy (that is, the internal number associated with a configuration). The two numbers are unrelated, and the revision number of an API proxy is totally opaque to apps that consume your API.</p>
+</div>
+<p>As an API provider, you need to determine when it's appropriate to release a new version of your API, and therefore require developers to migrate their apps to call the new URI.</p>
+<p>However, you can keep multiple versions of an API proxy live by deploying them to the same environment with different base paths, which you'd get by using /v1, /v2, /v3, etc. in the base path.</p>
+<p>For more information, see the next section, "Versioning best practices."</p>-->
+
+  <h2 id="versioningbestpractices">Best practices for API versioning</h2>
+
+  <p>For Apigee's thoughts and recommendations on API versioning, see <a href=
+  "https://docs-apis.apigee.io/files/Web-design-the-missing-link-ebook-2016-11.pdf#page=45" target=
+  "_blank">Versioning</a> in the <em>Web API Design: The Missing Link</em> e-book.</p><em>
+  <!--<p>Keep the following best practices in mind when you consider API versioning:</p>
+<ul>
+        <li>Never release an API without a version.</li>
+        <li>Make the version mandatory.</li>
+        <li>Specify the version with a "v" prefix. Place the prefix to the far left in the URL so that it has the highest scope, e.g., /v1/dogs.</li>
+        <li>Use a single ordinal number, such as v1, v2, and so on.</li>
+        <li>Make the version part of the API base path.</li>
+        <li>Maintain at least one version back.</li>
+        <li>Set up a reasonable deprecation policy. Give developers plenty of time and warning before deprecating features. Depending on your developer's platform, that can be six months or two years. For example, mobile apps take longer to rev than web apps.</li>
+</ul>
+<div class="note">
+        <p>Do not use the dot notation, like v1.2 for an API proxy version. This implies a granularity of versioning that doesn't work well with APIs.</p>
+</div>--></em>
+
+  <p><em> </em></p>{% endblock %}

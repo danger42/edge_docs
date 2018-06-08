@@ -1,0 +1,145 @@
+  {% extends "_base.html" %} {% block title %}Working with references{% endblock %} {% block body %}
+
+  <p>When configuring a virtual host to support TLS, you specify a keystore or truststore by using
+  a reference. A reference is a variable that contains the name of the keystore or truststore,
+  rather than specifying the keystore or truststore name directly, as shown below:</p>
+
+<pre class="prettyprint">
+    &lt;SSLInfo&gt; 
+        &lt;Enabled&gt;true&lt;/Enabled&gt; 
+        &lt;ClientAuthEnabled&gt;false&lt;/ClientAuthEnabled&gt; 
+        &lt;KeyStore&gt;ref://myTestKeystoreRef&lt;/KeyStore&gt; 
+        &lt;KeyAlias&gt;myKeyAlias&lt;/KeyAlias&gt; 
+    &lt;/SSLInfo&gt;
+</pre>
+
+  <p>The advantage to using a reference is that you can change the value of the reference to change
+  the keystore used by the virtual host, usually because the cert in the current keystore is
+  expiring in the near future. Changing the value of the reference does not require you to restart
+  the Edge Router.</p>
+
+  <p>You can only use a reference to the keystore and truststore; you cannot use a reference to the
+  alias. When you change the reference to a keystore, ensure that the alias name of the cert is the
+  same as in the old keystore.</p>
+
+  <p><strong>Caution:</strong> Alternatively, you can use a literal keystore name in the virtual
+  host. However, if you ever modify the virtual host to change the keystore name, you have to
+  restart the Edge Routers, meaning Cloud customers have to contact <a href=
+  "https://community.apigee.com/content/apigee-customer-support">Apigee Suport</a>. <strong>Apigee
+  strongly recommends that you use references to keystores and truststores in a virtual host and do
+  not use direct references.</strong></p>
+
+  <h4>Restrictions in using references to keystores and truststore</h4>
+
+  <p>You must take into account the following restriction when using references to keystores and
+  truststores:</p>
+
+  <ul>
+    <li>You can only use keystore and truststore references in virtual hosts if you support SNI and
+    you terminate SSL on the Apigee Routers.</li>
+
+    <li>If you have a load balancer in front of the Apigee Routers, and you terminate TLS on the
+    load balancer, then you cannot use keystore and truststore references in virtual hosts.</li>
+  </ul>
+
+  <h2 id="creatingareference">Creating a reference</h2>
+
+  <p>To create a reference in the Edge UI:</p>
+
+  <ol>
+    <li>Login to the Edge management UI at <a href="https://enterprise.apigee.com/">https://enterprise.apigee.com</a>.</li>
+
+    <li>In the Edge management UI menu, select the name of your organization.</li>
+
+    <li>Depending on your version of the Edge UI:
+
+      <ol style="list-style: lower-alpha outside">
+        <li>If you are using the <strong>Classic Edge UI</strong>: Select <strong>APIs &gt;
+        Environment Configuration</strong>.</li>
+
+        <li>If you are using the <strong>New Edge UI</strong>: Select <strong>Admin &gt;
+        Environments</strong>.</li>
+      </ol>
+    </li>
+
+    <li>Select the Environment (typically <code>prod</code> or <code>test</code>)</li>
+
+    <li>Select the <strong>References</strong> tab.</li>
+
+    <li>Select the <strong>+ Reference</strong> button. The following pop-up appears:<br>
+    <img alt="" src="/api-platform/images/add_ref_v2.png"></li>
+
+    <li>Specify the:
+
+      <ol style="list-style: lower-alpha outside">
+        <li><strong>Name</strong> of the reference.</li>
+
+        <li>The entity referred to by the reference, meaning the keystore or truststore name.</li>
+
+        <li>Select <strong>Save</strong>.</li>
+      </ol>
+    </li>
+  </ol>
+
+  <p>Alternatively, use the <a href=
+  "/management/apis/post/organizations/%7Borg_name%7D/environments/%7Benv_name%7D/references">Create
+  Reference</a> API call to create the reference named <strong>keystoreref</strong>:</p>
+
+<pre class="devsite-terminal">
+curl -X POST  -H "Content-Type:application/xml" https://api.enterprise.apigee.com/v1/o/{org_name}/e/{env_name}/references \
+-d '&lt;ResourceReference name="keystoreref"&gt;
+    &lt;Refers&gt;myTestKeystore&lt;/Refers&gt;
+    &lt;ResourceType&gt;KeyStore&lt;/ResourceType&gt;
+&lt;/ResourceReference&gt;' -u <var>orgAdminEmail</var>:<var>password</var>
+</pre>
+
+  <p>The reference specifies the name of the keystore and its type. Use the same API call to create
+  a reference to a truststore.</p>
+
+  <h2 id="modifyingareference">Modifying a reference</h2>
+
+  <p>To modify the value of a reference in the Edge UI:</p>
+
+  <ol>
+    <li>Login to the Edge management UI at <a href=
+    "https://enterprise.apigee.com/">https://enterprise.apigee.com</a>.</li>
+
+    <li>In the Edge management UI menu, select the name of your organization.</li>
+
+    <li>Depending on your version of the Edge UI:
+
+      <ol style="list-style: lower-alpha outside">
+        <li>If you are using the <strong>Classic Edge UI</strong>: Select <strong>APIs &gt;
+        Environment Configuration</strong>.</li>
+
+        <li>If you are using the <strong>New Edge UI</strong>: Select <strong>Admin &gt;
+        Environments</strong>.</li>
+      </ol>
+    </li>
+
+    <li>Select the Environment (typically <code>prod</code> or <code>test</code>)</li>
+
+    <li>Select the <strong>References</strong> tab.</li>
+
+    <li>In the <strong>Reference</strong> tab, select the <strong>Edit</strong> button for the
+    reference.</li>
+
+    <li>Update the reference to specify the new keystore or truststore. <strong>Caution</strong>:
+    Ensure that the alias in the new keystore has the same name as the alias in the old
+    keystore.</li>
+
+    <li>Select <strong>Save</strong>.</li>
+  </ol>
+
+  <p>To change the reference to point to a different keystore, ensuring that the alias in the new
+  keystore has the same name as the alias in the old keystore, use the <a href=
+  "/management/apis/put/organizations/%7Borg_name%7D/environments/%7Benv_name%7D/references/%7Bref_name%7D">
+  Update Reference</a> API:</p>
+
+  <pre class="devsite-terminal">
+curl -X PUT -H "Content-Type:application/xml" https://api.enterprise.apigee.com/v1/o/{org_name}/e/{env_name}/references/keystoreref \
+-d '&lt;ResourceReference name="keystoreref"&gt;
+    &lt;Refers&gt;myNewKeystore&lt;/Refers&gt;
+    &lt;ResourceType&gt;KeyStore&lt;/ResourceType&gt;
+&lt;/ResourceReference&gt;' -u <var>orgAdminEmail</var>:<var>password</var>
+</pre>{% endblock %}

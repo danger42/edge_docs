@@ -1,0 +1,173 @@
+  {% extends "_base.html" %} {% block title %}What you need to know about policy errors{% endblock %} {% block body %}
+
+  <p>This topic describes the structure of policy errors and the kinds of flow variables that are
+  set when a policy error occurs. This information is essential if you're designing and
+  implementing fault handling for your proxies.</p>
+
+  <p>This topic assumes you have a general understanding of how fault handling works in Edge, and
+  that you know what fault rules are. If you need a review, see <a href=
+  "/api-platform/fundamentals/fault-handling.html">Handling faults</a>. The information here will
+  also help you navigate and use the <a href=
+  "/api-platform/reference/policies/error-code-reference.html">Policy error reference</a>.</p>
+
+  <h2 id="aboutthedefaultpolicyerrorresponse">About the default policy error response</h2>
+
+  <p>When a policy throws an error, Edge immediately enters the error flow and generates an error
+  message. This system-generated message is a JSON object that includes two bits of information: an
+  <strong>errorcode</strong> and a <strong>faultstring</strong>.</p>
+
+  <aside class="note"><b>Note:</b> It's helpful to know that in the parts of an error as shown
+  below are available as flow variables. You can restructure and customize error messages through
+  these variables. The variable <strong>fault.name</strong> is the value of the
+  <strong>errorcode</strong> attribute and <strong>error.message</strong> is the value of the
+  <strong>faultstring</strong> attribute. These variables are discussed in more detail in the
+  following sections of this topic.  </aside>
+
+  <p>For example:</p>
+  <pre class="prettyprint">
+{  
+   "fault":{  
+      "detail":{  
+         "errorcode":"steps.extractvariables.SourceMessageNotAvailable"
+      },
+      "faultstring":"foo message is not available for ExtractVariable: ParseJsonResponse"
+   }
+}
+</pre>
+
+  <p>Let's quickly deconstruct this error message:</p>
+
+  <p>The <strong>errorcode</strong> consists of a <strong>prefix</strong> and an <strong>error
+  name</strong>, as follows: <code>[prefix].[error_name]</code>. In the above example
+  "<code>steps.extractvariables</code>" is the prefix and <code>SourceMessageNotAvailable</code> is
+  the error name. The prefix tells you what kind of policy generated the error. In the above
+  example, you can tell that an Extract Variables policy generated the error and the error name is
+  <code>SourceMessageNotAvailable</code>.</p>
+
+  <p>The <strong>faultstring</strong> contains a description of the error. The fault string
+  typically includes clues to help you find specific problem that caused the error, such as the
+  name of the policy, the name of an unresolved variable, or whatever contributed to the error. For
+  example, in the above error message, "<code>foo</code>" happens to be the name of an unresolved
+  message variable referenced in the policy and "<code>ParseJsonResponse</code>" is the name of the
+  policy that triggered the error.</p>
+
+  <aside class="note"><b>Note:</b> In the <a href=
+  "/api-platform/reference/policies/error-code-reference.html">Policy error reference</a>, we use a
+  consistent convention to document policy fault strings. We indicate where place variables occur
+  with a  <code>[]</code> notation. Here's an example of how we'd document the above error's
+  fault string:<br>
+  <br>
+  <code>[var_name] message is not available for ExtractVariable: [policy_name]</code>.</aside>
+
+  <h2 id="variablesspecifictopolicyerrors">Variables specific to policy errors</h2>
+
+  <p>When a policy error is triggered, certain error-specific flow variables are populated. These
+  variables are extremely useful in fault handling. As explained in the topic <a href=
+  "/api-platform/fundamentals/fault-handling.html">Handling faults</a>, it's a common practice to
+  trap the system-generated policy errors and perform a subsequent action such as to create a
+  custom error response. For example, for security reasons, you might want to prevent clients from
+  seeing the actual errors and status codes that Edge returns.</p>
+
+  <h3 id="variablesspecifictopolicyerrors-thefaultnamevariable"><strong>The <code>fault.name</code>
+  variable</strong></h3>
+
+  <p>When a policy throws an error, it sets the flow variable <code>fault.name</code> to the
+  <code>error_name</code> part of the errorcode (as described in the previous section). It's very
+  common to evaluate this variable to conditionally execute fault rules. </p>
+
+  <p>Here's an example fault rule that tests for the value of <code>fault.name</code>:</p>
+  <pre class="prettyprint">
+&lt;faultrule name="VariableOfNonMsgType"&lt;&gt;/faultrule&gt;&lt;FaultRule name="Source Message Not Available Fault"&gt;
+    &lt;Step&gt;
+        &lt;Name&gt;AM-CustomErrorMessage&lt;/Name&gt;
+        &lt;Condition&gt;(fault.name Matches "SourceMessageNotAvailable") &lt;/Condition&gt;
+    &lt;/Step&gt;
+&lt;/FaultRule&gt;
+</pre>
+
+  <p>The thing to remember is that when a policy triggers an error, the <code>fault.name</code>
+  variable is always set to the error name.</p>
+
+  <aside class="note"><b>Note:</b> When you're developing your fault handling code, just look in
+  the <a href="/api-platform/reference/policies/error-code-reference.html">Policy error
+  reference</a> to learn what the error name is for every policy error. It's also a common practice
+  to use the Edge Trace tool to examine error responses and the variables that are set.</aside>
+
+  <h3 id="variablesspecifictopolicyerrors-theprefixpolicy_namefailedvariable"><strong>The
+  <code>[prefix].[policy_name].failed</code> variable</strong></h3>
+
+  <p>Besides <code>fault.name</code>, another variable that developers commonly check is the
+  <code>[prefix].[policy_name].failed</code> flag, which is set to either true or false when a
+  policy executes. In fault rules, you'll want to check to see when it's <strong>true</strong> --
+  that is, to check if an error occurred. Here's how to construct a conditional that checks the
+  <code>[prefix].[policy_name].failed</code> flag. To correctly check this variable, you need to
+  know two things:</p>
+
+  <ul>
+    <li>The <strong>name</strong> of the policy you are checking. This is the value of the policy's
+    name attribute, not the display name. This attribute is always included in the policy
+    definition's XML.</li>
+
+    <li>A <strong>prefix</strong> that is specific to the type of policy you are checking. (We'll
+    explain how to find the prefix below.)</li>
+  </ul>
+
+  <p>To illustrate, here's another fault rule example. Notice in the outer condition how the
+  <code>[prefix].[policy_name].failed</code> variable name is formed. In this case the prefix is
+  <code>extractvariables</code> and the policy name is <code>ParseJsonResponse</code>. In this
+  case, the fault rule will only execute if this variable is true. And, here's a tip: because fault
+  rules can contain multiple steps, this pattern is a nice way to organize fault rules into
+  blocks.</p>
+  <pre class="prettyprint">
+&lt;faultrule name="VariableOfNonMsgType"&gt;&lt;/faultrule&gt;&lt;FaultRule name="Extract Variable Faults"&gt;
+    &lt;Step&gt;
+        &lt;Name&gt;AM-CustomErrorMessage&lt;/Name&gt;
+        &lt;Condition&gt;(fault.name Matches "SourceMessageNotAvailable") &lt;/Condition&gt;
+    &lt;/Step&gt;
+    &lt;Condition&gt;(extractvariables.ParseJsonResponse.failed = true) &lt;/Condition&gt;
+&lt;/FaultRule&gt;
+</pre>
+
+  <aside class="note"><b>Note:</b> How do you know what the fault variable's prefix is? You can't
+  necessarily guess it from the contents of the fault string or error code. You have to look it up
+  in the <a href="/api-platform/reference/policies/error-code-reference.html">Policy error
+  reference</a> or you can use the Edge Trace tool to inspect the flow variables that are created
+  when an error occurs. For example, for the Extract Variables policy, the
+  <code>[prefix].[policy_name].failed</code> prefix is <code>extractvariables</code>, and that's
+  pretty straightforward. But for the Access Control policy, the prefix is <code>acl</code>. So,
+  the point is, you have to check.</aside>
+
+  <h3 id="variablesspecifictopolicyerrors-abouttheerrorandmessagevariables"><strong>About the
+  <code>error</code> and <code>message</code> variables</strong></h3>
+
+  <p>The <strong><code>error</code></strong> variable is only available in the error flow of a
+  proxy. You can get useful information from the error variable, such as the error message, status
+  code, reason phrase, and so on. The formatting pattern for the error variable is:</p>
+
+  <p><code>error.[error_component] = [value]</code></p>
+
+  <p>For example:</p>
+
+  <p><code>error.message</code> = <code>"request message is not available for ExtractVariable:
+  ParseJsonResponse</code>"</p>
+
+  <p>and<br>
+  <br>
+  <code>error.status.code = "500"</code></p>
+
+  
+
+  <aside class="key-point"><b>Tip:</b> You can also use this variable to set response headers. This
+  can be extremely useful because in the error flow, the response object is not available.
+   </aside>
+
+  <p>The <code>message</code> variable is also available in the error flow and can be used for
+  similar purposes as the <code>error</code> variable. The message variable is special because it
+  is contextual. In a request flow, it behaves like a request variable, and in a response flow, it
+  can be used to get/set response values. If you want to know more, see <a href=
+  "/api-platform/reference/variables-reference.html#messagevariables-usesformessagevariables">Use
+  cases for message variables</a>.</p>
+
+  <p>Refer to <a href="/api-platform/reference/variables-reference.html">Variables reference</a>
+  for information on all of the Edge variables, including <code>error</code> and
+  <code>message</code>.</p>{% endblock %}

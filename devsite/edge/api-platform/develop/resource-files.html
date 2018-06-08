@@ -1,0 +1,340 @@
+  {% extends "_base.html" %} {% block title %}Resource files{% endblock %} {% block body %}
+
+  <p>Many policy types defined by Apigee Edge rely on <em>resources</em>. Resources are the files
+  that implement the code or configuration to be executed by a policy when attached to an API
+  proxy. In some cases, as with JavaScript and JavaCallout, a policy simply defines an attachment
+  point in an API proxy where some code should execute. A JavaScript or JavaCallout policy is a
+  pointer to a resource.</p>
+
+  <aside class="note"><b>Note:</b> In the management UI, resources scoped to an API proxy are
+  listed in the Scripts section of the Navigation pane.</aside>
+
+  <p>These resources can be stored in any of three locations in an organization.</p>
+
+  <ul>
+    <li><strong>API proxy</strong>: When stored in an API proxy, resources are available only to
+    that API proxy.</li>
+
+    <li><strong>Environment</strong>: When stored in an environment (for example, test or prod),
+    the resource is available to any API proxy deployed in the same environment.</li>
+
+    <li><strong>Organization</strong>: When stored in an organization, the resource is available to
+    any API proxy deployed in any environment.</li>
+  </ul>
+
+  <p>In addition to storing resources at the proxy level, API Services also provides repositories
+  for these resources at the organization and the environment level. By storing resources at the
+  organization or the environment level, you enable reuse and sharing of code and configuration
+  across the API proxies deployed in your organization and across different environments.</p>
+
+  <aside class="note"><b>Note:</b> The example API calls in this topic use cURL. You can also use
+  the <a href="/management/apis/post/organizations/%7Borg_name%7D/resourcefiles">SmartDocs</a>
+  management API reference topics to make the same calls.</aside>
+
+  <h2 id="resourcetypes">Resource types</h2>
+
+  <p>Resource repositories support the following resource types:</p>
+
+  <ul>
+    <li><code>jsc</code>: compiled JavaScript, referenced by policies of type Javascript</li>
+
+    <li><code>java</code>: Java classes in a JAR file, referenced by policies of type
+    JavaCallout<br>
+    (Available in Apigee Edge plans only. See <a href="https://apigee.com/api-management/#/pricing"
+    target="_blank">Edge pricing and features</a>.)</li>
+
+    <li><code>py</code>: Python scripts, referenced by policies of type Python<br>
+    (Available in Apigee Edge plans only. See <a href=
+    "https://apigee.com/api-management/#/pricing" target="_blank">Edge pricing and
+    features</a>.)</li>
+
+    <li><code>node</code>: Node.js files, including the main Node.js file, related source files,
+    and module dependencies</li>
+
+    <li><code>wsdl</code>: WSDL files, referenced by policies of type MessageValidation</li>
+
+    <li><code>xsd</code>: XML schemas, referenced by policies of type MessageValidation</li>
+
+    <li><code>xsl</code>: XSLT transformations, referenced by policies of type XSL</li>
+
+    <li><code>hosted</code>: Node.js files to deploy to <a href=
+  "/api-platform/hosted-targets/hosted-targets-overview">Hosted Targets</a>. You can deploy Node.js
+      as Edge backend target applications.</li>
+  </ul>
+
+  <p>The repositories are available at the following URIs, as described in the <a href=
+  "/api/resource-files">Resource files API</a> API:</p>
+  <pre class="prettyprint">
+/organizations/{org_name}/resourcefiles
+/organizations/{org_name}/environments/{environment_name}/resourcefiles
+/organizations/{org_name}/apis/{api_name}/revisions/{revision_number}/resources
+</pre>
+
+  <aside class="note"><b>Note:</b> You can also add resources at the API proxy scope in the Edge
+  management UI, in the proxy editor Develop view.</aside>
+
+  <p>For example, all JavaScript files available across an organization are stored under:</p>
+  <pre class="prettyprint">
+/organizations/{org_name}/resourcefiles/jsc
+</pre>
+
+  <p>JavaScript stored in the <code>/organizations</code> collection is available to any API proxy
+  running in any environment.</p>
+
+  <p>You can list all available resources by calling GET on the collection:</p>
+  <pre class="terminal">
+$ curl https://api.enterprise.apigee.com/v1/organizations/{org_name}/resourcefiles/{resource_type}
+</pre>
+
+  <p>The following request lists all JavaScript resources at the organization level:</p>
+  <pre class="terminal">
+$ curl https://api.enterprise.apigee.com/v1/organizations/myorg/resourcefiles/jsc
+</pre>
+
+  <p>The following request lists all JavaScript resources at the environment level, in the
+  environment called <code>prod</code>:</p>
+  <pre class="terminal">
+$ curl https://api.enterprise.apigee.com/v1/organizations/myorg/environments/prod/resourcefiles/jsc
+</pre>
+
+  <p>The following request lists all JavaScript resources in an API proxy revision (the most
+  specific level):</p>
+  <pre class="terminal">
+$ curl https://api.enterprise.apigee.com/v1/organizations/myorg/apis/weatherapi/revisions/6/resourcefiles/jsc
+</pre>
+
+  <p>Each request returns a list of resource names.</p>
+
+  <p>Sample response:</p>
+  <pre class="prettyprint">
+{
+  "resourceFile" : [ {
+    "name" : "genvars-pw.js",
+    "type" : "jsc"
+  }, {
+    "name" : "genvars-refresh.js",
+    "type" : "jsc"
+  }, {
+    "name" : "getvars.js",
+    "type" : "jsc"
+  } ]
+}
+</pre>
+
+  <h2 id="populatingresourcerepositories">Populating resource repositories</h2>
+
+  <aside class="note"><b>Note:</b> When updating an existing resource in a deployed API proxy, you
+  must redeploy the API proxy after to ensure the resource changes are picked up.</aside>
+
+  <p>Let's assume that you have a simple snippet of JavaScript that you need to make available to
+  API proxies across your organization. The following sample JavaScript sets the HTTP request path
+  to the value of the <code>proxy.basepath</code> variable. It's just one example of a resource
+  that you might need to put in the repository.</p>
+  <pre class="prettyprint">
+request.headers["RequestPath"] = context.getVariable("proxy.basepath");
+</pre>
+
+  <p>To create a resource, you call the POST method, submitting the body of the resource file, and
+  identifying the resource's <code>name</code> and <code>type</code> as query parameters.</p>
+
+  <p>To make the JavaScript available to API proxies running in any environment in your
+  organization:</p>
+  <pre class="terminal">
+$ curl -X POST -H "Content-type:application/octet-stream" -d \
+'request.headers["RequestPath"] = context.getVariable("proxy.basepath");' \
+https://api.enterprise.apigee.com/v1/organizations/myorg/resourcefiles?name=pathSetter.js&amp;type=jsc \
+-u email:password
+</pre>
+
+  <p>Sample response:</p>
+  <pre class="prettyprint">
+{
+  "name" : "pathSetter.js",
+  "type" : "jsc"
+}
+</pre>
+
+  <p>You can also upload resources as files from your local machine as follows. It's important to
+  use <code>-F</code> for the binary upload in cURL in order for the environment- and
+  organization-scoped JavaScript files to be accessible by the JavaScript policy.</p>
+  <pre class="terminal">
+$ curl -X POST -H "Content-type:multipart/form-data" -F file=@pathSetter.js \
+https://api.enterprise.apigee.com/v1/organizations/myorg/resourcefiles?name=pathSetter.js&amp;type=jsc \
+-u email:password
+</pre>
+
+  <aside class="note">
+    <b>Note:</b> When using a REST client, such as Postman:
+
+    <ul>
+      <li>Set the Content-Type to multipart/form-data.</li>
+
+      <li>Attach the script as a file.<br>
+      <img alt="" src="/api-platform/images/js_resource_postman2.png"></li>
+    </ul>
+  </aside>
+
+  <p>The JavaScript resource named <code>pathSetter.js</code> is now available to be referenced by
+  policies of type JavaScript running in any environment in the organization.</p>
+
+  <p>For example, to attach the JavaScript to the Request PostFlow, create a policy called
+  <code>PathSetterPolicy.xml</code> that references the file <code>pathSetter.js</code>:</p>
+  <pre class="prettyprint">
+&lt;Javascript name='PathSetterPolicy' timeLimit='200'&gt;
+    &lt;ResourceURL&gt;jsc://pathSetter.js&lt;/ResourceURL&gt;
+&lt;/Javascript&gt;
+</pre>
+
+  <p>Then reference the policy in the Endpoint configuration:</p>
+  <pre class="prettyprint">
+&lt;PostFlow&gt;
+  &lt;Request&gt;
+    &lt;Step&gt;&lt;Name&gt;PathSetterPolicy&lt;/Name&gt;&lt;/Step&gt;
+  &lt;/Request&gt;
+&lt;PostFlow&gt;
+</pre>
+
+  <h3 id="node">Node.js resource guidelines</h3>
+
+  <p>When you reference a Node.js script in an API proxy, you do so with the &lt;ResourceURL&gt;
+  element in the API proxy's TargetEndpoint configuration, as described in <a href=
+  "/api-platform/nodejs/adding-nodejs-existing-api-proxy.html">Adding Node.js to an existing API
+  proxy</a>. For example:</p>
+  <pre class="prettyprint">
+&lt;ScriptTarget&gt;
+    &lt;ResourceURL&gt;node://hello-world.js&lt;/ResourceURL&gt;
+&lt;/ScriptTarget&gt;
+</pre>
+
+  <p>That Node.js script and all supporting modules must reside at the API proxy scope (in the
+  proxy bundle's /resources/node directory). In the management UI API proxy editor, adding the
+  Node.js resource to the Scripts section accomplilshes this. So does using the management API to
+  store the resource at the API proxy scope.</p>
+
+  <h3 id="populatingresourcerepositories-addingjavaresources">Adding Java resources</h3>
+
+  <p>You can add compiled Java resources as JAR files using multiple options in cURL, such as
+  <code>-T</code>, <code>--data-binary</code>, or <code>-F</code> option (not the <code>-d</code>
+  option). For example:</p>
+  <pre class="prettyprint">
+curl -v -u {user}:{password} -H "Content-Type: application/octet-stream" \
+-X POST --data-binary @{jar_file} \
+"http://{mgmt_server}:{port}/v1/organizations/{org}/resourcefiles?name={jar_file}&amp;type=java"
+</pre>
+  <pre class="prettyprint">
+curl -v -u {user}:{password} -H "Content-Type: application/octet-stream" \
+-X POST -T "{jar_file}" \
+"http://{mgmt_server}:{port}/v1/organizations/{org}/resourcefiles?name={jar_file}&amp;type=java"
+</pre>
+  <pre class="prettyprint">
+curl -v -u {user}:{password} -H "Content-Type: multipart/form-data" \
+-X POST -F "file=@{jar_file}" \
+"http://{mgmt_server}:{port}/v1/organizations/{org}/resourcefiles?name={jar_file}&amp;type=java"
+</pre>
+
+  <aside class="note"><b>Note:</b> <strong>Package naming</strong>: Don't use 'io.apigee' or
+  'com.apigee' as package names in Java Callouts. Those are reserved and used by other Apigee
+  modules.</aside>
+
+  <p><strong>See also</strong></p>
+
+  <ul>
+    <li>Java best practices: <a href=
+    "/api-platform/fundamentals/best-practices-api-proxy-design-and-development.html">Best
+    practices for API proxy design and development</a></li>
+
+    <li>Java cookbook example: <a href=
+    "/api-platform/reference/policies/xsl-transform-policy.html">XSL Transform policy</a></li>
+  </ul>
+
+  <h2 id="updatinganddeletingresourcefiles">Updating and deleting resource files</h2>
+
+  <p>For API proxy-scoped resources, you can modify and delete them in the management UI's proxy
+  editor.</p>
+
+  <p>To update and delete API resources at the environment and organization scopes (as well as the
+  API proxy scope), see:</p>
+
+  <ul>
+    <li><a href=
+    "/management/apis/put/organizations/{org_name}/apis/{api_name}/revisions/{revision_number}/resourcefiles/{resource_type}/{resource_name}">
+    Update a resource file in an API</a></li>
+
+    <li><a href=
+    "/management/apis/put/organizations/{org_name}/environments/{env_name}/resourcefiles/{resource_type}/{resource_name}">
+    Update a resource file in an environment</a></li>
+
+    <li><a href=
+    "/management/apis/put/organizations/{org_name}/resourcefiles/{resource_type}/{resource_name}">Update
+    a resource file in an organization</a></li>
+  </ul>
+
+  <h2 id="resourcenameresolution">Resource name resolution</h2>
+
+  <p>Apigee Edge resolves resource names from the most specific to the most general scope. Resource
+  names are resolved "up the chain", from the API proxy level, to the environment level, to the
+  organization level.</p>
+
+  <aside class="note"><b>Note:</b> <strong>Node.js</strong>: One exception to the following
+  information is Node.js, which requires the scripts to be stored at the API proxy scope. See
+  <a href="#node">Node.js resource guidelines</a></aside>
+
+  <p>Let's say that you have populated the same resource in two different repositories &#8212; the
+  organization and the environment:</p>
+  <pre class="terminal">
+$ curl -X POST -H "Content-type:application/octet-stream" -d \
+'request.headers["RequestPath"] = context.getVariable("proxy.basepath");' \
+https://api.enterprise.apigee.com/v1/organizations/myorg/resourcefiles?name=pathSetter.js&amp;type=jsc \
+-u email:password
+</pre>
+  <pre class="terminal">
+$ curl -X POST -H "Content-type:application/octet-stream" -d \
+'request.headers["RequestPath"] = context.getVariable("proxy.basepath");' \
+https://api.enterprise.apigee.com/v1/organizations/myorg/environments/prod/resourcefiles?name=pathSetter.js&amp;type=jsc \
+-u email:password
+</pre>
+
+  <p>Let's take a scenario where the same resource is available in two repositories, at the
+  organization level and at the environment level:</p>
+  <pre class="prettyprint">
+https://api.enterprise.apigee.com/v1/organizations/myorg/resourcefiles/jsc/pathSetter.js
+https://api.enterprise.apigee.com/v1/organizations/myorg/environments/prod/resourcefiles/jsc/pathSetter.js
+</pre>
+
+  <p>Now imagine that an API proxy is configured with the following Policy:</p>
+  <pre class="prettyprint">
+&lt;Javascript name='PathSetterPolicy' timeLimit='200'&gt;
+    &lt;ResourceURL&gt;jsc://pathSetter.js&lt;/ResourceURL&gt;
+&lt;/Javascript&gt;
+</pre>
+
+  <p>The policy reference cannot explicitly resolve to a repository. The first resource at the most
+  granular scope whose name matches the resource name in the policy is resolved.</p>
+
+  <p>So, when the API proxy is deployed in the environment <code>prod</code>, the Policy will
+  resolve the environment-scoped <code>pathSetter.js</code> resource:</p>
+  <pre class="prettyprint">
+/organizations/myorg/environment/prod/resourcefiles/jsc/pathSetter.js
+</pre>When deployed in the environment <code>test</code>, the Policy will resolve to the org-scoped
+resource, because the environment-scoped resource is in the <code>prod</code> environment, not the
+<code>test</code> environment:
+  <pre class="prettyprint">
+/organizations/myorg/resourcefiles/jsc/pathSetter.js
+</pre>
+
+  <h2 id="retrievingresources">Retrieving resources</h2>
+
+  <p>You can view a resource body by calling the GET method on it:</p>
+  <pre class="terminal">
+$ curl -X GET -H "Accept: application/json"
+https://api.enterprise.apigee.com/v1/organizations/myorg/resourcefiles/jsc/pathSetter.js" \
+-u email
+</pre>
+
+  <p>Sample response (which displays the contents of the resource file):</p>
+  <pre class="prettyprint">
+request.headers["RequestPath"] = context.getVariable("proxy.basepath");
+</pre>
+
+  <p>For more information on listing and getting resource files, see <a href=
+  "/api/resource-files">Resource files API</a> in the management API.</p>{% endblock %}

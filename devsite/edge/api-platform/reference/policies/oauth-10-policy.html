@@ -1,0 +1,468 @@
+  {% extends "_base.html" %} {% block title %}OAuth v1.0a policy{% endblock %} {% block body %}
+  <img src="/api-platform/images/icon_policy_security.jpg">
+
+  <h3>What</h3>
+
+  <p><a href="https://tools.ietf.org/html/rfc5849">OAuth 1.0a</a> defines a standard protocol that
+  enables app users to authorize apps to consume APIs on their behalf, without requiring app users
+  to disclose their passwords to the app in the process. Apigee Edge enables you to protect APIs in
+  a way that ensures that an app uses has authorized the app to consume an API. Edge also provides
+  policy-based functionality for configuring the endpoints that app developers can use to obtain
+  access tokens.</p>
+
+  <h3 id="samples">Samples</h3>
+
+  <p>See the "Usage notes" for the following samples:</p>
+
+  <ul>
+    <li><a href="#generaterequesttoken">Generating a request token</a></li>
+
+    <li><a href="#generateaccesstoken">Generating an access token</a></li>
+
+    <li><a href="#associatetoken">Associating a token verification code with a request
+    token</a></li>
+
+    <li><a href="#verifyaccesstoken">Verifying an access token</a></li>
+
+    <li><a href="#customizeaccesstoken">Customizing access tokens</a></li>
+  </ul>
+  <hr>
+
+  <h2 id="usage">Usage notes</h2>
+
+  <p>Apigee Edge provides an OAuth v1.0a policy type that enables you to authorize apps with OAuth
+  1.0a. The OAuthV1 policy type is responsible for generating request tokens, generating access
+  tokens, and verifying access tokens based on the <a href=
+  "https://tools.ietf.org/html/rfc5849">OAuth 1.0a specification</a>.</p>
+
+  <p>Once you have configured OAuth policies on your API, apps must obtain access tokens to consume
+  them. To do so, the app must exchange a request token for an access token. Rather than relying on
+  a single password as the master key for every app that accesses an API, OAuth uses this token to
+  provide &#8220;delegated authentication&#8221; between APIs and apps. The resource owner can
+  issue access tokens with restricted scope and limited lifetime, and revoke them
+  independently.</p>
+
+  <p>On token requests, Apigee OAuth 1.0a only supports HMAC-SHA signature algorithm for the
+  <code>oauth_signature_method</code> header parameter, as described in the <a href=
+  "https://tools.ietf.org/html/rfc5849">OAuth 1.0a specification</a>. </p>
+
+  <p>The <code>name</code> attribute for this policy is restricted to these characters:
+  <code>A-Z0-9._\-$ %</code>. However, the Management UI enforces additional restrictions, such as
+  automatically removing characters that are not alphanumeric.</p>
+
+  <h3 id="generaterequesttoken">Generating a request token</h3>
+
+  <p>A request token is used by a consumer app to obtain authorization from the app end user, and
+  is then presented to the 'token endpoint' to be exchanged for an access token. A request token is
+  generated from a valid consumer key. Here are examples of the simple and comprehensive forms for
+  generating request tokens.</p>
+
+  <h4>Simple form</h4>
+  <pre class="prettyprint">
+&lt;OAuthV1 name="OAuthV1-GenerateRequestToken-1"&gt;
+  &lt;Operation&gt;GenerateRequestToken&lt;/Operation&gt;
+&lt;/OAuthV1&gt;
+</pre>
+
+  <h4>Comprehensive form</h4>
+  <pre class="prettyprint">
+&lt;OAuthV1 name="OAuthV1-GenerateRequestToken-1"&gt;
+  &lt;Operation&gt;GenerateRequestToken&lt;/Operation&gt;
+    &lt;URL ref="flow.variable"&gt;value&lt;/URL&gt;
+    &lt;GenerateResponse enabled="true"&gt;
+      &lt;Format&gt;FORM_PARAM | XML&lt;/Format&gt;
+    &lt;/GenerateResponse&gt;
+    &lt;GenerateErrorResponse enabled="true"&gt;
+      &lt;Format&gt;FORM_PARAM | XML&lt;/Format&gt;
+      &lt;Realm&gt;http://oauth.apigee.com/oauth/1/&lt;/Realm&gt;
+    &lt;/GenerateErrorResponse&gt;
+&lt;/OAuthV1&gt;
+</pre>
+
+  <p>The policy enforces the following OAuth semantics:</p>
+
+  <ul>
+    <li>The consumer key is valid.</li>
+
+    <li>The signature is valid.</li>
+  </ul>
+
+  <p>A successful request returns the following responses:</p>
+
+  <ul>
+    <li>Generates a request token and its attributes in the flow <span style=
+    "font-family:courier new,courier,monospace;">oauth_token</span>, <span style=
+    "font-family:courier new,courier,monospace;">oauth_token_secret</span>, <span style=
+    "font-family:courier new,courier,monospace;">oauth_callback_confirmed</span>, <span style=
+    "font-family:courier new,courier,monospace;">oauth_response</span></li>
+
+    <li>Also makes a consumer token and its attributes available in the flow <span style=
+    "font-family:courier new,courier,monospace;">oauth_consumer_key</span>, <span style=
+    "font-family:courier new,courier,monospace;">oauth_consumer_secret</span></li>
+  </ul>
+
+  <p>The &lt;URL&gt; element allows proper OAuthV1 signature calculation when running behind
+  Elastic Load Balancers (ELBs). The <code>ref</code> attribute takes precedence when both the
+  <code>ref</code> attribute and a text value are specified. If <code>ref</code> is not provided,
+  or if the flow variable given in <code>ref</code> is NULL, then the text value will be considered
+  for generating the signature. For example:</p>
+  <pre class="prettyprint">
+&lt;URL ref="secretURL"&gt;https://example-test.apigee.net/oauth/access_token&lt;/URL&gt; 
+</pre>
+
+  <p>On failure, a request returns the appropriate response status code with an error message.</p>
+
+  <p><strong>Sample request:</strong></p>
+  <pre class="prettyprint">
+https://$org-$env.$api_domain/oauth1-proxy/request_token -H 'Authorization: OAuth oauth_callback="oob", oauth_signature_method="HMAC-SHA1", oauth_token="\", oauth_consumer_key=&#8220;{consumerkey}&#8220;, oauth_timestamp="{timestamp}", oauth_nonce="{nonce}", oauth_version="1.0", oauth_signature="{signature}"'
+</pre>
+
+  <h3 id="generateaccesstoken">Generating an access token</h3>
+
+  <p>An access token is used by the consumer to gain access to the protected resources on behalf of
+  the user, instead of using the user&#8217;s service provider credentials. An access token is
+  created with a valid key, request token, and verifier combination. Here are examples of the
+  simple and comprehensive forms for generating access tokens.</p>
+
+  <h4>Simple form</h4>
+  <pre class="prettyprint">
+&lt;OAuthV1 name="OAuthV1-GenerateAccessToken-1"&gt;
+   &lt;Operation&gt;GenerateAccessToken&lt;/Operation&gt;
+&lt;/OAuthV1&gt;
+</pre>
+
+  <h4>Comprehensive form</h4>
+  <pre class="prettyprint">
+&lt;OAuthV1 name="OAuthV1-GenerateAccessToken-1"&gt;
+  &lt;Operation&gt;GenerateAccessToken&lt;/Operation&gt;
+  &lt;URL ref="flow.variable"&gt;{value}&lt;/URL&gt;
+  &lt;GenerateResponse enabled="true"&gt;
+    &lt;Format&gt;FORM_PARAM | XML&lt;/Format&gt;
+  &lt;/GenerateResponse&gt;
+  &lt;GenerateErrorResponse enabled="true"&gt;
+    &lt;Format&gt;FORM_PARAM | XML&lt;/Format&gt;
+    &lt;Realm&gt;http://oauth.apigee.com/oauth/1/&lt;/Realm&gt;
+  &lt;/GenerateErrorResponse&gt;
+&lt;/OAuthV1&gt;
+</pre>
+
+  <p>The policy enforces the following OAuth semantics:</p>
+
+  <ul>
+    <li>The consumer key is valid.</li>
+
+    <li>The request token is valid.</li>
+
+    <li>The verifier is valid.</li>
+
+    <li>The signature is valid.</li>
+  </ul>
+
+  <p>A successful request returns the following responses:</p>
+
+  <ul>
+    <li>Generates an access token and its attributes in the flow <span style=
+    "font-family:courier new,courier,monospace;">oauth_token</span>, <span style=
+    "font-family:courier new,courier,monospace;">oauth_token_secret</span>, <span style=
+    "font-family:courier new,courier,monospace;">oauth_response</span></li>
+
+    <li>Also makes a consumer token and its attributes available in the flow <span style=
+    "font-family:courier new,courier,monospace;">oauth_consumer_key</span>, <span style=
+    "font-family:courier new,courier,monospace;">oauth_consumer_secret</span></li>
+  </ul>
+
+  <p>The &lt;URL&gt; element allows proper OAuthV1 signature calculation when running behind
+  Elastic Load Balancers (ELBs). The <code>ref</code> attribute takes precedence when both the
+  <code>ref</code> attribute and a text value are specified. If <code>ref</code> is not provided,
+  or if the flow variable given in <code>ref</code> is NULL, then the text value will be considered
+  for generating the signature. For example:</p>
+  <pre class="prettyprint">
+&lt;URL ref="secretURL"&gt;https://example-test.apigee.net/oauth/access_token&lt;/URL&gt;
+</pre>
+
+  <p>On failure, a request returns the appropriate response status code with an error message.</p>
+
+  <h3 id="associatetoken">Associating a token verification code with a request token</h3>
+
+  <p>The following policy associates a token verification code with a request token. To receive an
+  access token, both a verification code and a request token are required. </p>
+
+  <aside class="note"><b>Note:</b> To use this policy, a verification code must be generated
+  as a separate step outside of Apigee Edge. The verifier value must be a unique, random
+  string.</aside>
+
+  <p>The verification code fits into the basic OAuth flow as follows: After an app user's
+  credentials are authenticated by a service provider, the service provider must inform the
+  consumer app that the credentials were accepted, implying that the request token can be exchanged
+  for an access token. This is usually done via a 302 redirect. Separately, the service provider
+  must send a verification code to Apigee Edge, and Apigee Edge internally associates this verifier
+  to the request token.</p>
+
+  <p>Later, when the app exchanges the request token for an access token, it must pass both the
+  request token and the verifier code. Apigee Edge then checks that the verifier code is correct,
+  ensuring that the user who authenticated and granted access to the service is the same user who
+  is asking the app to retrieve an access token.  For detailed information on this message
+  flow, see the <a href="https://oauth.net/core/1.0a/" style="font-size: 12px;">OAuth 1.0a
+  specification</a><span style="font-size: 12px;">. </span></p>
+
+  <h4>Comprehensive form</h4>
+  <pre class="prettyprint">
+&lt;OAuthV1 name="OAuthV1-GenerateVerifier-1"&gt;
+    &lt;Operation&gt;GenerateVerifier&lt;/Operation&gt;
+    &lt;RequestToken ref="request.header.requesttoken"/&gt;
+    &lt;AppUserId ref="request.header.appuserid"/&gt;
+    &lt;VerifierCode ref="request.header.verifiercode"/&gt;
+    &lt;GenerateResponse enabled="true"&gt;
+       &lt;Format&gt;FORM_PARAM | XML&lt;/Format&gt;
+    &lt;/GenerateResponse&gt;
+     &lt;Attributes&gt;
+       &lt;Attribute name="ver-attr1"&gt;ver-attr1&lt;/Attribute&gt; 
+       &lt;Attribute name="ver-attr2" ref="request.header.ver-attr2"&gt;&lt;/Attribute&gt; 
+       &lt;Attribute name="ver-attr3" display="false"&gt;ver-attr3&lt;/Attribute&gt; 
+    &lt;/Attributes&gt;
+&lt;/OAuthV1&gt;
+</pre>
+
+  <h4>Parameters</h4>
+
+  <table>
+    <tbody>
+      <tr>
+        <td><strong>Parameter</strong></td>
+
+        <td><strong>Description</strong></td>
+      </tr>
+
+      <tr>
+        <td><span style="font-family: 'courier new', courier, monospace;">RequestToken</span></td>
+
+        <td>(Required) Specifies the request token with which to associate the verifier. </td>
+      </tr>
+
+      <tr>
+        <td><span style="font-family: 'courier new', courier, monospace;">AppUserId</span></td>
+
+        <td>(Required) Specifies the ID of the application user.</td>
+      </tr>
+
+      <tr>
+        <td><span style="font-family: 'courier new', courier, monospace;">VerifierCode</span></td>
+
+        <td>(Required) Specifies the verifier code. This code must be generated outside of Apigee
+        as a separate step. </td>
+      </tr>
+
+      <tr>
+        <td><span style="font-family: 'courier new', courier, monospace;">Attributes</span></td>
+
+        <td>(Optional) Allows you to attach arbitrary values to the access token. It is also
+        possible to attach attributes to the request token. Any attributes that are attached to the
+        request token get "promoted" to the access token at the time the app exchanges the request
+        token for the access token. If the policy specifies custom attributes to associate to the
+        access token that have the same name as custom attributes already associated to the request
+        token, the values of the custom attributes specified here take precedence. See also
+        "<a href="#customizeaccesstoken">Customizing access tokens</a>" later in this topic.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p><br>
+  When this policy executes, the following flow variables are populated:</p>
+
+  <ul>
+    <li><span style="font-family:courier new,courier,monospace;"><span style=
+    "font-family:arial,helvetica,sans-serif;">Request Token:
+     </span>oauthtoken.{policy_name}.oauth_token</span></li>
+
+    <li><span style="font-family:courier new,courier,monospace;"><span style=
+    "font-family:arial,helvetica,sans-serif;">Verifier
+    Code:</span> authtoken.{policy_name}.verifier_code</span></li>
+
+    <li><span style="font-family:courier new,courier,monospace;"><span style=
+    "font-family:arial,helvetica,sans-serif;">App User Id:</span>
+    oauthtoken.{policy_name}.app_user_id</span></li>
+  </ul>
+
+  <h4>Sample response</h4>
+
+  <p>If GenerateReponse is enabled, then the verifier is returned in the response along with the
+  other attributes. This is an example response when Format is set to XML.</p>
+  <pre class="prettyprint">
+&lt;response&gt;
+    &lt;oauth_parameter name="issued_at"&gt;1389014375368&lt;/oauth_parameter&gt;
+    &lt;oauth_parameter name="expires_at"&gt;1389016175368&lt;/oauth_parameter&gt;
+    &lt;oauth_parameter name="application_name"&gt;f24b582d-701f-4cbd-a1e0-2fc0e77003&lt;/oauth_parameter&gt;
+    &lt;oauth_parameter name="app_user_id"&gt;someappuserid&lt;/oauth_parameter&gt;
+    &lt;oauth_parameter name="organization_id"&gt;0&lt;/oauth_parameter&gt;
+    &lt;oauth_parameter name="oauth_token"&gt;HVEUg3Tb9tM8yMWZAARDcSbgeHp5&lt;/oauth_parameter&gt;
+    &lt;oauth_parameter name="ver-attr1"&gt;ver-attr1-value&lt;/oauth_parameter&gt;
+    &lt;oauth_parameter name="oauth_verifier"&gt;verifier-code&lt;/oauth_parameter&gt;
+    &lt;oauth_parameter name="verifier_code"&gt;verifier-code&lt;/oauth_parameter&gt;
+&lt;/response&gt;
+</pre>
+
+  <h3 id="verifyaccesstoken">Verifying an access token</h3>
+
+  <p>Here are examples of the simple and comprehensive forms for verifying access tokens.</p>
+
+  <h4>Simple form</h4>
+  <pre class="prettyprint">
+&lt;OAuthV1 name="OAuthV1-VerifyAccessToken-1"&gt;
+  &lt;Operation&gt;VerifyAccessToken&lt;/Operation&gt;
+&lt;/OAuthV1&gt;
+</pre>
+
+  <h4>Comprehensive form</h4>
+  <pre class="prettyprint">
+&lt;OAuthV1 name="OAuthV1-VerifyAccessToken-1"&gt;
+  &lt;Operation&gt;VerifyAccessToken&lt;/Operation&gt;
+  &lt;URL ref="flow.variable"&gt;{value}&lt;/URL&gt;
+  &lt;GenerateErrorResponse enabled="true"&gt;
+    &lt;Format&gt;FORM_PARAM | XML&lt;/Format&gt;
+    &lt;Realm&gt;http://oauth.apigee.com/oauth/1/&lt;/Realm&gt;
+  &lt;/GenerateErrorResponse&gt;
+&lt;/OAuthV1&gt;
+</pre>
+
+  <p>The policy enforces the following OAuth semantics:</p>
+
+  <ul>
+    <li>The consumer key is valid.</li>
+
+    <li>The access token is valid.</li>
+
+    <li>The signature is valid.</li>
+  </ul>
+
+  <p>A successful validation returns the following responses:</p>
+
+  <ul>
+    <li>Makes an access token and its attributes available in the flow <span style=
+    "font-family:courier new,courier,monospace;">oauth_token</span>, <span style=
+    "font-family:courier new,courier,monospace;">oauth_token_secret</span>, <span style=
+    "font-family:courier new,courier,monospace;">oauth_response</span></li>
+
+    <li>Also makes a consumer token and its attributes available in the flow <span style=
+    "font-family:courier new,courier,monospace;">oauth_consumer_key</span>, <span style=
+    "font-family:courier new,courier,monospace;">oauth_consumer_secret</span></li>
+  </ul>
+
+  <p>The &lt;URL&gt; element allows proper OAuthV1 signature calculation when running behind
+  Elastic Load Balancers (ELBs). The <code>ref</code> attribute takes precedence when both the
+  <code>ref</code> attribute and a text value are specified. If <code>ref</code> is not provided,
+  or if the flow variable given in <code>ref</code> is NULL, then the text value will be considered
+  for generating the signature. For example:</p>
+  <pre class="prettyprint">
+&lt;URL ref="secretURL"&gt;https://example-test.apigee.net/oauth/access_token&lt;/URL&gt;
+</pre>
+
+  <p>If the request fails verification, the server responds with the appropriate response status
+  code with an error message.</p>
+
+  <h3 id="customizeaccesstoken">Customizing access tokens</h3>
+
+  <p>Custom attributes can be optionally included in access, refresh, and verifier tokens.</p>
+  <pre class="prettyprint">
+&lt;Attributes&gt; 
+  &lt;Attribute name=&#8221;attr_name1&#8221; ref=&#8221;flow.variable&#8221; display="true|false"&gt;value1&lt;/Attribute&gt;
+  &lt;Attribute name=&#8221;attr_name2&#8221; ref=&#8221;flow.variable&#8221; display="true|false"&gt;value2&lt;/Attribute&gt;
+&lt;/Attributes&gt;
+</pre>
+
+  <p>Where display is set to <code>true</code>, custom attributes are returned in the response
+  , where they may be viewable by the app end user.</p>
+
+  <p>Where display is set to <code>false</code>, custom attributes are stored in the data
+  store, but are not returned in the response message.</p>
+
+  <p>For example, to add the User-Agent associated with the request to an access token:</p>
+  <pre class="prettyprint">
+&lt;OAuthV1 name="GenerateAccessToken"&gt;
+  &lt;Operation&gt;GenerateAccessToken&lt;/Operation&gt;
+  &lt;ExpiresIn&gt;1000&lt;/ExpiresIn&gt;
+  &lt;GenerateResponse /&gt;
+  &lt;Attributes&gt; 
+    &lt;Attribute name=&#8221;user-agent&#8221; ref=&#8221;request.header.user-agent&#8221; 
+            display="false"&gt;NONE&lt;/Attribute&gt;
+  &lt;/Attributes&gt;
+&lt;/OAuthV1&gt;
+</pre>
+
+  <h3 id="usagenotes-schemas">Schemas</h3>
+
+  <aside class="note"><b>Sample:</b> See our <a href=
+  "https://github.com/apigee/api-platform-samples/tree/master/schemas/policy">GitHub
+  repository</a> samples for the most recent schemas.</aside>
+  <hr>
+
+  <h2 id="variables">Flow variables</h2>
+
+  <p>The OAuthV1 and GetOAuthV1Info Policy types set the following variables when they execute.</p>
+
+  <p>GenerateRequestToken operation</p>
+
+  <ul>
+    <li><code>oauth_token</code></li>
+
+    <li><code>oauth_token_secret</code></li>
+
+    <li><code>oauth_callback_confirmed</code></li>
+
+    <li><code>oauth_response</code></li>
+
+    <li><code>oauth_consumer_key</code></li>
+
+    <li><code>oauth_consumer_secret</code></li>
+  </ul>
+
+  <p>GenerateAccessToken operation</p>
+
+  <ul>
+    <li><code>oauth_token</code></li>
+
+    <li><code>oauth_token_secret</code></li>
+
+    <li><code>oauth_response</code></li>
+
+    <li><code>oauth_consumer_key</code></li>
+
+    <li><code>oauth_consumer_secret</code></li>
+  </ul>
+
+  <p>VerifyAccessToken operation</p>
+
+  <ul>
+    <li><code>oauth_token</code></li>
+
+    <li><code>oauth_token_secret</code></li>
+
+    <li><code>oauth_response</code></li>
+
+    <li><code>oauth_consumer_key</code></li>
+
+    <li><code>oauth_consumer_secret</code></li>
+  </ul>
+
+  <p>GetOAuthV1Info</p>
+
+  <ul>
+    <li><code>oauth_consumer_key</code></li>
+
+    <li><code>oauth_consumer_secret</code></li>
+  </ul>
+  <hr>
+
+  <h2 id="errors">Error codes</h2>
+
+  <p>Errors returned from Edge policies follow a consistent format as described in the <a href=
+  "/api-platform/reference/policies/error-code-reference.html">Error code reference</a>.</p>
+
+  <p>{% dynamic include /includes/___oauth-v10a-policy-error-codes %}</p>
+  <hr>
+
+  <h2 id="relatedtopics">Related topics</h2>
+
+  <aside class="note"><b>Sample:</b> For working samples of API proxies, see the <a href=
+  "/api-platform/samples/samples-reference.html">Samples list</a>.</aside>
+
+  {% endblock %}

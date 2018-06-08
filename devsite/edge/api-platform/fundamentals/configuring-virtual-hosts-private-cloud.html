@@ -1,0 +1,276 @@
+  {% extends "_base.html" %} {% block title %}Configuring virtual hosts for the Private Cloud{% endblock %} {% block body %}
+
+  <p>In an on-premises installation, you have complete control over virtual hosts. You can create
+  virtual hosts for any org, in any environments, using TLS or not.</p>
+
+  <aside class="note"><b>Private Cloud:</b> This document describes how to create a virtual host
+  for an on-premises deployment of Edge. To create a virtual host for a Cloud deployment of Edge,
+  see <a href="configuring-virtual-hosts-cloud">Configuring virtual
+  hosts for the Cloud</a>.</aside>
+
+  <p>This document describes how to create a simple virtual host. That is, one that does not
+  support TLS. For more examples, including examples on creating virtual hosts that support TLS,
+  see <a href="/api-platform/system-administration/creating-virtual-host">Configuring TLS
+  access to an API for the Private Cloud</a>.</p>
+
+  <p><strong>Learn more</strong>: </p>
+
+  <ul>
+    <li><a href="virtual-hosts">About virtual hosts</a></li>
+    <li><a href="configuring-virtual-hosts">Configuring virtual hosts</a></li>
+    <li><a href="/api-platform/system-administration/configuring-ssl">Configuring TLS</a></li>
+    <li><a href="/api-platform/system-administration/keystores-and-truststores">Keystores and
+    Truststores</a></li>
+    <li><a href="/api-platform/system-administration/creating-virtual-host">Configuring TLS
+    access to an API for the Private Cloud</a></li>
+  </ul>
+
+  <h2 id="abouthostaliases">About host aliases</h2>
+
+  <aside class="note">
+    <b>Note:</b> As of Edge for Private Cloud version 4.16.01, you must specify a host alias when
+    creating a virtual host. In releases previous to 4.16.01, the host alias was optional.
+
+    <p>Also, the combination of host alias name and port number for the virtual host must be unique
+    for all virtual hosts in the Edge installation.</p>
+  </aside>
+
+  <p>When you create the virtual host, you must specify the host alias of the virtual host.
+  Typically this is the DNS name of the virtual host.</p>
+
+  <p>The Edge Router compares the <code>Host</code> header of the incoming request to the
+  list of available host aliases as part of determining the API proxy that handles the request.
+  When making a request through a virtual host, either specify a domain name that matches the host
+  alias of a virtual host, or specify the IP address of the Router and the <code>Host</code> header containing the host alias.</p>
+
+  <p>For example, if you created a virtual host with a host alias of
+  <strong>myapis.apigee.net</strong> on port <strong>9001</strong>, then a cURL request to an API
+  through that virtual host could use one of the following forms:</p>
+
+  <ul>
+    <li><p>If you have a DNS entry for <strong>myapis.apigee.net</strong>:</p>
+
+      <pre class="devsite-terminal">curl http://<strong>myapis.apigee.net:9001</strong>/{proxy-base-path}/{resource-path}</pre></li>
+
+    <li><p>If you do not have a DNS entry for <strong>myapis.apigee.net</strong>:</p>
+
+      <pre class="devsite-terminal">curl http://<strong>&lt;<var>routerIP</var>&gt;:9001</strong>/{proxy-base-path}/{resource-path} -H 'host:myapis.apigee.net'</pre>
+
+      <p>In this form, you specify the IP address of the Router, and pass the host alias in the
+      <code>Host</code> header. </p>
+
+      <aside class="note"><b>Note: </b> The curl command, most browsers, and many other utilities automatically
+      append the <code>Host</code> header with the
+      domain as part of the request, so you can actually use a curl command in the form:</aside>
+
+      <pre class="devsite-terminal">curl http://<strong>&lt;<var>routerIP</var>&gt;:9001</strong>/{proxy-base-path}/{resource-path}</pre>
+    </li>
+  </ul>
+
+  <h3 id="abouthostaliases-optionswhenyoudonothaveadnsentryforthevirtualhost">Options when you do
+  not have a DNS entry for the virtual host</h3>
+
+  <p>One option when you do not have a DNS entry is to set the host alias to the IP address of the
+  Router and port of the virtual host, as <code>&lt;<var>routerIP</var>&gt;:port</code>. For example:</p>
+
+  <pre class="prettyprint">192.168.1.31:9001</pre>
+
+  <p>When you make a curl command in the form below:</p>
+
+  <pre class="devsite-terminal">curl http://<strong>&lt;<var>routerIP</var>&gt;:9001</strong>/{proxy-base-path}/{resource-path} </pre>
+
+  <p>This option is preferred because it works well with the Edge UI. </p>
+
+  <p>If you have multiple Routers, add a host alias for each Router, specifying the IP address of
+  each Router and port of the virtual host. </p>
+
+  <p>Alternatively, you can set the host alias to a value, such as
+  <strong>temp.hostalias.com</strong>. Then, you have to pass the <code>Host</code> header on every request:</p>
+
+<pre class="devsite-terminal">curl -v http://<strong>&lt;<var>routerIP</var>&gt;:9001</strong>/{proxy-base-path}/{resource-path} -H 'H<strong>ost: temp.hostalias.com</strong>'</pre>
+
+  <p>Or, add the host alias to your <strong>/etc/hosts</strong> file. For example, add this line to
+  /etc/hosts:</p>
+
+  <pre class="prettyprint">192.168.1.31 temp.hostalias.com</pre>
+
+  <p>Then you can make a request as if you had a DNS entry:</p>
+
+  <pre class="devsite-terminal">curl -v http://<strong>myapis.apigee.net:9001</strong>/{proxy-base-path}/{resource-path}</pre>
+
+
+  <h2 id="aboutvirtualhostportsonedgeforprivatecloud41601andlater">About virtual host ports on Edge
+  for Private Cloud 4.16.01 and later</h2>
+
+  <p>When creating a virtual host, you specify the Router port used by the virtual host. For
+  example, port 9001.</p>
+
+  <p>For Apigee for Private Cloud releases 4.16.01 and later, by default, the Router runs as the
+  user "apigee" which does not have access to privileged ports, typically ports 1024 and below. If
+  you want to create a virtual host that binds the Router to a protected port then you have to
+  configure the Router to run as a user with access to those ports.  See <a href=
+  "/private-cloud/latest/setting-virtual-host">Setting up a virtual host</a> for more.
+   </p>
+
+
+  <h2 id="createasimplevirtualhost">Creating a simple virtual host</h2>
+
+  <p>To create a virtual host that does not support TLS, create an XML object that defines the
+  virtual host. For example, the following XML object defines a virtual host that uses the HTTP
+  protocol:</p>
+
+  <pre class="prettyprint">
+&lt;VirtualHost name="myVHost"&gt;
+   &lt;HostAliases&gt;
+     &lt;HostAlias&gt;DNS_name_or_IP:port&lt;/HostAlias&gt; 
+   &lt;/HostAliases&gt; 
+   &lt;Interfaces/&gt;
+   &lt;Port&gt;9005&lt;/Port&gt; 
+&lt;/VirtualHost&gt;
+</pre>
+
+  <aside class="note"><b>Note:</b> As of Edge for Private Cloud version 4.16.01, you must specify a
+  host alias when creating a virtual host. In releases previous to 4.16.01, the host alias was
+  optional. For more on setting the host alias, see <a href=
+  "/api-platform/system-administration/creating-virtual-host">Configuring TLS access to an API
+  for the Private Cloud</a>.</aside>
+
+  <p>Notice that the virtual host contains a <code>name</code> property. You use the value of the
+  <code>name</code> property to configure an API
+  proxy to use the virtual host.</p>
+
+  <p>You can then access an API proxy through this virtual host by making a request to:</p>
+
+  <pre class="prettyprint">
+http://<var>routerIP</var>:<var>port</var>/{proxy-base-path}/{resource-path}<code>
+</code>https://<var>routerIP</var>:<var>port</var>/{proxy-base-path}/{resource-path}
+</pre>
+
+  <p>where:</p>
+
+  <ul>
+    <li><code>http</code> or <code>https</code>: If the virtual host is configured to
+    support TLS, use HTTPS. If the virtual host does not support TLS, use HTTP. </li>
+
+    <li><var>routerIP</var>:<var>port</var> is the IP address and port number of the virtual host.</li>
+
+    <li><code>{proxy-base-path}</code> and <code>{resource-path}</code> are defined
+    when you create the API proxy.</li>
+  </ul>
+
+  <p>Typically, you do not publish your APIs to customers with an IP address and port number.
+  Instead, you define a DNS entry for the Router and port. For example:</p>
+  <pre class="prettyprint">
+http://api.myCompany.com/{proxy-base-path}/{resource-path}
+https://api.myCompany.com/{proxy-base-path}/{resource-path}
+</pre>
+
+  <p>If you define the DNS entry, then you must create a <em>host alias</em> for the virtual host
+  that matches the domain name of the DNS entry. The host alias must match the string that the
+  client passes in the <code>Host</code> header.
+  From the example above, you would specify a host alias of <code>api.myCompany.com</code>. </p>
+  <pre class="prettyprint">
+&lt;VirtualHost name="myVHost"&gt;
+    &lt;HostAliases&gt;
+        &lt;HostAlias&gt;api.myCompany.com&lt;/HostAlias&gt;
+    &lt;/HostAliases&gt;
+    &lt;Interfaces/&gt;
+    &lt;Port&gt;9005&lt;/Port&gt;
+&lt;/VirtualHost&gt;
+</pre>
+
+  <p>To create a virtual host that uses the HTTP protocol, perform the following:</p>
+
+  <ol>
+    <li>Create the virtual host by using the <a href=
+    "/management/apis/post/organizations/{org_name}/environments/{env_name}/virtualhosts">Create a
+    Virtual Host</a> API, where <em><strong><code>&lt;<code>ms-IP&gt;</code></code></strong></em> is
+    the IP address or domain name of the Management Server node:<br>
+      <pre class="prettyprint">
+$ curl -X POST -H "Content-Type:application/xml" \
+http://<em><strong>&lt;ms-IP&gt;</strong></em>:8080/v1/o/{org_name}/environments/{env_name}/virtualhosts \
+-d '&lt;VirtualHost name="newVHost"&gt;
+        &lt;HostAliases&gt;
+            &lt;HostAlias&gt;api.myCompany.com&lt;/HostAlias&gt;
+        &lt;/HostAliases&gt;
+        &lt;Interfaces/&gt;
+        &lt;Port&gt;9005&lt;/Port&gt;
+    &lt;/VirtualHost&gt;' \
+-u <var>sysAdminEmail</var>:<var>password</var>
+</pre>
+    </li>
+
+    <li>Create the DNS record for the virtual host that matches the host alias.</li>
+
+    <li>If you have any existing API proxies, add the virtual host to the <code>&lt;HTTPConnection&gt;</code> element
+    in the Proxy Endpoint. The virtual host is added automatically to all new API proxies.
+    See <a href="configuring-virtual-hosts#configuringanapiproxytouseavirtualhost">
+      Configuring an API proxy to use a virtual host</a>.
+
+      <aside class="warning"><b>Warning:</b> All virtual hosts are automatically added to all new
+      API proxies. Therefore, if you create a new API proxy that should not be accessible over a
+      particular virtual host, then you must edit the API proxy to remove that virtual host from
+      its ProxyEndpoint.</aside>
+    </li>
+  </ol>
+
+
+  <h2 id="modifyingavirtualhost">Modifying a virtual host</h2>
+
+  <aside class="warning"><b>Warning:</b> Use this procedure to modify the virtual host settings except
+  those that specify the keystore, alias, and truststore. Changing those properties can
+  require a Router restart depending on how you specified them. See <a href=
+  "/api-platform/system-administration/update-or-replace-ssl-certificate">Update a TLS certificate</a> for more. </aside>
+
+  <aside class="note"><b>Note:</b> If you change the TLS settings of an existing virtual host for
+  <strong>Edge for Private Cloud versions 4.16.01 and 4.16.05 only</strong>, and do not change the
+  port number of the virtual host, then you have to stop the Router and remove any cached
+  configuration files. After removing the files, you can restart the Router.</aside>
+
+  <p>To modify a virtual host, perform the following:</p>
+
+  <ol>
+    <li>
+      <p>Update the virtual host by using the
+      <a href="/management/apis/put/organizations/{org_name}/environments/{env_name}/virtualhosts/{virtualhost_name}">
+    Update a Virtual Host</a> API, where <code>&lt;ms-IP&gt;</code> is the IP address
+    or domain name of the Management Server node. You must specify the complete definition of the
+    virtual host in the request body, not just the elements that you want to change. In this
+    example, you change the port number of the virtual host from 9008 to 9009:</p>
+
+    <pre class="devsite-terminal">curl -X PUT -H "Content-Type:application/xml" \
+  http://&lt;ms-IP&gt;:8080/v1/o/{org_name}/environments/{env_name}/virtualhosts/{vhost_name} \
+  -d '&lt;VirtualHost name="newVHost"&gt;
+    &lt;HostAliases&gt;
+      &lt;HostAlias&gt;api.myCompany.com&lt;/HostAlias&gt;
+    &lt;/HostAliases&gt;
+    &lt;Interfaces/&gt;
+    &lt;Port&gt;9009&lt;/Port&gt;
+  &lt;/VirtualHost&gt;' \
+  -u <var>email</var>:<var>password</var></pre></li>
+
+    <li>
+      <strong>For Edge for Private Cloud versions 4.16.01 and 4.16.05 only</strong>, If you modify
+      an existing virtual host, and you either enable TLS or disable TLS without changing the port
+      number, then:
+
+      <ol style="list-style: lower-alpha outside">
+        <li><p>Stop the Router:</p>
+
+        <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-router stop</pre></li>
+
+        <li><p>Delete any files in <code>/opt/nginx/conf.d</code>:</p>
+
+        <pre class="devsite-terminal">rm -f /opt/nginx/conf.d/*</pre></li>
+
+        <li><p>Start the Router:</p>
+
+        <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-router start</pre></li>
+
+        <li>Repeat for all Routers.</li>
+      </ol>
+    </li>
+  </ol>
+
+
+{% endblock %}

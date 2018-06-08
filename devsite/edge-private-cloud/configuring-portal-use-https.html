@@ -1,0 +1,71 @@
+  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}Configuring the portal to use
+  HTTPS{% endblock %} {% block body %}
+
+  <p>All Apigee recommended Private Cloud installations of the portal require the portal to be
+  behind a load balancer. Therefore, you configure TLS on the load balancer itself, and not on the
+  portal. The procedure that you use to configure TLS is therefore dependent on the load
+  balancer.</p>
+
+  <p>However, if necessary, you can configure TLS on the web server that hosts the
+  portal. </p>
+
+  <p>See <a href="/api-platform/system-administration/using-ssl-portal.html">Using TLS on the
+  portal</a> for an overview of using TLS on the portal. </p>
+
+  <h2 id="fortheportalrunningonnginx">For the portal running on Nginx</h2>
+
+  <p>By default, a portal using the Nginx web server listens for HTTP requests on port 8079. If you
+  enable TLS, then the portal listens only for HTTPS requests on 8079. That is, you can either
+  configure the portal to listen for HTTP requests or HTTPS requests, but not both.</p>
+
+  <p>You can also change the port number as described in <a href=
+  "set-http-port-used-portal.html">Set the HTTP port used by the portal</a>. </p>
+
+  <p>To configure TLS:</p>
+
+  <ol>
+    <li>Obtain your TLS key and certificate. For this example, the cert is in a file
+    named server.crt and the key is in server.key.</li>
+
+    <li>Upload your cert and key to the portal server to <span style=
+    "font-family:courier new,courier,monospace;">/opt/apigee/customer/nginx/ssl</span>.</li>
+
+    <li>Change the owner of the cert and key to the "apigee" user:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt; chown apigee:apigee
+    /opt/apigee/customer/nginx/ssl/server.crt<br>
+    &gt; chown apigee:apigee /opt/apigee/customer/nginx/ssl/server.key</span></li>
+
+    <li>Open <span style=
+    "font-family:courier new,courier,monospace;">/opt/apigee/customer/application/drupal-devportal.properties</span>
+    in an editor. If the file and directory does not exist, create it. </li>
+
+    <li>Set the following properties in <span style=
+    "font-family:courier new,courier,monospace;">drupal-devportal.properties</span>:<br>
+      <span style="font-family:courier new,courier,monospace;">conf_devportal_ssl_block=ssl on;
+      ssl_certificate <strong>/opt/apigee/customer/nginx/ssl/server.crt</strong>;
+      <strong>ssl_certificate_key /opt/apigee/customer/nginx/ssl/server.key</strong>;</span>
+
+      <div>
+        <span style=
+        "font-family:courier new,courier,monospace;">conf_devportal_http_https_redirect=</span>
+      </div>
+
+      <div>
+        <span style=
+        "font-family:courier new,courier,monospace;">conf_devportal_fastcgi_https=fastcgi_param
+        HTTPS on; fastcgi_param HTTP_SCHEME https;</span>
+      </div><br>
+      <font face="arial, helvetica, sans-serif">For the </font><span style=
+      "font-family:courier new,courier,monospace;">conf_devportal_ssl_block</span>, specify the
+      path to the cert and key files. You do not have to modify the other properties.
+    </li>
+
+    <li>Save the file.</li>
+
+    <li>Restart the portal:<br>
+    /<span style=
+    "font-family:courier new,courier,monospace;">opt/apigee/apigee-service/bin/apigee-service
+    apigee-drupal-devportal restart</span></li>
+  </ol>
+
+  <p>You should be able to access the portal over TLS.</p>{% endblock %}

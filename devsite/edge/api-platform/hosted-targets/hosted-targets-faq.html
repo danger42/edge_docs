@@ -1,0 +1,118 @@
+  {% extends "_base.html" %} {% block title %}Hosted Targets FAQ (Beta){% endblock %} {% block body %}
+
+<aside class="note">This is the Beta release of Hosted Targets. To learn more, see
+  <a href="https://cloud.google.com/terms/launch-stages">Google Cloud Platform Launch Stages</a>.</aside>
+
+   <h2>Beta FAQ</h2>
+
+   <h3>How do I provide feedback or get support?</h3>
+
+   <p>If you questions about Hosted Targets, please ask on the {{community}}.</p>
+
+<h3>Is there management API support for Hosted Target proxies?</h3>
+
+<p>No new management APIs were created or existing APIs changed to support Hosted
+Targets; however, you can use existing management APIs to deploy and manage proxies that use Hosted
+Targets, as long as the Hosted Target proxies are properly constructed.</p>
+
+<p>When working with Hosted Target proxies, you need to know the following requirements:</p>
+
+<ul>
+  <li>Hosted Target source code must be placed in the <code>resources/hosted</code> directory.</li>
+  <li>A <code>resources/hosted/app.yaml</code> <a href="/api-platform/hosted-targets/hosted-targets-reference#about-the-manifest-file">manifest file</a>. </li>
+  <li>A <code>package.json</code> file that includes any package dependencies for your Node.js app. </li>
+  <li>If your application contains any custom modules not available through <code>npm</code>, then you must also
+    include them in a <code>node_modules</code> directory in your proxy's <code>resources/hosted</code> directory.
+    <aside class="note">To reduce the size of your custom Node.js modules, you can zip them instead of placing them
+      in <code>node_modules</code>. Follow this pattern: <code>resources/hosted/node_modules-{module_name}.zip</code>
+
+</ul>
+
+<p>Example proxy file structure for a Hosted Targets proxy:</p>
+
+<pre>apiproxy/
+         policies/
+         proxies/
+         targets/
+         resources/
+           hosted/
+             app.yaml
+             package.json
+             node_modules or node-modules-{module name}.zip (required only if you must include custom modules)
+             Your application code</pre>
+
+<p>For details on creating Hosted Targets proxies, see the <a href="/api-platform/hosted-targets/hosted-targets-tutorials">Tutorials.</a></p>
+
+   <h3>Can I use IP whitelisting to secure my target backend?</h3>
+
+   <p>IP whitelisting is documented in a <a href="https://cloud.google.com/appengine/kb#static-ip">Google Cloud Knowledge Base entry</a>.
+     We realize this might not be exactly what you&rsquo;re use to and are interested in hearing your feedback.</p>
+
+   <h3>Can I put multiple &lt;HostedTarget&gt; target endpoints in one proxy</h3>
+
+   <p>You can specify multiple <strong>&lt;HostedTarget&gt;</strong> elements in the target endpoint
+     of a proxy; however, only one Hosted Target is deployed per proxy. This is the application
+     in the proxy's<strong> resources/hosted</strong> directory. Any route rules to different instances
+     of <strong>&lt;HostedTarget&gt; </strong>will route them to the same deployed Hosted Target application.</p>
+
+   <h3>How should we work around the lack of apigee-access?</h3>
+
+<p><b>apigee-access</b> is not supported</a>
+     in the Beta release of Hosted Targets and while we plan on having an answer to this in future releases, we realize that
+     existing Node.js on Edge customers might have some applications that will not run on Hosted
+     Targets. The suggestion right now is to use whatever Edge APIs and policies are available
+     to replace what your existing code does using apigee-access. Where that might not be possible,
+     we do have a few workarounds that will work for now:</p>
+   <ul>
+      <li><strong>Use headers</strong> -&nbsp;You can put KVM values or flow variables into headers
+        and those headers
+        can be consumed by your application at runtime.
+        <aside class="note">This will not be something that will be useful at application deployment
+          time. This will only work for KVM values or flow variables that are necessary when
+          processing request traffic.</aside></li>
+      <li><strong>Use environment variables</strong> -&nbsp;You can set environment variables whose
+        values are provided by the KVM. This is documented in the <a href="./hosted-targets-reference#about-the-manifest-file">manifest file</a>&nbsp;portion of the user guide.</li>
+   </ul>
+
+   <h3>Can I use Java Keystores (JKS) Files for TLS?</h3>
+
+   <p>No, Hosted Targets does not support JKS for TLS as a replacement for PEM files, see previous
+     documentation <a href="https://github.com/apigee/trireme#tlsssl-and-https">here</a>. Hosted Targets
+     uses native Node.js and thus uses OpenSSL natively. Please refer to the <a href="https://nodejs.org/dist/latest-v6.x/docs/api/tls.html">TLS (SSL) documentation</a>&nbsp;provided by Node.js docs when setting up TLS/SSL connections.</p>
+
+   <h3>Always delete temporary files</h3>
+
+   <p>Local disk storage in the temporary directory is an in-memory filesystem. All files that you
+     write consume memory available&nbsp;to your function. Files that you write are usually available
+     at consecutive invocations, therefore failing to delete these files may eventually lead to an
+     out-of-memory error and a subsequent cold start.</p>
+   <p>Do not attempt to write outside of the temporary directory. Also, use platform-independent
+     methods such as <strong>os.tmpdir()</strong>&nbsp;and <strong>path.join()</strong>&nbsp;to
+     construct the temporary file path, so that your functions also work on the emulator on any platform.</p>
+
+   <p>For more information, see <a href="https://cloud.google.com/functions/docs/bestpractices/tips">this Google Cloud document</a>.</p>
+   <h3>Deploying multiple proxy revisions</h3>
+
+   <p>Apigee Edge allows you to deploy multiple revisions of a proxy to an environment with different
+     basepaths; however, this behavior is not supported for Hosted Targets. In future releases this
+     situation will result in a deployment error.</p>
+   <h2>Troubleshooting</h2>
+
+   <h3>Build/Deploy failed due to missing package.json</h3>
+
+   <p>In the previous version of Node.js hosting a <strong>package.json</strong>&nbsp;file was optional.
+     For Hosted Targets, this is required. Any attempt to create/deploy a proxy without a <strong>package.json</strong>&nbsp;will fail at build time.</p>
+
+   <h3>Receiving 502 Bad Gateway From Proxy</h3>
+
+   <p>A "502 Bad Gateway" error can occur when the process fails to start. To debug this check the runtime logs and
+     look for error messages when starting. A common error is a missing or invalid start command in
+     the <strong>package.json</strong>. At a minimum the <strong>package.json</strong> should specify <strong>"start": "node ."</strong>&nbsp;in the &ldquo;scripts&rdquo; property. For an example check out the package.json provided above.</p>
+
+   <h3>Proxy Hangs and Returns 504 Gateway Timeout</h3>
+
+   <p>A "504 Gateway Timeout" error can occur when the Hosted Targets target app does not respond within the timeout limits.
+     Check to ensure your application is listening on the port set the environment variable PORT.
+     You can access this variable with <strong>process.env.PORT</strong>&nbsp;in your application.
+     Otherwise check the runtime logs for any other error messages.</p>
+{% endblock %}

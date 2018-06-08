@@ -1,0 +1,398 @@
+  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}About Planets, Regions, Pods,
+  Organizations, Environments and Virtual Hosts{% endblock %} {% block body %}
+
+  <p>An on-premises installation of Edge Private Cloud, or an Edge instance, consists of multiple
+  Edge components installed on a set of server nodes. The following image shows the relationship
+  among the planet, regions, pods, organizations, environments, and virtual hosts that make up an
+  Edge instance:</p>
+
+  <p><img alt="" src="/private-cloud/images/regionsPortsEtc.png"></p>
+
+  <p>The following table describes these relationships:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th> </th>
+        <th><strong>Contains</strong></th>
+        <th><strong>Associated with</strong></th>
+        <th><strong>Default</strong></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Planet</strong></td>
+        <td>One or more regions</td>
+        <td> </td>
+        <td>n/a</td>
+      </tr>
+      <tr>
+        <td><strong>Region</strong></td>
+        <td>One or more pods</td>
+        <td> </td>
+        <td>"dc-1"</td>
+      </tr>
+      <tr>
+        <td><strong>Pod</strong></td>
+        <td>One or more Edge components</td>
+        <td> </td>
+        <td>"central"<br/>"gateway"<br/>"analytics"</td>
+      </tr>
+      <tr>
+        <td><strong>Organization</strong></td>
+        <td>One or more environments</td>
+        <td>One or more pods containing Message Processors, and a user acting as the org admin</td>
+        <td>none</td>
+      </tr>
+      <tr>
+        <td><strong>Environment</strong></td>
+        <td>One or more virtual hosts</td>
+        <td>One or more Message Processors in a pod associated with the parent organization</td>
+        <td>none</td>
+      </tr>
+      <tr>
+        <td><strong>Virtual Host</strong></td>
+        <td>One or more host aliases</td>
+        <td> </td>
+        <td>none</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="aboutplanets">About Planets</h2>
+
+  <p>A <em>planet</em> represents an entire Edge hardware and software environment and can contain
+  one or more regions. In Edge, a planet is a logical grouping of regions &#8212; you do not
+  explicitly create or configure a planet as part of installing Edge.</p>
+
+  <h2 id="aboutregions">About Regions</h2>
+
+  <p>A <em>region</em> is a grouping of one or more pods. By default, when you install Edge, the
+  installer creates a single region named "dc-1" containing three pods, as the following table
+  shows:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th><strong>Region</strong></th>
+        <th><strong>Pods in the region</strong></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>"dc-1"</td>
+        <td>"gateway", "central", "analytics"</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>The following image shows the default regions:</p>
+
+  <p><img alt="" src="/private-cloud/images/single_region.png"></p>
+
+  <p>This image shows the load balancer directing traffic to the "gateway" pod. The "gateway" pod
+  contains the Edge Router and Message Processor components that handle API requests. Unless you
+  define multiple data centers, you should not have to create additional regions.  </p>
+
+  <p>In a more complex installation, you can create two or more regions. One reason to create
+  multiple regions is to organize machines geographically, which minimizes network transit time. In
+  this scenario, you host API endpoints so that they are geographically <em>close</em> to the
+  consumers of those APIs.</p>
+
+  <p>In Edge, each region is referred to as a <em>data center</em>.  A data center in the
+  Eastern US can then handle requests arriving from Boston, Massachusetts, while a data center in
+  Singapore can handle requests originating from devices or computers in Asia.</p>
+
+  <p>For example, the following image shows two regions, corresponding to two data centers:</p>
+
+  <p><img alt="" src="/private-cloud/images/two_dc.png"></p>
+
+  <h2 id="aboutpods">About Pods</h2>
+
+  <p>A <em>pod</em> is a grouping of one or more Edge components and Cassandra datastores. The Edge
+  components can be installed on the same node, but are more commonly installed on different nodes.
+  A Cassandra datastore is a data repository used by the Edge components in the pod.  </p>
+
+  <p>By default, when you install Edge, the installer creates three pods and associates the
+  following Edge components and Cassandra datastores with each pod:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th><strong>Pod</strong></th>
+        <th><strong>Edge components</strong></th>
+        <th colspan="2"><p align="center"><strong>Cassandra datastores</strong></p></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>"gateway"</td>
+        <td>Router, Message Processor</td>
+        <td>cache-datastore<br>
+          counter-datastore<br>
+          dc-datastore
+        </td>
+        <td>keyvaluemap-datastore<br>kms-datastore</td>
+      </tr>
+      <tr>
+        <td>"central"</td>
+        <td>Management Server, Zookeeper, LDAP, UI, Qpid</td>
+        <td>application-datastore<br/>apimodel-datastore<br/>audit-datastore<br/>auth-datastore</td>
+        <td>identityzone-datastore<br/>edgenotification-datastore<br/>management-server<br/>
+          scheduler-datastore<br/>user-settings-datastore</td>
+      </tr>
+      <tr>
+        <td>"analytics"</td>
+        <td>Postgres</td>
+        <td>analytics-datastore</td>
+        <td>reportcrud-datastore</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>The Edge components and Cassandra datastores in the "gateway" pod are required for API
+  processing. These components and datastores must be up and running to process API requests. The
+  components and datastores in the "central" and "analytics" pods are not required to process APIs,
+  but add additional functionality to Edge.  </p>
+
+  <p>The following image shows the components in each pod: </p>
+
+  <p><img alt="" src="/private-cloud/images/pod_components.png"></p>
+
+  <p>You can add additional Message Processor and Router pods to the three that are created by
+  default. Alternatively, you can add additional Edge components to an existing pod. For example,
+  you can add additional Routers and Message Processors to the "gateway" pod to handle increased
+  traffic loads.</p>
+
+  <p>Notice that the "gateway" pod contains the Edge Router and Message Processor components.
+  Routers only send requests to Message Processors in the same pod and not to Message Processors in
+  other pods. </p>
+
+  <p>You can use the following API call to view server registration details at the end of the
+  installation for each pod. This is a useful monitoring tool.</p>
+  <pre class="prettyprint">
+curl -u adminEmail:pword http://<em><strong>&lt;ms_IP</strong></em>&gt;:8080/v1/servers?pod=<em><strong>podName</strong></em>
+</pre>
+
+  <p>where <em><strong>ms_IP</strong></em> is the IP address or DNS name of the Management Server,
+  and <em><strong>podName</strong></em> is either:</p>
+
+  <ul>
+    <li><code>gateway</code></li>
+    <li><code>central</code></li>
+    <li><code>analytics</code></li>
+  </ul>
+
+  <p>For example, for the "gateway" pod:</p>
+  <pre class="prettyprint">&gt; curl -u adminEmail:pword http://&lt;<var>ms_IP</var>&gt;:8080/v1/servers?pod=<strong>gateway</strong></pre>
+
+  <p>You see output in the form:</p>
+  <pre class="prettyprint">
+[ {
+  "externalHostName" : "localhost",
+  "externalIP" : "192.168.1.11",
+  "internalHostName" : "localhost",
+  "internalIP" : "192.168.1.11",
+  "isUp" : true,
+  "pod" : "gateway",
+  "reachable" : true,
+  "region" : "dc-1",
+  "tags" : {
+    "property" : [ {
+      "name" : "jmx.rmi.port",
+      "value" : "1101"
+    }, ... ]
+  },
+  "type" : [ "message-processor" ],
+  "uUID" : "276bc250-7dd0-46a5-a583-fd11eba786f8"
+}, 
+{
+  "internalIP" : "192.168.1.11",
+  "isUp" : true,
+  "pod" : "gateway",
+  "reachable" : true,
+  "region" : "dc-1",
+  "tags" : {
+    "property" : [ ]
+  },
+  "type" : [ "dc-datastore", "management-server", "cache-datastore", "keyvaluemap-datastore", "counter-datastore", "kms-datastore" ],
+  "uUID" : "13cee956-d3a7-4577-8f0f-1694564179e4"
+},
+{
+  "externalHostName" : "localhost",
+  "externalIP" : "192.168.1.11",
+  "internalHostName" : "localhost",
+  "internalIP" : "192.168.1.11",
+  "isUp" : true,
+  "pod" : "gateway",
+  "reachable" : true,
+  "region" : "dc-1",
+  "tags" : {
+    "property" : [ {
+      "name" : "jmx.rmi.port",
+      "value" : "1100"
+    }, ... ]
+  },
+  "type" : [ "router" ],
+  "uUID" : "de8a0200-e405-43a3-a5f9-eabafdd990e2"
+} ]
+</pre>
+
+  <p>The <strong>type</strong> attribute lists the component type. Note that it lists the Cassandra
+  datastores registered in the pod. While Cassandra nodes are installed in the "gateway" pod, you
+  will see Cassandra datastores registered with all pods.</p>
+
+  <h2 id="aboutorganizations">About Organizations</h2>
+
+  <p>An <em>organization</em> is a container for all the objects in an Apigee account, including
+  APIs, API products, apps, and developers. An organization is associated with one or more pods,
+  where each pod must contain one or more Message Processors. </p>
+
+  <aside class="note"><strong>Note:</strong> In the default installation, where you only have a single
+  "gateway" pod that contains all the Message Processors, you only associate an org with the
+  "gateway" pod. Unless you define multiple data centers, and multiple Message Processors pods, you
+  cannot associate an organization with multiple pods.</aside>
+
+  <p>In an on-premises installation of Edge Private Cloud, there are no organizations by default.
+  When you create an organization, you specify two pieces of information:</p>
+
+  <ol>
+    <li>A user who functions as the organization administrator. That user can then add additional
+    users to the organization, and set the role of each user.</li>
+
+    <li>The "gateway" pod, the pod containing the Message Processors.</li>
+  </ol>
+
+  <p>An organization can contain one or more environments. The default Edge installation procedure
+  prompts you to create two environments: "test" and "prod". However, you can create more
+  environments as necessary, such as "staging", "experiments", etc.</p>
+
+  <p>Organization provides scope for some Apigee capabilities. For example, key-value-map (KVM)
+  data is available at the organization level, meaning from all environments. Other capabilities,
+  such as caching, are scoped to a specific environment. Apigee analytics data is partitioned by a
+  combination of organization and environment.</p>
+
+  <p>Shown below are the major objects of an organization, including those defined globally in the
+  organization, and those defined specifically to an environment:</p>
+
+  <p><img alt="" src="/private-cloud/images/org_components.png"></p>
+
+  <h2 id="aboutenvironments">About Environments</h2>
+
+  <p>An <em>environment</em> is a runtime execution context for the API proxies in an organization.
+  You must deploy an API proxy to an environment before it can be accessed. You can deploy an API
+  proxy to a single environment or to multiple environments.</p>
+
+  <p>An organization can contain multiple environments. For example, you might define a "dev",
+  "test", and "prod" environment in an organization. </p>
+
+  <p>When you create an environment, you associate it with one or more Message Processors. You can
+  think of an environment as a named set of Message Processors on which API proxies run. Every
+  environment can be associated with the same Message Processors, or with different ones. </p>
+
+  <p>To create an environment, specify two pieces of information:</p>
+
+  <ol>
+    <li>The organization containing the environment.</li>
+
+    <li>The Message Processors that handle API proxy requests to the environment. These Message
+    Processors must be in a pod associated with the environment's parent organization.<br>
+    By default, when you create an environment, Edge associates all available Message Processors in
+    the "gateway" pod with the environment. Alternatively, you can specify a subset of the
+    available Message Processors so that different Message Processors handle requests to different
+    environments. </li>
+  </ol>
+
+  <p>A Message Processor can be associated with multiple environments. For example, your Edge
+  installation contains two Message Processors: A and B. You then create three environments in your
+  organization: "dev", "test", and "prod":</p>
+
+  <ul>
+    <li>For the "dev" environment, you associate Message Processor A because you do not expect a
+      large volume of traffic.</li>
+    <li>For the "test" environment, you associate Message Processor B because you do not expect a
+      large volume of traffic.</li>
+    <li>For the "prod" environment, you associate both Message Processors A and B to handle the
+      production-level volume.</li>
+  </ul>
+
+  <p>The Message Processors assigned to an environment can all be from the same pod, or can be from
+  multiple pods, spanning multiple regions and data centers. For example, you define the
+  environment "global" in your organization that includes Message Processors from three regions,
+  meaning three different data centers: US, Japan, and Germany. </p>
+
+  <p>Deploying an API proxy to the "global" environment causes the API proxy to run on Message
+  Processors in all of three data centers. API traffic arriving at a Router in any one of those
+  data centers would be directed only to Message Processors in that data center because Routers
+  only direct traffic to Message Processors in the same pod.  </p>
+
+  <h2 id="aboutvirtualhosts">About virtual hosts</h2>
+
+  <p>A <em>virtual host</em> defines the port on the Edge Router on which an API proxy is exposed,
+  and, by extension, the URL that apps use to access the API proxy. Every environment must define
+  at least one virtual host. </p>
+
+  <p>Ensure that the port number specified by the virtual host is open on the Router node. You can
+  then access an API proxy by making a request to:</p>
+  <pre class="prettyprint">
+http://<var>routerIP</var>:<var>port</var>/<var>proxy-base-path</var>/<var>resource-name</var>
+https://<var>routerIP</var>:<var>port</var>/<var>proxy-base-path</var>/<var>resource-name</var>
+</pre>
+
+  <p>where:</p>
+  <ul>
+    <li><code>http</code> or <code>https</code>: If the virtual host is configured to
+    supports TLS/SSL, use HTTPS. If the virtual host does not support TLS/SSL, use HTTP. </li>
+    <li><var>routerIP:port</var> is the IP address and port number of the virtual host.</li>
+    <li><var>proxy-base-path</var> and <var>resource-name</var> are defined when you create
+    the API proxy.</li>
+  </ul>
+
+  <p>Typically, you do not publish your APIs to customers with an IP address and port number.
+  Instead, you define a DNS entry for the Router and port. For example:</p>
+  <pre class="prettyprint">
+http://<strong>myAPI.myCo.com</strong>/<var>proxy-base-path</var>/<var>resource-name</var>
+https://<strong>myAPI.myCo.com</strong>/<var>proxy-base-path</var>/<var>resource-name</var>
+</pre>
+
+  <p>You also must create a host alias for the virtual host that matches the domain name of the DNS
+  entry. From the example above, you would specify a host alias of <strong>myAPI.myCo.com</strong>.
+  If you do not have a DNS entry, set the host alias to the IP address of the Router and port of
+  the virtual host, as <var>routerIP:port</var>.</p>
+
+  <p>For more, see <a href="/api-platform/fundamentals/virtual-hosts">About virtual hosts</a>.</p>
+
+  <h2 id="creatingyourfirstorganizationenvironmentandvirtualhost">Creating your first organization,
+  environment, and virtual host</h2>
+
+  <p>After you complete the Edge installation process, your first action is typically to create an
+  organization, environment, and virtual host through the "onboarding" process. To perform
+  onboarding, run the following command on the Edge Management Server node:</p>
+  <pre class="prettyprint">
+/opt/apigee/apigee-service/bin/apigee-service apigee-provision setup-org -f <var>configFile</var>
+</pre>
+
+  <p>This command takes as input a config file that defines a user, organization, environment, and
+  virtual host.</p>
+
+  <p>For example, you create:</p>
+  <ul>
+    <li>A user of your choosing to function as the organization administrator</li>
+    <li>An organization named <code>example</code></li>
+    <li>An environment in the organization named <code>prod</code> that is associated with all Message
+      Processors in the "gateway" pod</li>
+    <li>A virtual host in the environment named <code>default</code> that allows HTTP access on port
+      9001</li>
+    <li>Host alias for the virtual host</li>
+  </ul>
+
+  <p>After running that script, you can access your APIs by using a URL in the form:</p>
+  <pre class="prettyprint">
+http://<var>routerIP</var>:9001/<var>proxy-base-path</var>/<var>resource-name</var>
+</pre>
+
+  <p>You can later add any number of organizations, environments, and virtual hosts.</p>
+
+  <p>For more information, see <a href="onboard-organization">Onboard an organization</a>.</p>
+
+{% endblock %}

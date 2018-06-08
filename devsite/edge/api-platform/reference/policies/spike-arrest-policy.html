@@ -1,0 +1,720 @@
+  {% extends "_base.html" %} {% block title %}Spike Arrest policy{% endblock %} {% block body %}
+  <img src="/api-platform/images/icon_policy_spike-arrest.jpg">
+
+  <h3>What</h3>
+
+  <p>The Spike Arrest policy protects against traffic spikes. It throttles the number of requests
+  processed by an API proxy and sent to a backend, protecting against performance lags and
+  downtime. See the <code><a href="#rate">&lt;Rate&gt;</a></code> element for a more detailed
+  behavior description. See also "<a href="#Howitworks">How spike arrest works</a>",
+  below. </p>
+
+  <aside class="key-point"><b>Tip:</b> Need help deciding which rate limiting policy to use? See
+  <a href=
+  "/api-platform/develop/comparing-quota-spike-arrest-and-concurrent-rate-limit-policies.html">Comparing
+  Quota, Spike Arrest, and Concurrent Rate Limit Policies</a>.</aside><!--<div class="video">
+        <p>Watch this video for an introduction to the Spike Arrest policy.</p>
+        <div class="collapse" id="demo">
+                <div style="text-align: left;"><iframe allowfullscreen="" frameborder="0" height="315" src="https://www.youtube.com/embed/3Gi-GGTqllg" width="560"></iframe></div>
+        </div>
+        <div id="collapsible_1"><a class="btn" data-toggle="collapse" href="#demo">Show/Hide Video</a></div>
+</div>-->
+
+  <h3 id="videos">Videos</h3>
+
+  <p>These videos show you how to protect your APIs against traffic spikes using the Spike Arrest
+  policy:</p>
+
+  <div class="ds-selector-tabs">
+    <section>
+      <h3 class="two-line-tab">Why You Need It</h3><iframe allowfullscreen="" frameborder="0"
+      height="390" src="https://www.youtube.com/embed/7ysABsE-dWw" width="640"></iframe>
+    </section>
+
+    <section>
+      <h3 class="two-line-tab">How to Configure</h3><iframe allowfullscreen="" frameborder="0"
+      height="390" src="https://www.youtube.com/embed/XlB3S5hJyWY" width="640"></iframe>
+    </section>
+
+    <section>
+      <h3 class="two-line-tab">Attach Policy</h3><iframe allowfullscreen="" frameborder="0" height=
+      "390" src="https://www.youtube.com/embed/3Gi-GGTqllg" width="640"></iframe>
+    </section>
+
+    <section>
+      <h3 class="two-line-tab">Per Second Rate Limiting</h3><iframe allowfullscreen="" frameborder=
+      "0" height="390" src="https://www.youtube.com/embed/4iqM_Ofmwws" width="640"></iframe>
+    </section>
+
+    <section>
+      <h3 class="two-line-tab">Per Minute Rate Limiting</h3><iframe allowfullscreen="" frameborder=
+      "0" height="390" src="https://www.youtube.com/embed/wnZyVHfeDM0" width="640"></iframe>
+    </section>
+
+    <section>
+      <h3 class="two-line-tab">Unique Rate Limiting</h3><iframe allowfullscreen="" frameborder="0"
+      height="390" src="https://www.youtube.com/embed/XY3AwAp_Xt4" width="640"></iframe>
+    </section>
+
+    <section>
+      <h3 class="two-line-tab">Compare Quota Policy</h3><iframe allowfullscreen="" frameborder="0"
+      height="390" src="https://www.youtube.com/embed/zerXp-hDrL8" width="640"></iframe>
+    </section>
+
+    <section>
+      <h3 class="two-line-tab">Flow Variables</h3><iframe allowfullscreen="" frameborder="0"
+      height="390" src="https://www.youtube.com/embed/l-3qKBOssPs" width="640"></iframe>
+    </section>
+  </div>
+
+  <h3 id="samples">Samples</h3><!-- Begin tab list -->
+  <!-- End tab list --><!-- Begin tabbed region -->
+
+  <div class="ds-selector-tabs">
+    <section>
+      <h3 class="two-line-tab">Per second</h3>
+      <pre class="prettyprint">
+&lt;SpikeArrest name="SpikeArrest"&gt;
+  &lt;Rate&gt;5ps&lt;/Rate&gt;
+&lt;/SpikeArrest&gt;
+</pre>
+
+      <p>5 per second. The policy smoothes the rate to 1 request allowed every 200
+      <strong>milliseconds</strong> (1000 / 5).</p>
+    </section>
+
+    <section>
+      <h3 class="two-line-tab">Per minute</h3>
+      <pre class="prettyprint">
+&lt;SpikeArrest name="SpikeArrest"&gt;
+  &lt;Rate&gt;12pm&lt;/Rate&gt;
+&lt;/SpikeArrest&gt;
+</pre>
+
+      <p>12 per minute. The policy smoothes the rate to 1 request allowed every 5
+      <strong>seconds</strong> (60 / 12).</p>
+    </section>
+
+    <section>
+      <h3 class="two-line-tab">With message weight</h3>
+      <pre class="prettyprint">
+&lt;SpikeArrest name="SpikeArrest"&gt;
+  &lt;Rate&gt;12pm&lt;/Rate&gt;
+  &lt;Identifier ref="client_id" /&gt;
+  &lt;MessageWeight ref="request.header.weight" /&gt;
+&lt;/SpikeArrest&gt;
+</pre>
+
+      <p>12 per minute (1 request allowed every 5 seconds, 60 / 12), with message weight that
+      provides additional throttling on specific clients or apps (captured by the Identifier).</p>
+    </section>
+
+    <section>
+      <h3 class="two-line-tab">Rate from variable</h3>
+      <pre class="prettyprint">
+&lt;SpikeArrest name="SpikeArrest"&gt;
+  &lt;Rate ref="request.header.rate" /&gt;
+&lt;/SpikeArrest&gt;
+</pre>
+
+      <p>Setting rate with a <code>variable</code> in the request. The variable value must be in
+      the form of {int}pm or {int}ps.</p>
+    </section>
+
+    <section>
+      <h3 class="two-line-tab">Rate from product</h3>
+
+      <p>Check out <a href=
+      "https://community.apigee.com/questions/39835/how-can-i-use-api-products-to-set-spike-arrest-lim.html">
+      this Apigee Community post</a> that explains how to set the spike arrest rate using custom
+      variables set in an API product.</p>
+    </section>
+  </div><!-- End tabbed region. -->
+  <hr>
+
+  <h2 id="elements">Element reference</h2>
+
+  <p>Following are elements and attributes you can configure on this policy.</p>
+  <pre class="prettyprint">
+&lt;SpikeArrest async="false" continueOnError="false" enabled="true" name="Spike-Arrest-1"&gt;
+    &lt;<a href=
+"#displaynameelement">DisplayName</a>&gt;Custom label used in UI&lt;/DisplayName&gt;
+    &lt;<a href="#rate">Rate</a>&gt;30ps&lt;/Rate&gt;
+    &lt;<a href="#identifier">Identifier</a> ref="request.header.some-header-name"/&gt;
+    &lt;<a href="#messageweight">MessageWeight</a> ref="request.header.weight"/&gt;
+    &lt;<a href="#useeffectivecount">UseEffectiveCount</a>&gt;true&lt;/UseEffectiveCount&gt;
+&lt;/SpikeArrest&gt;
+</pre>
+
+  <h2 id="spikearrestattributes">&lt;SpikeArrest&gt; attributes</h2>
+  <pre class="prettyprint">
+&lt;SpikeArrest async="false" continueOnError="false" enabled="true" name="Spike-Arrest-1"&gt;
+</pre>{% dynamic include /includes/___policies-parent-element-attributes %}
+
+  <h2 id="rate">&lt;Rate&gt; element</h2>
+
+  <p>Specifies the rate at which to limit traffic spikes (or bursts). Specify a number of requests
+  that are allowed in per minute or per second intervals. However, keep reading for a description
+  of how the policy behaves at runtime to smoothly throttle traffic. See also "<a href=
+  "#Howitworks">How spike arrest works</a>", below. </p>
+  <pre class="prettyprint">
+&lt;Rate&gt;10ps&lt;/Rate&gt;
+</pre>
+  <pre class="prettyprint">
+&lt;Rate&gt;30pm&lt;/Rate&gt;
+</pre>
+  <pre class="prettyprint">
+&lt;Rate ref="request.header.rate" /&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence</b></td>
+
+        <td>Required</td>
+      </tr>
+
+      <tr>
+        <td><b>Type</b></td>
+
+        <td>Integer</td>
+      </tr>
+
+      <tr>
+        <td><b>Valid values</b></td>
+
+        <td>
+          <ul>
+            <li>{int}ps (number of requests per second, smoothed into intervals of
+            milliseconds)</li>
+
+            <li>{int}pm (number of requests per minute, smoothed into intervals of seconds)
+
+              <aside class="note"><b>Note:</b> In rate smoothing, the number of requests is always
+              a whole number greater than zero. Smoothing never involves calculating fractions of
+              requests.</aside>
+            </li>
+          </ul>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="rateelement-attributes">Attributes</h3>
+
+  <table width="650">
+    <tbody>
+      <tr>
+        <th scope="col">Attribute</th>
+
+        <th scope="col">Description</th>
+
+        <th scope="col">Default</th>
+
+        <th scope="col">Presence</th>
+      </tr>
+
+      <tr>
+        <td>ref</td>
+
+        <td>
+          <p>A reference to the variable containing the rate setting, in the form of {int}pm or
+          {int}ps.</p>
+        </td>
+
+        <td>N/A</td>
+
+        <td>Optional</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="identifier">&lt;Identifier&gt; element</h2>
+
+  <p>Use the <code>&lt;Identifier&gt;</code> element to uniquely identify and apply spike
+  arrest against individual apps or developers. You can use a variety of variables to indicate a
+  unique developer or app, whether you're using custom variables or predefined variables, such as
+  those available with the <a href=
+  "/api-platform/reference/policies/verify-api-key-policy.html">Verify API Key policy</a>. See also
+  the <a href="/api-platform/reference/variables-reference.html">Variables reference</a>.</p>
+
+  <p>Use in conjunction with <code>&lt;MessageWeight&gt;</code> for more fine-grained
+  control over request throttling.</p>
+
+  <p>If you don't use this element, all calls made to the API proxy are counted for spike
+  arrest.</p>
+
+  <p>This element is also discussed in the following Apigee Community post: <a href=
+  "https://community.apigee.com/questions/2807/how-does-the-edge-quota-policy-work-when-no-identi.html">http://community.apigee.com/questions/2807/how-does-the-edge-quota-policy-work-when-no-identi.html</a>.</p>
+  <pre class="prettyprint">
+&lt;Identifier ref="client_id"/&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type</b></td>
+
+        <td>String</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="identifierelement-attributes">Attributes</h3>
+
+  <table width="650">
+    <tbody>
+      <tr>
+        <th scope="col">Attribute</th>
+
+        <th scope="col">Description</th>
+
+        <th scope="col">Default</th>
+
+        <th scope="col">Presence</th>
+      </tr>
+
+      <tr>
+        <td>ref</td>
+
+        <td>
+          <p>A reference to the variable containing the data that identifies the app or
+          developer.</p>
+        </td>
+
+        <td>N/A</td>
+
+        <td>Required</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="messageweight">&lt;MessageWeight&gt; element</h2>
+
+  <p>Use in conjunction with <code>&lt;Identifier&gt;</code> to further throttle requests by
+  specific clients or apps.</p>
+
+  <p>Specifies the weighting defined for each message. Message weight is used to modify the impact
+  of a single request on the calculation of the Spike Arrest limit. Message weight can be set by
+  variables based on HTTP headers, query parameters, or message body content. For example, if the
+  Spike Arrest Rate is 10pm, and an app submits requests with weight 2, then only 5 messages per
+  minute are permitted from that app.</p>
+  <pre class="prettyprint">
+&lt;MessageWeight ref="request.header.weight"/&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type</b></td>
+
+        <td>Integer</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="messageweightelement-attributes">Attributes</h3>
+
+  <table width="650">
+    <tbody>
+      <tr>
+        <th scope="col">Attribute</th>
+
+        <th scope="col">Description</th>
+
+        <th scope="col">Default</th>
+
+        <th scope="col">Presence</th>
+      </tr>
+
+      <tr>
+        <td>ref</td>
+
+        <td>
+          <p>A reference to the variable containing the message weight for the specific app or
+          client.</p>
+        </td>
+
+        <td>N/A</td>
+
+        <td>Required</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="useeffectivecount">&lt;UseEffectiveCount&gt; element</h2>
+
+  <p>The <code>&lt;UseEffectiveCount&gt;</code> element instructs Edge to automatically distribute
+  your Spike Arrest counts across message processors (MPs) when using auto-scaling groups.</p>
+
+  <p>The following example sets <code>&lt;UseEffectiveCount&gt;</code> to true:</p>
+  <pre class="prettyprint">
+&lt;SpikeArrest name='SA1'&gt;
+  &lt;Rate&gt;40ps&lt;/Rate&gt;
+  &lt;UseEffectiveCount&gt;true&lt;/UseEffectiveCount&gt;
+&lt;/SpikeArrest&gt;
+</pre>
+
+  <p>The <code>&lt;UseEffectiveCount&gt;</code> element is optional. The default value is false
+  when the element is omitted from your Spike Arrest policy.</p>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default</b></td>
+
+        <td>false</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type</b></td>
+
+        <td>Boolean</td>
+      </tr>
+
+      <tr>
+        <td><b>Valid values</b></td>
+
+        <td>
+          <ul>
+            <li>false (the default)</li>
+
+            <li>true</li>
+          </ul>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="useeffectivecountelement-attributes">Attributes</h3>
+
+  <table width="650">
+    <tbody>
+      <tr>
+        <th scope="col">Attribute</th>
+
+        <th scope="col">Description</th>
+
+        <th scope="col">Default</th>
+
+        <th scope="col">Presence</th>
+      </tr>
+
+      <tr>
+        <td>ref</td>
+
+        <td>
+          <p>A reference to the variable containing the value of
+          <code>&lt;UseEffectiveCount&gt;</code>.</p>
+        </td>
+
+        <td>N/A</td>
+
+        <td>Optional</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>When <code>&lt;UseEffectiveCount&gt;</code> is set to true, an MP's spike rate limit is the
+  <code>&lt;Rate&gt;</code> divided by the current number of MPs. The aggregate limit is the value
+  of <code>&lt;Rate&gt;</code>. When MPs are dynamically added (or removed), their individual spike
+  rate limits will increase (or decrease), but the aggregate limit will stay the same.</p>
+
+  <p>When <code>&lt;UseEffectiveCount&gt;</code> is set to false (or omitted, as this is the
+  default value), each MP's spike rate limit is simply the value of its <code>&lt;Rate&gt;</code>.
+  The aggregate limit is the sum of the rates of all the MPs. When MPs are added (or removed),
+  their individual spike rate limits will stay the same, but the aggregate limit will increase (or
+  decrease).</p>
+
+  <p>The following table shows the effect of <code>&lt;UseEffectiveCount&gt;</code> on the
+  effective rate limit of each MP:</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <th> </th>
+
+        <th colspan="6" scope="col" style="text-align: center;">Value of
+        <code>&lt;UseEffectiveCount&gt;</code></th>
+      </tr>
+
+      <tr>
+        <th> </th>
+
+        <th colspan="3" scope="col" style="text-align: center;">false</th>
+
+        <th colspan="3" scope="col" style="text-align: center;">true</th>
+      </tr>
+
+      <tr>
+        <th># of MPs</th>
+
+        <td style="text-align: center;">8</td>
+
+        <td style="text-align: center;">4</td>
+
+        <td style="text-align: center;">2</td>
+
+        <td style="text-align: center;">8</td>
+
+        <td style="text-align: center;">4</td>
+
+        <td style="text-align: center;">2</td>
+      </tr>
+
+      <tr>
+        <th>Value of <code>&lt;Rate&gt;</code></th>
+
+        <td style="text-align: center;">10</td>
+
+        <td style="text-align: center;">10</td>
+
+        <td style="text-align: center;">10</td>
+
+        <td colspan="3" style="text-align: center;">40</td>
+      </tr>
+
+      <tr>
+        <th>Effective Rate per MP</th>
+
+        <td style="text-align: center;">10</td>
+
+        <td style="text-align: center;">10</td>
+
+        <td style="text-align: center;">10</td>
+
+        <td style="text-align: center;">5</td>
+
+        <td style="text-align: center;">10</td>
+
+        <td style="text-align: center;">20</td>
+      </tr>
+
+      <tr>
+        <th>Aggregate Limit</th>
+
+        <td style="text-align: center;">80</td>
+
+        <td style="text-align: center;">40</td>
+
+        <td style="text-align: center;">20</td>
+
+        <td colspan="3" style="text-align: center;">40<sup>*</sup></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p><sup>*</sup> Same as <code>&lt;Rate&gt;</code>.</p>
+
+  <p>In this example, notice that when the number of MPs is decreased from 4 to 2, and
+  <code>&lt;UseEffectiveCount&gt;</code> is false, the effective rate per MP stays the same (at
+  10). But when <code>&lt;UseEffectiveCount&gt;</code> is true, the effective rate per MP goes from
+  10 to 20 when the number of MPs is decreased from 4 to 2.</p>
+
+  <p><b>TIP:</b> When you set <code>&lt;UseEffectiveCount&gt;</code> to true, set
+  <code>&lt;Rate&gt;</code> to your target aggregate limit.</p>
+  <hr>
+
+  <h2 id="howspikearrestworks"><a id="Howitworks" name="Howitworks"></a>How Spike Arrest works</h2>
+
+  <p>Think of Spike Arrest as a way to generally protect against traffic spikes rather than as a
+  way to limit traffic to a specific number of requests. Your APIs and backend can handle a certain
+  amount of traffic, and the Spike Arrest policy helps you smooth traffic to the general amounts
+  you want.</p>
+
+  <p>The runtime Spike Arrest behavior differs from what you might expect to see from the literal
+  per-minute or per-second values you enter.</p>
+
+  <p>For example, say you enter a rate of 30pm (30 requests per minute). In testing, you might
+  think you could send 30 requests in 1 second, as long as they came within a minute. But that's
+  not how the policy enforces the setting. If you think about it, 30 requests inside a 1-second
+  period could be considered a mini spike in some environments.</p>
+
+  <p>What actually happens, then? To prevent spike-like behavior, Spike Arrest smooths the number
+  of full requests allowed by dividing your settings into smaller intervals:</p>
+
+  <ul>
+    <li><strong>Per-minute</strong> rates get smoothed into full requests allowed in intervals
+    of <strong>seconds</strong>.<br>
+    For example, 30pm gets smoothed like this:<br>
+    60 seconds (1 minute) / 30pm = 2-second intervals, or 1 request allowed every 2 seconds. A
+    second request inside of 2 seconds will fail. Also, a 31st request within a minute will
+    fail.</li>
+
+    <li><strong>Per-second</strong> rates get smoothed into full requests allowed in intervals
+    of <strong>milliseconds</strong>.<br>
+    For example, 10ps gets smoothed like this:<br>
+    1000 milliseconds (1 second) / 10ps = 100-millisecond intervals, or 1 request allowed every 100
+    milliseconds. A second request inside of 100ms will fail. Also, an 11th request within a second
+    will fail.</li>
+  </ul>
+
+  <aside class="note"><b>Note:</b> In rate smoothing, the number of requests is always a whole
+  number greater than zero. Smoothing never involves calculating fractions of requests.</aside>
+
+  <h3 id="howspikearrestworks-theresmore1requestnumberofmessageprocessors">There's more: 1 request
+  * number of message processors</h3>
+
+  <p>By default, Spike Arrest is not distributed (unless you enable <a href=
+  "#useeffectivecount">&lt;UseEffectiveCount&gt;</a>): request counts are not synchronized
+  across MPs. With more than one message processor, especially those with a round-robin
+  configuration, each handles its own Spike Arrest throttling independently. With one message
+  processor, a 30pm rate smooths traffic to 1 request every 2 seconds (60 / 30). With two message
+  processors (the default for Edge cloud), that number doubles to 2 requests every 2 seconds. So
+  multiply your calculated number of full requests per interval by the number of message processors
+  to get your overall arrest rate.</p>
+
+  <h2 id="whatisthedifferencebetweenspikearrestandquota">What is the difference between spike
+  arrest and quota</h2>
+
+  <p>Quota policies configure the number of request messages that a client app is allowed to submit
+  to an API over the course of an hour, day, week, or month. The quota policy enforces consumption
+  limits on client apps by maintaining a distributed counter that tallies incoming requests.</p>
+
+  <p>Use a quota policy to enforce business contracts or SLAs with developers and partners, rather
+  than for operational traffic management. Use spike arrest to protect against sudden spikes in API
+  traffic. See also <a href=
+  "/api-platform/develop/comparing-quota-spike-arrest-and-concurrent-rate-limit-policies.html">Comparing
+  Quota, Spike Arrest, and Concurrent Rate Limit Policies</a>.</p>
+
+  <h2 id="usage">Usage notes</h2>
+
+  <ul>
+    <li>In general, you should use Spike Arrest to set a limit that throttles traffic to what your
+    backend services can handle.</li>
+
+    <li>See also "<a href="#Howitworks">How spike arrest works</a>". </li>
+  </ul>
+  <hr>
+
+  <h2 id="schemas">Schemas</h2>
+
+  <aside class="note"><b>Sample:</b> See our <a href=
+  "https://github.com/apigee/api-platform-samples/tree/master/schemas/policy">Github
+  repository</a> samples for the most recent schemas.</aside>
+
+  <h2 id="variables">Flow variables</h2>
+
+  <p>When a Spike Arrest policy executes, the following Flow variable is populated.</p>
+
+  <p>For more information about Flow variables, see <a href=
+  "/api-platform/reference/variables-reference.html">Variables reference</a>.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Variable</th>
+
+        <th>Type</th>
+
+        <th>Permission</th>
+
+        <th>Description</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td><code>ratelimit.{policy_name}.failed</code></td>
+
+        <td>Boolean</td>
+
+        <td>Read-Only</td>
+
+        <td>
+          <p>Indicates whether or not the policy failed (true or false).</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  <hr>
+
+  <h2 id="errors">Error reference</h2>
+
+  <p><span style="font-size: 12px;">{% dynamic include /includes/___spike-arrest-policy-error-codes %}</span></p>
+
+  <p><span style="color:#ff0000;">The current HTTP status code for exceeding the rate limit is 500,
+  but it will soon be changed to 429. Until the change occurs, if you are want the status code to
+  be 429, a property needs to be set on your organization
+  (<code>features.isHTTPStatusTooManyRequestEnabled</code>). If you're a cloud customer,
+  contact</span> <a href="https://community.apigee.com/content/apigee-customer-support" target=
+  "_blank"><span style="color:#ff0000;">Apigee Support</span></a> <span style="color:#ff0000;">to
+  have the property enabled. </span><span style=
+  "color: rgb(255, 0, 0);">See </span><a href=
+  "https://community.apigee.com/content/kbentry/23852/http-429-as-default-status-code-for-quota-policy-v.html">this
+  community article</a><span style="color: rgb(255, 0, 0);"> for guidance on the upcoming
+  change.</span></p>
+
+  <aside class="note">
+    <b>Private Cloud:</b> If you're an Edge for Private Cloud customer, set this property with the
+    following API call:
+    <pre class="prettyprint">
+curl -u email:password -X POST -H "Content-type:application/xml" http://host:8080/v1/o/myorg -d \
+"&lt;Organization type="trial" name="MyOrganization"&gt;
+    &lt;DisplayName&gt;MyOrganization&lt;/DisplayName&gt;
+    &lt;Environments/&gt;
+    &lt;Properties&gt;
+        &lt;Property name="features.isHTTPStatusTooManyRequestEnabled"&gt;true&lt;/Property&gt;
+    &lt;/Properties&gt;
+&lt;/Organization&gt;"
+</pre>
+  </aside>
+
+  <h2 id="relatedtopics">Related topics</h2>
+
+  <aside class="note"><b>Sample:</b> For working samples of API proxies, see the <a href=
+  "/api-platform/samples/samples-reference.html">Samples list</a>.</aside>
+
+  <ul>
+    <li><a href="/api-platform/reference/policies/quota-policy.html">Quota policy</a>: Quota
+    policy, to limit traffic on individual clients</li>
+
+    <li><a href="/api-platform/develop/rate-limiting.html">Rate-limiting</a> for a rate limiting
+    overview</li>
+
+    <li><a href="/api-platform/reference/policies/concurrent-rate-limit-policy.html">Concurrent
+    Rate Limit policy</a> to generally keep from overtaxing your backend</li>
+
+    <li><a href=
+    "/api-platform/develop/comparing-quota-spike-arrest-and-concurrent-rate-limit-policies.html">Comparing
+    Quota, Spike Arrest, and Concurrent Rate Limit Policies</a></li>
+  </ul>
+
+  {% endblock %}

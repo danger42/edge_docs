@@ -1,0 +1,343 @@
+  {% extends "_base.html" %} {% block title %}Statistics Collector policy{% endblock %} {% block body %} <img src="/api-platform/images/icon_policy_statistics-collector.jpg">
+
+  <h3>What</h3>
+
+  <p>Enables you to collect statistics for data in a message, such as product ID, price, REST
+  action, client and target URL, and message length. The data can come from flow variables
+  predefined by Apigee or custom variables that you define.</p>
+
+  <p>The statistics data is passed to the analytics server, which analyzes the statistics and
+  generates reports. You can view the reports by using the Edge management UI or Edge API.</p>
+
+  <aside class="warning"><b>Warning:</b> Only <strong>one</strong> Statistics Collector policy
+  should be attached to a single API proxy. If there are multiple Statistics Collector
+  policies in a proxy, then the last one to execute determines the data written to the analytics
+  server.</aside>
+
+  <h2 id="samples">Samples</h2><!-- Begin tab list -->
+  <!-- End tab list --><!-- Begin tabbed region -->
+
+  <div class="ds-selector-tabs">
+    <section>
+      <h3 class="two-line-tab">Basic example</h3>
+      <pre class="prettyprint">
+&lt;StatisticsCollector name="publishPurchaseDetails"&gt;
+  &lt;Statistics&gt;
+    &lt;Statistic name="productID" ref="product.id" type="string"&gt;999999&lt;/Statistic&gt;
+    &lt;Statistic name="price" ref="product.price" type="string"&gt;0&lt;/Statistic&gt;
+  &lt;/Statistics&gt;
+&lt;/StatisticsCollector&gt;
+</pre>
+
+      <p>In this example, you collect statistical information about two custom variables:
+      <span style="font-family:courier new,courier,monospace;">product.id</span> and <span style=
+      "font-family:courier new,courier,monospace;">product.price</span>. On every request, the
+      Statistics Collector policy writes the value of these two variables to the analytics
+      server.</p>
+
+      <p>This example also sets an optional default value for each variable, where the default
+      value of <span style="font-family:courier new,courier,monospace;">product.id</span> is 999999
+      and the default <span style="font-family:courier new,courier,monospace;">product.price</span>
+      is 0. If a variable is undefined and you do not specify a default value, then no data is
+      recordeded for the variable. If you specify a default value, then the default value is
+      recorded when the variable is undefined. </p>
+
+      <p>After gathering statistical data, you can use the Edge management UI or API
+      to retrieve the statistics. When retrieving statistics, you reference the data collected for
+      these variables as <span style="font-family:courier new,courier,monospace;">productID</span>
+      and <span style="font-family:courier new,courier,monospace;">price</span>, respectively.
+       </p>
+    </section>
+
+    <section>
+      <h3 class="two-line-tab">Accessing statistics</h3>
+
+      <p>In this example, you use the Edge management API to view the statistical data for the
+      collection called <code>productID</code>. This request builds a custom report for
+      product IDs based on the sum of message counts submitted for each product ID for each
+      day. Substitute your organization name for the variable <code>{org_name}</code>, and
+      substitute the email and password for your account on Apigee Edge for
+      <code>email:password</code>.</p>
+
+      <aside class="note"><b>Note:</b> You can also generate custom reports by
+      selecting <strong>Analytics &gt; Reports </strong>in the Edge UI at <a href=
+      "https://enterprise.apigee.com">enterprise.apigee.com</a>. See <a href=
+      "/api-platform/analytics/create-custom-reports.html">Manage custom reports</a> for
+      more. </aside>
+
+      <p>Set the <code>timeRange</code> parameter to include the time interval when your data was
+      collected. Data older than six months from the current date is not accessible by default. If
+      you want to access data older than six months, contact <a href=
+      "https://community.apigee.com/content/apigee-customer-support">Apigee Support</a>.</p>
+      <pre class="terminal">
+$ curl https://api.enterprise.apigee.com/v1/o/{org_name}/environments/test/stats/productID?"select=sum(message_count)&amp;timeRange=1/19/2015%2000:00~6/21/2015%2000:00&amp;timeUnit=day"
+-u email:password
+</pre>
+
+      <p>In the response, the <span style="font-family:courier new,courier,monospace;">name</span>
+      field contains the product ID and value shows the number of requests for each day:</p>
+      <pre class="prettyprint">
+{
+  "environments" : [ {
+    "dimensions" : [ {
+      "metrics" : [ {
+        "name" : "sum(message_count)",
+        "values" : [ {
+          "timestamp" : 1353369600000,
+          "value" : "4.0"
+        } ]
+      } ],
+      "name" : "52"
+    }, {
+      "metrics" : [ {
+        "name" : "sum(message_count)",
+        "values" : [ {
+          "timestamp" : 1353369600000,
+          "value" : "19.0"
+        } ]
+      } ],
+      "name" : "14"
+    }, ...
+  } ],
+  "metaData" : {
+    "samplingRate" : "100"
+  }
+}
+</pre>
+    </section>
+
+    <section>
+      <h3 class="two-line-tab">Extracting data for collection</h3>
+      <pre class="prettyprint">
+&lt;?xml version="1.0" encoding="UTF-8" standalone="yes"?&gt;
+&lt;ExtractVariables async="false" continueOnError="false" enabled="true" name="GetWeatherData"&gt;
+    &lt;VariablePrefix&gt;weather&lt;/VariablePrefix&gt;
+    &lt;XMLPayload&gt;
+       &lt;Namespaces&gt;
+          &lt;Namespace prefix="yweather"&gt;http://xml.weather.yahoo.com/ns/rss/1.0&lt;/Namespace&gt;
+       &lt;/Namespaces&gt;
+       &lt;Variable name="location" type="string"&gt;
+          &lt;XPath&gt;/rss/channel/yweather:location/@city&lt;/XPath&gt;
+       &lt;/Variable&gt;
+       &lt;Variable name="condition" type="string"&gt;
+          &lt;XPath&gt;/rss/channel/item/yweather:condition/@text&lt;/XPath&gt;
+       &lt;/Variable&gt;
+    &lt;/XMLPayload&gt;
+&lt;/ExtractVariables&gt;
+</pre>
+
+      <p>The Statistics Collector policy requires that the data collected be stored in variables.
+      These variables can be predefined by Apigee, or custom variables that you define.</p>
+
+      <p>In this example, you use the Extract Variables policy to extract data from an XML payload
+      that contains weather information. This policy:</p>
+
+      <ul>
+        <li>Extracts the name of the city and writes it to a variable named <span style=
+        "font-family:courier new,courier,monospace;">weather.location</span></li>
+
+        <li>Extracts the current conditions and writes it to a variable named <span style=
+        "font-family:courier new,courier,monospace;">weather.condition</span></li>
+      </ul>
+
+      <p>You can then use the Statistics Collector policy to gather information about the
+      variables, as shown below:</p>
+      <pre class="prettyprint">
+&lt;StatisticsCollector name="publishPurchaseDetails"&gt;
+  &lt;Statistics&gt;
+    &lt;Statistic name="weatherLocation" ref="weather.location" type="string"&gt;&lt;/Statistic&gt;
+    &lt;Statistic name="weatherCondition" ref="wether.condition" type="string"&gt;&lt;/Statistic&gt;
+  &lt;/Statistics&gt;
+&lt;/StatisticsCollector&gt;
+</pre>
+
+      <p>For a complete tutorial that shows how to extract data from an XML payload for the
+      Statistics Collector policy, see <a href=
+      "/api-platform/analytics/analyze-api-message-content-using-custom-analytics.html">Analyze API
+      message content using custom analytics</a>.</p>
+    </section>
+  </div>
+  <hr>
+
+  <h2 id="aboutthestatisticscollectorpolicy">About the Statistics Collector policy</h2>
+
+  <p>When executed, the Statistics Collector policy records the current value of one or more
+  variables. These variables can be flow variables predefined by Apigee or custom variables that
+  you define. This data is written to the Edge analytics server.</p>
+
+  <p>To access the statistical data collected by the policy, you use the Edge API or the Edge
+  management UI. For example, you can use the Edge management UI to create a custom report that
+  shows the collected data in a variety of formats. </p>
+
+  <p>For a complete tutorial using the Statistics Collector policy, see <a href=
+  "/api-platform/analytics/analyze-api-message-content-using-custom-analytics.html">Analyze API
+  message content using custom analytics</a>. </p>
+
+  <h3 id="aboutthestatisticscollectorpolicy-wheretoputthepolicy">Where to put the policy</h3>
+
+  <p>You can put  a Statistics Collector policy in the request or response flow of an API
+  proxy. However, if you put multiple Statistics Collector policies in a proxy, then the last
+  one to execute determines the data written to the analytics server and data written by any
+  previous Statistics Collector policies is lost.</p>
+
+  <p>One scenario where you might have multiple Statistics Collector policies in an API proxy is
+  when you have one one in the request or response flow, and another in a fault handler. If a fault
+  occurs in the API proxy, then the Statistics Collector in the fault handler determines the data
+  collected. You can use that Statistics Collector to record information about the fault, or to
+  record any other information that you think necessary. The Statistics Collector in the fault
+  handler determines the data collected regardless of whether or not the Statistics Collector
+  in the request/response already executed. </p>
+
+  <p>For more, see <a href="/api-platform/fundamentals/fault-handling.html">Handling
+  faults</a>.</p>
+
+  <h2 id="elementreference">Element reference</h2>
+
+  <p>The element reference describes the elements and attributes of the Statistics Collector
+  policy.</p>
+  <pre class="prettyprint">
+&lt;?xml version="1.0" encoding="UTF-8" standalone="yes"?&gt;
+&lt;StatisticsCollector async="false" continueOnError="false" enabled="true" name="Statistics-Collector-1"&gt;
+    &lt;DisplayName&gt;Statistics Collector 1&lt;/DisplayName&gt;
+    &lt;Statistics&gt;
+        &lt;Statistic name="statName" ref="varName" type="refDataType"&gt;defaultStatValue&lt;/Statistic&gt;
+    &lt;/Statistics&gt;
+&lt;/StatisticsCollector&gt;
+</pre>
+
+  <h2 id="statisticscollectorattributes">&lt;StatisticsCollector&gt; attributes</h2>
+  <pre class="prettyprint">
+&lt;StatisticsCollector async="false" continueOnError="false" enabled="true" name="Stats-1"&gt;
+</pre>{% dynamic include /includes/___policies-parent-element-attributes %}
+
+  <h2 id="statisticsstatisticelement">&lt;Statistics&gt;/&lt;Statistic&gt; element</h2>
+  <pre class="prettyprint">
+&lt;Statistics&gt;
+    &lt;Statistic name="statName" ref="varName" type="refDataType"&gt;defaultStatValue&lt;/Statistic&gt;
+&lt;/Statistics&gt;
+</pre>
+
+  <table>
+    <tbody>
+      <tr>
+        <th scope="col">Attribute</th>
+
+        <th scope="col">Description</th>
+
+        <th scope="col">Default</th>
+
+        <th scope="col">Presence</th>
+      </tr>
+
+      <tr>
+        <td>name</td>
+
+        <td>
+          <p>The name used to reference the data collected for the specified variable. When viewing
+          analytics data, use this name to reference the data collected about the variable
+          specified by the <span style="font-family:courier new,courier,monospace;">ref</span>
+          attribute.  </p>
+
+          <p>If the variable specified by <span style=
+          "font-family:courier new,courier,monospace;">ref</span> is undefined on a request or
+          response, then <span style=
+          "font-family:courier new,courier,monospace;">defaultStatValue</span> specifies the value
+          collected for the variable. If you omit the default value, no data is collected for the
+          variable when the variable is undefined. </p>
+
+          <p id="naming"><strong>Naming restrictions</strong></p>
+
+          <p>The following naming restrictions apply to custom analytics variables:</p>
+
+          <ul>
+            <li>Names can include the following characters: a-z, 0-9, _ (underscore)</li>
+
+            <li>Names cannot include spaces.</li>
+
+            <li>Case is ignored.</li>
+
+            <li>In addition to the above, keywords listed on the following page are not
+            allowed:<br>
+            <a href="https://www.postgresql.org/docs/8.1/static/sql-keywords-appendix.html" target=
+            "_blank">https://www.postgresql.org/docs/8.1/static/sql-keywords-appendix.html</a></li>
+          </ul>
+        </td>
+
+        <td>N/A</td>
+
+        <td style="width: 50px;">Required</td>
+      </tr>
+
+      <tr>
+        <td>ref</td>
+
+        <td>
+          <p>The flow variable for which you are collecting statistics. This variable can be a flow
+          variable predefined by Apigee or a custom variable that you define in your API proxy.</p>
+
+          <p>The ref attribute often references a custom variable defined by the Extract Variables
+          policy. See <a href=
+          "/api-platform/reference/policies/extract-variables-policy.html">Extract Variables
+          policy</a> for more.</p>
+        </td>
+
+        <td>N/A</td>
+
+        <td>Required</td>
+      </tr>
+
+      <tr>
+        <td>type</td>
+
+        <td>
+          <p>Specifies the data type of the variable specified by the <span style=
+          "font-family:courier new,courier,monospace;">ref</span> attribute. Valid values are:
+          string/integer/float/long/double.</p>
+
+          <p>For data of type string, reference the statistical data as a <em>Dimension</em> in a
+          custom report. For numerical data types (integer/float/long/double), reference the
+          statistical data in a custom report as a <em>Metric</em>. See <a href=
+          "/api-platform/analytics/create-custom-reports.html">Manage custom reports</a> for more.
+            </p>
+
+          <p>The value of <span style="font-family: 'courier new', courier, monospace;">type</span>
+          can be omitted only if <span style=
+          "font-family: 'courier new', courier, monospace;">ref</span> refers to a predefined
+          Apigee flow variable or the type is declared in the XML payload of the Extract Variables
+          policy.</p>
+        </td>
+
+        <td>N/A</td>
+
+        <td>Optional</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="errorcodes">Error reference</h2>
+
+  <p>{% dynamic include /includes/___statistics-collector-policy-error-codes %}</p>
+
+  <h2 id="schema">Schema</h2>
+
+  <p>Each policy type is defined by an XML schema (<code>.xsd</code>). For reference, <a href=
+  "https://github.com/apigee/api-platform-samples/tree/master/schemas/policy">policy schemas</a>
+  are available on GitHub.</p>
+
+  <h2 id="relatedtopics">Related topics</h2>
+
+  <p>For more information, see:</p>
+
+  <ul>
+    <li><a href=
+    "/api-platform/analytics/analyze-api-message-content-using-custom-analytics.html">Analyze API
+    message content using custom analytics</a></li>
+
+    <li><a href="/api-platform/analytics/create-custom-reports.html">Manage custom reports</a></li>
+
+    <li><a href=
+    "/api-platform/analytics/use-analytics-api-measure-api-program-performance.html">Use the
+    analytics API to measure API program performance</a></li>
+  </ul>
+
+  {% endblock %}

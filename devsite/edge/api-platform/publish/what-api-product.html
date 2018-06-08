@@ -1,0 +1,151 @@
+  {% extends "_base.html" %} {% block title %}What is an API product?{% endblock %} {% block body %}
+
+  <p>An <em>API product</em> bundles resources (such as API proxies) in order to provide a specific
+  level of access and functionality for client app developers. An API product typically specifies a
+  list of API proxies, along with access limits, API key approval method, and other configuration
+  that should be in place for all of the bundled proxies.</p>
+
+  <p>To learn how to create API products, see <a href=
+  "/api-platform/publish/create-api-products.html">Create API products</a>.</p>
+
+  <aside class="note"><b>Note:</b> See also this Apigee Community article: <a href=
+  "https://community.apigee.com/articles/38309/making-sense-of-api-product-configuration.html">Making
+  sense of API Product configuration</a>. </aside>
+
+  <h2 id="businessuses">Business uses</h2>
+
+  <p>From a business perspective, you can think of API products as your product line. You create an
+  API product to bundle your APIs at particular service levels for client app developers. Different
+  API products -- perhaps even bundling the same API proxies -- provide service levels for
+  different use cases. Instead of just giving developers a list of resources, you can bundle
+  specific resources together to create a product that solves a specific user need.</p>
+
+  <p>Client apps are how developers access your API products. When a developer registers an app,
+  they select the API products to associate with the app, and Apigee generates an API key for the
+  app. By default, a single key provides access to all API products associated with the app. When
+  the app makes a request, Apigee first verifies that the API key is valid and fails the request if
+  not.</p>
+
+  <p>Developers build the apps that access your APIs. However, a developer must first be registered
+  in your organization before they can register an app.</p>
+
+  <p>To learn how to create apps, see <a href=
+  "/api-platform/publish/creating-apps-surface-your-api.html">Register apps and manage API
+  keys</a>. To learn how to register developers, see <a href=
+  "/api-platform/publish/adding-developers-your-api-product.html">Managing app developers</a>.</p>
+
+  <p>For example, you can:</p>
+
+  <ul>
+    <li>Bundle resources accesssible only by internal developers -- or only by paying
+    customers.</li>
+
+    <li>Mix and match a set of API proxies to create a specialized feature set for each API
+    product.</li>
+
+    <li>Keep access to bundled proxies low (such as 1000 requests per day), then offer access at a
+    bargain price.</li>
+
+    <li>Allow access to the same proxies at a higher levels for a higher price.</li>
+
+    <li>Offer read-only access to certain resources via proxies in one API product, then sell
+    read/write access to the same resources via another API product. </li>
+  </ul>
+
+  <h2 id="technicaluses">Technical uses</h2>
+
+  <p>From a technical perspective, you create an API product when you want to:</p>
+
+  <ul>
+    <li>Add support for <strong>API keys</strong>. Your API product would be associated with a
+    developer app, where the key is generated. For enforcement, you'd use policies in your API
+    proxies to verify incoming API keys. API keys are provisioned for API products, not for
+    APIs themselves.
+
+      <p>By default, all key requests to an API product from an app are automatically approved. You
+      can instead choose to approve keys manually. If you set this option in the Edge management UI
+      when creating the product, you will have to approve key requests that come in from any app
+      that adds the API product. See <a href=
+      "/api-platform/publish/creating-apps-surface-your-api.html">Register apps and manage API
+      keys</a> for more.</p>
+    </li>
+
+    <li>Add support for <strong>access quotas</strong>, such as to limit the number of requests
+    allowed per minute. Your API product configuration would specify a default, while quota
+    policies in your API proxies handle the details.
+
+      <p>For information on configuring quota, see <a href=
+      "/api-platform/reference/policies/quota-policy.html">Quota policy</a>. For information on on
+      using product quota settings in quota policies, see <a href=
+      "https://community.apigee.com/questions/1488/how-do-the-quota-settings-on-an-api-product-intera.html">
+      https://community.apigee.com/questions/1488/how-do-the-quota-settings-on-an-api-product-intera.html</a>.</p>
+    </li>
+
+    <li>Add support for <strong>OAuth scopes</strong>. Your API product would specify OAuth scopes
+    that requests must include in their OAuth token in order to proceed to a bundled API proxy.
+
+      <p>For more information about using scopes with Edge OAuth policies, see <a href=
+      "/api-platform/security/oauth/working-scopes.html">Working with OAuth2 scopes</a>.</p>
+    </li>
+  </ul>
+
+  <h2 id="apiproductconfiguration">API product configuration</h2>
+
+  <p>You can create an API product in the management console. The following shows the edit page for
+  creating and product.</p>
+
+  <p>For more on creating an API product, see <a href=
+  "/api-platform/publish/create-api-products.html">Create API products</a>.</p>
+
+  <p><img alt="" src="/api-platform/images/configure_api_product.png"></p>
+
+  <p>When you create an API product with the management API, you POST configuration for the API
+  product with JSON such as the following.</p>
+
+  <p>For more about creating API products with the API, see <a href=
+  "/management/apis/post/organizations/{org_name}/apiproducts">Create API Product</a>.</p>
+  <pre class="prettyprint">
+{
+  "apiResources": [
+    "/"
+  ],
+  "approvalType": "auto",
+  "attributes": [
+    {
+      "name": "access",
+      "value": "public"
+    }
+  ],
+  "createdAt": 1452706896178,
+  "createdBy": "wwitman@apigee.com",
+  "description": "",
+  "displayName": "SC-PRODUCT-UNLIMITED",
+  "environments": [
+    "test",
+    "prod"
+  ],
+  "lastModifiedAt": 1452706896178,
+  "lastModifiedBy": "wwitman@apigee.com",
+  "name": "SC-PRODUCT-UNLIMITED",
+  "proxies": [
+    "foodcarts",
+    "menus",
+    "items",
+    "users",
+    "accesstoken"
+  ],
+  "quota": "1000000",
+  "quotaInterval": "1",
+  "quotaTimeUnit": "minute",
+  "scopes": [
+    "owner.read",
+    "owner.create",
+    "owner.update",
+    "owner.delete",
+    "reviewer.create",
+    "reviewer.read",
+    "manager.update",
+    "manager.read"
+  ]
+}
+</pre>{% endblock %}

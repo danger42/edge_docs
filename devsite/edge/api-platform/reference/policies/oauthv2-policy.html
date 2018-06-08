@@ -1,0 +1,2821 @@
+  {% extends "_base.html" %} {% block title %}OAuthV2 policy{% endblock %} {% block body %}
+  <img src="/api-platform/images/icon_policy_security.jpg">
+
+  <h3>What</h3>
+
+  <p>OAuthV2 is a multi-faceted policy for performing OAuth 2.0 grant type operations. This is the
+  primary policy used to configure OAuth 2.0 endpoints on Apigee Edge.</p>
+
+  <aside class="key-point"><b>Tip:</b> If you want to learn more about OAuth on Apigee Edge, see
+  the <a href="/api-platform/security/oauth/oauth-home.html">OAuth home page</a>. It provides links
+  to resources, samples, videos, and more. See the <a href=
+  "https://github.com/apigee/api-platform-samples/tree/master/sample-proxies/oauth-advanced">advanced
+  OAuth sample</a> on GitHub for a good demonstration of how this policy is used in a working
+  application. </aside><!--This is the start of the expand/collapse div-->
+
+  <h3 id="samples"><a id="Samples" name="Samples"></a>Samples</h3>
+
+  <div class="ds-selector-tabs">
+    <section>
+      <h3 class="two-line-tab">VerifyAccessToken</h3>
+
+      <h3>VerifyAccessToken</h3>
+
+      <p>This OAuthV2 policy configuration (with the VerifyAccessToken operation) verifies that an
+      access token submitted to Apigee Edge is valid. When this policy operation is triggered, Edge
+      looks for a valid access token in the request. If the access token is valid, the request is
+      allowed to proceed. If invalid, all processing stops and an error is returned in the
+      response. </p>
+      <pre class="prettyprint">
+&lt;OAuthV2 async="false" continueOnError="false" enabled="true" name="OAuth-v20-2"&gt;
+    &lt;DisplayName&gt;OAuth v2.0 2&lt;/DisplayName&gt;
+    &lt;Operation&gt;VerifyAccessToken&lt;/Operation&gt;
+    &lt;AccessTokenPrefix&gt;Bearer&lt;/AccessTokenPrefix&gt; &lt;!-- Optional, default is Bearer --&gt;
+&lt;/OAuthV2&gt;
+</pre>
+
+      <p>Note that only bearer (access) tokens are supported. MAC tokens are not supported.</p>
+
+      <p>Apps must pass the access token in the Authorization HTTP request header. For example:</p>
+      <pre class="prettyprint">
+$ curl -H "Authorization: Bearer ylSkZIjbdWybfsUQe9BqP0LH5Z" http://{org_name}-test.apigee.net/weather/forecastrss?w=12797282
+</pre>
+    </section>
+
+    <section>
+      <h3 class="two-line-tab">GenerateAccessToken</h3>
+
+      <h3>Generating access tokens</h3>
+
+      <p>For examples showing how to request access tokens for each of the supported grant types,
+      see <a href="/api-platform/security/oauth/access-tokens.html">Requesting access tokens and
+      authorization codes</a>. The topic includes examples of these operations:</p>
+
+      <ul>
+        <li><a href=
+        "/api-platform/security/oauth/access-tokens.html#requestinganaccesstokenauthorizationcodegranttype">
+        Authorization code</a></li>
+
+        <li><a href=
+        "/api-platform/security/oauth/access-tokens.html#requestinganaccesstokenclientcredentialsgranttype">
+        Client credentials</a></li>
+
+        <li><a href=
+        "/api-platform/security/oauth/access-tokens.html#requestinganaccesstokenimplicitgranttype">Implicit</a></li>
+
+        <li><a href=
+        "/api-platform/security/oauth/access-tokens.html#requestinganaccesstokenpasswordgranttype">Password</a></li>
+      </ul>
+    </section>
+
+    <section>
+      <h3 class="two-line-tab">GenerateAuthorizationCode</h3>
+
+      <h3>Generate authorization code</h3>
+
+      <p>For examples showing how to request authorization codes, see <a href=
+      "/api-platform/security/oauth/access-tokens.html#requestinganauthorizationcode">Requesting an
+      authorization code</a>. </p>
+    </section>
+
+    <section>
+      <h3 class="two-line-tab">RefreshAccessToken</h3>
+
+      <h3>Refresh an access token</h3>
+
+      <p>For examples showing how to request access tokens using a refresh token, see <a href=
+      "/api-platform/security/oauth/access-tokens.html#refreshinganaccesstoken">Refreshing an
+      access token</a>. </p>
+    </section>
+
+    <section>
+      <h3 class="two-line-tab">Response flow token</h3>
+
+      <h3>Generate an access token on the response flow</h3>
+
+      <p>Sometimes you may need to generate an access token in the response flow. For example, you
+      may do this in response to some custom validation done in a backend service. In this example,
+      the use case requires both an access token and a refresh token, ruling out the implicit grant
+      type. In this case, we'll use the password grant type to generate the token. As you'll see,
+      the trick to making this work is to pass in an Authorization request header with a JavaScript
+      policy.</p>
+
+      <p>First, let's look at the sample policy:</p>
+      <pre class="prettyprint">
+&lt;OAuthV2 enabled="true" continueOnError="false" async="false" name="generateAccessToken"&gt;
+    &lt;Operation&gt;GenerateAccessToken&lt;/Operation&gt;
+    &lt;AppEndUser&gt;Doe&lt;/AppEndUser&gt;
+    &lt;UserName&gt;jdoe&lt;/UserName&gt;
+    &lt;PassWord&gt;jdoe&lt;/PassWord&gt;
+    &lt;GrantType&gt;grant_type&lt;/GrantType&gt;
+    &lt;ClientId&gt;a_valid_client_id&lt;/ClientId&gt;
+    &lt;SupportedGrantTypes&gt;
+        &lt;GrantType&gt;password&lt;/GrantType&gt;
+    &lt;/SupportedGrantTypes&gt;
+&lt;/OAuthV2&gt;
+</pre>
+
+      <p>If you put this policy on the response flow, it will fail with a 401 UnAuthorized error
+      even though the correct login parameters are specified in the policy. To solve this problem,
+      you need to set an Authorization request header. </p>
+
+      <p>The Authorization header must contain a Basic access scheme with the Base64-encoded
+      client_id:client_secret.</p>
+
+      <p>You can add this header with a JavaScript policy placed just before the OAuthV2 policy,
+      like this. The "local_clientid" and "local_secret" variables must be previously set and
+      available in the flow:</p>
+      <pre class="prettyprint">
+var client_id = context.getVariable("local_clientid");
+var client_secret = context.getVariable("local_secret");
+context.setVariable("request.header.Authorization","Basic "+CryptoJS.enc.Base64.stringify(CryptoJS.enc.Latin1
+                                      .parse(client_id + ':' + client_secret)));
+</pre>
+    </section>
+  </div>
+
+  <p>See also "<a href="/api-platform/security/oauth/access-tokens.html#encoding">Encoding basic
+  authentication credentials</a>". </p>
+
+  <h2 id="elementreference"><a id="policyref" name="policyref"></a>Element reference</h2>
+
+  <p>The policy reference describes the elements and attributes of the OAuthV2 policy.</p>
+
+  <aside class="note">
+    <b>Note:</b> The way you configure this policy, and the elements you need to specify, depend on
+    which operation you want the policy to perform. For example, if you are implementing the
+    authorization code grant type, then you will require four separate OAuthV2 policies to perform
+    authorization code generation, access code generation, access code validation, and refresh
+    token generation. This reference lists all of the elements that can be used with this policy.
+
+    <p>If you want to see configurations for specific grant type use cases, refer to the <a href=
+    "/api-platform/security/oauth/oauth-home.html">OAuth home page</a> for a list of grant type
+    implementations. In particular, see the <a href=
+    "https://github.com/apigee/api-platform-samples/tree/master/sample-proxies/oauth-advanced">advanced
+    OAuth sample</a> on GitHub for a good demonstration of how this policy is used in a
+    working application. </p>
+  </aside>
+
+  <p>The sample policy shown below is one of many possible configurations. This sample shows an
+  OAuthV2 policy configured for the GenerateAccessToken operation. It includes required and
+  optional elements. Refer to the element descriptions in this section for details.</p>
+  <pre class="prettyprint">
+&lt;OAuthV2 name="GenerateAccessToken"&gt;
+  &lt;!-- This policy generates an OAuth 2.0 access token using the client_credentials grant type --&gt;
+  &lt;Operation&gt;GenerateAccessToken&lt;/Operation&gt;
+  &lt;!-- This is in millseconds, so expire in an hour --&gt;
+  &lt;ExpiresIn&gt;3600000&lt;/ExpiresIn&gt;
+  &lt;SupportedGrantTypes&gt;
+    &lt;GrantType&gt;client_credentials&lt;/GrantType&gt;
+  &lt;/SupportedGrantTypes&gt;
+  &lt;GrantType&gt;request.queryparam.grant_type&lt;/GrantType&gt;
+  &lt;GenerateResponse/&gt;
+&lt;/OAuthV2&gt;
+</pre>
+
+  <h2 id="oauthv2attributes">&lt;OAuthV2&gt; attributes</h2>
+  <pre class="prettyprint">
+&lt;OAuthV2 async="false" continueOnError="false" enabled="true" name="MyOAuthPolicy"&gt;
+</pre>{% dynamic include /includes/___policies-parent-element-attributes %}
+
+  <h2 id="accesstokenelement">&lt;AccessToken&gt; element</h2>
+  <pre class="prettyprint">
+&lt;AccessToken&gt;request.header.access_token&lt;/AccessToken&gt;
+</pre>
+
+  <p>By default, VerifyAccessToken expects the access token to be sent in an Authorization header.
+  You can change that default using this element. For
+  example <code>request.queryparam.access_token</code> indicates that the access token
+  should be present as a query parameter.</p>
+
+  <p>If presented in the header, it must be an Authorization header and be sent as a Bearer token.
+  For example:</p>
+  <pre class="prettyprint">
+-H "Authorization: Bearer Rft3dqrs56Blirls56a"
+</pre>
+
+  <p>Currently, Bearer is the only supported prefix.</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <td style="width:120px" width="150">
+          <p><strong>Default:</strong></p>
+        </td>
+
+        <td width="223">
+          <p>request.header.access_token</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Presence:</strong></p>
+        </td>
+
+        <td>
+          <p>Optional</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td><strong>Type:</strong></td>
+
+        <td>String</td>
+      </tr>
+
+      <tr>
+        <td><strong>Valid values:</strong></td>
+
+        <td>
+          <p>A valid access token</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td><strong>Used with operations:</strong></td>
+
+        <td>
+          <ul>
+            <li>VerifyAccessToken</li>
+          </ul>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="accesstokenprefixelement">&lt;AccessTokenPrefix&gt; element</h2>
+  <pre class="prettyprint">
+&lt;AccessTokenPrefix&gt;Bearer&lt;/AccessTokenPrefix&gt;
+</pre>
+
+  <p>By default, VerifyAccessToken expects the access token to be sent in an Authorization header
+  as a Bearer token. For example:</p>
+  <pre class="prettyprint">
+-H "Authorization: Bearer Rft3dqrs56Blirls56a"
+</pre>
+
+  <p>Currently, Bearer is the only supported prefix.</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <td style="width:120px" width="150">
+          <p><strong>Default:</strong></p>
+        </td>
+
+        <td width="223">
+          <p>Bearer</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Presence:</strong></p>
+        </td>
+
+        <td>
+          <p>Optional</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td><strong>Type:</strong></td>
+
+        <td>String</td>
+      </tr>
+
+      <tr>
+        <td><strong>Valid values:</strong></td>
+
+        <td>
+          <p>Bearer</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td><strong>Used with operations:</strong></td>
+
+        <td>
+          <ul>
+            <li>VerifyAccessToken</li>
+          </ul>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  
+
+  <h2 id="appenduserelement">&lt;AppEndUser&gt; element</h2>
+  <pre class="prettyprint">
+&lt;AppEndUser&gt;request.queryparam.app_enduser&lt;/AppEndUser&gt;
+</pre>
+
+  <p>In cases where the app end user ID must be sent to the authorization server, this element lets
+  you specify where Edge should look for the end user ID. For example, it could be sent as a query
+  parameter or in an HTTP header.</p>
+
+  <p>For example <code>request.queryparam.app_enduser</code> indicates that the
+  AppEndUser should be present as a query parameter, as, for
+  example, <code>?app_enduser=ntesla@theramin.com</code>. To require the AppEndUser in an HTTP
+  header, for example, set this value to <code>request.header.app_enduser</code>.</p>
+
+  <p>Providing this setting enables you to include an app end user ID in the access token. This
+  feature is useful if you want to be able to retrieve or revoke OAuth 2.0 access tokens by end
+  user ID. For more information, see <a href=
+  "/api-platform/security/oauth/enable-retrieval-and-revocation-oauth-20-access-tokens-end-user-id-app-id-or-both.html">
+  Enable retrieval and revocation of OAuth 2.0 access tokens by end user ID, app id, or
+  both</a>.</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <td style="width:120px">
+          <p><strong>Default:</strong></p>
+        </td>
+
+        <td>
+          <p>N/A</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Presence:</strong></p>
+        </td>
+
+        <td>
+          <p>Optional</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td><strong>Type:</strong></td>
+
+        <td>String</td>
+      </tr>
+
+      <tr>
+        <td><strong>Valid values:</strong></td>
+
+        <td>
+          <p>Any flow variable accessible to the policy at runtime.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td><strong>Used with grant types:</strong></td>
+
+        <td>
+          <ul>
+            <li>authorization_code</li>
+
+            <li>implicit</li>
+
+            <li>password</li>
+
+            <li>client_credentials</li>
+          </ul>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="attributesattribute">&lt;Attributes/Attribute&gt;</h2>
+  <pre class="prettyprint">
+&lt;Attributes&gt;
+    &lt;Attribute name="attr_name1" ref="flow.variable" display="true|false"&gt;value1&lt;/Attribute&gt;
+    &lt;Attribute name="attr_name2" ref="flow.variable" display="true|false"&gt;value2&lt;/Attribute&gt;
+&lt;/Attributes&gt;
+</pre>
+
+  <p>Use this element to add custom attributes to an access token or authorization code. For
+  example, you may wish to embed a user ID or session identifier in an access token that can be
+  extracted and checked at runtime.</p>
+
+  <p>This element lets you specify a value in a flow variable or from a literal string. If you
+  specify both a variable and a string, the value specified in the flow variable is used. If the
+  variable cannot be resolved, then the string is the default.</p>
+
+  <p>For more information on using this element, see <a href=
+  "/api-platform/security/oauth/customizing-access-tokens.html">Customizing Tokens and
+  Authorization Codes</a>.</p>
+
+  <aside class="note">
+    <b>Notes:</b>
+    <p>You can create up to {{ limit_custom_attribute }} custom attributes.</p>
+    <p>If you add custom attributes to an authorization code, those attributes will be
+    inherited by the access token generated from that code.</p>
+  </aside>
+
+  <h3 id="attributesattribute-displayingorhidingcustomattributesintheresponse"><a id=
+  "displayorhide" name="displayorhide"></a>Displaying or hiding custom attributes in the
+  response</h3>
+
+  <p>Remember that if you set the GenerateResponse element of this policy to <strong>true</strong>,
+  the full JSON representation of the token is returned in the response, including any custom
+  attributes that you set. In some cases, you might want to hide some or all of your custom
+  attributes in the response so that they are not visible to client apps. </p>
+
+  <p>By default, custom attributes do appear in the response. If you want to hide them, you can set
+  the <strong>display</strong> parameter to <strong>false</strong>. For example:</p>
+  <pre class="prettyprint">
+&lt;Attributes&gt;
+    &lt;Attribute name="employee_id" ref="employee.id" display="false"/&gt;
+    &lt;Attribute name="employee_name" ref="employee.name" display="false"/&gt;
+&lt;/Attributes&gt;
+</pre>
+
+<p>The value of the <code>display</code> attribute is not
+  persisted. Let's say you generate an access token with custom attributes that you want to hide in the
+  generated response. Setting <code>display=false</code> accomplishes that goal. However, if a new
+  access token is generated later using a refresh token, the original custom attributes from the
+  access token will show up in the refresh token response. This is because Edge does not remember that
+  the <code>display</code> attribute was originally set to <code>false</code> in the generate access token policy--the custom
+  attribute is simply part of the access token's metadata.</p>
+  <p>You will see the same behavior if you add custom attributes to an authorization code--when an
+  access token is generated using that code, those custom attributes will show up in the access token
+  response. Again, this may not be the behavior you intend.</p>
+
+   <p>To hide custom
+    attributes in these cases, you have these choices:</p>
+
+  <ul>
+    <li>Explicitly reset the custom attributes in the refresh token policy and set their display to
+    false. In this case, you may need to retrieve the original custom values from the original
+    access token using the GetOAuthV2Info policy.</li>
+
+    <li>Use a postprocessing JavaScript policy to manually extract any custom attributes that you do not
+    want to see in the response. </li>
+  </ul>
+
+  <p>See also <a href=
+  "/api-platform/security/oauth/customizing-access-tokens.html">Customizing Tokens and
+  Authorization Codes</a>.</p>
+
+
+  <table>
+    <tbody>
+      <tr>
+        <td style="width:120px">
+          <p><strong>Default:</strong></p>
+        </td>
+
+        <td>
+          <p><code>N/A</code></p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Presence:</strong></p>
+        </td>
+
+        <td>
+          <p>Optional</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td><strong>Valid values:</strong></td>
+
+        <td>
+          <ul>
+            <li><code>name</code> -The attribute name</li>
+
+            <li><code>ref</code> - The value of the attribute. Can come from a flow variable.</li>
+
+            <li><code>display</code> - (Optional) Lets you specify whether or not custom attributes
+            appear in the response. If <code>true</code>, custom attributes appear in the response
+            (If <code>GenerateResponse</code> is also enabled). If <code>false</code>, custom
+            attributes are not included in the response. Default value is <code>true</code>.
+            See <a href="#displayorhide">Displaying or hiding custom attributes in the
+            response</a>.</li>
+          </ul>
+        </td>
+      </tr>
+
+      <tr>
+        <td height="116"><strong>Used with grant types:</strong></td>
+
+        <td>
+          <ul>
+            <li>authorization_code</li>
+
+            <li>implicit</li>
+
+            <li>password</li>
+
+            <li>client_credentials</li>
+
+            <li>refresh_token</li>
+
+            <li>Can also be used with the GenerateAuthorizationCode operation.</li>
+          </ul>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="clientidelement">&lt;ClientId&gt; element</h2>
+  <pre class="prettyprint">
+&lt;ClientId&gt;request.queryparam.client_id&lt;/ClientId&gt;
+</pre>
+
+  <p>In several cases, the client app must send the client ID to the authorization server. This
+  element lets you specify where Edge should look for the client ID. For example, it could be sent
+  as a query parameter or in an HTTP header.</p>
+
+  <p>The variable <code>request.queryparam.client_id</code> indicates that the client_id
+  should be present as a query parameter, as, for example, <code>?client_id=AfGlvs9</code>. To
+  require the ClientId in an HTTP header, for example, set this value
+  to <code>request.header.client_id</code>. See also <a href=
+  "/api-platform/security/oauth/access-tokens.html">Requesting access tokens and authorization
+  codes</a>.</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <td style="width:120px">
+          <p><strong>Default:</strong></p>
+        </td>
+
+        <td>
+          <p>request.formparam.client_id (a x-www-form-urlencoded and specified in the request
+          body)</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Presence:</strong></p>
+        </td>
+
+        <td>
+          <p>Optional</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td><strong>Type:</strong></td>
+
+        <td>String</td>
+      </tr>
+
+      <tr>
+        <td><strong>Valid values:</strong></td>
+
+        <td>Any flow variable accessible to the policy at runtime</td>
+      </tr>
+
+      <tr>
+        <td><strong>Used with grant types:</strong></td>
+
+        <td>
+          <ul>
+            <li>authorization_code</li>
+
+            <li>password</li>
+
+            <li>implicit</li>
+
+            <li>client_credentials</li>
+          </ul>
+
+          <p>Can also be used with the GenerateAuthorizationCode operation.</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="codeelement">&lt;Code&gt; element</h2>
+  <pre class="prettyprint">
+&lt;Code&gt;request.queryparam.code&lt;/Code&gt;
+</pre>
+
+  <p>In the authorization grant type flow, the client must submit an authorization code to the
+  authorization server (Apigee Edge). This element lets you specify where Edge should look for the
+  authorization code. For example, it could be sent as a query parameter, HTTP header, or form
+  parameter (the default).</p>
+
+  <p>The variable, <code>request.queryparam.auth_code</code> indicates that the
+  authorization code should be present as a query parameter, as, for
+  example, <code>?auth_code=AfGlvs9</code>. To require the authorization code in an HTTP
+  header, for example, set this value to <code>request.header.auth_code</code>. See also
+  <a href="/api-platform/security/oauth/access-tokens.html">Requesting access tokens and
+  authorization codes</a>.</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <td style="width:120px">
+          <p><strong>Default:</strong></p>
+        </td>
+
+        <td>
+          <p>request.formparam.code (a x-www-form-urlencoded and specified in the request body)</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Presence:</strong></p>
+        </td>
+
+        <td>
+          <p>optional</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td><strong>Type:</strong></td>
+
+        <td>String</td>
+      </tr>
+
+      <tr>
+        <td><strong>Valid values:</strong></td>
+
+        <td>Any flow variable accessible to the policy at runtime</td>
+      </tr>
+
+      <tr>
+        <td><strong>Used with grant types:</strong></td>
+
+        <td>authorization_code</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="expiresinelement"><a id="expiresin" name="expiresin"></a>&lt;ExpiresIn&gt; element</h2>
+  <pre class="prettyprint">
+&lt;ExpiresIn&gt;10000&lt;/ExpiresIn&gt; 
+</pre>
+
+  <p>Enforces the expiry time of access tokens and authorization codes in milliseconds. (For
+  refresh tokens, use <code>&lt;RefreshTokenExpiresIn&gt;</code>.) The expiry time value is a
+  system generated value plus the <code>&lt;ExpiresIn&gt;</code> value. If
+  <code>&lt;ExpiresIn&gt;</code> is set to <strong>-1</strong>, the token or code is given an
+  infinite lifetime. If <code>&lt;ExpiresIn&gt;</code> is not specified, the system applies a
+  default value configured at the system level. Contact <a href=
+  "https://apigee.com/about/support/portal" target="_blank">Apigee Support</a> for more
+  information about default system settings for a Cloud-based installation.</p>
+
+  <aside class="note"><b>Private Cloud:</b> For an Edge for Private Cloud installation, the default
+  value is set by the <span style=
+  "font-family:courier new,courier,monospace;">oauth_auth_code_expiry_time_in_millis</span> property
+  in the <span style=
+  "font-family:courier new,courier,monospace;">&lt;install_dir&gt;/apigee/conf/apigee/message_processor/keymanagement.properties</span>
+  file. If you change that value, you must restart the Message Processor.</aside>
+
+  <aside class="note"><b>Note:</b> By default, expired access tokens are purged from the Apigee
+  Edge system automatically 180 days after expiration. See also <a href="#purge">Purging access
+  tokens</a></aside>
+
+  <p>The expiry time can also be set at runtime using either a hard-coded, default value or by
+  referencing a flow variable. For example, you can store a token expiration value in a key value
+  map, retrieve it, assign it to a variable, and reference it in the policy.  For example,
+  <code>kvm.oauth.expires_in</code>. </p>
+
+  <p>The following stanza specifies a flow variable and a default value as well. Note that the flow
+  variable value takes precedence over the specified default value.</p>
+
+<aside class="note">Edge does not support a way to force the expiration of a token after it has been created.
+If you need to force token expiration (for example, based on a condition), a possible solution is
+described in <a href="https://community.apigee.com/questions/1994/is-there-a-way-to-update-expiry-time-of-an-existin.html">this Apigee Community post</a>.</aside>
+  <pre class="prettyprint">
+&lt;ExpiresIn ref="kvm.oauth.expires_in"&gt;
+    3600000 &lt;!--default value in milliseconds--&gt;
+&lt;/ExpiresIn&gt;
+</pre>
+
+  <table>
+    <tbody>
+      <tr>
+        <td style="width:120px" width="154">
+          <p><strong>Default:</strong></p>
+        </td>
+
+        <td>
+          <p>If not specified, the system applies a default value configured at the system
+          level.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Presence:</strong></p>
+        </td>
+
+        <td>
+          <p>Optional</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td><strong>Type:</strong></td>
+
+        <td>Integer</td>
+      </tr>
+
+      <tr>
+        <td><strong>Valid values:</strong></td>
+
+        <td>
+          <ul>
+            <li>Any positive, nozero integer. Specifies the expiry time in milliseconds.</li>
+
+            <li><strong>-1</strong> to indicate an infinite expiry time.<br>
+            <br>
+            <strong>Note:</strong> Specifying any other negative integer or zero causes a
+            deployment error. </li>
+          </ul>
+        </td>
+      </tr>
+
+      <tr>
+        <td><strong>Used with grant types:</strong></td>
+
+        <td>
+          <ul>
+            <li>authorization_code</li>
+
+            <li>implicit</li>
+
+            <li>password</li>
+
+            <li>client_credentials</li>
+
+            <li>refresh_token</li>
+          </ul>
+
+          <p>Also used with GenerateAuthorizationCode operation.</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <aside class="note"><b>Note:</b> Note that if ExpiresIn is set to <strong>-1</strong> you will
+  see the following expiration value in the generated token: <code>"expires_in" :
+  "0"</code>.</aside>
+
+  <h2 id="externalaccesstokenelement">&lt;ExternalAccessToken&gt; element</h2>
+  <pre class="prettyprint">
+&lt;ExternalAccessToken&gt;request.queryparam.external_access_token&lt;/ExternalAccessToken&gt;
+</pre>
+
+  <p>Tells Apigee Edge where to find an external access token (an access token not generated by
+  Apigee Edge).</p>
+
+  <p>The variable <code>request.queryparam.external_access_token</code> indicates that
+  the external access token should be present as a query parameter, as, for
+  example, <code>?external_access_token=12345678</code>. To require the external access token
+  in an HTTP header, for example, set this value
+  to <code>request.header.external_access_token</code>. See also <a href=
+  "/api-platform/security/oauth/use-third-party-oauth-system.html">Using Third-Party OAuth
+  Tokens</a>.</p>
+
+  <h2 id="externalauthorizationelement">&lt;ExternalAuthorization&gt; element</h2>
+  <pre class="prettyprint">
+&lt;ExternalAuthorization&gt;true&lt;/ExternalAuthorization&gt;
+</pre>
+
+  <p>If this element is false or not present, then Edge validates the client_id and client_secret
+  normally against the Apigee Edge authorization store. Use this element when you want to work with
+  third-party OAuth tokens. For details on using this element, see <a href=
+  "/api-platform/security/oauth/use-third-party-oauth-system.html">Using Third-Party OAuth
+  Tokens</a>.</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <td style="width:120px" width="154">
+          <p><strong>Default:</strong></p>
+        </td>
+
+        <td width="321">
+          <p>false</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Presence:</strong></p>
+        </td>
+
+        <td>
+          <p>Optional</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td><strong>Type:</strong></td>
+
+        <td>Boolean</td>
+      </tr>
+
+      <tr>
+        <td><strong>Valid values:</strong></td>
+
+        <td>true or false</td>
+      </tr>
+
+      <tr>
+        <td><strong>Used with grant types:</strong></td>
+
+        <td>
+          <ul>
+            <li>authorization_code</li>
+
+            <li>password</li>
+
+            <li>client_credentials</li>
+          </ul>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  
+
+  <h2 id="generateresponseelement">&lt;GenerateResponse&gt; element</h2>
+  <pre class="prettyprint">
+&lt;GenerateResponse enabled='true'/&gt;
+</pre>
+
+  <p>If set to <code>true</code>, the policy generates and returns a response. For example, for
+  GenerateAccessToken, the response might be like:</p>
+  <pre class="prettyprint">
+{
+  "issued_at" : "1467841035013",
+  "scope" : "read",
+  "application_name" : "e31b8d06-d538-4f6b-9fe3-8796c11dc930",
+  "refresh_token_issued_at" : "1467841035013",
+  "status" : "approved",
+  "refresh_token_status" : "approved",
+  "api_product_list" : "[Product1, nhl_product]",
+  "expires_in" : "1799",
+  "developer.email" : "edward@slalom.org",
+  "token_type" : "BearerToken",
+  "refresh_token" : "rVSmm3QaNa0xBVFbUISz1NZI15akvgLJ",
+  "client_id" : "Adfsdvoc7KX5Gezz9le745UEql5dDmj",
+  "access_token" : "AnoHsh2oZ6EFWF4h0KrA0gC5og3a",
+  "organization_name" : "cerruti",
+  "refresh_token_expires_in" : "0",
+  "refresh_count" : "0"
+}
+</pre>
+
+  <p>If <code>false</code>, no response is sent. Instead, a set of flow variables are populated
+  with values related to the policy's function. For example, a flow variable called
+  <code>oauthv2authcode.OAuthV2-GenerateAuthorizationCode.code</code> gets populated with the newly
+  minted auth code. Note that <strong>expires_in</strong> is expressed in seconds in the
+  response. </p>
+
+  <table>
+    <tbody>
+      <tr>
+        <td style="width:90px" width="100">
+          <p><strong>Default:</strong></p>
+        </td>
+
+        <td width="390">
+          <p>false</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Presence:</strong></p>
+        </td>
+
+        <td>
+          <p>Optional</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td><strong>Type:</strong></td>
+
+        <td>string</td>
+      </tr>
+
+      <tr>
+        <td><strong>Valid values:</strong></td>
+
+        <td>true or false</td>
+      </tr>
+
+      <tr>
+        <td><strong>Used with grant types:</strong></td>
+
+        <td>
+          <ul>
+            <li>implicit</li>
+
+            <li>password</li>
+
+            <li>client_credentials</li>
+
+            <li>refresh_token</li>
+
+            <li>Also can be used with the GenerateAuthorizationCode operation.</li>
+          </ul>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  
+
+  <h2 id="generateerrorresponseelement">&lt;GenerateErrorResponse&gt; element</h2>
+  <pre class="prettyprint">
+&lt;GenerateErrorResponse enabled='true'/&gt;
+</pre>
+
+  <p>If set to <code>true</code>, the policy generates and returns a response if the
+  ContinueOnError attribute is set to true. If <code>false</code> (the default), no
+  response is sent. Instead, a set of flow variables are populated with values related to the
+  policy's function. </p>
+
+  <table>
+    <tbody>
+      <tr>
+        <td style="width: 90px;" width="100">
+          <p><strong>Default:</strong></p>
+        </td>
+
+        <td width="390">
+          <p>false</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Presence:</strong></p>
+        </td>
+
+        <td>
+          <p>Optional</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td><strong>Type:</strong></td>
+
+        <td>string</td>
+      </tr>
+
+      <tr>
+        <td><strong>Valid values:</strong></td>
+
+        <td>true or false</td>
+      </tr>
+
+      <tr>
+        <td><strong>Used with grant types:</strong></td>
+
+        <td>
+          <ul>
+            <li>implicit</li>
+
+            <li>password</li>
+
+            <li>client_credentials</li>
+
+            <li>refresh_token</li>
+
+            <li>Also can be used with the GenerateAuthorizationCode operation.</li>
+          </ul>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="granttype"><a id="granttype" name="granttype"></a>&lt;GrantType&gt;</h2>
+  <pre class="prettyprint">
+&lt;GrantType&gt;request.queryparam.grant_type&lt;/GrantType&gt;
+</pre>
+
+  <p>Tells the policy where to find the grant type parameter that is passed in a request. Per the
+  OAuth 2.0 specification, the grant type must be supplied with requests for access tokens and
+  authorization codes. The variable can be a header, query parameter, or form parameter
+  (default). </p>
+
+  <p>For example <code>request.queryparam.grant_type</code> indicates that the Password
+  should be present as a query parameter, as, for example, <code>?grant_type=password</code>.
+  To require the grant type in an HTTP header, for example, set this value
+  to <code>request.header.grant_type</code>. See also <a href=
+  "/api-platform/security/oauth/access-tokens.html">Requesting access tokens and authorization
+  codes</a>.</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <td style="width: 90px;" width="100">
+          <p><strong>Default:</strong></p>
+        </td>
+
+        <td width="390">
+          <p>request.formparam.grant_type (a x-www-form-urlencoded and specified in the request
+          body)</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Presence:</strong></p>
+        </td>
+
+        <td>
+          <p>Optional</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td><strong>Type:</strong></td>
+
+        <td>string</td>
+      </tr>
+
+      <tr>
+        <td><strong>Valid values:</strong></td>
+
+        <td>A variable, as explained above.</td>
+      </tr>
+
+      <tr>
+        <td><strong>Used with grant types:</strong></td>
+
+        <td>
+          <ul>
+            <li>authorization_code</li>
+
+            <li>password</li>
+
+            <li>implicit</li>
+
+            <li>client_credentials</li>
+
+            <li>refresh_token</li>
+          </ul>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="operationelement">&lt;Operation&gt; element</h2>
+  <pre class="prettyprint">
+&lt;Operation&gt;GenerateAuthorizationCode&lt;/Operation&gt;
+</pre>
+
+  <p>The OAuth 2.0 operation executed by the policy.</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <td style="width:120px">
+          <p><strong>Default:</strong></p>
+        </td>
+
+        <td>
+          <p>If <code>&lt;Operation&gt;</code> is not specified, Edge looks at the list of
+          <code>&lt;SupportedGrantTypes&gt;</code>. Only operations on those grant types will be
+          successful. In other words, you can omit <code>&lt;Operation&gt;</code> if you specify a
+          <code>&lt;GrantType&gt;</code> in the <code>&lt;SupportedGrantTypes&gt;</code> list. If
+          neither <code>&lt;Operation&gt;</code> nor <code>&lt;SupportedGrantTypes&gt;</code> are
+          specified, the default grant type is authorization_code. That is, authorization_code
+          grant type requests will succeed, but all others will fail.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Presence:</strong></p>
+        </td>
+
+        <td>
+          <p>Optional</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td><strong>Type:</strong></td>
+
+        <td>String</td>
+      </tr>
+
+      <tr>
+        <td><strong>Valid values:</strong></td>
+
+        <td>
+          <ul>
+            <li><code>GenerateAccessToken</code> - Generates an access token. See also <a href=
+            "/api-platform/security/oauth/access-tokens.html">Requesting access tokens and
+            authorization codes</a>.</li>
+
+            <li><code>GenerateAccessTokenImplicitGrant</code> - Generates an access token for the
+            implict grant type. See also <a href=
+            "/api-platform/security/oauth/access-tokens.html">Requesting access tokens and
+            authorization codes</a>.</li>
+
+            <li><code>GenerateAuthorizationCode</code> - Generates an auth code. Used with the
+            authorization code grant type. See also <a href=
+            "/api-platform/security/oauth/access-tokens.html">Requesting access tokens and
+            authorization codes</a>.</li>
+
+            <li><code>RefreshAccessToken</code> - Exchange a new access token for a refresh token.
+            See also <a href="/api-platform/security/oauth/access-tokens.html">Requesting access
+            tokens and authorization codes</a>.</li>
+
+            <li><code>VerifyAccessToken</code> - Verifies that an access token sent in a request is
+            valid. See the VerifyAccessToken sample above and "<a href="#verifying">Verifying
+            access tokens</a>". </li>
+
+            <li><code>InvalidateToken</code> - Revokes an access token. After a token has been
+            revoked, clients cannot use that token to call a protected API. See also <a href=
+            "/api-platform/security/oauth/validating-and-invalidating-access-tokens.html">Approving
+            and revoking access tokens</a>.</li>
+
+            <li><code>ValidateToken</code> - Reinstates or "approves" an access token that was
+            previously revoked. See also <a href=
+            "/api-platform/security/oauth/validating-and-invalidating-access-tokens.html">Approving
+            and revoking access tokens</a>.</li>
+          </ul>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="passwordelement">&lt;PassWord&gt; element</h2>
+  <pre class="prettyprint">
+&lt;PassWord&gt;request.queryparam.password&lt;/PassWord&gt;
+</pre>
+
+  <p><strong>This element is used with the</strong> <strong>password grant type only</strong>. With
+  the password grant type, user credentials (password and username) must be made available to the
+  OAuthV2 policy. The <code>&lt;PassWord&gt;</code> and <code>&lt;UserName&gt;</code> elements are
+  used to specify variables where Edge can find these values. If these elements are not specified,
+  the policy expects to find the values (by default) in form parameters named <code>username</code>
+  and <code>password</code>. If the values are not found, the policy throws an error. You can use
+  the <code>&lt;PassWord&gt;</code> and <code>&lt;UserName&gt;</code> elements to reference any
+  flow variable containing the credentials.</p>
+
+  <p>For example, you can pass the password in a token request using a query parameter and set the
+  element like this:
+  <code>&lt;PassWord&gt;request.queryparam.password&lt;/PassWord&gt;</code><code>.</code> To
+  require the password in an HTTP header, set this value
+  to <code>request.header.password</code>. </p>
+
+  <p>The OAuthV2 policy doesn't do anything else with these credential values; Edge is simply
+  verifying that they are present. It is up to the API developer to retrieve the values request and
+  send them to an identity provider before the token generation policy executes.</p>
+
+  <p>See also <a href="/api-platform/security/oauth/access-tokens.html">Requesting access tokens
+  and authorization codes</a>.</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <td style="width:90px">
+          <p><strong>Default:</strong></p>
+        </td>
+
+        <td>
+          <p>request.formparam.password (a x-www-form-urlencoded and specified in the request
+          body)</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Presence:</strong></p>
+        </td>
+
+        <td>
+          <p>Optional</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td><strong>Type:</strong></td>
+
+        <td>String</td>
+      </tr>
+
+      <tr>
+        <td><strong>Valid values:</strong></td>
+
+        <td>Any flow variable available to the policy at runtime.</td>
+      </tr>
+
+      <tr>
+        <td><strong>Used with grant types:</strong></td>
+
+        <td>password</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="redirecturielement">&lt;RedirectUri&gt; element</h2>
+  <pre class="prettyprint">
+&lt;RedirectUri&gt;request.queryparam.redirect_uri&lt;/RedirectUri&gt;
+</pre>
+
+  <p>Specifies where Edge should look for the <code>redirect_uri</code> parameter in the
+  request.</p>
+
+  <h3 id="redirecturielement-aboutredirectionuris">About redirection URIs</h3>
+
+  <p>Redirection URIs are used with the authorization code and implicit grant types. The redirect
+  URI tells the authorization server (Edge) where to send an authorization code (for the auth code
+  grant type) or access token (for the implicit grant type). It's important to understand when this
+  parameter is required, when it is optional, and how it is used:</p>
+
+  <ul>
+    <li>
+      <p>(required) If a Callback URL is registered with the developer app that is associated with
+      the request's client keys, and if the <code>request_uri</code> is present in the request,
+      then the two must match exactly. If they do not match, an error is returned. For information
+      on registering developer apps on Edge and specifying a Callback URL, see <a href=
+      "/api-platform/publish/creating-apps-surface-your-api.html">Register apps and manage API
+      keys</a>.</p>
+
+      <aside class="note">
+        <b>Note:</b> To ensure that Edge checks for an exact match between "Callback URL" and
+        "redirect_uri" (as opposed to a forward match), set the following property in your
+        organization: <code>features.isStrictOAuthUriValidation = true</code>. The default is false
+        (forward match).
+
+        <p>If you're a cloud customer, contact <a href=
+        "https://community.apigee.com/content/apigee-customer-support">Apigee Support</a> to enable
+        the property. If you're an Apigee Edge for Private Cloud customer, set the flag using the
+        following API PUT call with System Administrator credentials.</p>
+        <pre class="prettyprint">
+curl -u email:password -X PUT -H "Content-type:application/xml" http://host:port/v1/o/{myorg} -d \
+"&lt;Organization type="trial" name="MyOrganization"&gt;
+    &lt;Properties&gt;
+        &lt;Property name="features.isStrictOAuthUriValidation"&gt;true&lt;/Property&gt;
+        &lt;!-- other existing org properties --&gt;
+    &lt;/Properties&gt;
+&lt;/Organization&gt;"
+</pre>
+
+        <aside class="warning"><b>Warning:</b> When you update the organization with the API call,
+        be sure to include all the existing organization properties in the payload. If you don't,
+        all existing organization properties are overwritten by only the properties you set with
+        this call.</aside>
+      </aside>
+    </li>
+
+    <li>(optional) If a Callback URL is registered, and the <code>request_uri</code> is missing
+    from the request, then Edge redirects to the registered Callback URL.</li>
+
+    <li>(required) If a Callback URL is not registered, then the <code>request_uri</code> is
+    required. Note that in this case, Edge will accept ANY URL. <strong>This case can present a
+    security issue,</strong> <strong>and therefore should only be used with trusted client
+    apps.</strong> If client apps are not trusted, then the best practice is to always require the
+    registration of a Callback URL.</li>
+  </ul>
+
+  <p>You can send this parameter in a query parameter or in a header. The
+  variable <code>request.queryparam.redirect_uri</code> indicates that the RedirectUri
+  should be present as a query parameter, as, for
+  example, <code>?redirect_uri=login.myapp.com</code>. To require the RedirectUri in an HTTP
+  header, for example, set this value to <code>request.header.redirect_uri</code>. See
+  also <a href="/api-platform/security/oauth/access-tokens.html">Requesting access tokens and
+  authorization codes</a>.</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <td style="width:120px">
+          <p><strong>Default:</strong></p>
+        </td>
+
+        <td>
+          <p>request.formparam.redirect_uri (a x-www-form-urlencoded and specified in the request
+          body)</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Presence:</strong></p>
+        </td>
+
+        <td>
+          <p>Optional</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td><strong>Type:</strong></td>
+
+        <td>String</td>
+      </tr>
+
+      <tr>
+        <td><strong>Valid values:</strong></td>
+
+        <td>Any flow variable accessible in the policy at runtime</td>
+      </tr>
+
+      <tr>
+        <td><strong>Used with grant types:</strong></td>
+
+        <td>
+          <ul>
+            <li>authorization_code</li>
+
+            <li>implicit</li>
+          </ul>
+
+          <p>Also used with the GenerateAuthorizationCode operation.</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="refreshtokenelement">&lt;RefreshToken&gt; element</h2>
+  <pre class="prettyprint">
+&lt;RefreshToken&gt;request.queryparam.refreshtoken&lt;/RefreshToken&gt;
+</pre>
+
+  <p>When requesting an access token using a refresh token, you must supply the refresh token in
+  the request. This element lets you specify where Edge should look for the refresh token. For
+  example, it could be sent as a query parameter, HTTP header, or form parameter (the default).</p>
+
+  <p>The variable <code>request.queryparam.refreshtoken</code> indicates that the refresh
+  token should be present as a query parameter, as, for
+  example, <code>?refresh_token=login.myapp.com</code>. To require the RefreshToken in an HTTP
+  header, for example, set this value to <code>request.header.refresh_token</code>. See
+  also <a href="/api-platform/security/oauth/access-tokens.html">Requesting access tokens and
+  authorization codes</a>.</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <td style="width: 120px;">
+          <p><strong>Default:</strong></p>
+        </td>
+
+        <td>
+          <p>request.formparam.refresh_token (a x-www-form-urlencoded and specified in the request
+          body)</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Presence:</strong></p>
+        </td>
+
+        <td>
+          <p>Optional</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td><strong>Type:</strong></td>
+
+        <td>String</td>
+      </tr>
+
+      <tr>
+        <td><strong>Valid values:</strong></td>
+
+        <td>Any flow variable accessible in the policy at runtime</td>
+      </tr>
+
+      <tr>
+        <td><strong>Used with grant types:</strong></td>
+
+        <td>
+          <ul>
+            <li>refresh_token</li>
+          </ul>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="refreshtokenexpiresinelement">&lt;RefreshTokenExpiresIn&gt; element</h2>
+  <pre class="prettyprint">
+&lt;RefreshTokenExpiresIn&gt;1000&lt;/RefreshTokenExpiresIn&gt;
+</pre>
+
+  <p>Enforces the expiry time of refresh tokens in milliseconds. The expiry time value is a system
+  generated value plus the <code>&lt;RefreshTokenExpiresIn&gt;</code> value. If
+  <code>&lt;RefreshTokenExpiresIn&gt;</code> is set to<span style=
+  "font-size: 12px;"> </span><strong style="font-size: 12px;">-1</strong>, the refresh token
+  is given an infinite lifetime. If <code>&lt;RefreshTokenExpiresIn&gt;</code> is not specified,
+  the system applies a default value configured at the system level. Contact <a href=
+  "https://apigee.com/about/support/portal" target="_blank">Apigee Support</a> for more
+  information about default system settings.</p>
+
+  <p>The expiry time can also be set at runtime using either a hard-coded, default value or by
+  referencing a flow variable. For example, you can store a token expiration value in a key value
+  map, retrieve it, assign it to a variable, and reference it in the policy.  For
+  example, <code>kvm.oauth.expires_in</code>.  </p>
+
+  <p>The following stanza specifies a flow variable and a default value as well. Note that the flow
+  variable value takes precedence over the specified default value.</p>
+  <pre class="prettyprint">
+&lt;RefreshTokenExpiresIn ref="kvm.oauth.expires_in"&gt;
+    3600000 &lt;!--default value in milliseconds--&gt;
+&lt;/RefreshTokenExpiresIn&gt;
+</pre>
+
+  <table>
+    <tbody>
+      <tr>
+        <td style="width:120px">
+          <p><strong>Default:</strong></p>
+        </td>
+
+        <td>
+          <p>If not specified, the system applies a default value configured at the system
+          level.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Presence:</strong></p>
+        </td>
+
+        <td>
+          <p>Optional</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td><strong>Type:</strong></td>
+
+        <td>Integer</td>
+      </tr>
+
+      <tr>
+        <td><strong>Valid values:</strong></td>
+
+        <td>
+          <ul>
+            <li>Any positive, nozero integer. Specifies the expiry time in milliseconds. </li>
+
+            <li><strong>-1</strong> to indicate an infinite expiry time.<br>
+            <br>
+            <strong>Note:</strong> Specifying any other negative integer or zero causes a
+            deployment error. </li>
+          </ul>
+        </td>
+      </tr>
+
+      <tr>
+        <td><strong>Used with grant types:</strong></td>
+
+        <td>
+          <ul>
+            <li>authorization_code</li>
+
+            <li>password</li>
+
+            <li>refresh_token</li>
+          </ul>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <aside class="note"><b>Note:</b> Note that if RefreshTokenExpiresIn is set to <strong>-1</strong>
+  you will see the following expiration value in the generated token:
+  <code>"refresh_token_expires_in" : "0"</code>.</aside>
+
+  <h2 id="responsetypeelement">&lt;ResponseType&gt; element</h2>
+  <pre class="prettyprint">
+&lt;ResponseType&gt;request.queryparam.response_type&lt;/ResponseType&gt;
+</pre>
+
+  <p>This element informs Edge which grant type the client app is requesting. It is used only with
+  the authorization code and implicit grant type flows. </p>
+
+  <p>By default, Edge looks for the response type value in a <code>response_type</code> query
+  parameter. If you wish to override this default behavior, use the &lt;ResponseType&gt; element to
+  configure a flow variable containing the response type value. For example, if you set this
+  element to <code>request.header.response_type</code>, Edge looks for the response type to be
+  passed in the request header.  See also <a href=
+  "/api-platform/security/oauth/access-tokens.html">Requesting access tokens and authorization
+  codes</a>.</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <td style="width: 90px;">
+          <p><strong>Default:</strong></p>
+        </td>
+
+        <td>
+          <p>request.formparam.response_type (a x-www-form-urlencoded and specified in the request
+          body)</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Presence:</strong></p>
+        </td>
+
+        <td>
+          <p>Optional. Use this element if you wish to override the default behavior. </p>
+        </td>
+      </tr>
+
+      <tr>
+        <td><strong>Type:</strong></td>
+
+        <td>String</td>
+      </tr>
+
+      <tr>
+        <td><strong>Valid values:</strong></td>
+
+        <td>Either <code>code</code> (for the authorization code grant type) or <code>token</code>
+        (for the implicit grant type)</td>
+      </tr>
+
+      <tr>
+        <td><strong>Used with grant types:</strong></td>
+
+        <td>
+          <ul>
+            <li>implicit</li>
+
+            <li>Also used with the GenerateAuthorizationCode operation.</li>
+          </ul>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="reuserefreshtoken">&lt;ReuseRefreshToken&gt; element</h2>
+  <pre class="prettyprint">
+&lt;ReuseRefreshToken&gt;true&lt;/ReuseRefreshToken&gt;
+</pre>
+
+  <p>When set to <code>true</code>, the existing refresh token is reused until it expires. If
+  <code>false</code>, a new refresh token is issued by Apigee Edge when a valid refresh token is
+  presented.</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <td style="width:120px" width="154">
+          <p><strong>Default:</strong></p>
+        </td>
+
+        <td width="226">
+          <p><code>false</code></p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Presence:</strong></p>
+        </td>
+
+        <td>
+          <p>optional</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td><strong>Type:</strong></td>
+
+        <td>boolean</td>
+      </tr>
+
+      <tr>
+        <td><strong>Valid values:</strong></td>
+
+        <td>
+          <p><code>true</code> or <code>false</code></p>
+        </td>
+      </tr>
+
+      <tr>
+        <td height="116"><strong>Used with grant type:</strong></td>
+
+        <td>
+          <ul>
+            <li>refresh_token</li>
+          </ul>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="scopeelement">&lt;Scope&gt; element</h2>
+  <pre class="prettyprint">
+&lt;Scope&gt;request.queryparam.scope&lt;/Scope&gt;
+</pre>
+
+  <p>If this element is present in one of the GenerateAccessToken or GenerateAuthorizationCode
+  policies, it is used to specify which scopes to grant the token or code. These values are
+  typically passed to the policy in the request from a client app. You can configure the element to
+  take a flow variable, giving you the option to choose how the scopes are passed in a request. In
+  the following example, <code>request.queryparam.scope</code> indicates that the scope should
+  be present as a query parameter, as, for example, <code>?scope=READ</code>. To require the
+  scope in an HTTP header, for example, set this value
+  to <code>request.header.scope</code>.</p>
+
+  <p>If this element appears in a "VerifyAccessToken" policy, then it is used to specify which
+  scopes the policy should enforce. In this type of policy, the value must be a "hard coded" scope
+  name -- you can't use variables. For example:</p>
+  <pre class="prettyprint">
+&lt;Scope&gt;A B&lt;/Scope&gt;
+</pre>
+
+  <p> See also <a href="/api-platform/security/oauth/working-scopes.html">Working with OAuth2
+  scopes</a> and <a href="/api-platform/security/oauth/access-tokens.html">Requesting access tokens
+  and authorization codes</a>.</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <td style="width:120px">
+          <p><strong>Default:</strong></p>
+        </td>
+
+        <td>
+          <p>No scope</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Presence:</strong></p>
+        </td>
+
+        <td>
+          <p>Optional</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td><strong>Type:</strong></td>
+
+        <td>String</td>
+      </tr>
+
+      <tr>
+        <td><strong>Valid values:</strong></td>
+
+        <td>
+          <p>If used with Generate* policies, a flow variable. </p>
+
+          <p>If used with VerifyAccessToken, a space-separated list of scope names (strings).</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td><strong>Used with grant types:</strong></td>
+
+        <td>
+          <ul>
+            <li>authorization_code</li>
+
+            <li>implicit</li>
+
+            <li>password</li>
+
+            <li>client_credentials</li>
+
+            <li>Can also be used with the GenerateAuthorizationCode and VerifyAccessToken
+            operations.</li>
+          </ul>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="stateelement">&lt;State&gt; element</h2>
+  <pre class="prettyprint">
+&lt;State&gt;request.queryparam.state&lt;/State&gt;
+</pre>
+
+  <p>In cases where the client app must send the state information to the authorization server,
+  this element lets you specify where Edge should look for the state values. For example, it could
+  be sent as a query parameter or in an HTTP header. The state value is typically used as a
+  security measure to prevent CSRF attacks.</p>
+
+  <p>For example <code>request.queryparam.state</code> indicates that the state should be
+  present as a query parameter, as, for example, <code>?state=HjoiuKJH32</code>. To require
+  the state in an HTTP header, for example, set this value
+  to <code>request.header.state</code>. See also See also <a href=
+  "/api-platform/security/oauth/access-tokens.html">Requesting access tokens and authorization
+  codes</a>.</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <td style="width:120px">
+          <p><strong>Default:</strong></p>
+        </td>
+
+        <td>
+          <p>No state</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Presence:</strong></p>
+        </td>
+
+        <td>
+          <p>Optional</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td><strong>Type:</strong></td>
+
+        <td>String</td>
+      </tr>
+
+      <tr>
+        <td><strong>Valid values:</strong></td>
+
+        <td>Any flow variable accessible to the policy at runtime</td>
+      </tr>
+
+      <tr>
+        <td><strong>Used with grant types:</strong></td>
+
+        <td>
+          <ul>
+            <li>All</li>
+
+            <li>Can also be used with the GenerateAuthorizationCode operation</li>
+          </ul>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="storetokenelement">&lt;StoreToken&gt; element</h2>
+  <pre class="prettyprint">
+ &lt;StoreToken&gt;true&lt;/StoreToken&gt; 
+</pre>
+
+  <p>Set this element to <code>true</code> when the <code>&lt;ExternalAuthorization&gt;</code>
+  element is <code>true</code>. The <code>&lt;StoreToken&gt;</code> element tells Apigee Edge to
+  store the external access token. Otherwise, it will not be persisted.</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <td style="width:120px">
+          <p><strong>Default:</strong></p>
+        </td>
+
+        <td>
+          <p>false</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Presence:</strong></p>
+        </td>
+
+        <td>
+          <p>Optional</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td><strong>Type:</strong></td>
+
+        <td>Boolean</td>
+      </tr>
+
+      <tr>
+        <td><strong>Valid values:</strong></td>
+
+        <td>true or false</td>
+      </tr>
+
+      <tr>
+        <td><strong>Used with grant types:</strong></td>
+
+        <td>
+          <ul>
+            <li>authorization_code</li>
+
+            <li>password</li>
+
+            <li>client_credentials</li>
+          </ul>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="supportedgranttypesgranttypeelement">&lt;SupportedGrantTypes&gt;/&lt;GrantType&gt;
+  element</h2>
+  <pre class="prettyprint">
+&lt;SupportedGrantTypes&gt;
+    &lt;GrantType&gt;authorization_code&lt;/GrantType&gt;
+    &lt;GrantType&gt;client_credentials&lt;/GrantType&gt;
+    &lt;GrantType&gt;implicit&lt;/GrantType&gt;
+    &lt;GrantType&gt;password&lt;/GrantType&gt;
+&lt;/SupportedGrantTypes&gt;
+</pre>
+
+  <p>Specifies the grant types supported by an OAuth token endpoint on Apigee Edge. An endpoint may
+  support multiple grant types (that is, a single endpoint can be configured to distribute access
+  tokens for multiple grant types.) For more on endpoints, see <a href=
+  "/api-platform/security/oauth/configuring-oauth-endpoints-and-policies.html">Understanding OAuth
+  endpoints</a>. The grant type is passed in token requests in a <code>grant_type</code>
+  parameter.</p>
+
+  <p>If no supported grant types are specified, then the only allowed grant types are
+  <code>authorization_code</code> and <code>implicit</code>. See also the <a href=
+  "#granttype">&lt;GrantType&gt;</a> element (which is a higher-level element that is used to
+  specify where Apigee Edge should look for the <code>grant_type</code> parameter that is passed in
+  a client request. Edge will make sure that the value of the <code>grant_type</code> parameter
+  matches one of the supported grant types). </p>
+
+  <table>
+    <tbody>
+      <tr>
+        <td style="width:120px" width="145">
+          <p><strong>Default:</strong></p>
+        </td>
+
+        <td width="285">
+          <p>authorization _code and implicit</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Presence:</strong></p>
+        </td>
+
+        <td>
+          <p>Required</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td><strong>Type:</strong></td>
+
+        <td>String</td>
+      </tr>
+
+      <tr>
+        <td><strong>Valid values:</strong></td>
+
+        <td>
+          <ul>
+            <li>client_credentials</li>
+
+            <li>authorization_code</li>
+
+            <li>password</li>
+
+            <li>implicit</li>
+          </ul>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="tokenstokenelement">&lt;Tokens&gt;/&lt;Token&gt; element</h2>
+
+  <p>Used with the ValidateToken and InvalidateToken operations. See also <a href=
+  "/api-platform/security/oauth/validating-and-invalidating-access-tokens.html">Approving and
+  revoking access tokens</a>. The &lt;Token&gt; element identifies the flow variable that defines
+  the source of the token to be revoked. If developers are expected to submit access tokens as
+  query parameters named <code>access_token</code>, for example,
+  use <code>request.queryparam.access_token</code>.</p>
+
+  <h2 id="usernameelement">&lt;UserName&gt; element</h2>
+  <pre class="prettyprint">
+&lt;UserName&gt;request.queryparam.user_name&lt;/UserName&gt;
+</pre>
+
+  <p><strong>This element is used with the</strong> <strong>password grant type only</strong>. With
+  the password grant type, user credentials (password and username) must be made available to the
+  OAuthV2 policy. The <code>&lt;PassWord&gt;</code> and <code>&lt;UserName&gt;</code> elements are
+  used to specify variables where Edge can find these values. If these elements are not specified,
+  the policy expects to find the values (by default) in form parameters named <code>username</code>
+  and <code>password</code>. If the values are not found, the policy throws an error. You can use
+  the <code>&lt;PassWord&gt;</code> and <code>&lt;UserName&gt;</code> elements to reference any
+  flow variable containing the credentials.</p>
+
+  <p>For example, you can pass the username in a query parameter and set the
+  <code>&lt;UserName&gt;</code> element like this:
+  <code>&lt;UserName&gt;request.queryparam.username&lt;/UserName&gt;</code><code>.</code>To require
+  the username in an HTTP header, set this value
+  to <code>request.header.username</code>. </p>
+
+  <p>The OAuthV2 policy doesn't do anything else with these credential values; Edge is simply
+  verifying that they are present. It is up to the API developer to retrieve the values request and
+  send them to an identity provider before the token generation policy executes.</p>
+
+  <p>See also <a href="/api-platform/security/oauth/access-tokens.html">Requesting access tokens
+  and authorization codes</a>.</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <td style="width:120px">
+          <p><strong>Default:</strong></p>
+        </td>
+
+        <td>
+          <p>request.formparam.username (a x-www-form-urlencoded and specified in the request
+          body)</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Presence:</strong></p>
+        </td>
+
+        <td>
+          <p>Optional</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td><strong>Type:</strong></td>
+
+        <td>String</td>
+      </tr>
+
+      <tr>
+        <td><strong>Valid values:</strong></td>
+
+        <td>Any variable setting.</td>
+      </tr>
+
+      <tr>
+        <td><strong>Used with grant types:</strong></td>
+
+        <td>password</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="verifyingaccesstokens"><a id="verifying" name="verifying"></a>Verifying access
+  tokens</h2>
+
+  <p>Once a token endpoint is set up for an API proxy, a corresponding OAuthV2 policy that
+  specifies the <code>VerifyAccessToken</code> operation is attached to the Flow that exposes the
+  protected resource.</p>
+
+  <p>For example, to ensure that all requests to an API are authorized, the following policy
+  enforces access token verification:</p>
+  <pre class="prettyprint">
+&lt;OAuthV2 name="VerifyOAuthAccessToken"&gt;
+  &lt;Operation&gt;VerifyAccessToken&lt;/Operation&gt;
+&lt;/OAuthV2&gt;
+</pre>
+
+  <p>The policy is attached to the API resource to be protected. To ensure that all requests to an
+  API are verified, attach the policy to the ProxyEndpoint request PreFlow, as follows:</p>
+  <pre class="prettyprint">
+&lt;PreFlow&gt;
+  &lt;Request&gt;
+    &lt;Step&gt;&lt;Name&gt;VerifyOAuthAccessToken&lt;/Name&gt;&lt;/Step&gt;
+  &lt;/Request&gt;
+&lt;/PreFlow&gt;
+</pre>
+
+  <p>The following optional elements can be used to override the default settings for the
+  VerifyAccessToken operation.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+
+        <th>Description</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td>Scope</td>
+
+        <td>
+          <p>A space-delimited list of scopes. Verification will succeed if at least one of the
+          scopes listed is present in the access token. For example, the following policy will
+          check the access token to ensure that it contains at least one of the scopes listed. If
+          <span style="font-family:courier new,courier,monospace;">READ</span> or <span style=
+          "font-family:courier new,courier,monospace;">WRITE</span> is present, verification will
+          succeed.</p>
+          <pre class="prettyprint">
+&lt;OAuthV2 name="ValidateOauthScopePolicy"&gt;
+  &lt;Operation&gt;VerifyAccessToken&lt;/Operation&gt;
+  &lt;Scope&gt;READ WRITE&lt;/Scope&gt;
+&lt;/OAuthV2&gt;
+</pre>
+        </td>
+      </tr>
+
+      <tr>
+        <td>AccessToken</td>
+
+        <td>The variable where the access token is expected to be located. For example
+        <code>request.queryparam.accesstoken</code>. By default, the access token is expected to be
+        presented by the app in the Authorization HTTP header,  according to the <a href=
+        "https://tools.ietf.org/html/draft-ietf-oauth-v2-31">OAuth 2.0 specification</a>. Use this
+        setting if the access token is expected to be presented in a non-standard location, such as
+        a query parameter, or an HTTP header with a name other than Authorization.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>See also <a href="/api-platform/security/oauth/using-access-tokens.html">Verifying access
+  tokens</a> and <a href="/api-platform/security/oauth/access-tokens.html">Requesting access tokens
+  and authorization codes</a>.</p>
+
+  <h2 id="specifyingrequestvariablelocations"><a id="variablelocations" name=
+  "variablelocations"></a>Specifying request variable locations</h2>
+
+  <p>For each grant type, the policy makes assumptions about the location or required information
+  in request messages. These assumptions are based on the OAuth 2.0 specification. If your apps
+  need to deviate from the OAuth 2.0 specification, then you can specify the expected locations for
+  each parameter. For example, when handling an authorization code, you can specify the location of
+  the authorization code, the client ID, the redirect URI, and the scope. These can be specified as
+  HTTP headers, query parameters, or form parameters.</p>
+
+  <p>The example below demonstrates how you can specify the location of required authorization code
+  parameters as HTTP headers:</p>
+  <pre class="prettyprint">
+  ...
+  &lt;GrantType&gt;request.header.grant_type&lt;/GrantType&gt;
+  &lt;Code&gt;request.header.code&lt;/Code&gt;
+  &lt;ClientId&gt;request.header.client_id&lt;/ClientId&gt;
+  &lt;RedirectUri&gt;request.header.redirect_uri&lt;/RedirectUri&gt;
+  &lt;Scope&gt;request.header.scope&lt;/Scope&gt;
+  ...
+</pre>
+
+  <p>Or, if necessary to support your client app base, you can mix and match headers and query
+  parameters:</p>
+  <pre class="prettyprint">
+  ...
+  &lt;GrantType&gt;request.header.grant_type&lt;/GrantType&gt;
+  &lt;Code&gt;request.header.code&lt;/Code&gt;
+  &lt;ClientId&gt;request.queryparam.client_id&lt;/ClientId&gt;
+  &lt;RedirectUri&gt;request.queryparam.redirect_uri&lt;/RedirectUri&gt;
+  &lt;Scope&gt;request.queryparam.scope&lt;/Scope&gt;
+  ...
+</pre>
+
+  <p>Only one location can be configured per parameter.</p>
+
+  <h2 id="flowvariables"><a id="flowvariables" name="flowvariables"></a>Flow variables</h2>
+
+  <p>The flow variables defined in this table are populated when the respective OAuth policies are
+  executed, and hence are available to other policies or applications executing in the API proxy
+  flow.</p>
+
+  <h3 id="flowvariables-verifyaccesstokenoperation">VerifyAccessToken operation</h3>
+
+  <p>The the VerifyAccessToken operation executes, a large number of flow variables are populated
+  in the proxy's execution context. These variables give you properties related to the access
+  token, developer app, developer, and company. You can use an AssignMessage or JavaScript policy,
+  for example, to read any of these variables and use them as needed later in the flow. These
+  variables can also be useful for debugging purposes.</p>
+
+  <aside class="note">
+    <b>Note:</b> API product variables will be populated automatically if the API products are
+    configured with valid environment, proxies, and API resources (derived from the
+    <code>proxy.pathsuffix</code>). Explicitly setting flow.resource.name variable is not required.
+
+    <p>Where the API products are not configured with valid environments and API proxies, then
+    <code>flow.resource.name</code> must explicitly be set to populate API product variables in the
+    flow. For details on product configuration, see <a href=
+    "/api-platform/publish/using-edge-management-api-publish-apis.html">Using the Edge management
+    API to Publish APIs</a>.</p>
+  </aside>
+
+  <p><strong>Token-specific variables</strong></p>
+
+  <table>
+    <tbody>
+      <tr>
+        <th scope="col" width="250">Variables</th>
+
+        <th scope="col" width="655">Description</th>
+      </tr>
+
+      <tr>
+        <td><code>organization_name</code></td>
+
+        <td>The name of the organization where the proxy is executing.</td>
+      </tr>
+
+      <tr>
+        <td><code>developer.id</code></td>
+
+        <td>The ID of the developer associated with the registered client app.</td>
+      </tr>
+
+      <tr>
+        <td><code>developer.app.name</code></td>
+
+        <td>The name of the developer associated with the registered client app.</td>
+      </tr>
+
+      <tr>
+        <td><code>client_id</code></td>
+
+        <td>The client ID of the registered client app.</td>
+      </tr>
+
+      <tr>
+        <td><code>grant_type</code></td>
+
+        <td>The grant type associated with the request.</td>
+      </tr>
+
+      <tr>
+        <td><code>token_type</code></td>
+
+        <td>The token type associated with the request.</td>
+      </tr>
+
+      <tr>
+        <td><code>access_token</code></td>
+
+        <td>The access token that is being verified.</td>
+      </tr>
+
+      <tr>
+        <td><code>accesstoken.{custom_attribute}</code></td>
+
+        <td>A named custom attribute in the access token.</td>
+      </tr>
+
+      <tr>
+        <td><code>issued_at</code></td>
+
+        <td>The date the access token was issued.</td>
+      </tr>
+
+      <tr>
+        <td><code>expires_in</code></td>
+
+        <td>The expiration time for the access token. Expressed in
+        <strong>seconds</strong>. </td>
+      </tr>
+
+      <tr>
+        <td><code>status</code></td>
+
+        <td>The status of the access token (e.g., approved or revoked).</td>
+      </tr>
+
+      <tr>
+        <td><code>scope</code></td>
+
+        <td>The scope (if any) associated with the access token.</td>
+      </tr>
+
+      <tr>
+        <td><code>apiproduct.&lt;custom_attribute_name&gt;</code></td>
+
+        <td>A named custom attribute of the API product associated with the registered client
+        app.</td>
+      </tr>
+
+      <tr>
+        <td><code>apiproduct.name</code></td>
+
+        <td>The name of the API product associated with the registered client app.</td>
+      </tr>
+
+      <tr>
+        <td> </td>
+
+        <td> </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p><strong>App-specific variables</strong></p>
+
+  <p>These variables are releated to the Developer App that is associated with the token.</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <th scope="col" width="250">Variables</th>
+
+        <th scope="col" width="655">Description</th>
+      </tr>
+
+      <tr>
+        <td><code>app.name</code></td>
+
+        <td> </td>
+      </tr>
+
+      <tr>
+        <td><code>app.id</code></td>
+
+        <td> </td>
+      </tr>
+
+      <tr>
+        <td><code>app.accessType</code></td>
+
+        <td> </td>
+      </tr>
+
+      <tr>
+        <td><code>app.callbackUrl</code></td>
+
+        <td> </td>
+      </tr>
+
+      <tr>
+        <td><code>app.status</code></td>
+
+        <td>approved or revoked</td>
+      </tr>
+
+      <tr>
+        <td><code>app.scopes</code></td>
+
+        <td> </td>
+      </tr>
+
+      <tr>
+        <td><code>app.appFamily</code></td>
+
+        <td> </td>
+      </tr>
+
+      <tr>
+        <td><code>app.apiproducts</code></td>
+
+        <td> </td>
+      </tr>
+
+      <tr>
+        <td><code>app.appParentStatus</code></td>
+
+        <td> </td>
+      </tr>
+
+      <tr>
+        <td><code>app.appType</code></td>
+
+        <td>For example: Developer</td>
+      </tr>
+
+      <tr>
+        <td><code>app.appParentId</code></td>
+
+        <td> </td>
+      </tr>
+
+      <tr>
+        <td><code>app.created_by</code></td>
+
+        <td> </td>
+      </tr>
+
+      <tr>
+        <td><code>app.created_at</code></td>
+
+        <td> </td>
+      </tr>
+
+      <tr>
+        <td><code>app.last_modified_at</code></td>
+
+        <td> </td>
+      </tr>
+
+      <tr>
+        <td><code>app.last_modified_by</code></td>
+
+        <td> </td>
+      </tr>
+
+      <tr>
+        <td><code>app.{custom_attributes}</code></td>
+
+        <td>A named custom attribute of the registered client app.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p><strong>Developer-specific variables</strong></p>
+
+  <p>If the app.appType is "Company", then company attributes are populated and if app.appType is
+  "Developer", then developer attributes are populated.</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <th scope="col" width="250">Variables</th>
+
+        <th scope="col" width="655">Description</th>
+      </tr>
+
+      <tr>
+        <td><strong>Developer-specific variables</strong></td>
+
+        <td> </td>
+      </tr>
+
+      <tr>
+        <td><code>developer.id</code></td>
+
+        <td> </td>
+      </tr>
+
+      <tr>
+        <td><code>developer.userName</code></td>
+
+        <td> </td>
+      </tr>
+
+      <tr>
+        <td><code>developer.firstName</code></td>
+
+        <td> </td>
+      </tr>
+
+      <tr>
+        <td><code>developer.lastName</code></td>
+
+        <td> </td>
+      </tr>
+
+      <tr>
+        <td><code>developer.email</code></td>
+
+        <td> </td>
+      </tr>
+
+      <tr>
+        <td><code>developer.status</code></td>
+
+        <td>active or inactive</td>
+      </tr>
+
+      <tr>
+        <td><code>developer.apps</code></td>
+
+        <td> </td>
+      </tr>
+
+      <tr>
+        <td><code>developer.created_by</code></td>
+
+        <td> </td>
+      </tr>
+
+      <tr>
+        <td><code>developer.created_at</code></td>
+
+        <td> </td>
+      </tr>
+
+      <tr>
+        <td><code>developer.last_modified_at</code></td>
+
+        <td> </td>
+      </tr>
+
+      <tr>
+        <td><code>developer.last_modified_by</code></td>
+
+        <td> </td>
+      </tr>
+
+      <tr>
+        <td><code>developer.{custom_attributes}</code></td>
+
+        <td>A named custom attribute of the developer.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p><strong>Company-specific variables</strong></p>
+
+  <p>If the app.appType is "Company", then company attributes are populated and if app.appType is
+  "Developer", then developer attributes are populated.</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <th scope="col" width="250">Variables</th>
+
+        <th scope="col" width="655">Description</th>
+      </tr>
+
+      <tr>
+        <td><code>company.id</code></td>
+
+        <td> </td>
+      </tr>
+
+      <tr>
+        <td><code>company.displayName</code></td>
+
+        <td> </td>
+      </tr>
+
+      <tr>
+        <td><code>company.apps</code></td>
+
+        <td> </td>
+      </tr>
+
+      <tr>
+        <td><code>company.appOwnerStatus</code></td>
+
+        <td> </td>
+      </tr>
+
+      <tr>
+        <td><code>company.created_by</code></td>
+
+        <td> </td>
+      </tr>
+
+      <tr>
+        <td><code>company.created_at</code></td>
+
+        <td> </td>
+      </tr>
+
+      <tr>
+        <td><code>company.last_modified_at</code></td>
+
+        <td> </td>
+      </tr>
+
+      <tr>
+        <td><code>company.last_modified_by</code></td>
+
+        <td> </td>
+      </tr>
+
+      <tr>
+        <td><code>company.{custom_attributes}</code></td>
+
+        <td>A named custom attribute of the company.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="flowvariables-generateauthorizationcodeoperation">GenerateAuthorizationCode
+  operation</h3>
+
+  <p>These variables are set when the GenerateAuthorizationCode operation executes
+  successfully:</p>
+
+  <p><strong>Prefix:</strong> <code>oauthv2authcode.{policy_name}.{variable_name}</code></p>
+
+  <p><strong>Example:</strong> <code>oauthv2authcode.GenerateCodePolicy.code</code></p>
+
+  <table>
+    <thead>
+      <tr>
+        <th width="137">Variable</th>
+
+        <th width="1117">Description</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td><code>code</code></td>
+
+        <td>The authorization code generated when the policy executes.</td>
+      </tr>
+
+      <tr>
+        <td><code>redirect_uri</code></td>
+
+        <td>The redirect URI associated with the registered client app.</td>
+      </tr>
+
+      <tr>
+        <td><code>scope</code></td>
+
+        <td>The optional OAuth scope passed in the client request.</td>
+      </tr>
+
+      <tr>
+        <td><code>client_id</code></td>
+
+        <td>The client ID passed in the client request.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  
+
+  <h3 id="flowvariables-generateaccesstokenandrefreshaccesstokenoperations">GenerateAccessToken and
+  RefreshAccessToken operations</h3>
+
+  <p>These variables are set when the GenerateAccessToken and RefreshAccessToken operations execute
+  successfully. Note that refresh token variables do not apply for the client credentials grant
+  type flow.</p>
+
+  <p><strong>Prefix:</strong> <code>oauthv2accesstoken.{policy_name}.{variable_name}</code></p>
+
+  <p><strong>Example:</strong> <code>oauthv2accesstoken.GenerateTokenPolicy.access_token</code></p>
+
+  <table>
+    <thead>
+      <tr>
+        <th width="251">Variable name</th>
+
+        <th width="975">Description</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td><code>access_token</code></td>
+
+        <td>The access token that was generated.</td>
+      </tr>
+
+      <tr>
+        <td><code>client_id</code></td>
+
+        <td>The client ID of the developer app associated with this token.</td>
+      </tr>
+
+      <tr>
+        <td><code>expires_in</code></td>
+
+        <td>The expiry value for the token. See the <a href="#expiresin">&lt;ExpiresIn&gt;</a>
+        element for details. Note that in the response, <strong>expires_in</strong> is expressed in
+        <strong>seconds</strong>. </td>
+      </tr>
+
+      <tr>
+        <td><code>scope</code></td>
+
+        <td>List of available scopes configured for the token. See <a href=
+        "/api-platform/security/oauth/working-scopes.html">Working with OAuth2 scopes</a>.</td>
+      </tr>
+
+      <tr>
+        <td><code>status</code></td>
+
+        <td>Either <code>approved</code> or <code>revoked</code>.</td>
+      </tr>
+
+      <tr>
+        <td><code>token_type</code></td>
+
+        <td>Is set to <code>BearerToken</code>.</td>
+      </tr>
+
+      <tr>
+        <td> </td>
+
+        <td> </td>
+      </tr>
+
+      <tr>
+        <td><code>developer.email</code></td>
+
+        <td>The email address of the registered developer who owns the developer app associated
+        with the token.</td>
+      </tr>
+
+      <tr>
+        <td><code>organization_name</code></td>
+
+        <td>The org where the proxy executes.</td>
+      </tr>
+
+      <tr>
+        <td><code>api_product_list</code></td>
+
+        <td>A list of the products associated with the token's corresponding developer app.</td>
+      </tr>
+
+      <tr>
+        <td> </td>
+
+        <td> </td>
+      </tr>
+
+      <tr>
+        <td><code>refresh_count</code></td>
+
+        <td> </td>
+      </tr>
+
+      <tr>
+        <td><code>refresh_token</code></td>
+
+        <td>The refresh token that was generated. Note that refresh tokens are not generated for
+        the client credentials grant type.</td>
+      </tr>
+
+      <tr>
+        <td><code>refresh_token_expires_in</code></td>
+
+        <td>The lifespan of the refresh token, in seconds.</td>
+      </tr>
+
+      <tr>
+        <td><code>refresh_token_issued_at</code></td>
+
+        <td>This time value is the string representation of the corresponding 32-bit timestamp
+        quantity. For example, 'Wed, 21 Aug 2013 19:16:47 UTC' corresponds to the timestamp value
+        of 1377112607413.</td>
+      </tr>
+
+      <tr>
+        <td><code>refresh_token_status</code></td>
+
+        <td>Either <code>approved</code> or <code>revoked</code>.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="flowvariables-generateaccesstokenimplicitgrant">GenerateAccessTokenImplicitGrant</h3>
+
+  <p>These variables are set when the GenerateAccessTokenImplicit operation executes successfully
+  for the implicit grant type flow.</p>
+
+  <p><strong>Prefix:</strong> <code>oauthv2accesstoken.{policy_name}.{variable_name}</code></p>
+
+  <p><strong>Example:</strong> <code>oauthv2accesstoken.RefreshTokenPolicy.access_token</code></p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Variable</th>
+
+        <th>Description</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td><code>oauthv2accesstoken.access_token</code></td>
+
+        <td>The access token generated when the policy executes.</td>
+      </tr>
+
+      <tr>
+        <td><code>oauthv2accesstoken.{policy_name}.expires_in</code></td>
+
+        <td>The expiry value for the token, in seconds. See the <a href=
+        "#expiresin">&lt;ExpiresIn&gt;</a> element for details.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="errorreference"><a id="errorcodes" name="errorcodes"></a>Error reference</h2>
+
+  <p>{% dynamic include /includes/___oauthv2-policy-error-codes %}</p>
+
+  <h2 id="policyschema"><a name="schema" id="schema"></a>Policy schema</h2>
+
+  <p>Each policy type is defined by an XML schema (<code>.xsd</code>). For reference, <a href=
+  "https://github.com/apigee/api-platform-samples/tree/master/schemas/policy">policy
+  schemas</a> are available on GitHub.</p>
+
+  <h2 id="workingwiththedefaultoauthconfiguration">Working with the default OAuth
+  configuration</h2>
+
+  <p>Each organization (even a free trial org) on Apigee Edge is provisioned with an OAuth token
+  endpoint. The endpoint is preconfigured with policies in the API proxy
+  called <strong>oauth</strong>. You can begin using the token endpoint as soon as you create
+  an account on <a href="https://accounts.apigee.com/accounts/sign_up">Apigee Edge</a>. For
+  details, see <a href=
+  "/api-platform/security/oauth/configuring-oauth-endpoints-and-policies.html">Understanding OAuth
+  endpoints</a>.</p>
+
+  <h2 id="purgingaccesstokens"><a id="purge" name="purge"></a>Purging access tokens</h2>
+
+  <p>By default, OAuth2 tokens are purged from the Apigee Edge system 180 days after both the
+  access token and refresh token (if it exists) have expired. In some cases, you may want to change
+  this default. For example, you may want to shorten the purge time to save disk space if a large
+  number of tokens are being generated.</p>
+
+  <p>If you are on <strong>Edge Private Cloud</strong>, you can change this default by setting
+  organization properties as explained in this section.</p>
+
+  <h3 id="purgingaccesstokens-updatingpurgesettingsforedgeprivatecloud41601andlaterversions">
+  Updating purge settings for Edge Private Cloud 4.16.01 and later versions</h3>
+
+  <p><strong>Note:</strong> Only tokens generated <strong>after</strong> these settings are
+  applied are affected; the settings do not apply to tokens that were generated earlier.</p>
+
+  <aside class="note">
+    <b>Private Cloud:</b>
+
+    <ol>
+      <li>Open this file for editing:
+        <pre class="prettyprint">
+/opt/apigee/customer/application/message-processor.properties
+</pre>
+      </li>
+
+      <li>Add the following property to set the number of seconds to wait before purging a token
+      after it expires:
+        <pre class="prettyprint">
+conf_keymanagement_oauth.access.token.purge.after.seconds=&lt;number of seconds&gt;
+</pre>
+      </li>
+
+      <li>Restart the message processor. For example:
+        <pre class="prettyprint">
+/opt/apigee/apigee-service/bin/apigee-servie edge-message-processor restart
+</pre>
+      </li>
+    </ol>If the access token never expires, then it will never be purged. You can set token
+    expiration in the OAuthV2 policy using the <code>&lt;ExpiresIn&gt;</code> and
+    <code>&lt;RefreshTokenExpiresIn&gt;</code> attributes.
+  </aside>
+
+  <h3 id="purgingaccesstokens-updatingpurgesettingsforedgeprivatecloud41507">Updating purge
+  settings for Edge Private Cloud 4.15.07</h3>
+
+  <p><strong>Note:</strong> Only tokens generated <strong>after</strong> these settings are applied
+  are affected; the settings do not apply to tokens that were generated earlier.</p>
+
+  <aside class="note">
+    <b>Private Cloud:</b>
+
+    <ol>
+      <li>
+        <p>Set positive values for the <code>&lt;ExpiresIn&gt;</code> and
+        <code>&lt;RefreshTokenExpiresIn&gt;</code> attributes in the OAuthV2 policy. Values are in
+        milliseconds. If the access token never expires (a value of -1), then it will never be
+        purged. For example:</p>
+        <pre class="prettyprint">
+&lt;ExpiresIn&gt;1000&lt;/ExpiresIn&gt;
+&lt;RefreshTokenExpiresIn&gt;10000&lt;/RefreshTokenExpiresIn&gt;
+</pre>
+      </li>
+
+      <li>
+        <p>Redeploy the proxy.</p>
+      </li>
+
+      <li>
+        <p>Use this API to update the token purge properties for your organization:</p>
+        <pre class="prettyprint">
+POST https://&lt;host-name&gt;/v1/organizations/&lt;org-name&gt;
+</pre>
+
+        <p>Payload:</p>
+        <pre class="prettyprint">
+&lt;Organization name="AutomationOrganization"&gt; 
+ &lt;Description&gt;Desc&lt;/Description&gt;
+ &lt;Properties&gt;
+     &lt;Property name="keymanagement.oauth20.access.token.purge"&gt;true&lt;/Property&gt;
+     &lt;Property name="keymanagement.oauth20.access.token.purge.after.seconds"&gt;120&lt;/Property&gt;
+ &lt;/Properties&gt;
+&lt;/Organization&gt;
+</pre>
+      </li>
+
+      <li>
+        <p>Restart the message processor. For example:</p>
+        <pre class="prettyprint">
+/opt/apigee/apigee-service/bin/apigee-service edge-message-processor restart
+</pre>
+
+        <p>This API sets the token purge property to true for the organization called
+        AutomationOrganization. In this case, the access token will be purged from the database 120
+        seconds after both the token and refresh token expire.</p>
+      </li>
+    </ol>See also <a href="#expiresin">&lt;ExpiresIn&gt; element</a>. 
+  </aside>
+
+  <h2 id="relatedtopics"><a id="Related" name="Related"></a>Related topics</h2>
+
+  <ul>
+    <li><a href="/api-platform/security/oauth/oauth-introduction.html">Introduction to OAuth
+    2.0</a></li>
+  </ul>{% endblock %}

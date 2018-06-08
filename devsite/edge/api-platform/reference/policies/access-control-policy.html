@@ -1,0 +1,678 @@
+{% extends "_base.html" %}
+{% block title %}Access Control policy{% endblock %}
+{% block body %}
+
+  <p><img src="/api-platform/images/icon_policy_security.jpg"></p>
+
+  <h3>What</h3>
+
+  <p>The Access Control policy lets you allow or deny access to your APIs by specific IP
+  addresses.</p>
+
+  <div class="video">
+    <p><strong>Video:</strong> Watch a short video to learn more about how the to allow or deny
+    access to your APIs by specific IP addresses.</p>
+
+    <div style="text-align: left; margin:15px">
+      <iframe allowfullscreen="" frameborder="0" height="380" scrolling="no" src=
+      "https://www.youtube.com/embed/wlCFA8maquk" width="600"></iframe>
+    </div>
+  </div>
+
+  <p>While you can attach this policy anywhere in the API proxy flow, you'll most likely want to
+  check IP addresses at the beginning of the flow ( Request / ProxyEndpoint / PreFlow), even before
+  authentication or quota checking.</p>
+
+  <h3 id="samples">Samples</h3>
+
+  <p>The mask values in the following IPv4 samples identify which of the four octets (8, 16, 24, 32
+  bits) the match rule considers when allowing or denying access. The default value is 32. See the
+  <a href="#sourceaddress"><code>mask</code></a> attribute in the Element reference for more
+  information.</p><!-- Begin tab list -->
+  <!-- End tab list --><!-- Begin tabbed region -->
+
+  <div class="ds-selector-tabs">
+    <section>
+      <h3 class="two-line-tab">Deny 10.10.10.10</h3>
+      <pre class="prettyprint">
+&lt;AccessControl name="ACL"&gt;
+  &lt;IPRules noRuleMatchAction = "ALLOW"&gt;
+    &lt;MatchRule action = "DENY"&gt;
+      &lt;SourceAddress mask="32"&gt;10.10.10.10&lt;/SourceAddress&gt;
+    &lt;/MatchRule&gt;
+  &lt;/IPRules&gt;
+&lt;/AccessControl&gt;
+</pre>
+
+      <p>Deny all requests from client address: 10.10.10.10</p>
+
+      <p>Allow requests from any other client address.</p>
+    </section>
+
+    <section>
+      <h3 class="two-line-tab">Deny 10.10.10.*</h3>
+      <pre class="prettyprint">
+&lt;AccessControl name="ACL"&gt;
+  &lt;IPRules noRuleMatchAction = "ALLOW"&gt;
+    &lt;MatchRule action = "DENY"&gt;
+      &lt;SourceAddress mask="24"&gt;10.10.10.10&lt;/SourceAddress&gt;
+    &lt;/MatchRule&gt;
+    &lt;/IPRules&gt;
+&lt;/AccessControl&gt;
+</pre>
+
+      <p>Deny all requests from client address: 10.10.10.*</p>
+
+      <p>Allow requests from any other client address.</p>
+    </section>
+
+    <section>
+      <h3 class="two-line-tab">Deny 10.10.*.*</h3>
+      <pre class="prettyprint">
+&lt;AccessControl name="ACL"&gt;
+  &lt;IPRules noRuleMatchAction = "ALLOW"&gt;
+    &lt;MatchRule action = "DENY"&gt;
+       &lt;SourceAddress mask="16"&gt;10.10.10.10&lt;/SourceAddress&gt;
+    &lt;/MatchRule&gt;
+  &lt;/IPRules&gt;
+&lt;/AccessControl&gt;
+</pre>
+
+      <p>Deny all requests from client address: 10.10.*.*</p>
+
+      <p>Allow requests from any other client address.</p>
+    </section>
+
+    <section>
+      <h3 class="two-line-tab">Deny 10.10.10.*, allow 10.10.10.20</h3>
+      <pre class="prettyprint">
+&lt;AccessControl name="ACL"&gt;
+  &lt;IPRules noRuleMatchAction = "ALLOW"&gt;
+    &lt;MatchRule action = "ALLOW"&gt;
+      &lt;SourceAddress mask="32"&gt;10.10.10.20&lt;/SourceAddress&gt;
+    &lt;/MatchRule&gt;
+    &lt;MatchRule action = "DENY"&gt;
+      &lt;SourceAddress mask="24"&gt;10.10.10.20&lt;/SourceAddress&gt;
+    &lt;/MatchRule&gt;
+  &lt;/IPRules&gt;
+&lt;/AccessControl&gt;
+</pre>
+
+      <p>Deny all requests from client address: 10.10.10.*, but allow 10.10.10.20.</p>
+
+      <p>Allow requests from any other client address.</p>
+    </section>
+
+    <section>
+      <h3 class="two-line-tab">Allow 10.10.*.*</h3>
+      <pre class="prettyprint">
+&lt;AccessControl name="ACL"&gt;
+  &lt;IPRules noRuleMatchAction = "DENY"&gt;
+    &lt;MatchRule action = "ALLOW"&gt;
+      &lt;SourceAddress mask="16"&gt;10.10.10.10&lt;/SourceAddress&gt;
+    &lt;/MatchRule&gt;
+  &lt;/IPRules&gt;
+&lt;/AccessControl&gt;
+</pre>
+
+      <p>Allow all requests from address: 10.10.*.*</p>
+
+      <p>Deny requests from any other client address.</p>
+    </section>
+
+    <section>
+      <h3 class="two-line-tab">Allow multiple IPs</h3>
+      <pre class="prettyprint">
+&lt;AccessControl name="ACL"&gt;
+  &lt;IPRules noRuleMatchAction = "DENY"&gt;
+    &lt;MatchRule action = "ALLOW"&gt;
+      &lt;SourceAddress mask="24"&gt;10.10.20.0&lt;/SourceAddress&gt;
+      &lt;SourceAddress mask="24"&gt;10.10.30.0&lt;/SourceAddress&gt;
+      &lt;SourceAddress mask="24"&gt;10.10.40.0&lt;/SourceAddress&gt;
+     &lt;/MatchRule&gt;
+  &lt;/IPRules&gt;
+&lt;/AccessControl&gt;
+</pre>
+
+      <p>Whitelist (allow requests from) client addresses: 10.10.20.* 10.10.30.* 10.10.40.*</p>
+
+      <p>Deny all other addresses.</p>
+    </section>
+
+    <section>
+      <h3 class="two-line-tab">Deny multiple IPs</h3>
+      <pre class="prettyprint">
+&lt;AccessControl name="ACL"&gt;
+  &lt;IPRules noRuleMatchAction = "ALLOW"&gt;
+    &lt;MatchRule action = "DENY"&gt;
+      &lt;SourceAddress mask="24"&gt;10.10.20.0&lt;/SourceAddress&gt;
+      &lt;SourceAddress mask="24"&gt;10.10.30.0&lt;/SourceAddress&gt;
+      &lt;SourceAddress mask="24"&gt;10.10.40.0&lt;/SourceAddress&gt;
+    &lt;/MatchRule&gt;
+  &lt;/IPRules&gt;
+&lt;/AccessControl&gt;
+</pre>
+
+      <p>Blacklist (deny requests from) client addresses: 10.10.20.* 10.10.30.* 10.10.40.*</p>
+
+      <p>Allow all other addresses.</p>
+    </section>
+
+    <section>
+      <h3 class="two-line-tab">Allow multiple IPs, deny multiple IPs</h3>
+      <pre class="prettyprint">
+&lt;AccessControl name="ACL"&gt;
+  &lt;IPRules noRuleMatchAction = "DENY"&gt;
+    &lt;MatchRule action = "DENY"&gt;
+      &lt;SourceAddress mask="24"&gt;10.10.0.0&lt;/SourceAddress&gt;
+      &lt;SourceAddress mask="24"&gt;10.20.0.0&lt;/SourceAddress&gt;
+      &lt;SourceAddress mask="24"&gt;10.30.0.0&lt;/SourceAddress&gt;
+    &lt;/MatchRule&gt;
+    &lt;MatchRule action = "ALLOW"&gt;
+      &lt;SourceAddress mask="16"&gt;10.10.0.0&lt;/SourceAddress&gt;
+      &lt;SourceAddress mask="16"&gt;10.20.0.0&lt;/SourceAddress&gt;
+      &lt;SourceAddress mask="16"&gt;10.30.0.0&lt;/SourceAddress&gt;
+    &lt;/MatchRule&gt;
+  &lt;/IPRules&gt;
+&lt;/AccessControl&gt;
+</pre>
+
+      <p>Whitelist: 10.10.*.* 10.20.*.* 10.30.*.*</p>
+
+      <p>Blacklist a subset of the whitelist: 10.10.0.* 10.20.0.* 10.30.0.*</p>
+    </section>
+  </div><!-- End tabbed region. -->
+  <hr>
+
+  <h2 id="usage">Usage notes</h2>
+
+  <p>In addition to protecting your APIs against malicious IPs, the Access Control policy also
+  gives you control over legitimate IP access. For example, if you only want computers under the
+  control of your enterprise to access the APIs exposed in your test environment, you can allow (or
+  whitelist) the IP address range for your internal network. Developers working from home can
+  access these APIs using VPN.</p>
+
+  <p>The configuration and execution of an Access Control policy involves the following:</p>
+
+  <ul>
+    <li>Define a set of <em>match rules</em> with one of two actions (ALLOW or DENY) associated
+    with each.</li>
+
+    <li>For each match rule, specify the IP address (SourceAddress element).
+
+      <ul>
+        <li>Configure a mask for each IP address. You allow or deny access based on a mask value on
+        the IP address. See <a href="#cidr">About IP masking with CIDR notation</a>.</li>
+
+        <li>The <code>X-FORWARDED-FOR</code> header is considered the source address. If there are
+        multiple addresses in the header, use the <a href=
+        "#validatebasedon"><code>&lt;ValidateBasedOn&gt;</code></a> element to control which are
+        evaluated.</li>
+      </ul>
+    </li>
+
+    <li>Specify the order in which the rules are tested.</li>
+
+    <li>All the match rules are executed in the given order. When a rules matches, the
+    corresponding action is executed and following match rules are skipped.
+
+      <ul>
+        <li>If the same rule is configured with both ALLOW and DENY actions, the rule that is
+        defined first in the order is triggered and the subsequent rule (with the other action) is
+        skipped.</li>
+      </ul>
+    </li>
+  </ul>
+
+  <h3 id="xforwardedfor">About the X-Forwarded-For HTTP header</h3>
+
+  <p>The Access Control policy evaulates the IP addresses in
+  the <code>X-Forwarded-For</code> HTTP header. Edge automatically populates that header
+  with the IP address it received from the last external TCP handshake (such as the client IP or
+  router). If there are multiple IP addresses in the header, the trusted, auto-populated IP is the
+  last one listed. For example, if the <code>X-Forwarded-For</code> header in the request
+  to an API proxy (viewed in the Trace tool) contains the following:</p>
+  <pre class="prettyprint">
+111.222.333.444,111.111.111.111,73.153.16.114
+</pre>
+
+  <p>then the last value, <code>73.153.16.114</code>, is the trusted IP that's auto-populated by
+  Edge.</p><!-- See also MGMT-3347 about enableMultipleXForwardCheckForACL -->
+
+  <p>By default, Edge ignores any <code>X-Forwarded-For</code> IPs in the header except
+  the last address, which is the IP address Edge received from the last external TCP handshake.
+  This feature is for security reasons, so that blacklisted IPs can't spoof valid IPs by sending
+  valid IPs in the <code>X-Forwarded-For</code> header.</p>
+
+  <aside class="warning">
+    <b>Warning:</b> However, you can configure Edge to consider all IPs in
+    the <code>X-Forwarded-For</code> header. You'd want to do this in an architecture
+    where you trust the IP addresses in <code>X-Forwarded-For</code>. Configuring Edge to
+    allow <code>X-Forwarded-For</code> IP addresses involves setting
+    the <code>feature.enableMultipleXForwardCheckForACL</code> property in your
+    organization. To set the property in the cloud, contact <a href=
+    "https://community.apigee.com/content/apigee-customer-support">Apigee Support</a>. To enable it
+    on-premises in Edge for Private Cloud, see the API call below.
+
+    <aside class="note">
+      <b>Private Cloud:</b> Apigee Edge for Private Cloud customers can set
+      the <code>feature.enableMultipleXForwardCheckForACL</code> property with the
+      following API call. If there are other properties set on your organization, be sure to
+      include those as well. Otherwise, they'll be removed.
+      <pre class="prettyprint">
+curl -u email:password -X POST -H "Content-type:application/xml" http://host:8080/v1/o/myorg -d \
+"&lt;Organization type="trial" name="MyOrganization"&gt;
+    &lt;DisplayName&gt;MyOrganization&lt;/DisplayName&gt;
+    &lt;Environments/&gt;
+    &lt;Properties&gt;
+        &lt;Property name="feature.enableMultipleXForwardCheckForACL"&gt;true&lt;/Property&gt;
+        <strong>&lt;!-- Include other existing properties as well. --&gt;</strong>
+    &lt;/Properties&gt;
+&lt;/Organization&gt;"
+</pre>
+    </aside>
+  </aside>
+
+  <h3 id="cidr">About IP masking with CIDR notation</h3>
+
+  <p>CIDR notation (Classless Inter-Domain Routing) is a way of indicating a range of IP addresses
+  through masking. It applies to both IPv4 and IPv6. Here's how it works. We'll use IPv4 in our
+  examples for simplicity.</p>
+
+  <p>IP addresses are groups of numbers separated by periods. In binary terms, each group is a
+  specific number of bits (8 for IPv4 and 16 for IPv6). The IPv4 address 10.20.30.40 looks like
+  this in binary:</p>
+
+  <p><code>00001010 . 00010100 . 00011110 . 00101000</code></p>
+
+  <p>That's 4 groups of 8 bits, or 32 total bits. With CIDR, you can indicate a range by adding a
+  /number (1-32) to the IP address, like this:</p>
+
+  <p><code>10.20.30.40/16</code></p>
+
+  <p>In this case, the 16 is the number you would use for the <code>mask</code> attribute
+  value in this policy.</p>
+
+  <p>This notation means, "Keep the first 16 bits exactly as is, the remaining bits can be
+  anything." For example:</p>
+
+  <p><img alt="" src="/api-platform/images/cidr_1.png" width="461"></p>
+
+  <p>Notice that the mask happens at the end of group two. This makes things nice and tidy, in
+  essence creating a mask like this: 10.20.*.*. In most cases, using multiples of 8 (IPv4) and 16
+  (IPv6) will give you the masking level you want:</p>
+
+  <p>IPv4: 8, 16, 24, 32</p>
+
+  <p>IPv6: 16, 32, 48, 64, 80, 96, 112, 128</p>
+
+  <p>However, you can user other numbers for finer-grained control, which involves a little binary
+  calculation. Here's an example using a mask of 22:</p>
+
+  <p><img alt="" src="/api-platform/images/cidr_2.png"></p>
+
+  <p>Here it gets a litle tricky: keep the first 22 bits and allow anything in the
+  rest&#8364;&#8221;<em>per group</em>. For example, as shown above, groups 1 and 2 can be
+  any number 0-255. But because group 3 gets truncated by the CIDR notation, it means keep the
+  first 6 bits, and the last two can vary. When you translate the binary, it means there are four
+  possible combinations (00, 01, 10, 11) that can be added onto the leading 000111, which must stay
+  as is. In other words, these binary combinations are possible:</p>
+
+  <ul>
+    <li>000111<strong>00</strong> = 28</li>
+
+    <li>000111<strong>01</strong> = 29</li>
+
+    <li>000111<strong>10</strong> = 30</li>
+
+    <li>000111<strong>11</strong> = 31</li>
+  </ul>
+
+  <p>Since none of group 4 is truncated by the mask, values can be anything from 0 to 255.</p>
+
+  <p>In this example, with the configuration set to <code>&lt;SourceAddress
+  mask="22"&gt;10.20.30.40&lt;/SourceAddress&gt;</code>, the following IPs would be allowed (or
+  denied, depending on your rules):</p>
+
+  <ul>
+    <li>10.20.28.*</li>
+
+    <li>10.20.29.*</li>
+
+    <li>10.20.30.*</li>
+
+    <li>10.20.31.*</li>
+  </ul>
+
+  <h2 id="elements">Element reference</h2>
+
+  <p>The element reference describes the elements and attributes of the Access Control policy.</p>
+  <pre class="prettyprint">
+&lt;?xml version="1.0" encoding="UTF-8" standalone="yes"?&gt;
+&lt;AccessControl async="false" continueOnError="false" enabled="true" name="Access-Control-1"&gt;
+    &lt;DisplayName&gt;Access Control 1&lt;/DisplayName&gt;
+    &lt;IPRules noRuleMatchAction = "ALLOW"&gt;
+        &lt;MatchRule action = "ALLOW"&gt;
+            &lt;SourceAddress mask="32"&gt;10.10.10.20&lt;/SourceAddress&gt;
+        &lt;/MatchRule&gt;
+        &lt;MatchRule action = "DENY"&gt;
+            &lt;SourceAddress mask="24"&gt;10.10.10.20&lt;/SourceAddress&gt;
+        &lt;/MatchRule&gt;
+    &lt;/IPRules&gt;
+    &lt;ValidateBasedOn&gt;X_FORWARDED_FOR_ALL_IP&lt;/ValidateBasedOn&gt;
+&lt;/AccessControl&gt;
+</pre>
+
+  <h2 id="accesscontrolattributes">&lt;AccessControl&gt; attributes</h2>
+  <pre class="prettyprint">
+&lt;AccessControl async="false" continueOnError="false" enabled="true" name="Access-Control-1"&gt; 
+</pre>{% dynamic include /includes/___policies-parent-element-attributes %}
+
+  <h2 id="ipruleselement">&lt;IPRules&gt; element</h2>
+
+  <p>The parent element containing the rules that allow or deny IP addresses. The
+  <code>noRuleMatchAction</code> attribute lets you define how to handle any IP addresses that
+  aren't covered by your matching rules.</p>
+  <pre class="prettyprint">
+&lt;IPRules noRuleMatchAction = "ALLOW"&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type</b></td>
+
+        <td>N/A</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="ipruleselement-attributes">Attributes</h3>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="text-align: left;">Attribute</th>
+
+        <th style="text-align: left;">Description</th>
+
+        <th style="text-align: left;">Type</th>
+
+        <th style="text-align: left;">Default</th>
+
+        <th style="text-align: left;">Presence</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td>noRuleMatchAction</td>
+
+        <td>
+          <div>
+            The action to take (allow or deny access) if the match rule specified is not resolved
+            (unmatched).
+          </div>
+
+          <div>
+            Valid value: ALLOW or DENY
+          </div>
+
+          <div>
+             
+          </div>
+        </td>
+
+        <td>String</td>
+
+        <td>ALLOW</td>
+
+        <td>Required</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="iprulesmatchruleelement">&lt;IPRules&gt;/&lt;MatchRule&gt; element</h2>
+
+  <p>The action to take (allow or deny access) if the IP address matches the SourceAddress(es) you
+  define.</p>
+  <pre class="prettyprint">
+&lt;IPRules noRuleMatchAction = "ALLOW"&gt;
+    <strong>&lt;MatchRule action = "ALLOW"&gt;</strong>
+        &lt;SourceAddress mask="32"&gt;10.10.10.20&lt;/SourceAddress&gt;
+    &lt;/MatchRule&gt;
+    <strong>&lt;MatchRule action = "DENY"&gt;</strong>
+        &lt;SourceAddress mask="24"&gt;10.10.10.20&lt;/SourceAddress&gt;
+    &lt;/MatchRule&gt;
+&lt;/IPRules&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type</b></td>
+
+        <td>N/A</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="iprulesmatchruleelement-attributes">Attributes</h3>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="text-align: left;">Attribute</th>
+
+        <th style="text-align: left;">Description</th>
+
+        <th style="text-align: left;">Type</th>
+
+        <th style="text-align: left;">Default</th>
+
+        <th style="text-align: left;">Presence</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td>action</td>
+
+        <td>
+          <p>The action to take (allow or deny access) if the match rule specified is not resolved
+          (unmatched).</p>
+
+          <p>Valid value: ALLOW or DENY</p>
+        </td>
+
+        <td>String</td>
+
+        <td>ALLOW</td>
+
+        <td>Required</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="sourceaddress">&lt;IPRules&gt;/&lt;MatchRule&gt;/&lt;SourceAddress&gt; element</h2>
+
+  <p>The IP address range of a client.</p>
+
+  <p>Valid value: Valid IP address (dotted decimal notation). For wildcard behavior, use the
+  <code>mask</code> attribute.</p>
+  <pre class="prettyprint">
+&lt;IPRules noRuleMatchAction = "ALLOW"&gt;
+    &lt;MatchRule action = "ALLOW"&gt;
+        <strong>&lt;SourceAddress mask="32"&gt;10.10.10.20&lt;/SourceAddress&gt;</strong>
+    &lt;/MatchRule&gt;
+    &lt;MatchRule action = "DENY"&gt;
+        <strong>&lt;SourceAddress mask="24"&gt;10.10.10.20&lt;/SourceAddress&gt;</strong>
+    &lt;/MatchRule&gt;
+&lt;/IPRules&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type</b></td>
+
+        <td>String</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="iprulesmatchrulesourceaddresselement-attributes">Attributes</h3>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="text-align: left;">Attribute</th>
+
+        <th style="text-align: left;">Description</th>
+
+        <th style="text-align: left;">Type</th>
+
+        <th style="text-align: left;">Default</th>
+
+        <th style="text-align: left;">Presence</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td>mask</td>
+
+        <td>
+          <p>The mask attribute is a way to indicate the range of IP addresses to allow or deny.
+          Mask is the equivalent of using CIDR notation (Classless Inter-Domain Routing). For
+          example:</p>
+
+          <p><code>&lt;SourceAddress mask="24"&gt;192.168.100.0&lt;/SourceAddress&gt;</code></p>
+
+          <p>is equivalent to the following CIDR notation:</p>
+
+          <p>192.168.100.0/24</p>
+
+          <p>Valid values:</p>
+
+          <p>IPv4: 1-32</p>
+
+          <p>IPv6: 1-128</p>
+
+          <p>A value of zero (0) is valid only for IP 0.0.0.0, hence impractical.</p>
+
+          <p>For more guidance, see <a href="#cidr">About IP masking with CIDR notation</a>.</p>
+        </td>
+
+        <td>Integer</td>
+
+        <td>N/A</td>
+
+        <td>Required</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="validatebasedon">&lt;ValidateBasedOn&gt; element</h2>
+
+  <aside class="note"><b>Note:</b> To use this element, you need to change Edge's default behavior.
+  The default behavior and how to change it are described in <a href="#xforwardedfor">About
+  the X-Forwarded-For HTTP header</a>.</aside>
+
+  <p>When the <code>X-Forwarded-For</code> HTTP header contains <strong>multiple</strong> IP
+  addresses, use this <code>ValidateBasedOn</code> element to control which IP addresses are
+  checked.</p>
+
+  <p>The value you enter in this element lets you determine whether to check all IP addresses in
+  the header (default), only the first IP address, or only the last IP address.</p>
+  <pre class="prettyprint">
+&lt;AccessControl async="false" continueOnError="false" enabled="true" name="Access-Control-1"&gt;
+    &lt;DisplayName&gt;Access Control 1&lt;/DisplayName&gt;
+    &lt;IPRules noRuleMatchAction = "ALLOW"&gt;
+        &lt;MatchRule action = "DENY"&gt;
+            &lt;SourceAddress mask="32"&gt;10.10.10.20&lt;/SourceAddress&gt;
+        &lt;/MatchRule&gt;
+    &lt;/IPRules&gt;
+    <strong>&lt;ValidateBasedOn&gt;X_FORWARDED_FOR_ALL_IP&lt;/ValidateBasedOn&gt;</strong>
+&lt;/AccessControl&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default</b></td>
+
+        <td>X_FORWARDED_FOR_ALL_IP</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type</b></td>
+
+        <td>String</td>
+      </tr>
+
+      <tr>
+        <td><b>Valid values</b></td>
+
+        <td>
+          <ul>
+            <li>X_FORWARDED_FOR_ALL_IP (default)</li>
+
+            <li>X_FORWARDED_FOR_FIRST_IP</li>
+
+            <li>X_FORWARDED_FOR_LAST_IP</li>
+          </ul>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <aside class="note"><b>Sample:</b> See our <a href=
+  "https://github.com/apigee/api-platform-samples/tree/master/schemas/policy">GitHub
+  repository</a> samples for the most recent schemas.</aside>
+
+  <h2 id="errors">Error reference</h2>{% dynamic include /includes/___access-control-policy-error-codes %}
+
+  {% endblock %}

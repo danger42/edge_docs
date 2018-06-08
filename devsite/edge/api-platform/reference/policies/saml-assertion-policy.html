@@ -1,0 +1,513 @@
+  {% extends "_base.html" %} {% block title %}SAML Assertion policies{% endblock %} {% block body %} <img src="/api-platform/images/icon_policy_security.jpg">
+
+  <h3>What</h3>
+
+  <ul>
+    <li><strong>Inbound authentication and authorization: Validate SAML Assertion
+    policy</strong><br>
+    The SAML policy type enables API proxies to validate SAML assertions that are attached to
+    inbound SOAP requests. The SAML policy validates incoming messages that contain a
+    digitally-signed SAML assertion, rejects them if they are invalid, and sets variables that
+    allow additional policies, or the backend services itself, to further validate the information
+    in the assertion.</li>
+
+    <li><strong>Outbound token generation: Generate SAML Assertion policy</strong><br>
+    The SAML policy type enables API proxies to attach SAML assertions to outbound XML requests.
+    Those assertions are then available to enable backend services to apply further security
+    processing for authentication and authorization.</li>
+  </ul>
+
+  
+
+  <h3 id="samples">Samples</h3><!-- Begin tab list -->
+  <!-- End tab list --><!-- Begin tabbed region -->
+
+  <div class="ds-selector-tabs">
+    <section>
+      <h3 class="two-line-tab">Generate SAML assertion</h3>
+      <pre class="prettyprint">
+&lt;GenerateSAMLAssertion name="SAML" ignoreContentType="false"&gt;
+  &lt;CanonicalizationAlgorithm /&gt;
+  &lt;Issuer ref="reference"&gt;Issuer name&lt;/Issuer&gt;
+  &lt;KeyStore&gt;
+    &lt;Name ref="reference"&gt;keystorename&lt;/Name&gt;
+    &lt;Alias ref="reference"&gt;alias&lt;/Alias&gt;
+  &lt;/KeyStore&gt;
+  &lt;OutputVariable&gt;
+    &lt;FlowVariable&gt;assertion.content&lt;/FlowVariable&gt;
+    &lt;Message name="request"&gt;
+      &lt;Namespaces&gt;
+        &lt;Namespace prefix="test"&gt;http://www.example.com/test&lt;/Namespace&gt;
+      &lt;/Namespaces&gt;
+      &lt;XPath&gt;/envelope/header&lt;/XPath&gt;
+    &lt;/Message&gt;
+  &lt;/OutputVariable&gt;
+  &lt;SignatureAlgorithm /&gt;
+  &lt;Subject ref="reference"&gt;Subject name&lt;/Subject&gt;
+  &lt;Template ignoreUnresolvedVariables="false"&gt;
+    &lt;!-- A lot of XML goes here, in CDATA, with {} around
+         each variable --&gt;
+  &lt;/Template&gt;
+&lt;/GenerateSAMLAssertion&gt;
+</pre>
+
+      <p>Generating a SAML assertion</p>
+    </section>
+
+    <section>
+      <h3 class="two-line-tab">Validate SAML assertion</h3>
+      <pre class="prettyprint">
+&lt;ValidateSAMLAssertion name="SAML" ignoreContentType="false"&gt;
+  &lt;Source name="request"&gt;
+    &lt;Namespaces&gt;
+      &lt;Namespace prefix='soap'&gt;http://schemas.xmlsoap.org/soap/envelope/&lt;/Namespace&gt;
+      &lt;Namespace prefix='wsse'&gt;http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd&lt;/Namespace&gt;
+      &lt;Namespace prefix='saml'&gt;urn:oasis:names:tc:SAML:2.0:assertion&lt;/Namespace&gt;
+    &lt;/Namespaces&gt;
+    &lt;XPath&gt;/soap:Envelope/soap:Header/wsse:Security/saml:Assertion&lt;/XPath&gt;
+  &lt;/Source&gt;
+  &lt;TrustStore&gt;TrustStoreName&lt;/TrustStore&gt;
+  &lt;RemoveAssertion&gt;false&lt;/RemoveAssertion&gt;
+&lt;/ValidateSAMLAssertion&gt;
+</pre>
+
+      <p>Validating a SAML assertion</p>
+    </section>
+  </div><!-- End tabbed region. -->
+  <hr>
+
+  <h2 id="elements">Element reference</h2>
+
+  <h3 id="elementreference-generatesamlassertion">Generate SAML Assertion</h3>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Field Name</th>
+
+        <th colspan="3">Description</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td><code>name</code> attribute</td>
+
+        <td colspan="3">The name of the policy instance. The name must be unique in the
+        organization. Characters you can use in the name are restricted to: <code>A-Z0-9._\-$
+        %</code>. However, the Management UI enforces additional restrictions, such as
+        automatically removing characters that are not alphanumeric.</td>
+      </tr>
+
+      <tr>
+        <td><code>ignoreContentType</code> attribute</td>
+
+        <td>A boolean that can be set to <code>true</code> or <code>false</code>. By default, the
+        assertion will not be generated if the content type of the message is not an XML
+        Content-Type. If this is set to <code>true</code>, then the message will be treated as XML
+        regardless of the Content-type.</td>
+      </tr>
+
+      <tr>
+        <td><code>Issuer</code></td>
+
+        <td>
+          <div>
+            The unique identifier of the identity provider. If the optional <code>ref</code>
+            attribute is present, then the value of Issuer will be assigned at runtime based on the
+            specified variable. If the optional <code>ref</code> attribute is not present, then the
+            value of Issuer will be used.
+          </div>
+        </td>
+      </tr>
+
+      <tr>
+        <td><code>KeyStore</code></td>
+
+        <td>
+          <div>
+            The name of the KeyStore that contains the private key and the alias of the private key
+            used to digitally sign SAML assertions.
+          </div>
+        </td>
+      </tr>
+
+      <tr>
+        <td><code>OutputVariable</code></td>
+
+        <td> </td>
+      </tr>
+
+      <tr>
+        <td><code>FlowVariable</code></td>
+
+        <td> </td>
+      </tr>
+
+      <tr>
+        <td><code>Message</code></td>
+
+        <td>The target of the policy. Valid values are <code>message</code>, <code>request</code>,
+        and <code>response</code>. When set to <code>message</code>, the policy conditionally
+        retrieves the message object based on the attachment point of the policy. When attached to
+        the request Flow, the policy resolves <code>message</code> to request, and when attached to
+        the response Flow, the policy resolves <code>message</code> to response. </td>
+      </tr>
+
+      <tr>
+        <td><code>XPath</code></td>
+
+        <td>An XPath expression that indicates the element on the outbound XML document to which
+        the policy will attach the SAML assertion.</td>
+      </tr>
+
+      <tr>
+        <td><code>SignatureAlgorithm</code></td>
+
+        <td>SHA1 or SHA256</td>
+      </tr>
+
+      <tr>
+        <td><code>Subject</code></td>
+
+        <td>
+          <div>
+            The unique identifier of the subject of the SAML assertion. If the optional
+            <code>ref</code> attribute is present, then the value of Subject will be assigned at
+            runtime based on the specified variable. If the optional <code>ref</code> attribute is
+            present, then the value of Subject will be used.
+          </div>
+        </td>
+      </tr>
+
+      <tr>
+        <td><code>Template</code></td>
+
+        <td>
+          <div>
+            If present, then the assertion will be generated by running this template, replacing
+            everything denoted <code>{}</code> with the corresponding variable, and then digitally
+            signing the result. The template is processed following the AssignMessage policy rules.
+            See <a href="/api-platform/reference/policies/assign-message-policy.html">Assign
+            Message policy</a>.
+            <aside class="note">The <code>&lt;Template&gt;</code> element supports the dynamic string substitution feature called
+  <a href="/api-platform/reference/message-template-intro.html">message templating</a>. Message templating
+              is only supported when the policy signature is <code>GenerateSamlAssertion</code>.</aside>
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="elementreference-validatesamlassertion">Validate SAML Assertion</h3>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Field Name</th>
+
+        <th>Description</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td><code>name</code> attribute</td>
+
+        <td>
+          <div>
+            The name of the policy instance. The name must be unique in the organization.
+            Characters you can use in the name are restricted to: <code>A-Z0-9._\-$ %</code>.
+            However, the Management UI enforces additional restrictions, such as automatically
+            removing characters that are not alphanumeric.
+          </div>
+        </td>
+      </tr>
+
+      <tr>
+        <td><code>ignoreContentType</code> attribute</td>
+
+        <td>A boolean that can be set to <code>true</code> or <code>false</code>. By default, the
+        assertion will not be generated if the content type of the message is not an XML
+        Content-Type. If this is set to <code>true</code> then the message will be treated as XML
+        regardless of the Content-type.</td>
+      </tr>
+
+      <tr>
+        <td><code>Source</code></td>
+
+        <td>The target of the policy. Valid values are <code>message</code>, <code>request</code>,
+        and <code>response</code>. When set to <code>message</code>, the policy conditionally
+        retrieves the message object based on the attachment point of the policy. When attached to
+        the request Flow, the policy resolves <code>message</code> to request, and when attached to
+        the response Flow, the policy resolves <code>message</code> to response. </td>
+      </tr>
+
+      <tr>
+        <td><code>XPath</code></td>
+
+        <td>
+          <div>
+            Child of <code>Source</code>. An XPath expression that indicates the element on the
+            inbound XML document from which the policy can extract the SAML assertion.
+          </div>
+        </td>
+      </tr>
+
+      <tr>
+        <td><code>TrustStore</code></td>
+
+        <td>
+          <div>
+            The name of the TrustStore that contains trusted X.509 certificates used to validate
+            digital signatures on SAML assertions.
+          </div>
+        </td>
+      </tr>
+
+      <tr>
+        <td><code>RemoveAssertion</code></td>
+
+        <td>
+          <div>
+            A boolean that can be set to <code>true</code> or <code>false</code>. When
+            <code>true</code>, the SAML assertion will be stripped from the request message before
+            the message is forwarded to the backend service.
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  <hr>
+
+  <h2 id="usage">Usage notes</h2>
+
+  <p>The Security Assertion Markup Language (SAML) specification defines formats and protocols that
+  enable applications to exchange XML-formatted information for authentication and
+  authorization.</p>
+
+  <p>A "security assertion" is a trusted token that describes an attribute of an app, an app user,
+  or some other participant in a transaction. Security assertions are managed and consumed by two
+  types of entities:</p>
+
+  <ul>
+    <li>Identity providers: Generate security assertions on behalf of participants</li>
+
+    <li>Service providers: Validate security assertions through trusted relationships with identity
+    providers</li>
+  </ul>
+
+  <p>The API platform can act as an identity provider and as a service provider. It acts as an
+  identity provider by generating assertions and attaching them to request messages, making those
+  assertions available for processing by backend services. It acts as a service provider by
+  validating assertions on inbound request messages.</p>
+
+  <p>The SAML policy type supports SAML assertions that match version 2.0 of the SAML Core
+  Specification and Version 1.0 of the WS-Security SAML Token Profile specification.</p>
+
+  <h3 id="usagenotes-generatesamlassertion">Generate SAML Assertion</h3>
+
+  <p>Policy processing:</p>
+
+  <ol>
+    <li>If the message is not XML, and IgnoreContentType is not set to <code>true</code>, then
+    raise a fault.</li>
+
+    <li>If "Template" is set, then process the template as described for the AssignMessage policy.
+    If any variables are missing and IgnoreUnresolvedVariables is not set, then raise a fault.</li>
+
+    <li>If "Template" is not set, then construct an assertion that includes the values of the
+    Subject and Issuer parameters or their references.</li>
+
+    <li>Sign the assertion using the specified key.</li>
+
+    <li>Add the assertion to the message at the specified XPath.</li>
+  </ol>
+
+  <h3 id="usagenotes-validatesamlassertion">Validate SAML Assertion</h3>
+
+  <p>Policy processing:</p>
+
+  <ol>
+    <li>The policy checks the inbound message to verify that the request's media type is XML, by
+    checking if the content type matches the formats <code>text/(.*+)?xml</code> or
+    <code>application/(.*+)?xml</code>. If the media type is not XML, or if "IgnoreContentType" is
+    not set, then the policy will raise a fault.</li>
+
+    <li>The policy will parse the XML. If parsing fails then it will raise a fault.</li>
+
+    <li>The policy will validate the XML digital signature, using the values of TrustStore and
+    ValidateSigner as described above. If validation fails then it will raise a fault.</li>
+
+    <li>If present, the policy will check the current timestamp against the NotBefore and
+    NotOnOrAfter elements in the assertion, as described in SAML Core section 2.5.1.</li>
+
+    <li>Any additional rules for processing the "Conditions" as described in SAML Core section
+    2.5.1.1.</li>
+  </ol>
+
+  <p>Once the policy has completed without raising a fault, the developer of the proxy can be sure
+  of the following:</p>
+
+  <ul>
+    <li>The digital signature on the assertion is valid and was signed by a trusted CA</li>
+
+    <li>The assertion is valid for the current time period</li>
+
+    <li>The subject and issuer of the assertion will be extracted and set in flow variables. It is
+    the responsibility of other policies to use these values for additional authentication, such as
+    checking that the subject name is valid, or passing it to a target system for validation.</li>
+  </ul>
+
+  <p>Other policies, such as ExtractVariables, may be used to parse the raw XML of the assertion
+  for more complex validation.</p>
+  <hr>
+
+  <h2 id="variables">Flow variables</h2>
+
+  <p>There are many pieces of information that may be specified in a SAML assertion. The SAML
+  assertion itself is XML that can be parsed using the ExtractMessage policy and other mechanisms
+  in order to implement more complex validations.</p>
+
+  <p>See <a href="/api-platform/reference/policies/extract-variables-policy.html">Extract Variables
+  policy</a>.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th scope="col">Variable</th>
+
+        <th scope="col">Description</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td><code>saml.id</code></td>
+
+        <td>The SAML assertion ID</td>
+      </tr>
+
+      <tr>
+        <td><code>saml.issuer</code></td>
+
+        <td>The "Issuer" of the assertion, converted from its native XML type to a string</td>
+      </tr>
+
+      <tr>
+        <td><code>saml.subject</code></td>
+
+        <td>The "Subject" of the assertion, converted from its native XML type to a string</td>
+      </tr>
+
+      <tr>
+        <td><code>saml.valid</code></td>
+
+        <td>Returns true or false based on the result of the validity check</td>
+      </tr>
+
+      <tr>
+        <td><code>saml.attribute.{attribute_name}</code></td>
+
+        <td>The value of the named "Attribute" present in the assertion, converted from its native
+        XML to a string</td>
+      </tr>
+
+      <tr>
+        <td><code>saml.attributeNames</code></td>
+
+        <td>The names of all the "Attributes" present in the assertion, in a comma-separated
+        list</td>
+      </tr>
+
+      <tr>
+        <td><code>saml.issueInstant</code></td>
+
+        <td>IssueInstant</td>
+      </tr>
+
+      <tr>
+        <td><code>saml.subjectFormat</code></td>
+
+        <td>Subject format</td>
+      </tr>
+
+      <tr>
+        <td><code>saml.scmethod</code></td>
+
+        <td>Subject confirmation method</td>
+      </tr>
+
+      <tr>
+        <td><code>saml.scdaddress</code></td>
+
+        <td>Subject confirmation data address</td>
+      </tr>
+
+      <tr>
+        <td><code>saml.scdinresponse</code></td>
+
+        <td>Subject confirmation data in response</td>
+      </tr>
+
+      <tr>
+        <td><code>saml.scdrcpt</code></td>
+
+        <td>Subject confirmation data recipient</td>
+      </tr>
+
+      <tr>
+        <td><code>saml.authnSnooa</code></td>
+
+        <td>AuthnStatement SessionNotOnOrAfter</td>
+      </tr>
+
+      <tr>
+        <td><code>saml.authnContextClassRef</code></td>
+
+        <td>AuthnStatement AuthnContextClassRef</td>
+      </tr>
+
+      <tr>
+        <td><code>saml.authnInstant</code></td>
+
+        <td>AuthnStatement AuthInstant</td>
+      </tr>
+
+      <tr>
+        <td><code>saml.authnSessionIndex</code></td>
+
+        <td>AuthnStatement Session Index</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="errors">Error codes</h2><!--
+<p>The SAML Policy type defines the following error codes:</p>
+<table border="0" cellpadding="1" cellspacing="1" class="table" style="width: 690px;">
+        <thead>
+                <tr>
+                        <th scope="col">Error Code</th>
+                        <th scope="col">Message</th>
+                </tr>
+        </thead>
+        <tbody>
+                <tr></tr>
+                <tr>
+                        <td><code>code</code></td>
+                        <td><code>message</code></td>
+                </tr>
+        </tbody>
+</table>
+-->
+
+  <p>{% dynamic include /includes/___saml-assertion-policy-error-codes %}</p>
+
+  <h2 id="relatedtopics">Related topics</h2>
+
+  <aside class="note"><b>Sample:</b> For working samples of API proxies, see the <a href=
+  "/api-platform/samples/samples-reference.html">Samples list</a>.</aside>
+
+  <p>Extracting variables: <a href=
+  "/api-platform/reference/policies/extract-variables-policy.html">Extract Variables
+  policy</a></p>{% endblock %}

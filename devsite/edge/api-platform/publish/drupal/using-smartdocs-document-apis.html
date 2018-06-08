@@ -1,0 +1,1570 @@
+  {% extends "_base.html" %} {% block title %}Using SmartDocs to document APIs{% endblock %} {% block body %}
+
+  <p>SmartDocs lets you document your APIs on the Developer Services portal in a way that makes the
+  API documentation fully interactive. Interactive documentation means portal users can:</p>
+
+  <ul>
+    <li>Read about your APIs</li>
+
+    <li>Send a live request to your API</li>
+
+    <li>View a live response returned from the API</li>
+  </ul>
+
+  <p>By creating an interactive documentation on your APIs, you make it easy for portal user to
+  learn, test, and evaluate your APIs.</p>
+
+  <p>The Edge management API is a RESTful API that enables you to access API Services using any
+  HTTP client. Apigee uses SmartDocs to create interactive documentation for the Edge management
+  API. See that API documentation <a href="/management/apis" target="_blank">here</a>.</p>
+
+  <aside class="note"><b>Note:</b> In order to use SmartDocs to document your APIs, you must
+  disable the Display Suite module. The SmartDocs and Display Suite modules are not compatible. The
+  Display Suite module is deprecated and will be removed in a future release.</aside>
+
+  <h2 id="smartdocsportalexample">SmartDocs portal example</h2>
+
+  <p>To use SmartDocs, you must have an Apigee Developer Services portal. For more information, see
+  <a href="/api-platform/publish/drupal/creating-developer-portal.html">Creating a developer
+  portal</a>.</p>
+
+  <p>From your developer portal home page, click <strong>APIs</strong> in the top navigation bar to
+  view the API Documentation page.</p>
+
+  <p><img alt="" src="/api-platform/images/devportal-apidoc-v2.png" width="700"></p>
+
+  <p>There are two APIs documented on the portal: Hello World and Pet Store Example.</p>
+
+  <p>The Hello World API was created from the mock target OpenAPI
+  Specification, <code>mocktarget.yaml</code>. For more information, see <a href=
+  "https://github.com/apigee/api-platform-samples/tree/master/default-proxies/helloworld/openapi">https://github.com/apigee/api-platform-samples/tree/master/default-proxies/helloworld/openapi</a>. </p>
+
+  <p>The Pet Store Example API was created from the classic pet store demo.</p>
+
+  <p>Explore the Hello World API:</p>
+
+  <ol>
+    <li>Click <strong>Hello World API</strong>. The Hello World API summary page is displayed:<br>
+    <img alt="" src="/api-platform/images/devportal-helloworldapi.png" width="700"></li>
+
+    <li>Click <strong>View API affirmation</strong>. The SmartDocs for this resource is
+    displayed:<br>
+    <img alt="" src="/api-platform/images/devportal-viewapi.png" width="700"></li>
+
+    <li>Click <strong>Send this request</strong>.</li>
+
+    <li>View the response returned:
+      <pre class="prettyprint">
+HTTP/1.1 200 OK
+Connection:
+keep-alive
+Content-Length:
+18
+Content-Type:
+text/html; charset=utf-8
+Date:
+Tue, 21 Jun 2016 21:49:32 GMT
+ETag:
+W/"12-Jb9QP1bUxNSmZkxQGt5KLQ"
+X-Powered-By:
+Apigee
+&lt;H2&gt;I &lt;3 APIs&lt;/H2&gt;
+</pre>
+    </li>
+
+    <li>Click the <strong>Request</strong> tab to view the request, or the <strong>cURL</strong>
+    tab to view the corresponding cURL call.</li>
+  </ol>
+
+  <h2 id="howtodocumentyourapisbyusingsmartdocs">How to document your APIs by using SmartDocs</h2>
+
+  <p>SmartDocs represents your APIs by using a <em>model</em>, where the model contains all the
+  information about your APIs. The portal extracts information about your APIs from the model to
+  render the documentation pages on the portal as Drupal nodes, where each Drupal node corresponds
+  to a page of documentation on the portal.</p>
+
+  <aside class="note"><b>Note:</b> In order to use SmartDocs to document your APIs, you must
+  disable the Display Suite module. The SmartDocs and Display Suite modules are not compatible. The
+  Display Suite module is deprecated and will be removed in a future release.</aside>
+
+  <p>The general steps that you follow to use SmartDocs are:</p>
+
+  <ol>
+    <li><strong>Configure</strong> the Drupal SmartDocs module on the portal.</li>
+
+    <li><strong>Create</strong> a SmartDocs model.</li>
+
+    <li><strong>Add</strong> APIs to the model from a WADL file, OpenAPI (formerly Swagger)
+    specification, or manually.</li>
+
+    <li><strong>Render</strong> the model as a collection of Drupal nodes. Each Drupal node
+    contains information about a single API. For example, if a resource in your API supports both a
+    POST and a PUT request, SmartDocs creates a separate Drupal node for the POST and PUT.</li>
+
+    <li><strong>Publish</strong> the Drupal nodes. Once published, your portal users can view and
+    interact with your API.</li>
+
+    <li><strong>Edit</strong> the Drupal nodes, either before or after you publish them. You can
+    edit the Drupal nodes by using the Drupal editor or by editing the original WADL file or
+    OpenAPI Specification. When you are done editing the WADL file or OpenAPI Specification, import
+    it back into the model as a new revision, then render and publish your changes.</li>
+
+    <li><strong>Enable TLS</strong>. Because SmartDocs can send authentication credentials to your
+    backend as part of making a request to your APIs, you should enable TLS on your portal to
+    ensure that those credentials are secure. In the portal production and test environments,
+    Apigee provides the TLS certificate required to make https:// requests. However, before you go
+    live with your portal, you must obtain your own TLS certificate and enable TLS. For more, see
+    <a href="/api-platform/system-administration/using-ssl-portal.html">Using TLS on the
+    portal</a>.</li>
+  </ol>
+
+  <h3 id="models">About SmartDoc models and templates</h3>
+
+  <p>When you create a model in your portal, the model is actually stored in your Edge
+  organization, not in Drupal. A model is a big block of JSON with an internal name (such as
+  "my-smartdocs-api"), and it defines the structure of an API. Your portal, on the other hand,
+  renders the model in HTML and provides an editing interface for the model. Any updates to the API
+  in the portal are automatically pushed back to the source model.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>
+          <p>Stored in organization</p>
+        </th>
+
+        <th>
+          <p>Stored in Drupal</p>
+        </th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td>
+          <p>models</p>
+        </td>
+
+        <td>
+          <p>templates</p>
+
+          <p>Drupal nodes with editing functionality</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>Assume that you have multiple portals in your organization (for example, dev, stage, and
+  production). In Pantheon, you move a portal from one environment to another. Each instance of the
+  portal looks like it contains its own model, but all of them are really referencing the source
+  model. If you edit the API in dev, the model is updated, and the changes appear in production.
+  Likewise, if you delete a model in dev, the source is deleted, and it's no longer available in
+  production.</p>
+
+  <p>Templates control the look and feel of your SmartDocs, and those templates (governed by
+  Handlebars and CSS files) are stored with each portal instance. So each portal can theoretically
+  use a unique template for each model. However, one of the conveniences of the rendering framework
+  is that a default template (either the Apigee default or a template you provide) is automatically
+  applied to each model.</p>
+
+  <p>The following diagram shows the relationship between models and portals. The green arrows show
+  automatic synchronization.</p>
+
+  <p><img src="/api-platform/images/smartdocs_model_diagram.png"></p>
+
+  <p>The following cURL command lists all the models in your organization:</p>
+
+  <p><code>curl -v https://api.enterprise.apigee.com/v1/o/{your_org}/apimodels/ -u
+  edge_org_admin@example.com</code></p>
+
+  <h2 id="configuringthesmartdocsmodule">Configuring the SmartDocs module</h2>
+
+  <p>Apigee implemented SmartDocs as a custom Drupal module. Use the following procedure to
+  configure the SmartDocs module.</p>
+
+  <aside class="note"><b>Note:</b> If you are connecting the portal to Apigee Edge for the Private
+  Cloud, then you must ensure that SmartDocs was installed on the Edge Management Server at the
+  time you installed Edge. For more information, see the "<em>Install and Configuration Guide</em>"
+  in the documentation for the Apigee Edge for the Private Cloud.</aside>
+
+  <aside class="note">
+    <b>Note:</b> Unless instructed by Apigee support, do not modify the following settings under
+    the Manage API override settings section on the SmartDocs configuration page (viewable by
+    selecting <strong>Configuration &gt; SmartDocs</strong> in the Drupal administration menu):
+
+    <ul>
+      <li>Use local SmartDocs JS/CSS (enabled)</li>
+
+      <li>Local SmartDocs JS/CSS version (v6)</li>
+    </ul>
+
+    <p>If you modify these settings, the SmartDocs content may not render properly.</p>
+  </aside>
+
+  <p><strong>To configure the SmartDocs module:</strong></p>
+
+  <ol>
+    <li>Log in to your portal as a user with admin or content creation privileges.</li>
+
+    <li>Select <strong>Modules</strong> in the Drupal administration menu. The list of all
+    installed Drupal modules appears.</li>
+
+    <li>Enable the <strong>SmartDocs</strong> module.</li>
+
+    <li>Save the configuration.</li>
+
+    <li>
+      <div>
+        Select <strong>Modules</strong> in the Drupal admin menu.
+      </div>
+    </li>
+
+    <li>
+      <div>
+        Select <strong>SmartDocs -&gt; Permissions</strong> and ensure that "Perform administration
+        tasks for the SmartDocs module" for "Administrator" role is enabled.
+      </div>
+    </li>
+
+    <li>Select <strong>Configuration &gt; Dev Portal</strong> in the Drupal administration
+    menu.</li>
+
+    <li>Set the <strong>Connection Timeout</strong> and <strong>Request Timeout</strong> to 16
+    seconds.</li>
+
+    <li>Save the configuration.</li>
+
+    <li>Configure URL settings:
+
+      <ol style="list-style: lower-alpha outside">
+        <li>Select <strong>Configuration &gt; Search and metadata &gt; URL aliases &gt;
+        Settings</strong> from the Drupal menu.</li>
+
+        <li>Set the <strong>Maximum alias length</strong> and <strong>Maximum component
+        length</strong> to <strong>255</strong>.</li>
+
+        <li>Expand <strong>Punctuation</strong>.</li>
+
+        <li>For the <strong>Left curly bracket ({)</strong> and <strong>Right curly bracket
+        (})</strong> settings, select <strong>No action (do not replace)</strong>.</li>
+
+        <li>Click <strong>Save configuration</strong>.</li>
+      </ol>
+    </li>
+
+    <li>If your developer portal will be exposed to users in an internal network without access to
+    the internet or if a subset of your APIs are on a private network, configure the SmartDocs API
+    proxy URL, as follows:
+
+      <ol style="list-style: lower-alpha outside">
+        <li>Select <strong>Configuration &gt; SmartDocs</strong> in the Drupal Administration
+        menu.</li>
+
+        <li>Expand <strong>Advanced Settings</strong>.</li>
+
+        <li>Update the <strong>SmartDocs proxy URL</strong> field as follows:
+        <code>&lt;<em>host</em>&gt;/smartdocs/v1/sendrequest</code>.<br>
+        The inline help should provide the required value for your environment. For example:<br>
+        <span style=
+        "font-family:courier new,courier,monospace;">https://api-us-east-1-enterprise.apigee.com/smartdocs/v1/sendrequest</span><br>
+
+        <br>
+        This field defaults to
+        <code>https://apiconsole-prod.apigee.net/smartdocs/v1/sendrequest</code></li>
+
+        <li>Click <strong>Save configuration</strong>.</li>
+      </ol>
+    </li>
+  </ol>
+
+  <h2 id="creatingamodel">Creating a model</h2>
+
+  <p>A model contains all the information about the representation of your API. You can define
+  multiple models on the portal to support different APIs, or group all of your APIs into a single
+  model.</p>
+
+  <p>Each model specifies a unique internal name that also defines the base URL of the
+  generated Drupal nodes. The URL of each Drupal node is in the form:</p>
+  <pre class="prettyprint">
+http://&lt;<em>drupalBasePath</em>&gt;/&lt;<em>internalName</em>&gt;/apis/&lt;<em>httpMethod</em>&gt;/&lt;<em>resourcePath</em>&gt;
+</pre>
+
+  <p>where:</p>
+
+  <ul>
+    <li><strong>drupalBasePath</strong>: The base URL of your portal.</li>
+
+    <li><strong>internalName</strong>: The model's internal name.</li>
+
+    <li><strong>httpMethod</strong>: The HTTP method of the API, such as: get, put, post, or
+    delete.</li>
+
+    <li><strong>resourcePath</strong>: The resource path.</li>
+  </ul>
+
+  <p>For example, if you specify the internal name as 'mymodel', then the URL for the generated
+  Drupal node for a GET request to a resource named '/books' is:</p>
+  <pre class="prettyprint">
+http://prod-myco.devportal.apigee.com/mymodel/apis/get/books
+</pre>
+
+  <p><strong>To create a model</strong></p>
+
+  <p>When you create a model, it's stored in your Edge organization as the source for the API
+  structure. For more information, see <a href="#models">About SmartDoc models and
+  templates</a>.</p>
+
+  <ol>
+    <li>Log in to your portal as a user with admin or content creation privileges.</li>
+
+    <li>Select <strong>Content &gt; SmartDocs</strong> in the Drupal administration
+    menu.</li>
+
+    <li>Select <strong>New model</strong> at the top of the page.</li>
+
+    <li>Enter the following fields:
+
+      <ul>
+        <li><strong>Name</strong>: The model name that will be displayed across the site.</li>
+
+        <li><strong>Internal name</strong>: As you type the <strong>Name</strong>, the internal
+        name displays. The internal name for the model that must be unique among all models. 
+        The internal name must contain only lowercase letters, numbers, and hyphens with no spaces.
+        Select <strong>Edit</strong> to edit this name.</li>
+
+        <li><strong>Description</strong>: A description of the model.</li>
+      </ul>
+    </li>
+
+    <li>Select <strong>Create Model</strong>.</li>
+  </ol>
+
+  <p>After you create the model, you are redirected to the model's page. From there, you can use
+  the Operations drop-down bx to:</p>
+
+  <ul>
+    <li><strong>Import</strong> a WADL file describing your API or specify the URL of an OpenAPI
+    Specification that describes your API.</li>
+
+    <li><strong>Add Revision</strong> to the model</li>
+
+    <li>Modify the model <strong>Settings</strong>, including the style sheets used by the
+    model.</li>
+
+    <li><strong>Export</strong> the model to a file.</li>
+
+    <li><strong>Delete</strong> the model.</li>
+  </ul>
+
+  <h2 id="addingapistoamodel">Adding APIs to a model</h2>
+
+  <p>You can add APIs to a model by:</p>
+
+  <ul>
+    <li>Importing a WADL file containing the API definition</li>
+
+    <li>Importing an OpenAPI Specification (OpenAPI 2.0 or 1.2)</li>
+
+    <li>Manually creating resources and methods</li>
+  </ul>
+
+  <p>You can also import a SmartDocs JSON file into a model. This file is typically created by
+  first exporting an existing model, editing the file, and then importing the updates. For more,
+  see "<em>Exporting and importing a model</em>" below. </p>
+
+  <div class="video">
+    <p><strong>Video:</strong> Watch a short video to learn how to add APIs to a SmartDocs model by
+    importing an OpenAPI Specification.</p>
+
+    <div style="text-align: left; margin:15px">
+      <iframe allowfullscreen="" frameborder="0" height="315" src=
+      "https://www.youtube.com/embed/GQYOFMH1FAI" width="560"></iframe>
+    </div>
+  </div>
+
+  <h3 id="addingapistoamodel-importawadl"><strong>Import a WADL</strong></h3>
+
+  <p>After you have successfully created a model, import a WADL file that describes your API. Every
+  time you import a WADL file, you automatically create a new revision of the model.</p>
+
+  <aside class="note"><b>Note:</b> While the WADL spec on the W3C website at <a href=
+  "https://www.w3.org/Submission/wadl/">http://www.w3.org/Submission/wadl/</a> specifies that a
+  WADL can contain multiple <span style=
+  "font-family:courier new,courier,monospace;">&lt;resources&gt;</span> tags, SmartDocs can only
+  process a WADL file that contains a single <span style=
+  "font-family:courier new,courier,monospace;">&lt;resources&gt;</span> tag. See <a href="/">WADL
+  Reference</a> for more on creating WADL files.</aside>
+
+  <ol>
+    <li>Log in to your portal as a user with admin or content creation privileges.</li>
+
+    <li>Select <strong><strong>Content &gt; </strong>SmartDocs</strong> in the Drupal
+    administration menu.</li>
+
+    <li>Select the model you want to update.</li>
+
+    <li>Under <strong>Operations</strong>, select <strong>Import</strong>.</li>
+
+    <li>Select <strong>WADL</strong> in the <strong>Choose Format</strong> dropdown on the
+    SmartDocs import page.</li>
+
+    <li>Select <strong>File</strong> or <strong>URL</strong> in the <strong>Upload
+    Type</strong> dropdown.
+
+      <ol style="list-style: lower-alpha outside">
+        <li>If you select <strong>File</strong>, browse to the WADL file.</li>
+
+        <li>If you select <strong>URL</strong>, specify the URL of the WADL file.</li>
+      </ol>
+    </li>
+
+    <li>Click <strong>Import</strong> to import it into the model. You can now
+    render the model.</li>
+
+    <li>You are redirected to the model&#8217;s information page where you can now render the
+    model.</li>
+  </ol>
+
+  <h3 id="addingapistoamodel-importanopenapispecification"><strong>Import an OpenAPI
+  Specification</strong></h3>
+
+  <p>After you have successfully created a model, you can import an OpenAPI (formerly Swagger)
+  Specification. Edge supports OpenAPI version 1.2 and 2.0.</p>
+
+  <p>OpenAPI uses files containing JSON objects to describe an API. Every time you import
+  an OpenAPI Specification, you automatically create a new revision of the model.</p>
+
+  <aside class="note"><b>Note:</b> OpenAPI uses <a href=
+  "http://json-schema.org/latest/json-schema-core.html#anchor8" target="_blank">JSON-Schema draft
+  4</a> to describe complex objects (like JSON payloads) and <a href=
+  "http://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md#schemaObject" target=
+  "_blank">Schema Objects</a> to describe models. The same schemas are used by SmartDocs to
+  generate example payloads for an API. XML extensions are not supported by SmartDocs.</aside>
+
+  <aside class="note">
+    <b>Note:</b> Before you import your OpenAPI Specification, you can validate it using one of the
+    following tools:
+
+    <ul>
+      <li><a href="http://apistudio.io/" target="_blank">Apigee API Studio</a></li>
+
+      <li><a href="https://www.npmjs.com/package/swagger-tools" package="" target="_blank"
+      www.npmjs.com="">swagger-tools</a></li>
+
+      <li>Pass the URL of your OpenAPI Specification (<em style=
+      "font-family: 'courier new', courier, monospace;">openapiURL</em>) to one of the following
+      URLs to validate it: <br>
+      <span style=
+      "font-family: 'courier new', courier, monospace;">http://online.swagger.io/validator?url=<em><strong>openapi</strong></em></span><strong style="font-family: 'courier new', courier, monospace;"><em>URL</em></strong><br>
+
+      <span style=
+      "font-family:courier new,courier,monospace;">http://online.swagger.io/validator/debug?url=<strong><em>openapiURL</em></strong> <span style="font-family:arial,helvetica,sans-serif;">(displays
+      error information)</span></span></li>
+    </ul>
+  </aside>
+
+  <p>To import an OpenAPI Specification:</p>
+
+  <ol>
+    <li>Log in to your portal as a user with admin or content creation privileges.</li>
+
+    <li>Select
+    <strong><strong><strong>Content &gt; </strong></strong>SmartDocs</strong> in the
+    Drupal administration menu.</li>
+
+    <li>Select the model you want to update.</li>
+
+    <li>Under <strong>Operations</strong>, select <strong>Import</strong>.</li>
+
+    <li>Select <strong>Swagger JSON</strong> or <strong>Swagger YAML</strong> in the
+    <strong>Choose Format</strong> dropdown on the SmartDocs import page.</li>
+
+    <li>Select <strong>File</strong> or <strong>URL</strong> in the
+    <strong>Upload Type</strong> dropdown (you must select <strong>URL</strong> for OpenAPI 1.2).
+
+      <ol style="list-style: lower-alpha outside;">
+        <li>If you select <strong>File</strong>, browse to the OpenAPI
+        Specification.</li>
+
+        <li>If you select <strong>URL</strong>, specify the URL of the OpenAPI
+        Specification.</li>
+      </ol>
+    </li>
+
+    <li>Click <strong>Import</strong> to import it into the model.</li>
+
+    <li>You are redirected to the model&#8217;s information page where you can now render the
+    model.</li>
+  </ol>
+
+  <h3 id="addingapistoamodel-manuallycreateresourcesandmethods"><strong>Manually create resources
+  and methods</strong></h3>
+
+  <p>If you do not have a WADL file or OpenAPI Specification that represents your API, you can
+  manually add APIs to your model. Also, if you use a WADL file or OpenAPI Specification to create
+  your model, you can use this procedure to edit your APIs, including adding new APIs, after
+  import.</p>
+
+  <p><strong>To manually add an API:</strong></p>
+
+  <ol>
+    <li>Create a new revision of the model.<br>
+    <br>
+    When you create the revision, you specify the single base path of all APIs in the model,
+    meaning all APIs in a model share the same base path. For example, specify the base path
+    as:<br>
+    <br>
+    <span style="font-family:courier new,courier,monospace;">https://myCompany.com/v1</span><br>
+    <br>
+    When you add resources to the model, they extend the base path.</li>
+
+    <li>Define one or more resources for the model. The resource path combines with the base path
+    of the model revision to specify the full URL of the resource. For example, if your resource
+    defines a path of "/login", the full URL of the resource is:<br>
+    <br>
+    <span style=
+    "font-family:courier new,courier,monospace;">https://myCompany.com/v1/login</span></li>
+
+    <li>Define one or more methods for each resource. A method specifies the HTTP verb that can be
+    invoked on a resource. For example, for the "/login" resource, you support POST for login and
+    DELETE for logout. This resource does not support other HTTP verbs, such as PUT or GET.
+    Therefore, define two methods for the resource, one for the POST and one for the DELETE.<br>
+    <br>
+    The method uses the resource URL from its parent resource. Therefore, all methods with the same
+    URL are defined under a single resource in SmartDocs.</li>
+  </ol>
+
+  <p>As a general rule:</p>
+
+  <ul>
+    <li>Create a different SmartDocs model for each unique base path in your API.</li>
+
+    <li>Define a different SmartDocs resource for each unique resource in your API.</li>
+
+    <li>Define a different SmartDocs method for each HTTP verb supported by a resource.</li>
+  </ul>
+
+  <h4>Creating a new revision of a model</h4>
+
+  <p>You can only add a resource to an existing revision of a model. If the model already has a
+  revision, you can add your resource. If the model is new and has no revisions, create a new
+  revision.</p>
+
+  <p><strong>To create a new revision of a model:</strong></p>
+
+  <ol>
+    <li>Log in to your portal as a user with admin or content creation privileges.</li>
+
+    <li>Select
+    <strong><strong><strong><strong><strong>Content &gt; </strong></strong></strong></strong>SmartDocs</strong> in
+    the Drupal administration menu.</li>
+
+    <li>For the model you want to update select <strong>Add</strong> <strong>Revision</strong>
+    under <strong>Operations</strong>.</li>
+
+    <li>On the <strong>Add API Revision</strong> page, enter the following information:
+
+      <ul>
+        <li><strong>Display Name</strong>: The name of the revision as it appears in the
+        portal.</li>
+
+        <li><strong>Version ID</strong>: A short identifier for the revision.</li>
+
+        <li><strong>Description</strong>: A description of the revision.</li>
+
+        <li><strong>Base URL</strong>: The base URL of all APIs in the revision of the model. A
+        model can use different base URLs for each revision. For example, you include a version
+        indicator in the base URL. For the first model revision, the base URL is:<br>
+        <span style=
+        "font-family:courier new,courier,monospace;">https://myCompany.com/v1</span><br>
+        For the next revision, the base URL could be:<br>
+        <span style=
+        "font-family:courier new,courier,monospace;">https://myCompany.com/v2</span></li>
+      </ul>
+    </li>
+
+    <li>Select <strong>Add Revision</strong>. You are redirected to the revision page of the model.
+    You can now define resources on the model.</li>
+  </ol>
+
+  <h4>Defining a resource</h4>
+
+  <p>A resource specifies the full URL of an API. When defining a resource, you specify the
+  resource path, which is combined with the base URL in the model revision to create the full URL
+  of the resource.</p>
+
+  <aside class="note"><b>Note:</b> You can omit the resource path. In that case, the resource URL
+  is the same as the base URL of the model revision.</aside>
+
+  <p><strong>To define a resource:</strong></p>
+
+  <ol>
+    <li>Log in to your portal as a user with admin or content creation privileges.</li>
+
+    <li>Select
+    <strong><strong><strong><strong>Content &gt; </strong></strong></strong>SmartDocs</strong> in
+    the Drupal administration menu.</li>
+
+    <li>For the model you want to update, under <strong>Operations</strong>, select <strong>API
+    Revisions</strong> to view all revisions of a model.</li>
+
+    <li>Select a revision to edit.</li>
+
+    <li>On the revision page, select <strong>Add Resource</strong> from the dropdown menu.</li>
+
+    <li>On the <strong>Add Resource</strong> page, enter the following information:
+
+      <ul>
+        <li><strong>Display Name</strong>: The name of the resource.</li>
+
+        <li><strong>Path</strong>: The resource path, starting with "/". The value of
+        <strong>Path</strong> is combined with the <strong>Base URL</strong> of the model revision
+        to create the full URL of the resource.</li>
+
+        <li><strong>Description</strong>: A description of the resource.</li>
+
+        <li><strong>Parameters</strong>: Optionally enter the JSON object defining each parameter
+        on the resource. These parameters are described below.</li>
+      </ul>
+    </li>
+
+    <li>Select <strong>Add Resource</strong>. You are redirected to the model page. You can now
+    define methods on the resource.</li>
+  </ol>
+
+  <p>Optionally, you can add parameters to the resource, such as template, query, and header
+  parameters. All resource parameters are inherited by any methods defined on that resource.
+  Therefore, if you define a query parameter on the resource, all methods added to that resource
+  must support that query parameter.</p>
+
+  <p>Alternatively, you can define parameters on a method. For example, a POST method might support
+  query parameters that are not supported by a DELETE method. Therefore, add any parameters
+  specific to a method when you define the method, as described below.</p>
+
+  <p>The following image shows an existing SmartDocs page for the <a href=
+  "/management/apis/post/organizations/%7Borg_name%7D/developers/%7Bdeveloper_email%7D/apps/%7Bapp_name%7D">
+  Apigee Approve or Revoke Developer App</a> API with each type of parameter highlighted:</p>
+
+  <p><img alt="" src="/api-platform/images/queryHeader_v1407.png" width="421"></p>
+
+  <p>Each parameter type is defined by a JSON object:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>
+          <p>Type</p>
+        </th>
+
+        <th>
+          <p>JSON object</p>
+        </th>
+
+        <th>
+          <p>Notes</p>
+        </th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td>
+          <p>Template</p>
+        </td>
+
+        <td>
+          <p><span style="font-family:courier new,courier,monospace;">{<br>
+           "dataType": "string",<br>
+           "defaultValue": "",<br>
+           "description": "The organization name.",<br>
+           "name": "org_name",<br>
+           "required": true,<br>
+           "type": "TEMPLATE"<br>
+          }</span></p>
+        </td>
+
+        <td>
+          <p>Template params are always required, so set <span style=
+          "font-family:courier new,courier,monospace;">required</span> to <span style=
+          "font-family:courier new,courier,monospace;">true</span>, and omit the value to 
+          <span style="font-family:courier new,courier,monospace;">defaultValue</span>.</p>
+
+          <p>The <span style="font-family:courier new,courier,monospace;">description</span> value
+          appears in a popup when the user hovers over the URL in a SmartDocs page.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>Query</p>
+        </td>
+
+        <td>
+          <p><span style="font-family:courier new,courier,monospace;">{<br>
+           "dataType": "string",<br>
+           "defaultValue": "",<br>
+           "description": "The location.",<br>
+           "name": "w",<br>
+           "required": true,<br>
+           "type": "QUERY"<br>
+          }</span></p>
+        </td>
+
+        <td>
+          <p>Required query params can still specify a <span style=
+          "font-family:courier new,courier,monospace;">defaultValue</span>, but often do not.</p>
+
+          <p>For optional query params, set <span style=
+          "font-family:courier new,courier,monospace;">required</span> to <span style=
+          "font-family:courier new,courier,monospace;">false</span> and specify a value to
+          <span style="font-family:courier new,courier,monospace;">defaultValue</span>.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>Header</p>
+        </td>
+
+        <td>
+          <p><span style="font-family:courier new,courier,monospace;">{<br>
+           "dataType": "string",<br>
+           "defaultValue": "application/json",<br>
+           "description": "Specify as &lt;code&gt;application/json&lt;/code&gt;.",<br>
+           "name": "Content-Type",<br>
+           "required": true,<br>
+           "type": "HEADER"<br>
+          }</span></p>
+        </td>
+
+        <td>
+          <p>Notice how you can use HTML tags in the description.  </p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>A template parameter defines a variable in the resource path. For example, you define two
+  template parameters on the resource. Notice how each parameter definition in the parameter array
+  is separated by a comma:</p>
+  <pre class="prettyprint">
+[
+ {
+  "dataType": "string",
+  "defaultValue": "",
+  "description": "Mention the organization name.",
+  "name": "org_name",
+  "required": true,
+  "type": "TEMPLATE"
+ },
+ {
+  "dataType": "string",
+  "defaultValue": "",
+  "description": "Mention the user email.",
+  "name": "developer_email",
+  "required": true,
+  "type": "TEMPLATE"
+ }
+]
+</pre>
+
+  <p>You can then use the template parameters in the resource Path definition, enclosed in "{}".
+  For example, set the path to:</p>
+  <pre class="prettyprint">
+/login/{org_name}/{developer_email}
+</pre>
+
+  <p>In the SmartDocs API page, the user must edit the URL to specify the <span style=
+  "font-family:courier new,courier,monospace;">org_name</span> and <span style=
+  "font-family:courier new,courier,monospace;">developer_email</span> portion of the URL before
+  they can submit a request.</p>
+
+  <h4>Defining a method</h4>
+
+  <p>Define one or more methods for each resource. The method definition specifies an HTTP verb
+  that can be invoked on the resource. A resource can have a single method defined on it, or
+  multiple methods.</p>
+
+  <p>As part of defining the method, specify any parameters used by the method, including query and
+  header parameters. See the description above for resource for information about adding parameters
+  to a method.</p>
+
+  <p>The following image shows an existing SmartDocs page for the Apigee <a href=
+  "/management/apis/post/organizations/%7Borg_name%7D/developers">Create Developer</a> API with
+  each area of the page highlighted with the corresponding value that you set when defining a
+  method:</p>
+
+  <p><img alt="" src="/api-platform/images/createDev_v1407.png" width="449"></p>
+
+  <p>The next image shows the same page but with the Description of the Request Body selected:</p>
+
+  <p><img alt="" src="/api-platform/images/createDeve_bodyDescrip_v1407.png" width="449"></p>
+
+  <p><strong>To define a method:</strong></p>
+
+  <ol>
+    <li>Log in to your portal as a user with admin or content creation privileges.</li>
+
+    <li>Select
+    <strong><strong><strong><strong><strong>Content &gt; </strong></strong></strong></strong>SmartDocs</strong> in
+    the Drupal administration menu.</li>
+
+    <li>For the model you want to update, under <strong>Operations</strong>, select <strong>API
+    Revisions</strong> to view all revisions of a model.</li>
+
+    <li>Select a revision to edit.</li>
+
+    <li>On the revision page, select <strong>Add Method</strong> from the dropdown menu for one of
+    the resources.</li>
+
+    <li>On the <strong>Edit Method</strong> page, enter the following information:
+
+      <ul>
+        <li><strong>Display Name</strong>: The name of the API, which also becomes the title of the
+        Drupal page for the API.</li>
+
+        <li><strong>Description</strong>: Describe the API.</li>
+
+        <li><strong>Method</strong> <strong>Verb</strong>: The HTTP verb type.</li>
+
+        <li><strong>Security Schemes</strong>: Specify the authentication mode, if any, for the
+        method. For more, see <a href="#oauth">Configuring the SmartDocs authentication
+        type</a>.</li>
+
+        <li><strong>Content Type</strong>: The content type of the request and response. See the
+        section below about configuring different authentication methods.</li>
+
+        <li><strong>Parameters</strong>: (Optional) Any query or header parameters for the method.
+        See the description above for adding a parameter to a resource for more information.</li>
+
+        <li><strong>Request Body Documentation</strong>: (Optional) Describe the request body. POST
+        and PUT methods take a request body. You can use this area to describe it. If you omit this
+        value, the <strong>Description</strong> link under <strong>Request Body</strong> is omitted
+        from the generated SmartDocs page.</li>
+
+        <li><strong>Request Body Example</strong>: (Optional) Show an example of a request body,
+        typically as a JSON object or as XML. For the POST and PUT verbs, the <strong>Request Body
+        Example</strong> is passed as part of each request. Users of the SmartDocs page edit this
+        example before they submit a request to the API. If you omit this value, the
+        <strong>Value</strong> link under <strong>Request Body</strong> is omitted from the
+        generated SmartDocs page.</li>
+
+        <li><strong>Tags</strong>: An array of tags associated with the API. SmartDocs uses tags to
+        group similar APIs together. For example, you might apply the tag "Statistics" to all APIs
+        about statistics. You can group APIs from different resources under a single tag. if they
+        all use the same tag.</li>
+      </ul>
+    </li>
+
+    <li>Select <strong>Add Method</strong>. You are redirected to the model page. You can now
+    render and publish your method.</li>
+  </ol>
+
+  <h2 id="renderingamodel">Rendering a model</h2>
+
+  <p>After you add APIs to a model, you can render the model. Rendering converts the model's
+  description of the API into Drupal nodes. When rendering completes, you will have a single Drupal
+  node for each API, where each Drupal node corresponds to an HTML page.</p>
+
+  <p>You can choose to render the entire model at once, or selct individual APIs for
+  rendering. </p>
+
+  <p><strong>To render a model:</strong></p>
+
+  <ol>
+    <li>Log in to your portal as a user with admin or content creation privileges.</li>
+
+    <li>Select
+    <strong><strong><strong><strong><strong><strong>Content &gt; </strong></strong></strong></strong></strong>SmartDocs</strong> in
+    the Drupal administration menu.</li>
+
+    <li>For the model you want to render, select <strong>API Revisions</strong> under
+    Operations.</li>
+
+    <li>Select the revision you want to render. You can only render nodes from a single revision of
+    the model.</li>
+
+    <li>Select the methods to render.</li>
+
+    <li>Select <strong>Render Nodes</strong> from the <strong>Update</strong>
+    <strong>options</strong> dropdown.</li>
+
+    <li>Click <strong>Update</strong>.</li>
+
+    <li>A loading screen appears to view progress on your nodes being rendered.<br>
+    After the nodes have been rendered, the ID of the Drupal node for each API appears under the
+    <strong>Node Association</strong> column of the model. Click on the link in the <strong>Node
+    Association</strong> column to see the rendered node.</li>
+  </ol>
+
+  <p>Instead of selecting <strong>Render Nodes,</strong> you can select <strong>Render
+  and publish nodes</strong> to render and immediately publish the APIs as a Drupal node. </p>
+
+  <h2 id="publishingnodes">Publishing nodes</h2>
+
+  <p>A node is not visible to portal users until it is published. You can optionally choose to
+  publish nodes during the rendering process. If you do choose not to publish the nodes, then you
+  have to manually publish them after rendering completes.</p>
+
+  <p><strong>To publish a node:</strong></p>
+
+  <ol>
+    <li>Log in to your portal as a user with admin or content creation privileges.</li>
+
+    <li>Select
+    <strong><strong><strong><strong><strong><strong><strong>Content &gt; </strong></strong></strong></strong></strong></strong>SmartDocs</strong> in
+    the Drupal administration menu.</li>
+
+    <li>For the model you want to publish, select <strong>API Revisions</strong> under
+    Operations.</li>
+
+    <li>Select the revision you want to publish. You can only publish nodes from a single revision
+    of the model.</li>
+
+    <li>Select the methods to publish.</li>
+
+    <li>Select the nodes in the revision to publish.</li>
+
+    <li>Select the <strong>Publish Nodes</strong> from the <strong>Update</strong>
+    <strong>options</strong> dropdown.</li>
+
+    <li>Click <strong>Update</strong>.</li>
+
+    <li>Navigate to the node by selecting the node ID under the <strong>Node Association</strong>
+    column.</li>
+  </ol>
+
+  <p>By default, the Drupal URL to a published API node is in the form: <span style=
+  "font-family:courier new,courier,monospace;">http://&lt;<em>drupalBasePath</em>&gt;/&lt;<em>internalName</em>&gt;/apis/&lt;<em>httpMethod</em>&gt;/&lt;<em>resourcePath</em>&gt;</span>.
+  Use the following procedure to control the form of the URL:</p>
+
+  <ol>
+    <li>Log in to your portal as a user with admin or content creation privileges.</li>
+
+    <li>Select <strong>Configuration &gt; Search and metadata &gt; URL aliases &gt;
+    Patterns</strong> in the Drupal administration menu.</li>
+
+    <li>Under <strong>Pattern for all SmartDocs Method paths</strong> specify how you want to
+    generate the path.</li>
+
+    <li>Select <strong>Save configuration</strong>.</li>
+  </ol>
+
+  <p>Because of caching on the portal, you might not see your model pages appearing immediately
+  after publishing them. If necessary, you can manually clear the SmartDocs HTML cache by using the
+  following procedure:</p>
+
+  <ol>
+    <li>Log in to your portal as a user with admin or content creation privileges. </li>
+
+    <li>Select <strong>Configuration &gt; SmartDocs</strong> in the Drupal administration
+    menu.</li>
+
+    <li>Click <strong>Rebuild SmartDocs model caches</strong>.</li>
+  </ol>
+
+  <h2 id="unpublishinganode">Unpublishing a node</h2>
+
+  <p>You can unpublish a published node at any time. Unpublishing a node makes it invisible to
+  portal users.</p>
+
+  <p><strong>To unpublish a node:</strong></p>
+
+  <ol>
+    <li>Log in to your portal as a user with admin or content creation privileges.</li>
+
+    <li>Select
+    <strong><strong><strong><strong><strong><strong><strong><strong>Content &gt; </strong></strong></strong></strong></strong></strong></strong>SmartDocs</strong> in
+    the Drupal administration menu.</li>
+
+    <li>For the model you want to unpublish, select <strong>API Revisions</strong> under
+    Operations.</li>
+
+    <li>Select the model revision of the node you want to unpublish.</li>
+
+    <li>Select the nodes in the revision to unpublish.</li>
+
+    <li>Select the <strong>Unpublish</strong> Nodes from the <strong>Update</strong>
+    <strong>options</strong> dropdown.</li>
+
+    <li>Click <strong>Update</strong>.</li>
+  </ol>
+
+  <h2 id="viewingtherevisionofamodel">Viewing the revision of a model</h2>
+
+  <p>You create a new revision of a model by importing a new WADL file or OpenAPI Specification
+  into an existing model, or by manually creating a new revision. After creating the new revision,
+  you can render and publish the revision, which replaces the currently published Drupal nodes.</p>
+
+  <p>You can render and publish nodes from multiple revisions at the same time. Meaning if you have
+  five revisions of a model, you can publish nodes from any or all revisions. However, publishing
+  an API in one model that is the same as a published node from another model unpublishes the older
+  version of the API and replaces it with the one from the most recently published
+  API. </p>
+
+  <p><strong>To see the revision of a model:</strong></p>
+
+  <ol>
+    <li>Log in to your portal as a user with admin or content creation privileges.</li>
+
+    <li>Select
+    <strong><strong><strong><strong><strong><strong><strong>Content &gt; </strong></strong></strong></strong></strong></strong></strong>SmartDocs in
+    the Drupal administration menu.</li>
+
+    <li>For the model you want to update, select <strong>API Revisions</strong> under
+    Operations.</li>
+
+    <li>Select the model revision you want to view.</li>
+
+    <li>Render and publish the nodes as described above.</li>
+  </ol>
+
+  <h2 id="editinganode">Editing a node</h2>
+
+  <p>After you render a node, you can edit it by using the Drupal editor. For example, you can edit
+  the HTTP verb and description of an API, or add a new query or header parameter to the API. You
+  can edit nodes created from a WADL file or OpenAPI Specification, or nodes that created
+  manually.</p>
+
+  <p>You can also edit the original WADL file or OpenAPI Specification. When you are done with
+  editing, import the WADL file or OpenAPI Specification back into the model as a new revision,
+  then render and publish your changes as described above. </p>
+
+  <p><strong>To edit a node by using the Drupal editor:</strong></p>
+
+  <ol>
+    <li>Log in to your portal as a user with admin or content creation privileges.</li>
+
+    <li>Browse to the Drupal node corresponding to the API documentation that you want to
+    edit.</li>
+
+    <li>Select <strong>Edit</strong> to use the Drupal editor.</li>
+
+    <li>After your edits are complete, select <strong>Update Method</strong>.</li>
+  </ol>
+
+  <p>Alternatively, you can edit the node from the SmartDocs model:</p>
+
+  <ol>
+    <li>Log in to your portal as a user with admin or content creation privileges.</li>
+
+    <li>
+    Select<strong> </strong><strong><strong><strong><strong><strong><strong><strong>Content &gt; </strong></strong></strong></strong></strong></strong></strong>SmartDocs in
+    the Drupal administration menu.</li>
+
+    <li>For the model you want to update, select <strong>API Revisions</strong> under
+    Operations.</li>
+
+    <li>Select the model revision you want to publish.</li>
+
+    <li>Select <strong>Edit method</strong> in the <strong>Operations</strong> dropdown for the
+    method that you want to edit.</li>
+  </ol>
+
+  <p><strong>To delete a node:</strong></p>
+
+  <ol>
+    <li>Log in to your portal as a user with admin or content creation privileges.</li>
+
+    <li>
+    Select<strong> </strong><strong><strong><strong><strong><strong><strong><strong>Content &gt; </strong></strong></strong></strong></strong></strong></strong>SmartDocs in
+    the Drupal administration menu.</li>
+
+    <li>For the model you want to update, select <strong>API Revisions</strong> under
+    Operations.</li>
+
+    <li>Select the model revision you want to publish.</li>
+
+    <li>Select <strong>Delete method</strong> in
+    the <strong>Operations</strong> dropdown for the method.<br>
+    <strong>Caution:</strong> Deleting the node also removes the API from the model. If you only
+    want to unpublish the API so that it is hidden from portal users, but do not want to delete it
+    from the model, you should unpublish the node as described above. </li>
+  </ol>
+
+  <p>The portal has a built-in report which displays information about any node rendered by a
+  SmartDocs model which no longer refer to a valid methods of the model. Access the report by
+  selecting <strong>Reports</strong> in the Drupal menu, and then selecting the report
+  named <strong>SmartDocs node status</strong>.</p>
+
+  <h2 id="exportingandimportingamodel">Exporting and importing a model</h2>
+
+  <p>SmartDocs lets you export an existing model to a file. For example, you might define a
+  production and a staging environment. You then make all of your SmartDocs edits in the staging
+  environment. When you are ready to release your APIs, you export the staging model and import it
+  into the production model.</p>
+
+  <p>Importing a model creates a new revision of the model. SmartDocs attempts to match existing
+  APIs in the model with imported APIs. If SmartDocs detects a match, the import updates the Drupal
+  node corresponding to the existing API. If SmartDocs does not detect a match, then the import
+  creates a new Drupal node for the API.</p>
+
+  <p>For example, you have a POST API the corresponds to a Drupal node with an ID of 91. You then
+  import a model and SmartDocs detects a match of a POST API in the imported model to the existing
+  POST API. Any updates to the POST API then update Drupal node 91. If SmartDocs does not detect a
+  match, it creates a new Drupal node with a new ID.</p>
+
+  <p>Drupal performs the match by using the following characteristics of the API:</p>
+
+  <ul>
+    <li><strong>internalName</strong>: The internal model name.</li>
+
+    <li><strong>httpMethod</strong>: The HTTP method of the API, such as: GET, PUT, POST, or
+    DELETE.</li>
+
+    <li><strong>resourcePath</strong>: The resource path.</li>
+
+    <li><strong>query params</strong>: Any query parameters used by the API.</li>
+  </ul>
+
+  <p>If all four characteristics of an imported API match an existing API in the model, then
+  SmartDocs updates the existing Drupal node.</p>
+
+  <p>The exported model is represented by a single JSON object with entries for resources and
+  methods. That means you can edit the exported model to modify a resource or method, and then
+  reimport the model. If you do edit the JSON object, do not modify the following fields:</p>
+
+  <ul>
+    <li><span style="font-family:courier new,courier,monospace;">revisionNumber</span></li>
+
+    <li><span style="font-family:courier new,courier,monospace;">createdTime</span></li>
+
+    <li><span style="font-family:courier new,courier,monospace;">modifiedTime</span></li>
+
+    <li><span style="font-family:courier new,courier,monospace;">apiRevisionId</span></li>
+
+    <li><span style="font-family:courier new,courier,monospace;">resourceId</span></li>
+  </ul>
+
+  <p><strong>To export a model:</strong></p>
+
+  <ol>
+    <li>Log in to your portal as a user with admin or content creation privileges.</li>
+
+    <li>Select
+    <strong><strong><strong><strong><strong><strong><strong><strong>Content &gt; </strong></strong></strong></strong></strong></strong></strong></strong>SmartDocs in
+    the Drupal administration menu.</li>
+
+    <li>For the model you want to export, select <strong>Export</strong> under
+    <strong>Operations</strong>.</li>
+
+    <li>Select the export file type as <strong>SmartDocs JSON</strong>.</li>
+
+    <li>Click <strong>Export</strong>.</li>
+
+    <li>You are prompted to save the file to disk or open it in an editor.</li>
+  </ol>
+
+  <p><strong>To import a model:</strong></p>
+
+  <ol>
+    <li>Log in to your portal as a user with admin or content creation privileges.</li>
+
+    <li>Select
+    <strong><strong><strong><strong><strong><strong><strong><strong>Content &gt; </strong></strong></strong></strong></strong></strong></strong></strong>SmartDocs in
+    the Drupal administration menu.</li>
+
+    <li>For the model you want to import, select <strong>Import</strong> under
+    <strong>Operations</strong>.</li>
+
+    <li>Select <strong>SmartDocs JSON</strong> in the <strong>Choose Format</strong> dropdown.</li>
+
+    <li>
+    Select <strong><strong>File</strong> or <strong>URL</strong></strong> in
+    the<strong> </strong>Upload Type:
+
+      <ol style="list-style: lower-alpha outside">
+        <li>If you select <strong>File</strong>, browse to the JSON file.</li>
+
+        <li>If you select <strong>URL</strong>, specify the URL of the SmartDocs JSON file.</li>
+      </ol>
+    </li>
+
+    <li>Click <strong>Import</strong> to import it into the model.</li>
+
+    <li>You are redirected to the model&#8217;s information page where you can now render the
+    model. Note that the import creates a new revision of the model.</li>
+
+    <li>Render and publish the nodes.</li>
+  </ol>
+
+  <h2 id="editingthesmartdocstemplate">Editing the SmartDocs template</h2>
+
+  <p>The SmartDocs template defines how your Drupal nodes appear on the screen. Each SmartDocs
+  model can use the same default template or you can manually customize the template used for an
+  individual model.</p>
+
+  <p>The SmartDocs template includes a template file coded as a Handlebars .hbr file, CSS files,
+  and JavaScript files. With Handlebars, much of the content is variable-driven using embedded
+  handlebars expressions, such as<code>&amp;123;&amp;123;body}}</code>. A list of the existing
+  Handlebar expressions is provided in a comment at the top of the file. For information about
+  using Handlebars to customize your templates, see <span style=
+  "font-family:courier new,courier,monospace;"><a href="https://handlebarsjs.com" target=
+  "_blank">http://handlebarsjs.com</a></span>.</p>
+
+  <aside class="note"><b>Note:</b> Apigee cannot guarantee support for any customizations made to
+  the SmartDocs template. Ensure that you test your customziations locally before publishing your
+  content to the live portal.</aside>
+
+  <p>The following sections describe how to upload a custom SmartDocs template file for use by all
+  new models or for when you are importing new APIs into an existing model, how to restore the
+  original default SmartDocs template file, and how to modify the SmartDocs template for an
+  individual model.</p>
+
+  <h3 id="editingthesmartdocstemplate-uploadingacustomsmartdocstemplatefile">Uploading a custom
+  SmartDocs template file</h3>
+
+  <p>You can upload a custom SmartDocs template file, as a Handlebars .hbr file, to use as the
+  default template when creating new models or importing new APIs into an existing model.</p>
+
+  <p>If you'd like to use the default SmartDocs template file as a starting point when creating
+  your custom SmartDocs template file, you can download a copy from:
+  <code>profiles/apigee/modules/custom/devconnect/smartdocs/templates/smartdocs.hbr</code></p>
+
+  <aside class="note"><b>Note:</b> When importing new APIs into an existing model, the custom
+  Smartdocs template will be applied to all APIs in the model.</aside>
+
+  <p>To upload a custom SmartDocs template file:</p>
+
+  <ol>
+    <li>Log in to your portal as a user with admin or content creation privileges.</li>
+
+    <li>Select<strong> Configuration &gt; SmartDocs</strong> in the Drupal
+    administration menu.</li>
+
+    <li>Expand the <strong>Advanced Settings</strong> area of the page. </li>
+
+    <li>Under Upload customized method template, click <strong>Choose File</strong>, and
+    navigate to the Handlebars .hbr file.</li>
+
+    <li>Click <strong>Upload</strong>.</li>
+
+    <li>Click <strong>Save configuration</strong>.</li>
+  </ol>
+
+  <h3 id="editingthesmartdocstemplate-restoringthedefaultsmartdocstemplatefile">Restoring the
+  default SmartDocs template file</h3>
+
+  <p>You can restore the default SmartDocs template file. Once restored, the default SmartDocs
+  template file will be used when creating new models or importing new APIs into an existing
+  model.</p>
+
+  <aside class="note"><b>Note:</b> When importing new APIs into an existing model, the default
+  Smartdocs template will be applied to all APIs in the model.</aside>
+
+  <p>To restore the default SmartDocs template file:</p>
+
+  <ol>
+    <li>Log in to your portal as a user with admin or content creation privileges.</li>
+
+    <li>Select<strong> Configuration &gt; SmartDocs</strong> in the Drupal
+    administration menu.</li>
+
+    <li>Expand the <strong>Advanced Settings</strong> area of the page. </li>
+
+    <li>Under Upload customized method template, click <strong>Remove</strong> adjacent to the
+    custom SmartDocs template file.</li>
+
+    <li>Click <strong>Save configuration</strong>.</li>
+  </ol>
+
+  <h3 id="editingthesmartdocstemplate-modifyingthesmartdocstemplateforanindividualmodel">Modifying
+  the SmartDocs template for an individual model</h3>
+
+  <p>You can modify the template used for an individual model.</p>
+
+  <p>To modify the template for an indvidual model:</p>
+
+  <ol>
+    <li>Log in to your portal as a user with admin or content creation privileges.</li>
+
+    <li>Select
+    <strong><strong><strong><strong><strong><strong><strong><strong><strong>Content &gt; </strong></strong></strong></strong></strong></strong></strong></strong></strong>SmartDocs in
+    the Drupal administration menu.</li>
+
+    <li>For the model you want to edit, select <strong>Settings</strong> under
+    <strong>Operations</strong>.</li>
+
+    <li>In the Method Template area, edit the template as required.</li>
+
+    <li>Click <strong>Save template</strong>.</li>
+
+    <li>Browse to a Drupal node. You should see your template changes on the page.</li>
+  </ol>
+
+  <h2 id="configuringthesmartdocsauthenticationtype"><a id="oauth" name="oauth"></a>Configuring the
+  SmartDocs authentication type</h2>
+
+  <p>APIs defined in SmartDocs can either be open, meaning no authentication credentials are
+  required to access them, or secure. A secure API requires that you pass credentials when making a
+  call to the API.</p>
+
+  <p>For a secure API, SmartDocs supports the following types of authentication:</p>
+
+  <ul>
+    <li><strong>Basic authentication</strong> - Pass basic authentication credentials as a
+    username and password pair. If you do not specify to use OAuth as the credential type, the API
+    defaults to using basic authentication.</li>
+
+    <li><strong>OAuth 2.0</strong> - A third-party service provider authenticates the user's
+    credentials, ensures that the user has authorization to the API, and then issues an access
+    token. When you make a SmartDocs request to a protected API, SmartDocs builds the request and
+    sends it to the service provider. The service provider then validates the token and ensures
+    that it has not expired.</li>
+
+    <li><strong>Custom token</strong> - Pass a token value as a header or query parameter to each
+    request.</li>
+  </ul>
+
+  <p>For each type of authentication, you create a <em>security scheme</em> that defines the
+  characteristics of the authentication. For example, for custom token authentication, the
+  security scheme defines how the token is passed (header, query param, body param) and the name of
+  the token.  </p>
+
+  <p>A security scheme is associated with a specific revision of a model. Therefore, if you create
+  a new revision of a model, you have to redefine the security schemes for that revision </p>
+
+  <p>In a WADL file, you specify if an API requires authentication by using the <span style=
+  "font-family:courier new,courier,monospace;">&lt;apigee:authentication&gt;</span> Apigee tag, as
+  shown below:</p>
+  <pre class="prettyprint">
+&lt;method id="statusespublic_timeline" name="GET" apigee:displayName="PublicTimeline"&gt;
+    ...
+    &lt;apigee:authentication required="true"/&gt;
+&lt;/method&gt; 
+</pre>
+
+  <p>If the API is open, set the <span style=
+  "font-family:courier new,courier,monospace;">required</span> attribute to <span style=
+  "font-family:courier new,courier,monospace;">false</span>.</p>
+
+  <p>Notice that you cannot specify the type of authentication in the WADL file. You do that by
+  editing the node in Drupal. For more information on WADL files, see <a href="/">WADL
+  Reference</a>.</p>
+
+  <p>On the API page in Drupal, SmartDocs adds the following button to let users specify their
+  basic authentication credentials:</p>
+
+  <p><img alt="" src="/api-platform/images/smartdocs_basicAuth.png"></p>
+
+  <p>If you edit the node to set the authentication type to OAuth, then SmartDocs adds the
+  following button to the page:</p>
+
+  <p><img alt="" src="/api-platform/images/smartdocs_oAuth.png"></p>
+
+  <p>For custom token, SmartDocs adds:</p>
+
+  <p><img alt="" src="/api-platform/images/customToken_v1407_2.png" width="141"></p>
+
+  <h3 id="configuringthesmartdocsauthenticationtype-configuringbasicauthentication">Configuring
+  basic authentication</h3>
+
+  <p>If you use basic authentication with your API, then you only have to specify the <span style=
+  "font-family:courier new,courier,monospace;">&lt;apigee:authentication&gt;</span> tag in the WADL
+  file that you use to create the model.</p>
+
+  <p>To apply basic authentication to methods created from a source other than a WADL file:</p>
+
+  <ol>
+    <li>Log in to your portal as a user with admin or content creation privileges.</li>
+
+    <li>
+    Select<strong> </strong><strong><strong><strong><strong><strong><strong><strong><strong><strong><strong>Content &gt; </strong></strong></strong></strong></strong></strong></strong></strong></strong></strong>SmartDocs in
+    the Drupal administration menu.</li>
+
+    <li>For the desired model, select <strong>API Revisions</strong> under
+    Operations.</li>
+
+    <li>For the model revision you want to edit, select <strong>Security
+    Settings</strong> under <strong>Operations</strong>.</li>
+
+    <li>Select <strong>Add Security Scheme</strong>.</li>
+
+    <li>Specify the <strong>name</strong> of the security scheme.</li>
+
+    <li>Select <strong>Basic</strong> as the<strong> Type</strong>.</li>
+
+    <li>Select <strong>Submit</strong>.</li>
+
+    <li>For each method in the model, edit the method to set its <strong>Security Scheme</strong>
+    to your basic scheme.
+
+      <ol style="list-style: lower-alpha outside">
+        <li>
+        Select<strong> </strong><strong><strong><strong><strong><strong><strong><strong><strong><strong><strong>Content &gt; </strong></strong></strong></strong></strong></strong></strong></strong></strong></strong>SmartDocs in
+        the Drupal administration menu.</li>
+
+        <li>For the desired model, select <strong>API Revisions</strong> under
+        Operations.</li>
+
+        <li>For the model revision you want to edit, select <strong>Revision
+        Details</strong> under <strong>Operations</strong>.</li>
+
+        <li>Select <strong>Edit Method</strong> for the API that you want to edit.</li>
+
+        <li>Select the <strong>Security Scheme</strong> for the API.</li>
+
+        <li><strong>Save</strong> the API. </li>
+      </ol>
+    </li>
+  </ol>
+
+  <h3 id="configuringthesmartdocsauthenticationtype-configuringoauth20authentication">Configuring
+  OAuth 2.0 authentication</h3>
+
+  <p>You can configure a model to use OAuth 2.0 in SmartDocs, instead of the default of basic
+  authentication. You configure OAuth in two locations:</p>
+
+  <ol>
+    <li>Create a security scheme for each revision of a model under <strong>Security
+    Settings</strong> for the revision.</li>
+
+    <li>Specify the Client ID and Client Secret for all revisions of the model under
+    <strong>Settings</strong> for the model.</li>
+  </ol>
+
+  <p><strong>To enable OAuth:</strong></p>
+
+  <ol>
+    <li>Log in to your portal as a user with admin or content creation privileges.</li>
+
+    <li>
+    Select<strong> </strong><strong><strong><strong><strong><strong><strong><strong><strong><strong><strong>Content &gt; </strong></strong></strong></strong></strong></strong></strong></strong></strong></strong>SmartDocs in
+    the Drupal administration menu.</li>
+
+    <li>For the desired model, select <strong>API Revisions</strong> under Operations.</li>
+
+    <li>For the model revision you want to edit, select <strong>Security Settings</strong> under
+    <strong>Operations</strong>.</li>
+
+    <li>Select <strong>Add Security Scheme</strong>.</li>
+
+    <li>Specify the <strong>name</strong> of the security scheme.</li>
+
+    <li>Select <strong>OAuth 2.0</strong> as the <strong>Type</strong>.</li>
+
+    <li>Set the <strong>Grant Type</strong>.</li>
+
+    <li>Enter the values in the <strong>Authorization URL</strong> fields. The Authorization
+    URL is used to obtain the access token.</li>
+
+    <li>Set the <strong>Authorization Verb</strong> as GET or POST.</li>
+
+    <li>Enter the <strong>Access Token URL</strong>. The Access Token URL is the URL used to
+    exchange the request token for an access token.</li>
+
+    <li>Enter the <strong>Access Token param name</strong>.</li>
+
+    <li>Use <strong>In</strong> to specify how to pass the token: <strong>Header</strong>,
+    <strong>Query</strong>, or <strong>Body</strong>.</li>
+
+    <li>Set the OAuth <strong>Scopes</strong>.</li>
+
+    <li>Select <strong>Submit</strong>.</li>
+
+    <li>
+    Select<strong> </strong><strong><strong><strong><strong><strong><strong><strong><strong><strong><strong>Content &gt; </strong></strong></strong></strong></strong></strong></strong></strong></strong></strong>SmartDocs in
+    the Drupal administration menu.</li>
+
+    <li>For the model, select <strong>Settings</strong> in the <strong>Operations</strong>
+    drop-down.</li>
+
+    <li>Enter the values in the <strong>Client ID</strong> and <strong>Client
+    Secret</strong>.</li>
+
+    <li>Select <strong>Save template authentication settings</strong>.</li>
+
+    <li>For each method in the model, edit the method to set its <strong>Security Scheme</strong>
+    to your OAuth security scheme.
+
+      <ol style="list-style: lower-alpha outside">
+        <li>
+        Select<strong> </strong><strong><strong><strong><strong><strong><strong><strong><strong><strong><strong>Content &gt; </strong></strong></strong></strong></strong></strong></strong></strong></strong></strong>SmartDocs in
+        the Drupal administration menu.</li>
+
+        <li>For the desired model, select <strong>API Revisions</strong> under
+        Operations.</li>
+
+        <li>For the model revision you want to edit, select <strong>Revision
+        Details</strong> under <strong>Operations</strong>.</li>
+
+        <li>Select <strong>Edit Method</strong> for the API that you want to edit.</li>
+
+        <li>Select the <strong>Security Scheme</strong> for the API.</li>
+
+        <li><strong>Save</strong> the API. </li>
+      </ol>
+    </li>
+  </ol>
+
+  <h3 id="configuringthesmartdocsauthenticationtype-configuringcustomtokenauthentication">
+  Configuring custom token authentication</h3>
+
+  <p>You can configure a model to use custom token authentication.</p>
+
+  <p><strong>To enable custom tokens:</strong></p>
+
+  <ol>
+    <li>Log in to your portal as a user with admin or content creation privileges.</li>
+
+    <li>
+    Select<strong> </strong><strong><strong><strong><strong><strong><strong><strong><strong><strong><strong>Content &gt; </strong></strong></strong></strong></strong></strong></strong></strong></strong></strong>SmartDocs in
+    the Drupal administration menu.</li>
+
+    <li>For the desired model, select <strong>API Revisions</strong> under
+    Operations.</li>
+
+    <li>For the model revision you want to edit, select <strong>Security
+    Settings</strong> under <strong>Operations</strong>.</li>
+
+    <li>Select <strong>Add Security Scheme</strong>.</li>
+
+    <li>Specify the <strong>name</strong> of the security scheme.</li>
+
+    <li>Select <strong>Apikey</strong> as the<strong> Type</strong>.</li>
+
+    <li>Set the <strong>Param</strong> <strong>Name</strong> containing the token.</li>
+
+    <li>Use <strong>In</strong> to specify how to pass the
+    token: <strong>Header</strong>, <strong>Query</strong>,
+    or <strong>Body</strong>.</li>
+
+    <li>Select <strong>Submit</strong>.</li>
+
+    <li>For each method in the model, edit the method to set its <strong>Security Scheme</strong>
+    to your token scheme.
+
+      <ol style="list-style: lower-alpha outside">
+        <li>
+        Select<strong> </strong><strong><strong><strong><strong><strong><strong><strong><strong><strong><strong>Content &gt; </strong></strong></strong></strong></strong></strong></strong></strong></strong></strong>SmartDocs in
+        the Drupal administration menu.</li>
+
+        <li>For the desired model, select <strong>API Revisions</strong> under
+        Operations.</li>
+
+        <li>For the model revision you want to edit, select <strong>Revision
+        Details</strong> under <strong>Operations</strong>.</li>
+
+        <li>Select <strong>Edit Method</strong> for the API that you want to edit.</li>
+
+        <li>Select the <strong>Security Scheme</strong> for the API.</li>
+
+        <li><strong>Save</strong> the API. </li>
+      </ol>
+    </li>
+  </ol>
+
+  <h2 id="deletingamodel">Deleting a model</h2>
+
+  <p>When you delete a model (<strong>Content &gt; SmartDocs</strong>, <strong>Delete</strong> in
+  the Operations field in Drupal), the model is deleted from your Edge organization. That means if
+  other portals are referencing the model, the model is no longer available. For more information,
+  see <a href="#models">About SmartDoc models and templates</a>.</p>
+
+  
+
+  <div>
+     
+  </div>
+
+  {% endblock %}

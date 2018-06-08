@@ -1,0 +1,426 @@
+  {% extends "_base.html" %} {% block title %}Use the analytics API to measure API program
+  performance{% endblock %} {% block body %}
+
+  <p>This topic covers the Apigee Analytics Services API. Apigee Edge records a wide variety of
+  operational and business data that flows across APIs. The metrics derived from this data are
+  useful for operational monitoring and business monitoring. Using Analytics Services, you can, for
+  example, determine which APIs are performing well or poorly, which developers are delivering the
+  highest value traffic, and which apps are causing the most issues for your backend services.</p>
+
+  <p>To help access this data easily, Apigee Edge Analytics Services exposes a RESTful API. You can
+  use this API when you need to automate certain Analytics functions, such as retrieving metrics
+  periodically using an automation client or script. You can also use the API to build your own
+  visualizations in the form of custom widgets that you can embed in portals or custom apps.</p>
+
+  <p>This topic demonstrates the RESTful Analytics API. To learn how to use Analytics in the API
+  Edge management UI see <a href=
+  "/api-platform/analytics/analytics-services-overview.html">Analytics Services overview</a>.</p>
+
+  <p>{% dynamic include /includes/___reused-topic-analytics-delay-interval-receiving-data %}</p>
+
+  <h2 id="gettingthenumberofapicallspermonth">Getting the number of API calls per month</h2>
+
+  <p>If you want to see the total number of calls made to your APIs per month, see the <a href=
+  "/management/apis/get/organizations/{org_name}/stats">Get API message counts</a> SmartDocs
+  management API.</p>
+
+  <p>The API must be run for each organization and each envronment. Here's the call in cURL:</p>
+  <pre class="prettyprint">
+curl -v "https://api.enterprise.apigee.com/v1/organizations/{org}/environments/{environment}/stats/?select=sum(message_count)&amp;timeRange=03/01/2016%2000:00~03/31/2016%2024:00" -u email
+</pre>
+
+  <p>Dates/times are in UTC and use the following format: MM/DD/YYYY HH:MM, with the range
+  separated by a tilde (~). For cURL, the %20 URL encoding is required for the space between
+  the date and time.</p>
+
+  <p>This is an abbreviated version of the /stats API, which provides additional query parameters
+  and dimension resource paths for more granular analytics reporting. For more information, see
+  <a href=
+  "/management/apis/get/organizations/{org_name}/environments/{env_name}/stats/{dimension_name}-0">Get
+  metrics organized by dimensions</a>, as well as the information that follows.</p>
+
+  <h2 id="gettingmetricswiththemanagementapi">Getting metrics with the management API</h2>
+
+  <p>Use the <a href=
+  "/management/apis/get/organizations/{org_name}/environments/{env_name}/stats/{dimension_name}-0">Get
+  metrics organized by dimensions</a> management API to get API metrics over a specified time
+  period. In Apigee Edge, metrics can be shown in the context of dimensions, or groupings. For
+  example, you may have gotten 20,000 API calls over the past hour. Dimensions make that data more
+  meaningful by grouping the numbers. When you use the "API proxy" dimension to retrieve the
+  traffic metrics, you'll see that API proxy A got 10,000 calls, API proxy B got 6,000 calls, and
+  API proxy C got 4,000 calls.</p>
+
+  <p>For example, to get metrics grouped by API proxies, you'd use the following base URL to call
+  the management API (the type of metrics and other API controls are provided with query
+  parameters, not shown here):</p>
+  <pre class="prettyprint">
+https://api.enterprise.apigee.com/v1/o/{org_name}/environments/{env_name}/stats/apiproxy
+</pre>
+
+  <p>To get metrics grouped by developers:</p>
+  <pre class="prettyprint">
+https://api.enterprise.apigee.com/v1/o/{org_name}/environments/{env_name}/stats/developer
+</pre>
+
+  <p>To get metrics grouped by developer apps:</p>
+  <pre class="prettyprint">
+https://api.enterprise.apigee.com/v1/o/{org_name}/environments/{env_name}/stats/developer_app
+</pre>
+
+  <aside class="note"><b>Note:</b> In this topic, you will get metrics for the set of built-in
+  dimensions. The next topic, <a href=
+  "/api-platform/analytics/analyze-api-message-content-using-custom-analytics.html">Analyze API
+  message content using custom analytics</a>, shows you how to define and work with your own custom
+  dimensions.</aside>
+
+  <p>You will find that if you submit one of these requests, you will get the following error:</p>
+  <pre class="prettyprint">
+{
+  "code" : "analytics.dataapi.service.MissingSelectParameter",
+  "message" : "Missing select parameter",
+  "contexts" : [ ]
+}
+</pre>
+
+  <p>Now you need to add a select statement to the base URL for the chosen dimension. You create
+  the select statement using query parameters.</p>
+
+  <p>Query parameters define:</p>
+
+  <ul>
+    <li>Metrics: The type of data you want. For more information about metrics, see <a href=
+    "/api-platform/analytics/analytics-reference.html">Analytics metrics, dimensions, and filters
+    reference</a>.</li>
+
+    <li>Functions: The optional aggregate function run against the metric, such
+    as <span style="font-family:courier new,courier,monospace;">avg</span>, <span style=
+    "font-family:courier new,courier,monospace;">min</span>, <span style=
+    "font-family:courier new,courier,monospace;">max</span>, <span style=
+    "font-family:courier new,courier,monospace;">sum</span>.</li>
+
+    <li>TimeRange: The time interval over which data should be analyzed, in the form
+    MM/DD/YYYY%20HH:MM~MM/DD/YYYY%20HH:MM.<br>
+      <br>
+      Notice the "%20" before "HH:MM". The TimeRange requires an URL-encoded space character
+      before HH:MM, or a "+" character, as in: MM/DD/YYYY+HH:MM~MM/DD/YYYY+HH:MM. 
+
+      <aside class="note"><b>Note:</b> For information on the length of data retention, see the
+      <a href="https://apigee.com/api-management/#/pricing" target="_blank">Apigee Edge plans
+      page</a>.</aside>
+    </li>
+
+    <li>Filters: The attribute used to limit the results.</li>
+  </ul>
+
+  <aside class="note"><b>Note:</b> For descriptions of available metrics and dimensions, and how
+  you can create filters to display a limited set of metrics, see <a href=
+  "/api-platform/analytics/analytics-reference.html">Analytics metrics, dimensions, and filters
+  reference</a>.</aside>
+
+  <p>Let's suppose that you want to get metrics for your API proxies that are deployed in the test
+  environment. You want to find out how many request messages were received by all API proxies
+  between 6/24/2017 and 6/25/2017. You want to find out a daily count for messages that were
+  received. To do so, you create a select statement on the
+  <code>/stats/apiproxy</code> resource.</p>
+
+  <p>The example below demonstrates who you would construct a request for these metrics. The select
+  statement defines the aggregate function <code>sum</code> for the metric
+  <code>message_count</code> on the dimension <code>apiproxy</code> deployed in the
+  <code>test</code> environment. The report provides a snapshot of the request message throughput
+  to all APIs for traffic received between the beginning of 6/20/2017 and the end of 6/21/2017, in
+  UTC time:</p>
+  <pre class="terminal">
+$ curl  https://api.enterprise.apigee.com/v1/o/{org_name}/environments/test/stats/apiproxy?"select=sum(message_count)&amp;timeRange=06/20/2017%2000:00~06/21/2017%2023:59&amp;timeUnit=day" \
+-u email:password
+</pre>
+
+  <p>Sample Response:</p>
+  <pre class="prettyprint">
+{
+  "environments" : [ {
+    "dimensions" : [ {
+      "metrics" : [ {
+        "name" : "sum(message_count)",
+        "values" : [ {
+          "timestamp" : 1498003200000,
+          "value" : "1100.0"
+        } ]
+      } ],
+      "name" : "target-reroute"
+    } ],
+    "name" : "test"
+  } ]...
+}
+</pre>
+
+  <p>This response indicates that 1100 message were received by one API proxy called
+  'target-reroute' running in the test environment between the start of 6/20/2017 and the end of
+  6/21/2017, UTC time.</p>
+
+  <aside class="key-point"><b>Tip:</b> Note that the timestamp, <code>1498003200000</code>, is in
+  Unix timestamp format. There are many Unix timestamp conversion tools available on the Internet
+  that you can use to decode these timestamps.</aside>
+
+  <p>To get metrics for other dimensions, specify a different dimension as the URI parameter. For
+  example, you can specify the <code>developer_app</code> dimension to retrieve metrics for
+  developer apps. The following report shows the total throughput (messages received) from any apps
+  for the specified time interval:</p>
+  <pre class="terminal">
+$ curl  https://api.enterprise.apigee.com/v1/o/{org_name}/environments/test/stats/developer_app?"select=sum(message_count)&amp;timeRange=06/20/2017%2000:00~06/21/2017%2023:59&amp;timeUnit=day" \
+-u email:password
+</pre>
+  <pre class="prettyprint">
+{
+  "environments": [
+    {
+      "dimensions": [
+        {
+          "metrics": [
+            {
+              "name": "sum(message_count)",
+              "values": [
+                {
+                  "timestamp": 1498003200000,
+                  "value": "886.0"
+                }
+              ]
+            }
+          ],
+          "name": "Test-App"
+        },
+        {
+          "metrics": [
+            {
+              "name": "sum(message_count)",
+              "values": [
+                {
+                  "timestamp": 1498003200000,
+                  "value": "6645.0"
+                }
+              ]
+            }
+          ],
+          "name": "johndoe_app"
+        },
+        {
+          "metrics": [
+            {
+              "name": "sum(message_count)",
+              "values": [
+                {
+                  "timestamp": 1498003200000,
+                  "value": "1109.0"
+                }
+              ]
+            }
+          ],
+          "name": "marys_app"
+        }
+  ]...
+}
+</pre>
+
+  <aside class="note"><b>Note:</b> Metrics for some dimensions, such as developers and developer
+  apps, can be retrieved for developers and developer apps can be individually identified by an API
+  key (also called a 'consumer key') or by an OAuth access token. For more information, see
+  <a href="/api-platform/analytics/why-am-i-seeing-analytics-entity-named-not-set.html">mean?</a>.</aside>
+
+  <h2 id="sortingresultsbyrelativeranking">Sorting results by relative ranking</h2>
+
+  <p>Many times when getting metrics, you only want to get results for a subset of the total set of
+  data. Usually, you need to get the results for the "top 10", for example, the "top 10 slowest
+  APIs", the "top 10 most active apps". You can do this using the <code>topk</code> query parameter
+  as part of the request.</p>
+
+  <p>For example you may be interested to know who your top developers are, measured by throughput,
+  or what your worst performers (i.e., 'top slowest') target APIs are by latency.</p>
+
+  <p>The <code>topk</code> (meaning 'top k' entities) enables reporting on the entities associated
+  with the highest value for a given metric. This enables you to filter metrics for a list of
+  entities that exemplify a particular condition. For example, to find which target URL was the
+  most error prone over the last week, the <code>topk</code> parameter is appended to the request,
+  with a value of <code>1</code>.</p>
+
+  <p>In the example below</p>
+  <pre class="terminal">
+$ curl https://api.enterprise.apigee.com/v1/o/{org_name}/environments/test/stats/target_url?"select=sum(is_error)&amp;timeRange=05/08/2017%2000:00~05/15/2017%2000:00&amp;timeUnit=week&amp;sortby=sum(is_error)&amp;topk=1" -u email:password
+</pre>
+  <pre class="prettyprint">
+{
+  "environments": [
+    {
+      "dimensions": [
+        {
+          "metrics": [
+            {
+              "name": "sum(is_error)",
+              "values": [
+                {
+                  "timestamp": 1494201600000,
+                  "value": "12077.0"
+                }
+              ]
+            }
+          ],
+          "name": "http://api.company.com"
+        }
+      ]...
+}
+</pre>
+
+  <p>The result of this request is a set of metrics that shows that the buggiest target URL is
+  <code>http://api.company.com</code>.</p>
+
+  <p>You can also use the <code>topk</code> parameter to sort for the APIs experiencing the highest
+  throughput. The following example retrieves metrics on the top ranked API, defined by highest
+  throughput in the last week:</p>
+  <pre class="terminal">
+$ curl https://api.enterprise.apigee.com/v1/o/{org_name}/environments/test/stats/apiproxy?"select=sum(message_count)&amp;timeRange=05/08/2017%2000:00~05/15/2017%2000:00&amp;timeUnit=day&amp;sortby=sum(message_count)&amp;sort=DESC&amp;topk=1" \
+-u email:password
+</pre>
+
+  <p>Sample Response</p>
+  <pre class="prettyprint">
+{
+  "environments": [
+    {
+      "dimensions": [
+        {
+          "metrics": [
+            {
+              "name": "sum(message_count)",
+              "values": [
+                {
+                  "timestamp": 1494720000000,
+                  "value": "5750.0"
+                },
+                {
+                  "timestamp": 1494633600000,
+                  "value": "5752.0"
+                },
+                {
+                  "timestamp": 1494547200000,
+                  "value": "5747.0"
+                },
+                {
+                  "timestamp": 1494460800000,
+                  "value": "5751.0"
+                },
+                {
+                  "timestamp": 1494374400000,
+                  "value": "5753.0"
+                },
+                {
+                  "timestamp": 1494288000000,
+                  "value": "5751.0"
+                },
+                {
+                  "timestamp": 1494201600000,
+                  "value": "5752.0"
+                }
+              ]
+            }
+          ],
+          "name": "testCache"
+        }
+      ],
+      "name": "test"
+    }
+  ]...
+}
+</pre>
+
+  <h2 id="filteringresults">Filtering results</h2>
+
+  <p>For greater granularity, you can filter results to limit the data returned. When using
+  filters, you must use dimensions as filter properties.</p>
+
+  <p>For example, let's suppose that you need to retrieve a count of errors from backend services
+  filtered by the HTTP verb of the request. Your goal is find out how many POST and PUT requests
+  are generating errors per backend service. To do so, you use the dimension
+  <code>target_url</code> along with the filter <code>request_verb</code>.</p>
+  <pre class="prettyprint">
+$ curl https://api.enterprise.apigee.com/v1/o/{org_name}/environments/test/stats/target_url?"select=sum(is_error)&amp;timeRange=05/08/2017%2000:00~05/15/2017%2000:00&amp;timeUnit=week&amp;filter=(request_verb%20in%20'POST','PUT')" \
+-u email:password
+</pre><b>&lt;sample response=""&gt;&lt;/sample&gt;</b>
+
+  <h2 id="paginatingresults">Paginating results</h2>
+
+  <p>In production environments, some request to the Analytics Services API return very large data
+  sets. To make it easy to display large data sets in the context of a UI-based application, the
+  API natively supports pagination.</p>
+
+  <p>To paginate results, use the <code>offset</code> and <code>limit</code> query parameters,
+  along with the <code>sortby</code> sorting parameter to ensure a consistent ordering of
+  items.</p>
+
+  <aside class="note">
+    <b>Note:</b> When paginating results, it's important to sort results in a predictable way using
+    the <code>sortby</code> query parameter. Without sorting, results are returned in an
+    unpredictable order, which defeats the purpose of pagination.
+
+    <p>The <code>sortby</code> value must be the same as one used in the <code>select</code> query
+    parameter. For example, if <code>select=sum(message_count)</code>, then
+    <code>sortby=sum(message_count)</code>.</p>
+  </aside>
+
+  <p>For example, the following request would be likely to return a large data set, since it
+  retrieves metrics for all errors on all APIs in the product environment for the last week.</p>
+  <pre class="prettyprint">
+$ curl https://api.enterprise.apigee.com/v1/o/{org_name}/environments/prod/stats/apiproxy?"select=sum(is_error)&amp;timeRange=05/08/2017%2000:00~05/15/2017%2000:00&amp;timeUnit=week&amp;sortby=sum(is_error)" \
+-u email:password
+</pre>
+
+  <p>If your UI-based application can reasonably display 50 results per page, you can set the limit
+  to 50. Since 0 counts as the first item, the following call returns items 0-49 in descending
+  order (<code>sort=DESC</code> is the default).</p>
+  <pre class="prettyprint">
+$ curl https://api.enterprise.apigee.com/v1/o/{org_name}/environments/prod/stats/apiproxy?"select=sum(is_error)&amp;timeRange=05/08/2017%2000:00~05/15/2017%2000:00&amp;timeUnit=week&amp;<strong>sortby=sum(is_error)&amp;limit=50&amp;offset=0</strong>" \
+-u email:password
+</pre>
+
+  <p>For the second 'page' of results, use the offset query parameter, as follows. Note that the
+  limit and offset are identical. That's because 0 counts as the first item. With a limit of 50 and
+  an offset of 0, items 0-49 are returned. With an offset of 50, items 50-99 are returned.</p>
+  <pre class="prettyprint">
+$ curl https://api.enterprise.apigee.com/v1/o/{org_name}/environments/prod/stats/apiproxy?"select=sum(is_error)&amp;timeRange=05/08/2017%2000:00~05/15/2017%2000:00&amp;timeUnit=week&amp;<strong>sortby=sum(is_error)&amp;limit=50&amp;offset=50</strong>" \
+-u email:password
+</pre>
+
+  <h2 id="optinoroutofdailyanalyticsreports">Opt in or out of daily analytics reports</h2>
+
+  <p>In addition to the analytics available online through Apigee Edge, all organization
+  administrators are automatically subscribed to receive daily analytics summary reports through
+  email. You can unsubscribe (opt out) of receiving daily analytics reports through an opt out
+  link in the actual report that is emailed to you. You can also opt in or opt out of daily summary
+  reports using these API calls:</p>
+
+  <p>Opt out of receiving a daily summary report:</p>
+
+  <div id="well">
+    <pre class="terminal">
+$ curl -u email:password https://api.enterprise.apigee.com/v1/o/{myorg}/stats/preferences/reports/dailysummaryreport?optin=false
+</pre>
+  </div>
+
+  <p>Opt in to receiving a daily summary report:</p>
+
+  <div id="well">
+    <pre class="terminal">
+$ curl -u email:password 
+https://api.enterprise.apigee.com/v1/o/{myorg}/stats/preferences/reports/dailysummaryreport?optin=true
+</pre>
+  </div>
+
+  <p>Retrieve list of users who have opted in or opted out:</p>
+
+  <div id="well">
+    <pre class="terminal">
+$ curl -u email:password 
+https://api.enterprise.apigee.com/v1/o/{myorg}/stats/preferences/reports/dailysummaryreport/users
+</pre>
+  </div>
+
+  
+
+  {% endblock %}

@@ -1,0 +1,171 @@
+{% extends "_base.html" %}
+{% block title %}Step 5: Add a policy{% endblock %}
+{% block body %}
+
+  <p>Now that you've <a href="change-endpoint">changed your target endpoint</a>, you're ready to add
+  a policy to your proxy.</p>
+
+  <p>A <em>policy</em> is an Edge component that you can attach to different points in the message
+  flow through your API proxies. Policies can transform message formats, enforce access control,
+  call remote services, authorize users, examine message content for potential threats, and do much
+  more.</p>
+
+  <p>In this tutorial, you're going to add the <a href="/api-platform/reference/policies/xml-json-policy">XML
+  to JSON policy</a> to your proxy. This  policy converts the payload of an XML message to JSON. It
+  also changes the response's <code>Content-Type</code> header.</p>
+
+  <aside class="objective"><h3>Further Reading</h3>
+    <p>There are dozens of out-of-the-box policies for you to add to your proxies that do all sorts
+    of wonderful things, including:</p>
+    <ul>
+      <li><a href="/api-platform/reference/policies/raise-fault-policy">Raise Fault policy</a></li>
+      <li><a href="/api-platform/reference/policies/javascript-policy">JavaScript policy</a></li>
+      <li><a href="/api-platform/reference/policies/spike-arrest-policy">Spike Arrest policy</a></li>
+      <li><a href="/api-platform/reference/policies/extract-variables-policy">Extract Variables policy</a></li>
+   </ul>
+   <p>For a complete list of policies, see <a href="/api-platform/reference/policies/reference-overview-policy">Edge
+   policy reference</a>.</p>
+  </aside>
+
+  <p><strong>To add the XML to JSON policy to your proxy:</strong></p>
+
+  <ol>
+    <li>Open the {{mgmt_ui}} in a browser and log in.</li>
+    <li>Click <strong>API Proxies</strong> in the main window and select a proxy.</li>
+    <li>Click the <strong>Develop</strong> tab. You are now in the API Proxy Editor.</li>
+    <li><p>In the <strong>Navigator</strong> pane, click <strong>Proxy Endpoints &gt; default &gt;
+      PreFlow</strong>.</p>
+      <p>Edge displays the default Proxy Endpoint configuration in the <strong>Code</strong>
+      pane:</p>
+      <pre class="prettyprint">{% htmlescape %}<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<ProxyEndpoint name="default">
+  <Description/>
+  <FaultRules/>
+  <PreFlow name="PreFlow">
+    <Request/>
+    <Response/>
+  </PreFlow>
+  <PostFlow name="PostFlow">
+    <Request/>
+    <Response/>
+  </PostFlow>
+  <Flows/>
+  <HTTPProxyConnection>
+    <BasePath>/getstarted</BasePath>
+    <Properties/>
+    <VirtualHost>default</VirtualHost>
+    <VirtualHost>secure</VirtualHost>
+  </HTTPProxyConnection>
+  <RouteRule name="default">
+    <TargetEndpoint>default</TargetEndpoint>
+  </RouteRule>
+</ProxyEndpoint>{% endhtmlescape %}</pre>
+    </li>
+    <li>In the Flow editor, click the top <strong>+ Step</strong> button in the response (the
+      bottom half of the Flow editor):
+      <p><img class="screenshot" width="50%" src="/api-platform/images/step-response.png"></p>
+      <p>Edge displays a categorized list of policies that you can add to your flow.</p>
+    </li>
+    <li>Scroll down and select the <strong>XML to JSON</strong> policy in the Mediation
+      category.</li>
+    <li><p>Leave the default names, and click <strong>Add</strong>.</p>
+      <p>Edge attaches the new policy to the PreFlow of the response:</p>
+      <p><img class="screenshot" width="90%" src="/api-platform/images/new-policy-highlights.png"></p>
+      <p>Note that when you click <strong>Add</strong>, Edge does the following:</p>
+      <ul>
+        <li>Adds the new policy under <strong>Policies</strong> in the <strong>Navigator</strong>
+          pane.</li>
+        <li>Adds the XML to JSON policy in the <strong>Flow</strong> pane.</li>
+        <li>Displays the policy's configuration XML in the <strong>Code</strong> pane.</li>
+      </ul>
+    </li>
+    <li>Click <strong>Save</strong> to save the current revision with your changes.</li>
+  </ol>
+
+  <p>Now try it out! In a terminal window, execute the following <code>curl</code> command:</p>
+  <pre class="devsite-terminal">curl https://<var>org_name</var><strong>-test</strong>.apigee.net<strong>/getstarted</strong></pre>
+  <p>Where:</p>
+  <ul>
+    <li><var>org_name</var> is the organization name that Apigee assigned to you when
+      you <a href="create-account#orgs">created your Apigee account</a>.</li>
+    <li><code>-test</code> is the environment. You deployed your new proxy to the
+      "test" environment in <a href="create-proxy">Step 2: Create an API proxy</a>.</li>
+    <li><code>/getstarted</code> is the Proxy Base Path.</li>
+  </ul>
+  <aside class="key-point"><h3>TIP</h3> Use a JSON prettifier such as the json.tool
+    Python library to make your output look better in a terminal.</aside>
+  <p>For example:</p>
+  <pre class="devsite-terminal">curl https://ahamilton-eval-test.apigee.net/getstarted | python -m json.tool</pre>
+  <p>Alternatively, you can open the same URL in a browser.</p>
+  <p>You should receive the following response:</p>
+  <pre class="prettyprint">{
+  "root": {
+    "city": "San Jose",
+    "firstName": "John",
+    "lastName": "Doe",
+    "state": "CA"
+  }
+}</pre>
+
+  <aside class="success"><h3>Congratulations!</h3> You've successfully added the XML to JSON
+  policy to your new proxy!</aside>
+
+  <p>If the body of the response doesn't look like this, check that:</p>
+  <ol>
+    <li>Your target endpoint is "https://mocktarget.apigee.net/xml", as described in
+      <a href="change-endpoint">Step 4: Change your target endpoint</a>:
+        <ul>
+          <li>If you get "Hello, Guest!" as a response, then you need to append "/xml" to the end
+          of the target endpoint.</li>
+          <li>If you get a 404, then check that you are accessing "apigee.net" and not
+            "apigee.com".</li>
+        </ul>
+    <li>Your proxy is deployed. Try re-deploying your API proxy as described in
+      <a href="/api-platform/deploy/deploying-proxies-ui#deploying">Deploying and undeploying an
+      API proxy</a>.</li>
+  </ol>
+
+  <p>To see the HTTP request and response headers, enable verbosity in <code>curl</code> with the
+  <code>-vs</code> option (<code>v</code> makes the response verbose, but <code>s</code> suppresses
+  some of the less interesting details). For example:</p>
+
+  <pre class="prettyprint devsite-terminal">curl -vs https://ahamilton-eval-test.apigee.net/getstarted | python -m json.tool</pre>
+
+  <p>You should get a response that looks like the following. Note that the
+  <code>Content-Type</code> header in the response is "application/json". The XML to JSON policy
+  changes the header before sending the response back.</p>
+
+<pre class="prettyprint">*   Trying 10.20.30.40...
+* TCP_NODELAY set
+* Connected to ahamilton-eval-test.apigee.net (10.20.30.40) port 443 (#0)
+...
+&gt; GET /getstarted HTTP/1.1
+&gt; Host: ahamilton-eval-test.apigee.net
+&gt; User-Agent: curl/7.58.0
+&gt; Accept: */*
+&gt;
+&lt; HTTP/1.1 200 OK
+&lt; Date: Fri, 25 May 2018 16:20:00 GMT
+<strong>&lt; Content-Type: application/json;charset=UTF-8</strong>
+&lt; Content-Length: 77
+&lt; Connection: keep-alive
+&lt; X-Powered-By: Apigee
+&lt; Access-Control-Allow-Origin: *
+...
+{ [77 bytes data]
+{
+  "root": {
+    "city": "San Jose",
+    "firstName": "John",
+    "lastName": "Doe",
+    "state": "CA"
+  }
+}</pre>
+
+  <h3>Next step</h3>
+  <p><a class="button button-primary" href="go-deeper">Go deeper</a></p>
+
+  <h2>Discussion</h2>
+  {% include "comment-widget.html" %}
+
+{% endblock %}

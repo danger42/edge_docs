@@ -1,0 +1,90 @@
+  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}Supporting multiple Edge UI
+  instances{% endblock %} {% block body %}
+
+  <p>You can install multiple instances of the Edge UI in a high availability scenario. However,
+  after installing the two instances of the Edge UI, you must perform post-installation tasks in
+  order to synchronize the property settings between the two.</p>
+
+  <p>Specifically, you must configure the two UI instances to have the same value for the following
+  properties:</p>
+  <pre class="prettyprint">
+application.secret=<em><strong>value</strong></em>
+mail.smtp.credential=<em><strong>value</strong></em>
+apigee.mgmt.credential=<em><strong>value</strong></em>
+</pre>
+
+  <p>Additionally, if you configure them to use TLS, then you must ensure that you use the same
+  cert and key on both instances.  </p>
+
+  <h2 id="configureedgeuiinstancesusinghttp">Configure Edge UI instances using HTTP</h2>
+
+  <ol>
+    <li>Log in to the node hosting the first Edge UI instances (do not log in to the UI itself, but
+    as a user on the node). </li>
+
+    <li>Open <span style=
+    "font-family:courier new,courier,monospace;">/opt/apigee/edge-ui/conf/apigee.conf</span> in an
+    editor and copy the values of the following properties for later use:<br>
+    <span style=
+    "font-family:courier new,courier,monospace;">mail.smtp.credential="<em><strong>value</strong></em>"<br>
+
+    apigee.mgmt.credential="<em><strong>value</strong></em>"</span></li>
+
+    <li>Open <span style=
+    "font-family:courier new,courier,monospace;">/opt/apigee/edge-ui/conf/application.conf</span> in
+    an editor and copy the values of the following property for later use:<br>
+    <span style=
+    "font-family: &quot;courier new&quot;, courier, monospace;">application.secret="<em><strong>value</strong></em>"</span></li>
+
+    <li>Log in to the node hosting the second Edge UI instances. </li>
+
+    <li>Open <span style=
+    "font-family:courier new,courier,monospace;">/opt/apigee/customer/application/ui.properties</span>
+    on the second UI instance in an editor. If the file does not exist, create it.</li>
+
+    <li>Add the following properties to <span style=
+    "font-family:courier new,courier,monospace;">/opt/apigee/customer/application/ui.properties</span>,
+    including the values that you copied from the first UI instance:<br>
+    <span style=
+    "font-family:courier new,courier,monospace;">conf_application_<strong>application.secret</strong>="<em><strong>value"</strong></em><br>
+
+    conf_apigee_<strong>mail.smtp.credential</strong>="<em><strong>value"</strong></em><br>
+    conf_apigee_<strong>apigee.mgmt.credential</strong>="<em><strong>value"</strong></em></span><br>
+
+    <br>
+    Notice how you prefix these values with either <span style=
+    "font-family:courier new,courier,monospace;">conf_application_</span> or <span style=
+    "font-family:courier new,courier,monospace;">conf_apigee_</span>.</li>
+
+    <li>Save the file.</li>
+
+    <li>Make sure <span style=
+    "font-family:courier new,courier,monospace;">/opt/apigee/customer/application/ui.properties</span>
+    is owned by the <span style=
+    "font-family:courier new,courier,monospace;">apigee</span> user:?<br>
+    <span style="font-family:courier new,courier,monospace;">&gt; chown apigee:apigee
+    /opt/apigee/customer/application/ui.properties</span></li>
+
+    <li>Restart the second UI instance:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt;
+    /opt/apigee/apigee-service/bin/apigee-service edge-ui restart</span></li>
+  </ol>
+
+  <p>Users can now log in to either UI instance.</p>
+
+  <h2 id="configureedgeuiinstancesusingtlshttps">Configure Edge UI instances
+  using TLS/HTTPS</h2>
+
+  <ol>
+    <li>Configure the first UI instance to use TLS/HTTPS as described in <a href=
+    "configuring-ssl-management-ui.html">Configuring TLS for the management UI</a>.</li>
+
+    <li>Configure the second Edge UI instances as described above for HTTP to synchronize the
+    required properties.</li>
+
+    <li>Copy the JKS file containing the cert and key from the first UI instance to the node
+    hosting the second UI instance.</li>
+
+    <li>Configure the second UI instance to use TLS/HTTPS as described in <a href=
+    "configuring-ssl-management-ui.html">Configuring TLS for the management UI</a>.</li>
+  </ol>{% endblock %}

@@ -1,0 +1,123 @@
+  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}Managing LDAP Resources{% endblock %} {% block body %}
+
+  <p>When using the LDAP policy for authentication or DN queries (<a href=
+  "/api-platform/reference/policies/ldap-policy.html">http://apigee.com/docs/api-services/content/ldap-policy</a>),
+  the policy uses an Apigee-side LDAP resource that contains the connection details to your LDAP
+  provider. This section describes how to create and manage LDAP resources via an API.</p>
+
+  <h2 id="createanldapresource">Create an LDAP resource</h2>
+
+  <p>Following is the API for creating an LDAP resource:</p>
+  <pre class="prettyprint">
+/v1/organizations/{org_name}/environments/{environment}/ldapresources
+</pre>
+
+  <p>Following is an annotated XML payload that describes the LDAP resource configuration
+  you&#8217;ll send to create the resource:</p>
+  <pre class="prettyprint">
+&lt;LdapResource name="ldap1"&gt;
+  &lt;Connection&gt;
+    &lt;Hosts&gt; 
+      &lt;Host port="636"&gt;foo.com&lt;/Host&gt; &lt;!-- port is optional: defaults to 389 for ldap:// and 636 for ldaps:// --&gt;
+    &lt;/Hosts&gt;
+    &lt;SSLEnabled&gt;false&lt;/SSLEnabled&gt; &lt;!-- optional, defaults to false --&gt;
+    &lt;Version&gt;3&lt;/Version&gt; &lt;!-- optional, defaults to 3--&gt;
+    &lt;Authentication&gt;simple&lt;/Authentication&gt; &lt;!-- optional, only simple supported --&gt;
+    &lt;ConnectionProvider&gt;jndi|unboundid&lt;/ConnectionProvider&gt; &lt;!-- required --&gt;
+    &lt;ServerSetType&gt;single|round robin|failover&lt;/ServerSetType&gt; &lt;!-- not applicable for jndi --&gt;
+    &lt;LdapConnectorClass&gt;com.custom.ldap.MyProvider&lt;/LdapConnectorClass&gt; &lt;!-- If using a custom LDAP provider, the fully qualified class --&gt;
+  &lt;/Connection&gt;
+  &lt;ConnectPool enabled="true"&gt; &lt;!-- enabled is optional, defaults to true --&gt;
+    &lt;Timeout&gt;30000&lt;/Timeout&gt; &lt;!-- optional, in milliseconds; if not set, no timeout --&gt;
+    &lt;Maxsize&gt;50&lt;/Maxsize&gt; &lt;!-- optional; if not set, no max connections --&gt;
+    &lt;Prefsize&gt;30&lt;/Prefsize&gt; &lt;!-- optional; if not set, no pref size --&gt;
+    &lt;Initsize&gt;&lt;/Initsize&gt; &lt;!-- optional; if not set, defaults to 1 --&gt;
+    &lt;Protocol&gt;&lt;/Protocol&gt; &lt;!-- optional; if not set, defaults to 'ssl plain' --&gt;
+  &lt;/ConnectPool&gt;
+  &lt;Admin&gt;
+    &lt;DN&gt;cn=admin,dc=apigee,dc=com&lt;/DN&gt;
+    &lt;Password&gt;secret&lt;/Password&gt;
+  &lt;/Admin&gt;
+&lt;/LdapResource&gt;
+</pre>
+
+  <h3 id="createanldapresource-example">Example</h3>
+
+  <p>The following example creates an LDAP resource named <strong>ldap1:</strong></p>
+  <pre class="prettyprint">
+curl -X POST -H "Content-Type: application/xml" \
+https://api.enterprise.apigee.com/v1/organizations/myorg/environments/test/ldapresources \
+-u {apigee_email}:{password} -d \
+'&lt;LdapResource name="ldap1"&gt;
+  &lt;Connection&gt;
+    &lt;Hosts&gt; 
+      &lt;Host&gt;foo.com&lt;/Host&gt;
+    &lt;/Hosts&gt;
+    &lt;SSLEnabled&gt;false&lt;/SSLEnabled&gt;
+    &lt;Version&gt;3&lt;/Version&gt; 
+    &lt;Authentication&gt;simple&lt;/Authentication&gt; 
+    &lt;ConnectionProvider&gt;unboundid&lt;/ConnectionProvider&gt;
+    &lt;ServerSetType&gt;round robin&lt;/ServerSetType&gt;
+  &lt;/Connection&gt;
+  &lt;ConnectPool enabled="true"&gt; 
+    &lt;Timeout&gt;30000&lt;/Timeout&gt; 
+    &lt;Maxsize&gt;50&lt;/Maxsize&gt; 
+    &lt;Prefsize&gt;30&lt;/Prefsize&gt; 
+    &lt;Initsize&gt;&lt;/Initsize&gt; 
+    &lt;Protocol&gt;&lt;/Protocol&gt; 
+  &lt;/ConnectPool&gt;
+  &lt;Admin&gt;
+    &lt;DN&gt;cn=admin,dc=apigee,dc=com&lt;/DN&gt;
+    &lt;Password&gt;secret&lt;/Password&gt;
+  &lt;/Admin&gt;
+&lt;/LdapResource&gt;'
+</pre>
+
+  <h2 id="listallldapresources">List all LDAP Resources</h2>
+  <pre class="prettyprint">
+curl https://api.enterprise.apigee.com/v1/organizations/myorg/environments/test/ldapresources \
+-u {apigee_email}:{password}
+</pre>
+
+  <h2 id="getthedetailsofanldapresource">Get the Details of an LDAP Resource</h2>
+  <pre class="prettyprint">
+curl https://api.enterprise.apigee.com/v1/organizations/myorg/environments/test/ldapresources/ldap1 \
+-u {apigee_email}:{password}
+</pre>
+
+  <h2 id="updateanldapresource">Update an LDAP resource</h2>
+  <pre class="prettyprint">
+curl -X POST -H "Content-Type: application/xml" \
+https://api.enterprise.apigee.com/v1/organizations/myorg/environments/test/ldapresources/ldap1 \
+-u {apigee_email}:{password} -d \
+'&lt;LdapResource name="ldap1"&gt;
+  &lt;Connection&gt;
+    &lt;Hosts&gt; 
+      &lt;Host&gt;foo.com&lt;/Host&gt;
+    &lt;/Hosts&gt;
+    &lt;SSLEnabled&gt;false&lt;/SSLEnabled&gt;
+    &lt;Version&gt;3&lt;/Version&gt; 
+    &lt;Authentication&gt;simple&lt;/Authentication&gt; 
+    &lt;ConnectionProvider&gt;unboundid&lt;/ConnectionProvider&gt;
+    &lt;ServerSetType&gt;round robin&lt;/ServerSetType&gt;
+  &lt;/Connection&gt;
+  &lt;ConnectPool enabled="true"&gt; 
+    &lt;Timeout&gt;50000&lt;/Timeout&gt; 
+    &lt;Maxsize&gt;50&lt;/Maxsize&gt; 
+    &lt;Prefsize&gt;30&lt;/Prefsize&gt; 
+    &lt;Initsize&gt;&lt;/Initsize&gt; 
+    &lt;Protocol&gt;&lt;/Protocol&gt; 
+  &lt;/ConnectPool&gt;
+  &lt;Admin&gt;
+    &lt;DN&gt;cn=admin,dc=apigee,dc=com&lt;/DN&gt;
+    &lt;Password&gt;secret&lt;/Password&gt;
+  &lt;/Admin&gt;
+&lt;/LdapResource&gt;'
+</pre>
+
+  <h2 id="deleteanldapresource">Delete an LDAP Resource</h2>
+  <pre class="prettyprint">
+curl -X DELETE \
+https://api.enterprise.apigee.com/v1/organizations/myorg/environments/test/ldapresources/ldap1 \
+-u {apigee_email}:{password}
+</pre>{% endblock %}

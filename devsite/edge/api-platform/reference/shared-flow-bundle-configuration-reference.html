@@ -1,0 +1,431 @@
+  {% extends "_base.html" %} {% block title %}Shared flow bundle configuration reference{% endblock %} {% block body %}
+
+  <p>A shared flow is reusable functionality similar to an API proxy. Much of the content of this
+  reference will be familiar if you're already acquainted with API proxies.</p>
+
+  <p>If you are learning how to build shared flow, begin with the topic <a href=
+  "/api-platform/fundamentals/shared-flows.html">Reusable shared flows</a>.</p>
+
+  <h2 id="sharedflowbundlestructure">Shared flow bundle structure</h2>
+
+  <p>A shared flow bundle consists of the following configuration:</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <td><strong>Base Configuration</strong></td>
+
+        <td>Primary configuration settings. See <a href="#baseconfig">Base Configuration.</a></td>
+      </tr>
+
+      <tr>
+        <td><strong>Policies</strong></td>
+
+        <td>XML-formatted configuration files that conform to the Apigee Edge policy schemas. See
+        <a href="#policies">Policies</a>.</td>
+      </tr>
+
+      <tr>
+        <td><strong>Resources</strong></td>
+
+        <td>Scripts, JAR files, and XSLT files referenced by policies to execute custom logic. See
+        <a href="#resources">Resources</a>.</td>
+      </tr>
+
+      <tr>
+        <td><strong>SharedFlows</strong></td>
+
+        <td>Shared flows included in this bundle. See <a href="#sharedflows">Shared flows</a>.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>The components in the table above are defined by configuration files in the following
+  directory structure:</p>
+
+  <p><img alt="" src="/api-platform/images/sharedflowbundlehierarchy.png"></p>
+
+  <h3 id="sharedflowbundlestructure-configurationfilesanddirectorystructureofasharedflowbundle">
+  Configuration files and directory structure of a shared flow bundle</h3>
+
+  <p>This section explain the configuration files and directory structure of a shared flow
+  bundle.</p>
+
+  <ul>
+    <li><a href="#baseconfig">Base Configuration</a></li>
+
+    <li><a href="#policies">Policies</a></li>
+
+    <li><a href="#sharedflows">Shared Flows</a></li>
+
+    <li><a href="#resources">Resources</a></li>
+  </ul>
+
+  <h2 id="baseconfig">Base Configuration</h2>
+
+  <p>The base configuration file is located at the bundle's root directory. Its name is the name of
+  the bundle.</p>
+  <pre class="prettyprint">
+/sharedflowbundle/traffic-management-shared.xml
+</pre>
+
+  <p>The base configuration defines the contents of the shared flow bundle, along with information
+  for tracking the bundle's revision history.</p>
+  <pre class="prettyprint">
+&lt;SharedFlowBundle revision="2" name="traffic-management-shared"&gt;
+    &lt;ConfigurationVersion majorVersion="4" minorVersion="0"/&gt;
+    &lt;CreatedAt&gt;1478637529218&lt;/CreatedAt&gt;
+    &lt;CreatedBy&gt;gladys@example.com&lt;/CreatedBy&gt;
+    &lt;Description&gt;Shared flow to moderate API traffic&lt;/Description&gt;
+    &lt;DisplayName&gt;traffic-management-shared&lt;/DisplayName&gt;
+    &lt;LastModifiedAt&gt;1481573374023&lt;/LastModifiedAt&gt;
+    &lt;LastModifiedBy&gt;gladys@example.com&lt;/LastModifiedBy&gt;
+    &lt;Policies&gt;
+        &lt;Policy&gt;Auth-Flow-Callout&lt;/Policy&gt;
+        &lt;Policy&gt;Extract-Token&lt;/Policy&gt;
+        &lt;Policy&gt;Spike-Arrest&lt;/Policy&gt;
+    &lt;/Policies&gt;
+    &lt;Resources&gt;
+        &lt;Resource&gt;jsc://extract-token.js&lt;/Resource&gt;
+    &lt;/Resources&gt;
+    &lt;SharedFlows&gt;
+        &lt;SharedFlow&gt;default&lt;/SharedFlow&gt;
+    &lt;/SharedFlows&gt;
+&lt;/SharedFlowBundle&gt;
+</pre>
+
+  <h3 id="baseconfiguration-baseconfigurationattributes">Base Configuration Attributes</h3>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+
+        <th>Description</th>
+
+        <th>Default</th>
+
+        <th>Required?</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td><b><code>SharedFlowBundle</code></b></td>
+
+        <td colspan="3"> </td>
+      </tr>
+
+      <tr>
+        <td><code>name</code></td>
+
+        <td>The name of the shared flow bundle, which must be unique within an organization. The
+        characters you are allowed to use in the name are restricted to the following:
+        <code>A-Za-z0-9_-</code></td>
+
+        <td>N/A</td>
+
+        <td>Yes</td>
+      </tr>
+
+      <tr>
+        <td><code>revision</code></td>
+
+        <td>The revision number of the shared flow bundle configuration. You do not need to
+        explicitly set the revision number, since Apigee Edge automatically tracks the current
+        revision of the shared flow.</td>
+
+        <td>N/A</td>
+
+        <td>No</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="baseconfiguration-baseconfigurationelements">Base Configuration Elements</h3>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+
+        <th>Description</th>
+
+        <th>Default</th>
+
+        <th>Required?</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td><b><code>SharedFlowBundle</code></b></td>
+
+        <td colspan="3"> </td>
+      </tr>
+
+      <tr>
+        <td><code>ConfigurationVersion</code></td>
+
+        <td>The version of the shared flow bundle configuration schema to which this shared flow
+        conforms. The only supported value currently is majorVersion 4 and minorVersion 0. This
+        setting may be used in the future to enable evolution of the shared flow bundle
+        format.</td>
+
+        <td>4.0</td>
+
+        <td>No</td>
+      </tr>
+
+      <tr>
+        <td><code>CreatedAt</code> and <code>CreatedBy</code></td>
+
+        <td>The date/time (in epoch time) that the shared flow bundle was created, along with the
+        email of the user who created it.</td>
+
+        <td> </td>
+
+        <td> </td>
+      </tr>
+
+      <tr>
+        <td><code>Description</code></td>
+
+        <td>A textual description of the shared flow. If provided, the description will display in
+        the Edge management UI.</td>
+
+        <td>N/A</td>
+
+        <td>No</td>
+      </tr>
+
+      <tr>
+        <td><code>DisplayName</code></td>
+
+        <td>A user-friendly name that may be different from the <code>name</code> attribute of the
+        shared flow configuration.</td>
+
+        <td>N/A</td>
+
+        <td>No</td>
+      </tr>
+
+      <tr>
+        <td><code>LastModifiedAt</code> and <code>LastModifiedBy</code></td>
+
+        <td>The date/time (in epoch time) that the shared flow bundle was last modified, along with
+        the email of the user who modified it.</td>
+
+        <td> </td>
+
+        <td> </td>
+      </tr>
+
+      <tr>
+        <td><code>Policies</code></td>
+
+        <td>A list of policies in the <code>/policies</code> directory of this shared flow. You
+        will normally only see this element when the shared flow was created using the Edge
+        management UI. This is simply a 'manifest' setting, designed to provide visibility into the
+        contents of the shared flow.</td>
+
+        <td>N/A</td>
+
+        <td>No</td>
+      </tr>
+
+      <tr>
+        <td><code>ProxyEndpoints</code></td>
+
+        <td>A list of ProxyEndpoints in the <code>/proxies</code> directory of this shared flow.
+        You will normally only see this element when the shared flow was created using the Edge
+        management UI. This is simply a 'manifest' setting, designed to provide visibility into the
+        contents of the shared flow.</td>
+
+        <td>N/A</td>
+
+        <td>No</td>
+      </tr>
+
+      <tr>
+        <td><code>Resources</code></td>
+
+        <td>A list of resources (JavaScript, Python, Java, XSLT) in the <code>/resources</code>
+        directory of this shared flow. You will normally only see this element when the shared flow
+        was created using the Edge management UI. This is simply a 'manifest' setting, designed to
+        provide visibility into the contents of the shared flow.</td>
+
+        <td>N/A</td>
+
+        <td>No</td>
+      </tr>
+
+      <tr>
+        <td><code>SharedFlows</code></td>
+
+        <td>
+          Specifies the shared flow that this bundle contains.
+
+          <p>Note that currently, this element supports only one child &lt;SharedFlow&gt;. Only one
+          shared flow may be added to a shared flow bundle.</p>
+        </td>
+
+        <td>N/A</td>
+
+        <td>Yes</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="sharedflows">Shared flows</h2>
+  <pre class="prettyprint">
+/sharedflowbundle/sharedflows/default.xml
+</pre>
+
+  <p>The SharedFlow configuration defines the sequence in which flow elements should be executed.
+  The &lt;SharedFlow&gt; element's &lt;Step&gt; child elements each specify a part of the sequence,
+  such as a call to a policy.</p>
+
+  <p>The following SharedFlow configuration specifies three policies to be executed in a
+  top-to-bottom sequence (left to right in the management console), with the <a href=
+  "/api-platform/reference/policies/spike-arrest-policy.html">Spike Arrest policy</a> first and a
+  <a href="/api-platform/reference/policies/flow-callout-policy.html">Flow Callout policy</a>
+  last.</p>
+  <pre class="prettyprint">
+&lt;SharedFlow name="default"&gt;
+    &lt;Step&gt;
+        &lt;Name&gt;Spike-Arrest&lt;/Name&gt;
+    &lt;/Step&gt;
+    &lt;Step&gt;
+        &lt;Name&gt;Extract-Token&lt;/Name&gt;
+    &lt;/Step&gt;
+    &lt;Step&gt;
+        &lt;Name&gt;Auth-Flow-Callout&lt;/Name&gt;
+    &lt;/Step&gt;
+&lt;/SharedFlow&gt;
+</pre>
+
+  <h3 id="sharedflows-sharedflowconfigurationattributes">Shared flow configuration attributes</h3>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+
+        <th>Description</th>
+
+        <th>Default</th>
+
+        <th>Required?</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td><b><code>SharedFlow</code></b></td>
+
+        <td colspan="3"> </td>
+      </tr>
+
+      <tr>
+        <td><code>name</code></td>
+
+        <td>The name of the shared flow, which must be unique within an organization. The
+        characters you are allowed to use in the name are restricted to the following:
+        <code>A-Za-z0-9_-</code></td>
+
+        <td>N/A</td>
+
+        <td>Yes</td>
+      </tr>
+
+      <tr>
+        <td><code>revision</code></td>
+
+        <td>The revision number of the shared flow configuration. You do not need to explicitly set
+        the revision number, since Apigee Edge automatically tracks the current revision of the
+        shared flow.</td>
+
+        <td>N/A</td>
+
+        <td>No</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="sharedflows-sharedflowconfigurationelements">Shared flow configuration elements</h3>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+
+        <th>Description</th>
+
+        <th>Default</th>
+
+        <th>Required?</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td><strong><code>SharedFlow</code></strong></td>
+
+        <td>Defines the sequence of policies in the shared flow.</td>
+
+        <td>N/A</td>
+
+        <td>Yes</td>
+      </tr>
+
+      <tr>
+        <td><b><code>Step</code></b></td>
+
+        <td>Defines a step -- a stage in the flow's sequence.</td>
+
+        <td>N/A</td>
+
+        <td>Yes</td>
+      </tr>
+
+      <tr>
+        <td><b><code>Name</code></b></td>
+
+        <td>Specifies the name of the item referenced by the step. This element's value should be
+        the same as the item's unique identifier, such as a policy's name attribute value.</td>
+
+        <td>N/A</td>
+
+        <td>Yes</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="policies">Policies</h2>
+  <pre class="prettyprint">
+/sharedflowbundle/policies
+</pre>
+
+  <p>As in an API proxy, in a shared flow bundle the <code>/policies</code> directory contains
+  configuration XML for all policies available to be attached to the shared flow in the bundle.
+  Policies share a subset of elements, though this subset is augment with elements that are
+  specific to the policy. For more about how to configure a policy, see the topic about the policy
+  you want. You can also reach these from <a href=
+  "/api-platform/reference/policies/reference-overview-policy.html">Policy reference
+  overview</a>.</p>
+
+  <h2 id="resources">Resources</h2>
+  <pre class="prettyprint">
+/sharedflowbundle/resources
+</pre>
+
+  <p>Resources are scripts, code, and XSL transformations that can be attached to shared flows
+  using policies. These appear in the Scripts section of the shared flow editor in the management
+  UI.</p>
+
+  <p>See <a href="/api-platform/develop/resource-files.html">Resource files</a> for the supported
+  resource types.</p>
+
+  <p>Post questions to the <a href=
+  "https://community.apigee.com/content/apigee-customer-support">Apigee Developer Forum</a>.</p>{% endblock %}

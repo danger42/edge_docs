@@ -1,0 +1,616 @@
+  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}Monitoring Best Practices{% endblock %} {% block body %}
+
+  <h2 id="monitoringalerts">Monitoring Alerts</h2>
+
+  <p>Apigee Edge allows you to forward alerts to syslogs or external monitoring systems/tools when
+  an error or a failure occurs due to failure of an event. These alerts can be system-level or
+  application-level alerts/events. Application level alerts are mostly custom alerts that are
+  created based on events generated. The network administrator usually configures the custom
+  conditions. For more information on alerts, contact Apigee Support.</p>
+
+  <h2 id="settingalertthresholds">Setting Alert Thresholds</h2>
+
+  <p>Set a threshold after which an alert needs to be generated. What you set depends on your
+  hardware configuration. Threshold should be set in relation to your capacity. For example, Apigee
+  Edge might be too low if you only have 6GB capacity. You can assign threshold with equal to (=)
+  or greater than (&gt;) criterion. You can also specify a time interval between two consecutive
+  alerts generation. You can use the hours/minutes/seconds option.</p>
+
+  <h2 id="criteriaforsettingsystemlevelalerts">Criteria for Setting System-level Alerts</h2>
+
+  <p>The following table describes the criteria:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>
+          <p><strong>Alert</strong></p>
+        </th>
+
+        <th>
+          <p><strong>Suggested Threshold</strong></p>
+        </th>
+
+        <th>
+          <p><strong>Description</strong></p>
+        </th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td style="height:40px;">
+          <p>Low memory</p>
+        </td>
+
+        <td style="height:40px;">
+          <p>500MB</p>
+        </td>
+
+        <td style="height:40px;">
+          <p>Memory is too low to start a component</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td style="height:24px;">
+          <p>Low disk space (/var/log)</p>
+        </td>
+
+        <td style="height:24px;">
+          <p>8GB</p>
+        </td>
+
+        <td style="height:24px;">
+          <p>Disk space has fallen too low.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td style="height:28px;">
+          <p>High load</p>
+        </td>
+
+        <td style="height:28px;">
+          <p>3+</p>
+        </td>
+
+        <td style="height:28px;">
+          <p>Processes waiting to run have increased unexpectedly</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>Process stopped</p>
+        </td>
+
+        <td>
+          <p>N/A, a Boolean value of true or false</p>
+        </td>
+
+        <td>
+          <p>Apigee Java process in the system has stopped</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <aside class="note"><b>Note:</b> For disk space, monitor all mounted partitions.</aside>
+
+  <h2 id="checkingonapigeespecificandthirdpartyports">Checking on Apigee-specific and Third-party
+  Ports</h2>
+
+  <p>Monitor the following ports to make sure they&#8217;re active</p>
+
+  <ul>
+    <li>Port 4526, 4527 and 4528 on Management Server, Router and Message Processor</li>
+
+    <li>Port 1099, 1100 and 1101 on Management Server, Router and Message Processor</li>
+
+    <li>Port 8081 and 15999 on Routers</li>
+
+    <li>Port 8082 and 8998 on Message Processors</li>
+
+    <li>Port 8080 on Management Server</li>
+  </ul>
+
+  <p>Check the following third-party ports to make sure they&#8217;re active:</p>
+
+  <ul>
+    <li>Qpid port 5672</li>
+
+    <li>Postgres port 5432</li>
+
+    <li>Cassandra port 7000, 7199, 9042, 9160</li>
+
+    <li>ZooKeeper port 2181</li>
+
+    <li>OpenLDAP port 10389</li>
+  </ul>
+
+  <p>In order to determine which port each Apigee component is listening for API calls on, issue
+  the following API calls to the Management Server (which is generally on port 8080):</p>
+  <pre class="prettyprint">
+curl -v -u &lt;username&gt;:&lt;password&gt; http://&lt;host&gt;:&lt;port&gt;/v1/servers?pod=gateway&amp;region=dc-1
+curl -v -u &lt;username&gt;:&lt;password&gt; http:// &lt;host&gt;:&lt;port&gt;/v1/servers?pod=central&amp;region=dc-1
+curl -v -u &lt;username&gt;:&lt;password&gt; http:// &lt;host&gt;:&lt;port&gt;/v1/servers?pod=analytics&amp;region=dc-1
+</pre>
+
+  <p>The output of these commands will contain sections similar to that shown below.  The
+  "<span style="font-family:courier new,courier,monospace;">http.management.port</span>" section
+  gives the port number for the specified component.</p>
+  <pre class="prettyprint">
+{
+  "externalHostName" : "localhost",
+  "externalIP" : "111.222.333.444",
+  "internalHostName" : "localhost",
+  "internalIP" : "111.222.333.444",
+  "isUp" : true,
+  "pod" : "gateway",
+  "reachable" : true,
+  "region" : "default",
+  "tags" : {
+    "property" : [ {
+      "name" : "Profile",
+      "value" : "Router"
+    }, {
+      "name" : "rpc.port",
+      "value" : "4527"
+    }, {
+<strong>      "name" : "http.management.port",
+      "value" : "8081"</strong>
+    }, {
+      "name" : "jmx.rmi.port",
+      "value" : "1100"
+    } ]
+  },
+<strong>  "type" : [ "router" ],
+  "uUID" : "2d4ec885-e20a-4173-ae87-10be38b35750"</strong>
+}
+</pre>
+
+  <h2 id="viewinglogs">Viewing Logs</h2>
+
+  <p>Log files keep track of messages regarding the event/operation of the system. Messages appear
+  in the log when processes begin and complete or when an error condition occurs. By viewing log
+  files, you can obtain information about system components, for example, CPU, memory, disk, load,
+  processes, so on, before and after attaining a failed state. This also allows you to identify and
+  diagnose the source of current system problems or help you predict potential system
+  problems. </p>
+
+  <p>For example, a typical system log of a component contains following entries as seen below:</p>
+  <pre class="prettyprint">
+TimeStamp = 25/01/13 19:25 ; NextDelay = 30
+Memory
+HeapMemoryUsage = {used = 29086176}{max = 64880640} ;    
+NonHeapMemoryUsage = {init = 24313856}{committed = 57278464} ;
+Threading
+PeakThreadCount = 53 ; ThreadCount = 53 ;
+OperatingSystem
+SystemLoadAverage = 0.25 ;
+</pre>
+
+  <p>You can edit the /opt/apigee/conf/logback.xml file to control the logging mechanism without
+  having to restart a server. The logback.xml file contains the following property that sets the
+  frequency that the logging mechanism checks the logback.xml file for configuration changes:</p>
+  <pre class="prettyprint">
+&lt;configuration scan="true" scanPeriod="30 seconds" &gt;
+</pre>
+
+  <p>By default, the logging mechanism checks for changes every minute. If you omit the time units
+  to the <span style="font-family:courier new,courier,monospace;">scanPeriod</span> attribute, it
+  defaults to milliseconds.</p>
+
+  <aside class="note"><b>Note:</b> Setting the scanPeriod attribute to a short interval might
+  affect system performance. </aside>
+
+  <p>The following table tells the log files location of Apigee Edge Private Cloud components.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>
+          <p><strong>Components</strong></p>
+        </th>
+
+        <th>
+          <p><strong>Location</strong></p>
+        </th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td>
+          <p>Management Server</p>
+        </td>
+
+        <td>
+          <p>opt/apigee/var/log/edge-management-server</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>Router</p>
+        </td>
+
+        <td>
+          <p>opt/apigee/var/log/edge-router</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>Message Processor</p>
+        </td>
+
+        <td>
+          <p>opt/apigee/var/log/edge-message-processor</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>Qpid Server</p>
+        </td>
+
+        <td>
+          <p>opt/apigee/var/log/edge-qpid-server</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>Apigee Postgres Server</p>
+        </td>
+
+        <td>
+          <p>opt/apigee/var/log/edge-postgres-server</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>Edge UI</p>
+        </td>
+
+        <td>
+          <p>opt/apigee/var/log/edge-ui</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>ZooKeeper</p>
+        </td>
+
+        <td>
+          <p>opt/apigee/var/log/apigee-zookeeper</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>OpenLDAP</p>
+        </td>
+
+        <td>
+          <p>opt/apigee/var/log/apigee-openldap</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>Cassandra</p>
+        </td>
+
+        <td>
+          <p>opt/apigee/var/log/apigee-cassandra</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>Qpidd</p>
+        </td>
+
+        <td>
+          <p>opt/apigee/var/log/apigee-qpidd</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>PostgreSQL database</p>
+        </td>
+
+        <td>
+          <p>opt/apigee/var/log/apigee-postgresql</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="enablingdebuglogsforthemessageprocessorandedgeui">Enabling debug logs for the Message
+  Processor and Edge UI</h2>
+
+  <p>To enable debug logs for Message Processor:</p>
+
+  <ol>
+    <li>On the Message Processor node, edit <span style=
+    "font-family:courier new,courier,monospace;">/opt/apigee/customer/application/messsage-processor.properties</span>.
+    If that file does not exist, create it.</li>
+
+    <li>Add the following property to the file:<br>
+    <span style=
+    "font-family:courier new,courier,monospace;">conf_system_log.level=DEBUG</span></li>
+
+    <li>Restart the Message Processor:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt;
+    /opt/apigee/apigee-service/bin/apigee-service edge-message-processor restart</span></li>
+  </ol>
+
+  <p>To enable debug logs for Edge UI:</p>
+
+  <ol>
+    <li>On the Edge UI node, edit <span style=
+    "font-family:courier new,courier,monospace;">/opt/apigee/customer/application/ui.properties</span>.
+    If that file does not exist, create it.</li>
+
+    <li>Add the following property to the file:<br>
+    <span style=
+    "font-family:courier new,courier,monospace;">conf_application_logger.application=DEBUG</span></li>
+
+    <li>Restart the Edge UI:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt;
+    /opt/apigee/apigee-service/bin/apigee-service edge-ui restart</span></li>
+  </ol>
+
+  <h2 id="monitoringtools">Monitoring Tools</h2>
+
+  <p>Monitoring tools such as Nagios, Collectd, Graphite, Splunk, Sumologic, and Monit can help you
+  monitor your entire enterprise environment and business processes.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th colspan="2">
+          <p><strong>Component</strong></p>
+        </th>
+
+        <th>
+          <p style="margin-left:5.65pt;"><strong>Nagios</strong></p>
+        </th>
+
+        <th>
+          <p style="margin-left:5.65pt;"><strong>Collectd</strong></p>
+        </th>
+
+        <th>
+          <p style="margin-left:5.65pt;"><strong>Splunk</strong></p>
+        </th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td rowspan="4">
+          <p>System-level checks</p>
+        </td>
+
+        <td>
+          <p>CPU utilization</p>
+        </td>
+
+        <td>
+          <p align="center">?</p>
+        </td>
+
+        <td>
+          <p align="center">?</p>
+        </td>
+
+        <td> </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>Free/used memory</p>
+        </td>
+
+        <td>
+          <p align="center">?</p>
+        </td>
+
+        <td>
+          <p align="center">?</p>
+        </td>
+
+        <td> </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>Disk space usage</p>
+        </td>
+
+        <td>
+          <p align="center">?</p>
+        </td>
+
+        <td>
+          <p align="center">?</p>
+        </td>
+
+        <td> </td>
+      </tr>
+
+      <tr>
+        <td style="height:29px;">
+          <p>Network statistics</p>
+        </td>
+
+        <td style="height:29px;">
+          <p align="center">?</p>
+        </td>
+
+        <td style="height:29px;">
+          <p align="center">?</p>
+        </td>
+
+        <td style="height:29px;"> </td>
+      </tr>
+
+      <tr>
+        <td colspan="2" style="height:29px;">
+          <p>Processes</p>
+        </td>
+
+        <td style="height:29px;">
+          <p align="center">?</p>
+        </td>
+
+        <td style="height:29px;"> </td>
+
+        <td style="height:29px;"> </td>
+      </tr>
+
+      <tr>
+        <td colspan="2" style="height:29px;">
+          <p>API checks</p>
+        </td>
+
+        <td style="height:29px;">
+          <p align="center">?</p>
+        </td>
+
+        <td style="height:29px;"> </td>
+
+        <td style="height:29px;"> </td>
+      </tr>
+
+      <tr>
+        <td colspan="2" style="height:29px;">
+          <p>JMX</p>
+        </td>
+
+        <td style="height:29px;">
+          <p align="center">?</p>
+        </td>
+
+        <td style="height:29px;"> </td>
+
+        <td style="height:29px;"> </td>
+      </tr>
+
+      <tr>
+        <td colspan="2" style="height:29px;">
+          <p>Java</p>
+        </td>
+
+        <td style="height:29px;"> </td>
+
+        <td style="height:29px;">
+          <p align="center">?</p>
+        </td>
+
+        <td style="height:29px;"> </td>
+      </tr>
+
+      <tr>
+        <td colspan="2" style="height:29px;">
+          <p>Log files</p>
+        </td>
+
+        <td style="height:29px;"> </td>
+
+        <td style="height:29px;"> </td>
+
+        <td style="height:29px;">
+          <p align="center">?</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td rowspan="3">
+          <p>Critical events</p>
+        </td>
+
+        <td>
+          <p>Rate Limit hit</p>
+        </td>
+
+        <td> </td>
+
+        <td> </td>
+
+        <td>
+          <p align="center">?</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>Backend server (Hybris or SharePoint) cannot be reached</p>
+        </td>
+
+        <td> </td>
+
+        <td> </td>
+
+        <td>
+          <p align="center">?</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td style="height:27px;">
+          <p>FaaS (STS) cannot be reached</p>
+        </td>
+
+        <td style="height:27px;"> </td>
+
+        <td style="height:27px;"> </td>
+
+        <td style="height:27px;">
+          <p align="center">?</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td rowspan="2" style="height:27px;">
+          <p>Warning events</p>
+        </td>
+
+        <td style="height:27px;">
+          <p>SMTP server cannot be reached</p>
+        </td>
+
+        <td style="height:27px;"> </td>
+
+        <td style="height:27px;"> </td>
+
+        <td style="height:27px;">
+          <p align="center">?</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td style="height:28px;">
+          <p>SLA&#8217;s violated</p>
+        </td>
+
+        <td style="height:28px;"> </td>
+
+        <td style="height:28px;"> </td>
+
+        <td style="height:28px;">
+          <p align="center">?</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  {% endblock %}

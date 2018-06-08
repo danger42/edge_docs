@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html devsite>
+  <head>
+    <title>Service Callout Policy Error Codes</title>
+  </head>
+  <body>
+  <p>This section describes the error messages and flow variables that are set when this policy
+  triggers an error. This information is important to know if you are developing fault rules for a
+  proxy. To learn more, see <a href=
+  "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html">What you need to know
+  about policy errors</a> and <a href="/api-platform/fundamentals/fault-handling.html">Handling
+  faults</a>.</p>
+
+  <h3>Runtime errors</h3>
+
+  <p>These errors can occur when the policy executes.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th scope="col" width="281">Error name</th>
+
+        <th scope="col" width="49">HTTP status</th>
+
+        <th scope="col" width="875">Cause</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td><code>RequestVariableNotMessageType</code></td>
+
+        <td>500</td>
+
+        <td>The Request variable specified in the policy is not of type Message. For example, if
+        it's a string or other non-message type, you'll see this error.</td>
+      </tr>
+
+      <tr>
+        <td><code>RequestVariableNotRequest\<br>
+        MessageType</code></td>
+
+        <td>500</td>
+
+        <td>The Request variable specified in the policy is not of type Request Message. For
+        example, if it's a Response type, you'll see this error.</td>
+      </tr>
+
+      <tr>
+        <td><code>ExecutionFailed</code></td>
+
+        <td>500</td>
+
+        <td>
+          <p>This error can occur when:</p>
+
+          <ul>
+            <li>the policy is asked to handle input that is malformed or otherwise invalid.</li>
+
+            <li>the backend target service returns an error status (by default, 4xx or 5xx).</li>
+          </ul>
+        </td>
+      </tr>
+
+      <tr>
+        <td><code>InvalidExecutionState</code></td>
+
+        <td>500</td>
+
+        <td> </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3> </h3>
+
+  <h3>Deployment errors</h3>
+
+  <p>These errors can occur when you deploy a proxy containing this policy.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th scope="col" width="271">Error name</th>
+
+        <th scope="col" width="379">Occurs when</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td><code>URLMissing</code></td>
+
+        <td>The <code>&lt;URL&gt;</code> element inside <code>&lt;HTTPTargetConnection&gt;</code>
+        is missing or empty.</td>
+      </tr>
+
+      <tr>
+        <td><code>ConnectionInfoMissing</code></td>
+
+        <td>This error happens if the policy does not have an
+        <code>&lt;HTTPTargetConnection&gt;</code> or <code>&lt;LocalTargetConnection&gt;</code>
+        element.</td>
+      </tr>
+
+      <tr>
+        <td><code>InvalidTimeoutValue</code></td>
+
+        <td>This error happens if the <code>&lt;Timeout&gt;</code> value is negative or zero.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Fault variables</h3>
+
+  <p>These variables are set when a runtime error occurs. For more information, see <a href=
+  "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html">What you need to know
+  about policy errors</a>.</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <th width="324">Variables set <code><span style="font-size: 10pt">(<a href=
+        "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html">Learn
+        more</a>)</span></code></th>
+
+        <th width="428">Where</th>
+
+        <th width="428">Example</th>
+      </tr>
+
+      <tr>
+        <td width="324"><code>[prefix].[policy_name].failed</code></td>
+
+        <td width="428">
+          <p>The <code>[prefix]</code> is <code><strong>servicecallout</strong></code>.<br>
+          <code>[policy_name]:</code> The name of the policy to check.</p>
+        </td>
+
+        <td width="428"><code>servicecallout.SC-GetUserData.failed = true</code></td>
+      </tr>
+
+      <tr>
+        <td><code>fault.[error_name]</code></td>
+
+        <td><code>[error_name]</code> = The specific error name to check for as listed in the table
+        above.</td>
+
+        <td><code>fault.name = "RequestVariableNotMessageType"</code></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Example error response</h3>
+
+  <aside class="note"><b>Note:</b> For error handling, the best practice is to trap the
+  <code>errorcode</code> part of the error response. Do not rely on the text in the
+  <code>faultstring</code>, because it could change.</aside>
+  <pre class="prettyprint">
+{  
+   "fault":{  
+      "detail":{  
+         "errorcode":"steps.servicecallout.RequestVariableNotMessageType"
+      },
+      "faultstring":"ServiceCallout[ServiceCalloutGetMockResponse]: 
+            request variable data_str value is not of type Message"
+   }
+}
+</pre>
+
+  <h3>Example fault rule</h3>
+  <pre class="prettyprint">
+&lt;faultrule name="VariableOfNonMsgType"&gt;&lt;/faultrule&gt;&lt;FaultRule name="RequestVariableNotMessageType"&gt;
+    &lt;Step&gt;
+        &lt;Name&gt;AM-RequestVariableNotMessageType&lt;/Name&gt;
+    &lt;/Step&gt;
+    &lt;Condition&gt;(fault.name = "RequestVariableNotMessageType")&lt;/Condition&gt;
+&lt;/FaultRule&gt;
+</pre>
+  </body>
+</html>

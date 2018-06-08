@@ -1,0 +1,456 @@
+{% extends "_base.html" %} {% block title %}About message templates{% endblock %} {% block body %}
+
+<p>
+This topic discusses how to use message templates in API proxies.
+</p>
+<h2 id="what-is-a-message-template">What is a message template?</h2>
+
+
+<p>
+A <strong>message template</strong> permits you to perform <strong>variable string substitution</strong> in certain policy and TargetEndpoint elements. This feature, where supported, lets you populate strings dynamically when a proxy executes.
+</p>
+<p>
+You can include any combination of flow variable references and literal text in a message template. Flow variable names must be enclosed in curly braces, while any text not in curly braces is output as literal text.
+</p>
+<p>
+See also <a href="#where-can-you-use-message-templates">Where can you use message templates?</a>
+</p>
+<h3 id="example">Example</h3>
+
+
+<p>
+	For example, the Assign Message policy lets you use a message template within in the <code>&lt;Payload&gt;</code> element:<br>
+
+</p>
+
+
+
+<pre class="prettyprint">&lt;AssignMessage name="set-dynamic-content">
+  &lt;AssignTo createNew="false" type="response">&lt;/AssignTo>
+  &lt;Set>
+    &lt;Payload contentType="application/json">
+      {"name":"Alert", "message":"You entered an invalid username: {user.name}"}
+    &lt;/Payload>
+  &lt;/Set>
+  &lt;IgnoreUnresolvedVariables>false&lt;/IgnoreUnresolvedVariables>
+&lt;/AssignMessage></pre>
+
+
+<p>
+In the above example, the value of flow variable <code>user.name</code> (in curly braces) will be
+  evaluated and substituted into the payload string at runtime. So, for example, if <code>user.name=jdoe</code>,
+  then the resulting message output in the payload will be: <code>You entered an invalid username: jdoe</code>.
+  If the variable cannot be resolved, then an empty string is output.
+</p>
+<h3 id="example">Example</h3>
+
+
+<p>
+When a quota is exceeded, it is a good practice to return a meaningful message to the caller. This
+  pattern is commonly used with a "fault rule" to provide output to give the caller information
+  about the quota violation. In the following Assign Message policy, message templates are used
+  to populate quota information dynamically in several XML elements:<br>
+
+</p>
+
+
+
+<pre class="prettyprint">&lt;AssignMessage name='AM-QuotaViolationMessage'>
+  &lt;Description>message for quota exceeded&lt;/Description>
+  &lt;IgnoreUnresolvedVariables>false&lt;/IgnoreUnresolvedVariables>
+  &lt;Set>
+    &lt;Headers>
+      &lt;Header name='X-Quota-Reset'>{ratelimit.Quota-1.expiry.time}&lt;/Header>
+      &lt;Header name='X-Quota-Allowed'>{ratelimit.Quota-1.allowed.count}&lt;/Header>
+      &lt;Header name='X-Quota-Available'>{ratelimit.Quota-1.available.count}&lt;/Header>
+    &lt;/Headers>
+    &lt;Payload contentType='application/json'>{
+  "error" : {
+    "message" : "you have exceeded your quota",
+    "clientId" : "{request.queryparam.apikey}"
+  }
+}
+    &lt;/Payload>
+    &lt;StatusCode>429&lt;/StatusCode>
+    &lt;ReasonPhrase>Quota Exceeded&lt;/ReasonPhrase>
+  &lt;/Set>
+&lt;/AssignMessage></pre>
+
+
+<p>
+In the AssignMessage policy, the following elements in the <code>&lt;Set&gt;</code>
+  element support message templating:
+</p><ul>
+
+<li>Header
+<li>QueryParam
+<li>FormParam
+<li>PayLoad
+<li>Version
+<li>Verb
+<li>Path
+<li>StatusCode
+<li>ReasonPhrase</li></ul>
+
+<p>
+Again, note that flow variables in a message template must be enclosed in curly braces.
+</p>
+<p>
+When this policy executes:
+</p><ul>
+
+<li>The Header elements receive values of the specified flow variables.
+<li>The Payload includes a mix of literal text and variables (the <code>client_id</code> is populated dynamically).
+<li>The StatusCode and ReasonPhrase only include literal text; however, these elements also support message templating if you wish to use it. </li></ul>
+
+<h3 id="example">Example</h3>
+
+
+<p>
+In a proxy TargetEndpoint definition, child-elements of <code>&lt;SSLInfo&gt;</code> support message templating. Following the same pattern used in policies, the flow variables in curly braces are replaced when the proxy executes.
+</p>
+
+
+
+<pre class="prettyprint">&lt;TargetEndpoint name="default">
+  …
+  &lt;HTTPTargetConnection>
+    &lt;SSLInfo>
+        &lt;Enabled>{myvars.ssl.enabled}&lt;/Enabled>
+        &lt;ClientAuthEnabled>{myvars.ssl.client.auth.enabled}&lt;/ClientAuthEnabled>
+        &lt;KeyStore>{myvars.ssl.keystore}&lt;/KeyStore>
+        &lt;KeyAlias>{myvars.ssl.keyAlias}&lt;/KeyAlias>
+        &lt;TrustStore>{myvars.ssl.trustStore}&lt;/TrustStore>
+    &lt;/SSLInfo>
+
+  &lt;/HTTPTargetConnection>
+  …
+&lt;/TargetEndpoint></pre>
+
+
+<h2 id="where-can-you-use-message-templates">Where can you use message templates?</h2>
+
+
+<p>
+Message templates are supported in several <strong>policies </strong>as well as certain elements used in the <strong>TargetEndpoint configuration</strong>.
+</p>
+
+<aside class="note">You can also refer to the policy documentation to learn which policy and TargetEndpoint elements support message templates.</aside>
+
+<h3 id="policies-that-accept-message-templates">Policies that accept message templates</h3>
+
+
+
+<table>
+  <tr>
+   <td><strong>Policy</strong>
+   </td>
+   <td><strong>Elements and child-elements that support message templates</strong>
+   </td>
+  </tr>
+  <tr>
+   <td>Assign Message
+   </td>
+	  <td><code>&lt;Set&gt;</code> elements: Payload, ContentType, Verb, Version, Path, StatusCode, ReasonPhrase, Headers, QueryParams, FormParams
+   <p>
+	   <code>&lt;Add&gt;</code> elements: Headers, QueryParams, FormParams
+   </td>
+  </tr>
+  <tr>
+   <td>Extract Variables
+   </td>
+	  <td><code>&lt;JsonPath&gt;</code>
+      <aside class="note">Message template is <strong>not</strong> accepted for <code>&lt;XMLPath&gt;</code>.</aside>
+</td>
+  </tr>
+  <tr>
+   <td>GenerateJWT
+<p>
+VerifyJWT
+   </td>
+   <td><code>&lt;AdditionalClaims&gt;&lt;Claim&gt;</code>
+<p>
+	  <code>&lt;AdditionalHeaders&gt;&lt;Claim&gt;</code>
+<p>
+* These elements support message template only when <strong>type=map</strong>.
+   </td>
+  </tr>
+  <tr>
+   <td>LDAP
+   </td>
+	  <td><code>&lt;SearchQuery&gt;</code></td>
+  </tr>
+  <tr>
+   <td>Message Logger
+   </td>
+	  <td><code>&lt;Syslog&gt;&lt;Message&gt;</code>
+    <p><code>&lt;File&gt;&lt;Message&gt;</code></td>
+  </tr>
+  <tr>
+   <td>Raise Fault
+   </td>
+	  <td><code>&lt;Set&gt;</code> elements: Payload, ContentType, Verb, Version, Path, StatusCode, ReasonPhrase, Headers, QueryParams, FormParams
+		  <p><code>&lt;Add&gt;</code> elements: Headers, QueryParams, FormParams
+   </td>
+  </tr>
+  <tr>
+   <td>SAML Assertion
+   </td>
+	  <td><code> &lt;Template&gt;</code>
+<p>
+	* Only when the policy signature is <code>&lt;GenerateSAMLAssertion&gt;</code></td>
+  </tr>
+  <tr>
+   <td>Service Callout
+   </td>
+	  <td><code>&lt;Set&gt;</code> elements: Payload, ContentType, Verb, Version, Path, StatusCode, ReasonPhrase, /Headers, QueryParams, FormParams
+	    <p><code>&lt;Add&gt;</code> elements: Headers, QueryParams, FormParams
+		  <p><code>&lt;HTTPTargetConnection&gt;/&lt;URL&gt;</code>: Note that the first part of the string must be http or https.
+   </td>
+  </tr>
+</table>
+
+
+<h3 id="targetendpoint-elements-that-accept-message-templates">TargetEndpoint elements that accept message templates</h3>
+
+
+
+<table>
+  <tr>
+   <td><strong>HTTPTargetConnection elements</strong>
+   </td>
+   <td><strong>Child-elements that support message templates</strong>
+   </td>
+  </tr>
+  <tr>
+   <td>SSLInfo
+   </td>
+   <td>Enabled, KeyAlias, KeyStore, TrustStore, ClientAuthEnabled, CLRStore
+   </td>
+  </tr>
+  <tr>
+   <td>LocalTargetConnection
+   </td>
+   <td>ApiProxy, ProxyEndpoint
+   </td>
+  </tr>
+</table>
+
+
+<h2 id="message-template-syntax">Message template syntax</h2>
+
+
+<p>
+This section explains the rules you must follow to use message templates.
+</p>
+<h3 id="use-curly-braces-to-denote-variables">Use curly braces to denote variables</h3>
+
+
+<p>
+Enclose variable names in <strong>curly braces { }</strong>. If the variable does not exist, an
+  empty string is returned in the output; however, you can specify default values in message
+  templates (values that are substituted if the variable is unresolved). See
+  <a href="#setting-default-values-in-message-templates">Setting default values in message templates</a>.
+</p>
+<p>
+  Note that enclosing the entire message template string in quotes is permitted, but optional. For example, the following two message templates are equivalent:<br>
+
+</p>
+
+
+
+<pre class="prettyprint">&lt;Set>
+    &lt;Headers>
+        &lt;Header name="x-h1">"Hello {user.name}"&lt;/Header>
+        &lt;Header name="x-h1">Hello {user.name}&lt;/Header>
+    &lt;/Headers>
+&lt;/Set></pre>
+
+</p>
+<h3 id="setting-default-values-in-message-templates">Setting default values in message templates</h3>
+
+
+<p>
+If a templated variable can't be resolved, Edge substitutes an empty string. However, you can specify a default value as follows:
+</p>
+
+
+
+<pre class="prettyprint"> &lt;Header name="x-h1">Test message. id = {request.header.id:Unknown}&lt;/Header>
+</pre>
+
+
+<p>
+In the above sample if the variable <code>request.header.id</code> cannot be resolved then its value is replaced by <code>Unknown</code>. For example:
+</p>
+
+
+
+<pre class="prettyprint">Test message. Unknown
+</pre>
+
+
+<h3 id="legacy-syntax-for-json-payloads">Legacy syntax for JSON payloads</h3>
+
+
+<p>
+In Edge versions <strong>before Cloud release 16.08.17</strong>, you could <strong>not</strong> use curly braces to denote variable references within JSON payloads. In those older versions, you needed to use the <code>variablePrefix</code> and <code>variableSuffix</code> attributes to specify delimiter characters, and use those to wrap variable names, like so:<br>
+
+</p>
+
+
+
+<pre class="prettyprint">&lt;Set>
+    &lt;Payload contentType="application/json" variablePrefix="@" variableSuffix="#">
+        {"name":"foo", "type":"@variable_name#"}
+    &lt;/Payload>
+&lt;/Set></pre>
+
+
+<p>
+Although Apigee recommends that you use the newer curly-brace syntax, the older syntax still works.
+</p>
+<h2 id="using-message-template-functions">Using message template functions</h2>
+
+
+<p>
+Edge provides a set of functions that you can use within message templates to escape, encode, hash, and format string variables.
+</p>
+<p>
+The message template functions are described in detail in <a href="/api-platform/reference/message-template-functions.html">Message template function reference</a>.
+</p>
+<h3 id="example-tolowercase">Example: toLowerCase()</h3>
+
+
+<p>
+  Use the built-in <code>toLowerCase()</code> function to transform a string variable to lowercase:<br>
+
+</p>
+
+
+
+<pre class="prettyprint">&lt;AssignMessage name="AM-Set-Custom-Response">
+    &lt;AssignTo createNew="false" type="response"/>
+    &lt;IgnoreUnresolvedVariables>true&lt;/IgnoreUnresolvedVariables>
+    &lt;Set>
+        &lt;Headers>
+            &lt;Header name="x-h1">Test header: {toLowerCase(foo.bar:FOO)}&lt;/Header>
+        &lt;/Headers>
+    &lt;/Set>
+&lt;/AssignMessage></pre>
+
+
+<p>
+If the <code>foo.bar</code> flow variable resolves, then its characters will be all lowercase. If <code>foo.bar</code> is unresolved and the default value <code>FOO</code> is substituted and converted to lowercase characters. For example:
+</p>
+
+
+
+<pre class="prettyprint">Test header: foo
+</pre>
+
+
+<h3 id="example-escapejson">Example: escapeJSON()</h3>
+
+
+<p>
+Here's an interesting use case: Let's say your backend app returns a JSON response that contains valid escape characters. For example:
+</p>
+
+
+
+<pre class="prettyprint">{
+      "code": "INVALID",
+      "user_message": "Invalid value for \"logonId\" check your input."
+}</pre>
+
+
+<p>
+Then, let's say you want to return this message to the client caller in a custom payload. The usual way to do this is to extract the message from the target response payload and use Assign Message to add it to a custom proxy response (that is, send it back to the client).
+</p>
+<p>
+Here's the Extract Variables policy that extracts the <code>user_message</code> information into a variable called <code>standard.systemMessage</code>:
+</p>
+
+
+
+<pre class="prettyprint">&lt;ExtractVariables name="EV-BackendErrorResponse">
+    &lt;DisplayName>EV-BackendErrorResponse&lt;/DisplayName>
+    &lt;JSONPayload>
+        &lt;Variable name="standard.systemMessage">
+            &lt;JSONPath>$.user_message&lt;/JSONPath>
+        &lt;/Variable>
+    &lt;/JSONPayload>
+&lt;/ExtractVariables></pre>
+
+
+<p>
+Now, here's a perfectly valid Assign Message policy that adds the extracted variable to the response payload (the proxy response):<br>
+
+</p>
+
+
+
+<pre class="prettyprint">&lt;AssignMessage name="AM-SetStandardFaultResponse">
+    &lt;DisplayName>AM-SetStandardFaultResponse&lt;/DisplayName>
+    &lt;Set>
+        &lt;Payload contentType="application/json">
+           {
+              "systemMessage": "{standard.systemMessage}"
+           }
+        &lt;/Payload>
+    &lt;/Set>
+    &lt;IgnoreUnresolvedVariables>true&lt;/IgnoreUnresolvedVariables>
+    &lt;AssignTo createNew="false" transport="http" type="response"/>
+&lt;/AssignMessage></pre>
+
+
+<p>
+<br>
+Unfortunately, there's a problem. The Extract Variables policy removed the escaped quotation characters around part of the message. This means that the response returned to the client is invalid JSON. This is clearly not what you intended! <br>
+
+</p>
+
+
+
+<pre class="prettyprint">{
+    "systemMessage": "Invalid value for "logonId" check your input."
+}</pre>
+
+
+<p>
+To work around this problem, you can modify the Assign Message policy to use a <strong>message template function</strong> that escapes the quotes within the JSON for you. This function, <strong><code>escapeJSON()</code></strong>, escapes any quotes or other special characters that occur within a JSON expression:
+
+
+
+
+<pre class="prettyprint">&lt;AssignMessage name="AM-SetStandardFaultResponse">
+    &lt;DisplayName>AM-SetStandardFaultResponse&lt;/DisplayName>
+    &lt;Set>
+        &lt;Payload contentType="application/json">
+           {
+              "systemMessage": "{escapeJSON(standard.systemMessage)}"
+           }
+        &lt;/Payload>
+    &lt;/Set>
+    &lt;IgnoreUnresolvedVariables>true&lt;/IgnoreUnresolvedVariables>
+    &lt;AssignTo createNew="false" transport="http" type="response"/>
+&lt;/AssignMessage></pre>
+
+
+<p>
+<br>
+The function escapes the embedded quotes, resulting in valid JSON, which is exactly what you wanted:
+</p>
+
+
+
+<pre class="prettyprint">{
+      "systemMessage": "Invalid value for \"logonId\" check your input.",
+}</pre>
+
+
+<p>
+For more information on these and other message template functions, see <a href="/api-platform/reference/message-template-functions.html">Message template function reference</a>.
+</p>
+{% endblock %}

@@ -1,0 +1,417 @@
+  {% extends "_base.html" %} {% block title %}Reset Quota policy{% endblock %} {% block body %}
+  <img src="/api-platform/images/icon_policy_reset-quota.jpg">
+
+  <h3>What</h3>
+
+  <p>Use to dynamically modify the remaining number of requests allowed by the target Quota policy.
+  You typically use this policy to decrease the current quota count of the target Quota policy
+  rather than waiting for the quota count to reset. </p>
+
+  <p>For example, the target Quota policy limits a developer to 1000 requests per week. By the
+  second day of the week, the developer has already reached this limit. Use the Reset Quota policy
+  to subtract 500 from their quota counter to allow an additional 500 requests for the remainder of
+  the week. At the end of the week, the Quota policy resets, and the developer is back to 1000
+  requests for the week.</p>
+
+  <p>See <a href="/api-platform/reference/policies/quota-policy.html">Quota policy</a> for more on
+  the Quota policy. Also see <a href=
+  "https://community.apigee.com/questions/27507/how-to-use-reset-quota-correctly.html">this
+  community post</a> on using the Reset Quota policy. </p>
+
+  <h3 id="samples">Samples</h3>
+
+  <p>These policy code samples illustrate how to reset quota counters:</p><!-- Begin tab list -->
+  <!-- End tab list --><!-- Begin tabbed region -->
+
+  <div class="ds-selector-tabs">
+    <section>
+      <h3 class="two-line-tab">Reset Default Counter</h3>
+      <pre class="prettyprint">
+&lt;ResetQuota name="resetQuota"&gt;
+   &lt;Quota name="MyQuotaPolicy"&gt;
+      &lt;Identifier name="_default"&gt;
+         &lt;Allow&gt;100&lt;/Allow&gt;
+      &lt;/Identifier&gt;
+   &lt;/Quota&gt;
+&lt;/ResetQuota&gt;
+</pre>
+
+      <p>The Reset Quota policy specifies the target Quota policy by using the <span style=
+      "font-family:courier new,courier,monospace;">name</span> attribute of the <span style=
+      "font-family:courier new,courier,monospace;">&lt;Quota&gt;</span> tag. In the example above,
+      the MyQuotaPolicy policy is the target.</p>
+
+      <p>All Reset Quota policies require the <span style=
+      "font-family:courier new,courier,monospace;">&lt;Identifier&gt;</span> tag to specify the
+      counter in the Quota policy to update. By default, a Quota policy has a single counter,
+      unless the Quota policy also includes the <span style=
+      "font-family:courier new,courier,monospace;">&lt;Identifier&gt;</span> tag. In this example,
+      the target Quota policy does not use the <span style=
+      "font-family:courier new,courier,monospace;">&lt;Identifier&gt;</span> tag, so you specify
+      the <span style="font-family:courier new,courier,monospace;">name</span> attribute as
+      <span style="font-family:courier new,courier,monospace;">_default</span>.</p>
+
+      <p>The <span style="font-family:courier new,courier,monospace;">&lt;Allow&gt;</span> element
+      specifies the value used to decrease the current quota count on the target policy. In this
+      example, the quota count is decreased by 100, to allow 100 more requests to the target Quota
+      policy. When the target Quota policy resets, this change is discarded.</p>
+
+      <p>Shown below is the definition of the target Quota policy:</p>
+      <pre class="prettyprint">
+&lt;Quota name="MyQuotaPolicy"&gt;
+  &lt;Interval&gt;5&lt;/Interval&gt;
+  &lt;TimeUnit&gt;hour&lt;/TimeUnit&gt;
+  &lt;Allow count="100"/&gt;
+&lt;/Quota&gt;
+</pre>
+    </section>
+
+    <section>
+      <h3 class="two-line-tab">Use a Reference</h3>
+      <pre class="prettyprint">
+&lt;ResetQuota name="resetQuota"&gt;
+   &lt;Quota ref="request.header.quotapolicy"&gt;
+      &lt;Identifier name="_default"&gt;
+         &lt;Allow ref="request.header.allowquota" /&gt;
+      &lt;/Identifier&gt;
+   &lt;/Quota&gt;
+&lt;/ResetQuota&gt;
+</pre>
+
+      <p>In this example, you pass the name of the target Quota policy, and the change to its quota
+      count, as headers in the request. You can then reference the flow variables containing these
+      values in the Reset Quota policy.  </p>
+    </section>
+
+    <section>
+      <h3 class="two-line-tab">Specify the Identifier</h3>
+      <pre class="prettyprint">
+&lt;ResetQuota name="resetQuota"&gt;
+   &lt;Quota name="QuotaPolicy"&gt;
+      &lt;Identifier ref="request.header.clientId"&gt;
+         &lt;Allow&gt;100&lt;/Allow&gt;
+      &lt;/Identifier&gt;
+   &lt;/Quota&gt;
+&lt;/ResetQuota&gt;
+</pre>
+
+      <p>If the target Quota policy specifies the <span style=
+      "font-family:courier new,courier,monospace;">&lt;Identifier&gt;</span> tag, then you can
+      specify the same value to the <span style=
+      "font-family:courier new,courier,monospace;">&lt;Identifier&gt;</span> tag of the Reset Quota
+      policy to update a specific quota count. Notice how the <span style=
+      "font-family:courier new,courier,monospace;">&lt;Identifier&gt;</span> tag in the target
+      Quota policy below matches the value specified to the Reset Quota policy: </p>
+      <pre class="prettyprint">
+&lt;Quota name="QuotaPolicy"&gt;
+  &lt;Identifier ref="request.header.clientId"/&gt; 
+  &lt;Interval&gt;5&lt;/Interval&gt;
+  &lt;TimeUnit&gt;hour&lt;/TimeUnit&gt;
+  &lt;Allow count="100"/&gt;
+&lt;/Quota&gt;
+</pre>
+    </section>
+  </div><!-- End tabbed region. -->
+  <hr>
+
+  <h2 id="elementreference">Element reference</h2>
+
+  <p>The element reference describes the elements and attributes of the Reset Quota policy.</p>
+  <pre class="prettyprint">
+&lt;ResetQuota async="false" continueOnError="false" enabled="true" name="Reset-Quota-1"&gt;
+   &lt;DisplayName&gt;Reset Quota 1&lt;/DisplayName&gt;
+   &lt;Quota name="quotaName" ref="request.header.quotapolicy"&gt;
+      &lt;Identifier name="identifierName" ref="request.header.identifier"&gt;
+         &lt;Class ref="request.header.classIdentifier" /&gt;
+         &lt;Allow&gt;100&lt;/Allow&gt;
+      &lt;/Identifier&gt;
+   &lt;/Quota&gt;
+&lt;/ResetQuota&gt;
+</pre>
+
+  <h2 id="resetquotaattributes">&lt;ResetQuota&gt; attributes</h2>
+  <pre class="prettyprint">
+&lt;ResetQuota async="false" continueOnError="false" enabled="true" name="Reset-Quota-1"&gt; 
+</pre>
+
+  <p>{% dynamic include /includes/___policies-parent-element-attributes %}</p>
+
+  <h2 id="quotaelement">&lt;Quota&gt; element</h2>
+
+  <p>Identifies the target Quota policy whose counter should be updated.</p>
+  <pre class="prettyprint">
+&lt;Quota name="quotaName"  ref="request.header.quotapolicy"&gt;
+   &lt;Identifier name="identifierName" ref="request.header.identifier"&gt;
+      &lt;Allow&gt;100&lt;/Allow&gt;
+   &lt;/Identifier&gt;
+&lt;/Quota&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Required</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>N/A</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="quotaelement-attributes">Attributes</h3>
+
+  <table width="650">
+    <tbody>
+      <tr>
+        <th scope="col">Attribute</th>
+
+        <th scope="col">Description</th>
+
+        <th scope="col">Default</th>
+
+        <th scope="col">Presence</th>
+      </tr>
+
+      <tr>
+        <td>name</td>
+
+        <td>
+          <p>Specifies the name of the target Quota policy. </p>
+        </td>
+
+        <td>N/A</td>
+
+        <td style="width: 50px;">Optional</td>
+      </tr>
+
+      <tr>
+        <td>ref</td>
+
+        <td>A flow variable that contains the name of the target Quota policy. If
+        both <span style=
+        "font-family: 'courier new', courier, monospace;">ref</span> and <span style=
+        "font-family: 'courier new', courier, monospace;">name</span> are specified,
+        then <span style=
+        "font-family: 'courier new', courier, monospace;">ref</span> gets priority.
+        If <span style="font-family: 'courier new', courier, monospace;">ref</span> does
+        not resolve at runtime, then <span style=
+        "font-family: 'courier new', courier, monospace;">name</span> is used.</td>
+
+        <td>N/A</td>
+
+        <td style="width: 50px;">Optional</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="quotaidentifierelement">&lt;Quota&gt;/&lt;Identifier&gt; element</h2>
+
+  <p>Variable used to uniquely identify the counter if the target Quota policy specifies
+  the <span style=
+  "font-family: 'courier new', courier, monospace;">&lt;Identifier&gt;</span> tag. </p>
+  <pre class="prettyprint">
+&lt;Quota name="quotaName"&gt;
+   &lt;Identifier name="identifierName" ref="request.header.identifier"&gt;
+      &lt;Allow&gt;100&lt;/Allow&gt;
+   &lt;/Identifier&gt;
+&lt;/Quota&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Required</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>String</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="quotaidentifierelement-attributes">Attributes</h3>
+
+  <table width="650">
+    <tbody>
+      <tr>
+        <th scope="col">Attribute</th>
+
+        <th scope="col">Description</th>
+
+        <th scope="col">Default</th>
+
+        <th scope="col">Presence</th>
+      </tr>
+
+      <tr>
+        <td>name</td>
+
+        <td>
+          <p>Specifies the name of the count identifier in the target Quota policy. For a Quota
+          policy that does not use the <span style=
+          "font-family:courier new,courier,monospace;">&lt;Identifier&gt;</span> tag, specify
+          <span style="font-family:courier new,courier,monospace;">_default</span>.</p>
+        </td>
+
+        <td>N/A</td>
+
+        <td style="width: 50px;">Optional</td>
+      </tr>
+
+      <tr>
+        <td>ref</td>
+
+        <td>
+          <p>A flow variable that contains the name of the count identifier in the target Quota
+          policy. If both <span style=
+          "font-family: 'courier new', courier, monospace;">ref</span> and <span style=
+          "font-family: 'courier new', courier, monospace;">name</span> are specified,
+          then <span style=
+          "font-family: 'courier new', courier, monospace;">ref</span> gets priority.
+          If <span style=
+          "font-family: 'courier new', courier, monospace;">ref</span> does not resolve at
+          runtime, then <span style=
+          "font-family: 'courier new', courier, monospace;">name</span> is used.</p>
+        </td>
+
+        <td>N/A</td>
+
+        <td>Optional</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="quotaidentifierallowelement">&lt;Quota&gt;/&lt;Identifier&gt;/&lt;Allow&gt; element</h2>
+
+  <p>Specifies the amount to decrease the quota counter. You must specify <span style=
+  "font-family:courier new,courier,monospace;">&lt;Allow&gt;</span>, otherwise, the policy does not
+  modify the quota.</p>
+  <pre class="prettyprint">
+&lt;Identifier name="identifierName" ref="request.header.identifier"&gt;
+   &lt;Allow&gt;100&lt;/Allow&gt;
+&lt;/Identifier&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Required</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>Integer</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="quotaidentifierclasselement">&lt;Quota&gt;/&lt;Identifier&gt;/&lt;Class&gt; element</h2>
+
+  <p>Specifies the class for which the Quota counter is updated. For more on using class with the
+  Quota policy, see <a href="/api-platform/reference/policies/quota-policy.html">Quota
+  policy</a>. </p>
+  <pre class="prettyprint">
+&lt;Identifier name="_default"&gt;
+   &lt;Class ref="request.header.classIdentifier" /&gt;
+   &lt;Allow&gt;200&lt;/Allow&gt;
+&lt;/Identifier&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>N/A</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="quotaidentifierclasselement-attributes">Attributes</h3>
+
+  <table width="650">
+    <tbody>
+      <tr>
+        <th scope="col">Attribute</th>
+
+        <th scope="col">Description</th>
+
+        <th scope="col">Default</th>
+
+        <th scope="col">Presence</th>
+      </tr>
+
+      <tr>
+        <td>ref</td>
+
+        <td>
+          <p>Reference to the flow variable that contains the quota class to update.</p>
+        </td>
+
+        <td>N/A</td>
+
+        <td>Optional</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="errorcodes">Error codes</h2>
+
+  <p>Errors returned from Edge policies follow a consistent format as described in the <a href=
+  "/api-platform/reference/policies/error-code-reference.html">Error code reference</a>.</p>
+
+  <p>{% dynamic include /includes/___reset-quota-policy-error-codes %}</p>
+
+  <h2 id="schemas">Schemas</h2>
+
+  <aside class="note"><b>Sample:</b> See our <a href=
+  "https://github.com/apigee/api-platform-samples/tree/master/schemas/policy">Github
+  repository</a> samples for the most recent schemas.</aside>
+
+  <h2 id="relatedtopics">Related topics</h2>
+
+  <p><a href="/api-platform/reference/policies/quota-policy.html">Quota policy</a></p>
+
+  {% endblock %}

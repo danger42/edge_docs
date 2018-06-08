@@ -1,0 +1,67 @@
+  {% extends "_base.html" %} {% block title %}Deploying proxies in the UI{% endblock %} {% block body %}
+
+  <p>All organizations in Apigee Edge, by default, have two environments: <span style=
+  "font-family: 'courier new', courier, monospace;">test</span> and <span style=
+  "font-family: 'courier new', courier, monospace;">prod</span>. The naming is arbitrary. These
+  environments are merely designed to provide you with one area to work on and test API changes,
+  and another area where APIs are exposed to apps.</p>
+
+  <aside class="note"><b>Note:</b> Depending on your role, you may not be able to deploy to all
+  environments. Users can only deploy to the <span style=
+  "font-family: 'courier new', courier, monospace;">test</span> environment. If you're an
+  administrator you can deploy to any environment.</aside>
+
+  <h2 id="deploymentoptions"><a name="system" id="system"></a>Deployment options</h2>
+
+  <p>You can deploy proxies as revisions or versions. These are distinct concepts, as explained
+  next.</p>
+
+  <h3 id="deploymentoptions-aboutrevisions">About revisions</h3>
+
+  <p>Each environment in an organization can only have one deployed revision of an API proxy. It is
+  common to have a proxy revision in <code>prod</code> while another revision is
+  in <code>test</code> as it's being tested or developed. For example, you could have
+  revision 1 deployed in <span style=
+  "font-family: 'courier new', courier, monospace;">test</span> and revision 20 deployed
+  in <span style="font-family: 'courier new', courier, monospace;">prod</span>. You can view
+  deployment of all revisions on the Overview page of the API proxy editor.</p>
+
+  <p><img src="/api-platform/images/proxy_revisions.png"></p>
+
+  <p>When you create a new revision of an API proxy without changing its base path, then deploy it
+  to an environment in which it's already deployed, the previous version is undeployed and the new
+  revision is deployed in its place. Note that deployment through the management UI might impact
+  inbound calls. To handle and transition inbound calls more gracefully during deployment, use the
+  management API. See the section on seamless deployment in <a href=
+  "/api-platform/deploy/deploy-api-proxies-using-management-api.html">Deploy API proxies using the
+  management API</a>.</p>
+
+  <h3 id="deploymentoptions-aboutversions">About versions</h3>
+
+  <p>Edge supports multiple version deployments of a proxy in a single environment. Each version
+  must have a different base path (for example <code>/v1</code> and <code>/v2</code>). </p>
+
+  <h2 id="deploying">Deploying and undeploying an API Proxy</h2>
+
+  <p>{% dynamic include /includes/___proxy-bundle-size-limit-note %}</p>
+
+  <p>To deploy (or undeploy) an API proxy in the management UI:</p>
+
+  <ol>
+    <li>In the API proxy editor, select the revision you want to deploy (or undeploy).</li>
+
+    <li>Click <strong>Deployment &gt; {environment}</strong> and respond to the confirmation
+    dialog.
+
+      <p><img src="/api-platform/images/proxy_deploy.png"></p>If the API proxy base path is the
+      same as another deployed revision in that environment, the former revision is undeployed and
+      the new revision is deployed in its place.<br>
+      For deploying multiple versions in the same environment, see the next section.
+    </li>
+  </ol>
+
+  <aside class="note"><b>Note:</b> You can also undeploy a revision by performing the previous
+  steps on an already deployed revision, indicated by a green dot next to the environment
+  name.</aside>
+
+  {% endblock %}

@@ -1,0 +1,173 @@
+  {% extends "_base.html" %} {% block title %}Revoking and approving developer app keys{% endblock %} {% block body %}
+
+  
+
+  <p>This topic explains how to use the UI and APIs to revoke or approve API keys for products in
+  developer apps and for developer apps. </p>
+
+  <aside class="note"><b>Note:</b> If you need to revoke an access token, you can do that directly
+  by calling a properly configured OAuthV2 endpoint. For details, see <a href=
+  "/api-platform/security/oauth/validating-and-invalidating-access-tokens.html">Approving and
+  revoking access tokens</a>.</aside>
+
+  <h2 id="usingtheuitorevokethekeyforaspecificapiproductinadeveloperapp">Using the UI to revoke the
+  key for a specific API product in a developer app</h2>
+
+  <p>You can revoke the key associated with a specific API product through the management UI. The
+  effect is that the API resources defined in that API product will no longer be accessible unless
+  the key is re-approved.</p>
+
+  <ol>
+    <li>Log in to your Apigee Edge account. </li>
+
+    <li>From the main menu, select <strong>Publish &gt; Developer apps</strong>.</li>
+
+    <li>From the list of apps, select the one that contains the key you wish to revoke.</li>
+
+    <li>In the Developer app page, click <strong>Edit</strong>. </li>
+
+    <li>In the Products section, click <strong>Revoke</strong> to revoke the key for the
+    product you wish to revoke.</li>
+  </ol>
+
+  <p><strong>Tip:</strong> You can use the <a href=
+  "/management/apis/get/organizations/{org_name}/developers/{developer_email}/apps/{app_name}">Get
+  Developer App Details</a> API to get the JSON representation of a developer app to discover the
+  approval status of products in that app. In the following JSON representation of a developer app,
+  you can see where the  API Product called "Weather-Product" has been revoked:</p>
+  <pre class="prettyprint">
+{
+  "accessType": "",
+  "appFamily": "default",
+  "appId": "6ed3a4d1-4733-439a-80a4-0d71149ec9ad",
+  "attributes": [
+    {
+      "name": "DisplayName",
+      "value": "AnotherTestApp"
+    },
+    {
+      "name": "Notes",
+      "value": ""
+    }
+  ],
+  "callbackUrl": "",
+  "createdAt": 1415728893126,
+  "createdBy": "wwitman@apigee.com",
+  "credentials": [
+    {
+      "apiProducts": [
+        {
+          "apiproduct": "Weather-Product",
+          "status": "revoked"
+        }
+      ],
+      "attributes": [],
+      "consumerKey": "giIC9Au6XP82wJ1oxZuQU4L75OdNKLhb",
+      "consumerSecret": "SXg8JizqeTA8j3gX",
+      "expiresAt": -1,
+      "issuedAt": 1415728893154,
+      "scopes": [],
+      "status": "approved"
+    }
+  ],
+  "developerId": "Z2S37rxX2Suzkwtg",
+  "lastModifiedAt": 1420682967414,
+  "lastModifiedBy": "wwitman@apigee.com",
+  "name": "AnotherTestApp",
+  "scopes": [],
+  "status": "approved"
+}
+</pre>
+
+  
+
+  <h2 id="usingtheuitoapprovethekeyforaspecificapiproductinadeveloperapp">Using the UI to approve
+  the key for a specific API product in a developer app</h2>
+
+  <p>You can approve a previously revoked consumer key for an API product in a developer app
+  through the management UI. The client app will once again be able to access the APIs in that
+  product. </p>
+
+  <ol>
+    <li>Log in to your Apigee Edge account. </li>
+
+    <li>From the main menu, select <strong>Publish &gt; Developer apps</strong>.</li>
+
+    <li>From the list of apps, select the one that contains the key you wish to revoke.</li>
+
+    <li>In the Developer app page, click <strong>Edit</strong>. </li>
+
+    <li>In the Products section, click <strong>Approve</strong> to reinstate the
+    key. </li>
+  </ol>
+
+  
+
+  <h2 id="revokingandapprovingkeysforapiproductswiththeedgeapi">Revoking and approving keys for API
+  products with the Edge API</h2>
+
+  <p>Edge provides APIs that let you manage API key status, depending on your use case. In the
+  developer app JSON below, the location of each approve/revoke flag is indicated for each of these
+  three cases:</p>
+
+  <ul>
+    <li>(1) Revoking/approving keys for specific API products in a developer app. This API does
+    exactly what the UI operations described previously in this topic do. See <a href=
+    "/management/apis/post/organizations/{org_name}/developers/{developer_email}/apps/{app_name}/keys/{consumer_key}/apiproducts/{apiproduct_name}">
+    Approve or Revoke API Product for a Key for a Developer App</a>.</li>
+
+    <li>(2) Revoking/approving specific key for a developer app. Revoking the key renders it
+    unusable for the app to use it to access an API. Any access tokens associated with a
+    revoked app key will remain active, but Apigee Edge checks the status of the app key first. If
+    the status is set to "revoked," Apigee Edge will not allow the call go through. See <a href=
+    "/management/apis/post/organizations/{org_name}/developers/{developer_email}/apps/{app_name}/keys/{consumer_key}-0">
+    Approve or Revoke Specific Key of Developer App</a>.</li>
+
+    <li>(3) Revoke/approve the API key status of an entire developer app. A revoked app cannot
+    access any API products and cannot invoke any API managed by Apigee Edge. See <a href=
+    "/management/apis/post/organizations/{org_name}/developers/{developer_email}/apps/{app_name}">Approve
+    or Revoke Developer App</a>.</li>
+  </ul>
+  <pre class="prettyprint">
+{
+  "accessType": "",
+  "appFamily": "default",
+  "appId": "6ed3a4d1-4733-439a-80a4-0d71149ec9ad",
+  "attributes": [
+    {
+      "name": "DisplayName",
+      "value": "AnotherTestApp"
+    },
+    {
+      "name": "Notes",
+      "value": ""
+    }
+  ],
+  "callbackUrl": "",
+  "createdAt": 1415728893126,
+  "createdBy": "wwitman@apigee.com",
+  "credentials": [
+    {
+      "apiProducts": [
+        {
+          "apiproduct": "Weather-Product",
+          <strong>"status": "revoked" // (1)</strong>
+        }
+      ],
+      "attributes": [],
+      "consumerKey": "giIC9Au6XP82wJ1oxZuQU4L75OdNKLhb",
+      "consumerSecret": "SXg8JizqeTA8j3gX",
+      "expiresAt": -1,
+      "issuedAt": 1415728893154,
+      "scopes": [],
+      <strong>"status": "approved" // (2) </strong>
+    }
+  ],
+  "developerId": "Z2S37rxX2Suzkwtg",
+  "lastModifiedAt": 1420682967414,
+  "lastModifiedBy": "wwitman@apigee.com",
+  "name": "AnotherTestApp",
+  "scopes": [],
+  <strong>"status": "approved" // (3)</strong>
+}
+</pre>{% endblock %}

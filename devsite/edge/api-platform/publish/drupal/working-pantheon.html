@@ -1,0 +1,789 @@
+  {% extends "_base.html" %} {% block title %}Working with Pantheon{% endblock %} {% block body %}
+
+  <p>Apigee uses <a href="https://pantheon.io/">Pantheon</a>, a website management service, for
+  hosting cloud-based versions of the Developer Services portal. Pantheon is designed to work with
+  Drupal to let you develop, test, and publish your portal in a secure environment. The following
+  sections describe how to use Pantheon to develop and manage your portal.</p>
+
+  <aside class="note"><b>Note:</b> Acquia is provided as an alternative to customers that need to
+  host the Developer Portal in the EU only due to EU regulations. Apigee uses Pantheon for hosting
+  in the US. For more information about Acquia, see <a href=
+  "/api-platform/publish/drupal/working-acquia.html">Working with Acquia</a>.</aside>
+
+  <aside class="warning">
+    <b>Warning:</b>
+
+    <h2 id="requiredreadingpantheondocumentation"><span style="color:#ff0000;">Required reading:
+    Pantheon documentation</span></h2>This document contains an overview of how you use Pantheon
+    with your portal. However, use the <a href="https://pantheon.io/docs/">Pantheon
+    documentation</a> for much of the detailed information on working with Pantheon.
+
+    <p>Included in the Pantheon documentation is the <a href=
+    "https://pantheon.io/docs/articles/required-reading-essential-pantheon-documentation/">Required
+    Reading</a> page with links to many important documents.</p>
+  </aside>
+
+  <h2 id="accessingthepantheondashboard">Accessing the Pantheon dashboard</h2>
+
+  <p>When Apigee sends you the URL of your portal, you also receive the URL of the Pantheon
+  Dashboard: <a href=
+  "https://dashboard.getpantheon.com/">https://dashboard.getpantheon.com/</a>.</p>
+
+  <p>When you first log in to the Pantheon dashboard, you land on the <strong>Sites</strong> page,
+  shown below:</p>
+
+  <p><img alt="" src="/api-platform/images/PanthDB_v1.png"></p>
+
+  <p>From the dashboard, you can access your site, configure your account, and perform other
+  operations. </p>
+
+  <p>Select the image of your site (for example <span style=
+  "font-family:courier new,courier,monospace;">apigeedocs</span>) to open the dashboard for that
+  site:</p>
+
+  <p><img alt="" src="/api-platform/images/siteDB_v1.png"></p>
+
+  <h2 id="manage-envs">Managing your environments</h2>
+
+  <p>On the Pantheon dashboard there are three environments listed across the top of the page: Dev,
+  Test, and Live. Each are described in the following table.</p>
+
+  <table width="700">
+    <thead>
+      <tr>
+        <th>
+          <p><strong>Environment</strong></p>
+        </th>
+
+        <th>
+          <p><strong>Description</strong></p>
+        </th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td>
+          <p><strong>Dev</strong></p>
+        </td>
+
+        <td>
+          <p>The <strong>Dev</strong> environment is connected to your Git repo. Any
+          changes you push to Git show up immediately in
+          the <strong>Dev</strong> environment.</p>
+
+          <p>The URL to this site is in the form below, where <span style=
+          "font-family: &quot;courier new&quot;, courier, monospace;"><em>org_name</em></span> is
+          the name of your organization:</p>
+
+          <p><span style=
+          "font-family: &quot;courier new&quot;, courier, monospace;">http://<strong>dev</strong>-{<em>org_name</em>}.devportal.apigee.io/</span></p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Test</strong></p>
+        </td>
+
+        <td>
+          <p>The <strong>Test</strong> environment is for testing your latest code with a
+          copy of data from the <strong>Live</strong> environment. This environment is
+          where you test code changes before pushing it to
+          the <strong>Live</strong> environment.</p>
+
+          <p>The URL to this site is in the form below, where <span style=
+          "font-family: &quot;courier new&quot;, courier, monospace;"><em>org_name</em></span> is
+          the name of your organization:</p>
+
+          <p><span style=
+          "font-family: &quot;courier new&quot;, courier, monospace;">http://<strong>test</strong>-{<em>org_name</em>}.devportal.apigee.io/</span></p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Live</strong></p>
+        </td>
+
+        <td>
+          <p>The <strong>Live</strong> environment is your production environment that
+          you make accessible to your customers.</p>
+
+          <p>The URL to this site is in the form below, where <span style=
+          "font-family: &quot;courier new&quot;, courier, monospace;"><em>org_name</em></span> is
+          the name of your organization:</p>
+
+          <p><span style=
+          "font-family: &quot;courier new&quot;, courier, monospace;">http://<strong>live</strong>-{<em>org_name</em>}.devportal.apigee.io/</span></p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <aside class="note">
+    <b>Note:</b> For portals created prior to June 15, 2017 that have not been migrated, the URLs
+    to your portal environments will be in the following form:
+    <pre class="prettyprint">
+http://{<em>environment</em>}-{<em>your-org-name</em>}.devportal.apigee.com/
+</pre>
+  </aside>
+
+  <h2 id="develop">Developing your portal content</h2>
+
+  <p>The following sections describe how to develop your portal content.</p>
+
+  <ul>
+    <li><a href="#git-repo">Overview of the Git repository</a></li>
+
+    <li><a href="#accessing-your-code">Accessing your code</a></li>
+
+    <li><a href="#deploying-code-to-your-portal-environments">Deploying code to your portal
+    environments</a></li>
+
+    <li><a href="#adding-custom-modules-and-themes">Adding custom modules and themes</a></li>
+
+    <li><a href="#migratingyourcustomfeatures">Overriding Drupal profile modules and
+    themes</a></li>
+  </ul>
+
+  <p>In addition, refer to the following sections for more details about customizing your
+  portal.</p>
+
+  <table swidth="700">
+    <thead>
+      <tr>
+        <th>
+          <p><strong>If you want to...</strong></p>
+        </th>
+
+        <th>
+          <p><strong>You can</strong></p>
+        </th>
+
+        <th>
+          <p><strong>More Information</strong></p>
+        </th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td rowspan="2" style="height: 28px;">
+          <p>Change the site&#8217;s look and feel</p>
+        </td>
+
+        <td style="height: 28px;">
+          <p><strong>Basic</strong> - Use the <strong>Appearance</strong> menu entry
+          on the portal site to make changes, such as modify the logo and site colors.</p>
+        </td>
+
+        <td style="height: 28px;">
+          <p>See <a href="/api-platform/publish/drupal/customize-appearance.html">Customize
+          the appearance</a>:</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td style="height: 28px;">
+          <p><strong>Advanced</strong> - To make modifications to the complete look and feel
+          of the site, extend the Apigee Responsive theme.</p>
+        </td>
+
+        <td style="height: 28px;">
+          <p>See <a href="/api-platform/publish/drupal/customizing-theme.html">Customizing the
+          theme</a></p>
+        </td>
+      </tr>
+
+      <tr>
+        <td rowspan="2" style="height: 28px;">
+          <p>Change the behavior of site functionality</p>
+        </td>
+
+        <td style="height: 28px;">
+          <p><strong>Basic</strong> - Use the admin settings on the portal to change/configure
+          the way the site behaves.</p>
+        </td>
+
+        <td style="height: 28px;">
+          <p>See the Apigee documentation starting <a href=
+          "/api-platform/publish/drupal/customize-appearance.html">here</a></p>
+        </td>
+      </tr>
+
+      <tr>
+        <td style="height: 28px;">
+          <p><strong>Advanced</strong> - Create a custom module to change any behavior of the
+          site.</p>
+        </td>
+
+        <td style="height: 28px;">
+          <p>See <a href="https://www.drupal.org/developing/modules/7">Creating custom
+          modules</a> in the Drupal documentation</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="git-repo">Overview of the Git repository</h3>
+
+  <p>The Git repository for your Drupal code contains all of your portal code and is organized
+  using the following structure.</p>
+
+  <p><strong>Note</strong>: Only modify content within the <code>/sites/all</code> directory. If
+  you modify content that is outside of the <code>/sites/all</code> directory, you will have issues
+  when upgrading to new versions and may experience merge conflicts when checking in changes to
+  Git.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>
+          <p>Folder in Git repo</p>
+        </th>
+
+        <th>
+          <p>Description</p>
+        </th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td><code>/profiles/apigee</code></td>
+
+        <td>
+          <p>Apigee maintained modules and themes, including:</p>
+
+          <ul>
+            <li><code>/profiles/apigee/modules/contrib</code>: Drupal contrib modules maintained by
+            Apigee</li>
+
+            <li><code>/profiles/apigee/themes/contrib</code>: Drupal contrib themes maintained by
+            Apigee</li>
+
+            <li><code>/profiles/apigee/modules/custom</code>: Custom modules created by Apigee</li>
+
+            <li><code>/profiles/apigee/themes/custom</code>: Custom themes created by Apigee</li>
+          </ul>
+
+          <p><strong>Note</strong>: Do not modify content in the <span style=
+          "font-family: monospace;">/profiles/apigee</span> directory or you will have issues
+          when upgrading to new versions and may experience merge conflicts when checking in
+          changes to Git. For Drupal best practices, see <a href=
+          "https://www.drupal.org/docs/7/site-building-best-practices/never-hack-core" target=
+          "_new">Never hack core</a>.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td><code>/sites/all</code></td>
+
+        <td>
+          <p>Your custom Drupal modules and themes. For information about managing the content in
+          this folder, see <a href="#adding-custom-modules-and-themes">Adding custom modules
+          and themes</a> and <a href="#override">Overriding Drupal profile modules and
+          themes</a>.</p>
+
+          <p><strong>Note</strong>: Only modify content within the <span style=
+          "font-family: monospace;">/sites/all</span> directory.</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="accessing-your-code">Accessing your code</h3>
+
+  <p>In order to access your code repository in Git, you need to perform the tasks described in the
+  following sections:</p>
+
+  <ul>
+    <li><a href="#enabling-ssh-access-to-your-server">Enabling SSH access to your server</a></li>
+
+    <li><a href="#accessing-your-code-repository-in-git">Accessing your code repository in
+    Git</a></li>
+  </ul>
+
+  <h4 id="enabling-ssh-access-to-your-server">Enabling SSH access to your server</h4>
+
+  <p>Before you can use Git to manage your Drupal code, you must enable SSH to access your server
+  by uploading an SSH key to Pantheon.</p>
+
+  <p>To enable SSH access to your server:</p>
+
+  <ol>
+    <li>Log in to Pantheon at <a href=
+    "https://dashboard.getpantheon.com/">https://dashboard.getpantheon.com/</a>.</li>
+
+    <li>On the dashboard, select <strong>Account</strong>.</li>
+
+    <li>Select <strong>SSH Keys</strong> in the menu on the left.</li>
+
+    <li>Add your key and select <strong>Add key</strong>. <br>
+    If you need help, select the <strong>Learn how to generate an SSH
+    Key</strong> link.</li>
+  </ol>
+
+  <h4 id="accessing-your-code-repository-in-git">Accessing your code repository in Git</h4>
+
+  <p><strong>Note</strong>: See <a href="#git-repo">Overview of the Git
+  repository</a> for an overview of the Git repository structure.</p>
+
+  <p>To access your code repository in Git:</p>
+
+  <ol>
+    <li>Log into the Pantheon dashboard.</li>
+
+    <li>From the main Sites page, select the icon for your portal. </li>
+
+    <li>The URL of the Git repo appears on the page to the right of <strong>Connection
+    Mode</strong>, as shown in the previous figure.</li>
+
+    <li>Copy the URL of your Git repo and clone it to your local development environment by using
+    the command:<br>
+    <span style="font-family: &quot;courier new&quot;, courier, monospace;">&gt; git
+    clone <em>gitURL</em> <em>sitename</em></span><br>
+    For example: <br>
+    <span style="font-family: &quot;courier new&quot;, courier, monospace;">&gt; git clone
+    ssh://codeserver.dev.12@codeserver.dev.12.drush.in:2222/~/repository.git devportal</span></li>
+  </ol>
+
+  <p>Any code changes that you push to the Git repo appear immediately in
+  the <strong>Dev</strong> environment of your portal. </p>
+
+  <h3 id="deploying-code-to-your-portal-environments">Deploying code to your portal
+  environments</h3>
+
+  <p>To code to your portal environments:</p>
+
+  <ol>
+    <li>Push your code updates to Git, which immediately updates the <strong>Dev</strong>
+    environment.</li>
+
+    <li>Log in to Pantheon and select your site. </li>
+
+    <li>Select the <strong>Dev</strong> environment.</li>
+
+    <li>Select <strong>&lt;/&gt;Code</strong> in the left-hand menu to see a message about your
+    code change in the <strong>Commit Log</strong>:<br>
+    <img alt="" src="/api-platform/images/codecommitmessage_v1.png"></li>
+
+    <li>Select the <strong>Test</strong> environment at the top of the page.
+
+      <ol style="list-style: lower-alpha outside">
+        <li>If you have not yet uploaded <strong>Dev</strong> to <strong>Test</strong>, you are
+        prompted to do it now. </li>
+
+        <li>If you already have a <strong>Test</strong> environment, a message appears indicating
+        that there is a commit from <strong>Dev</strong> ready to deploy:<br>
+        <img alt="" src="/api-platform/images/testDeploy_v1.png"></li>
+      </ol>
+    </li>
+
+    <li>If you have already pushed a site to the <strong>Live</strong> environment, you can
+    optionally select the third checkbox to copy the live database and any files uploaded by
+    developers to <strong>Test</strong> from <strong>Live</strong>. This is useful if you want to
+    test your code changes against the most recent data available on <strong>Live</strong>.</li>
+
+    <li>Select the <strong>Deploy Code from Development</strong> button.</li>
+
+    <li>Test the portal in the <strong>Test</strong> environment. </li>
+
+    <li>Make any code fixes to the <strong>Dev</strong> environment and push files again to
+    <strong>Test</strong> for testing.</li>
+
+    <li>When testing completes, select the <strong>Live</strong> environment at the top of the
+    page.
+
+      <ol style="list-style: lower-alpha outside">
+        <li>If you have not yet uploaded <strong>Test</strong> to <strong>Live</strong>, you are
+        prompted to do it now. </li>
+
+        <li>If you already have a <strong>Live</strong> environment, a message appears indicating
+        that there is a commit from <strong>Test</strong> ready to deploy. Deploy those changes in
+        the same way you deployed them to <strong>Test</strong> from <strong>Dev</strong>. When you
+        are done testing, push the code to the <strong>Live</strong> environment. </li>
+      </ol>
+    </li>
+  </ol>
+
+  <p><strong>Learn more:</strong></p>
+
+  <ul>
+    <li>Pantheon supplies a set of <a href="https://pantheon.io/docs/categories/going-live/">Going
+    Live Articles</a> on this process that you can view. One of the most important is the <a href=
+    "https://pantheon.io/docs/articles/sites/code/using-the-pantheon-workflow/">Using the Pantheon
+    Workflow</a> article which provides an overview of how to develop, test, and push your
+    site. </li>
+  </ul>
+
+  <h3 id="adding-custom-modules-and-themes">Adding custom modules and themes</h3>
+
+  <p>You can expand the functionality of the portal by adding your own custom modules and themes to
+  the folders listed in the following table.</p>
+
+  <p><strong>Note</strong>: Only modify content within the <span style=
+  "font-family: monospace;">/sites/all</span> directory. If you modify content that is outside
+  of the <span style="font-family: monospace;">/sites/all</span> directory, you may
+  experience merge conflicts when checking in changes to Git.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <td><strong>Module/Theme</strong></td>
+
+        <td><strong>Folder in Git repository</strong></td>
+
+        <td><strong>More information (Drupal documentation)</strong></td>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td>Custom modules</td>
+
+        <td><code>sites/all/modules/custom</code></td>
+
+        <td><a href="https://www.drupal.org/developing/modules/7" target="_new">Creating custom
+        modules</a></td>
+      </tr>
+
+      <tr>
+        <td>Custom themes</td>
+
+        <td><code>sites/all/themes</code></td>
+
+        <td><a href="/api-platform/publish/drupal/customizing-theme.html#sub-theme">Customizing the
+        theme</a><br>
+        <a href="https://www.drupal.org/docs/7/theming" target="_new">Theming Drupal 7</a></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>After adding the custom module or theme in the <strong>Dev</strong> environment, you
+  can deploy it to <strong>Test</strong> for testing, and then to
+  the <strong>Live</strong> environment for production, as described in <a href=
+  "#deploying-code-to-your-portal-environments">Deploying code to your portal environments</a>.</p>
+
+  <h3 id="override">Overriding Drupal profile modules and themes</h3>
+
+  <p>The modules and themes in the following directories override the Drupal profile modules and
+  themes maintained and distributed by Apigee in <code>/profiles/apigee</code>.
+  See <a href="#git-repo">Overview of your Git repository</a>.</p>
+
+  <p>For example, you may want to override a module in the Apigee Drupal distribution in the
+  following scenarios:</p>
+
+  <ul>
+    <li>You want to use a different version of a particular module.</li>
+
+    <li>You want implement a security update before the next scheduled Apigee release.</li>
+  </ul>
+
+  <aside class="note"><b>Note:</b> If you wish to use the Drupal profile modules and themes
+  maintained by Apigee in the <span style=
+  "font-family: monospace;">/profiles/apigee</span> folder, then you will need to remove any
+  duplicate modules and themes that you added to this folder.</aside>
+
+  <table>
+    <thead>
+      <tr>
+        <td><strong>Module/Theme</strong></td>
+
+        <td><strong>Folder in Git repository</strong></td>
+
+        <td><strong>More information (Drupal documentation)</strong></td>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td>Drupal Contributed modules</td>
+
+        <td>
+          <p><code>sites/all/modules/contrib</code></p>
+
+          <p><strong>Note</strong>: Modules stored anywhere under <code>/sites/all/modules</code>
+          will override the Apigee Drupal distribution modules.</p>
+        </td>
+
+        <td>
+          <a href="https://www.drupal.org/docs/7/modules" target="_new">Contributed modules</a>
+
+          <p><b>Note</b>: Drupal contributed modules in this directory override equivalent modules
+          maintained and distributed by Apigee in <code>/profiles/apigee/modules</code>.
+          Remove any duplicate modules that you added to this folder if you wish to use the Apigee
+          maintained Drupal profile modules.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Drupal Contributed themes</td>
+
+        <td><code>sites/all/themes</code></td>
+
+        <td>
+          <a href="https://www.drupal.org/docs/7/themes" target="_new">Contributed themes</a>
+
+          <p><b>Note</b>: Drupal contributed themes in this directory override equivalent modules
+          maintained and distributed by Apigee
+          in <code>/profiles/apigee/themes</code>. Remove any duplicate modules that you
+          added to this folder if you wish to use the Apigee maintained profile themes.</p>
+
+          <div>
+             
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+<h3 id="settings-php">About the settings.php file</h3>
+<p>The Drupal <code>settings.php</code> is committed into the Apigee Drupal Developer Portal upstream Git repo. If you want to make changes to <code>sites/default/settings.php</code> file, do not edit the file directly.
+  Instead, create a file named <code>sites/default/settings.local.php</code> and put your custom code there.  The <code>sites/default/settings.local.php</code> is included by the <code>settings.php</code> file.</p>
+<p>For example, when setting up a custom domain for a live site following instructions provided by Pantheon, instead of modifying the <code>settings.php</code> file directly, add the required updates in <code>sites/default/settings.local.php</code>.</p>
+  <h2 id="secure">Securing your portal</h2>
+
+  <p>The portal sites associated with the <strong>Dev</strong>, <strong>Test</strong>, and
+  <strong>Live</strong> environments are publicly accessible by default. That means anyone with the
+  URL of the site can access it, though they might not be able to register an account or log in to
+  the site. For more information on controlling user registration, see <a href=
+  "/api-platform/publish/drupal/add-and-manage-user-accounts.html">Add and manage user
+  accounts</a>.</p>
+
+  <p>You probably want to hide your <strong>Dev</strong> and <strong>Test</strong> site from the
+  public, and want to hide your <strong>Live</strong> site until you complete development. Pantheon
+  lets you add username/password control to lock a site so that only people with the proper
+  credentials can access it. </p>
+
+  <p>Add locking to any of the three environments by selecting <strong>Security</strong> in the
+  left-hand menu for the environment.  For more information, see <a href=
+  "https://pantheon.io/docs/articles/sites/security/locking-your-site/">Locking Your Site</a>.</p>
+
+  <p>If you want to enable TLS/SSL for your site, see <a href=
+  "/api-platform/system-administration/using-ssl-portal.html">Using TLS on the portal</a>.</p>
+
+  <h2 id="applyinganapigeeupdatetoyourportal">Applying an Apigee update to your portal</h2>
+
+  <p>When Apigee publishes a new release of the portal, a message appears on the Pantheon
+  Dashboard. </p>
+
+  <aside class="note"><b>Note:</b> You should check for updates on a regular basis and apply them
+  as necessary. You can subscribe to Apigee release and Pantheon status updates, as described in
+  <a href="#subscribingtostatusupdates">Subscribing to status updates</a>.</aside>
+  <aside class="warning">
+    <b>Warning:</b> In the Status area of an environment, accessed from the <strong>Status</strong>
+    menu item on the left of the dashboard, you might see that there are updates available for
+    Drupal modules. Ignore these updates. Apigee automatically incorporates updates to Drupal
+    modules into the next release of the portal for you.
+
+    <p>By allowing Apigee to update Drupal modules for you, Apigee ensures that these updates have
+    been tested against the latest portal code. If you update a Drupal module outside of the normal
+    Apigee portal release cycle, you might run into unforeseen issues.</p>
+  </aside>
+
+  <p>You typically apply the update to the <strong>Dev</strong> environment, and then test those
+  changes in the same way that you test your own code changes. For example, push the
+  <strong>Dev</strong> environment to <strong>Test</strong>, push the live data from
+  <strong>Live</strong> to <strong>Test</strong>, and then test the update.</p>
+
+  <aside class="note"><b>Note:</b> When applying updates, you may receive the following error: <code>We were not able to perform the merge safely. See the <a href="https://pantheon.io/docs/core-updates/" target="_blank">Applying Upstream Updates</a> doc for further debugging tips</code>.</p>
+<p>It may be difficult to fix merge conflicts from the Apigee Drupal Developer Portal upstream Git repository because it is not publicly accessible. Contact Apigee support for help fixing merge conflicts.</p>
+<p>To minimize Git merge conflicts, make sure not to modify files outside of the <code>sites</code> directory. In addition, if you want to make changes to <code>sites/default/settings.php</code> file, do not edit the file directly.
+  Instead, create a file named <code>sites/default/settings.local.php</code> and put your custom code there.  The <code>sites/default/settings.local.php</code> is included by the <code>settings.php</code> file.</p>
+</aside>
+
+  <p><strong>To apply an update:</strong></p>
+
+  <ol>
+    <li>Log in to Pantheon at <a href=
+    "https://dashboard.getpantheon.com/">https://dashboard.getpantheon.com/</a> and select
+    your site.</li>
+
+    <li>Select the <strong>Dev</strong> environment.</li>
+
+    <li>Select the <strong>&lt;/&gt;Code</strong> menu entry on the left. If any Apigee updates are
+    available, they are listed. </li>
+
+    <li>Apply the update:
+
+      <ol style="list-style: lower-alpha outside">
+        <li>
+          <div>
+            Select the <strong>Run update.php after pulling code</strong> checkbox.
+          </div>
+        </li>
+
+        <li>
+          <div>
+            If available, select the <strong>Clear caches after pulling</strong> code
+            checkbox. 
+          </div>
+        </li>
+
+        <li>
+          <div>
+            Select the <strong>Deploy Code</strong> button.
+          </div>
+        </li>
+      </ol>
+    </li>
+
+    <li>After the update completes, select the <strong>Status</strong> menu item on the
+    left of the dashboard.</li>
+
+    <li>In the <strong>Status</strong> area of an environment, you might notice an error for a
+    database update, as shown below:  
+
+      <p><img alt="" src="/api-platform/images/portalDatabaseUpdate_v1.png"></p>
+
+      <p>If you see this error in any environment, manually update the database:</p>
+
+      <ol style="list-style: lower-alpha outside">
+        <li>Log in to your portal as a user with admin or content creation privileges.</li>
+
+        <li>Select the <strong>Home icon &gt; Run updates</strong> in the upper-left corner of the
+        portal.</li>
+
+        <li>Follow the instructions to update your database.</li>
+      </ol>
+    </li>
+
+    <li>Push the code changes to the <strong>Test</strong> environment, and then push to
+    <strong>Live</strong>, as described above. </li>
+  </ol>
+
+  <h2 id="migratingyourcustomfeatures">Migrating your custom features</h2>
+
+  <p>If you add custom code or features to the portal, you have to decide how to maintain them and
+  how to move them from the <strong>Dev</strong> to <strong>Test</strong> to <strong>Live</strong>
+  environments. </p>
+
+  <p>For code in the Git repo, you can use the process described in <a href=
+  "#deploying-code-to-your-portal-environments">Deploying code to your portal environments</a> to
+  migrate the code from <strong>Dev</strong> to <strong>Test</strong> to <strong>Live</strong>.</p>
+
+  <p>If you have created any custom configurations, use one of the following methods to migrate
+  them:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <td><strong>Method</strong></td>
+
+        <td><strong>Description</strong></td>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td>Export your configuration to code</td>
+
+        <td>Many common configurations are "exportable" to code using the <a href=
+        "https://www.drupal.org/project/features" target="_new">Features module</a>. For example,
+        views, panels, image cache, and so on.</td>
+      </tr>
+
+      <tr>
+        <td>Implement <code>hook_update_N()</code> function</td>
+
+        <td>
+          Drupal manages database and configuration changes by using the <a href=
+          "https://api.drupal.org/api/drupal/modules%21system%21system.api.php/function/hook_update_N/7"
+          target="_new">hook_update_N() function</a>.
+
+          <p>If you have a custom module, you can:</p>
+
+          <ul>
+            <li>Add <code>hook_update_N()</code> functions to your
+            module's <code>.install</code> file to process your changes.</li>
+
+            <li>Deploy these changes along with your code.</li>
+
+            <li>Run <code>update.php</code> to migrate the changes in the Stage and Prod
+            environments.</li>
+          </ul>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>See also <a href=
+  "https://pantheon.io/docs/articles/sites/code/using-the-pantheon-workflow/">Using the Pantheon
+  Workflow</a> which provides an overview of how to develop, test, and push your site. Included in
+  that article is the section on <a href=
+  "https://pantheon.io/docs/articles/sites/code/using-the-pantheon-workflow/#configuration-management">
+  Configuration Management</a>.</p>
+
+  <h2 id="custom-domain">Configuring a custom domain</h2>
+
+  <p>The domain names that Apigee provides for a portal default to <code>apigee.io</code>, as
+  described in <a href="#manage-envs">Managing your environments</a>, which may not be what you
+  want to expose to your customers.</p>
+
+  <p>Paid portal plans can configure a custom domain name for the portal (Developer, or free
+  accounts, cannot create a custom domain). To use a custom domain create a CNAME in your DNS and
+  point your domain to <span style=
+  "font-family: &quot;courier new&quot;, courier, monospace;">edge.apigee.getpantheon.com</span>.</p>
+
+  <aside class="warning"><b>Warning:</b> The instructions on the Pantheon dashboard specify to use
+  CNAME <span style=
+  "font-family: &quot;courier new&quot;, courier, monospace;">edge.live.getpantheon.com</span>, but
+  this is incorrect. Make sure you use to <span style=
+  "font-family: &quot;courier new&quot;, courier, monospace;">edge.apigee.getpantheon.com</span>.</aside>
+
+  <p>For example, to configure the custom domain for a company named Mytech:</p>
+
+  <ol>
+    <li> Configure the following the DNS setting: <br>
+    <span style="font-family: &quot;courier new&quot;, courier, monospace;">developer.mytech.com.
+    3600 IN CNAME edge.apigee.getpantheon.com</span><br>
+    It can take up to 48 hours for this DNS change to take effect for all client devices.</li>
+
+    <li>Use the <strong>Domains / SSL</strong> menu entry on the left side of the
+    dashboard to add this domain to your Pantheon dashboard for
+    the <strong>Live</strong> environment only.<br>
+    In most cases, you only configure DNS for the <strong>Live</strong> environment, not
+    for <strong>Dev</strong> and <strong>Test</strong>. You should not use
+    the <strong>Dev</strong> or <strong>Test</strong> environments for
+    production.</li>
+  </ol>
+
+  <p>For more information, see the Pantheon documentation <a href=
+  "https://pantheon.io/docs/articles/sites/domains/adding-a-domain-to-a-site-environment/">here</a>. </p>
+
+  <h2 id="add-users">Adding portal administrators</h2>
+
+  <p>When you receive the email from Apigee that your portal is ready, Apigee will have already
+  configured the list of portal administrators. You can see that list by selecting
+  the <strong>Team</strong> link in the upper-right side of the site dashboard. </p>
+
+  <p>To add additional administrators, contact <a href=
+  "https://community.apigee.com/content/apigee-customer-support">Apigee Customer
+  Support</a>. </p>
+
+  <h2 id="backingupyourportal">Backing up your portal</h2>
+
+  <p>To back up your portal, use the <strong>Backups</strong> tab on the Pantheon dashboard. You
+  can create an on-demand or automated backup. In Pantheon, a backup consists of three separate
+  archives: database, files, and code.</p>
+
+  <aside class="note"><b>Note:</b> It is strongly recommended that you back up each portal
+  environment (Dev, Test, and Live) separately on a regular schedule.</aside>
+
+  <p>For more information, see <a href="https://pantheon.io/docs/backups/" target="_blank">Backups
+  Tool</a> in the Pantheon documentation.</p>
+
+  <h2 id="subscribingtostatusupdates">Subscribing to status updates</h2>
+
+  <p>You can subscribe to <strong>Apigee</strong> release and status updates
+  at <a href="https://status.apigee.com" target="_new">status.apigee.com</a>.
+  Click <strong>Subscribe to Updates</strong>, enter your contact information, such as email
+  address, when prompted, and click <strong>Subscribe</strong>. On the email notification
+  management page, ensure that <strong>Developer Portal</strong> is selected, toggle
+  other notification settings as required, and click <strong>Update Preferences</strong>.</p>
+
+  <p>You can subscribe to <strong>Pantheon</strong> status updates and incident reports,
+  such as when an outage occurs, at <a href=
+  "http://status.getpantheon.com/">http://status.getpantheon.com</a>. Click <strong>Subscribe
+  to Updates</strong> to sign up.</p>{% endblock %}

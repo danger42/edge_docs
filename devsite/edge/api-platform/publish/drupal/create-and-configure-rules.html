@@ -1,0 +1,160 @@
+  {% extends "_base.html" %} {% block title %}Create and configure rules{% endblock %} {% block body %}
+
+  <p>The <a href="https://drupal.org/project/rules">Drupal Rules</a> module lets you define a
+  <em>rule</em> that specifies the <em>action</em> that occurs automatically in response to an
+  <em>event</em> on the portal. For example, you can create a rule to automatically add a default
+  app (action) to all new developer accounts (event). Or, you can create a rule to redirect a user
+  to a specific page (action) on log in (event). <a href=
+  "/api-platform/publish/drupal/add-and-manage-user-accounts.html">Add and manage user accounts</a>
+  shows how to define those two rules.</p>
+
+  <aside class="note"><b>Note:</b> The Drupal Rules module tracks events that are performed using
+  the portal only. It does not track equivalent events that are performed using Apigee Edge. For
+  example, if you have defined a rule that tracks when an app is updated, if an app is updated
+  using the dev portal, the action will be triggered. If the app is updated using Apigee Edge, no
+  action will be triggered.</aside>
+
+  <p>The Rules module is very flexible and you can use it to create many different types of rules.
+  A subset of the events include:</p>
+
+  <ul>
+    <li>Adding, updating or deleting a developer app</li>
+
+    <li>Changing the status of a developer app</li>
+
+    <li>Adding, updating, or deleting a developer account</li>
+
+    <li>Adding, updating, or deleting a portal node</li>
+
+    <li>Drupal is initialized</li>
+
+    <li>A Drupal log entry is created</li>
+  </ul>
+
+  <p>A subset of the types of actions that can be performed include:</p>
+
+  <ul>
+    <li>Sending an email to an individual or group</li>
+
+    <li>Blocking a user</li>
+
+    <li>Promoting content</li>
+
+    <li>Showing a message on the site</li>
+
+    <li>Performing a page redirect</li>
+
+    <li>Blocking an IP address</li>
+  </ul>
+
+  <aside class="note">
+    <b>Note:</b> If the event is the changing of the status of an app, and the action is to send an
+    email, then the email is sent the next time the portal's cron job runs. In Edge for Private
+    Cloud installations, you can set the frequency of the cron job to as short as one minute. In
+    Edge cloud, the minimum frequency is one hour. 
+
+    <p>To set the frequency of the cron job, select <strong>Configuration &gt; System
+    &gt; Cron</strong> in the Drupal administration menu.</p>
+
+    <p>To manually trigger the cron job, select the <strong>Home icon &gt; Run
+    cron</strong>.</p>
+  </aside>
+
+  <p>You can also add conditions to rules, for example to test the role of a developer, as part of
+  processing the rule. </p>
+
+  <p>For a compete list of capabilities, see the documentation on the <a href=
+  "https://drupal.org/project/rules">Drupal Rules</a> module.</p>
+
+  <h2 id="enablingrules">Enabling rules</h2>
+
+  <p>Before you can create a rule, you muse ensure that all the necessary Drupal modules are
+  enabled.<br>
+  <br>
+  <strong>To enable the necessary Drupal modules:</strong></p>
+
+  <ol>
+    <li>Log in to your portal as a user with admin privileges.</li>
+
+    <li>Select <strong>Modules</strong> in the Drupal administration menu.</li>
+
+    <li>Enable the following modules if they are not already enabled:
+
+      <ul>
+        <li>Rules</li>
+
+        <li>Rules UI</li>
+      </ul>
+    </li>
+
+    <li>Save the configuration.<br>
+    You might see other required modules being enabled automatically.</li>
+  </ol>
+
+  <h2 id="creatingarule">Creating a rule</h2>
+
+  <p>In this example, you create a rule to notify administrators when a developer create a new app
+  on the portal.</p>
+
+  <aside class="note"><b>Note:</b> This example generates an email when the developer create a
+  new app. You must configure SMTP on the portal for the email to be generated. See <a href=
+  "/api-platform/publish/drupal/configuring-email.html">Configuring email</a> for
+  more. </aside>
+
+  <p><strong>To create a rule:</strong></p>
+
+  <ol>
+    <li>Log in to your portal as a user with admin privileges.</li>
+
+    <li>Select <strong>Configuration &gt; Workflow &gt; Rules</strong> in the Drupal
+    administration menu.</li>
+
+    <li>Select <strong>+ Add new rule</strong> on the Rules page.</li>
+
+    <li>Specify the <strong>Name</strong> of the rule. For example <span style=
+    "font-family:courier new,courier,monospace;">Email on app creation</span>.</li>
+
+    <li>Optionally specify a tag as <span style=
+    "font-family:courier new,courier,monospace;">app_creation</span>.</li>
+
+    <li>In the <strong>React on event</strong> dropdown box, select <strong>Devconnect &gt; Upon
+    creation of a developer app</strong>.<br>
+    <img alt="" src="/api-platform/images/emailRule_14_07.png"></li>
+
+    <li>Select <strong>Save</strong><br>
+    The <strong>Editing reaction rule</strong> page appears. You already set the event in the
+    previous step, so it should say <strong>Upon creation of a developer app</strong> in
+    under <strong>Events</strong>. Leave <strong>Conditions</strong> blank for this rule.</li>
+
+    <li>Under <strong>Actions</strong>, select <strong>+ Add action</strong>.</li>
+
+    <li>Select <strong>System &gt; Send mail</strong> in the dropdown.<br>
+    The <strong>Add a new action</strong> page changes its layout to let you specify email
+    information.</li>
+
+    <li>Edit all information including the email recipients, message body, sender, and other
+    information.</li>
+
+    <li>Click <strong>Save</strong> to return to the <strong>Editing reaction rule</strong>
+    page. </li>
+
+    <li>Click <strong>Save</strong> changes.<br>
+    <br>
+    Now when a developer creates an app, an email is automatically sent to the list of recipients
+    specified by the rule.  </li>
+  </ol>
+
+  <h2 id="editingordeletingarule">Editing or deleting a rule</h2>
+
+  <p>After you create a rule, you can later edit or delete the rule.</p>
+
+  <p><strong>To edit or update a rule:</strong></p>
+
+  <ol>
+    <li>Log in to your portal as a user with admin privileges.</li>
+
+    <li>Select <strong>Configuration &gt; Workflow &gt; Rules</strong> in the Drupal
+    administration menu.</li>
+
+    <li>Select the rule to edit or delete.</li>
+  </ol>{% endblock %}

@@ -1,0 +1,77 @@
+  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}Handling a PostgresSQL
+  Database Failover{% endblock %} {% block body %}
+
+  <p>Perform the following during a PostgreSQL database failover:</p>
+
+  <ol>
+    <li>Stop <span style="font-family:courier new,courier,monospace;">apigee-postgresql</span> on
+    the current master if it is still running:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt;
+    /opt/apigee/apigee-service/bin/apigee-service apigee-postgresql stop</span></li>
+
+    <li>Go to standby node and invoke the following command to make it the master:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt;
+    /opt/apigee/apigee-service/bin/apigee-service apigee-postgresql promote-standby-to-master
+    <em><strong>IPorDNSofOldMaster</strong></em></span></li>
+  </ol>
+
+  <p>If old master is restored at some time in the future, make it a standby node:</p>
+
+  <ol>
+    <li>On the current master, edit the config file to set:<br>
+    <span style=
+    "font-family:courier new,courier,monospace;">PG_MASTER=<em><strong>IPorDNSofNewMaster</strong></em><br>
+
+    PG_STANDBY=<em><strong>IPorDNSofOldMaster</strong></em></span></li>
+
+    <li>Enable replication on the new master:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt;
+    /opt/apigee/apigee-service/bin/apigee-service apigee-postgresql setup-replication-on-master -f
+    <em><strong>configFIle</strong></em></span></li>
+
+    <li>On the old master, edit the config file to set:<br>
+    <span style=
+    "font-family:courier new,courier,monospace;">PG_MASTER=<em><strong>IPorDNSofNewMaster</strong></em><br>
+
+    PG_STANDBY=<em><strong>IPorDNSofOldMaster</strong></em></span></li>
+
+    <li>
+      <div>
+        Stop <span style="font-family:courier new,courier,monospace;">apigee-postgresql</span>
+        on the old master:
+      </div><span style="font-family:courier new,courier,monospace;">&gt;
+      /opt/apigee/apigee-service/bin/apigee-service apigee-postgresql stop</span>
+    </li>
+
+    <li>On the old master, clean out any old Postgres data:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt; rm -rf
+    /opt/apigee/data/apigee-postgresql/</span><br>
+    <br>
+    <strong>Note</strong>: If necessary, you can backup this data before deleting it.</li>
+
+    <li>Configure the old master as a standby:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt;
+    /opt/apigee/apigee-service/bin/apigee-service apigee-postgresql setup-replication-on-standby -f
+    <em><strong>configFile</strong></em></span></li>
+
+    <li>On completion of replication, verify the replication status by issuing the following
+    scripts on both servers. The system should display identical results on both servers to ensure
+    a successful replication:
+
+      <ol style="list-style: lower-alpha outside">
+        <li>On the master node, run:<br>
+        <span style="font-family:courier new,courier,monospace;">&gt;
+        /opt/apigee/apigee-service/bin/apigee-service apigee-postgresql
+        postgres-check-master</span><br>
+        <br>
+        Validate that it says it is the master.</li>
+
+        <li>On the standby node:<br>
+        <span style="font-family:courier new,courier,monospace;">&gt;
+        /opt/apigee/apigee-service/bin/apigee-service apigee-postgresql
+        postgres-check-standby</span><br>
+        <br>
+        Validate that it says it is the standby.</li>
+      </ol>
+    </li>
+  </ol>{% endblock %}

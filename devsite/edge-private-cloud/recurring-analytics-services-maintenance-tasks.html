@@ -1,0 +1,47 @@
+  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}Recurring Analytics Services
+  Maintenance Tasks{% endblock %} {% block body %}
+
+  <p>Many Apigee Analytics Services tasks can be performed using standard Postgres utilities. The
+  routine maintenance tasks you would perform on the Analytics database &#8211; such as database
+  reorganization using VACUUM, reindexing and log file maintenance - are the same as those you
+  would perform on any PostgreSQL database. Information on routine Postgres maintenance can be
+  found at <a href=
+  "https://www.postgresql.org/docs/9.1/static/maintenance.html">http://www.postgresql.org/docs/9.1/static/maintenance.html</a>.</p>
+
+  <aside class="note"><b>Note:</b> Postgres autovacuum is enabled by default, so you do not have to
+  explicitly run the VACUUM command. Autovacuum reclaims storage by removing obsolete
+  data from the PostgreSQL database.</aside>
+
+  <p><strong>Important Note</strong>: Apigee does not recommend moving the PostgreSQL database
+  without contacting Apigee Customer Success. The Apigee system PostgreSQL database servers using
+  their IP address, and moving the database or changing its IP address without performing
+  corresponding updates on the Apigee environment metadata will cause undesirable results.</p>
+
+  <p>For more on maintaining PostgreSQL database, see <a href=
+  "https://www.postgresql.org/docs/9.1/static/maintenance.html">http://www.postgresql.org/docs/9.1/static/maintenance.html</a>.</p>
+
+  <aside class="note"><b>Note:</b> No pruning is required for Cassandra. Expired tokens are
+  automatically purged after 180 days.</aside>
+
+  <h2 id="pruninganalyticsdata">Pruning Analytics Data</h2>
+
+  <p>As the amount of analytics data available within the Apigee repository increases, you may find
+  it desirable to "prune" the data beyond your required retention interval. Run the following
+  command to prune data for a specific organization and environment:</p>
+  <pre class="prettyprint">
+&gt; /opt/apigee/apigee-service/bin/apigee-service apigee-postgresql pg-data-purge &lt;Org&gt; &lt;Env&gt; &lt;NoOfDaysToPurgeBackFromCurrentDate&gt;
+</pre>
+
+  <p>This command interrogates the "childfactables" table in the "analytics" schema to determine
+  which raw data partitions cover the dates for which data pruning is to be performed, then drops
+  those tables.  Once the tables are dropped, the entries in "childfactables" related to those
+  partitions are deleted.</p>
+
+  <p>Childfactables are daily-partitioned fact data. Every day new partitions are created and data
+  gets ingested into the daily partitioned tables. So at a later point in time, when the old fact
+  data will not be required, you can purge the respective childfactables. </p>
+
+  <aside class="note"><b>Note:</b> If you have configured master-standby replication between
+  Postgres servers, then you only need to run this script on the Postgres master.</aside>
+
+  {% endblock %}

@@ -1,0 +1,497 @@
+  {% extends "_base.html" %} {% block title %}JavaScript policy{% endblock %} {% block body %}
+  <img src="/api-platform/images/icon_policy_javaScript.jpg">
+
+  <h3>What</h3>
+
+  <p>This policy lets you add custom JavaScript code that executes within the context of an API
+  proxy flow. In your custom JavaScript code, you can use the objects, methods, and properties of
+  the Apigee Edge <a href="/api-platform/reference/javascript-object-model.html">JavaScript object
+  model</a>. The object model lets you get, set, and remove variables in the proxy flow conext. You
+  can also use basic cryptographic functions that are provided with the object model. </p>
+
+  <h3>About</h3>
+
+  <p>There are many use cases for the JavaScript policy. For example, you can get and set flow
+  variables, execute custom logic and perform fault handling, extract data from requests or
+  responses, dynamically edit the backend target URL, and much more. This policy allows you to
+  implement custom behavior that is not covered by any other standard Edge policies. In fact, you
+  can use a JavaScript policy to achieve many of the same behaviors implemented by other policies,
+  like AssignMessage and ExtractVariable.</p>
+
+  <p>One use case we don't recommend for the JavaScript policy is logging. The <a href=
+  "/api-platform/reference/policies/message-logging-policy.html">Message Logging policy</a> is much
+  better suited for logging to third-party logging platforms such as Splunk, Sumo, and Loggly, and
+  you improve API proxy performance by executing the Message Logging policy in the PostClientFlow,
+  which executes after the response has been sent back to the client.</p>
+
+  <p>Basically, the JavaScript policy specifies the name of the JavaScript source file to execute
+  when the step to which the policy is attached executes. The source file is always stored in a
+  standard location within the proxy bundle: <code>apiproxy/resources/jsc</code>. Or, you can also
+  store the source code in a resource file at the environment or organization level. For
+  instructions, see <a href="/api-platform/develop/resource-files.html">Resource files</a>. You can
+  also upload your JavaScript through the management UI proxy editor.</p>
+
+  <p>JavaScript source files must always have a <code>.js</code> extension.</p>
+
+  <p>See <a href="/release/supported-software.html">Supported software and supported versions</a>
+  for the currently supported version of JavaScript.</p>
+
+  <h3 id="video">Video</h3>
+
+  <p>Watch a short video to learn how to create a custom policy extension using the JavaScript
+  policy.</p>
+
+  <div style="text-align: left; margin:15px">
+    <iframe allowfullscreen="" frameborder="0" height="480" src=
+    "https://www.youtube.com/embed/w_HDOgO8FEI" width="560"></iframe>
+  </div>
+
+  <h3 id="samples">Samples</h3><!-- Begin tab list -->
+  <!-- End tab list --><!-- Begin tabbed region -->
+
+  <div class="ds-selector-tabs">
+    <section>
+      <h3 class="two-line-tab">Rewrite the target URL</h3>
+
+      <p>Here's a common use case: extracting data from a request body, storing it in a flow
+      variable, and using that flow variable elsewhere in the proxy flow. Let's say you have an app
+      where the user enters their name in an HTML form and submits it. You want the API proxy to
+      extract the form data and dynamically add it to the URL used to call the backend service. How
+      would you do this in a JavsScript policy?</p>
+
+      <p><strong>Note:</strong> If you want to try out this example, we assume you've created a new
+      proxy in the proxy editor. When you create it, just give it a backend service URL of:
+      http://www.example.com. For this example, we're going to rewrite the backend URL dynamically.
+      If you don't know how to create a new proxy, refer to the getting started tutorial. .</p>
+
+      <ol>
+        <li>In Edge UI, open the proxy that you created in the proxy editor.</li>
+
+        <li>Select the <strong>Develop</strong> tab.</li>
+
+        <li>From the New menu, select <strong>New Script</strong>.</li>
+
+        <li>In the dialog, select JavaScript and give the script a name, like
+        <code>js-example</code>.</li>
+
+        <li>Paste the following code in the code editor and save the proxy. The important thing to
+        notice is the <code>context</code> object. This object is available to the JavaScript code
+        anywhere in the proxy flow. It's used to obtain flow-specific constants, to call useful
+        get/set methods, and for more operations. This object part is of Edge's <a href=
+        "/api-platform/reference/javascript-object-model.html">JavaScript Object Model</a>. Note,
+        too, that the <code>target.url</code> flow variable is a built-in, read/write variable that
+        is accessible in the Target Request flow. When we set that variable with the API URL, Edge
+        makes its backend call to that URL. We've essentially rewritten the original target URL,
+        which was whatever you specified when you created the proxy (e.g.,
+        http://www.example.com).<br>
+          <br>
+          <pre class="prettyprint">
+if (context.flow=="PROXY_REQ_FLOW") {
+     var username = context.getVariable("request.formparam.user");
+     context.setVariable("info.username", username);
+}
+
+
+if (context.flow=="TARGET_REQ_FLOW") {
+     context.setVariable("request.verb", "GET");
+     var name = context.getVariable("info.username");
+     var url = "http://mocktarget.apigee.net/"
+     context.setVariable("target.url", url + "?user=" + name);
+}
+</pre>
+
+          <div>
+             
+          </div>
+        </li>
+
+        <li>From the New Policy menu, select <strong>JavaScript</strong>.</li>
+
+        <li>Give the policy a name, like <code>target-rewrite</code>. Accept the defaults, and save
+        the policy.</li>
+
+        <li>If you select the Proxy Endpoint Preflow in the Navigator, you'll see that the policy
+        was added to that flow.</li>
+
+        <li>In the Navigator, select the <strong>Target Endpoint PreFlow</strong> icon.</li>
+
+        <li>From the Navigator, drag the JavaScript policy onto the Request side of the Target
+        Endpoint in the flow editor.</li>
+
+        <li>Save.</li>
+
+        <li>Call the API like this, substituting your correct org name and proxy name as
+        appropriate:</li>
+      </ol>
+      <pre class="prettyprint">
+curl -i -H 'Content-Type: application/x-www-form-urlencoded' -X POST -d 'user=Will' http://myorg-test.apigee.net/js-example
+</pre>
+
+      <p>One final thing, let's take a look at the XML definition for the JavaScript policy used in
+      this example. The important thing to note is that the <code>&lt;ResourceURL&gt;</code>
+      element is used to speicfy the JavaScript source file to execute. This same pattern is used
+      for any JavaScript source file: <code>jsc://filename.js</code>. If you're JavaScript code
+      requires includes, you can use one or more <code>&lt;IncludeURL&gt;</code> elements to do
+      that, as described later in this reference.</p>
+      <pre class="prettyprint">
+&lt;?xml version="1.0" encoding="UTF-8" standalone="yes"?&gt;
+&lt;Javascript async="false" continueOnError="false" enabled="true" timeLimit="200" name="target-rewrite"&gt;
+    &lt;DisplayName&gt;target-rewrite&lt;/DisplayName&gt;
+    &lt;Properties/&gt;
+    &lt;ResourceURL&gt;jsc://js-example.js&lt;/ResourceURL&gt;
+&lt;/Javascript&gt;
+</pre>
+    </section>
+
+    <section>
+      <h3 class="two-line-tab">Retrieve property value from JavaScript</h3>
+
+      <p>You can add a <code>&lt;Property&gt;</code> element in configuration, then retrieve the
+      element's value with JavaScript at runtime.</p>
+
+      <p>Use the element's <code>name</code> attribute to specify the name with which to access the
+      property from JavaScript code. The <code>&lt;Property&gt;</code> element's value (the value
+      between the opening and closing tags) is the literal value that will be received by the
+      JavaScript.</p>
+
+      <p>In JavaScript, you retrieve the policy property value by accessing it as a property of the
+      <code>Properties</code> object, as in the following:</p>
+
+      <ul>
+        <li>Configure the property. Here, the property value is the variable name
+        <code>response.status.code</code>.
+          <pre class="prettyprint">
+&lt;Javascript async="false" continueOnError="false" enabled="true" timeLimit="200" name="JavascriptURLRewrite"&gt;
+    &lt;DisplayName&gt;JavascriptURLRewrite&lt;/DisplayName&gt;
+    &lt;Properties&gt;
+        &lt;Property name="source"&gt;response.status.code&lt;/Property&gt;
+    &lt;/Properties&gt;
+    &lt;ResourceURL&gt;jsc://JavascriptURLRewrite.js&lt;/ResourceURL&gt;
+&lt;/Javascript&gt;
+</pre>
+        </li>
+
+        <li>Retrieve the property with JavaScript. Here, the retrieved value -- a variable name --
+        is then used by the <code>getVariable</code> function to retrieve the variable's value.
+          <pre class="prettyprint">
+var responseCode = properties.source; // Returns "response.status.code"
+var value = context.getVariable(responseCode); // Get the value of response.status.code
+context.setVariable("response.header.x-target-response-code", value);
+</pre>
+        </li>
+      </ul>
+    </section>
+
+    <section>
+      <h3 class="two-line-tab">Handling errors</h3>
+
+      <p>For examples and a discussion of error handling techniques that you can use in a
+      JavaScript callout, see <a href=
+      "https://community.apigee.com/questions/11381/correct-way-to-return-error-from-javascript-policy.html">
+      this post in the Apigee Community</a>. Suggestions offered in the Apigee Community are for
+      information only and do not necessarily represent best practices recommended by Apigee.</p>
+    </section>
+  </div><!-- End tabbed region. -->
+  <hr>
+
+  <h2 id="elementreference">Element reference</h2>
+
+  <p>The element reference describes the elements and attributes of the JavaScript policy.</p>
+  <pre class="prettyprint">
+&lt;?xml version="1.0" encoding="UTF-8" standalone="yes"?&gt;
+&lt;<a href="#JavaScript">Javascript</a> async="false" 
+        continueOnError="false" enabled="true" timeLimit="200" 
+        name="JavaScript-1"&gt;
+    &lt;DisplayName&gt;JavaScript 1&lt;/DisplayName&gt;
+    &lt;Properties&gt;
+        &lt;Property name="propName"&gt;propertyValue&lt;/Property&gt;
+    &lt;/Properties&gt;
+    &lt;<a href=
+"#ResourceURL">ResourceURL</a>&gt;jsc://my-javascript-source-file&lt;/ResourceURL&gt;
+    &lt;<a href="#IncludeURL">IncludeURL</a>&gt;jsc://a-javascript-library-file&lt;/IncludeURL&gt;
+&lt;/Javascript&gt;
+</pre>
+
+  <h2 id="JavaScript">&lt;Javascript&gt; Attributes</h2>
+  <pre class="prettyprint">
+&lt;Javascript name="Javascript-1" enabled="true" continueOnError="false" async="false" timeLimit="200"&gt;
+</pre>
+
+  <p>The following attributes are specific to this policy.</p>
+
+  <table width="650">
+    <thead>
+      <tr>
+        <th width="118">Attribute</th>
+
+        <th width="343">Description</th>
+
+        <th width="92">Default</th>
+
+        <th width="192">Presence</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td>timeLimit</td>
+
+        <td>
+          <p>Specifies the maximum time (in milliseconds) that the script is permitted to
+          execute.</p>
+
+          <p><strong>Note:</strong> For free trial accounts, execution time is limited to 200
+          ms.</p>
+        </td>
+
+        <td>N/A</td>
+
+        <td>Required</td>
+      </tr>
+    </tbody>
+  </table>{% dynamic include /includes/___policies-parent-element-attributes %}
+
+  <h2 id="IncludeURL">&lt;IncludeURL&gt; element</h2>
+
+  <p>Specifies a JavaScript library file to be loaded as dependency to the main JavaScript file
+  specified with the <code>&lt;ResourceURL&gt;</code> element. The scripts will be evaluated in the
+  order in which they are listed in the policy. Your code can use the objects, methods, and
+  properties of the <a href="/api-platform/reference/javascript-object-model.html">JavaScript
+  object model</a>.</p>
+
+  <p>Include more than one JavaScript dependency resource with additional
+  <code>&lt;IncludeURL&gt;</code> elements.</p>
+
+  <aside class="warning"><b>Warning:</b> If your JavaScript files are stored at the organization or
+  environment level, be sure they were uploaded correctly with cURL using the <code>-F</code>
+  option or as a file attachment through a REST client. Content-Type is
+  <code>multipart/form-data</code>. For more information, see <a href=
+  "/api-platform/develop/resource-files.html">Resource files</a>.</aside>
+  <pre class="prettyprint">
+&lt;IncludeURL&gt;jsc://my-javascript-dependency.js&lt;/IncludeURL&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>None</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>String</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="includeurlelement-example">Example</h3>
+
+  <p>See the Basic Example in the <a href="#samples">Samples</a> section.</p>
+
+  <h2 id="Property">&lt;Property&gt; element</h2>
+
+  <p>Specifies a property you can access from JavaScript code at runtime.</p>
+  <pre class="prettyprint">
+&lt;Properties&gt;
+    &lt;Property name="propName"&gt;propertyValue&lt;/Property&gt;
+&lt;/Properties&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>None</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>String</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="Property_attributes">Attributes</h3>
+
+  <table width="650">
+    <thead>
+      <tr>
+        <th width="118">Attribute</th>
+
+        <th width="343">Description</th>
+
+        <th width="92">Default</th>
+
+        <th width="192">Presence</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td>name</td>
+
+        <td>
+          <p>Specifies the name of the property.</p>
+        </td>
+
+        <td>N/A</td>
+
+        <td>Required.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="propertyelement-example">Example</h3>
+
+  <p>See the example in the <a href="#samples">Samples</a> section.</p>
+
+  <h2 id="ResourceURL">&lt;ResourceURL&gt; element</h2>
+
+  <p>Specifies the main JavaScript file that will execute in the API flow. You can store this file
+  at the API proxy scope (under <code>/apiproxy/resources/jsc</code> in the API proxy bundle or in
+  the Scripts section of the API proxy editor's Navigator pane), or at the organization or
+  environment scopes for reuse across multiple API proxies, as described in <a href=
+  "/api-platform/develop/resource-files.html">Resource files</a>. Your code can use the objects,
+  methods, and properties of the <a href=
+  "/api-platform/reference/javascript-object-model.html">JavaScript object model</a>.</p>
+  <pre class="prettyprint">
+&lt;ResourceURL&gt;jsc://my-javascript.js&lt;/ResourceURL&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>None</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Required</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>String</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="resourceurlelement-example">Example</h3>
+
+  <p>See the Basic Example in the <a href="#samples">Samples</a> section.</p>
+
+  <h2 id="usage">Usage notes</h2>
+
+  <p>A JavaScript policy contains no actual code. Instead, a JavaScript policy references a
+  JavaScript 'resource' and defines the Step in the API flow where the JavaScript executes. You can
+  upload your script through the Management UI proxy editor, or you can include it in the
+  <code>/resources/jsc</code> directory in API proxies that you develop locally.</p>
+
+  <aside class="warning"><b>Warning:</b> System calls are not permitted by the security
+  model. For example: internal file system reads or writes, or getting current user info, the
+  process list, or CPU/memory utilization. Although some such calls may be functional, they are
+  unsupported and liable to be actively disabled at any time. For forward compatibility, you should
+  avoid making such calls in your code.</aside>
+
+  <h2 id="debuggingjavascriptpolicycode">Debugging JavaScript policy code</h2>
+
+  <p>Use the <strong>print()</strong> function to output debug information to the transaction
+  output panel in the Trace Tool. For details and examples, see Debug with JavaScript
+  <strong>print()</strong> statements.</p>
+
+  <p>To view print statements in Trace:</p>
+
+  <ol>
+    <li>Open the Trace Tool and start a trace session for a proxy that contains your JavaScript
+    policy.</li>
+
+    <li>Call the proxy.</li>
+
+    <li>In the Trace Tool, click <strong>Output from all Transactions</strong> to open the output
+    panel.
+
+      <p><img alt="" src="/api-platform/images/output-transactions.png"></p>
+    </li>
+
+    <li>Your print statements will appear in this panel.</li>
+  </ol>
+
+  <p>You can use the print() function to output debug information to the <a href=
+  "/api-platform/debug/using-trace-tool-0.html">Trace tool</a>. This function is available directly
+  through the JavaScript object model. For details, see "<a href=
+  "/api-platform/reference/javascript-object-model.html">Debug JavaScript with print()
+  statements</a>".</p>
+
+  <h2 id="flowvariables">Flow Variables</h2>
+
+  <p>This policy does not populate any variables by default; however, you can set (and get) flow
+  variables in your JavaScript code by calling methods on the context object. A typical pattern
+  looks like this:</p>
+  <pre class="prettyprint">
+context.setVariable("response.header.X-Apigee-Target", context.getVariable("target.name"))
+</pre>
+
+  <p>The context object is part of the Apigee Edge JavaScript Object Model. For more information,
+  see <a href="/api-platform/reference/javascript-object-model.html">JavaScript object
+  model</a>. </p>
+
+  <h2 id="errorcodes">Error reference</h2>
+
+  <p>{% dynamic include /includes/___javascript-policy-error-codes %}</p>
+
+  <h2 id="schema">Schema</h2>
+
+  <p>Each policy type is defined by an XML schema (<code>.xsd</code>). For reference, <a href=
+  "https://github.com/apigee/api-platform-samples/tree/master/schemas/policy">policy schemas</a>
+  are available on GitHub.</p>
+
+  <h2 id="relatedtopics">Related topics</h2>
+
+  <ul>
+    <li><a href="/api-platform/reference/javascript-object-model.html">JavaScript object
+    model</a></li>
+
+    <li><a href="/api-platform/reference/javascript-object-model.html">JavaScript object
+    model</a></li>
+
+    <li>For instructions, policy samples, and JavaScript samples, see <a href=
+    "/api-platform/samples/cookbook/programming-api-proxies-javascript.html">Programming API
+    proxies with JavaScript</a>.</li>
+
+    <li>For instructions on building and deploying full-fledged JavaScript apps for Apigee Edge,
+    see the <a href=
+    "/api-platform/samples/cookbook/implementing-http-clients-javascript.html">Implementing HTTP
+    clients in JavaScript</a>.</li>
+  </ul>
+
+  <h2 id="apigeecommunityarticles">Apigee Community articles</h2>
+
+  <p>You can find these related articles on the <a href="https://community.apigee.com/">Apigee
+  Community</a>:</p>
+
+  <ul>
+    <li><a href=
+    "https://community.apigee.com/articles/2319/how-to-handle-multi-value-headers-in-javascript.html">
+    How to handle multi-value headers in Javascript</a>?</li>
+  </ul>{% endblock %}

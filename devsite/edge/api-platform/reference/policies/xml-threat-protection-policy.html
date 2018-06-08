@@ -1,0 +1,937 @@
+  {% extends "_base.html" %} {% block title %}XML Threat Protection policy{% endblock %} {% block body %} <img src="/api-platform/images/icon_policy_threat-protection.jpg">
+
+  <h3>What</h3>
+
+  <p>Address XML vulnerabilities and minimize attacks on your API. Optionally, detect XML payload
+  attacks based on configured limits. Screen against XML threats using the following
+  approaches:</p>
+
+  <aside class="note"><b>Note:</b> This policy executes only if the <code>Content-Type</code> of
+  the request or response header is set to <code>application/xml.</code></aside>
+
+  <ul>
+    <li>Validate messages against an XML schema (<code>.xsd</code>)</li>
+
+    <li>Evaluate message content for specific blacklisted keywords or patterns</li>
+
+    <li>Detect corrupt or malformed messages before those messages are parsed</li>
+  </ul>
+
+  <h2 id="watchashortvideoonthreatprotection">Watch a short video on threat protection </h2>
+
+  <div class="video">
+    <p><strong>Video:</strong> Watch a short video on threat protection policies from the
+    Four-minute Videos for Developers (4MV4D) series.</p>
+
+    <div style="text-align: left; margin:15px">
+      <iframe allowfullscreen="" frameborder="0" height="480" src=
+      "https://www.youtube.com/embed/rC8kZJgwBFM?list=PLIXjuPlujxxxe3iTmLtgfIBgpMo7iD7fk" width=
+      "854"></iframe>
+    </div>
+  </div>
+
+  <h2 id="elementreference">Element reference</h2>
+
+  <p>The element reference describes the elements and attributes of the XMLThreatProtection
+  policy.</p>
+  <pre class="prettyprint">
+&lt;XMLThreatProtection async="false" continueOnError="false" enabled="true" name="XML-Threat-Protection-1"&gt;
+   &lt;DisplayName&gt;XML Threat Protection 1&lt;/DisplayName&gt;
+   &lt;NameLimits&gt;
+      &lt;Element&gt;10&lt;/Element&gt;
+      &lt;Attribute&gt;10&lt;/Attribute&gt;
+      &lt;NamespacePrefix&gt;10&lt;/NamespacePrefix&gt;
+      &lt;ProcessingInstructionTarget&gt;10&lt;/ProcessingInstructionTarget&gt;
+   &lt;/NameLimits&gt;
+   &lt;Source&gt;request&lt;/Source&gt;
+   &lt;StructureLimits&gt;
+      &lt;NodeDepth&gt;5&lt;/NodeDepth&gt;
+      &lt;AttributeCountPerElement&gt;2&lt;/AttributeCountPerElement&gt;
+      &lt;NamespaceCountPerElement&gt;3&lt;/NamespaceCountPerElement&gt;
+      &lt;ChildCount includeComment="true" includeElement="true" includeProcessingInstruction="true" includeText="true"&gt;3&lt;/ChildCount&gt;
+   &lt;/StructureLimits&gt;
+   &lt;ValueLimits&gt;
+      &lt;Text&gt;15&lt;/Text&gt;
+      &lt;Attribute&gt;10&lt;/Attribute&gt;
+      &lt;NamespaceURI&gt;10&lt;/NamespaceURI&gt;
+      &lt;Comment&gt;10&lt;/Comment&gt;
+      &lt;ProcessingInstructionData&gt;10&lt;/ProcessingInstructionData&gt;
+   &lt;/ValueLimits&gt; 
+&lt;/XMLThreatProtection&gt;
+</pre>
+
+  <h2 id="xmlthreatprotectionattributes">&lt;XMLThreatProtection&gt; attributes</h2>
+  <pre class="prettyprint">
+&lt;XMLThreatProtection async="false" continueOnError="false" enabled="true" name="XML-Threat-Protection-1"&gt; 
+</pre>{% dynamic include /includes/___policies-parent-element-attributes %}
+
+  <h2 id="namelimitselement">&lt;NameLimits&gt; element</h2>
+
+  <p>Specifies character limits to be checked and enforced by the policy.</p>
+  <pre class="prettyprint">
+&lt;NameLimits&gt;
+   &lt;Element&gt;10&lt;/Element&gt;
+   &lt;Attribute&gt;10&lt;/Attribute&gt;
+   &lt;NamespacePrefix&gt;10&lt;/NamespacePrefix&gt;
+   &lt;ProcessingInstructionTarget&gt;10&lt;/ProcessingInstructionTarget&gt;     
+&lt;/NameLimits&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>N/A</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="namelimitselementelement">&lt;NameLimits&gt;/&lt;Element&gt; element</h2>
+
+  <p>Specifies a limit on the maximum number of characters permitted in any element name in the XML
+  document.</p>
+
+  <p>For example, consider the following XML:</p>
+  <pre class="prettyprint">
+&lt;book category="WEB"&gt;
+   &lt;title&gt;Learning XML&lt;/title&gt;
+   &lt;author&gt;Erik T. Ray&lt;/author&gt;
+   &lt;year&gt;2003&lt;/year&gt;
+&lt;/book&gt;
+</pre>
+
+  <p>When analyzing the XML above, the <code>&lt;Element&gt;</code> element value in the policy
+  snippet below will validate that element names (<code>book</code> , <code>title</code>,
+  <code>author</code>, and <code>year)</code> do not exceed <code>10</code> characters.</p>
+  <pre class="prettyprint">
+&lt;NameLimits&gt;
+   &lt;Element&gt;10&lt;/Element&gt;
+   &lt;Attribute&gt;10&lt;/Attribute&gt;
+   &lt;NamespacePrefix&gt;10&lt;/NamespacePrefix&gt;
+   &lt;ProcessingInstructionTarget&gt;10&lt;/ProcessingInstructionTarget&gt;     
+&lt;/NameLimits&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>If you do not specify a limit, the system applies a default value of <code>-1</code>,
+        which the system equates to no limit.</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>Integer</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="namelimitsattributeelement">&lt;NameLimits&gt;/&lt;Attribute&gt; element</h2>
+
+  <p>Specifies a limit on the maximum number of characters permitted in any attribute name in the
+  XML document.</p>
+
+  <p>For example, consider the following XML:</p>
+  <pre class="prettyprint">
+&lt;book category="WEB"&gt;
+   &lt;title&gt;Learning XML&lt;/title&gt;
+   &lt;author&gt;Erik T. Ray&lt;/author&gt;
+   &lt;year&gt;2003&lt;/year&gt;
+&lt;/book&gt;
+</pre>
+
+  <p>When analyzing the XML above, the <code>&lt;Attribute&gt;</code> element value in the policy
+  snippet below will validate that attribute name <code>category</code> does not exceed
+  <code>10</code> characters.</p>
+  <pre class="prettyprint">
+&lt;NameLimits&gt;
+   &lt;Element&gt;10&lt;/Element&gt;
+   &lt;Attribute&gt;10&lt;/Attribute&gt;
+   &lt;NamespacePrefix&gt;10&lt;/NamespacePrefix&gt;
+   &lt;ProcessingInstructionTarget&gt;10&lt;/ProcessingInstructionTarget&gt;     
+&lt;/NameLimits&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>If you do not specify a limit, the system applies a default value of <code>-1</code>,
+        which the system equates to no limit.</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>Integer</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="namelimitsnamespaceprefixelement">&lt;NameLimits&gt;/&lt;NamespacePrefix&gt; element</h2>
+
+  <p>Specifies a limit on the maximum number of characters permitted in the namespace prefix in the
+  XML document.</p>
+
+  <p>For example, consider the following XML:</p>
+  <pre class="prettyprint">
+&lt;ns1:myelem xmlns:ns1="http://ns1.com"/&gt;
+</pre>
+
+  <p>When analyzing the XML above, the <code>&lt;NamespacePrefix&gt;</code> element value in the
+  policy snippet below will validate that the namespace prefix <code>ns1</code> does not exceed
+  <code>10</code> characters.</p>
+  <pre class="prettyprint">
+&lt;NameLimits&gt;
+   &lt;Element&gt;10&lt;/Element&gt;
+   &lt;Attribute&gt;10&lt;/Attribute&gt;
+   &lt;NamespacePrefix&gt;10&lt;/NamespacePrefix&gt;
+   &lt;ProcessingInstructionTarget&gt;10&lt;/ProcessingInstructionTarget&gt;     
+&lt;/NameLimits&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>If you do not specify a limit, the system applies a default value of <code>-1</code>,
+        which the system equates to no limit.</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>Integer</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="namelimitsprocessinginstructiontargetelement">
+  &lt;NameLimits&gt;/&lt;ProcessingInstructionTarget&gt; element</h2>
+
+  <p>Specifies a limit on the maximum number of characters permitted in the target of any
+  processing instructions in the XML document.</p>
+
+  <p>For example, consider the following XML:</p>
+  <pre class="prettyprint">
+&lt;?xml-stylesheet type="text/xsl" href="style.xsl"?&gt;
+</pre>
+
+  <p>When analyzing the XML above, the <code>&lt;ProcessingInstructionTarget&gt;</code> element
+  value in the policy snippet below will validate that the processing instruction target
+  <code>xml-stylesheet</code> does not exceed <code>10</code> characters.</p>
+  <pre class="prettyprint">
+&lt;NameLimits&gt;
+   &lt;Element&gt;10&lt;/Element&gt;
+   &lt;Attribute&gt;10&lt;/Attribute&gt;
+   &lt;NamespacePrefix&gt;10&lt;/NamespacePrefix&gt;
+   &lt;ProcessingInstructionTarget&gt;10&lt;/ProcessingInstructionTarget&gt;     
+&lt;/NameLimits&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>If you do not specify a limit, the system applies a default value of <code>-1</code>,
+        which the system equates to no limit.</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>Integer</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="sourceelement">&lt;Source&gt; element</h2>
+
+  <p>Message to be screened for XML payload attacks. This is most commonly set to
+  <code>request</code>, as you will typically need to validate inbound requests from client apps.
+  When set to <code>message</code>, this element will automatically evaluate the request message
+  when attached to the request flow and the response message when attached to the response
+  flow.</p>
+  <pre class="prettyprint">
+&lt;Source&gt;request&lt;/Source&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>request</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>
+          <p>String.</p>
+
+          <p>Select from <code>request</code>, <code>response</code>, or <code>message</code>.</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="structurallimitselement">&lt;StructuralLimits&gt; element</h2>
+
+  <p>Specifies structural limits to be checked and enforced by the policy.</p>
+  <pre class="prettyprint">
+&lt;StructureLimits&gt;
+   &lt;NodeDepth&gt;5&lt;/NodeDepth&gt;
+   &lt;AttributeCountPerElement&gt;2&lt;/AttributeCountPerElement&gt;
+   &lt;NamespaceCountPerElement&gt;3&lt;/NamespaceCountPerElement&gt;
+   &lt;ChildCount includeComment="true" includeElement="true" includeProcessingInstruction="true" includeText="true"&gt;3&lt;/ChildCount&gt;
+&lt;/StructureLimits&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>N/A</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="structurallimitsnodedepthelement">&lt;StructuralLimits&gt;/&lt;NodeDepth&gt; element</h2>
+
+  <p>Specifies the maximum node depth allowed in the XML.</p>
+  <pre class="prettyprint">
+&lt;StructureLimits&gt;
+   &lt;NodeDepth&gt;5&lt;/NodeDepth&gt;
+   &lt;AttributeCountPerElement&gt;2&lt;/AttributeCountPerElement&gt;
+   &lt;NamespaceCountPerElement&gt;3&lt;/NamespaceCountPerElement&gt;
+   &lt;ChildCount includeComment="true" includeElement="true" includeProcessingInstruction="true" includeText="true"&gt;3&lt;/ChildCount&gt;
+&lt;/StructureLimits&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>If you do not specify a limit, the system applies a default value of <code>-1</code>,
+        which the system equates to no limit.</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>
+          <p>Integer</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="structurallimitsattributecountperelementelement">
+  &lt;StructuralLimits&gt;/&lt;AttributeCountPerElement&gt; element</h2>
+
+  <p>Specifies the maximum number of attributes allowed for any element.</p>
+
+  <p>For example, consider the following XML:</p>
+  <pre class="prettyprint">
+&lt;book category="WEB"&gt;
+   &lt;title&gt;Learning XML&lt;/title&gt;
+   &lt;author&gt;Erik T. Ray&lt;/author&gt;
+   &lt;year&gt;2003&lt;/year&gt;
+&lt;/book&gt;
+</pre>When analyzing the XML above, the <code>&lt;AttributeCountPerElement&gt;</code> element value
+in the policy snippet below will validate that the elements <code>book</code>, <code>title</code>,
+<code>author</code>, and <code>year</code> do not have more than <code>2</code> attributes each.
+Note that attributes used for defining namespaces are not counted.
+  <pre class="prettyprint">
+&lt;StructureLimits&gt;
+   &lt;NodeDepth&gt;5&lt;/NodeDepth&gt;
+   &lt;AttributeCountPerElement&gt;2&lt;/AttributeCountPerElement&gt;
+   &lt;NamespaceCountPerElement&gt;3&lt;/NamespaceCountPerElement&gt;
+   &lt;ChildCount includeComment="true" includeElement="true" includeProcessingInstruction="true" includeText="true"&gt;3&lt;/ChildCount&gt;
+&lt;/StructureLimits&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>If you do not specify a limit, the system applies a default value of <code>-1</code>,
+        which the system equates to no limit.</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>
+          <p>Integer</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="structurallimitsnamespacecountperelementelement">
+  &lt;StructuralLimits&gt;/&lt;NameSpaceCountPerElement&gt; element</h2>
+
+  <p>Specifies the maximum number of namespace definitions allowed for any element.</p>
+
+  <p>For example, consider the following XML:</p>
+  <pre class="prettyprint">
+&lt;e1 attr1="val1" attr2="val2"&gt;
+    &lt;e2 xmlns="http://apigee.com" xmlns:yahoo="http://yahoo.com" one="1" yahoo:two="2"/&gt;
+&lt;/e1&gt;
+</pre>
+
+  <p>When analyzing the XML above, the <code>&lt;NamespaceCountPerElement&gt;</code> element value
+  in the policy snippet below will validate that the elements <code>e1</code> and <code>e2</code>
+  do not have more than <code>2</code> namespace definitions each. In this case, <span style=
+  "font-family:courier new,courier,monospace;">&lt;e1&gt;</span> has 0 namespace definitions and
+  <span style="font-family:courier new,courier,monospace;">&lt;e2&gt;</span> has 2 namespace
+  definitions: <code>xmlns="http://apigee.com"</code> and
+  <code>xmlns:yahoo="http://yahoo.com"</code>.</p>
+  <pre class="prettyprint">
+&lt;StructureLimits&gt;
+   &lt;NodeDepth&gt;5&lt;/NodeDepth&gt;
+   &lt;AttributeCountPerElement&gt;2&lt;/AttributeCountPerElement&gt;
+   &lt;NamespaceCountPerElement&gt;3&lt;/NamespaceCountPerElement&gt;
+   &lt;ChildCount includeComment="true" includeElement="true" includeProcessingInstruction="true" includeText="true"&gt;3&lt;/ChildCount&gt;
+&lt;/StructureLimits&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>If you do not specify a limit, the system applies a default value of <code>-1</code>,
+        which the system equates to no limit.</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>
+          <p>Integer</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="structurallimitschildcountelement">&lt;StructuralLimits&gt;/&lt;ChildCount&gt;
+  element</h2>
+
+  <p>Specifies the maximum number of child elements allowed for any element.</p>
+  <pre class="prettyprint">
+&lt;StructureLimits&gt;
+   &lt;NodeDepth&gt;5&lt;/NodeDepth&gt;
+   &lt;AttributeCountPerElement&gt;2&lt;/AttributeCountPerElement&gt;
+   &lt;NamespaceCountPerElement&gt;3&lt;/NamespaceCountPerElement&gt;
+   &lt;ChildCount includeComment="true" includeElement="true" includeProcessingInstruction="true" includeText="true"&gt;3&lt;/ChildCount&gt;
+&lt;/StructureLimits&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>If you do not specify a limit, the system applies a default value of <code>-1</code>,
+        which the system equates to no limit.</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>
+          <p>Integer</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="structurallimitschildcountelement-attributes">Attributes</h3>
+
+  <table width="650">
+    <tbody>
+      <tr>
+        <th scope="col">Attribute</th>
+
+        <th scope="col">Default</th>
+
+        <th scope="col">Presence</th>
+      </tr>
+
+      <tr>
+        <td>includeComment</td>
+
+        <td>true</td>
+
+        <td style="width: 50px;">Optional</td>
+      </tr>
+
+      <tr>
+        <td>includeElement</td>
+
+        <td>true</td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td>includeProcessingInstructions</td>
+
+        <td>true</td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td>includeText</td>
+
+        <td>true</td>
+
+        <td>Optional</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="valuelimitselement">&lt;ValueLimits&gt; element</h2>
+
+  <p>Specifies character limits for values to be checked and enforced by the policy.</p>
+  <pre class="prettyprint">
+&lt;ValueLimits&gt;
+   &lt;Text&gt;15&lt;/Text&gt;
+   &lt;Attribute&gt;10&lt;/Attribute&gt;
+   &lt;NamespaceURI&gt;10&lt;/NamespaceURI&gt;
+   &lt;Comment&gt;10&lt;/Comment&gt;
+   &lt;ProcessingInstructionData&gt;10&lt;/ProcessingInstructionData&gt;
+&lt;/ValueLimits&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>
+          <p>N/A</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="valuelimitstextelement">&lt;ValueLimits&gt;/&lt;Text&gt; element</h2>
+
+  <p>Specifies a character limit for any text nodes present in the XML document.</p>
+
+  <p>For example, consider the following XML:</p>
+  <pre class="prettyprint">
+&lt;book category="WEB"&gt;
+   &lt;title&gt;Learning XML&lt;/title&gt;
+   &lt;author&gt;Erik T. Ray&lt;/author&gt;
+   &lt;year&gt;2003&lt;/year&gt;
+&lt;/book&gt;
+</pre>When analyzing the XML above, the <code>&lt;Text&gt;</code> element value in the policy
+snippet below will validate that the element text values <code>Learning XML</code>, <code>Erik T.
+Ray,</code> and <code>2003</code> do not exceed <code>15</code> characters each.
+  <pre class="prettyprint">
+&lt;ValueLimits&gt;
+   &lt;Text&gt;15&lt;/Text&gt;
+   &lt;Attribute&gt;10&lt;/Attribute&gt;
+   &lt;NamespaceURI&gt;10&lt;/NamespaceURI&gt;
+   &lt;Comment&gt;10&lt;/Comment&gt;
+   &lt;ProcessingInstructionData&gt;10&lt;/ProcessingInstructionData&gt;
+&lt;/ValueLimits&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>If you do not specify a limit, the system applies a default value of <code>-1</code>,
+        which the system equates to no limit.</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>
+          <p>Integer</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="valuelimitsattributeelement">&lt;ValueLimits&gt;/&lt;Attribute&gt; element</h2>
+
+  <p>Specifies a character limit for any attribute values present in the XML document.</p>
+
+  <p>For example, consider the following XML:</p>
+  <pre class="prettyprint">
+&lt;book category="WEB"&gt;
+   &lt;title&gt;Learning XML&lt;/title&gt;
+   &lt;author&gt;Erik T. Ray&lt;/author&gt;
+   &lt;year&gt;2003&lt;/year&gt;
+&lt;/book&gt;
+</pre>When analyzing the XML above, the <code>&lt;Attribute&gt;</code> element value in the policy
+snippet below will validate that the attribute value <code>WEB</code> does not exceed
+<code>10</code> characters.
+  <pre class="prettyprint">
+&lt;ValueLimits&gt;
+   &lt;Text&gt;15&lt;/Text&gt;
+   &lt;Attribute&gt;10&lt;/Attribute&gt;
+   &lt;NamespaceURI&gt;10&lt;/NamespaceURI&gt;
+   &lt;Comment&gt;10&lt;/Comment&gt;
+   &lt;ProcessingInstructionData&gt;10&lt;/ProcessingInstructionData&gt;
+&lt;/ValueLimits&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>If you do not specify a limit, the system applies a default value of <code>-1</code>,
+        which the system equates to no limit.</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>
+          <p>Integer</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="valuelimitsnamespaceurielement">&lt;ValueLimits&gt;/&lt;NamespaceURI&gt; element</h2>
+
+  <p>Specifies a character limit for any namespace URIs present in the XML document.</p>
+
+  <p>For example, consider the following XML:</p>
+  <pre class="prettyprint">
+&lt;ns1:myelem xmlns:ns1="http://ns1.com"/&gt;
+</pre>When analyzing the XML above, the <code>&lt;NamespaceURI&gt;</code> element value in the
+policy snippet below will validate that the namespace URI value <code>http://ns1.com</code> does
+not exceed <code>10</code> characters.
+  <pre class="prettyprint">
+&lt;ValueLimits&gt;
+   &lt;Text&gt;15&lt;/Text&gt;
+   &lt;Attribute&gt;10&lt;/Attribute&gt;
+   &lt;NamespaceURI&gt;10&lt;/NamespaceURI&gt;
+   &lt;Comment&gt;10&lt;/Comment&gt;
+   &lt;ProcessingInstructionData&gt;10&lt;/ProcessingInstructionData&gt;
+&lt;/ValueLimits&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>If you do not specify a limit, the system applies a default value of <code>-1</code>,
+        which the system equates to no limit.</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>
+          <p>Integer</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="valuelimitscommentelement">&lt;ValueLimits&gt;/&lt;Comment&gt; element</h2>
+
+  <p>Specifies a character limit for any comments present in the XML document.</p>
+
+  <p>For example, consider the following XML:</p>
+  <pre class="prettyprint">
+&lt;book category="WEB"&gt;
+   &lt;!-- This is a comment --&gt;
+   &lt;title&gt;Learning XML&lt;/title&gt;
+   &lt;author&gt;Erik T. Ray&lt;/author&gt;
+   &lt;year&gt;2003&lt;/year&gt;
+&lt;/book&gt;
+</pre>When analyzing the XML above, the <code>&lt;Comment&gt;</code> element value in the policy
+snippet below will validate that the comment text <code>This is a comment</code> does not exceed
+<code>10</code> characters.
+  <pre class="prettyprint">
+&lt;ValueLimits&gt;
+   &lt;Text&gt;15&lt;/Text&gt;
+   &lt;Attribute&gt;10&lt;/Attribute&gt;
+   &lt;NamespaceURI&gt;10&lt;/NamespaceURI&gt;
+   &lt;Comment&gt;10&lt;/Comment&gt;
+   &lt;ProcessingInstructionData&gt;10&lt;/ProcessingInstructionData&gt;
+&lt;/ValueLimits&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>If you do not specify a limit, the system applies a default value of <code>-1</code>,
+        which the system equates to no limit.</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>
+          <p>Integer</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="valuelimitsprocessinginstructiondataelement">
+  &lt;ValueLimits&gt;/&lt;ProcessingInstructionData&gt; element</h2>
+
+  <p>Specifies a character limit for any processing instruction text present in the XML
+  document.</p>
+
+  <p>For example, consider the following XML:</p>
+  <pre class="prettyprint">
+&lt;?xml-stylesheet type="text/xsl" href="style.xsl"?&gt;
+</pre>When analyzing the XML above, the <code>&lt;ProcessingInstructionData&gt;</code> element
+value in the policy snippet below will validate that the processing instruction text
+<code>type="text/xsl" href="style.xsl"</code> does not exceed <code>10</code> characters.
+  <pre class="prettyprint">
+&lt;ValueLimits&gt;
+   &lt;Text&gt;15&lt;/Text&gt;
+   &lt;Attribute&gt;10&lt;/Attribute&gt;
+   &lt;NamespaceURI&gt;10&lt;/NamespaceURI&gt;
+   &lt;Comment&gt;10&lt;/Comment&gt;
+   &lt;ProcessingInstructionData&gt;10&lt;/ProcessingInstructionData&gt;
+&lt;/ValueLimits&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>If you do not specify a limit, the system applies a default value of <code>-1</code>,
+        which the system equates to no limit.</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>
+          <p>Integer</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="errorcodes">Error reference</h2>
+
+  <p>Errors returned from Edge policies follow a consistent format as described in the <a href=
+  "/api-platform/reference/policies/error-code-reference.html">Error code reference</a>.</p>
+
+  <aside class="note"><b>Note:</b> This policy executes only if the <code>Content-Type</code> of
+  the request or response header is set to <code>application/xml.</code></aside>
+
+  <p>{% dynamic include /includes/___xml-threat-protection-policy-error-codes %}</p>
+
+  <h2 id="schemas">Schemas</h2>
+
+  <aside class="note"><b>Sample:</b> See our <a href=
+  "https://github.com/apigee/api-platform-samples/tree/master/schemas/policy">GitHub
+  repository</a> samples for the most recent schemas.</aside>
+
+  <h2 id="usagenotes">Usage notes</h2>
+
+  <p>Any server that receives online data is subject to attack, whether malicious or unintentional.
+  Some attacks take advantage of the flexibility of XML by constructing invalid documents that have
+  the potential to compromise back-end systems. Corrupt or extremely complex XML documents can
+  cause servers to allocate more memory than is available, tying up CPU and memory resources,
+  crashing parsers, and generally disabling message processing and creating application-level
+  denial-of-service attacks.</p>
+
+  <h3 id="usagenotes-threatprotectionerrorconfiguration">Threat protection error configuration</h3>
+
+  <p><strong>Important information if you are creating FaultRules for this policy:</strong> By
+  default, Edge throws an HTTP 500 Internal Server Error status code and an ExecutionFailed error
+  code if a message doesn't make it past a JSON or XML Threat Protection policy. You can change
+  that error behavior with a new organization-level property. When setting org
+  property <code>features.isPolicyHttpStatusEnabled</code> to true, the following
+  behavior occurs:</p>
+
+  <ul>
+    <li>Request: With a threat protection policy attached to any request flow, invalid messages
+    return a <strong>400 Bad Request status code</strong>, along with a corresponding policy error
+    code (rather than just ExecutionFailed).</li>
+
+    <li>Response: With a threat protection policy attached to any response flow, invalid messages
+    still return a <strong>500 Internal Server Error status code</strong>, and one of the
+    corresponding policy error codes is thrown (rather than just ExecutionFailed).</li>
+  </ul>
+
+  <p>Cloud customers must contact <a href=
+  "https://community.apigee.com/page/apigee-customer-support">Apigee Support</a> to set the
+  organization property.</p>
+
+  <aside class="note">
+    <b>Private Cloud:</b> Private Cloud customers can set the property with an API call like the
+    following.
+
+    <aside class="warning"><b>Warning:</b> When doing a PUT to update organization properties, be
+    sure to include all existing properties in the call to prevent wiping them out.</aside>
+    <pre class="prettyprint">
+curl -u email:password -X POST -H "Content-type:application/xml" http://host:8080/v1/o/myorg -d \
+"&lt;Organization type="trial" name="MyOrganization"&gt;
+    &lt;Environments/&gt;
+    &lt;Properties&gt;
+        &lt;Property name="features.isPolicyHttpStatusEnabled"&gt;true&lt;/Property&gt;
+        ...
+    &lt;/Properties&gt;
+&lt;/Organization&gt;"
+</pre>
+  </aside>
+
+  <h2 id="relatedtopics">Related topics</h2>
+
+  <p><a href="/api-platform/reference/policies/json-threat-protection-policy.html">JSON Threat
+  Protection policy</a></p>
+
+  <p><a href="/api-platform/reference/policies/regular-expression-protection.html">Regular
+  Expression Protection policy</a></p>
+
+  {% endblock %}

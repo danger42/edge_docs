@@ -1,0 +1,518 @@
+  {% extends "_base.html" %} {% block title %}Basic Authentication policy{% endblock %} {% block body %} <img src="/api-platform/images/icon_policy_threat-protection.jpg">
+
+  <h3>What</h3>
+
+  <p>Enables you to use lightweight <a href=
+  "https://en.wikipedia.org/wiki/Basic_access_authentication">Basic Authentication</a> for
+  last-mile security. The policy takes a username and password, Base64 encodes them, and writes the
+  resulting value to a variable. The resulting value is in the form <code>Basic
+  <em>Base64EncodedString</em></code>. You typically write this value to an HTTP header, such as
+  the <span style="font-family:courier new,courier,monospace;">Authorization</span> header.</p>
+
+  <p>The policy also lets you decode credentials stored in a Base64 encoded string into a username
+  and password.</p>
+
+  <aside class="note"><b>Note:</b> This policy does not enforce Basic Authentication on a request
+  to an API proxy. Instead, you use it to Base64 encode/decode credentials, typically when
+  connecting to a backend server or using a service callout policy, such as the <a href=
+  "/api-platform/reference/policies/service-callout-policy.html">Service Callout policy</a>, that
+  requires Basic Authentication.</aside>
+
+  <div class="video">
+    <p><strong>Video:</strong> This video demonstrates how to base64-encode a username and
+    password using the Basic Authentication policy.</p>
+
+    <div style="text-align: left; margin:15px">
+      <iframe allowfullscreen="" frameborder="0" height="480" src=
+      "https://www.youtube.com/embed/Xlxdg6pf-QQ" width="854"></iframe>
+    </div>
+  </div>
+
+  <div class="video">
+    <p><strong>Video:</strong> This video demonstrates how to decode a base64-encoded username and
+    password using the Basic Authentication policy.</p>
+
+    <div style="text-align: left; margin:15px">
+      <iframe allowfullscreen="" frameborder="0" height="480" src=
+      "https://www.youtube.com/embed/JMV6_01IelE" width="854"></iframe>
+    </div>
+  </div>
+
+  <h2 id="samples">Samples</h2><!-- Begin tab list -->
+  <!-- End tab list --><!-- Begin tabbed region -->
+
+  <div class="ds-selector-tabs">
+    <section>
+      <h3 class="two-line-tab">Outbound encoding</h3>
+      <pre class="prettyprint">
+&lt;BasicAuthentication name="ApplyBasicAuthHeader"&gt;
+   &lt;DisplayName&gt;ApplyBasicAuthHeader&lt;/DisplayName&gt;
+   &lt;Operation&gt;Encode&lt;/Operation&gt;
+   &lt;IgnoreUnresolvedVariables&gt;false&lt;/IgnoreUnresolvedVariables&gt;
+   &lt;User ref="BasicAuth.credentials.username" /&gt;
+   &lt;Password ref="BasicAuth.credentials.password" /&gt;
+   &lt;AssignTo createNew="false"&gt;request.header.Authorization&lt;/AssignTo&gt;
+&lt;/BasicAuthentication&gt;
+</pre>
+
+      <p>In the sample policy configuration above, the username and password to be encoded are
+      derived from the variables specified by the <code>ref</code> attributes on the
+      <code>&lt;User&gt;</code> and <code>&lt;Password&gt;</code> elements. The variables must be
+      set before this policy executes. Typically, the variables are populated by values that are
+      read from a key/value map. See <a href=
+      "/api-platform/reference/policies/key-value-map-operations-policy.html">Key Value Map
+      Operations policy</a>.</p>
+
+      <p>This configuration results in the HTTP header named <span style=
+      "font-family:courier new,courier,monospace;">Authorization</span>, as specified by the
+      <span style="font-family:courier new,courier,monospace;">&lt;AssignTo&gt;</span> element,
+      being added to the outbound request message sent to the backend server:</p>
+
+      <p><code>Authorization: Basic TXlVc2VybmFtZTpNeVBhc3N3b3Jk</code></p>
+
+      <p>The <code>&lt;User&gt;</code> and <code>&lt;Password&gt;</code> values are concatenated
+      with a colon prior to Base64 encoding.</p>
+
+      <p>Consider that you have a key/value map with the following entry:</p>
+      <pre class="prettyprint">
+{
+  "entry" : [ {
+    "name" : "username",
+    "value" : "MyUsername
+  }, {
+    "name" : "password",
+    "value" : "MyPassword
+  } ],
+  "name" : "BasicAuthCredentials"
+}
+</pre>
+
+      <p>Attach the following KeyValueMapOperations policies before the BasicAuthentication policy
+      to be able to extract the values for your <code>&lt;User&gt;</code> and
+      <code>&lt;Password&gt;</code> elements from the key/value store and populate them to the
+      variables <code>BasicAuth.credentials.username</code> and
+      <code>BasicAuth.credentials.password</code>.</p>
+      <pre class="prettyprint">
+&lt;KeyValueMapOperations name="getUsername" mapIdentifier="BasicAuthCredentials"&gt;
+&lt;Scope&gt;apiproxy&lt;/Scope&gt;
+   &lt;Get assignTo="credentials.username" index='1'&gt;
+      &lt;Key&gt;
+         &lt;Parameter ref="BasicAuth.credentials.username"/&gt; 
+      &lt;/Key&gt;
+   &lt;/Get&gt;
+&lt;/KeyValueMapOperations&gt;
+</pre>
+      <pre class="prettyprint">
+&lt;KeyValueMapOperations name="getPassword" mapIdentifier="BasicAuthCredentials"&gt;
+   &lt;Scope&gt;apiproxy&lt;/Scope&gt;
+   &lt;Get assignTo="credentials.password" index='1'&gt;
+      &lt;Key&gt;
+         &lt;Parameter ref="BasicAuth.credentials.password"/&gt; 
+      &lt;/Key&gt;
+   &lt;/Get&gt;
+&lt;/KeyValueMapOperations&gt;
+</pre>
+    </section>
+
+    <section>
+      <h3 class="two-line-tab">Inbound decoding</h3>
+      <pre class="prettyprint">
+&lt;BasicAuthentication name="DecodeBaseAuthHeaders"&gt;
+   &lt;DisplayName&gt;Decode Basic Authentication Header&lt;/DisplayName&gt;
+   &lt;Operation&gt;Decode&lt;/Operation&gt;
+   &lt;IgnoreUnresolvedVariables&gt;false&lt;/IgnoreUnresolvedVariables&gt;
+   &lt;User ref="request.header.username" /&gt;
+   &lt;Password ref="request.header.password" /&gt;
+   &lt;Source&gt;request.header.Authorization&lt;/Source&gt;
+&lt;/BasicAuthentication&gt;
+</pre>
+
+      <p>In this policy sample, the policy decodes the username and password from the
+      <code>Authorization</code> HTTP header, as specified by the <span style=
+      "font-family:courier new,courier,monospace;">&lt;Source&gt;</span> element. The Base64
+      encoded string must be in the form <code>Basic <em>Base64EncodedString.</em></code></p>
+
+      <p>The policy writes the decoded username to the <span style=
+      "font-family:courier new,courier,monospace;">request.header.username</span> variable and
+      the decoded password to the <span style=
+      "font-family:courier new,courier,monospace;">request.header.password</span> variable.</p>
+    </section>
+  </div><!-- End tabbed region. -->
+  <hr>
+
+  <h2 id="usagenotes">About the Basic Authentication policy</h2>
+
+  <p>The policy has two modes of operations:</p>
+
+  <ul>
+    <li><strong>Encode</strong>:  Base64 encodes a username and password stored in
+    variables</li>
+
+    <li><strong>Decode</strong>:  Decodes the username and password from a
+    Base64 encoded string</li>
+  </ul>
+
+  <p>The username and password are commonly stored the key/value store and then read from the
+  key/value store at runtime. For details on using key/value store, see <a href=
+  "/api-platform/reference/policies/key-value-map-operations-policy.html">Key Value Map Operations
+  policy</a>.</p>
+
+  <aside class="warning"><b>Warning:</b> Basic authentication does not provide confidentiality.
+  Always send credentials over a TLS-enabled (HTTPS) connection to your backend service.</aside>
+
+  <h2 id="elementreference">Element reference</h2>
+
+  <p>The element reference describes the elements and attributes of the BasicAuthentication
+  policy.</p>
+  <pre class="prettyprint">
+&lt;BasicAuthentication async="false" continueOnError="false" enabled="true" name="Basic-Authentication-1"&gt;
+   &lt;DisplayName&gt;Basic Authentication 1&lt;/DisplayName&gt;
+   &lt;Operation&gt;Encode&lt;/Operation&gt;
+   &lt;IgnoreUnresolvedVariables&gt;false&lt;/IgnoreUnresolvedVariables&gt;
+   &lt;User ref="request.queryparam.username" /&gt;
+   &lt;Password ref="request.queryparam.password" /&gt;
+   &lt;AssignTo createNew="false"&gt;request.header.Authorization&lt;/AssignTo&gt;
+   &lt;Source&gt;request.header.Authorization&lt;/Source&gt; 
+&lt;/BasicAuthentication&gt;
+</pre>
+
+  <h2 id="basicauthenticationattributes">&lt;BasicAuthentication&gt; attributes</h2>
+  <pre class="prettyprint">
+&lt;BasicAuthentication async="false" continueOnError="false" enabled="true" name="Basic-Authentication-1"&gt;
+</pre>{% dynamic include /includes/___policies-parent-element-attributes %}
+
+  <h2 id="operationelement">&lt;Operation&gt; element</h2>
+
+  <p>Determines whether the policy Base64 encodes or decodes credentials.</p>
+  <pre class="prettyprint">
+&lt;Operation&gt;Encode&lt;/Operation&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Required</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>
+          <p>String.</p>
+
+          <p>Valid values include:</p>
+
+          <ul>
+            <li>Encode</li>
+
+            <li>Decode</li>
+          </ul>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="ignoreunresolvedvariableselement">&lt;IgnoreUnresolvedVariables&gt; element</h2>
+
+  <p>When set to <code>true</code>, the policy will not throw an error if a variable cannot be
+  resolved. When used in the context of a BasicAuthentication policy, this setting is usually set
+  to <code>false</code> because it is generally beneficial to throw an error if a username or
+  password cannot be found in the variables specified.</p>
+  <pre class="prettyprint">
+&lt;IgnoreUnresolvedVariables&gt;false&lt;/IgnoreUnresolvedVariables&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>true</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>
+          <p>Boolean</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="userelement">&lt;User&gt; element</h2>
+
+  <ul>
+    <li>For encoding, use the <code>&lt;User&gt;</code> element to specify the variable
+    containing the username. Username and password values are concatenated with a colon prior to
+    Base64 encoding. </li>
+
+    <li>For decoding, specify the variable where the decoded username is written.</li>
+  </ul>
+  <pre class="prettyprint">
+&lt;User ref="request.queryparam.username" /&gt; 
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Required</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>
+          <p>N/A</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="userelement-attributes">Attributes</h3>
+
+  <table width="650">
+    <tbody>
+      <tr>
+        <th scope="col">Attribute</th>
+
+        <th scope="col">Description</th>
+
+        <th scope="col">Default</th>
+
+        <th scope="col">Presence</th>
+      </tr>
+
+      <tr>
+        <td>ref</td>
+
+        <td>
+          <p>The variable from which the policy dynamically reads the username (encode) or writes
+          the username (decode).</p>
+        </td>
+
+        <td>N/A</td>
+
+        <td style="width: 50px;">Required</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="passwordelement">&lt;Password&gt; element</h2>
+
+  <ul>
+    <li>For encoding, use the <code>&lt;Password&gt;</code> element to specify the variable
+    containing the password. </li>
+
+    <li>For decoding, specify the variable where the decoded password is written.</li>
+  </ul>
+  <pre class="prettyprint">
+&lt;Password ref="request.queryparam.password" /&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Required</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>
+          <p>N/A</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="passwordelement-attributes">Attributes</h3>
+
+  <table width="650">
+    <tbody>
+      <tr>
+        <th scope="col">Attribute</th>
+
+        <th scope="col">Description</th>
+
+        <th scope="col">Default</th>
+
+        <th scope="col">Presence</th>
+      </tr>
+
+      <tr>
+        <td>ref</td>
+
+        <td>
+          <p>The variable from which the policy dynamically reads the password (encode) or writes
+          the password (decode).</p>
+        </td>
+
+        <td>N/A</td>
+
+        <td style="width: 50px;">Required</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="assigntoelement">&lt;AssignTo&gt; element</h2>
+
+  <p>For encoding, this is the variable where the encoded value, in the
+  form <code>Basic</code> <em><code>Base64EncodedString</code></em> is written. For
+  example, <code>request.header.Authorization</code>, corresponding to the <span style=
+  "font-family:courier new,courier,monospace;">Authorization</span> header.</p>
+  <pre class="prettyprint">
+&lt;AssignTo createNew="false"&gt;request.header.Authorization&lt;/AssignTo&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Required for the Encode operation.</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>
+          <p>N/A</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="assigntoelement-attributes">Attributes</h3>
+
+  <table width="650">
+    <tbody>
+      <tr>
+        <th scope="col">Attribute</th>
+
+        <th scope="col">Description</th>
+
+        <th scope="col">Default</th>
+
+        <th scope="col">Presence</th>
+      </tr>
+
+      <tr>
+        <td>createNew</td>
+
+        <td>
+          <p>For the BasicAuthentication policy, you will usually set this attribute to
+          <code>false</code>.</p>
+
+          <p>In the context of BasicAuthentication, you do not want to require that the policy
+          generate a new message. Instead, you want the destination variable to be added to the
+          existing request message.</p>
+        </td>
+
+        <td>False</td>
+
+        <td style="width: 50px;">Optional</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="sourceelement">&lt;Source&gt; element</h2>
+
+  <p>For decoding, the variable containing the Base64 encoded string, in the
+  form <code>Basic</code> <em><code>Base64EncodedString</code></em>. For example,
+  specify <code>request.header.Authorization</code>, corresponding to the <span style=
+  "font-family: 'courier new', courier, monospace;">Authorization</span> header.</p>
+  <pre class="prettyprint">
+&lt;Source&gt;request.header.Authorization&lt;/Source&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Required for the Decode operation.</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>
+          <p>N/A</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="flowvariables">Flow variables</h2>
+
+  <p>The following flow variable is set when the policy fails:</p>
+
+  <ul>
+    <li><code>BasicAuthentication.{policy_name}.failed</code> (with a value of true)</li>
+  </ul>
+
+  <aside class="note"><b>Note:</b> If you see variables called <span style=
+  "font-family:courier new,courier,monospace;">BasicAuthentication.{policy_name}.fault.cause</span>
+  and <span style=
+  "font-family:courier new,courier,monospace;">BasicAuthentication.{policy_name}.fault.name</span>,
+  they are not currently being used by Edge.</aside>
+
+  <h2 id="errors">Error reference</h2>
+
+  <p id="errorcodes">{% dynamic include /includes/___basic-authentication-policy-error-codes %}</p>
+
+  <h2 id="schemas">Schemas</h2>
+
+  <aside class="note"><b>Sample:</b> See our <a href=
+  "https://github.com/apigee/api-platform-samples/tree/master/schemas/policy">GitHub
+  repository</a> samples for the most recent schemas.</aside>
+
+  <h2 id="relatedtopics">Related topics</h2>
+
+  <p><a href="/api-platform/reference/policies/key-value-map-operations-policy.html">Key Value Map
+  Operations policy</a></p>
+
+  {% endblock %}

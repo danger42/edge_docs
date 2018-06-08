@@ -1,0 +1,263 @@
+  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}Enable access to OAuth 2.0
+  tokens by user ID and app ID{% endblock %} {% block body %}
+
+  <p>This document describes how to enable retrieval and revocation of OAuth 2.0 access tokens by
+  end user ID, app ID, or both.  </p>
+
+  <p>App IDs are automatically added to an OAuth access token. Therefore, after you use the
+  procedure below to enable token access for an organization, you can access tokens by app ID.</p>
+
+  <p>To retrieve and revoke OAuth 2.0 access tokens by end user ID, an end user ID must be present
+  in the access token. The procedure below describes how add an end user ID to an existing token or
+  to new tokens.</p>
+
+  <p>By default, when Edge generates an OAuth 2.0 access token, the token has the format:</p>
+  <pre class="prettyprint">
+{
+  "issued_at" : "1421847736581",
+ <strong> "application_name" : "a68d01f8-b15c-4be3-b800-ceae8c456f5a",</strong>
+  "scope" : "READ",
+  "status" : "approved",
+  "api_product_list" : "[PremiumWeatherAPI]",
+  "expires_in" : "3599",
+  "developer.email" : "tesla@weathersample.com",
+  "organization_id" : "0",
+  "token_type" : "BearerToken",
+  "client_id" : "k3nJyFJIA3p62DWOkLO6OJNi87GYXFmP",
+ <strong> "access_token" : "7S22UqXGJDTuUADGzJzjXzXSaGJL",</strong>
+  "organization_name" : "myorg",
+  "refresh_token_expires_in" : "0",
+  "refresh_count" : "0"
+}
+</pre>
+
+  <p>Note the following:</p>
+
+  <ul>
+    <li>The <span style="font-family:courier new,courier,monospace;">application_name</span> field
+    contains the UUID of the app associated with the token. If you enable retrieval and revocation
+    of OAuth 2.0 access tokens by app ID, this is the app ID you use.</li>
+
+    <li>The <span style="font-family:courier new,courier,monospace;">access_token</span> field
+    contains the OAuth 2.0 access token value.</li>
+  </ul>
+
+  <p>To enable retrieval and revocation of OAuth 2.0 access tokens by end user ID, configure the
+  OAuth 2.0 policy to include the user ID in the token, as described in the procedure below.</p>
+
+  <p>The end user ID is the string that Edge uses as the developer ID, not the developer's email
+  address. You can determine the developer's ID from the developer's email address by using the Get
+  Developer API call.</p>
+
+  <p>After you configure Edge to include the end user ID in the token, it is included as the
+  app_enduser field, as shown below:</p>
+  <pre class="prettyprint">
+{
+  "issued_at" : "1421847736581",
+<strong>  "application_name" : "a68d01f8-b15c-4be3-b800-ceae8c456f5a",</strong>
+  "scope" : "READ",
+<strong>  "app_enduser" : "6ZG094fgnjNf02EK",</strong>
+  "status" : "approved",
+  "api_product_list" : "[PremiumWeatherAPI]",
+  "expires_in" : "3599",
+  "developer.email" : "tesla@weathersample.com",
+  "organization_id" : "0",
+  "token_type" : "BearerToken",
+  "client_id" : "k3nJyFJIA3p62DWOkLO6OJNi87GYXFmP",
+ <strong> "access_token" : "7S22UqXGJDTuUADGzJzjXzXSaGJL",</strong>
+  "organization_name" : "myorg",
+  "refresh_token_expires_in" : "0",
+  "refresh_count" : "0"
+}
+</pre>
+
+  <h2 id="apistoretrieveandrevokeoauth20accesstokensbyuseridandappid">APIs to retrieve and revoke
+  OAuth 2.0 access tokens by user ID and app ID</h2>
+
+  <p>Use the following APIs to access OAuth tokens by user ID, app ID, or both:</p>
+
+  <ul>
+    <li><a href="/management/apis/get/organizations/%7Borg_name%7D/oauth2/search">Get OAuth 2.0
+    Access Token by End User ID or App ID </a></li>
+
+    <li><a href="/management/apis/post/organizations/%7Borg_name%7D/oauth2/revoke">Revoke OAuth 2.0
+    Access Token by End User ID or App ID </a></li>
+  </ul>
+
+  <h2 id="procedureforenablingtokenaccess">Procedure for enabling token access</h2>
+
+  <p>Use the following procedure to enable retrieval and revocation of OAuth 2.0 access tokens by
+  end user ID and app ID.</p>
+
+  <h3 id="procedureforenablingtokenaccess-step1enabletokenaccesssupportforanorganization">Step 1:
+  Enable token access support for an organization</h3>
+
+  <p>You must enable token access for each organization separately. Call the PUT API below for each
+  organization on which you want to enable the retrieval and revocation of OAuth 2.0 access tokens
+  by end user ID or app ID. </p>
+
+  <p>The user making the following call must be in the role <strong>orgadmin</strong> or
+  <strong>opsadmin</strong> for the organization. Replace the values in <em><strong>{curly
+  braces}</strong></em> with your org-specific values:</p>
+  <pre class="prettyprint">
+&gt; curl -H "Content-type:text/xml" -X POST \
+  https://&lt;ms-ip&gt;:8080/v1/organizations/{org_name} \
+  -d '&lt;Organization name="{org_name}"&gt;
+      &lt;Properties&gt;
+        &lt;Property name="features.isOAuthRevokeEnabled"&gt;true&lt;/Property&gt;
+        &lt;Property name="features.isOAuth2TokenSearchEnabled"&gt;true&lt;/Property&gt;
+      &lt;/Properties&gt;
+    &lt;/Organization&gt;' \ 
+  -u {userEmail}:{mypassword}
+</pre>
+
+  <h3 id="procedureforenablingtokenaccess-step2setpermissionsforopsadminroleintheorganization">Step
+  2: Set permissions for opsadmin role in the organization</h3>
+
+  <p>Only the <strong>orgadmin</strong> and <strong>opsadmin</strong> roles in an organization
+  should be given permissions to retrieve (HTTP GET) and revoke (HTTP PUT) OAuth 2.0 tokens based
+  on user ID or app ID. To control access, set get and put permissions on the /oauth2 resource for
+  an organization. That resource has a URL in the form:</p>
+  <pre class="prettyprint">
+https://&lt;ms-ip&gt;:8080/v1/organizations/{org_name}/oauth2
+</pre>
+
+  <p>The <strong>orgadmin</strong> role should already have the necessary permissions. For the
+  <strong>opsadmin</strong> role for the /oauth2 resource, the permissions should look like
+  this:</p>
+  <pre class="prettyprint">
+&lt;ResourcePermission path="/oauth2"&gt;
+    &lt;Permissions&gt;
+        &lt;Permission&gt;get&lt;/Permission&gt;
+        &lt;Permission&gt;put&lt;/Permission&gt;
+    &lt;/Permissions&gt;
+&lt;/ResourcePermission&gt;
+</pre>
+
+  <p>You can use the <a href=
+  "/management/apis/get/organizations/%7Borg_name%7D/userroles/%7Brole_name%7D/permissions">Get
+  Permission for a Single Resource API</a> call to see which roles have permissions for the
+  <span style="font-family:courier new,courier,monospace;">/oauth2</span> resource. </p>
+
+  <p>Based on the response, you can use the <a href=
+  "/management/apis/post/organizations/%7Borg_name%7D/userroles/%7Brole_name%7D/permissions">Add
+  Permissions for Resource to a Role</a> and <a href=
+  "/management/apis/delete/organizations/%7Borg_name%7D/userroles/%7Brole_name%7D/permissions/%7Bpermission%7D">
+  Delete Permission for Resource</a> API calls to make any necessary adjustments to the /oauth2
+  resource permissions.</p>
+
+  <p>Use the following cURL command to give the <strong>opsadmin</strong> role <span style=
+  "font-family:courier new,courier,monospace;">get</span> and <span style=
+  "font-family:courier new,courier,monospace;">put</span> permissions for the <span style=
+  "font-family:courier new,courier,monospace;">/oauth2</span> resource. Replace the values in
+  <em><strong>{curly braces}</strong></em> with your org-specific values:</p>
+  <pre class="prettyprint">
+&gt; curl -X POST -H 'Content-type:application/xml' \
+  http://&lt;ms-ip&gt;:8080/v1/organizations/{org}/userroles/opsadmin/permissions \
+  -d '&lt;ResourcePermission path="/oauth2"&gt;
+      &lt;Permissions&gt;
+        &lt;Permission&gt;get&lt;/Permission&gt;
+        &lt;Permission&gt;put&lt;/Permission&gt;
+      &lt;/Permissions&gt;
+    &lt;/ResourcePermission&gt;' \
+  -u {USEREMAIL}:{PWD} 
+</pre>
+
+  <p>Use the following cURL command to revoke <span style=
+  "font-family:courier new,courier,monospace;">get</span> and <span style=
+  "font-family:courier new,courier,monospace;">put</span> permissions for the <span style=
+  "font-family:courier new,courier,monospace;">/oauth2</span> resource from roles other than
+  <strong>orgadmin</strong> and <strong>opsadmin</strong>. Replace the values in <em><strong>{curly
+  braces}</strong></em> with your org-specific values:</p>
+  <pre class="prettyprint">
+&gt; curl -X DELETE -H 'Content-type:application/xml' \
+  http://&lt;msip&gt;:8080/v1/organizations/{org-name}/userroles/{roles}/permissions \
+  -d '&lt;ResourcePermission path="/oauth2"&gt;
+      &lt;Permissions&gt;&lt;/Permissions&gt;
+    &lt;/ResourcePermission&gt;' \
+   -u {USEREMAIL}:{PWD} 
+</pre>
+
+  <h3 id="procedureforenablingtokenaccess-step3settheoauth_max_search_limitproperty">Step 3: Set
+  the oauth_max_search_limit property </h3>
+
+  <p>Ensure that the <span style=
+  "font-family:courier new,courier,monospace;">conf_keymanagement_oauth_max_search_limit</span>
+  property in <span style=
+  "font-family:courier new,courier,monospace;">/opt/apigee/customer/application/management-server.properties</span>
+  file is set to 100: </p>
+  <pre class="prettyprint">
+conf_keymanagement_oauth_max_search_limit = 100
+</pre>
+
+  <p>If this file does not exist, create it.</p>
+
+  <p>This property sets the page size used when fetching tokens. Apigee recommends a value of 100,
+  but you can set it as you see fit.</p>
+
+  <p>On a new installation, the property should be already set to 100. If you have to change the
+  value of this property, restart the Management Server and Message Processor by using the
+  commands:</p>
+  <pre class="prettyprint">
+&gt; /opt/apigee/apigee-service/bin/apigee-service edge-management-server restart
+&gt; /opt/apigee/apigee-service/bin/apigee-service edge-message-processor restart
+</pre>
+
+  <h3 id=
+  "procedureforenablingtokenaccess-step4configuretheoauth20policythatgeneratestokenstoincludeenduserid">
+  Step 4: Configure the OAuth 2.0 policy that generates tokens to include end user ID</h3>
+
+  <aside class="note"><b>Note:</b> This task is optional. You only need to perform it if you want
+  to retrieve and revoke OAuth 2.0 access tokens by end user ID. </aside>
+
+  <p>Configure the OAuth 2.0 policy used to generate access tokens to include the end user ID in
+  the token. By including end user IDs in the access token, you can retrieve and revoke tokens by
+  ID.</p>
+
+  <p>To configure the policy to include an end user ID in an access token, the request that creates
+  the access token must include the end user ID and you must specify the input variable that
+  contains the end user ID. </p>
+
+  <p>The OAuth 2.0 policy below, named GenerateAccessTokenClient, generates an OAuth 2.0 access
+  token. Note the addition of the <span style=
+  "font-family:courier new,courier,monospace;">&lt;AppEndUser&gt;</span> tag in bold that specifies
+  the variable containing the end user ID:</p>
+  <pre class="prettyprint">
+&lt;OAuthV2 async="false" continueOnError="false" enabled="true" name="GenerateAccessTokenClient"&gt;
+    &lt;DisplayName&gt;OAuth 2.0.0 1&lt;/DisplayName&gt;
+    &lt;ExternalAuthorization&gt;false&lt;/ExternalAuthorization&gt;
+    &lt;Operation&gt;GenerateAccessToken&lt;/Operation&gt;
+    &lt;SupportedGrantTypes&gt;
+         &lt;GrantType&gt;client_credentials&lt;/GrantType&gt;
+    &lt;/SupportedGrantTypes&gt;
+    &lt;GenerateResponse enabled="true"/&gt;
+    &lt;GrantType&gt;request.queryparam.grant_type&lt;/GrantType&gt; 
+    <strong>&lt;AppEndUser&gt;request.header.appuserID&lt;/AppEndUser&gt; 
+    </strong>&lt;ExpiresIn&gt;960000&lt;/ExpiresIn&gt;
+&lt;/OAuthV2&gt;
+</pre>
+
+  <p>You can then use the following cURL command to generate the OAuth 2.0 access token, passing
+  the user ID as the <span style="font-family:courier new,courier,monospace;">appuserID</span>
+  header:</p>
+  <pre class="prettyprint">
+&gt; curl -H "appuserID:6ZG094fgnjNf02EK" \
+https://myorg-test.apigee.net/oauth/client_credential/accesstoken?grant_type=client_credentials \
+  -X POST \
+  -d 'client_id=k3nJyFJIA3p62TKIkLO6OJNXFmP&amp;client_secret=gk5K5lIp943AY4'
+</pre>
+
+  <p>In this example, the <span style="font-family:courier new,courier,monospace;">appuserID</span>
+  is passed as a request header. You can pass information as part of a request in many ways. For
+  example, as an alternative, you can: </p>
+
+  <ul>
+    <li>Use a form parameter variable: <span style=
+    "font-family:courier new,courier,monospace;">request.formparam.appuserID</span></li>
+
+    <li>Use a flow variable providing the end user ID</li>
+  </ul>
+
+  <div>
+     
+  </div>{% endblock %}

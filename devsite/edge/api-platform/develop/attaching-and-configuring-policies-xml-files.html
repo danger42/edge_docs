@@ -1,0 +1,65 @@
+  {% extends "_base.html" %} {% block title %}Attaching and configuring policies in XML files{% endblock %} {% block body %}
+
+  <p>You can create and edit policies locally, using your favorite text or XML-aware editor or IDE.
+  This topic uses the Quota policy type as an example of how to create, configure, attach, deploy,
+  and test policies.</p>
+
+  <p>Most API proxies enforce a quota. Quotas provide control over how often a client app is
+  permitted to invoke an API over a given time interval. In the example below, a Quota policy is
+  configured to limit apps to 1 request per minute. (While this may not be realistic, it does
+  provide a simple way to see the effects of a policy.)</p>
+
+  <p>In an API proxy configuration, Policy files are stored as XML files under
+  <code>/apiproxy/policies</code> directory.</p>
+
+  <p>For example, a policy of type Quota called "QuotaPolicy" could be created as a file called
+  <code>QuotaPolicy.xml</code> with the following content:</p>
+  <pre class="prettyprint">
+&lt;Quota enabled="true" continueOnError="false"
+async="false" name="QuotaPolicy"&gt;
+    &lt;Allow count="1"/&gt;
+    &lt;Interval&gt;1&lt;/Interval&gt;
+    &lt;TimeUnit&gt;minute&lt;/TimeUnit&gt;
+&lt;/Quota&gt;
+</pre>
+
+  <p>You can create a text file by hand, or you can generate the policy from an XML schema. All
+  policies have some settings that are specific to the policy type, and some settings that are
+  generic across all policies. 
+  <!-- For reference,&nbsp;<a href="https://github.com/apigee/api-platform-samples/tree/master/schemas">policy schemas</a>&nbsp;are provided in the&nbsp;<a href="https://github.com/apigee/api-platform-samples">API Platform samples</a>&nbsp;on GitHub.--></p>
+
+  <div>
+    When you attach policies in the management UI, the API proxy builder generates the policy
+    instance from the XML schema for the policy type you selected. Therefore, you may see elements
+    in the policy configuration that, for clarity, are not always included in documentation. 
+  </div>
+
+  <p>All policies define the following attributes:</p>
+
+  <ul>
+    <li><code>enabled</code>: Indicates whether the policy is turned "on" or "off". Policies can be
+    enabled/disabled at runtime by changing this setting. A policy that has <code>enabled</code>
+    set to <code>false</code> is not enforced.</li>
+
+    <li><code>continueOnError</code>: Defines whether the pipeline should continue processing the
+    message if the policy fails. When enforcing quota policies, errors likely indicate that the
+    quota has been exceeded, and, therefore, this attribute should be set to false.</li>
+
+    <li><code>async</code>: In a policy, enabling <code>async=true</code> tells API Services to run
+    the policy inside a different thread pool, isolated from the regular pool that is servicing the
+    request/response Flow. This is an internal optimization that will rarely be of use to API
+    developers.</li>
+
+    <li><code>name</code>: The name that you give to this policy. This name is unique to this
+    policy instance, and it is used to attach the policy to the flow as a processing step.</li>
+  </ul>
+
+  <aside class="note"><b>Note:</b> Except for <code>name</code>, you rarely need to modify the
+  default settings for these policy attributes. For this reason, and for clarity, they are often
+  excluded from the policy samples in the documentation.</aside>
+
+  <p>In the example above, the elements <code>Allow</code>, <code>Interval</code>, and
+  <code>TimeUnit</code> are specific to the Quota policy. These elements provide settings that API
+  Services enforces on behalf of an API. Other policy types define their own settings, which you
+  can learn about in the <a href=
+  "/api-platform/reference/policies/reference-overview-policy.html">Policy Reference</a>.</p>{% endblock %}

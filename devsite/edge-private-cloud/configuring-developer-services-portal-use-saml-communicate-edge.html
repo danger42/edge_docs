@@ -1,0 +1,182 @@
+  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}Configuring the Developer
+  Services portal to use SAML to communicate with Edge{% endblock %} {% block body %}
+
+  <p>The Developer Services portal acts as a client of Apigee Edge. That means the portal does not
+  function as a stand-alone system. Instead, much of the information used by the portal is actually
+  stored on Edge. When necessary, the portal makes a request to retrieve information from Edge or
+  to send information to Edge.</p>
+
+  <p>The portal is always associated with a single Edge organization. When you configure the
+  portal, you can specify the basic authentication credentials (username and password) for an
+  account in the organization that the portal uses to communicate with Edge.</p>
+
+  <p>If you choose to enable SAML for Edge authentication, you can then configure the portal to use
+  SAML authentication when making requests to Edge. Configuring the portal to use SAML
+  automatically creates a new machine user account in the Edge organization that the portal then
+  uses to make requests to Edge. For more on machine users, see <a href=
+  "using-saml-automated-tasks.html">Using SAML with automated tasks</a>.</p>
+
+  <p>SAML support for the portal requires that you have already installed and configures the Edge
+  SSO module on the Edge Management Server node. The general process for enabling SAML for the
+  portal is:</p>
+
+  <ol>
+    <li>Configure SAML on Edge as described in <a href=
+    "installation-and-configuration-saml-edge.html">Installation and configuration of SAML for
+    Edge</a>. <strong>Note</strong>: Basic Auth must still be enabled on Edge to install the
+    portal. Do not disable Basic Auth on Edge until after you have configured the portal to use
+    SAML.</li>
+
+    <li>Install the portal and ensure that your installation is working properly. See <a href=
+    "installing-edge-private-cloud-developer-services-portal.html">Installing the Edge for Private
+    Cloud Developer Services portal</a>.</li>
+
+    <li>Configure SAML on the portal.</li>
+
+    <li>You can now disable Basic Auth on Edge.</li>
+  </ol>
+
+  <h2 id="creatingamachineuserfortheportal">Creating a machine user for the portal</h2>
+
+  <p>When SAML is enabled, Edge supports automated OAuth2 token generation through the use of
+  <em>machine users</em>. A machine user can obtain OAuth2 tokens without having to specify a
+  passcode. That means you can completely automate the process of obtaining and refreshing OAuth2
+  tokens.</p>
+
+  <p>The SAML configuration process for the portal automatically creates a machine user in the
+  organization associated with the portal. The portal then uses this machine user account to
+  connect to Edge. For more on machine users, see <a href="using-saml-automated-tasks.html">Using
+  SAML with automated tasks</a>.</p>
+
+  <h2 id="aboutauthenticationforportaldeveloperaccounts">About authentication for portal developer
+  accounts</h2>
+
+  <p>When you configure the portal to use SAML, you enable the portal to use SAML to authenticate
+  with Edge so that the portal can make requests to Edge. However, the portal also supports a type
+  of user called <em>developers</em>.</p>
+
+  <p>Developers make up the community of users that build apps by using your APIs. App developers
+  use the portal to learn about your APIs, to register apps that use your APIs, to interact with
+  the developer community, and to view statistical information about their app usage on a
+  dashboard.</p>
+
+  <p>When a developer logs in to the portal, it is the portal that is responsible for
+  authenticating the developer and for enforcing role-based permissions. The portal continues to
+  use basic authentication with developers even after you enable SAML between the portal and Edge.
+  For more, see <a href=
+  "/api-platform/publish/drupal/communicating-between-developer-services-portal-and-edge.html">Communicating
+  between the portal and Edge</a>.</p>
+
+  <p>It is possible to also configure the portal to use SAML to authenticate developers. For an
+  example on enableng SAML using third-party Drupal modules, see <a href=
+  "https://community.apigee.com/articles/29201/sso-integration-via-saml-with-developer-portal.html">
+  https://community.apigee.com/articles/29201/sso-integration-via-saml-with-developer-portal.html</a>.</p>
+
+  <h2 id="configuresamlontheportaltocommunicatewithedge">Configure SAML on the portal to
+  communicate with Edge</h2>
+
+  <p>To configure SAML for the portal, you must create a config file to configure the portal:</p>
+  <pre class="prettyprint">
+# IP address of Edge Management Server and apigee-sso node.
+IP1=22.222.22.222
+
+# URL of Edge management API.
+MGMT_URL=http://$IP1:8080/v1
+
+# Org associated with the portal.
+EDGE_ORG=myorg
+
+# Information about apigee-sso.
+# Externally accessible IP or DNS of apigee-sso.
+SSO_PUBLIC_URL_HOSTNAME=$IP1
+SSO_PUBLIC_URL_PORT=9099
+# Default is http. Set to https if you enabled TLS on apigee-sso.
+SSO_PUBLIC_URL_SCHEME=http
+
+# SSO admin credentials as set when you installed apigee-sso.
+SSO_ADMIN_NAME=ssoadmin
+SSO_ADMIN_SECRET=Secret123
+
+# Default is "n" to disable SAML support.
+DEVPORTAL_SSO_ENABLED=y
+
+# The name of the OAuth client used to connect to apigee-sso. 
+# The default client name is portalcli.
+PORTALCLI_SSO_CLIENT_NAME=portalcli
+# Oauth client password using uppercase, lowercase, number, and special chars. 
+PORTALCLI_SSO_CLIENT_SECRET=Abcdefg@1
+
+# Email address and user info for the machine user created in 
+# the Edge org specified above by EDGE_ORG. 
+# This account is used by the portal to make requests to Edge.
+# Add this email as an org admin before configuring the portal to use SAML. 
+DEVPORTAL_ADMIN_EMAIL=DevPortal_SAML@google.com
+DEVPORTAL_ADMIN_FIRSTNAME=DevPortal
+DEVPORTAL_ADMIN_LASTNAME=SAMLAdmin
+DEVPORTAL_ADMIN_PWD=Abcdefg@1
+
+# If set, the existing portal OAuth client is deleted and new one is created.
+# The default value is "n".
+# Set to "y" when you configure SAML and change the value of 
+# any of the PORTALCLI_* properties.
+PORTALCLI_SSO_CLIENT_OVERWRITE=y
+</pre>
+
+  <p>To enable SAML support on the portal:</p>
+
+  <ol>
+    <li>In the Edge UI, add the machine user specified by <span style=
+    "font-family:courier new,courier,monospace;">DEVPORTAL_ADMIN_EMAIL</span> to the organization
+    associated with the portal as an <strong>Organization Administrator</strong>.<br>
+    <strong>Note</strong>: The machine user does not exist yet but is created automatically in the
+    next step.</li>
+
+    <li>Run the following command to configure SAML on the portal:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt;
+    /opt/apigee/apigee-service/bin/apigee-service apigee-drupal-devportal configure-sso -f
+    <strong><em>samlConfigFile</em></strong></span><br>
+    <br>
+    where <strong><em>samlConfigFile</em></strong> is the SAML config file.</li>
+
+    <li>Log in to the portal as a portal admin.</li>
+
+    <li>In the main Drupal menu, select <strong>Configuration &gt; Dev Portal</strong>. The portal
+    configuration screen appears, including the SAML settings:<br>
+      <img alt="" src="/private-cloud/images/portalWithSAML.png">
+
+      <p id="gdcalert25">Note that the box for <strong>This org is SAML-enabled</strong> is
+      checked, the endpoint for the Edge SSO module is filled in, the <strong>API key</strong> and
+      <strong>Consumer secret</strong> fields for the portal Oauth client are filled in, and the
+      message <strong>Connection Successful</strong> appears under the <strong>Test
+      Connection</strong> button.</p>
+    </li>
+
+    <li>You can press the <strong>Test Connection</strong> button to retest the connection at
+    anytime.</li>
+  </ol>
+
+  <p>To later change these values, update the config file and run the command again.</p>
+
+  <h2 id="disablesamlontheportal">Disable SAML on the portal</h2>
+
+  <p>If you choose to disable SAML for communications between the portal and Edge, the portal will
+  no longer be able to make requests to Edge. Developers are able to log in to the portal but will
+  not be able to view product or create apps.</p>
+
+  <p><strong>Caution</strong>: If you disable SAML, you should then reconfigure it the portal to
+  either use SAML or, if Edge is still configured to supports Basic Auth, configure the portal to
+  communicate with Edge using Basic Auth. For more on using Basic Auth see <a href=
+  "/api-platform/publish/drupal/communicating-between-developer-services-portal-and-edge.html">Communicating
+  between the portal and Edge</a>.</p>
+
+  <p>To disable SAML on the portal:</p>
+
+  <ol>
+    <li>Edit the config file that you used to configure SAM to set:<br>
+    <span style="font-family:courier new,courier,monospace;">DEVPORTAL_SSO_ENABLED=n</span></li>
+
+    <li>Configure the portal:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt;
+    /opt/apigee/apigee-service/bin/apigee-service apigee-drupal-devportal configure-sso -f
+    <strong><em>configFile</em></strong></span></li>
+  </ol>{% endblock %}

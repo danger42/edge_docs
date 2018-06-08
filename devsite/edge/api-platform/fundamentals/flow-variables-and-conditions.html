@@ -1,0 +1,345 @@
+  {% extends "_base.html" %} {% block title %}Flow variables and conditions{% endblock %} {% block body %}
+
+  <p>Conditional statements are a common control structure in all programming languages. Like a
+  programming language, API proxy configuration supports conditional statements for Flows,
+  Policies, Steps, and RouteRules. By defining conditional statements, you define dynamic behavior
+  for your API. This dynamic behavior lets you do things like converting XML into JSON only for
+  mobile devices, or routing to a backend URL based on the content type or HTTP verb of the request
+  message.</p>
+
+  <p>This topic shows you how to use conditions to dynamically apply API management features at
+  runtime, without writing any code.</p>
+
+  <div class="video">
+    <p><strong>Video:</strong> Watch a short video to learn more about flow variables and
+    conditions.</p>
+
+    <div style="text-align: left; margin:15px">
+      <iframe allowfullscreen="" frameborder="0" height="480" src=
+      "https://www.youtube.com/embed/lmU95q7Z-iM" width="560"></iframe>
+    </div>
+  </div>
+
+  <h2 id="configuringconditionalstatements">Configuring conditional statements</h2>
+
+  <p>Conditional behavior is implemented in API proxies by using a combination of <i>conditions</i>
+  and <i>variables</i>. A conditional statement is created using a Condition element. The following
+  is an empty condition:</p>
+  <pre class="prettyprint">
+&lt;Condition&gt;&lt;/Condition&gt;
+</pre>
+
+  <p>To create a conditional statement, you add a conditional operator and a variable to create the
+  following structure:</p>
+  <pre class="prettyprint">
+&lt;Condition&gt;{variable.name}{operator}{"value"}&lt;/Condition&gt;
+</pre>
+
+  <p>Supported conditional operators include <code>=</code> (equals), <code>!=</code> (not equal),
+  and <code>&gt;</code> (greater than). For readability, you can also write the conditionals as
+  text: <code>equals</code>, <code>notequals</code>, <code>greaterthan</code>.</p>
+
+  <p>When working with URI paths you can use <code>~/</code> or <code>MatchesPath</code>. You can
+  also match JavaRegex regular expressions with the ~~ operator.</p>
+
+  <aside class="note">
+    <b>Note:</b> For an example of the ~~ operator, see the following Apigee Community thread:
+
+    <p><a href=
+    "https://community.apigee.com/questions/4284/how-do-you-override-at-the-end-of-the-url-when-you.html">
+    https://community.apigee.com/questions/4284/how-do-you-override-at-the-end-of-the-url-when-you.html</a></p>
+  </aside>
+
+  <p>Conditions are used to define API proxy conditional flows to backend API resources, described
+  in <a href="/api-platform/fundamentals/uri-based-configurations.html">Mapping conditional flows
+  to backend API resources</a>. For a complete list of conditionals, see <a href=
+  "/api-platform/reference/conditions-reference.html">Conditions reference</a>.</p>
+
+  <h2 id="variables">Variables</h2>
+
+  <p>Conditions do their work by evaluating the values of <i>variables</i>. A variable is a
+  property of an HTTP transaction executed by an API proxy, or a property of an API proxy
+  configuration itself. Whenever an API proxy gets a request from an app, Apigee Edge populates a
+  long list of variables that are associated with things like system time, the app's network
+  information, HTTP headers on messages, the API proxy configuration, policy executions and so on.
+  This creates a rich context that you can use to set up conditional statements.</p>
+
+  <p>Variables always use a dotted notation. For example, HTTP headers on the request message are
+  available as variables called <code>request.header.{header_name}</code>. So to evaluate the
+  Content-type header, you could use the variable <code>request.header.Content-type</code>. For
+  example <code>request.header.Content-type = "application/json"</code> indicates that the content
+  type of the request should be JSON.</p>
+
+  <p> Imagine that you need to create a conditional statement that will cause a policy to be
+  enforced only when a request message is a GET. To create a condition that evaluates the HTTP verb
+  of a request, you create the conditional statement below. The variable in this condition is
+  <code>request.verb</code>. The value of the variable is <code>GET</code>. The operator is
+  <code>=</code>.</p>
+  <pre class="prettyprint">
+&lt;Condition&gt;request.verb = "GET"&lt;/Condition&gt;
+</pre>You could also use:
+  <pre class="prettyprint">
+&lt;Condition&gt;request.verb equals "GET"&lt;/Condition&gt;
+</pre>
+
+  <p>Edge uses such a statement to evaluate conditions. The example above evaluates to true if the
+  HTTP verb associated with the request is GET. If the HTTP verb associated with the request is
+  POST, then the statement evaluates to false.</p>
+
+  <aside class="note"><b>Note:</b> Edge automatically stores all HTTP headers and query parameters
+  as variables that can be accessed using <code>request.header.</code> and
+  <code>request.queryparam.</code> variable prefixes.</aside>
+
+  <p>To enable dynamic behavior, you can attach Conditions to Flows, Steps, and RouteRules.</p>
+
+  <p>When you attach a condition to a Flow, you create a 'conditional Flow'. Conditional Flows
+  execute only when the condition evaluates to true. You can attach as many Policies as you want to
+  a conditional Flow. A conditional Flow enables you to craft highly specialized processing rules
+  for request or response messages that meet certain criteria.</p>
+
+  <p>For example, to create a Flow that executes only when the request verb is a GET:</p>
+  <pre class="prettyprint">
+&lt;Flows&gt;
+  &lt;Flow name="ExecuteForGETs"&gt;
+  &lt;Condition&gt;request.verb="GET"&lt;/Condition&gt;
+  &lt;/Flow&gt;
+&lt;/Flows&gt;
+</pre>
+
+  <p>To create one Flow for GETs and another for POSTs:</p>
+  <pre class="prettyprint">
+&lt;Flows&gt;
+  &lt;Flow name="ExecuteForGETs"&gt;
+  &lt;Condition&gt;request.verb="GET"&lt;/Condition&gt;
+  &lt;/Flow&gt;
+  &lt;Flow name="ExecuteForPOSTs"&gt;
+  &lt;Condition&gt;request.verb="POST"&lt;/Condition&gt;
+  &lt;/Flow&gt;
+&lt;/Flows&gt;
+</pre>
+
+  <p>As shown in the example below, you can apply the condition to the Policy Step itself. The
+  following Condition causes the VerifyApiKey Policy to be enforced only if a request message is a
+  POST.</p>
+  <pre class="prettyprint">
+&lt;PreFlow name="PreFlow"&gt;
+    &lt;Request&gt;
+        &lt;Step&gt;
+            &lt;Condition&gt;request.verb equals "POST"&lt;/Condition&gt;
+            &lt;Name&gt;VerifyApiKey&lt;/Name&gt;
+        &lt;/Step&gt;
+    &lt;/Request&gt;
+&lt;/PreFlow&gt;
+</pre>
+
+  <p>Once you have defined such conditional Flows, you can attach Policies to them, enabling an API
+  proxy to enforce one set of policies for GET requests, and another set of policies for POST
+  requests.</p>
+
+  <p>For comprehensive references, see:</p>
+
+  <ul>
+    <li><a href="/api-platform/reference/variables-reference.html">Variables reference</a></li>
+
+    <li><a href="/api-platform/reference/conditions-reference.html">Conditions reference</a></li>
+
+    <li><a href="/api-platform/reference/conditions-reference.html#operators">Operators</a></li>
+  </ul>
+
+  <h3 id="variables-conditionallyconvertingapayloadfromxmltojson">Conditionally converting a
+  payload from XML to JSON</h3>
+
+  <p>Let's use a specific example in which you need to transform response message from XML to JSON
+  only for mobile devices. First, create the policy that will convert the XML-formatted response
+  from the Weather API into JSON:</p>
+  <pre class="prettyprint">
+&lt;XMLToJSON name="ConvertToJSON"&gt;
+  &lt;Options&gt;
+  &lt;/Options&gt;
+  &lt;OutputVariable&gt;response&lt;/OutputVariable&gt;
+  &lt;Source&gt;response&lt;/Source&gt;
+&lt;/XMLToJSON&gt;
+</pre>
+
+  <p>The policy configuration above tells the API proxy to take the response message, perform a
+  conversion from XML to JSON with default settings, and then write the result to the new response
+  message. (If you are converting a <i>request</i> message from XML to JSON, you simply set both of
+  these values to <code>request</code>.)</p>
+
+  <aside class="key-point"><b>Tip:</b> The XMLToJSON policy type defines a set of reasonable
+  defaults, which means that you only need to add configuration elements to craft XML into specific
+  JSON structures. For instruction, refer to <a href=
+  "/api-platform/reference/policies/xml-json-policy.html">XML to JSON policy</a></aside>
+
+  <p>Since you want to convert responses from XML to JSON, you need to configure a conditional
+  response Flow to perform the conversion. For example, to convert all responses from XML to JSON
+  before they are returned to the client app, configure the following ProxyEndpoint response
+  Flow.</p>
+  <pre class="prettyprint">
+&lt;Flows&gt;
+  &lt;Flow name="Convert-for-devices"&gt;
+    &lt;Response&gt;
+      &lt;Step&gt;&lt;Name&gt;ConvertToJSON&lt;/Name&gt;&lt;/Step&gt;
+    &lt;/Response&gt;
+  &lt;/Flow&gt;
+&lt;/Flows&gt;
+</pre>
+
+  <p>When you invoke the API using the standard request, the response is formatted in JSON.</p>
+
+  <p>However, your goal is to only convert Weather reports into JSON <i>when the requesting client
+  is a mobile device</i>. To enable such dynamic behavior, you must add a conditional statement to
+  the Flow.</p>
+
+  <h2 id="configuringconditionalbehavior">Configuring conditional behavior</h2>
+
+  <p>The following example shows a single conditional flow named <code>Convert-for-devices</code>,
+  configured in the ProxyEndpoint response Flow. Add the Condition as an element to the entity to
+  which the condition applies. In this example, the condition is a component of the Flow.
+  Therefore, the Flow will execute whenever the statement evaluates to true.</p>
+  <pre class="prettyprint">
+&lt;Flows&gt;
+  &lt;Flow name="Convert-for-devices"&gt;
+  &lt;Condition&gt;(request.header.User-Agent = "Mozilla")&lt;/Condition&gt;
+    &lt;Response&gt;
+      &lt;Step&gt;&lt;Name&gt;ConvertToJSON&lt;/Name&gt;&lt;/Step&gt;
+    &lt;/Response&gt;
+  &lt;/Flow&gt;
+&lt;/Flows&gt;
+</pre>
+
+  <p>For each request received from an app, Edge stores the values of all HTTP headers present as
+  variables. If the request contains an HTTP header called <code>User-Agent</code>, that header and
+  its value are stored as a variable called <code>request.header.User-Agent</code>.</p>
+
+  <p>Given the ProxyEndpoint configuration above, Edge checks the value of the
+  <code>request.header.User-Agent</code> variable to see whether the condition evaluates to
+  true.</p>
+
+  <p>If the condition does evaluate to true, that is, the value of the variable
+  <code>request.header.User-Agent</code> equals <code>Mozilla</code>, then the conditional Flow
+  executes and the XMLtoJSON policy called <code>ConvertToJSON</code> is enforced. If not, the Flow
+  is not executed, and the XML response is returned unmodified (in XML format) to the requesting
+  app.</p>
+
+  <h3 id="configuringconditionalbehavior-testingtheconditionalflow">Testing the conditional
+  flow</h3>
+
+  <p>In this sample request, the HTTP <code>User-Agent</code> header is set to
+  <code>Mozilla</code>, causing the conditional statement to evaluate to true and the conditional
+  flow <code>Convert-for-devices</code> to execute.</p>
+  <pre class="prettyprint">
+$ curl -H "User-Agent:Mozilla" http://{org_name}-test.apigee.net/weather/forecastrss?w=12797282
+</pre>
+
+  <p>or, to pretty print where Python is available:</p>
+  <pre class="prettyprint">
+$ curl -H "User-Agent:Mozilla" http://{org_name}-test.apigee.net/weather/forecastrss?w=12797282 | python -mjson.tool
+</pre>
+
+  <p>Sample Response:</p>
+  <pre class="prettyprint">
+. . .
+
+"yweather_forecast": [
+         {
+              "code": "11", 
+              "date": "12 Dec 2012", 
+              "day": "Wed", 
+              "high": "55", 
+              "low": "36", 
+              "text": "Showers" 
+          }, 
+          {
+              "code": "32", 
+              "date": "13 Dec 2012", 
+              "day": "Thu", 
+              "high": "56", 
+              "low": "38", 
+              "text": "Sunny"
+          }
+      ]
+  }
+
+. . .
+</pre>
+
+  <p>A request submitted without the <code>User-Agent</code> header, or with a different value than
+  <code>Mozilla</code>, will result in an XML-formatted response.</p>
+  <pre class="prettyprint">
+$ curl http://{org_name}-test.apigee.net/weather/forecastrss?w=12797282
+</pre>
+
+  <p>The unmodified XML response is returned.</p>
+
+  <p>Sample Response:</p>
+  <pre class="prettyprint">
+&lt;yweather:forecast day="Wed" date="12 Dec 2012" low="36" high="55" text="Showers" code="11" /&gt; &lt;yweather:forecast day="Thu" date="13 Dec 2012" low="38" high="56" text="Sunny" code="32" /&gt;
+</pre>
+
+  <h2 id="sampleconditions"><a name="using_conditions" id="using_conditions"></a>Sample
+  conditions</h2>
+
+  <h3 id="sampleconditions-conditionattachedtorouterule">Condition attached to RouteRule</h3>
+  <pre class="prettyprint">
+&lt;RouteRule name="default"&gt;
+<span style=
+"color:#0000ff;"> &lt;!--this routing executes if the header indicates that this is an XML call. If true, the call is routed to the endpoint XMLTargetEndpoint--&gt;</span>
+  &lt;Condition&gt;request.header.content-type = "text/xml"&lt;/Condition&gt;
+  &lt;TargetEndpoint&gt;XmlTargetEndpoint&lt;/TargetEndpoint&gt;
+&lt;/RouteRule&gt;
+</pre>
+
+  <h3 id="sampleconditions-conditionattachedtoapolicy">Condition attached to a policy</h3>
+  <pre class="prettyprint">
+&lt;Step&gt;
+<span style="color:#0000ff;">&lt;!--the policy </span><span style=
+"color: rgb(0, 0, 255);">MaintenancePolicy only </span><span style=
+"color: rgb(0, 0, 255);">executes if the response status code is exactly 503</span><span style=
+"color: rgb(0, 0, 255);">--&gt;</span>
+  &lt;Condition&gt;response.status.code = 503&lt;/Condition&gt;
+  &lt;Name&gt;MaintenancePolicy&lt;/Name&gt;
+&lt;/Step&gt;
+</pre>
+
+  <h3 id="sampleconditions-conditionalflow">Conditional Flow</h3>
+  <pre class="prettyprint">
+<span style=
+"color: rgb(0, 0, 255);">&lt;!-- this entire flow is executed only if the request verb is a GET--</span><span style="color: rgb(0, 0, 255);">&gt;
+</span>&lt;Flow name="GetRequests"&gt;
+  &lt;Condition&gt;request.verb="GET"&lt;/Condition&gt;
+  &lt;Request&gt;
+    &lt;Step&gt;
+<span style=
+"color: rgb(0, 0, 255);">&lt;!-- this policy only executes if request path includes a term like statues--</span><span style="color: rgb(0, 0, 255);">&gt;
+</span>&lt;Condition&gt;request.path ~ "/statuses/**"&lt;/Condition&gt;
+      &lt;Name&gt;StatusesRequestPolicy&lt;/Name&gt;
+    &lt;/Step&gt;
+  &lt;/Request&gt;
+  &lt;Response&gt;
+    &lt;Step&gt;
+<span style=
+"color: rgb(0, 0, 255);">&lt;!-- this condition has multiple expressions. The policy executes if the response code status is exactly 503 or 400--</span><span style="color: rgb(0, 0, 255);">&gt;
+</span>&lt;Condition&gt;(response.status.code = 503) or (response.status.code = 400)&lt;/Condition&gt;
+      &lt;Name&gt;MaintenancePolicy&lt;/Name&gt;
+    &lt;/Step&gt;
+  &lt;/Response&gt;
+&lt;/Flow&gt;
+</pre>
+
+  <h3 id="sampleconditions-sampleoperatorsinconditions"><a name="operators" id=
+  "operators"></a>Sample operators in conditions</h3>
+
+  <p>Here are some examples of operators used to create conditions:</p>
+
+  <ul>
+    <li><code>request.header.content-type = "text/xml"</code></li>
+
+    <li><code>request.header.content-length &lt; 4096 &amp;&amp; request.verb = "PUT"</code></li>
+
+    <li><code>response.status.code = 404 || response.status.code = 500</code></li>
+
+    <li><code>request.uri MatchesPath "/*/statuses/**"</code></li>
+
+    <li><code>request.queryparam.q0 NotEquals 10</code></li>
+  </ul>{% endblock %}

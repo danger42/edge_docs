@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wsdl:definitions targetNamespace="https://example.com/gateway"
+    xmlns:tns="https://example.com/gateway"
+    xmlns:types="https://example.com/gateway/types"
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+    xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+    xmlns:wsdlsoap="http://schemas.xmlsoap.org/wsdl/soap/">
+  <wsdl:types>
+    <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+        targetNamespace="https://example.com/gateway/types"
+        elementFormDefault="qualified">
+      <xsd:element name="MyType">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="ID" nillable="false" minOccurs="1" maxOccurs="1"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+    </xsd:schema>
+    <schema attributeFormDefault="unqualified" elementFormDefault="qualified"
+        targetNamespace="https://example.com/gateway"
+        xmlns="http://www.w3.org/2001/XMLSchema">
+      <xsd:import namespace="https://example.com/gateway/types"/>
+      <element name="getID">
+        <complexType>
+          <sequence>
+            <element ref="types:MyType"/>
+          </sequence>
+        </complexType>
+      </element>
+    </schema>
+  </wsdl:types>
+
+  <wsdl:message name="getRequest">
+    <wsdl:part name="getRequest" element="tns:getID"/>
+  </wsdl:message>
+  <wsdl:message name="getResponse">
+    <wsdl:part name="getResponse" element="tns:getID"/>
+  </wsdl:message>
+
+  <wsdl:portType name="PortType">
+    <wsdl:operation name="get">
+      <wsdl:input name="methodRequest" message="tns:getRequest"/>
+      <wsdl:output name="methodResponse" message="tns:getResponse"/>
+    </wsdl:operation>
+  </wsdl:portType>
+
+  <wsdl:service name="Gateway">
+    <wsdl:port name="GatewaySoap" binding="tns:SoapBinding">
+      <wsdlsoap:address location="https://example.com/gateway"/>
+    </wsdl:port>
+  </wsdl:service>
+
+  <wsdl:binding name="SoapBinding" type="tns:PortType">
+    <wsdlsoap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+
+    <wsdl:operation name="get">
+      <wsdlsoap:operation soapAction="get"/>
+      <wsdl:input name="methodRequest"/>
+      <wsdl:output name="methodResponse"/>
+    </wsdl:operation>
+
+  </wsdl:binding>
+</wsdl:definitions>

@@ -1,0 +1,380 @@
+  {% extends "_base.html" %} {% block title %}Deploying a standalone Node.js app{% endblock %} {% block body %}
+
+  <p>This topic explains how to deploy a Node.js application from your local system to Apigee Edge.
+  In this topic, we'll discuss how to use a command-line tool called <code>apigeetool</code> to
+  deploy Node.js applications to Apigee Edge.</p>
+
+  <h2 id="aboutdeployingnodejscodetoapigeeedge">About deploying Node.js code to Apigee Edge</h2>
+
+  <p>You can deploy an existing Node.js API application, including any dependent Node.js modules,
+  from your local system to Apigee Edge using a command-line utility called
+  <code>apigeetool</code>. The utility automatically bundles the application and its dependencies
+  into an API proxy and deploys it on Edge.</p>
+
+  <p>For example, let's say you used Express to create a web application in Node.js. The
+  application runs as an HTTP server that listens for HTTP requests, processes those requests,
+  returns data, and so on. When you use <code>apigeetool</code> to deploy a Node.js
+  application to Edge, it's wrapped in a proxy and executes within the context of the Edge
+  platform. You can then call your application through its new proxy URL, and you can add value to
+  it by "dressing it" with standard Edge features like OAuth security, quota policies, threat
+  protection policies, conditional flows, caching, and many others.</p>
+
+  <h2 id="whatdoesapigeetooldo">What does apigeetool do?</h2>
+
+  <p>When you run the <code>apigeetool</code> utility with the <code>deploynodeapp</code> option,
+  it:</p>
+
+  <ul>
+    <li>Generates an API proxy configuration bundle to house the Node.js application.</li>
+
+    <li>Packages the Node.js application with any Node.js packages installed with NPM (Node
+    Packaged Modules).</li>
+
+    <li>Imports the API proxy configuration bundle to the specified organization on Apigee Edge
+    using the Edge management API.</li>
+
+    <li>Deploys the API proxy to an environment.</li>
+
+    <li>Executes the Node.js application on Apigee Edge and making it available over the
+    network.</li>
+  </ul>
+
+  <h2 id="preparingtouseapigeetool">Preparing to use apigeetool</h2>
+
+  <p>Before you begin, you need to install the <code>apigeetool</code> utility.</p>
+
+  <p>You can install apigeetool either through npm or by cloning and linking the code from
+  GitHub. </p>
+
+  <h3 id="preparingtouseapigeetool-installationfromnpm">Installation from npm</h3>
+
+  <p>The <code>apigeetool</code> module and its dependencies are designed for Node.js and is
+  available through npm using the following command:</p>
+  <pre class="prettyprint">
+$ sudo npm install -g apigeetool
+</pre>
+
+  <aside class="note"><b>Note:</b> <code>sudo</code> may be required with the <code>-g</code>
+  option which places apigeetool in your PATH. If you do not use <code>-g</code>, then you need to
+  add apigeetool to your PATH manually.</aside>
+
+  <p>Typically, the -g option places modules in:
+  <code>/usr/local/lib/node_modules/apigeetool</code> on *nix-based machines.</p>
+
+  <h3 id="preparingtouseapigeetool-installationfromgithub">Installation from GitHub</h3>
+
+  <p>Either download or clone the API Platform Tools from GitHub. See the README file in the
+  repository root directory for installation instructions.</p>
+  <pre class="terminal">
+$ git clone https://github.com/apigee/apigeetool-node.git
+</pre>
+
+  <p>When you've completed the installation, be sure the <code>apigeetool</code> executable is in
+  your Path. You can test it out by typing:</p>
+
+  <p><code>$ apigeetool -h</code></p>
+
+  <h2 id="deployinganodejsapplicationtoedgewithapigeetool">Deploying a Node.js application to Edge
+  with apigeetool</h2>
+
+  <p><strong>Note:</strong> Before you deploy, you'll need to know your Apigee Edge organization
+  name, user name, and the password for your <a href="https://enterprise.apigee.com/">Apigee
+  Edge account</a>. You need this information to correctly form
+  the <code>apigeetool</code> command.</p>
+
+  <p>To deploy a Node.js application using <code>apigeetool</code>:</p>
+
+  <ol>
+    <li>In a terminal window, <code>cd</code> the root directory of your Node.js application.</li>
+
+    <li>Execute the <code>apigeetool</code> utility with the <code>deploynodeapp</code>
+    command:<br>
+      <br>
+      <pre class="terminal">
+$ apigeetool deploynodeapp -n {A name for your new proxy} -d {The root directory of your Node.js app} -m {The name of the main Node.js file} -o {Your org name on Edge} -e {The environment to deploy to} -b {The base URL for your proxy} -u {Your Edge email address} -p {Your Edge password}
+</pre>For example:<br>
+      <br>
+      <pre class="terminal">
+$ apigeetool deploynodeapp -n myNodeApp -d . -m server.js -o myorg -e test -b /myNodeApp -u ntesla -p myPassword
+</pre>
+    </li>
+
+    <li>Check the output in your terminal window. It will look something like this:<br>
+      <br>
+      <pre class="prettyprint">
+Importing new application myNodeApp
+Imported new app revision 1
+Deploying revision 1
+  Deployed.
+Proxy: "myNodeApp" Revision 1
+  Environment: test BasePath: /myNodeApp
+  Status: deployed
+</pre>
+
+      <p>If you see "Status: deployed", that's it. Everything went smoothly. Your Node.js app is
+      wrapped in an API proxy, deployed to Edge, and it's running and waiting to handle requests.
+      It's ready to be tested.</p>
+    </li>
+
+    <li>Test your proxy. For example:<br>
+      <br>
+      <pre class="terminal">
+$ curl http://myorg-test.apigee.net/myNodeApp
+Hello, My Node App!
+</pre>
+    </li>
+
+    <li>If you wish, log in to your your Apigee Edge account and go to the API Proxies page of the
+    management UI. You will see your new proxy listed there.</li>
+  </ol>
+
+  <h2 id="howapigeetoolhandlesdependentfilesandmodules">How apigeetool handles dependent files and
+  modules</h2>
+
+  <p>If your Node.js application depends on installed modules, apigeetool handles them by zipping
+  the <code>node_modules</code> folder and adding it to the proxy bundle. No additional action is
+  necessary. The same is true for any directories that contain additional source code. The
+  apigeetool utility zips them and deploys them with the bundle.</p>
+
+  <p>You cannot edit files in these zipped directories on the Edge management UI's editor. If you
+  need to change them, you can export your project, edit the files locally, and then redeploy using
+  apigeetool or by importing the exported project using the management UI. See also "<a href=
+  "#ExportImportProxy">Exporting and importing a proxy with Node.js code</a>". </p>
+
+  <h2 id="basicusageinformationforapigeetool">Basic usage information for apigeetool</h2>
+
+  <p>For basic usage information on the <code>apigeetool</code> utility's input parameters,
+  enter:</p>
+  <pre class="terminal">
+$ apigeetool deploynodeapp -h
+
+  Usage: deploynodeapp -n [name] -o [organization] -e [environment]
+  -d [directory name] -m [main script file]
+  -u [username] -p [password]
+  -b [base path] -l [apigee API url] -z [zip file] -i -h
+  -o Apigee organization name
+  -e Apigee environment name
+  -n Apigee proxy name
+  -d Apigee proxy directory
+  -m Main script name: Should be at the top level of the directory
+  -u Apigee user name
+  -p Apigee password
+  -b Base path (optional, defaults to /)
+  -L Apigee API URL (optional, defaults to https://api.enterprise.apigee.com)
+  -z ZIP file to save (optional for debugging)
+  -i import only, do not deploy
+  -R Resolve Node.js modules on Apigee Edge. Equivalent to running npm install on your project. 
+  -U Uploads Node.js modules to Apigee Edge. 
+  -h Print this message
+</pre>
+
+  <h2 id="creatinganewproxywithexistingnodejsfiles">Creating a new proxy with existing Node.js
+  files</h2>
+
+  <p>Another way to integrate an existing Node.js application into an API proxy is to add the
+  application when you create the proxy. You can do this entirely through the management UI and the
+  New API Proxy dialog.</p>
+
+  <aside class="note"><b>Note:</b> This is currently the only way to incorporate an existing local
+  Node.js application into a proxy from the management UI. This procedure must be performed when
+  you are creating a new proxy.</aside>
+
+  <ol>
+    <li>From the API proxy summary page, click <strong>+API Proxy</strong>. </li>
+
+    <li>In the New API Proxy dialog, select <strong>Existing Node.js</strong>.</li>
+
+    <li>Use the <strong>Choose Files</strong> button to select one or more Node.js files to
+    import. 
+
+      <aside class="note"><b>Note:</b> If you upload multiple Node.js files, you need to specify
+      which one is the main file. (The main file is the one that you would invoke from the command
+      line with the node command.)</aside>
+    </li>
+
+    <li>Give the proxy a name. In this example, we are calling it
+    <code>hellonode</code>. </li>
+
+    <li>Add the version <code>/v1</code> to the Project Base Path. Versioning your API is a best
+    practice. </li>
+
+    <li>Click <strong>Build</strong>. </li>
+
+    <li>Click <strong>Develop</strong> to enter the Develop view. </li>
+
+    <li>Open the <code>TargetEndpoint</code> file in the code editor.</li>
+
+    <li>Be sure the <code>&lt;ScriptTarget&gt;</code> element specifies the main Node.js file, as
+    follows:<br>
+      <br>
+      <br>
+      <pre class="prettyprint">
+&lt;ScriptTarget&gt;
+        &lt;ResourceURL&gt;node://server.js&lt;/ResourceURL&gt;
+        &lt;Properties/&gt;
+&lt;/ScriptTarget&gt;
+</pre>
+    </li>
+
+    <li>Click <strong>Save</strong>.</li>
+  </ol>
+
+  <h2 id="addingandinvokingnewnodejsresourcefiles">Adding and invoking new Node.js resource
+  files </h2>
+
+  <p>Another way to add Node.js code to a proxy is to add it directly, either through the UI or by
+  uploading it from your local filesystem. You can also specify which Node.js file is the main
+  file, which is the file Edge invokes when the proxy is deployed. </p>
+
+  <h3 id="addingandinvokingnewnodejsresourcefiles-addingnewnodejsfilesthroughtheui">Adding new
+  Node.js files through the UI</h3>
+
+  <p>The management UI lets you add additional Node.js source files to a proxy that is on the Edge
+  platform. You can create them directly in the UI or import them from your file system. First,
+  let's look at how to do this from the UI.</p>
+
+  <aside class="note"><b>Note:</b> Only one Node.js source file is designated to be the main
+  file.  The main file is the one you would execute from the command line to run a Node.js
+  application. The main file is specified in the proxy's target endpoint definition file using an
+  element called &lt;ScriptTarget&gt;, as explained in <a href=
+  "#InvokingImportedFile">Invoking an imported Node.js file</a> and in <a href=
+  "/api-platform/nodejs/adding-nodejs-existing-api-proxy.html">Adding Node.js to an existing API
+  proxy</a>. In these out-of-the-box examples, the correct target endpoint definition is created
+  for you.</aside>
+
+  <p>To create a new Node.js resource file:</p>
+
+  <ol>
+    <li>In the Develop view, select <span style="font-weight: bold;">New
+    Script</span> from the New menu.</li>
+
+    <li>In the Add Script dialog, select the file type <span style=
+    "font-weight: bold;">Node</span> and name the script.</li>
+
+    <li>Click <span style="font-weight: bold;">Add</span>. </li>
+  </ol>
+
+  
+
+  <p><img src="/api-platform/images/add-script-dialog.png" width="691"></p>
+
+  <p>The new, blank Node.js file opens in the editor. You can cut and paste your code into the
+  file. The file also appears in the Scripts section of the Navigator.<br>
+  <br>
+  [[{"type":"media","view_mode":"media_large","fid":"2431","attributes":{"alt":"","class":"media-image","height":"312","typeof":"foaf:Image","width":"417"}}]]</p>
+
+  <h3 id="addingandinvokingnewnodejsresourcefiles-importingnodejsfilesfromyourfilesystem">Importing
+  Node.js files from your filesystem</h3>
+
+  <p>To <span style="font-weight: bold;">import</span> a Node.js file from your
+  filesystem to the proxy:</p>
+
+  <ol>
+    <li>In the Develop view, select <span style="font-weight: bold;">New
+    Script</span> from the New menu. </li>
+
+    <li>In the Add Script dialog, click <span style="font-weight: bold;">Import
+    Script</span>.</li>
+
+    <li>Use the file tool to select your Node.js file.</li>
+
+    <li>The file's name is added to the dialog, but you can change it if you wish.</li>
+
+    <li>Click <span style="font-weight: bold;">Add</span>. The file appears in the Scripts
+    section of the Navigator and opens in the editor.</li>
+
+    <li>Click <span style="font-weight: bold;">Save</span>. </li>
+  </ol>
+
+  <p>If you want to invoke the imported file, an extra step is required, as explained in the next
+  section.</p>
+
+  <h3 id="addingandinvokingnewnodejsresourcefiles-invokinganimportednodejsfile"><a id=
+  "InvokingImportedFile" name="InvokingImportedFile"></a>Invoking an imported Node.js file</h3>
+
+  <p>You can't simply invoke a newly imported or created Node.js file. The reason is that Edge
+  requires that one Node.js file be the <span style=
+  "font-weight: bold;">main</span> file. The main file is specified in the
+  &lt;ScriptTarget&gt; element of the Target Endpoint definition. To specify which file is the main
+  Node.js file, do the following:</p>
+
+  <ol>
+    <li>Under Target Endpoints in the Navigator, click the name of the target endpoint (usually
+    called <span style="font-weight: bold;">default</span>). </li>
+
+    <li>In the Code editor, edit the &lt;ScriptTarget&gt; element by changing the
+    &lt;ResourceURL&gt; to reflect the name of the file you wish to be the main Node.js file. For
+    example, if you wanted a file called <code>hello-world.js</code> to be the main file,
+    you'd enter: <code>node://hello-world.js</code> in the ResourceURL element.</li>
+
+    <li>Click <span style="font-weight: bold;">Save</span>.</li>
+  </ol>
+
+  <p><img src="/api-platform/images/node-import-scripttarget.png" width="690"><img src=
+  "/api-platform/images/node-import-scripttarget.png" width="690"></p>
+
+  <p>At this point, you can invoke the file with whatever proxy path you used before. For example,
+  we've been looking at the Hello World! example, where the base path <code>v1/hello</code>is
+  specified. However, you can change the base path by editing the Proxy Endpoint.</p>
+
+  <aside class="note"><b>Note:</b> Recall that the Proxy Endpoint defines how clients call your
+  API. When a client calls the API with the new base path, processing is routed to the Target
+  Endpoint, where the main Node.js file is specified.</aside>
+
+  <ol>
+    <li>Under Proxy Endpoints in the Navigator, click the name of the proxy endpoint (usually
+    called <span style="font-weight: bold;">default</span>). </li>
+
+    <li>In the Code editor, edit the &lt;HttpProxyConnection&gt; element by changing the
+    &lt;BasePath&gt; to whatever name you wish. For example, if the current &lt;BasePath&gt;
+    is <code>v1/hello</code> and you wanted it to be <code>v1/my-node-file</code>,
+    change the &lt;BasePath&gt; element like this:<br>
+    <br>
+    <span style=
+    "font-family: monospace;">&lt;BasePath&gt;/v1/my-node-file&lt;/BasePath&gt;</span><br>
+     </li>
+
+    <li>Click <span style="font-weight: bold;">Save</span>. </li>
+
+    <li>Invoke the proxy using the new base path, like this:<br>
+      <br>
+      <pre class="terminal">
+$ curl http://<span style="font-style: italic;">myorg</span>-test.apigee.net/v1/my-node-file
+Hello, World!
+</pre>
+    </li>
+  </ol>
+
+  <h2 id="exportingandimportingaproxywithnodejscode"><a id="ExportImportProxy" name=
+  "ExportImportProxy"></a>Exporting and importing a proxy with Node.js code</h2>
+
+  <p>After you deploy a proxy containing Node.js code to Edge, you can always export the proxy back
+  to your system, work on it there, and then re-import it to Edge using the management UI. This
+  sort of round-trip development technique is commonly used.</p>
+
+  <ol>
+    <li>From the API proxy summary page, click <strong>Develop</strong>.</li>
+
+    <li>In the Develop page, select <strong>Download Current Revision</strong>.</li>
+
+    <li>Unzip the downloaded file on your system.</li>
+  </ol>
+
+  <aside class="note"><b>Note:</b> The Download function does not unzip any directories that were
+  zipped when the proxy was deployed, like <code>node_modules</code> or other folders with source
+  code in them. You'll need to unzip them manually once the proxy is downloaded to your
+  system.</aside>
+
+  <p>You can import the proxy bundle back into Edge by selecting <strong>Import Into New
+  Revision</strong> from the same menu.</p>
+
+  <p>You can also use the API for deploying proxies. See <a href=
+  "/api-platform/deploy/deploying-proxies-command-line.html">Deploying proxies from the command
+  line</a> for details. </p>
+
+  <h2 id="nextsteps">Next Steps</h2>
+
+  <p>In the next topic, <a href="/api-platform/nodejs/adding-nodejs-existing-api-proxy.html">Adding
+  Node.js to an existing API proxy</a>, we explain how to add a Node.js app to <strong>an existing
+  proxy</strong> in your filesystem and deploy it to Edge.</p><!-- InstanceEndEditable -->
+  {% endblock %}

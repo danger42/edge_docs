@@ -1,0 +1,321 @@
+  {% extends "_base.html" %} {% block title %}Accessing the cache in Node.js{% endblock %} {% block body %}
+
+  <p>You can use the <code>apigee-access</code> module to access the Edge distributed cache from
+  within a Node.js application. The module includes methods for <a href="#getCache1">getting a
+  cache</a> and <a href="#put">putting</a>, <a href="#get">getting</a>, and <a href=
+  "#remove">removing</a> data.</p>
+
+  <p>The Apigee Edge distributed cache lets you store strings or other data. Like most caches, it
+  is a least-recently-used cache with a maximum size. Inside Apigee Edge, the cache is distributed
+  among all nodes where your Node.js application executes. You can manage the cache through an
+  Apigee Edge API. Using the API, you can manually create cache resources, or you can use the
+  default resource. For an introduction to caching on Apigee Edge, see <a href=
+  "/api-platform/cache/persistence-tools.html">Persistence tools in Edge</a>. To learn more
+  about the distributed cache, see <a href=
+  "/api-platform/cache/optimize-performance-using-cache.html">Example: General purpose
+  caching</a>.</p>
+
+  <p>For an introduction to the <code>apigee-access</code> module and its other features, see
+  <a href="/api-platform/nodejs/using-apigee-access.html">Using the apigee-access module</a>.</p>
+
+  <h2 id="methods">Methods</h2>
+
+  <ul>
+    <li>(1) <a href="#getCache1">getCache</a></li>
+
+    <li>(2) <a href="#getCache2">getCache</a></li>
+
+    <li><a href="#put">put</a></li>
+
+    <li><a href="#get">get</a></li>
+
+    <li><a href="#remove">remove</a></li>
+  </ul>
+  <hr>
+
+  <h3 id="methods-1getcache"><a id="getCache1" name="getCache1"></a>(1) getCache</h3><code>var
+  cache = apigee.getCache(<em>cacheName</em>);</code><br>
+  <br>
+
+  <p>Look up a named cache and create it if necessary. The resulting cache uses a pre-defined set
+  of configuration parameters suitable for most situations.</p>
+
+  <p><strong>Parameters:</strong></p>
+
+  <p style="margin-left: 40px;"><strong><em>cacheName</em></strong> - A string, the name of the
+  cache. (Not the name of the cache resource).</p>
+
+  <p><strong>Returns:</strong></p>
+
+  <p style="margin-left: 40px;">A cache object.</p>
+
+  <p><strong>Example:</strong></p>
+  <pre class="prettyprint">
+var apigee = require('apigee-access');
+var cache = apigee.getCache('cache');
+</pre>
+
+  
+  <hr>
+
+  <h3 id="methods-2getcache"><a id="getCache2" name="getCache2"></a>(2) getCache</h3><code>var
+  customCache = apigee.getCache(<em>cacheName</em>, <em>options</em> );</code><br>
+  <br>
+
+  <p>Access a custom cache resource specified in a configuration object. For information about how
+  to create a cache resource, see <a href=
+  "/api-platform/cache/manage-caches-environment.html">Creating and editing an environment
+  cache</a>.</p>
+
+  <p><strong>Parameters:</strong></p>
+
+  <p style="margin-left: 40px;"><strong><em>cacheName</em></strong> - A string, the name of the
+  custom cache. (Not the name of the cache resource)</p>
+
+  <p style="margin-left: 40px;"><strong><em>options</em></strong> - A configuration object. The
+  object can be empty, or it can contain the following optional parameters:</p>
+
+  <ul style="margin-left: 80px;">
+    <li>
+      <p><strong><code>resource</code></strong>: The name of an Apigee "cache resource" where the
+      cache data is stored. Cache resources are used to fine-tune memory allocation and other cache
+      parameters. If not specified, a default resource will be used. If the cache resource does not
+      exist, then the method throws an error.</p>
+    </li>
+
+    <li>
+      <p><strong><code>scope</code></strong>: Specifies whether cache entries are prefixed to
+      prevent collisions. Valid values are <code>global</code>, <code>application</code>, and
+      <code>exclusive</code>.</p>
+
+      <ul>
+        <li>
+          <p><code>global</code>: All cache entries may be seen by all Node.js applications in the
+          same Apigee "environment."</p>
+        </li>
+
+        <li>
+          <p><code>application</code>: All cache entries may be seen by all Node.js caches that are
+          part of the same Apigee Edge application.</p>
+        </li>
+
+        <li>
+          <p><code>exclusive</code>: (Default) Cache entries are only seen by Node.js caches in the
+          same application that have the same name. This is the default.</p>
+        </li>
+      </ul>
+    </li>
+
+    <li>
+      <p><strong><code>prefix</code></strong>: If the cache key name includes a prefix, as
+      described in <a href="/api-platform/reference/policies/populate-cache-policy.html">Populate
+      Cache policy</a> and <a href=
+      "/api-platform/reference/policies/working-cachekeys.html">Working with cache keys</a>, use
+      this parameter to specify it. Edge automatically adds a double-underscore suffix to the
+      prefix name. So if a cache key was created with the prefix "UserToken", the prefix to specify
+      here is "UserToken__". </p>
+    </li>
+
+    <li>
+      <p><strong><code>defaultTtl</code></strong>: Specifies the default time to live for a cache
+      entry, in seconds. If not specified then the default TTL in the cache resource will be
+      used.</p>
+    </li>
+
+    <li>
+      <p><strong><code>timeout</code></strong>: How long to wait to fetch a result from the
+      distributed cache, in seconds. The default 30 seconds. Latency-sensitive applications may
+      wish to reduce this in order to prevent slow response times if the cache infrastructure is
+      overloaded.</p>
+    </li>
+  </ul>
+
+  <p><strong>Returns:</strong></p>
+
+  <p style="margin-left: 40px;">A custom cache object.</p>
+
+  <p><strong>Example:</strong></p>
+  <pre class="prettyprint">
+var apigee = require('apigee-access');
+var customCache = apigee.getCache('doesNotMatter',
+  { resource: 'MyCustomResource', scope: 'global', prefix: 'UserToken'} );
+customCache.put("myCacheKey", "xyz");
+</pre>
+
+  <p>This works with a LookupCache policy configured like this:</p>
+  <pre class="prettyprint">
+&lt;LookupCache name="Lookup-Cache-1"&gt;
+  &lt;CacheKey&gt;
+    &lt;Prefix&gt;UserToken&lt;/prefix&gt;    
+    &lt;KeyFragment&gt;myCacheKey&lt;/KeyFragment&gt;
+  &lt;/CacheKey&gt;
+  &lt;CacheResource&gt;MyCustomResource&lt;/CacheResource&gt;
+  &lt;Scope&gt;Global&lt;/Scope&gt;
+  &lt;AssignTo&gt;contextVariable&lt;/AssignTo&gt;
+&lt;/LookupCache&gt;
+</pre>
+
+  
+  <hr>
+
+  <h3 id="methods-put"><a id="put" name="put"></a>put</h3><code>cache.put('<em>key</em>',
+  <em>data</em>, <em>ttl</em>, function(<em>error</em>));</code><br>
+  <br>
+
+  <p>Put data into a cache.</p>
+
+  <p><strong>Parameters:</strong></p>
+
+  <ul>
+    <li>
+      <p><strong><em><code>key</code></em></strong>: (Required) A string that uniquely identifies
+      the item in the cache. Cache keys are limited to a size of 2 KB.</p>
+    </li>
+
+    <li>
+      <p><strong><em><code>data</code></em></strong>: (Required) A string, Buffer, or object that
+      represents the data to cache. Any other data type will result in an error. For convenience,
+      objects will be converted into a string using "JSON.stringify".</p>
+    </li>
+
+    <li>
+      <p><strong><em><code>ttl</code></em></strong>: (Optional) The maximum time to persist the
+      data in the cache, in seconds. If not specified then a default TTL will be used.</p>
+    </li>
+
+    <li>
+      <p><strong><em><code>callback</code></em></strong>: (Optional) If specified, a function that
+      will be called once the data is safely in the cache. It will be called with an Error object
+      as the first parameter if there is an insertion error, and otherwise it will be called with
+      no parameters.</p>
+    </li>
+  </ul>
+
+  <p><strong>Example:</strong></p>
+  <pre class="prettyprint">
+var apigee = require('apigee-access');
+var cache = apigee.getCache();
+// Insert a string into cache using the default TTL
+cache.put('key1', 'Buenos dias, Mundo!');
+// Insert a string into cache using a TTL of 120 seconds
+cache.put('key2', 'Hello, World!', 120);
+// Insert a string with the default TTL, and get notified when the insert is complete
+cache.put('key3', 'Ciao, Mondo!', function(error) {
+  // "error" will be falsy unless there was an error on insert
+});
+// Insert a string with a TTL of 600 seconds, and get notified when the insert is complete
+cache.put('key4', 'Hallo Wereld!', 600, function(error) {
+  // "error" will be falsy unless there was an error on insert
+});
+</pre>
+
+  
+  <hr>
+
+  <h3 id="methods-get"><a id="get" name="get"></a>get</h3><code>cache.get('<em>key</em>',
+  function(error, data));</code><br>
+  <br>
+
+  <p>Retrieve data from a cache.</p>
+
+  <p><strong>Parameters:</strong></p>
+
+  <ul>
+    <li>
+      <p><strong><em><code>key</code></em></strong> (required): A string that uniquely identifies
+      the item in the cache.</p>
+
+      <p>For cache entries put to the cache from an Apigee Edge policy (such as <a href=
+      "/api-platform/reference/policies/populate-cache-policy.html">Populate Cache policy</a>), you
+      will need to construct the cache key by inferring from the specific way the policy creates
+      keys for entries. To do this, you'll need to know how the policy is configured. While
+      <a href="/api-platform/reference/policies/working-cachekeys.html">Working with cache keys</a>
+      describes how cache keys are created by policies, keep in mind that you shouldn't specify
+      string values related to scope; in calls from Node.js, scope is already part of the
+      context.</p>
+    </li>
+
+    <li>
+      <p><strong><em><code>callback</code></em></strong> (required): A function that will be called
+      when the data is available. If there is cached data, it is returned in the second
+      parameter.</p>
+
+      <ul>
+        <li>
+          <p><strong><em><code>error</code></em></strong> - An Error object. If there is an error
+          while retrieving from the cache, then an Error object will be set here. Otherwise this
+          parameter will be set to "undefined".</p>
+        </li>
+
+        <li>
+          <p><strong><em><code>data</code></em></strong> - The data retrieved, if any. It will be
+          one of four values:</p>
+
+          <ul>
+            <li>If a string was inserted, it will be a string.</li>
+
+            <li>If a Buffer was inserted, it will be a Buffer.</li>
+
+            <li>If an object was inserted, it will be a string containing the JSON version of the
+            object as produced by "JSON.stringify".</li>
+
+            <li>If nothing was found, then it will be "undefined".</li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
+
+  <p><strong>Example:</strong></p>
+  <pre class="prettyprint">
+var apigee = require('apigee-access');
+var cache = apigee.getCache();
+cache.get('key', function(error, data) {
+  // If there was an error, then "error" will be set.
+  // If error is falsy, "data" is the item that was retrieved:
+  //   - undefined, in the case of cache miss, or
+  //   - a Buffer, or
+  //   - a String
+});
+</pre>
+
+  
+  <hr>
+
+  <h3 id="methods-remove"><a id="remove" name=
+  "remove"></a>remove</h3><code>cache.remove('<em>key</em>', function(error));</code><br>
+  <br>
+
+  <p>Invalidate a cached item. Once a key is invalidated, subsequent get() requests will return
+  "undefined" unless another value is inserted.</p>
+
+  <p><strong>Parameters:</strong></p>
+
+  <ul>
+    <li>
+      <p><strong><em><code>key</code></em></strong> (Required): A string that uniquely identifies
+      the item in the cache to invalidate.</p>
+
+      <p>For cache entries put to the cache from an Apigee Edge policy (such as <a href=
+      "/api-platform/reference/policies/populate-cache-policy.html">Populate Cache policy</a>), you
+      will need to construct the cache key by inferring from the specific way the policy creates
+      keys for entries. To do this, you'll need to know how the policy is configured. While
+      <a href="/api-platform/reference/policies/working-cachekeys.html">Working with cache keys</a>
+      describes how cache keys are created by policies, keep in mind that you shouldn't specify
+      string values related to scope; in calls from Node.js, scope is already part of the
+      context.</p>
+    </li>
+
+    <li>
+      <p><strong><em><code>callback</code></em></strong> (Required): A callback function that will
+      be called with an Error object as the first parameter if there is an error.</p>
+    </li>
+  </ul>
+
+  <p><strong>Example:</strong></p>
+  <pre class="prettyprint">
+var apigee = require('apigee-access');
+var cache = apigee.getCache();
+cache.remove('key', function(error) {
+});
+</pre>{% endblock %}

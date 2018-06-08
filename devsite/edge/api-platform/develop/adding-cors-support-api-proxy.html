@@ -1,0 +1,251 @@
+  {% extends "_base.html" %} {% block title %}Adding CORS support to an API proxy{% endblock %} {% block body %}
+
+  <p>CORS (Cross-origin resource sharing) is a standard mechanism that allows JavaScript
+  XMLHttpRequest (XHR) calls executed in a web page to interact with resources from non-origin
+  domains. CORS is a commonly implemented solution to the "<a href=
+  "https://en.wikipedia.org/wiki/Same-origin_policy">same-origin policy</a>" that is enforced by
+  all browsers. For example, if you make an XHR call to the Twitter API from JavaScript code
+  executing in your browser, the call will fail. This is because the domain serving the page to
+  your browser is not the same as the domain serving the Twitter API. CORS provides a solution to
+  this problem by allowing servers to "opt-in" if they wish to provide cross-origin resource
+  sharing. </p>
+
+  <aside class="note">
+    <b>Note:</b> Most modern browsers support CORS. You can find a comprehensive list of supported
+    browsers <a href="https://caniuse.com/cors">here</a>. For an in-depth description of
+    CORS, see the <a href="https://www.w3.org/TR/cors/">Cross-Origin Resource Sharing W3C
+    Recommendation</a>.
+
+    <p>If you are using a <a href="/api-platform/cache/persistence-tools.html">cache
+    policy</a> on your API proxy, you must ensure that the response of the CORS policy is not
+    cached.</p>
+  </aside>
+
+  <div class="video">
+    <p><strong>Video:</strong> Watch a short video to learn how to enable CORS on an API proxy.</p>
+
+    <div style="text-align: left; margin:15px">
+      <iframe allowfullscreen="" frameborder="0" height="480" src=
+      "https://www.youtube.com/embed/Ax3XAMOZsaE" width="560"></iframe>
+    </div>
+  </div>
+
+  <h2 id="typicalusecaseforcors">Typical use case for CORS</h2>
+
+  <p>The following JQuery code calls a fictitious target service. If executed from within the
+  context of a browser (a web page), the call will fail because of the same-origin policy:</p>
+  <pre class="prettyprint">
+&lt;script&gt;
+var url = "http://service.example.com";
+$(document).ready(function(){
+  $("button").click(function(){
+    $.ajax({
+        type:"GET",
+        url:url,
+        async:true,
+        dataType: "json",
+           success: function(json) {
+              // Parse the response.
+              // Do other things.
+           },
+           error: function(xhr, status, err) {
+              // This is where we end up! 
+            }
+    });
+  });
+});
+&lt;/script&gt;
+</pre>
+
+  <p>One solution to this problem is to create an Apigee API proxy that calls the service API on
+  the back end. Remember that Edge sits between the client (a browser in this case) and the backend
+  API (the service). Because the API proxy executes on the server, not in a browser, it
+  <strong><em>is</em></strong> able to call the service successfully. Then, all you need to do
+  is attach CORS headers to the TargetEndpoint response. As long as the browser supports CORS,
+  these headers signal to the browser that it's okay to "relax" its same-origin policy, allowing
+  the cross-origin API call to succeed.</p>
+
+  <p>Once the proxy with CORS support is created, you can call the API proxy URL instead of the
+  backend service in your client-side code. For example:</p>
+  <pre class="prettyprint">
+&lt;script&gt;
+var url = "http://myorg-test.apigee.net/v1/example";
+$(document).ready(function(){
+  $("button").click(function(){
+    $.ajax({
+        type:"GET",
+        url:url,
+        async:true,
+        dataType: "json",
+           success: function(json) {
+              // Parse the response.
+              // Do other things.
+           },
+           error: function(xhr, status, err) {
+              // This time, we do not end up here!
+            }
+    });
+  });
+});
+&lt;/script&gt;
+</pre>
+
+  <aside class="note"><b>Note:</b> In the simplest case, you can return CORS headers to the client
+  and the cross-origin request will work. More complicated cases exist where a "preflight" request
+  is required. You can read about preflight CORS requests in <a href=
+  "https://www.w3.org/TR/cors/">Cross-Origin Resource Sharing W3C Recommendation</a>, as well as in
+  numerous articles and blogs. See also "<a href="#Preflight">Handling CORS preflight requests</a>"
+  below.</aside>
+
+  <h2 id="attachinganaddcorspolicytoanewapiproxy">Attaching an Add CORS policy to a new API
+  proxy </h2>
+
+  <p>You can add CORS support to an API proxy by attaching an "Add CORS" policy to the API proxy
+  when you create it. To add this policy, select the <strong>Add CORS headers</strong> checkbox in
+  the Security page of the Build a Proxy wizard. </p>
+
+  <p>When you select this checkbox, a policy called Add CORS is automatically added to the system
+  and attached to the TargetEndpoint response preflow, as shown in the following figure:</p>
+
+  <p><img alt="" src="/api-platform/images/cors-policy-attach_1.png"></p>
+
+  <p>The Add CORS policy is implemented as an <a href=
+  "/api-platform/reference/policies/assign-message-policy.html">AssignMessage policy</a>, which
+  adds the appropropriate headers to the response. Here is the XML for the Add CORS policy:</p>
+  <pre class="prettyprint">
+&lt;AssignMessage async="false" continueOnError="false" enabled="true" name="add-cors"&gt;
+    &lt;DisplayName&gt;Add CORS&lt;/DisplayName&gt;
+    &lt;FaultRules/&gt;
+    &lt;Properties/&gt;
+    &lt;Add&gt;
+        &lt;Headers&gt;
+            &lt;Header name="Access-Control-Allow-Origin"&gt;{request.header.origin}&lt;/Header&gt;
+            &lt;Header name="Access-Control-Allow-Headers"&gt;origin, x-requested-with, accept, content-type&lt;/Header&gt;
+            &lt;Header name="Access-Control-Max-Age"&gt;3628800&lt;/Header&gt;
+            &lt;Header name="Access-Control-Allow-Methods"&gt;GET, PUT, POST, DELETE&lt;/Header&gt;
+        &lt;/Headers&gt;
+    &lt;/Add&gt;
+    &lt;IgnoreUnresolvedVariables&gt;true&lt;/IgnoreUnresolvedVariables&gt;
+    &lt;AssignTo createNew="false" transport="http" type="response"/&gt;
+&lt;/AssignMessage&gt;
+</pre>
+
+  <p>Basically, the headers let the browser know which origins it will share its resources with,
+  which methods it accepts, and so on. You can read more about these CORS headers in the
+  <a href="https://www.w3.org/TR/cors/">Cross-Origin Resource Sharing W3C Recommendation</a>.</p>
+
+  <h2 id="addingcorsheaderstoanexistingproxy">Adding CORS headers to an existing proxy</h2>
+
+  <p>You need to manually create a new Assign Message policy and copy the code for the Add CORS
+  policy listed in the previous section into it. Then, attach the policy to the response preflow of
+  the TargetEndpoint of the API proxy. You can modify the header values as needed. For more
+  information on creating and attaching policies, see <a href=
+  "/api-platform/develop/policy-attachment-and-enforcement.html">What's a policy?</a>.</p>
+
+  <h2 id="handlingcorspreflightrequests"><a id="Preflight" name="Preflight"></a>Handling CORS
+  preflight requests</h2>
+
+  <p><strong>CORS preflight</strong> refers to sending a request to a server to verify if it
+  supports CORS. Typical preflight responses include which origins the server will accept CORS
+  requests from, a list of HTTP methods that are supported for CORS requests, headers that can be
+  used as part of the resource request, the maximum time preflight response will be cached, and
+  others. If the service does not indicate CORS support or does not wish to accept cross-origin
+  requests from the client's origin, the cross-origin policy of the browser will be enforced and
+  any cross-domain requests made from the client to interact with resources hosted on that server
+  will fail.</p>
+
+  <p>Typically, CORS preflight requests are made with the HTTP OPTIONS method. When a server that
+  supports CORS receives an OPTIONS request, it returns a set of CORS headers to the client that
+  indicate its level of CORS support. As a result of this handshake, the client knows what it is
+  allowed to request from the non-origin domain. </p>
+
+  <p>For more information on preflight, refer to the <a href=
+  "https://www.w3.org/TR/cors/">Cross-Origin Resource Sharing W3C Recommendation</a>. There are in
+  addition numerous blogs and articles on CORS that you can refer to.</p>
+
+  <p>Apigee does not include a CORS preflight solution out of the box, but it is possible to
+  implement, as described in this section. The objective is for the proxy to evaluate an OPTIONS
+  request in a conditional flow. The proxy can then send an appropriate response back to the
+  client. </p>
+
+  <p>Let's look at a sample flow, and then discuss the parts that handle the preflight request:<br>
+   </p>
+  <pre class="prettyprint">
+&lt;?xml version="1.0" encoding="UTF-8" standalone="yes"?&gt;
+&lt;ProxyEndpoint name="default"&gt;
+    &lt;Description/&gt;
+    &lt;Flows&gt;
+        <strong>&lt;Flow name="OptionsPreFlight"&gt;
+            &lt;Request/&gt;
+            &lt;Response&gt;
+                &lt;Step&gt;
+                    &lt;Name&gt;add-cors&lt;/Name&gt;
+                &lt;/Step&gt;
+            &lt;/Response&gt;
+        &lt;Condition&gt;request.verb == "OPTIONS" AND request.header.origin != null AND request.header.Access-Control-Request-Method != null&lt;/Condition&gt; 
+        &lt;/Flow&gt;</strong>
+    &lt;/Flows&gt;
+
+    &lt;PreFlow name="PreFlow"&gt;
+        &lt;Request/&gt;
+        &lt;Response/&gt;
+
+    &lt;/PreFlow&gt;
+    &lt;HTTPProxyConnection&gt;
+        &lt;BasePath&gt;/v1/cnc&lt;/BasePath&gt;
+        &lt;VirtualHost&gt;default&lt;/VirtualHost&gt;
+        &lt;VirtualHost&gt;secure&lt;/VirtualHost&gt;
+    &lt;/HTTPProxyConnection&gt;
+    <strong>&lt;RouteRule name="NoRoute"&gt;
+        &lt;Condition&gt;request.verb == "OPTIONS" AND request.header.origin != null AND request.header.Access-Control-Request-Method != null&lt;/Condition&gt;
+    &lt;/RouteRule&gt;</strong>
+    &lt;RouteRule name="default"&gt;
+        &lt;TargetEndpoint&gt;default&lt;/TargetEndpoint&gt;
+   &lt;/RouteRule&gt;
+   &lt;PostFlow name="PostFlow"&gt;
+        &lt;Request/&gt;
+        &lt;Response/&gt;
+    &lt;/PostFlow&gt;
+&lt;/ProxyEndpoint&gt;
+</pre>
+
+  <p>The key parts of this ProxyEndpoint are as follows:</p>
+
+  <ul>
+    <li>A RouteRule is created to a NULL target with a condition for the OPTIONS request. Note that
+    there is no TargetEndpoint specified. If the OPTIONS request is received and the Origin and
+    Access-Control-Request-Method request headers are not null, the proxy immediately returns the
+    CORS headers in a response to the client (bypassing the actual default "backend" target).
+     For details on flow conditions and RouteRule, see <a href=
+    "/api-platform/fundamentals/flow-variables-and-conditions.html">Flow variables and
+    conditions</a>.<br>
+      <br>
+      <pre class="prettyprint">
+&lt;RouteRule name="NoRoute"&gt;
+    &lt;Condition&gt;request.verb == "OPTIONS" AND request.header.origin != null AND request.header.Access-Control-Request-Method != null&lt;/Condition&gt;
+&lt;/RouteRule&gt;
+</pre>
+    </li>
+
+    <li>An OptionsPreFlight flow is created that adds an Add CORS policy, containing the CORS
+    headers, to the flow if an OPTIONS request is received and the Origin and
+    Access-Control-Request-Method request headers are not null. <br>
+      <br>
+      <pre class="prettyprint">
+ &lt;Flow name="OptionsPreFlight"&gt;
+            &lt;Request/&gt;
+            &lt;Response&gt;
+                &lt;Step&gt;
+                    &lt;Name&gt;add-cors&lt;/Name&gt;
+                &lt;/Step&gt;
+            &lt;/Response&gt;
+        &lt;Condition&gt;request.verb == "OPTIONS" AND request.header.origin != null AND request.header.Access-Control-Request-Method != null&lt;/Condition&gt; 
+ &lt;/Flow&gt;
+</pre>
+    </li>
+  </ul><br>
+
+  <aside class="note"><b>Note:</b> RouteRules are evaluated in the order specified in the
+  ProxyEndpoint configuration. You should always have the default (no condition) Route at the end.
+  Otherwise, if at the top, it will always match and never evaluate the other Route
+  possibilities.</aside>{% endblock %}

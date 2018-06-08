@@ -1,0 +1,596 @@
+  {% extends "_base.html" %} {% block title %}Configuring virtual hosts for the Cloud{% endblock %}
+  {% block body %}
+
+  <p>A Cloud customer with a paid account can create a virtual host in an organization. </p>
+
+  <aside class="note"><b>Note:</b> <strong>Virtual hosts for Edge for the Cloud
+  require that you enable TLS. For information about TLS, see
+    <a href="/api-platform/system-administration/ssl">TLS/SSL</a>.</strong></aside>
+
+  <p><strong>Learn more</strong>: </p>
+
+  <ul>
+    <li><a href="virtual-hosts">About virtual hosts</a></li>
+    <li><a href="configuring-virtual-hosts">Configuring virtual hosts</a></li>
+    <li><a href="/api-platform/system-administration/configuring-ssl">Configuring TLS</a></li>
+    <li><a href="/api-platform/system-administration/keystores-and-truststores">Keystores and Truststores</a></li>
+  </ul>
+
+ <h2 id="who-can-create-and-modify-virtual-hosts-in-the-cloud">Who can create and modify virtual
+  hosts in the Cloud</h2>
+
+  <p>Virtual host creation and modification is available to paid accounts only in Edge Cloud.
+    The user creating the virtual host must be in the role of <em>organization administrator</em>, or in a
+  custom role with permissions to modify a virtual host. Users in other roles do not have
+    authorization to create virtual hosts.</p>
+
+  <p>For example, paid customers can:</p>
+
+  <ul>
+    <li>Enable one-way and two-way TLS</li>
+
+    <li>Specify the keystore/truststore used by the virtual host</li>
+  </ul>
+
+  <p>Free and trial accounts cannot create or modify virtual hosts and are limited to the virtual hosts
+  created for them at Edge registration time. For more information on Edge pricing plans, see
+  <a href=
+  "https://apigee.com/api-management/#/pricing">https://apigee.com/api-management/#/pricing</a>.</p>
+
+  <aside class="note"><b>Note:</b> Free and trial accounts cannot create or modify virtual hosts
+  and are limited to the virtual hosts created for them at Edge registration time. Instead, Apigee
+  automatically provides a TLS certificate and private key to support HTTPS on a secure virtual
+  host so that trial customers can get started developing and testing APIs. Trial customers are
+  allowed to use one-way TLS to API proxies hosted on the *.apigee.net domain. For more information
+  on Edge pricing plans, see <a href=
+  "https://apigee.com/api-management/#/pricing">https://apigee.com/api-management/#/pricing</a>.</aside>
+
+
+ <h2 id="aboutconfiguringavirtualhost">Requirements for configuring a virtual host for the Cloud</h2>
+
+  <p>The following table summarizes the requirements for creating a virtual host:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th><strong>Category</strong></th>
+
+        <th><strong>Requirement</strong></th>
+
+        <th><strong>Description</strong></th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td>Account type</td>
+
+        <td>Paid</td>
+
+        <td>Free and trial accounts cannot create or modify virtual hosts.</td>
+      </tr>
+
+      <tr>
+        <td>User role</td>
+
+        <td>organization admin</td>
+
+        <td>Only an org admin can create a virtual host, or a user in a custom role that has
+        permissions to modify a virtual host.</td>
+      </tr>
+
+      <tr>
+        <td>Number of virtual hosts</td>
+
+        <td>20 maximum</td>
+
+        <td>
+          <p>You are limited to a maximum of 20 virtual hosts per organization/environment in the
+          Cloud.</p>
+
+          <p><strong>Note</strong>: There is no limit to the number of virtual hosts in the Private
+          Cloud.</p>
+
+          <p>Most organizations/environments use two virtual hosts: one for HTTP and one for HTTPS
+          access. You might need additional virtual hosts if your organization/environment allows
+          access using different domain names.</p>
+
+        </td>
+      </tr>
+
+      <tr>
+        <td>Port</td>
+
+        <td>443</td>
+
+        <td>
+          <p>You can only create a virtual host on port 443.</p>
+
+          <p>Note that you can create multiple virtual hosts on port 443 as long as they have
+          unique host aliases and all support TLS.</p>
+
+          <p>If you require a different port, and have a paid support plan, contact <a href=
+          "https://community.apigee.com/content/apigee-customer-support">Apigee Support</a>.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>TLS</td>
+
+        <td>Required</td>
+
+        <td>
+          <p>You can only create a virtual host that supports TLS over HTTPS. You must have already
+          created a keystore, and optionally a truststore, containing your TLS cert and key.</p>
+
+          <p>You must have a cert signed by a trusted entity, such as Symantec or VeriSign.
+            You cannot use a self-signed cert.</p>
+
+          <p>If you require HTTP access, contact <a href=
+          "https://community.apigee.com/content/apigee-customer-support">Apigee Support</a>.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>TLS protocol</td>
+
+        <td>TLS 1.2</td>
+
+        <td>
+          <p>Edge in the Cloud supports TLS version 1.2 only.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Host alias</td>
+
+        <td>Unique in the organization and environment</td>
+
+        <td>The host alias does not exist for another organization/environment combination.</td>
+      </tr>
+
+      <tr>
+        <td>Domain name</td>
+
+        <td>Owned by customer</td>
+
+        <td>
+          <p>You must own the domain name specified in the virtual host. Edge checks to make sure
+          that the domain name, as defined by the host alias, matches the metadata in the TLS
+          cert.</p>
+
+          <p>Specifically, Edge checks the following information in the cert:</p>
+
+          <ul>
+            <li>CN - Common Name</li>
+
+            <li>SAN - Subject Alternative Name</li>
+          </ul>
+
+          <p>Wildcards are allowed in the SAN or CN, for example, <code>*.myco.net</code>.</p>
+
+          <p>Edge also validates that the cert has not expired.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Client app SNI support</td>
+
+        <td>All client apps accessing the virtual host must support SNI.</td>
+
+        <td>
+          <p>SNI support is required by all apps.</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="definingavirtualhostforonewaytls">Defining a virtual host for one-way TLS</h2>
+
+  <p>An XML object that defines the virtual host. For example, the following XML object defines a
+  virtual host for one-way TLS:</p>
+  <pre class="prettyprint">
+&lt;VirtualHost <strong>name="myTLSVHost"</strong>&gt; 
+    &lt;HostAliases&gt; 
+        <strong>&lt;HostAlias&gt;api.myCompany.com&lt;/HostAlias&gt;</strong> 
+    &lt;/HostAliases&gt; 
+    <strong>&lt;Port&gt;443&lt;/Port&gt; 
+    &lt;SSLInfo&gt; 
+        &lt;Enabled&gt;true&lt;/Enabled&gt; 
+        &lt;ClientAuthEnabled&gt;false&lt;/ClientAuthEnabled&gt; 
+        &lt;KeyStore&gt;ref://myTestKeystoreRef&lt;/KeyStore&gt; 
+        &lt;KeyAlias&gt;myKeyAlias&lt;/KeyAlias&gt; 
+    &lt;/SSLInfo&gt;</strong>
+&lt;/VirtualHost&gt;
+</pre>
+
+  <p>In this definition you:</p>
+
+  <ul>
+    <li>Specify the <strong>name</strong> as <strong>myTLSVHost</strong>. Use the name to reference
+    the virtual host in an API proxy or in an API call.</li>
+
+    <li>Specify the <strong>host alias</strong> as <strong>api.myCompany.com</strong>. This is the
+    publicly facing domain used to access your APIs as defined by a DNS definition and CNAME
+    record.</li>
+
+    <li>Specify the <strong>port</strong> number as <strong>443</strong>. If omitted, by default
+    the port is set to 443.</li>
+
+    <li>Enable TLS as required.<br>
+    <br>
+    The <code>&lt;Enable&gt;</code> element
+    is set to true to enable one-way TLS, and the and <code>&lt;KeyStore&gt;</code> elements specify the
+    keystore and key alias used by the TLS connection.<br>
+    <br>
+    To enable two-way TLS, set <code>&lt;ClientAuthEnabled&gt;</code> to true, and
+    specify a truststore using the <code>&lt;TrustStore&gt;</code> element. The truststore
+    holds the client's certificate and, optionally, certificate's CA chain.<br>
+    <br>
+    <strong>Note:</strong> Because Edge originally supported SSL, the tag that you use to configure
+    TLS is named <code>&lt;SSLInfo&gt;</code>.</li>
+  </ul>
+
+  <p>Note that there are additional properties that you can set in the virtual host. For a
+  reference for all properties, see <a href="virtual-host-property-reference">Virtual host property reference</a>.</p>
+
+  <h3 id=
+  "definingavirtualhostforonewaytls-decidinghowtospecifythekeystoreandtruststorenameinthevirtualhost">
+  Deciding how to specify the keystore and truststore name in the virtual host</h3>
+
+  <p>When configuring a virtual host to support TLS, you specify a keystore by using a
+  <em>reference</em>. A reference is a variable that contains the name of the keystore or
+  truststore, rather than specifying the keystore or truststore name directly, as shown below:</p>
+  <pre class="prettyprint">
+    &lt;SSLInfo&gt; 
+        &lt;Enabled&gt;true&lt;/Enabled&gt; 
+        &lt;ClientAuthEnabled&gt;false&lt;/ClientAuthEnabled&gt; 
+<strong>        &lt;KeyStore&gt;ref://myTestKeystoreRef&lt;/KeyStore&gt; 
+</strong>        &lt;KeyAlias&gt;myKeyAlias&lt;/KeyAlias&gt; 
+    &lt;/SSLInfo&gt;
+</pre>
+
+  <p>The advantage to using a reference is that you can change the value of the reference to change
+  the keystore used by the virtual host, usually because the cert in the current keystore is
+  expiring in the near future. Changing the value of the reference does not require you to restart
+  the Edge Router. See <a href="/api-platform/system-administration/working-references">Working with references</a> for
+  more on creating and modifying references.</p>
+
+  <p>You can only use a reference to the keystore and truststore; you cannot use a reference to the
+  alias. When you change the reference to a keystore, ensure that the alias name of the cert is the
+  same as in the old keystore.</p>
+
+  <aside class="warning"><b>Warning:</b> Alternatively, you can use a literal keystore name in the
+  virtual host. However, if you ever modify the virtual host to change the keystore name, you have
+  to restart the Edge Routers, meaning you have to contact <a href=
+  "https://community.apigee.com/content/apigee-customer-support">Apigee Suport</a>. <strong>Apigee
+  strongly recommends that you use references to keystores and truststores in a virtual host and do
+  not use direct references.</strong></aside>
+
+  <h3 id="definingavirtualhostforonewaytls-restrictionsinusingreferencestokeystoresandtruststore">
+  Restrictions in using references to keystores and truststore</h3>
+
+  <p>You must take into account the following restriction when using references to keystores and
+  truststores:</p>
+
+  <ul>
+    <li>You can only use keystore and truststore references in virtual hosts if you support SNI and
+    you terminate SSL on the Apigee Routers.</li>
+
+    <li>If you have a load balancer in front of the Apigee Routers, and you terminate TLS on the
+    load balancer, then you cannot use keystore and truststore references in virtual hosts.</li>
+  </ul>
+
+  <h2 id="definingavirtualhostfortwowaytls">Defining a virtual host for two-way TLS</h2>
+
+  <p>To enable two-way TLS, set the <code>&lt;ClientAuthEnabled&gt;</code> element to
+  <code>true</code>, and specify a truststore by
+  using a <em>reference</em> with the <code>&lt;TrustStore&gt;</code> element. The truststore
+  holds the client's certificate and, optionally, certificate's CA chain. The client must also be
+  configured correctly for two-way TLS.</p>
+
+  <p>To create a virtual host for two-way TLS, create an XML object that defines the virtual
+  host:</p>
+  <pre class="prettyprint">
+&lt;VirtualHost <strong>name="myTLSVHost"</strong>&gt; 
+    &lt;HostAliases&gt; 
+        <strong>&lt;HostAlias&gt;api.myCompany.com&lt;/HostAlias&gt;</strong> 
+    &lt;/HostAliases&gt; 
+    <strong>&lt;Port&gt;443&lt;/Port&gt; 
+    &lt;SSLInfo&gt; 
+        &lt;Enabled&gt;true&lt;/Enabled&gt; 
+        &lt;ClientAuthEnabled&gt;true&lt;/ClientAuthEnabled&gt; 
+        &lt;KeyStore&gt;ref://myTestKeystoreRef&lt;/KeyStore&gt; 
+        &lt;KeyAlias&gt;myKeyAlias&lt;/KeyAlias&gt; 
+        &lt;TrustStore&gt;ref://myTestTruststoreRef&lt;/TrustStore&gt; 
+    &lt;/SSLInfo&gt;</strong>
+&lt;/VirtualHost&gt;
+</pre>
+
+  <p>In this definition you:</p>
+
+  <ul>
+    <li>Enable two-way TLS by setting <code>&lt;ClientAuthEnabled&gt;</code> to true.</li>
+
+    <li>Specify the reference to the truststore using the <code>&lt;TrustStore&gt;</code> element. The truststore
+    holds the client's certificate and, optionally, certificate's CA chain.</li>
+  </ul>
+
+  <h2 id="creatingavirtualhost">Creating a virtual host</h2>
+
+  <p>Use the following procedure to create the virtual host:</p>
+
+  <ol>
+    <li>Create a DNS entry and CNAME record for your publicly facing domain, <code>api.myCompany.com</code> for this example, that
+    points to <code>[org]-[environment].apigee.net</code>.</li>
+
+    <li>Create and configure a keystore, named <strong>myTestKeystore</strong> in this example, by
+    using the procedure described here: <a href="/api-platform/system-administration/creating-keystores-and-truststore-cloud-using-edge-ui">
+    Creating keystores and truststore using the Edge UI</a>. For this example,
+    ensure that the keystore uses an alias name of <strong>myKeyAlias</strong> for the cert and
+    private key.</li>
+
+    <li>Upload your cert and key to the keystore. Ensure that the domain name specified by your
+    cert matches the host alias that you want to use for the virtual host.</li>
+
+    <li>
+      <p>Create a reference to the keystore by using the Edge UI or API. The reference
+      specifies the name of the keystore and the reference type as <code>KeyStore</code>.
+        See <a href="/api-platform/system-administration/working-references">Working with references</a> for
+      more on creating and modifying references.</p>
+    </li>
+
+    <li>Create the virtual host by using the <a href=
+    "/management/apis/post/organizations/{org_name}/environments/{env_name}/virtualhosts">Create a
+    Virtual Host</a> API. Make sure to specify the correct keystore reference and key alias.
+    To use the API, use the following POST API call to create the keystore
+    named <strong>myTLSVHost</strong>:
+
+      <pre class="devsite-terminal">curl -X POST -H "Content-Type:application/xml" \
+  https://api.enterprise.apigee.com/v1/o/{org_name}/e/{env_name}/virtualhosts \
+  -d '&lt;VirtualHost name="myTLSVHost"&gt;
+    &lt;HostAliases&gt;
+      &lt;HostAlias&gt;api.myCompany.com&lt;/HostAlias&gt;
+    &lt;/HostAliases&gt;
+    &lt;Port&gt;443&lt;/Port&gt;
+    &lt;SSLInfo&gt;
+      &lt;Enabled&gt;true&lt;/Enabled&gt;
+      &lt;ClientAuthEnabled&gt;false&lt;/ClientAuthEnabled&gt;
+      &lt;KeyStore&gt;ref://myTestKeystoreRef&lt;/KeyStore&gt;
+      &lt;KeyAlias&gt;myKeyAlias&lt;/KeyAlias&gt;
+    &lt;/SSLInfo&gt;
+  &lt;/VirtualHost&gt;' \
+  -u <var>orgAdminEmail:password</var></pre>
+
+    <p>If you are performing two-way TLS with the client, then set <code>&lt;ClientAuthEnabled&gt;</code> to true
+      and specify the truststore using the <code>&lt;TrustStore&gt;</code> element. The client
+      must be configured correctly for two-way TLS, meaning Edge has a truststore containing the
+      client's cert and certificate chain. Create the truststore by using the procedure described
+      here: <a href="/api-platform/system-administration/creating-keystores-and-truststore-cloud-using-edge-ui">
+      Creating keystores and truststore using the Edge UI</a>.</p>
+    </li>
+
+    <li><p>If you have any existing API proxies, add the virtual host to the <code>&lt;HTTPConnection&gt;</code> element in the
+    ProxyEndpoint. The virtual host is added automatically to all new API proxies.
+    See <a href="configuring-virtual-hosts#configuringanapiproxytouseavirtualhost">
+      Configuring an API proxy to use a virtual host</a>.</p>
+
+    <aside class="warning"><b>Caution: </b> All virtual hosts are automatically added to all new API proxies.
+    Therefore, if you create a new API proxy that should not be accessible over a particular
+    virtual host, then you must edit the API proxy to remove that virtual host from its
+      ProxyEndpoint.</aside>
+    </li>
+  </ol>
+
+  <p>After updating an API proxy to use the virtual host, and creating the DNS entry and CNAME
+  record for the host alias, you can access the API proxy as shown below:</p>
+  <pre class="prettyprint">
+https://api.myCompany.com/v1/{project-base-path}/{resource-path}
+</pre>
+
+  <p>For example:</p>
+  <pre class="prettyprint">
+https://api.myCompany.com/v1/weather/forecastrss?w=12797282
+</pre>
+
+  <h2 id="modifyingavirtualhost">Modifying a virtual host</h2>
+
+ <p>There are two main tasks paid Cloud customers perform to modify an existing virtual host:</p>
+
+  <ol>
+    <li>Modifying the value of a reference to a keystore or truststore.<br>
+    <br>
+    <strong>Note</strong>: Once you set a <code>&lt;KeyStore&gt;</code> or
+    <code>&lt;TrustStore&gt;</code> to use a reference, you can change the value of the reference
+    at any time. However, if you ever want to change <code>&lt;KeyStore&gt;</code> or
+    <code>&lt;TrustStore&gt;</code> to use a different reference, or change
+    <code>&lt;KeyAlias&gt;</code> to use a different alias, you must contact <a href=
+    "https://community.apigee.com/content/apigee-customer-support">Apigee support</a>.</li>
+
+    <li>Modifying the TLS properties of the virtual host.</li>
+  </ol>
+
+  <h3 id="modifyinganexistingvirtualhost-modifyingthevalueofareference">Modifying the value of a
+  reference</h3>
+
+  <p>You can modify the value of a reference to change the keystore or truststore used by a virtual
+  host.</p>
+
+  <aside class="warning"><b>Warning:</b> When changing the reference to a keystore, ensure that the
+  alias in the new keystore has the same name as the alias in the old keystore.</aside>
+
+  <p>Before you modify the value of the reference:</p>
+
+  <ol>
+    <li>Create a new keystore and upload a cert and key as described in <a href=
+    "/api-platform/system-administration/creating-keystores-and-truststore-cloud-using-edge-ui.html">
+    Creating keystores and truststore using the Edge UI</a>. In the new keystore,
+    <strong>ensure that you use the same name for the key alias as was used in the existing key
+    store</strong>.</li>
+
+    <li>If necessary, create a new truststore and upload a cert as described in <a href=
+    "/api-platform/system-administration/creating-keystores-and-truststore-cloud-using-edge-ui.html">
+    Creating keystores and truststore using the Edge UI</a>.</li>
+
+    <li>Modify the reference as described in <a href=
+    "/api-platform/system-administration/working-references.html">Working with references</a>.</li>
+  </ol>
+
+  <h3 id="modifying-the-tls-properties-of-the-virtual-host">Modifying the TLS properties of the
+  virtual host</h3>
+
+  <p>Paid customers can use the <a href=
+  "/management/apis/put/organizations/{org_name}/environments/{env_name}/virtualhosts/{virtualhost_name}">
+  Update a Virtual Host</a> API to update a virtual host. This API lets you set all of the
+  properties for the virtual host described at
+    <a href="virtual-host-property-reference">Virtual host property reference</a>.</p>
+
+  <aside class="note"><b>Note:</b> Free and trial accounts cannot create or modify virtual hosts
+  and are limited to the four virtual hosts created for them at Edge registration time.</aside>
+
+  <aside class="warning"><b>Caution: </b>Before you modify a virtual host:
+
+  <ul>
+    <li>Ensure that the virtual host uses references to set <code>&lt;KeyStore&gt;</code> and <code>&lt;TrustStore&gt;</code>. Do not set them
+    directly to the name of a keystore or truststore.</li>
+
+    <li>If the <code>&lt;KeyStore&gt;</code> and <code>&lt;TrustStore&gt;</code> use
+    references, update the value of the reference to change the keystore or truststore. If you want
+    to change <code>&lt;KeyStore&gt;</code> and <code>&lt;TrustStore&gt;</code> to
+    use a different reference variable, you must work with <a href=
+    "https://community.apigee.com/content/apigee-customer-support">Apigee Support</a> because this
+    change requires a Router restart.</li>
+
+    <li>If the <code>&lt;KeyStore&gt;</code> and <code>&lt;TrustStore&gt;</code> are
+    directly set to the name of a keystore or truststore, you must work with <a href=
+    "https://community.apigee.com/content/apigee-customer-support">Apigee Support</a> to convert
+    them to references. See <a href="#modifying-a-virtual-host-to-use-references-to-the-keystore-and-truststore">
+    Modifying a virtual host to use references to the keystore and truststore</a> for more.</li>
+
+    <li>If the virtual host already has a value for <code>&lt;KeyAlias&gt;</code>, do not change it. The new
+    keystore must use an alias with the same name as the current alias. To change the alias name,
+    you must work with <a href=
+    "https://community.apigee.com/content/apigee-customer-support">Apigee Support</a>.</li>
+
+    <li>You cannot enable TLS on a virtual host using port 80.</li>
+
+    <li>You cannot disable TLS on a virtual host using port 443.</li>
+
+    <li>If Apigee Support configured the virtual host for you to use a port other than 443, then
+    you can still update the virtual host but cannot change the port. A port other than 443 is
+    typically required if your app does not support SNI. If you need to change the port, contact
+    <a href="https://community.apigee.com/content/apigee-customer-support">Apigee Support</a>.</li>
+  </ul>
+</aside>
+
+  <p>When you modify the virtual host, Edge performs a validation similar to when you create a
+  virtual host. That is, on a modify, Edge validates that:</p>
+
+  <ul>
+    <li>The domain as specified by the host alias is not used in another organization and
+    environment.</li>
+
+    <li>You own the domain name. Specifically, Edge checks that the following information in the
+    cert matches the host alias:
+
+      <ul>
+        <li>CN - Common Name</li>
+
+        <li>SAN - Subject Alternative Name</li>
+
+        <li>Edge validates that the cert has not expired.</li>
+      </ul>
+    </li>
+  </ul>
+
+  <p>To modify a virtual host by using the Edge API, perform the following:</p>
+
+  <ol>
+    <li><p>Update the virtual host by using the <a href=
+    "/management/apis/put/organizations/{org_name}/environments/{env_name}/virtualhosts/{virtualhost_name}">
+    Update a Virtual Host</a> API. When using the API, you must specify the complete definition of
+    the virtual host in the request body, not just the elements that you want to change. In this
+    example, you set the value of the <code>proxy_read_timeout</code> property:</p>
+
+    <pre  class="devsite-terminal">curl -X PUT -H "Content-Type:application/xml" \
+  https://api.enterprise.apigee.com/v1/o/{org_name}/e/{env_name}/virtualhosts/{vhost_name} \
+  -d '&lt;VirtualHost name="myTLSVHost"&gt;
+    &lt;HostAliases&gt;
+      &lt;HostAlias&gt;api.myCompany.com&lt;/HostAlias&gt;
+    &lt;/HostAliases&gt;
+    &lt;Port&gt;443&lt;/Port&gt;
+    &lt;SSLInfo&gt;
+      &lt;Enabled&gt;true&lt;/Enabled&gt;
+      &lt;ClientAuthEnabled&gt;false&lt;/ClientAuthEnabled&gt;
+      &lt;KeyStore&gt;ref://myTestKeystoreRef&lt;/KeyStore&gt;
+      &lt;KeyAlias&gt;myKeyAlias&lt;/KeyAlias&gt;
+    &lt;/SSLInfo&gt;
+    <strong>&lt;Properties&gt;
+       &lt;Property name="proxy_read_timeout"&gt;50&lt;/Property&gt;
+         &lt;/Properties&gt;</strong>
+  &lt;/VirtualHost&gt;' \
+  -u <var>orgAdminEmail:password</var></pre>
+  </li>
+  </ol>
+
+  <h2 id="modifying-a-virtual-host-to-use-references-to-the-keystore-and-truststore">Modifying a
+  virtual host to use references to the keystore and truststore</h2>
+
+  <p>All new virtual hosts for Edge in the Cloud use reference to the keystore and truststore.
+  References let you change the keystore and truststore without contacting <a href=
+  "https://community.apigee.com/content/apigee-customer-support">Apigee Support</a>.</p>
+
+  <p>Older virtual hosts on Apigee Edge might not be configured to use references for keystores and
+  truststores. In this case, you can update the virtual host to use a reference.</p>
+
+  <aside class="warning"><b>Warning:</b> To change the virtual host to use a reference to the
+  keystore you must work with <a href=
+  "https://community.apigee.com/content/apigee-customer-support">Apigee Support</a>.</aside>
+
+  <h3 id="updating-a-virtual-host-to-use-a-reference">Updating a virtual host to use a
+  reference</h3>
+
+  <p>Use the following procedure to update the virtual host:</p>
+
+  <ol>
+    <li>If required, create a new keystore and upload a cert as described in <a href=
+    "/api-platform/system-administration/creating-keystores-and-truststore-cloud-using-edge-ui">
+    Creating keystores and truststore using the Edge UI</a>. If you already have a
+    keystore, then you can configure a reference to point to it.</li>
+
+    <li>Create a new reference to the keystore.</li>
+
+    <li>If required, create a new truststore and upload a cert. If you already have a truststore,
+    then you can configure a reference to point to it.</li>
+
+    <li>Create a new reference to the truststore.</li>
+
+    <li>Update the virtual host to set the keystore, alias, truststore, and any other TLS
+    properties. The payload for the call is:
+
+      <pre class="devsite-terminal">curl -X PUT -H "Content-Type:application/xml" \
+  https://api.enterprise.apigee.com/v1/o/{<strong><em>org_name</em></strong>}/e/{<strong><em>env_name</em></strong>}/virtualhosts/{<strong><em>vhost_name</em></strong>} \
+  -d '&lt;VirtualHost  name="myTLSVHost"&gt;
+        &lt;HostAliases&gt;
+          &lt;HostAlias&gt;api.myCompany.com&lt;/HostAlias&gt;
+        &lt;/HostAliases&gt;
+        &lt;Port&gt;443&lt;/Port&gt;
+        &lt;OCSPStapling&gt;off&lt;/OCSPStapling&gt;
+        &lt;SSLInfo&gt;
+          &lt;Enabled&gt;true&lt;/Enabled&gt;
+          &lt;ClientAuthEnabled&gt;<strong>true</strong>&lt;/ClientAuthEnabled&gt;
+          &lt;KeyStore&gt;<strong>ref://myKeyStore2Way</strong>&lt;/KeyStore&gt;
+          &lt;KeyAlias&gt;<strong>keyAlias</strong>&lt;/KeyAlias&gt;
+          &lt;TrustStore&gt;<strong>ref://myTrustStore2Way</strong>&lt;/TrustStore&gt;
+          &lt;IgnoreValidationErrors&gt;false&lt;/IgnoreValidationErrors&gt;
+        &lt;/SSLInfo&gt;
+      &lt;/VirtualHost&gt;' \
+    -u <var>orgAdminEmail</var>:<var>pWord</var></pre>
+    </li>
+
+    <li>Contact <a href="https://community.apigee.com/content/apigee-customer-support">Apigee
+    Support</a> to restart the Edge Routers to complete the process.</li>
+  </ol>
+
+
+ {% endblock %}

@@ -1,0 +1,315 @@
+  {% extends "_base.html" %} {% block title %}About TLS/SSL{% endblock %} {% block body %}
+
+  <p>TLS (Transport Layer Security, whose predecessor is SSL) is the standard security technology
+  for establishing an encrypted link between a web server and a web client, such as a browser or an
+  app. An encrypted link ensures that all data passing between the server and the client remains
+  private. To use TLS, a client makes a secure request to the server by using the encrypted
+  <code>https</code> protocol, instead of the unencrypted <code>http</code> protocol.</p>
+
+  <aside class="note"><b>Note:</b> Because Edge originally supported SSL, you will see some
+  instances in the Edge UI and in the Edge XML that use the term "SSL". For example, the menu entry
+  in the Edge UI that you use to view certs is called <strong>SSL Certificates</strong>. The
+  XML tag that you use to configure a virtual host to use TLS is named <span style=
+  "font-family:courier new,courier,monospace;">&lt;SSLInfo&gt;</span>. </aside>
+
+  <p>Edge supports one-way TLS and two-way TLS in both a cloud and an on-premises deployment (see
+  <a href="/release/supported-software.html">Supported software and supported versions</a> for
+  supported versions of TLS). One-way TLS enables the TLS client to verify the identity of the TLS
+  server. For example, an app running on an Android phone (client) can verify the identity of Edge
+  APIs (server).</p>
+
+  <p>Apigee also supports a stronger form of authentication using two-way, or client, TLS. You
+  typically implement two-way TLS to enhance security end-to-end and protect your data from client
+  attacks such as client spoofing or man-in-the middle attacks. In two-way TLS, the client verifies
+  the identity of the server followed by the server verifying the identity of the client.</p>
+
+  <h2 id="tlsterminology">TLS terminology</h2>
+
+  <p>You should be familiar with some important terms and concepts before configuring TLS:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>
+          <p><strong>Term</strong></p>
+        </th>
+
+        <th>
+          <p><strong>Definition</strong></p>
+        </th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td>
+          <p><strong>TLS certificate</strong></p>
+        </td>
+
+        <td>
+          <p>A digital file that identifies an entity in a TLS transaction. A certificate, or
+          <em>cert</em>, can be used to identify the TLS server and TLS client, depending on the
+          TLS configuration.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td><strong>Self Signed Certificate</strong></td>
+
+        <td>
+          <p>Certificate that is not signed by a trusted CA. The issuer and the subject are
+          identical; they are signed with the private key matching the public key they contain.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Certificate chain</strong></p>
+        </td>
+
+        <td>
+          <p>Often you will not have a certificate signed by your CA's root private key. Instead,
+          you have your cert along with one or more intermediate certs that form a chain. The last
+          intermediate cert in the chain is typically signed by the CA's root private key.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Certificate</strong> <strong>Authority</strong> <strong>(CA)</strong></p>
+        </td>
+
+        <td>
+          <p>A trusted entity, such as Symantec or VeriSign, used to issue certs and to validate
+          the authenticity of a cert. One type of cert, called a <em>self- signed</em> cert, does
+          not require a CA.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Public key</strong></p>
+        </td>
+
+        <td>
+          <p>Used to encrypt data sent from a TLS client to a TLS server. The public key is
+          included in the cert. All TLS clients have a copy of the server's public key.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Private key</strong></p>
+        </td>
+
+        <td>
+          <p>Used on the TLS server to decrypt data. Only the TLS server has the private key - it
+          is not shared with TLS clients.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td><strong>CSR</strong></td>
+
+        <td>
+          <p>A Certificate Signing Request (CSR) is a file generated on the TLS server based on the
+          private key. The CSR contains the public key and other information like organization's
+          name, location, and domain name. The CA will sign the CSR to create a TLS certificate.
+          You typically generate a CSR when you have an expired cert and want to renew
+          it. </p>
+
+          <p><strong>Note</strong>: Apigee does not create the CSR for you. You are responsible for
+          creating the CSR. For more information, see this article: <a href=
+          "https://community.apigee.com/articles/2770/how-to-create-a-private-key-and-generate-a-csr.html">How
+          to create a Private Key and generate a CSR?</a></p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Keystore</strong></p>
+        </td>
+
+        <td>
+          <p>Contains the TLS certificate and private key used to identify the entity during TLS
+          handshaking.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Truststore</strong></p>
+        </td>
+
+        <td>
+          <p>Contains trusted certificates on an TLS client used to validate a TLS server's
+          certificate presented to the client. These certificates are typically self-signed
+          certificates or certificates that are not signed by a trusted CA.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td><strong>PEM file</strong></td>
+
+        <td>
+          <p>Text files which comply with the X.509 format for for storing a certificate,
+          certificate chain, or private key. If your cert or private key is not defined by a PEM
+          file, you can convert it to a PEM file by using utilities such as openssl.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td><strong>PKCS12/PFX file</strong></td>
+
+        <td>
+          <p>A binary file format for storing a certificate, any intermediate certificates, and the
+          private key in a single encryptable file. PFX files usually have the extensions .pfx and
+          .p12. PFX files are typically used on Windows machines to import and export certificates
+          and private keys.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td><strong>Server Name Indication (SNI)</strong></td>
+
+        <td>
+          <p>Allows multiple HTTPS targets to be served off the same IP address and port without
+          requiring those targets to use the same certificate.</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="onewaytlsssl">One-way TLS/SSL</h2>
+
+  <p>The following figure shows TLS/SSL handshaking for one-way authentication between a TLS client
+  and TLS server. </p>
+
+  <p><img alt="" src="/api-platform/images/oneWaySSL_tls.png"></p>
+
+  <p>In a one-way TLS configuration:</p>
+
+  <ul>
+    <li>The client issues a session request to the server.</li>
+
+    <li>The server responds with a certificate, which contains its public key. This certificate
+    comes from the server's keystore, which also contains the server's private key. The private key
+    is never sent to the client.</li>
+
+    <li>For a signed cert, the client makes a request to the Certificate Authority (CA) to
+    authenticates the certificate.</li>
+
+    <li>The client and server exchange several more messages to validate keys.</li>
+
+    <li>The client begins TLS data transfer with the server. </li>
+  </ul>
+
+  <p>The following figure shows TLS/SSL handshaking using an optional truststore on the client:</p>
+
+  <p><img alt="" src="/api-platform/images/oneWaySSLTrustStore_tls.png"></p>
+
+  <p>If the TLS server uses a self-signed certificate or a certificate that is not signed by a
+  trusted CA, then you create a truststore on the client. The client populates its truststore with
+  server certificates and public keys that it trusts. When the client receives a certificate, the
+  incoming certificate is then validated against the certificates in its truststore. </p>
+
+  <p>In one-way TLS, Edge can be either the server or the client:</p>
+
+  <ul>
+    <li><strong>Edge as the TLS server</strong><br>
+    <br>
+    Edge is the server hosting the TLS endpoint, where the TLS endpoint corresponds to an API proxy
+    deployed to a virtual host. The client is an app attempting to access the API proxy. In this
+    scenario, Edge has the keystore containing the certificate and private key.</li>
+
+    <li><strong>Edge as the TLS client</strong><br>
+    <br>
+    Edge acts as the client that accesses a backend service. In this case, the backend service
+    corresponds to the server hosting a TLS endpoint. The backend server therefore has a keystore
+    that contains its certificate and private key.</li>
+  </ul>
+
+  <h2 id="twowaytls">Two-way TLS</h2>
+
+  <p>The following figure shows the TLS/SSL handshaking for two-way TLS authentication between a
+  client and server:</p>
+
+  <p><img alt="" src="/api-platform/images/twoWaySSL_tls.png"></p>
+
+  <p>In two-way TLS:</p>
+
+  <ul>
+    <li>The client and server both have their own keystores. The
+    client's keystore contains its cert and private key, and the
+    server's keystore contains its cert and private key.</li>
+
+    <li>The TLS server presents its certificate to the TLS client to authenticate itself. The
+    client then verifies the identity of the server prior to sending its cert to the server.</li>
+
+    <li>The TLS client presents its certificate to the TLS server to authenticate itself to the
+    server. </li>
+  </ul>
+
+  <p>The following figure shows TLS handshaking using an optional truststore:</p>
+
+  <p><img alt="" src="/api-platform/images/twoWaySSLTrustStore_tls.png"></p>
+
+  <p>In this scenario:</p>
+
+  <ul>
+    <li>If the TLS <strong>server</strong> uses a self-signed certificate or a certificate
+    that is not signed by a trusted CA, then you create a truststore on the
+    <strong>client</strong>. The <strong>client</strong> has a copy of the
+    <strong>server's</strong> cert in its truststore. During TLS handshaking, the
+    <strong>client</strong> compares the cert in its truststore to the cert send from the
+    <strong>server</strong> to verify the identity of the <strong>server</strong>.</li>
+
+    <li>If the TLS <strong>client</strong> uses a self-signed certificate or a
+    certificate that is not signed by a trusted CA, then you create a truststore on the
+    <strong>server</strong>.The <strong>server</strong> has a copy of the <strong>client's</strong>
+    cert in its truststore. During TLS handshaking, the <strong>server</strong> compares the cert
+    in its truststore to the cert send from the <strong>client</strong> to verify the
+    identity of the <strong>client</strong>.</li>
+  </ul>
+
+  <p>Either the client or server can use a truststore, or both can.</p>
+
+  <p>In two-way TLS, Edge can be either the server or the client:</p>
+
+  <ul>
+    <li><strong>Edge as the server</strong><br>
+    <br>
+    Edge is the server hosting the TLS endpoint, where the TLS endpoint corresponds to an API
+    proxy. The client is an app attempting to access the API proxy. In this scenario, Edge has a
+    keystore containing the certificate and private key, and requires a truststore containing the
+    client's cert and CA chain.</li>
+
+    <li><strong>Edge as the client</strong><br>
+    <br>
+    Edge acts as a client that accesses a backend service. In this case, the backend service
+    corresponds to the server hosting the TLS endpoint. The backend server therefore has a keystore
+    that contains its certificate and private key.<br>
+    <br>
+    Edge must also define a keystore that contains the certificate needed to validate itself to the
+    backend service, and optionally a truststore containing the cert from the backend server if the
+    server uses a self-signed certificate or a certificate that is not signed by a trusted
+    CA,.</li>
+  </ul>
+
+  <p>The important thing to remember is that Edge is flexible enough to support two-way TLS
+  regardless of how you decide to configure it.  </p>
+
+  <h2 id="servernameindicationsnisupport">Server Name Indication (SNI) support</h2>
+
+  <p>Edge supports the use of Server Name Indication (SNI) from from API proxies to Edge, where
+  Edge acts as the TLS server, and from Edge to target endpoints, where Edge acts as the TLS
+  client, in both Cloud and Private Cloud installations.</p>
+
+  <aside class="note"><b>Note:</b> For Private Cloud installations, <strong>Java 1.7 or
+  later</strong> is required.</aside>
+
+  <p>With SNI, which is an extension of TLS/SSL, multiple HTTPS targets can be served off the same
+  IP address and port without requiring those targets to use the same certificate.</p>
+
+  <p>For information on enabling SNI for an on-premises installation, see <a href=
+  "/api-platform/system-administration/using-sni-edge.html">Using SNI with Edge</a>.</p>{% endblock %}

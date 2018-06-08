@@ -1,0 +1,960 @@
+  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}Install Edge components on a
+  node{% endblock %} {% block body %}
+
+  <p>After you install the Edge <span style=
+  "font-family:courier new,courier,monospace;">apigee-setup</span> utility on a node, use the
+  <span style="font-family:courier new,courier,monospace;">apigee-setup</span> utility to install
+  one or more Edge components on the node. </p>
+
+  <aside class="note"><b>Note:</b> See <a href="install-edge-apigee-setup-utility.html">Install the
+  Edge apigee-setup utility</a> for more on installing the Edge <span style=
+  "font-family:courier new,courier,monospace;">apigee-setup</span> utility.</aside>
+
+  <p>The apigee-setup utility uses a command in the form:</p>
+  <pre class="prettyprint">
+<span style=
+"font-family:courier new,courier,monospace;">&gt; /opt/apigee/apigee-setup/bin/setup.sh -p <em><strong>component</strong></em> -f <em><strong>configFile</strong></em></span>
+</pre>
+
+  <p>where <em><strong>component</strong></em> is the Edge component to install, and
+  <em><strong>configFile</strong></em> is the silent configuration file containing the installation
+  information. The configuration file must be accessible or readable by the "apigee" user. For
+  example, you can create a new directory for the files, place them in the /usr/local or
+  /usr/local/share directory, or anywhere else on the node accessible by the "apigee"
+  user. </p>
+
+  <p>For example, to install the Edge Management Server:</p>
+  <pre class="prettyprint">
+<span style=
+"font-family:courier new,courier,monospace;">&gt; /opt/apigee/apigee-setup/bin/setup.sh -p ms -f /usr/local/myConfig</span>
+</pre>
+
+  <h2 id="installationconsiderations">Installation considerations</h2>
+
+  <p>As you write your config file, take into consideration the following options.</p>
+
+  <h3 id="installationconsiderations-settinguppostgresmasterstandbyreplication">Setting up Postgres
+  master-standby replication</h3>
+
+  <p>By default, Edge installs all Postgres nodes in master mode. However, in production systems
+  with multiple Postgres nodes, you must configure them to use master-standby replication so that
+  if the master node fails, the standby node can continue to server traffic. </p>
+
+  <p>You can enable and configure master-standby replication at install time by using properties in
+  the silent config file. Or, you can enable master-standby replication after installation. For
+  more, see <a href="set-master-standby-replication-postgres.html">Set up Master-Standby
+  Replication for Postgres</a>.</p>
+
+  <h3 id="installationconsiderations-enablingcassandraauthentication">Enabling Cassandra
+  authentication </h3>
+
+  <p>By default, Cassandra installs without authentication enabled. That means anyone can access
+  Cassandra. You can enable authentication after installing Edge, or as part of the installation
+  process. </p>
+
+  <aside class="note"><b>Note:</b> While you can enable authentication when you install Cassandra,
+  you cannot change the default username and password. You have to perform that step manually after
+  installation of Cassandra completes.</aside>
+
+  <p>For more, see <a href="enable-cassandra-authentication.html">Enable Cassandra
+  authentication</a>.</p>
+
+  <h3 id="installationconsiderations-usingaprotectedportwhencreatingavirtualhost">Using a protected
+  port when creating a virtual host</h3>
+
+  <p>If you want to create a virtual host that binds the Router to a protected port, such as port
+  numbers less than 1000, then you have to configure the Router to run as a user with access to
+  those ports. By default, the Router runs as the user "apigee" which does not have access to
+  privileged ports. </p>
+
+  <p>For information about how to configure a virtual host and Router to access ports below 1000,
+  see <a href="setting-virtual-host.html">Setting up a virtual host</a>.</p>
+
+  <h2 id="specifyingthecomponentstoinstall">Specifying the components to install</h2>
+
+  <p>The following table lists the options you pass to the -p option of the apigee-service utility
+  to specify which components to install on the node: </p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>
+          <p><strong>Component</strong></p>
+        </th>
+
+        <th>
+          <p><strong>Description</strong></p>
+        </th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td>
+          <p>c  </p>
+        </td>
+
+        <td>
+          <p>Install Cassandra only.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>zk</td>
+
+        <td>install ZooKeeper only.</td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>ds</p>
+        </td>
+
+        <td>
+          <p>Install ZooKeeper and Cassandra.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>ld</p>
+        </td>
+
+        <td>
+          <p>Install OpenLDAP only.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>ms</p>
+        </td>
+
+        <td>
+          <p>Install Edge Management Server, which also installs the Edge UI and OpenLDAP.</p>
+
+          <p>If you set <span style=
+          "font-family:courier new,courier,monospace;">USE_LDAP_REMOTE_HOST=y</span> in the config
+          file, then OpenLDAP installation is skipped and the Management Server uses OpenLDAP
+          installed on a different node.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>r  </p>
+        </td>
+
+        <td>
+          <p>Install Edge Router only.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>mp</p>
+        </td>
+
+        <td>
+          <p>Install Edge Message Processor only.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>rmp</p>
+        </td>
+
+        <td>
+          <p>Install Edge Router and Message Processor.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>ui</p>
+        </td>
+
+        <td>
+          <p>Install the Edge UI.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>qs</p>
+        </td>
+
+        <td>
+          <p>Install Qpid Server only.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>ps</p>
+        </td>
+
+        <td>
+          <p>Install Postgres Server only.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>pdb</td>
+
+        <td>Install Postgres database only - used only when installing the Developer Services
+        portal. See <a href="developer-services-portal-installation.html">Developer Services portal
+        installation</a>.</td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>sax</p>
+        </td>
+
+        <td>
+          <p>Install the analytics components, meaning Qpid and Postgres.</p>
+
+          <p>Use this option for development and testing only, not for production.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>sso</td>
+
+        <td>Install the Edge SSO module.</td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>mo</p>
+        </td>
+
+        <td>
+          <p>Install Monetization.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>sa</p>
+        </td>
+
+        <td>
+          <p>Install Edge standalone, meaning Cassandra, ZooKeeper, Management Server, OpenLDAP,
+          Edge UI, Router, and Message Processor. This option omits the Edge analytics components:
+          Qpid and Postgres.</p>
+
+          <p>Use this option for development and testing only, not for production.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>aio</p>
+        </td>
+
+        <td>
+          <p>Install all components on a single node.</p>
+
+          <p>Use this option for development and testing only, not for production.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>dp</td>
+
+        <td>
+          <p>Install the Developer Services portal.</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="creatingaconfigurationfile">Creating a configuration file</h2>
+
+  <p>The configuration file contains all the information necessary to install Edge. You can often
+  use the same configuration file to install all components in an Edge installation. </p>
+
+  <aside class="note"><b>Note:</b> In the configuration file, you must specify all Cassandra nodes
+  by IP address. Other components can be specified by IP address or DNS name.</aside>
+
+  <p>However, you will have to use different configuration files, or modify your configuration
+  file, if:</p>
+
+  <ul>
+    <li>You are installing multiple OpenLDAP servers and need to configure replication as part of a
+    13-node installation. Each file requires different values for <span style=
+    "font-family:courier new,courier,monospace;">LDAP_SID</span> and <span style=
+    "font-family:courier new,courier,monospace;">LDAP_PEER</span>.</li>
+
+    <li>You are creating multiple data centers as part of a 12-node installation. Each data center
+    requires different settings for properties such as <span style=
+    "font-family:courier new,courier,monospace;">ZK_CLIENT_HOSTS</span> and <span style=
+    "font-family:courier new,courier,monospace;">CASS_HOSTS</span>. </li>
+  </ul>
+
+  <p>Each installation topology described below shows an example config file for that topology. For
+  a complete reference on the config file, see <a href=
+  "edge-configuration-file-reference.html">Edge Configuration File Reference</a>. </p>
+
+  <aside class="warning"><b>Warning:</b> <strong>Creating a config file on a Windows machine and
+  then copying it to a Linux machine can add additional end-of-line, carriage return, or newline
+  characters to the file that are not compatible with all Linux utilites.</strong> This situation
+  can also occur if you copy text from a Windows editor and paste into a Linux window. As an
+  alternative, you can use the Linux <span style=
+  "font-family:courier new,courier,monospace;">dos2unix</span> utility to clean up a config file
+  created on Windows. Or, make sure to do all editing of config files in a Linux editor.</aside>
+
+  <h2 id="testsystemrequirementswithoutrunninganinstall">Test system requirements without running
+  an install</h2>
+
+  <p>Edge for the Private Cloud supports the <span style=
+  "font-family:courier new,courier,monospace;">ENABLE_SYSTEM_CHECK=y</span> property to check CPU
+  and memory requirements on a machine as part of an install. However, in previous releases of
+  Edge, that check required you to actually perform the install.</p>
+
+  <p>You can now use the "-t" flag to make that check without having to do an install. For example,
+  to check the system requirments for an "aio" install without actually doing the install, use the
+  following command: </p>
+  <pre class="prettyprint">
+/opt/apigee/apigee-setup/bin/setup.sh -p aio -f <em>configFile</em> <strong>-t</strong>
+</pre>
+
+  <p>This command displays any errors with the system requirements to the screen.  </p>
+
+  <p>See <a href="installation-requirements.html">Installation Requirements</a> for a list of
+  system requirements for all Edge components.</p>
+
+  <h2 id="installationlogfiles">Installation log files</h2>
+
+  <p>By default, the setup.sh utility writes log information about the installation to:</p>
+
+  <p><span style=
+  "font-family: &quot;courier new&quot;, courier, monospace;">/opt/apigee/var/log/apigee-setup/setup.log</span></p>
+
+  <p>If the user running the <span style=
+  "font-family: &quot;courier new&quot;, courier, monospace;">setup.sh</span> utility does not
+  have access to that directory, it writes the log to the <span style=
+  "font-family: &quot;courier new&quot;, courier, monospace;">/tmp</span> directory as a file
+  named <span style=
+  "font-family: &quot;courier new&quot;, courier, monospace;">setup_<strong>username</strong>.log</span>.</p>
+
+  <p>If the user does not have access to /tmp, the <span style=
+  "font-family: &quot;courier new&quot;, courier, monospace;">setup.sh</span> utility
+  fails.</p>
+
+  <h2 id="installedgecomponents">Install Edge components</h2>
+
+  <p>This section describes how to install Edge components for the different topologies. The order
+  of component installation is based on your desired topology.</p>
+
+  <p>All of the installation example shown below assume that you are installing:</p>
+
+  <ul>
+    <li>With Cassandra authentication disabled (default). See <a href=
+    "enable-cassandra-authentication.html">Enable Cassandra authentication</a> for more.</li>
+
+    <li>With Postgres master-standby replication disabled (default). See <a href=
+    "set-master-standby-replication-postgres.html">Set up Master-Standby Replication for
+    Postgres</a> for more.</li>
+
+    <li>Message Processor and Router on the same node. If you install the Message Processors and
+    Routers on different nodes, install all the Message Processors first, and then all the
+    Routers. </li>
+  </ul>
+
+  <aside class="note"><b>Note:</b> You must disable SELinux or set it to permissive mode before you
+  install Edge components. See <a href="install-edge-apigee-setup-utility.html">Install the Edge
+  apigee-setup utility</a> for more.</aside>
+
+  <aside class="note"><b>Note:</b> The <a href="installation-requirements.html">Installation
+  Requirements</a> details the installation prerequisites and provides a list of required files to
+  obtain before proceeding with the installation. Ensure that you have reviewed the requirements
+  before beginning the installation process.</aside>
+
+  <h3 id="installedgecomponents-allinoneinstallation">All-in-one Installation</h3>
+
+  <aside class="note"><b>Note:</b> See a video of an Edge all-in-one install <a href=
+  "https://community.apigee.com/articles/21648/video-of-an-edge-private-cloud-aio-install.html">here</a>.</aside>
+
+  <ol>
+    <li>Install all components on a single node using the command:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt;
+    /opt/apigee/apigee-setup/bin/setup.sh -p aio -f
+    <em><strong>configFile</strong></em></span></li>
+
+    <li>Test the installation as described at <a href="test-install.html">Test the
+    install</a>.</li>
+
+    <li>Onboard your organization as described at <a href="onboard-organization.html">Onboard an
+    organization</a>.</li>
+  </ol>
+
+  <p>Shown below is a silent configuration file for this topology. For a complete reference on
+  the config file, see <a href="edge-configuration-file-reference.html">Edge
+  Configuration File Reference</a>.</p>
+  <pre class="prettyprint">
+<strong># With SMTP
+IP1=IPorDNSnameOfNode</strong>
+HOSTIP=$(hostname -i)
+ENABLE_SYSTEM_CHECK=y
+ADMIN_EMAIL=opdk@google.com
+APIGEE_ADMINPW=Secret123
+LICENSE_FILE=/tmp/license.txt
+MSIP=$IP1
+LDAP_TYPE=1
+APIGEE_LDAPPW=secret
+MP_POD=gateway
+REGION=dc-1
+ZK_HOSTS="$IP1"
+ZK_CLIENT_HOSTS="$IP1"
+# Must use IP addresses for CASS_HOSTS, not DNS names.
+CASS_HOSTS="$IP1"
+# Default is postgres
+PG_PWD=postgres
+SKIP_SMTP=n
+SMTPHOST=smtp.example.com
+SMTPUSER=smtp@example.com  
+# omit for no username
+SMTPPASSWORD=smtppwd    
+# omit for no password
+SMTPSSL=n
+SMTPPORT=25
+SMTPMAILFROM="My Company &lt;myco@company.com&gt;"
+</pre>
+
+  <h3 id="installedgecomponents-2hoststandaloneinstallation">2-host standalone installation</h3>
+
+  <p>See <a href="installation-topologies.html">Installation Topologies</a> for the list of Edge
+  topologies and node numbers.</p>
+
+  <ol>
+    <li>Install Standalone Gateway and node 1<br>
+    <span style="font-family:courier new,courier,monospace;">&gt;
+    /opt/apigee/apigee-setup/bin/setup.sh -p sa -f </span><em style=
+    "font-family: 'courier new', courier, monospace;"><strong>configFile</strong></em></li>
+
+    <li>Install Analytics on node 2:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt;
+    /opt/apigee/apigee-setup/bin/setup.sh -p sax -f </span><em style=
+    "font-family: 'courier new', courier, monospace;"><strong>configFile</strong></em></li>
+
+    <li>Test the installation as described at <a href="test-install.html">Test the
+    install</a>.</li>
+
+    <li>Onboard your organization as described at <a href="onboard-organization.html">Onboard an
+    organization</a>.</li>
+  </ol>
+
+  <p>Shown below is a silent configuration file for this topology. For a complete reference on
+  the config file, see <a href="edge-configuration-file-reference.html">Edge
+  Configuration File Reference</a>.</p>
+  <pre class="prettyprint">
+<strong># With SMTP
+IP1=IPorDNSnameOfNode1
+</strong>HOSTIP=$(hostname -i)
+ENABLE_SYSTEM_CHECK=y
+ADMIN_EMAIL=opdk@google.com
+APIGEE_ADMINPW=Secret123
+LICENSE_FILE=/tmp/license.txt
+MSIP=$IP1
+LDAP_TYPE=1
+APIGEE_LDAPPW=secret
+MP_POD=gateway
+REGION=dc-1
+ZK_HOSTS="$IP1"
+ZK_CLIENT_HOSTS="$IP1"
+# Must use IP addresses for CASS_HOSTS, not DNS names.
+CASS_HOSTS="$IP1"
+# Default is postgres
+PG_PWD=postgres
+SKIP_SMTP=n
+SMTPHOST=smtp.example.com
+SMTPUSER=smtp@example.com  
+# omit for no username
+SMTPPASSWORD=smtppwd    
+# omit for no password
+SMTPSSL=n
+SMTPPORT=25
+SMTPMAILFROM="My Company &lt;myco@company.com&gt;"
+</pre>
+
+  <h3 id="installedgecomponents-5hostclusteredinstallation">5-host clustered installation</h3>
+
+  <p>See <a href="installation-topologies.html">Installation Topologies</a> for the list of Edge
+  topologies and node numbers.</p>
+
+  <ol>
+    <li>Install Datastore cluster on nodes 1, 2 and 3:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt;
+    /opt/apigee/apigee-setup/bin/setup.sh -p ds -f </span><em style=
+    "font-family: 'courier new', courier, monospace;"><strong>configFile</strong></em></li>
+
+    <li>Install Management Server on node 1:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt;
+    /opt/apigee/apigee-setup/bin/setup.sh -p ms -f </span><em style=
+    "font-family: 'courier new', courier, monospace;"><strong>configFile</strong></em></li>
+
+    <li>Install Router and Message Processor on nodes 2 and 3: <br>
+    <span style="font-family: &quot;courier new&quot;, courier, monospace;">&gt;
+    /opt/apigee/apigee-setup/bin/setup.sh -p rmp
+    -f <em><strong>configFile</strong></em></span></li>
+
+    <li>Install Analytics on node 4 and 5:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt;
+    /opt/apigee/apigee-setup/bin/setup.sh -p sax -f </span><em style=
+    "font-family: 'courier new', courier, monospace;"><strong>configFile</strong></em></li>
+
+    <li>Test the installation as described at <a href="test-install.html">Test the
+    install</a>.</li>
+
+    <li>Onboard your organization as described at <a href="onboard-organization.html">Onboard an
+    organization</a>.</li>
+  </ol>
+
+  <p>Shown below is a silent configuration file for this topology. For a complete reference on
+  the config file, see <a href="edge-configuration-file-reference.html">Edge
+  Configuration File Reference</a>.</p>
+  <pre class="prettyprint">
+<strong># With SMTP
+IP1=IPorDNSnameOfNode1
+IP2=IPorDNSnameOfNode2
+IP3=IPorDNSnameOfNode3
+IP4=IPorDNSnameOfNode4
+IP5=IPorDNSnameOfNode5
+?</strong>HOSTIP=$(hostname -i)
+ENABLE_SYSTEM_CHECK=y
+ADMIN_EMAIL=opdk@google.com
+APIGEE_ADMINPW=Secret123
+LICENSE_FILE=/tmp/license.txt 
+MSIP=$IP1 
+USE_LDAP_REMOTE_HOST=n 
+LDAP_TYPE=1
+APIGEE_LDAPPW=secret 
+MP_POD=gateway
+REGION=dc-1 
+ZK_HOSTS="$IP1 $IP2 $IP3" 
+ZK_CLIENT_HOSTS="$IP1 $IP2 $IP3" 
+# Must use IP addresses for CASS_HOSTS, not DNS names.
+CASS_HOSTS="$IP1 $IP2 $IP3" 
+# Default is postgres
+PG_PWD=postgres
+PG_MASTER=$IP4
+PG_STANDBY=$IP5
+SKIP_SMTP=n
+SMTPHOST=smtp.example.com 
+SMTPUSER=smtp@example.com  
+# omit for no username
+SMTPPASSWORD=smtppwd       
+# omit for no password 
+SMTPSSL=n
+SMTPPORT=25
+SMTPMAILFROM="My Company &lt;myco@company.com&gt;"
+</pre>
+
+  <h3 id="installedgecomponents-9hostclusteredinstallation">9-host clustered installation</h3>
+
+  <p>See <a href="installation-topologies.html">Installation Topologies</a> for the list of Edge
+  topologies and node numbers.</p>
+
+  <ol>
+    <li>Install Datastore Cluster Node on node 1, 2 and 3:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt;
+    /opt/apigee/apigee-setup/bin/setup.sh -p ds -f </span><em style=
+    "font-family: 'courier new', courier, monospace;"><strong>configFile</strong></em></li>
+
+    <li>Install Apigee Management Server on node 1:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt;
+    /opt/apigee/apigee-setup/bin/setup.sh -p ms -f </span><em style=
+    "font-family: 'courier new', courier, monospace;"><strong>configFile</strong></em></li>
+
+    <li>Install Router and Message Processor on nodes 4 and 5: <br>
+    <span style="font-family: &quot;courier new&quot;, courier, monospace;">&gt;
+    /opt/apigee/apigee-setup/bin/setup.sh -p rmp
+    -f <em><strong>configFile</strong></em></span></li>
+
+    <li>Install Apigee Analytics Qpid Server on node 6 and 7:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt;
+    /opt/apigee/apigee-setup/bin/setup.sh -p qs -f </span><em style=
+    "font-family: 'courier new', courier, monospace;"><strong>configFile</strong></em></li>
+
+    <li>Install Apigee Analytics Postgres Server on node 8 and 9:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt;
+    /opt/apigee/apigee-setup/bin/setup.sh -p ps -f </span><em style=
+    "font-family: 'courier new', courier, monospace;"><strong>configFile</strong></em></li>
+
+    <li>Test the installation as described at <a href="test-install.html">Test the
+    install</a>.</li>
+
+    <li>Onboard your organization as described at <a href="onboard-organization.html">Onboard an
+    organization</a>.</li>
+  </ol>
+
+  <p>Shown below is a silent configuration file for this topology. For a complete reference on
+  the config file, see <a href="edge-configuration-file-reference.html">Edge
+  Configuration File Reference</a>.</p>
+  <pre class="prettyprint">
+<strong># With SMTP
+IP1=IPorDNSnameOfNode1
+IP2=IPorDNSnameOfNode2
+IP3=IPorDNSnameOfNode3
+IP8=IPorDNSnameOfNode8
+IP9=IPorDNSnameOfNode9
+</strong>HOSTIP=$(hostname -i)
+ENABLE_SYSTEM_CHECK=y
+ADMIN_EMAIL=opdk@google.com
+APIGEE_ADMINPW=Secret123
+LICENSE_FILE=/tmp/license.txt 
+MSIP=$IP1 
+USE_LDAP_REMOTE_HOST=n 
+LDAP_TYPE=1
+APIGEE_LDAPPW=secret 
+MP_POD=gateway
+REGION=dc-1 
+ZK_HOSTS="$IP1 $IP2 $IP3" 
+ZK_CLIENT_HOSTS="$IP1 $IP2 $IP3" 
+# Must use IP addresses for CASS_HOSTS, not DNS names.
+CASS_HOSTS="$IP1 $IP2 $IP3" 
+# Default is postgres
+PG_PWD=postgres
+SKIP_SMTP=n
+PG_MASTER=$IP8
+PG_STANDBY=$IP9
+SMTPHOST=smtp.example.com 
+SMTPUSER=smtp@example.com  
+# omit for no username
+SMTPPASSWORD=smtppwd       
+# omit for no password
+SMTPSSL=n
+SMTPPORT=25
+SMTPMAILFROM="My Company &lt;myco@company.com&gt;"
+</pre>
+
+  <h3 id="installedgecomponents-13hostclusteredinstallation">13-host clustered installation</h3>
+
+  <p>See <a href="installation-topologies.html">Installation Topologies</a> for the list of Edge
+  topologies and node numbers.</p>
+
+  <ol>
+    <li>Install Datastore Cluster Node on node 1, 2 and 3:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt;
+    /opt/apigee/apigee-setup/bin/setup.sh -p ds -f </span><em style=
+    "font-family: 'courier new', courier, monospace;"><strong>configFile</strong></em></li>
+
+    <li>Install OpenLDAP on node 4 and 5:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt;
+    /opt/apigee/apigee-setup/bin/setup.sh -p ld -f </span><em style=
+    "font-family: 'courier new', courier, monospace;"><strong>configFile</strong></em></li>
+
+    <li>Install Apigee Management Server on node 6 and 7:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt;
+    /opt/apigee/apigee-setup/bin/setup.sh -p ms -f </span><em style=
+    "font-family: 'courier new', courier, monospace;"><strong>configFile</strong></em></li>
+
+    <li>Install Apigee Analytics Postgres Server on node 8 and 9:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt;
+    /opt/apigee/apigee-setup/bin/setup.sh -p ps -f </span><em style=
+    "font-family: 'courier new', courier, monospace;"><strong>configFile</strong></em></li>
+
+    <li>Install Router and Message Processor on nodes 10 and 11: <br>
+    <span style="font-family: &quot;courier new&quot;, courier, monospace;">&gt;
+    /opt/apigee/apigee-setup/bin/setup.sh -p rmp
+    -f <em><strong>configFile</strong></em></span></li>
+
+    <li>Install Apigee Analytics Qpid Server on node 12 and 13:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt;
+    /opt/apigee/apigee-setup/bin/setup.sh -p qs -f <em><strong>configFile</strong></em></span></li>
+
+    <li>Test the installation as described at <a href="test-install.html">Test the
+    install</a>.</li>
+
+    <li>Onboard your organization as described at <a href="onboard-organization.html">Onboard an
+    organization</a>.</li>
+  </ol>
+
+  <p>Shown below is a silent configuration file for this topology. For a complete reference on
+  the config file, see <a href="edge-configuration-file-reference.html">Edge
+  Configuration File Reference</a>.</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <td>
+          <pre class="prettyprint">
+<strong># For all components except OpenLDAP
+IP1=IPorDNSnameOfNode1
+IP2=IPorDNSnameOfNode2
+IP3=IPorDNSnameOfNode3
+IP4=IPorDNSnameOfNode4
+IP5=IPorDNSnameOfNode5
+IP6=IPorDNSnameOfNode6
+IP7=IPorDNSnameOfNode7
+IP8=IPorDNSnameOfNode8
+IP9=IPorDNSnameOfNode9
+</strong>HOSTIP=$(hostname -i)
+ENABLE_SYSTEM_CHECK=y
+ADMIN_EMAIL=opdk@google.com
+APIGEE_ADMINPW=Secret123
+LICENSE_FILE=/tmp/license.txt 
+<strong># First Management Server on IP6
+MSIP=$IP6 
+USE_LDAP_REMOTE_HOST=y
+LDAP_HOST=$IP4
+LDAP_PORT=10389
+# Second Management Server on IP7
+# MSIP=$IP7
+# USE_LDAP_REMOTE_HOST=y
+# LDAP_HOST=$IP5
+# LDAP_PORT=10389
+# Same password for both OpenLDAPs.
+APIGEE_LDAPPW=secret </strong>
+MP_POD=gateway
+REGION=dc-1 
+ZK_HOSTS="$IP1 $IP2 $IP3" 
+ZK_CLIENT_HOSTS="$IP1 $IP2 $IP3" 
+# Must use IP addresses for CASS_HOSTS, not DNS names.
+CASS_HOSTS="$IP1 $IP2 $IP3" 
+# Default is postgres
+PG_PWD=postgres
+PG_MASTER=$IP8
+PG_STANDBY=$IP9
+SKIP_SMTP=n
+SMTPHOST=smtp.example.com 
+SMTPUSER=smtp@example.com  
+# omit for no username
+SMTPPASSWORD=smtppwd       
+# omit for no password
+SMTPSSL=n
+SMTPPORT=25
+SMTPMAILFROM="My Company &lt;myco@company.com&gt;"
+</pre>
+        </td>
+
+        <td>
+          <pre class="prettyprint">
+<strong># For OpenLDAP on IP4 and IP5
+IP1=IPorDNSnameOfNode1
+IP2=IPorDNSnameOfNode2
+IP3=IPorDNSnameOfNode3
+IP4=IPorDNSnameOfNode4
+IP5=IPorDNSnameOfNode5
+IP6=IPorDNSnameOfNode6
+IP7=IPorDNSnameOfNode7
+IP8=IPorDNSnameOfNode8
+IP9=IPorDNSnameOfNode9</strong>
+HOSTIP=$(hostname -i)
+ENABLE_SYSTEM_CHECK=y
+ADMIN_EMAIL=opdk@google.com
+APIGEE_ADMINPW=Secret123
+<strong># First OpenLDAP Server on IP4
+MSIP=$IP6 
+USE_LDAP_REMOTE_HOST=n 
+LDAP_TYPE=2
+LDAP_SID=1
+LDAP_PEER=$IP5
+# Second OpenLDAP Server on IP5
+# MSIP=$IP7 
+# USE_LDAP_REMOTE_HOST=n 
+# LDAP_TYPE=2
+# LDAP_SID=2
+# LDAP_PEER=$IP4
+# Set same password for both OpenLDAPs.
+APIGEE_LDAPPW=secret </strong>
+</pre>
+
+          <div>
+             
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="installedgecomponents-12hostclusteredinstallation">12-host clustered installation</h3>
+
+  <p>Before you install Edge on a12-host clustered topology (two data centers), you must understand
+  how to set the ZooKeeper and Cassandra properties in the silent config file. </p>
+
+  <aside class="note"><b>Note:</b> Shown below is a complete config file for both data
+  centers.</aside>
+
+  <ul>
+    <li>ZooKeeper<br>
+    <br>
+    For the ZK_HOSTS property for both data centers, specify the IP addresses or DNS names of all
+    ZooKeeper nodes from both data centers, in the same order, and mark any nodes with the with
+    &#8220;:observer&#8221; modifier. Nodes without the &#8220;:observer&#8221; modifier are called
+    "voters". You must have an odd number of "voters" in your configuration.<br>
+    <br>
+    In this topology, the ZooKeeper host on host 9 is the observer:<br>
+    <img alt="" src="/private-cloud/images/zookeperDC.png"><br>
+    For the ZK_CLIENT_HOSTS property for each data center, specify the IP addresses or DNS names of
+    only the ZooKeeper nodes in the data center, in the same order, for all ZooKeeper nodes in the
+    data center. In the example configuration file shown below, node 9 is tagged with the
+    &#8220;:observer&#8221; modifier so that you have five voters: Nodes 1, 2, 3, 7, and 8.</li>
+
+    <li>Cassandra<br>
+    All datacenters must to have the same number of Cassandra nodes.<br>
+    <br>
+    For CASS_HOSTS for each data center, ensure that you specify all Cassandra IP addresses (not
+    DNS names) for both data centers. For data center 1, list the Cassandra nodes in that data
+    center first. For data center 2, list the Cassandra nodes in that data center first. List the
+    Cassandra nodes in the same order for all Cassandra nodes in the data center. <br>
+    <br>
+    All Cassandra nodes must have a suffix ':&lt;d&gt;,&lt;r&gt;', for example '&lt;ip&gt;:1,1 =
+    datacenter 1 and rack/availability zone 1 and '&lt;ip&gt;:2,1 = datacenter 2 and
+    rack/availability zone 1.<br>
+    For example, "192.168.124.201:1,1 192.168.124.202:1,1 192.168.124.203:1,1 192.168.124.204:2,1
+    192.168.124.205:2,1 192.168.124.206:2,1"<br>
+    <br>
+    The first node in rack/availability zone 1 of each datacenter will be used as the seed
+    server.<br>
+    <br>
+    In this deployment model, Cassandra setup will look like this:<br>
+    <img alt="" src="/private-cloud/images/cassandraDC.png"></li>
+  </ul>
+
+  <p>See <a href="installation-topologies.html">Installation Topologies</a> for the list of Edge
+  topologies and node numbers.</p>
+
+  <ol>
+    <li>Install Datastore Cluster Node on node 1, 2, 3, 7, 8, and 9:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt;
+    /opt/apigee/apigee-setup/bin/setup.sh -p ds -f </span><em style=
+    "font-family: 'courier new', courier, monospace;"><strong>configFile</strong></em></li>
+
+    <li>Install Apigee Management Server with OpenLDAP replication on node 1 and 7:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt;
+    /opt/apigee/apigee-setup/bin/setup.sh -p ms -f </span><em style=
+    "font-family: 'courier new', courier, monospace;"><strong>configFile</strong></em></li>
+
+    <li>Install Router and Message Processor on nodes 2, 3, 8 and 9: <br>
+    <span style="font-family: &quot;courier new&quot;, courier, monospace;">&gt;
+    /opt/apigee/apigee-setup/bin/setup.sh -p rmp
+    -f <em><strong>configFile</strong></em></span></li>
+
+    <li>Install Apigee Analytics Qpid Server on node 4, 5, 10, and 11:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt;
+    /opt/apigee/apigee-setup/bin/setup.sh -p qs -f </span><em style=
+    "font-family: 'courier new', courier, monospace;"><strong>configFile</strong></em></li>
+
+    <li>Install Apigee Analytics Postgres Server on node 6 and 12:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt;
+    /opt/apigee/apigee-setup/bin/setup.sh -p ps -f </span><em style=
+    "font-family: 'courier new', courier, monospace;"><strong>configFile</strong></em></li>
+
+    <li>Test the installation as described at <a href="test-install.html">Test the
+    install</a>.</li>
+
+    <li>Onboard your organization as described at <a href="onboard-organization.html">Onboard an
+    organization</a>.</li>
+  </ol>
+
+  <p>Shown below is a silent configuration file for this topology. Notice that this config
+  file. For a complete reference on the config file, see <a href=
+  "edge-configuration-file-reference.html">Edge Configuration File Reference</a>.</p>
+
+  <ul>
+    <li>Configures OpenLDAP with replication across two OpenLDAP nodes.</li>
+
+    <li>Specifies the &#8220;:observer&#8221; modifier on one ZooKeeper node. In a single data
+    center installation, omit that modifier.</li>
+  </ul>
+
+  <table>
+    <tbody>
+      <tr>
+        <td>
+          <pre class="prettyprint">
+<strong># Datacenter 1
+IP1=IPorDNSnameOfNode1
+IP2=IPorDNSnameOfNode2
+IP3=IPorDNSnameOfNode3
+IP6=IPorDNSnameOfNode6
+IP7=IPorDNSnameOfNode7
+IP8=IPorDNSnameOfNode8
+IP9=IPorDNSnameOfNode9 
+IP12=IPorDNSnameOfNode12</strong>
+HOSTIP=$(hostname -i)
+MSIP=$IP1
+ENABLE_SYSTEM_CHECK=y
+ADMIN_EMAIL=opdk@google.com
+APIGEE_ADMINPW=Secret123
+LICENSE_FILE=/tmp/license.txt
+USE_LDAP_REMOTE_HOST=n
+<strong>LDAP_TYPE=2
+LDAP_SID=1
+LDAP_PEER=$IP7</strong>
+APIGEE_LDAPPW=secret
+MP_POD=gateway-1
+REGION=dc-1
+<strong>ZK_HOSTS="$IP1 $IP2 $IP3 $IP7 $IP8 $IP9:observer"
+ZK_CLIENT_HOSTS="$IP1 $IP2 $IP3"
+# Must use IP addresses for CASS_HOSTS, not DNS names.
+CASS_HOSTS="$IP1:1,1 $IP2:1,1 $IP3:1,1 $IP7:2,1 $IP8:2,1 $IP9:2,1"</strong>
+# Default is postgres
+PG_PWD=postgres
+PG_MASTER=$IP6
+PG_STANDBY=$IP12
+SKIP_SMTP=n
+SMTPHOST=smtp.example.com
+SMTPUSER=smtp@example.com 
+# omit for no username
+SMTPPASSWORD=smtppwd   
+# omit for no password
+SMTPSSL=n
+SMTPPORT=25
+SMTPMAILFROM="My Company &lt;myco@company.com&gt;"
+</pre>
+        </td>
+
+        <td>
+          <pre class="prettyprint">
+<strong># Datacenter 2
+IP1=IPorDNSnameOfNode1
+IP2=IPorDNSnameOfNode2
+IP3=IPorDNSnameOfNode3
+IP6=IPorDNSnameOfNode6
+IP7=IPorDNSnameOfNode7
+IP8=IPorDNSnameOfNode8
+IP9=IPorDNSnameOfNode9 
+IP12=IPorDNSnameOfNode12</strong>
+HOSTIP=$(hostname -i)
+MSIP=$IP7
+ENABLE_SYSTEM_CHECK=y
+ADMIN_EMAIL=opdk@google.com
+APIGEE_ADMINPW=Secret123
+LICENSE_FILE=/tmp/license.txt
+USE_LDAP_REMOTE_HOST=n
+<strong>LDAP_TYPE=2
+LDAP_SID=2
+LDAP_PEER=$IP1</strong>
+APIGEE_LDAPPW=secret
+MP_POD=gateway-2
+REGION=dc-2
+<strong>ZK_HOSTS="$IP1 $IP2 $IP3 $IP7 $IP8 $IP9:observer"
+ZK_CLIENT_HOSTS="$IP7 $IP8 $IP9"
+# Must use IP addresses for CASS_HOSTS, not DNS names.
+CASS_HOSTS="$IP7:2,1 $IP8:2,1 $IP9:2,1 $IP1:1,1 $IP2:1,1 $IP3:1,1"</strong>
+# Default is postgres
+PG_PWD=postgres
+PG_MASTER=$IP6
+PG_STANDBY=$IP12
+SKIP_SMTP=n
+SMTPHOST=smtp.example.com
+SMTPUSER=smtp@example.com 
+# omit for no username
+SMTPPASSWORD=smtppwd   
+# omit for no password
+SMTPSSL=n
+SMTPPORT=25
+SMTPMAILFROM="My Company &lt;myco@company.com&gt;"
+</pre>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  {% endblock %}

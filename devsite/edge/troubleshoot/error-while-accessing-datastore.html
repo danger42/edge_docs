@@ -1,0 +1,146 @@
+  {% extends "_base.html" %} {% block title %}The revision is deployed, but traffic cannot flow.
+  Error while accessing datastore;Please retry later{% endblock %} {% block body %}
+
+  <h2 id="errortext">Error text</h2>
+  <pre class="prettyprint">
+<strong>Error in deployment for environment test.</strong>
+The revision is deployed, but traffic cannot flow. Error while accessing datastore;Please retry later
+</pre>
+
+  <p>If the message includes the words <strong>traffic cannot flow</strong>, it means that the
+  proxy could not be deployed to ANY available <a href=
+  "/private-cloud/latest/overview#onpremisesdeployment">Message Processors</a> or <a href=
+  "/private-cloud/latest/overview#onpremisesdeployment">Routers</a>.</p>
+
+  <p>If the message says <strong>traffic can flow, but flow may be impaired</strong>, it means the
+  proxy might have been deployed to some, but not to all available Message Processors or Routers (a
+  partial deployment).</p>
+
+  <h2 id="cause">Cause</h2>
+
+  <p>This error indicates a problem related to <a href=
+  "/private-cloud/latest/overview#onpremisesdeployment">Cassandra</a>, the internal datastore used
+  by Apigee Edge.</p>
+
+  <ul>
+    <li>
+      <p><strong>Network connectivity issue:</strong> Communication failed between a <a href=
+      "/private-cloud/latest/overview#onpremisesdeployment">Message Processor</a> and Cassandra due
+      to network connectivity issues or firewall rules.</p>
+    </li>
+
+    <li>
+      <p><strong>Deployment errors due to Cassandra restarts:</strong> One or more Cassandra nodes
+      were unavailable because they were restarted as part of routine maintenance.</p>
+    </li>
+
+    <li>
+      <p><strong>Spike in read request latency on Cassandra:</strong> If one or more Cassandra
+      nodes are performing a large number of concurrent reads, then they may respond slowly due to
+      a spike in read request latency.</p>
+    </li>
+
+    <li>
+      <p><strong>API Proxy Bundle larger than 15MB:</strong> Cassandra has been configured to not
+      allow API proxy bundles larger than 15MB in size.</p>
+    </li>
+  </ul>
+
+  <p>See <a href="#whatyoucando">What you can do</a> below for more information.</p>
+
+  <h2 id="whatyoucando"><a id="whatyoucando" name="whatyoucando"></a>What you can do</h2>
+
+  <h3 id="whatyoucando-edgeprivatecloud">Edge Private Cloud</h3>
+
+  <p>If you are on <strong>Edge Private Cloud</strong>, you may be able to diagnose and resolve
+  this problem yourself. For troubleshooting instructions, go to the <a href=
+  "https://docs-apis.apigee.io/files/ApigeeEdgeTroubleshootingGuide.pdf">Edge Public Cloud
+  Troubleshooting Guide</a> and locate the section that describes this error. If the problem
+  persists, contact <a href="https://support.apigee.com">Apigee Support</a>. See also <a href=
+  "/troubleshoot/what-include-if-you-contact-tech-support-or-community.html">What to include when
+  you contact Tech Support or the Community</a>.</p>
+
+  <h3 id="whatyoucando-edgepubliccloud">Edge Public Cloud</h3>
+
+  <p>If you are on <strong>Edge Public Cloud</strong>, you may need expert help from Apigee to
+  resolve this error. However, you can try the steps outlined in the <a href=
+  "#troubleshooting">Troubleshooting</a> section below before contacting <a href=
+  "https://support.apigee.com">Apigee Support</a> or posting the issue to the <a href=
+  "https://community.apigee.com/index.html">Apigee Community</a>. See also <a href=
+  "/troubleshoot/what-include-if-you-contact-tech-support-or-community.html">What to include when
+  you contact Tech Support or the Community</a>.<br>
+   </p>
+
+  <h2 id="troubleshooting"><a id="troubleshooting" name="troubleshooting"></a>Troubleshooting</h2>
+
+  <h3 id="troubleshooting-forcloudcustomerschecktheapigeestatuspageforoutages">For Cloud customers,
+  check the Apigee status page for outages</h3>
+
+  <p>Deployment errors can occur when there is an outage in Edge for the Cloud. Use the following
+  URL to check the current Edge status to see if there is an outage:  <a href=
+  "https://status.apigee.com/">https://status.apigee.com</a></p>
+
+  <h3 id="troubleshooting-forceundeployandredeploy">Force undeploy and redeploy</h3>
+
+  <p>In some cases, undeploying and redeploying the proxy revision will correct the problem. Apigee
+  recommends that you do a <strong>forced undeploy</strong> using the <a href=
+  "/management/apis/post/organizations/%7Borg_name%7D/apis/%7Bapi_name%7D/revisions/%7Brevision_number%7D/deployments">
+  Deployments</a> API with the parameter <strong>force=true</strong>. If the forced undeploy works,
+  try redeploying the proxy.</p>
+
+  <h3 id="troubleshooting-createanewproxyrevision">Create a new proxy revision</h3>
+
+  <p>If undeploy/redeploy does not work, try deploying the proxy as a new revision. Sometimes if
+  you delete certain policies from a proxy and then redeploy as the same revision, you can get a
+  deployment error. See <a href=
+  "/api-platform/deploy/deploying-proxies-ui.html#deploymentoptions-aboutrevisions">About
+  revisions</a>.</p>
+
+  <h3 id="troubleshooting-checkthedeploymentstatusofyourproxy">Check the deployment status of your
+  proxy</h3>
+
+  <p>Use the <a href=
+  "/management/apis/get/organizations/%7Borg_name%7D/environments/%7Benv_name%7D/apis/%7Bapi_name%7D/deployments">
+  Deployments</a> API to check the deployment status of your proxy to the Message Processors and
+  routers in your environment. This step can indicate the source of the problem. For example, it'll
+  show you which Message Processors or routers have errors.</p>
+
+  <p>If necessary, you can always include the response information when you contact <a href=
+  "https://support.apigee.com">Apigee Support</a> or post your issue on the <a href=
+  "https://community.apigee.com/index.html">Apigee Community</a>. See also <a href=
+  "/troubleshoot/what-include-if-you-contact-tech-support-or-community.html">What to include when
+  you contact Tech Support or the Community</a>.</p>
+
+  <h3 id="troubleshooting-createanddeployasimplepassthroughproxy">Create and deploy a simple
+  pass-through proxy</h3>
+
+  <p>Go through the {{gs_tutorial}}, which
+  walks you through creating a "hello world" proxy and deploying it.
+  If it deploys successfully, then there might be a problem with the size
+  of the proxy bundle that's not deploying properly. See the next section <a href=
+  "#moveresourcefiles">Move resource files to the Environment or Organization level</a>.</p>
+
+  <h3 id="troubleshooting-moveresourcefilestotheenvironmentororganizationlevel"><a id=
+  "moveresourcefiles" name="moveresourcefiles"></a>Move resource files to the Environment or
+  Organization level</h3>
+
+  <p>If you're on Public Cloud, you can try this solution if you suspect you have an unusually
+  large proxy bundle. If you're on Private Cloud, additional troubleshooting steps are described in
+  <a href="https://docs-apis.apigee.io/files/ApigeeEdgeTroubleshootingGuide.pdf">Edge Public Cloud
+  Troubleshooting Guide</a>.</p>
+
+  <p>For example, if you're deploying a proxy with a Java Callout and the Java code includes a
+  large number of JAR files, it's possible your proxy is exceeding a size limit (by default 15
+  Mb).</p>
+
+  <ol>
+    <li>Move any resource files, such as NodeJS Script files and modules, JavaScript files, or JAR
+    files to the environment or organization level. For more information on resource files, see
+    <a href="/api-platform/develop/resource-files.html">Resource files</a>.</li>
+
+    <li>Deploy the API proxy and see if the error goes away. If the problem persists, contact
+    <a href="https://support.apigee.com">Apigee Support</a>.
+
+      <p> </p>
+    </li>
+  </ol>{% endblock %}

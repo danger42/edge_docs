@@ -1,0 +1,181 @@
+  {% extends "_base.html" %} {% block title %}Chaining API proxies together{% endblock %} {% block body %}
+
+  <p>You can specify that one proxy is the target endpoint of another, effectively connecting the
+  two proxies in a proxy chain. Chaining proxies in this way can help you avoid a network hop, and
+  so improve overall performance.</p>
+
+  <aside class="note"><b>Note:</b> Proxy chaining provides one way to reuse proxies. For another
+  way, in which you develop components that are expressly designed to be reused, be sure to see
+  <a href="/api-platform/fundamentals/shared-flows.html">Reusable shared flows</a>.</aside>
+
+  <p>With proxy chaining, you specify that one proxy is the local target endpoint of the other.
+  Rather than using the <code>HTTPTargetConnection</code> element to make a call to the second
+  proxy, you use the <code>LocalTargetConnection</code> element.</p>
+  <pre class="prettyprint">
+&lt;LocalTargetConnection&gt;
+    &lt;APIProxy&gt;myproxy2&lt;/APIProxy&gt;
+    &lt;ProxyEndpoint&gt;default&lt;/ProxyEndpoint&gt;
+&lt;/LocalTargetConnection&gt;
+</pre>
+
+  <p>You might find proxy chaining useful when you have a proxy that offers some discrete low-level
+  functionality that other proxies will consume. For example, a proxy that exposes
+  create/read/update/delete operations with a backend data store could be the target proxy for
+  multiple other proxies that expose the data to clients.</p>
+
+  <aside class="note"><b>Note:</b> Proxies you want to connect in this way must be in the same
+  organization and environment. When the proxy you're connecting with is outside this scope,
+  consider connecting to it as an external resource using the <code>HTTPTargetConnection</code>
+  element (as described in <a href=
+  "/api-platform/reference/policies/api-proxy-configuration-reference.html">API proxy configuration
+  reference</a>).</aside>
+
+  <div class="video">
+    <p><strong>Video:</strong> Watch a short video to learn more about API proxy chaining.</p>
+
+    <div style="text-align: left; margin:15px">
+      <iframe allowfullscreen="" frameborder="0" height="480" src=
+      "https://www.youtube.com/embed/gSv48sGJMls" width="560"></iframe>
+    </div>
+  </div>
+
+  <h2 id="howproxychainingworks">How proxy chaining works</h2>
+
+  <p>Proxy chaining uses a local connection to minimize network overhead when calling one proxy
+  from another. This local connection is more efficient because it bypasses network features such
+  as load balancers, routers, and message processors.</p>
+
+  <p>The following illustrates the difference between connecting proxies via HTTPTargetConnection
+  and LocalTargetConnection (proxy chaining):</p>
+
+  <p><img src="/api-platform/images/proxies-unchained.png"></p>
+
+  <p><img src="/api-platform/images/proxies-chained.png"></p>
+
+  <p>You connect proxies by specifying that one is a local target endpoint of the other. You can
+  create a local connection between proxies in two ways:</p>
+
+  <ul>
+    <li>By specifying the name of the target proxy and a ProxyEndpoint name</li>
+
+    <li>By specifying a path to the target proxy endpoint</li>
+  </ul>
+
+  <p>You connect target proxies within a <code>TargetEndpoint</code> configuration, using a
+  <code>LocalTargetConnection</code> element, as described below.</p>
+
+  <aside class="warning"><b>Warning:</b> When chaining API proxies, take care to avoid "infinite
+  loop" recursive callouts back into the same API proxy, which could result in system
+  overload.</aside>
+
+  <h2 id="connectingproxiesbyproxyname">Connecting proxies by proxy name</h2>
+
+  <p>You can specify the target proxy by name. You might find that this is most useful when you're
+  creating the connection from the start and developing the proxies together. If you don't know the
+  name (or the name might change), consider connecting with the target proxy's endpoint path, as
+  described below.</p>
+
+  <p>When you connect to a target proxy by name, you specify the proxy's name and the name of its
+  <code>ProxyEndpoint</code>.</p>
+
+  <p>The following example specifies a target proxy called <code>data-manager</code>, along with
+  the <code>ProxyEndpoint</code> name exposed by <code>data-manager</code>. For reference
+  information, see <a href=
+  "/api-platform/reference/policies/api-proxy-configuration-reference.html">API proxy configuration
+  reference</a>.</p>
+<aside class="note">The <code>&lt;APIProxy&gt;</code> and <code>&lt;ProxyEndpoint&gt;</code>elements support the dynamic string substitution feature called
+  <a href="/api-platform/reference/message-template-intro.html">message templating</a>.</aside>
+  <pre class="prettyprint">
+&lt;TargetEndpoint name="datamanager"&gt;
+    &lt;PreFlow name="PreFlow"&gt;
+        &lt;!-- PreFlow policies --&gt;
+    &lt;/PreFlow&gt;
+    &lt;PostFlow name="PostFlow"&gt;
+        &lt;!-- PostFlow policies --&gt;
+    &lt;/PostFlow&gt;
+    &lt;LocalTargetConnection&gt;
+        &lt;APIProxy&gt;data-manager&lt;/APIProxy&gt;
+        &lt;ProxyEndpoint&gt;default&lt;/ProxyEndpoint&gt;
+    &lt;/LocalTargetConnection&gt;
+&lt;/TargetEndpoint&gt;
+</pre>
+
+  <h2 id="connectingproxiesbypath">Connecting proxies by path</h2>
+
+  <p>You can specify the target proxy by its endpoint path. You might want to do it this way when
+  you don't know the proxy name, or when the name might change.</p>
+
+  <p>If your proxy is simply the consumer of the target proxy -- such as when you're not developing
+  both -- the path might be the most reliable way to connect. For example, if the proxy you're
+  connecting to is developed and maintained by another team, you might want to connect using a
+  reliable endpoint path.</p>
+
+  <p>The following example specifies a target proxy at
+  <code>/v1/streetcarts/foodcarts/data-manager</code>, where the host is assumed to be the same as
+  the current proxy. For reference information, see <a href=
+  "/api-platform/reference/policies/api-proxy-configuration-reference.html">API proxy configuration
+  reference</a>.</p>
+
+  <pre class="prettyprint">
+&lt;TargetEndpoint name="datamanager"&gt;
+    &lt;PreFlow name="PreFlow"&gt;
+        &lt;!-- PreFlow policies --&gt;
+    &lt;/PreFlow&gt;
+    &lt;PostFlow name="PostFlow"&gt;
+        &lt;!-- PostFlow policies --&gt;
+    &lt;/PostFlow&gt;
+    &lt;LocalTargetConnection&gt;
+        &lt;Path&gt;/v1/streetcarts/foodcarts/data-manager&lt;/Path&gt; 
+    &lt;/LocalTargetConnection&gt;
+&lt;/TargetEndpoint&gt;
+</pre>
+
+  <h2 id="connectingproxieswiththemanagementconsole">Connecting proxies with the management
+  console</h2>
+
+  <p>You can create proxy chaining connections using the Edge management console.</p>
+
+  <ol>
+    <li>Open the proxy that will be consuming the target proxy.</li>
+
+    <li>In the <b>Navigator</b>, click the plus sign next to <b>Target Endpoints</b>.</li>
+
+    <li>In the <b>New Target Endpoint</b> dialog, enter the name of the target endpoint.</li>
+
+    <li>Beneath the <b>Target Endpoint Name</b> box, select one of the following:
+
+      <ul>
+        <li>
+          <b>Proxy Chaining</b> to select from a list of proxies already in the organization and
+          environment.
+
+          <ol>
+            <li>In the <b>Proxy Name</b> dropdown, select the target proxy.</li>
+
+            <li>In the <b>Proxy Endpoint</b> box, enter the target proxy endpoint path you want to
+            connect to.</li>
+          </ol>
+        </li>
+
+        <li><b>Path Chaining</b> to enter the target proxy base path, such a
+        <code>/mypath/myproxy/myendpoint</code>.</li>
+      </ul>
+    </li>
+
+    <li>Click <b>Add</b>.</li>
+  </ol>
+
+  <h2 id="chainedproxiesapiproductsandsecurity">Chained proxies, API products, and security</h2>
+
+  <p>Proxy chaining is best for cases where both proxies are in the same API product. By default,
+  both are available to clients. Apigee currently doesn't support bundling the second proxy in a
+  separate API product that clients shouldn't have access to.</p>
+
+  <p>If your second proxy must be secured against direct client requests, consider adding logic to
+  have your second proxy examine the IP address of the client. In the case of a call made via
+  chaining, the IP address will be local. Your code can validate that it is local before allowing
+  processing to continue. See the <a href=
+  "/api-platform/reference/policies/access-control-policy.html">Access Control policy</a> for one
+  way to do this.</p>
+
+  {% endblock %}

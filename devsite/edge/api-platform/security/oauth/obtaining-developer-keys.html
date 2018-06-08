@@ -1,0 +1,120 @@
+  {% extends "_base.html" %} {% block title %}Obtaining client credentials{% endblock %} {% block body %}
+
+  <p>This topic shows you how to obtain client credentials (also called developer keys) for
+  development and testing purposes using an out-of-the-box developer app and product. For
+  production situations, the steps are similar, however you would use your own developer apps,
+  products, and other entities.</p>
+
+  <h2 id="whatareclientcredentials">What are client credentials?</h2>
+
+  <p>To participate in any OAuth 2.0 flow, all client apps must be registered with Apigee Edge (the
+  authorization server). When you register your app, you will be assigned two keys: the
+  <strong>Consumer ID</strong> and <strong>Consumer Secret</strong>. The Consumer ID is a
+  public key and Consumer Secret must never be made public. These client credential keys allow
+  Apigee Edge to uniquely identify the client app.</p>
+
+  <aside class="note"><b>Note:</b> Terminology: The <a href=
+  "https://tools.ietf.org/html/draft-ietf-oauth-v2-31">IETF OAuth 2.0 specification</a> refers to
+  client credentials as the client identifier and client secret. The Apigee Edge management UI
+  refers to them as the Consumer ID and the Consumer Secret. These terms are
+  synonymous. </aside>
+
+  <h2 id="quicksteps">Quick steps</h2>
+
+  <p>These quick steps show you how to obtain developer keys for one of the out-of-the-box apps
+  that are configured when you created your Apigee Edge organization. You can use these keys mainly
+  for development and testing: </p>
+
+  <ol>
+    <li>Log in to your Apigee Edge account.</li>
+
+    <li>Select <strong>Publish &gt; Developer Apps</strong> to open the Developer Apps overview
+    page. </li>
+
+    <li>Click <strong>Weather App </strong>to open the Weather App overview page. Notice
+    that the developer associated with the app is Nicolai Tesla. This app and developer were
+    provisioned by default when your organization was created. All developer apps must have a
+    developer associated with them. </li>
+
+    <li>In the <strong>Products</strong> section, next to the Premium Weather API product, click
+    <strong>Show</strong> to expose the Consumer ID and Consumer Secret values.</li>
+
+    <li>Copy and save those two values -- you will need to use them later to make API calls to
+    obtain access tokens.</li>
+  </ol>
+
+  <aside class="key-point"><b>Tip:</b> It's important to be sure that the product associated with
+  the keys is enabled for the same environment where the API you are securing is deployed. If not,
+  you will receive this error when the access token is validated: Invalid API call as no
+  apiproduct match found. For more information, see this helpful <a href=
+  "https://community.apigee.com/content/kbentry/6831/oauth20-access-token-verification-throws-invalid-a.html">
+  article on the Apigee Community</a>. </aside>
+
+  <h2 id="gettingclientcredentialswithedgeapis">Getting client credentials with Edge APIs</h2>
+
+  <p>You can also obtain the consumer key and secret for an app by calling the management API.
+  First, get the list of apps in your organization by making the following API call:</p>
+  <pre class="terminal">
+$ curl https://api.enterprise.apigee.com/v1/o/{org_name}/apps \
+-u email:password 
+</pre>
+
+  <p>This call returns a list of apps by <strong>app ID</strong>.</p>
+  <pre class="prettyprint">
+[ "da496fae-2a04-4a5c-b2d0-709278a6f9db", "50e3e831-175b-4a05-8fb6-05a54701af6e" ]
+</pre>
+
+  <p>You can retrieve an app's profile by making a simple GET call on the app ID:</p>
+  <pre class="terminal">
+$ curl https://api.enterprise.apigee.com/v1/o/{org_name}/apps/{app_id} \
+-u email:password 
+</pre>
+
+  <p>For example:</p>
+  <pre class="terminal">
+$ curl https://api.enterprise.apigee.com/v1/o/{org_name}/apps/da496fae-2a04-4a5c-b2d0-709278a6f9db \
+-u email:password 
+</pre>
+
+  <p>The API call returns the profile of the app you specified. For example, an app profile
+  for <strong>weatherapp</strong> has the following JSON representation:</p>
+  <pre class="prettyprint">
+{
+  "accessType" : "read",
+  "apiProducts" : [ ],
+  "appFamily" : "default",
+  "appId" : "da496fae-2a04-4a5c-b2d0-70928a6f9db",
+  "attributes" : [ ],
+  "callbackUrl" : "http://weatherapp.com",
+  "createdAt" : 1380290158713,
+  "createdBy" : "noreply_admin@apigee.com",
+  "credentials" : [ {
+    "apiProducts" : [ {
+      "apiproduct" : "PremiumWeatherAPI",
+      "status" : "approved"
+    } ],
+    "attributes" : [ ],
+    "consumerKey" : "bBGAQrXgivA9lKu7NMPyYpVKNhGar6K",
+    "consumerSecret" : "hAr4Gn0gA9vyvI4",
+    "expiresAt" : -1,
+    "issuedAt" : 1380290161417,
+    "scopes" : [ ],
+    "status" : "approved"
+  } ],
+  "developerId" : "5w95xGkpnjzDBT4",
+  "lastModifiedAt" : 1380290158713,
+  "lastModifiedBy" : "noreply_admin@apigee.com",
+  "name" : "weatherapp",
+  "scopes" : [ ],
+  "status" : "approved"
+}
+</pre>
+
+  <p>Note the values
+  for <code>consumerKey</code> and <code>consumerSecret</code>.</p>
+
+  <h2 id="deeperdive">Deeper dive</h2>
+
+  <p>For a more detailed discussion of app registration and key management, see <a href=
+  "/api-platform/publish/creating-apps-surface-your-api.html">Register apps and manage API
+  keys</a>.</p>{% endblock %}

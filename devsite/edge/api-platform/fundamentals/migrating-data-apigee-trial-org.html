@@ -1,0 +1,137 @@
+  {% extends "_base.html" %} {% block title %}Migrating data from an Apigee trial org{% endblock %}
+  {% block body %}
+
+  <p>You can migrate code in your Apigee Edge organization from one trial org to another. Using the
+  Apigee migrate tool, you can migrate most of the code, leaving just a few pieces to copy over
+  manually.</p>
+
+  <p>The Apigee migrate tool is an open source tool that uses a JavaScript task runner, Grunt. The
+  tool makes calls to Apigee management APIs for both the orgs you're working with.</p>
+
+  <p>You'll find the tool in the <a href="https://github.com/apigeecs/apigee-migrate-tool">migrate
+  tool GitHub repository</a>.</p>
+
+  <aside class="note"><b>Note:</b> The migration tool supports only basic authentication when
+  authenticating with your Apigee orgs. If you're using 2-factor authentication or bearer tokens,
+  you may need to temporarily disable that requirement in order to use the tool.</aside>
+
+  <h2 id="datamigrated">Data migrated</h2>
+
+  <p>With the tool, you can import and export data about:</p>
+
+  <ul>
+    <li>developers</li>
+
+    <li>proxies (latest version)</li>
+
+    <li>shared flows</li>
+
+    <li>products</li>
+
+    <li>apps</li>
+
+    <li>app keys</li>
+
+    <li>KVMs (org and env)</li>
+  </ul>
+
+  <p>You can also import the following kinds of data from a CSV file to an Apigee org:</p>
+
+  <ul>
+    <li>developers</li>
+
+    <li>apps</li>
+
+    <li>app keys</li>
+
+    <li>KVMs (org and env)</li>
+  </ul>
+
+  <h2 id="datanotmigrated">Data not migrated</h2>
+
+  <p>Please note that the following entities won't be migrated as part of this tool. In most cases,
+  you'll need to migrate these manually using the Apigee Edge console.</p>
+
+  <ul>
+    <li>Cache resources and cached values. Please recreate the cache resources before deploying
+    your proxies.
+
+      <ul>
+        <li>For more, see <a href="/api-platform/cache/manage-caches-environment.html">Creating and
+        editing an environment cache</a>.</li>
+      </ul>
+    </li>
+
+    <li>Environment resources such as target servers, virtualhosts, and keystores. For more
+    information, see:
+
+      <ul>
+        <li><a href="/api-platform/deploy/load-balancing-across-backend-servers.html">Load
+        balancing across backend servers</a></li>
+
+        <li><a href="/api-platform/fundamentals/virtual-hosts.html">About virtual hosts
+        (Beta)</a></li>
+
+        <li><a href="/api-platform/system-administration/keystores-and-truststores.html">Keystores
+        and Truststores</a></li>
+      </ul>
+    </li>
+
+    <li>KVM entries for "encrypted" key-value maps. Encrypted values can't be retrieved using the
+    management API. Make a note of the values you're using in your old org, then add these values
+    manually to the new org.
+
+      <ul>
+        <li>See <a href="/api-platform/cache/key-value-maps.html">Working with key value
+        maps</a>.</li>
+      </ul>
+    </li>
+
+    <li>Organization or environment level resources such as .jar files, .js files, and so on.</li>
+
+    <li>Analytics data. This data can't be migrated.</li>
+
+    <li>Flow hooks. You can use the UI to download these and import them into the new org.
+
+      <ul>
+        <li>For more, see <a href="/api-platform/fundamentals/flow-hooks.html">Attaching a shared
+        flow using a flow hook</a>.</li>
+      </ul>
+    </li>
+  </ul>
+
+  <h2 id="usingtheapigeemigratetool">Using the Apigee migrate tool</h2>
+
+  <p>The Apigee migrate tool is an open source Node.js tool that uses the task runner, Grunt. Once
+  you download the tool, you configure it with information about your old and new orgs. Then you
+  run migrate tool tasks to export and import the parts of your org.</p>
+
+  <p>At a high level, migration includes the following steps:</p>
+
+  <ol>
+    <li>Collect information about the orgs you're migrating from and importing to. For example,
+    you'll need:
+
+      <ul>
+        <li>Base URL for management API calls, such as https://api.enterprise.apigee.com</li>
+
+        <li>An org admin's user ID and password. For example, these are the credentials used to log
+        in to the Apigee Edge management console.</li>
+
+        <li>The old org's name and environment.</li>
+
+        <li>The name of the target org environment to which the migrated pieces are deployed.</li>
+      </ul>
+    </li>
+
+    <li>Configure the tool with information about your orgs.</li>
+
+    <li>Run Grunt tasks defined in the migration tool to export org data to your local drive, then
+    import the data to another org.</li>
+
+    <li>Verify that the data you migrated works as it should in the new org.</li>
+  </ol>
+
+  <p>To get started with migration, use <a href=
+  "https://github.com/apigeecs/apigee-migrate-tool">documentation in the migration tool
+  repository</a> to install, configure, and run the tool.</p>{% endblock %}

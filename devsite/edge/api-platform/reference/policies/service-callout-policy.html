@@ -1,0 +1,1087 @@
+  {% extends "_base.html" %} {% block title %}Service Callout policy{% endblock %} {% block body %}
+  <img src="/api-platform/images/icon_policy_service-callout.jpg">
+
+  <h3>What</h3>
+
+  <p>The Service Callout policy lets you call to an another service from your API proxy flow. You
+  can make callouts to either an external service (such as an external RESTful service endpoint) or
+  internal services (such as an API proxy in the same organization and environment).</p>
+
+  <ul>
+    <li>In an external use case, you make a callout to a third-party API that's external to your
+    proxy. The response from the third-party API is parsed and inserted in your API's response
+    message, enriching and "mashing up" the data for app end users. You can also make a request
+    using the Service Callout policy in the request flow, then pass the information in the response
+    to the TargetEndpoint of the API proxy.</li>
+
+    <li>In another use case, you call a proxy that's in the same organization and environment as
+    the one you're calling from. For example, you might find this useful when you have a proxy that
+    offers some discrete low-level functionality that one or more other proxies will consume. For
+    example, a proxy that exposes create/read/update/delete operations with a backend data store
+    could be the target proxy for multiple other proxies that expose the data to clients.</li>
+  </ul>
+
+  <p>The policy supports requests over HTTP and HTTPS.</p>
+
+  <h3 id="samples"><a id="Samples" name="Samples"></a>Samples</h3><!-- Begin tab list -->
+  <!-- End tab list --><!-- Begin tabbed region -->
+
+  <div class="ds-selector-tabs">
+    <section>
+      <h3 class="two-line-tab">Local call to an internal proxy</h3>
+      <pre class="prettyprint">
+&lt;LocalTargetConnection&gt;
+    &lt;APIProxy&gt;data-manager&lt;/APIProxy&gt;
+    &lt;ProxyEndpoint&gt;default&lt;/ProxyEndpoint&gt;
+&lt;/LocalTargetConnection&gt;
+</pre>
+
+      <p>This example creates a callout to a local API proxy (that is, one in the same organization
+      and environment) called <code>data-manager</code>, specifying its proxy endpoint whose name
+      is <code>default</code>.</p>
+    </section>
+
+    <section>
+      <h3 class="two-line-tab">URL as a variable</h3>
+      <pre class="prettyprint">
+&lt;HTTPTargetConnection&gt;
+    &lt;URL&gt;http://example.com/{request.myResourcePath}&lt;/URL&gt;
+&lt;/HTTPTargetConnection&gt;
+</pre>
+
+      <p>This example uses a variable in the URL to dynamically populate the URL of the target. The
+      protocol portion of the URL, <span style=
+      "font-family: 'courier new', courier, monospace;">http://</span>, cannot be specified by a
+      variable. Also, you must use separate variables for the domain portion of the URL and
+      for the rest of the URL.</p>
+    </section>
+
+    <section>
+      <h3 class="two-line-tab">Google geocoding / define request</h3>
+      <pre class="prettyprint">
+&lt;ServiceCallout name="ServiceCallout-GeocodingRequest1"&gt;
+    &lt;DisplayName&gt;Inline request message&lt;/DisplayName&gt;
+    &lt;Request variable="authenticationRequest"&gt;
+      &lt;Set&gt;
+        &lt;QueryParams&gt;
+          &lt;QueryParam name="address"&gt;{request.queryparam.postalcode}&lt;/QueryParam&gt;
+          &lt;QueryParam name="region"&gt;{request.queryparam.country}&lt;/QueryParam&gt;
+          &lt;QueryParam name="sensor"&gt;false&lt;/QueryParam&gt;
+        &lt;/QueryParams&gt;
+      &lt;/Set&gt;
+    &lt;/Request&gt;
+    &lt;Response&gt;GeocodingResponse&lt;/Response&gt;
+    &lt;Timeout&gt;30000&lt;/Timeout&gt;
+    &lt;HTTPTargetConnection&gt;
+      &lt;URL&gt;http://maps.googleapis.com/maps/api/geocode/json&lt;/URL&gt;
+    &lt;/HTTPTargetConnection&gt;
+&lt;/ServiceCallout&gt;
+</pre><code>http://maps.googleapis.com/maps/api/geocode/json</code>
+
+      <p>Instead of using a policy such as Assign Message to create the request object, you can
+      define it directly in the Service Callout policy. In this example, the Service Callout policy
+      sets the values of three query parameters passed to the external service. You can create an
+      entire request message in the Service Callout policy that specifies a payload, encoding type
+      such as <span style="font-family:courier new,courier,monospace;">application/xml</span>,
+      headers, form parameters, etc.</p>
+
+      <p>Here's another example where the request is formed before reaching the Service Callout
+      policy.</p>
+      <pre class="prettyprint">
+&lt;ServiceCallout name="ServiceCallout-GeocodingRequest2"&gt;
+    &lt;Request clearPayload="false" variable="GeocodingRequest"/&gt;
+    &lt;Response&gt;GeocodingResponse&lt;/Response&gt;
+    &lt;Timeout&gt;30000&lt;/Timeout&gt;
+    &lt;HTTPTargetConnection&gt;
+      &lt;URL&gt;http://maps.googleapis.com/maps/api/geocode/json&lt;/URL&gt;
+    &lt;/HTTPTargetConnection&gt;
+&lt;/ServiceCallout&gt;
+</pre>
+
+      <p>The content of the request message is extracted from a variable called <span style=
+      "font-family:courier new,courier,monospace;">GeocodingRequest</span> (which could be
+      populated, for example, by an AssignMessage policy). The response message is assigned to the
+      variable called <span style=
+      "font-family:courier new,courier,monospace;">GeocodingResponse</span>, where it is a
+      available to be parsed by an Extract Variables policy or by custom code written in JavaScript
+      or Java. The policy waits 30 seconds for the response from the Google Geocoding API before
+      timing out.</p>
+
+      <p>For a complete sample API proxy that uses this example Service Callout, along with the
+      Assign Message and Extract Variables policies, see <a href=
+      "/api-platform/samples/cookbook/using-policy-composition.html">Using policy
+      composition</a>. </p>
+    </section>
+
+    <section>
+      <h3 class="two-line-tab">Call target servers</h3>
+      <pre class="prettyprint">
+&lt;ServiceCallout async="false" continueOnError="false" enabled="true" name="service-callout"&gt;
+    &lt;DisplayName&gt;service-callout&lt;/DisplayName&gt;
+    &lt;Properties/&gt;
+    &lt;Request clearPayload="true" variable="myRequest"&gt;
+        &lt;IgnoreUnresolvedVariables&gt;false&lt;/IgnoreUnresolvedVariables&gt;
+    &lt;/Request&gt;
+    &lt;Response&gt;myResponse&lt;/Response&gt;
+    &lt;HTTPTargetConnection&gt;
+        &lt;LoadBalancer&gt;
+            &lt;Algorithm&gt;RoundRobin&lt;/Algorithm&gt;
+            &lt;Server name="httpbin"/&gt;
+            &lt;Server name="yahoo"/&gt;
+        &lt;/LoadBalancer&gt;
+        &lt;Path&gt;/get&lt;/Path&gt;
+    &lt;/HTTPTargetConnection&gt;
+&lt;/ServiceCallout&gt;
+</pre>
+
+      <p>This policy uses the LoadBalancer attribute to call target servers and do load balancing
+      across them. In this example, load is distributed across two target servers named "httpbin"
+      and "yahoo". For information about setting up Target Servers for your proxy and configuring
+      load balancing, see <a href=
+      "/api-platform/deploy/load-balancing-across-backend-servers.html">Load balancing across
+      backend servers</a>.</p>
+    </section>
+  </div><!-- End tabbed region. -->
+  <hr>
+
+  <h2 id="usage">About the Service Callout policy</h2>
+
+  <p>There are many scenarios where you can use a Service Callout policy in your API proxy. For
+  example, you can configure an API proxy to make calls to an external service to deliver
+  geolocation data, customer reviews, items from a partner&#8217;s retail catalog, and so on.</p>
+
+  <aside class="note"><b>Sample:</b> <strong>Learn by doing!</strong><br>
+  If you want to see Service Callout in action, check out this <a href=
+  "https://github.com/apigee/api-platform-samples/tree/master/learn-edge/service-callout-1" target=
+  "_blank">Learn by doing example</a> in the Apigee GitHub samples. Just clone the repository and
+  follow the instructions in that topic. The example uses Assign Message to set a request path,
+  then uses a Service Callout policy to make the request to an external service.</aside>
+
+  <p>A callout is typically used with two other policies: Assign Message and Extract Variables.</p>
+
+  <ul>
+    <li><strong>Request</strong>: Assign Message populates the request message sent to the remote
+    service.</li>
+
+    <li>
+      <p><strong>Response</strong>: Extract Variables parses the response and extracts specific
+      content.</p>
+
+      <aside class="note"><b>Note:</b> The request and response message headers in a Service
+      Callout are already available as variables, as described in the <a href="#flowvariables">Flow
+      Variables</a> section. You do not need to extract those with the Extract Variables
+      policy.</aside>
+    </li>
+  </ul>
+
+  <p>The typical Service Callout policy composition involves:</p>
+
+  <ol>
+    <li><a href="/api-platform/reference/policies/assign-message-policy.html">Assign Message
+    policy</a>: Creates a request message, populates HTTP headers, query parameters, sets the HTTP
+    verb, etc.</li>
+
+    <li><strong>Service Callout</strong> policy: References a message created by the Assign Message
+    policy, defines a target URL for the external call, and defines a name for the response object
+    that the target service returns.<br>
+    <br>
+    For improved performance, you can also cache Service Callout responses, as described in this
+    Apigee Community thread: <a href=
+    "https://community.apigee.com/questions/34110/how-can-i-store-the-results-of-the-servicecallout.html"
+    target=
+    "_blank">https://community.apigee.com/questions/34110/how-can-i-store-the-results-of-the-servicecallout.html</a>.</li>
+
+    <li><a href="/api-platform/reference/policies/extract-variables-policy.html">Extract Variables
+    policy</a>: Typically defines a JSONPath or XPath expression that parses the message generated
+    by the Service Callout. The policy then sets variables containing the values parsed from the
+    Service Callout response.</li>
+  </ol>
+
+  <p>See <a href="/api-platform/samples/cookbook/using-policy-composition.html">Using policy
+  composition</a> for a complete sample API proxy that uses the Service Callout policy along with
+  the Assign Message and Extract Variables policies. The source code for that sample is available
+  at <a href="https://github.com/apigee/api-platform-samples">API Platform samples</a> on
+  GitHub.</p>
+
+  <aside class="note"><b>Note:</b> An alternative approach to Service Callout is an HTTPClient
+  written in JavaScript using the <a href=
+  "/api-platform/reference/javascript-object-model.html">JavaScript object model</a>. For a working
+  sample and code walkthrough, see <a href=
+  "/api-platform/samples/cookbook/implementing-http-clients-javascript.html">Implementing HTTP
+  clients in JavaScript</a>.</aside>
+
+  <h2 id="customerrorhandling">Custom error handling</h2>
+
+  <aside class="note"><b>Sample:</b> <strong>Learn by doing!</strong><br>
+  This <a href=
+  "https://github.com/apigee/api-platform-samples/tree/master/learn-edge/service-callout-2" target=
+  "_blank">Learn Edge</a> example shows you how to check the HTTP code in a Service Callout
+  response and throw a custom exception based on the value of the code. The example returns a
+  custom error message when the target service returns a 404 status. Just clone the repository and
+  follow the instructions in that topic. The example illustrates a common pattern for handling
+  service callout errors. .</aside>
+
+  <h2 id="elements">Element reference</h2>
+
+  <p>Following are elements and attributes you can configure on this policy:</p>
+  <pre class="prettyprint">
+&lt;ServiceCallout async="false" continueOnError="false" enabled="true" name="Service-Callout-1"&gt;
+    &lt;DisplayName&gt;Custom label used in UI&lt;/DisplayName&gt;
+    &lt;Request clearPayload="true" variable="myRequest"&gt;
+        &lt;IgnoreUnresolvedVariables&gt;false&lt;/IgnoreUnresolvedVariables&gt;
+        &lt;Remove&gt;
+            &lt;ReasonPhrase/&gt;
+            &lt;StatusCode/&gt;
+            &lt;Path/&gt;
+            &lt;Version/&gt;
+            &lt;Verb/&gt;
+         &lt;/Remove&gt;
+         &lt;Copy&gt;
+            &lt;ReasonPhrase/&gt;
+            &lt;StatusCode/&gt;
+            &lt;Path/&gt;
+            &lt;Version/&gt;
+            &lt;Verb/&gt;
+        &lt;/Copy&gt;
+        &lt;Add&gt;
+            &lt;Headers/&gt;
+            &lt;QueryParams/&gt;
+            &lt;FormParams/&gt;
+        &lt;/Add&gt;
+        &lt;Set&gt;
+            &lt;Headers/&gt;
+            &lt;QueryParams/&gt;
+            &lt;FormParams/&gt;
+            &lt;Payload/&gt;
+            &lt;ReasonPhrase/&gt;
+            &lt;StatusCode/&gt;
+            &lt;Path/&gt;
+            &lt;Version/&gt;
+            &lt;Verb/&gt;
+        &lt;/Set&gt;
+    &lt;/Request&gt;
+    &lt;Response&gt;calloutResponse&lt;/Response&gt;
+    &lt;Timeout&gt;60000&lt;/Timeout&gt;
+    &lt;HTTPTargetConnection&gt;
+        &lt;URL&gt;http://example.com&lt;/URL&gt;
+        &lt;LoadBalancer/&gt;
+        &lt;SSLInfo/&gt;
+        &lt;Properties/&gt;
+    &lt;/HTTPTargetConnection&gt;
+    &lt;LocalTargetConnection&gt;
+        &lt;APIProxy/&gt;
+        &lt;ProxyEndpoint/&gt;
+        &lt;Path/&gt;
+    &lt;/LocalTargetConnection&gt;
+&lt;/ServiceCallout&gt;
+</pre>
+
+  <h2 id="servicecalloutattributes">&lt;ServiceCallout&gt; attributes</h2>
+  <pre class="prettyprint">
+&lt;ServiceCallout async="false" continueOnError="false" enabled="true" name="Service-Callout-1"&gt;
+</pre>{% dynamic include /includes/___policies-parent-element-attributes %}
+
+  <h2 id="request">&lt;Request&gt; element</h2>
+
+  <p>Specifies the variable containing the request message that gets sent from the API proxy to the
+  other service. The variable can be created by a previous policy in the flow, or you can create it
+  inline in the Service Callout policy.</p>
+  <pre class="prettyprint">
+&lt;Request clearPayload="true" variable="myRequest"&gt;
+    &lt;IgnoreUnresolvedVariables&gt;false&lt;/IgnoreUnresolvedVariables&gt;
+    &lt;Remove&gt;
+        &lt;ReasonPhrase/&gt;
+        &lt;StatusCode/&gt;
+        &lt;Path/&gt;
+        &lt;Version/&gt;
+        &lt;Verb/&gt;
+    &lt;/Remove&gt;
+    &lt;Copy&gt;
+        &lt;ReasonPhrase/&gt;
+        &lt;StatusCode/&gt;
+        &lt;Path/&gt;
+        &lt;Version/&gt;
+        &lt;Verb/&gt;
+    &lt;/Copy&gt;
+    &lt;Add&gt;
+        &lt;Headers/&gt;
+        &lt;QueryParams/&gt;
+        &lt;FormParams/&gt;
+    &lt;/Add&gt;
+    &lt;Set&gt;
+        &lt;Headers/&gt;
+        &lt;QueryParams/&gt;
+        &lt;FormParams/&gt;
+        &lt;Payload/&gt;
+        &lt;ReasonPhrase/&gt;
+        &lt;StatusCode/&gt;
+        &lt;Path/&gt;
+        &lt;Version/&gt;
+        &lt;Verb/&gt;
+    &lt;/Set&gt;
+&lt;/Request&gt;
+</pre>
+
+  <p>The syntax for the <span style=
+  "font-family:courier new,courier,monospace;">&lt;Remove&gt;</span>, <span style=
+  "font-family:courier new,courier,monospace;">&lt;Copy&gt;</span>, <span style=
+  "font-family:courier new,courier,monospace;">&lt;Add&gt;</span>, and <span style=
+  "font-family:courier new,courier,monospace;">&lt;Set&gt;</span> tags is the same as for the
+  <a href="/api-platform/reference/policies/assign-message-policy.html">Assign Message
+  policy</a>.</p>
+<aside class="note">The sub-elements of <code>&lt;Set&gt;</code> and <code>&lt;Add&gt;</code> support the
+  variable string substitution feature called
+  <a href="/api-platform/reference/message-template-intro.html">message templating</a>.</aside>
+
+  <p>The policy returns an error if the request message cannot be resolved or is of an invalid
+  request message type.</p>
+
+  <p>In the simplest example, you pass a variable containing the request message that was populated
+  earlier in the flow of the API proxy:</p>
+  <pre class="prettyprint">
+&lt;Request clearPayload="true" variable="myRequest"/&gt;
+</pre>
+
+  <p>Or you can populate the request message sent to the external service in the Service Callout policy itself:</p>
+  <pre class="prettyprint">
+&lt;Request&gt;
+  &lt;Set&gt;
+    &lt;Headers&gt;
+      &lt;Header name="Accept"&gt;application/json&lt;/Header&gt;
+    &lt;/Headers&gt;
+    &lt;Verb&gt;POST&lt;/Verb&gt;
+    &lt;Payload contentType="application/json"&gt;{"message":"my test message"}&lt;/Payload&gt;
+  &lt;/Set&gt;
+  &lt;IgnoreUnresolvedVariables&gt;false&lt;/IgnoreUnresolvedVariables&gt;
+&lt;/Request&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td width=150><b>Default</b></td>
+
+        <td> If you omit the Request element, or any of its attributes, Edge assigns the
+          following <b>default values</b>:
+
+          <p><span style="font-family:courier new,courier,monospace;">&lt;Request
+          clearPayload="true" variable="servicecallout.request"/&gt;</span></p>
+
+          <p>Let's look at what these default falues mean. First, <code>clearPayload=true</code> means that a new
+            request object is created each time the ServiceCallout policy executes. This means that
+            the request and the request URI path are never reused. Second, the default variable
+            name, <code>servicecallout.request</code>, is a reserved name that is assigned to the request
+            if you do not supply a name.<p>
+            <p>It's important to know about this default name if you are using <a href="/api-platform/security/data-masking">data masking</a> -- if you omit the variable name,
+            you need to add <code>servicecallout.request</code> to your mask configuration. For example,
+            if you wanted to mask the Authorization header so that it does not appear in Trace sessions,
+            you would add the following to your masking configuration to capture the default name:</p>
+             <p> <code>servicecallout.request.header.Authorization</code>.</p></td>
+      </tr>
+      <tr>
+        <td><b>Presence</b></td>
+        <td>
+          Optional.
+        </td>
+      </tr>
+
+      <tr>
+        <td><b>Type</b></td>
+
+        <td>N/A</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="requestelement-attributes">Attributes</h3>
+
+  <table>
+    <tbody>
+      <tr>
+        <th scope="col">Attribute</th>
+
+        <th scope="col">Description</th>
+
+        <th scope="col">Default</th>
+
+        <th scope="col">Presence</th>
+      </tr>
+
+      <tr>
+        <td><span style="font-family:courier new,courier,monospace;">variable</span></td>
+
+        <td>
+          <p>Name of the variable that will contain the request message.</p>
+        </td>
+
+        <td><code>servicecallout.request</code></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><span style="font-family:courier new,courier,monospace;">clearPayload</span></td>
+
+        <td>
+          <p>If <code>true</code>, the variable containing the request message is cleared after the
+          request is sent to the HTTP target to free up the memory used by the request message.</p>
+
+          <p>Set the <span style="font-family:courier new,courier,monospace;">clearPayload</span>
+          option to false only if the request message is required after the Service Callout is
+          executed.</p>
+        </td>
+
+        <td>true</td>
+
+        <td>Optional</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="ignoreunresolvedvariables">&lt;Request&gt;/&lt;IgnoreUnresolvedVariables&gt; element</h3>
+
+  <p>When set to <span style="font-family:courier new,courier,monospace;">true</span>, the policy
+  ignores any unresolved variable error in the request.</p>
+  <pre class="prettyprint">
+&lt;Request clearPayload="true" variable="myRequest"&gt;
+    &lt;IgnoreUnresolvedVariables&gt;false&lt;/IgnoreUnresolvedVariables&gt;
+&lt;/Request&gt; 
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default</b></td>
+
+        <td>false</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type</b></td>
+
+        <td>Boolean</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="response">&lt;Response&gt; element</h2>
+
+  <p>Include this element when the API proxy logic requires the response from the remote call for
+  further processing.</p>
+
+  <p>When this element is present, it specifies the name of the variable that will contain the
+  response message received from the external service. The response from the target is assigned to
+  the variable only when the entire response is read successfully by the policy. If the remote call
+  fails for any reason, the policy returns an error.</p>
+
+  <p>If this element is omitted, the API proxy does not wait for a response; API Proxy flow
+  execution continues with any subsequent flow steps. Also, to state the obvious, with no
+  <code>Response</code> element, the response from the target is not available for processing by
+  subsequent steps, and there is no way for the proxy flow to detect a failure in the remote call.
+  A common use for omitting the <code>Response</code> element when using ServiceCallout: to log
+  messages to an external system.</p>
+  <pre class="prettyprint">
+ &lt;Response&gt;calloutResponse&lt;/Response&gt; 
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default</b></td>
+
+        <td>NA</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type</b></td>
+
+        <td>String</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="timeout">&lt;Timeout&gt; element</h2>
+
+  <p>The time in milliseconds that the Service Callout policy will wait for a response from the
+  target. You cannot set this value dynamically at runtime. If the Service Callout hits a timeout,
+  an HTTP 500 is returned, the policy fails, and the API proxy goes into an error state, as
+  described in <a href="/api-platform/fundamentals/fault-handling.html">Handling faults</a>.</p>
+  <pre class="prettyprint">
+&lt;Timeout&gt;60000&lt;/Timeout&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default</b></td>
+
+        <td>120000 milliseconds (120 seconds), the default HTTP timeout setting for Apigee
+        Edge</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type</b></td>
+
+        <td>Integer</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="httptargetconnection">&lt;HTTPTargetConnection&gt; element</h2>
+
+  <p>Provides transport details such as URL, TLS/SSL, and HTTP properties. See the <a href=
+  "/api-platform/reference/policies/api-proxy-configuration-reference.html#targetendpoint">TargetEndpoint
+  configuration reference</a>.</p>
+
+  <aside class="note"><b>Note:</b> You can use flow variables to construct the URL in an
+  <span style="font-family:courier new,courier,monospace;">&lt;HttpTargetConnection&gt;</span>
+  element. </aside>
+  <pre class="prettyprint">
+&lt;HTTPTargetConnection&gt;
+    &lt;URL&gt;http://example.com&lt;/URL&gt;
+    &lt;LoadBalancer/&gt;
+    &lt;SSLInfo/&gt;
+    &lt;Properties/&gt;
+&lt;/HTTPTargetConnection&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence</b></td>
+
+        <td>Required</td>
+      </tr>
+
+      <tr>
+        <td><b>Type</b></td>
+
+        <td>N/A</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="url">&lt;HTTPTargetConnection&gt;/&lt;URL&gt; element</h3>
+
+  <p>The URL to the service being called:</p>
+<aside class="note">The <code>&lt;URL&gt;</code> element supports the
+  variable string substitution feature called
+  <a href="/api-platform/reference/message-template-intro.html">message templating</a>.</aside>
+  <pre class="prettyprint">
+&lt;HTTPTargetConnection&gt;
+    &lt;URL&gt;http://example.com&lt;/URL&gt;
+&lt;/HTTPTargetConnection&gt;
+</pre>
+
+  <p>You can supply part of the URL dynamically with a variable. However, the protocol portion of
+  the URL, <span style="font-family:courier new,courier,monospace;">http://</span> below, cannot be
+  specified by a variable. In the next example, you use a variable to specify the value of a query
+  parameter:</p>
+  <pre class="prettyprint">
+&lt;URL&gt;http://example.com/forecastrss?w=${request.header.woeid}&lt;/URL&gt;
+</pre>
+
+  <p>Or, set a portion of the URL path with a variable:</p>
+  <pre class="prettyprint">
+&lt;URL&gt;http://example.com/{request.resourcePath}?w=${request.header.woeid}&lt;/URL&gt;
+</pre>
+
+  <p>If you want to use a variable to specify the domain and port of the URL, then use one variable
+  for the domain and port only, and a second variable for any other part of the URL:</p>
+  <pre class="prettyprint">
+&lt;URL&gt;http://{request.dom_port}/{request.resourcePath}&lt;/URL&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence</b></td>
+
+        <td>Required</td>
+      </tr>
+
+      <tr>
+        <td><b>Type</b></td>
+
+        <td>String</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="sslinfo">&lt;HTTPTargetConnection&gt;/&lt;SSLInfo&gt; element</h3>
+
+  <p>The TLS/SSL configuration to the backend service. For help on TLS/SSL configuration, see
+  <a href=
+  "/api-platform/system-administration/configuring-ssl-edge-backend-service.html">Configuring TLS
+  from Edge to the backend (Cloud and Private Cloud)</a> and "TLS/SSL TargetEndpoint Configuration"
+  in <a href="/api-platform/reference/policies/api-proxy-configuration-reference.html">API proxy
+  configuration reference</a>.</p>
+  <pre class="prettyprint">
+&lt;HTTPTargetConnection&gt;
+    &lt;URL&gt;https://example.com&lt;/URL&gt;
+    &lt;SSLInfo&gt;
+        &lt;Enabled&gt;true&lt;/Enabled&gt;
+        &lt;ClientAuthEnabled&gt;true&lt;/ClientAuthEnabled&gt;
+        &lt;KeyStore&gt;myKeystore&lt;/KeyStore&gt;
+        &lt;KeyAlias&gt;myKey&lt;/KeyAlias&gt;
+        &lt;TrustStore&gt;myTruststore&lt;/TrustStore&gt;
+        &lt;Ciphers/&gt;
+        &lt;Protocols/&gt;
+    &lt;/SSLInfo&gt;
+&lt;/HTTPTargetConnection&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type</b></td>
+
+        <td>N/A</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="properties">&lt;HTTPTargetConnection&gt;/&lt;Properties&gt; element</h3>
+
+  <p>HTTP transport properties to the backend service. For more information, see <a href=
+  "/api-platform/reference/policies/endpoint-properties-reference.html">Endpoint properties
+  reference</a>.</p>
+  <pre class="prettyprint">
+&lt;HTTPTargetConnection&gt;
+    &lt;URL&gt;http://example.com&lt;/URL&gt;
+    &lt;Properties&gt;
+        &lt;Property name="allow.http10"&gt;true&lt;/Property&gt;
+        &lt;Property name="request.streaming.enabled"&gt;true&lt;/Property&gt;
+        &lt;Property name="request.retain.headers"&gt;
+          User-Agent,Referer,Accept-Language
+        &lt;/Property&gt;
+    &lt;/Properties&gt;
+&lt;/HTTPTargetConnection&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type</b></td>
+
+        <td>N/A</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="properties">&lt;HTTPTargetConnection&gt;/&lt;LoadBalancer&gt; element</h3>
+
+  <p>Call one or more target servers and do load balancing on them. See the <strong>Call target
+  servers</strong> sample in the <a href="#Samples">Samples section</a>. See also <a href=
+  "/api-platform/deploy/load-balancing-across-backend-servers.html">Load balancing across backend
+  servers</a>. See also <a href=
+  "https://community.apigee.com/questions/25526/target-endpointserver-callout.html">this community
+  post</a> that discusses ways to call target servers from both the Service Callout policy and
+  using Route Rules. </p>
+  <pre class="prettyprint">
+&lt;HTTPTargetConnection&gt; &lt;LoadBalancer&gt; &lt;Algorithm&gt;RoundRobin&lt;/Algorithm&gt; &lt;Server name="httpbin"/&gt; &lt;Server name="yahoo"/&gt; &lt;/LoadBalancer&gt; &lt;Path&gt;/get&lt;/Path&gt; &lt;/HTTPTargetConnection&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type</b></td>
+
+        <td>N/A<br>
+         </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="localtargetconnection">&lt;LocalTargetConnection&gt; element</h2>
+
+  <p>Specifies a local proxy -- that is, a proxy in the same organization and environment -- as the
+  target of service callouts.</p>
+
+  <p>To further specify the target, use either the <a href=
+  "#apiproxy"><code>&lt;APIProxy&gt;</code></a> and <a href=
+  "#proxyendpoint"><code>&lt;ProxyEndpoint&gt;</code></a> elements, or the <a href=
+  "#localtargetconnection-path"><code>&lt;Path&gt;</code></a> element.</p>
+  <pre class="prettyprint">
+&lt;LocalTargetConnection&gt;
+   &lt;APIProxy/&gt;
+   &lt;ProxyEndpoint/&gt;
+   &lt;Path/&gt;
+&lt;/LocalTargetConnection&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence</b></td>
+
+        <td>Required</td>
+      </tr>
+
+      <tr>
+        <td><b>Type</b></td>
+
+        <td>N/A</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="apiproxy">&lt;LocalTargetConnection&gt;/&lt;APIProxy&gt; element</h3>
+
+  <p>The name of an API proxy that is the target of a local call. The proxy must be in the same
+  organization and environment as the proxy making the call.</p>
+  <pre class="prettyprint">
+&lt;LocalTargetConnection&gt;
+   &lt;APIProxy&gt;data-manager&lt;/APIProxy&gt;
+   &lt;ProxyEndpoint&gt;default&lt;/ProxyEndpoint&gt;
+&lt;/LocalTargetConnection&gt;
+</pre>
+
+  <p>Along with the <code>&lt;APIProxy&gt;</code> element, include the
+  <code>&lt;ProxyEndpoint&gt;</code> element to specify the name of the proxy endpoint that should
+  be targeted for the call.</p>
+  <pre class="prettyprint">
+&lt;LocalTargetConnection&gt;
+   &lt;APIProxy/&gt;
+   &lt;ProxyEndpoint/&gt;
+&lt;/LocalTargetConnection&gt; 
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence</b></td>
+
+        <td>Required</td>
+      </tr>
+
+      <tr>
+        <td><b>Type</b></td>
+
+        <td>String</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="proxyendpoint">&lt;LocalTargetConnection&gt;/&lt;ProxyEndpoint&gt; element</h3>
+
+  <p>The name of the proxy endpoint that should be the target of calls. This is a proxy endpoint in
+  the API proxy specified with the <code>&lt;APIProxy&gt;</code> element.</p>
+  <pre class="prettyprint">
+&lt;LocalTargetConnection&gt;
+   &lt;APIProxy&gt;data-manager&lt;/APIProxy&gt;
+   &lt;ProxyEndpoint&gt;default&lt;/ProxyEndpoint&gt;
+&lt;/LocalTargetConnection&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type</b></td>
+
+        <td>N/A</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="localtargetconnection-path">&lt;LocalTargetConnection&gt;/&lt;Path&gt; element</h3>
+
+  <p>A path to the endpoint that is being targeted. The endpoint must refer to a proxy in the same
+  organization and environment as the proxy making the call.</p>
+
+  <p>Use this instead of a <code>&lt;APIProxy&gt;/&lt;ProxyEndpoint&gt;</code> pair when you don't
+  know -- or can't rely on -- the proxy name. The path might be a reliable target.</p>
+  <pre class="prettyprint">
+&lt;LocalTargetConnection&gt;
+   &lt;Path&gt;/data-manager&lt;/Path&gt;
+&lt;/LocalTargetConnection&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type</b></td>
+
+        <td>N/A</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="schemas">Schemas</h2>
+
+  <aside class="note"><b>Sample:</b> See our <a href=
+  "https://github.com/apigee/api-platform-samples/tree/master/schemas/policy">GitHub
+  repository</a> samples for the most recent schemas.</aside>
+
+  <h2 id="flowvariables">Flow variables</h2>
+
+  <p>Flow variables enable dynamic behavior of policies and Flows at runtime, based on HTTP
+  headers, message content, or Flow context. The following predefined Flow variables are available
+  after a Service Callout policy executes. For more information about Flow variables, see <a href=
+  "/api-platform/reference/variables-reference.html">Variables reference</a>.</p>
+
+  <p>Service Callouts have their own request and response, and you can access that data through
+  variables. Because the main message is using the <code>request.*</code> and
+  <code>response.*</code> variable prefixes, use the <code>myrequest.*</code> and
+  <code>calloutResponse.*</code> prefixes (the defaults in the Service Callout configuration) to
+  get message data specific to the Service Callout. The first example in the following table shows
+  how you'd get HTTP headers in the Service Callout.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="text-align: left;">Variable</th>
+
+        <th style="text-align: left;">Description</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td>
+          <p>Following is an example of getting Service Callout request and response headers
+          similar to how you would get headers from the main request and response.</p>
+
+          <p><code><em>calloutResponse</em>.header.<em>HeaderName</em></code></p>
+
+          <p><code><em>myRequest</em>.header.<em>HeaderName</em></code></p>
+
+          <p>where <em>calloutResponse</em> is the variable name for the Response in the Service
+          Callout, and <em>myRequest</em> is the variable name for the Request. For example:</p>
+
+          <p><code>calloutResponse.header.Content-Length</code></p>
+
+          <p>returns the Content-Length header of the Service Callout response.</p>
+        </td>
+
+        <td>
+          <p><strong>Scope</strong>: From the Service Callout forward<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read/Write</p>
+
+          <p>A message header in the Service Callout request or response. For example, if the API
+          proxy target is http://example.com, and the Service Callout target is
+          http://mocktarget.apigee.net, these variables are the headers for the callout to
+          http://mocktarget.apigee.net.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td><code>servicecallout.requesturi</code></td>
+
+        <td>
+          <p><strong>Scope</strong>: From the Service Callout request forward<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read/Write</p>
+
+          <p>The TargetEndpoint URI for a ServiceCallout policy. The URI is the TargetEndpoint URL
+          without the protocol and domain specification.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td><code>servicecallout.{policy-name}.target.url</code></td>
+
+        <td>
+          <p><strong>Scope</strong>: From the Service Callout request forward<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read/Write</p>
+
+          <p>The target URL for a the Service Callout. </p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><code>calloutResponse.content</code></p>
+
+          <p>where <code>calloutResponse</code> is the <code>&lt;Response&gt;</code>variable name
+          in the Service Callout configuration.</p>
+        </td>
+
+        <td>
+          <p><strong>Scope</strong>: From the Service Callout response forward<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read/Write</p>
+
+          <p>The response body from the Service Callout.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td><code>servicecallout.{policy-name}.expectedcn</code></td>
+
+        <td>
+          <p><strong>Scope</strong>: From the Service Callout request forward<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read/Write</p>
+
+          <p>The expected Common Name of the TargetEndpoint as referred to in a ServiceCallout
+          policy. This is meaningful only when the TargetEndpoint refers to an TLS/SSL
+          endpoint.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td><code>servicecallout.{policy-name}.failed</code></td>
+
+        <td>
+          <p><strong>Scope</strong>: From the Service Callout response forward<br>
+          <strong>Type</strong>: Boolean<br>
+          <strong>Permission</strong>: Read/Write</p>
+
+          <p>Boolean indicating if the policy succeeded, false, or failed, true.</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="errors">Error codes</h2>
+
+  <p>Errors returned from Edge policies follow a consistent format as described in the <a href=
+  "/api-platform/reference/policies/error-code-reference.html">Error code reference</a>.</p>
+
+  <p>{% dynamic include /includes/___service-callout-policy-error-codes %}</p>
+
+  <h2 id="relatedtopics">Related topics</h2>
+
+  <aside class="note"><b>Sample:</b> For working samples of API proxies, see the <a href=
+  "/api-platform/samples/samples-reference.html">Samples list</a>.</aside>
+
+  <ul>
+    <li>Generate or modify messages: <a href=
+    "/api-platform/reference/policies/assign-message-policy.html">Assign Message policy</a></li>
+
+    <li>Extract variables: <a href=
+    "/api-platform/reference/policies/extract-variables-policy.html">Extract Variables
+    policy</a></li>
+
+    <li>Variables: <a href="/api-platform/reference/variables-reference.html">Variables
+    reference</a></li>
+
+    <li>TLS/SSL configuration
+
+      <ul>
+        <li><a href=
+        "/api-platform/system-administration/configuring-ssl-edge-backend-service.html">Configuring
+        TLS from Edge to the backend (Cloud and Private Cloud)</a></li>
+
+        <li>"TLS/SSL TargetEndpoint Configuration" in <a href=
+        "/api-platform/reference/policies/api-proxy-configuration-reference.html">API proxy
+        configuration reference</a></li>
+      </ul>
+    </li>
+
+    <li>HTTP transport properties: <a href=
+    "/api-platform/reference/policies/endpoint-properties-reference.html">Endpoint properties
+    reference</a></li>
+
+    <li>Alternative to Service Callout: HTTPClient written in JavaScript, see <a href=
+    "/api-platform/reference/javascript-object-model.html">JavaScript object model</a> and <a href=
+    "/api-platform/samples/cookbook/implementing-http-clients-javascript.html">Implementing HTTP
+    clients in JavaScript</a></li>
+  </ul>
+
+  {% endblock %}

@@ -1,0 +1,547 @@
+  {% extends "_base.html" %} {% block title %}Create API products{% endblock %} {% block body %}
+
+  <p>You can create an API product in the Apigee Edge management UI at <a href=
+  "https://enterprise.apigee.com">https://enterprise.apigee.com</a> or with the management
+  API. This procedure shows the management UI version. For the API version, (see <a href=
+  "/api-platform/publish/using-edge-management-api-publish-apis.html">Using the Edge management API
+  to Publish APIs</a>).</p>
+
+  <p>For an overview of API products, see <a href=
+  "/api-platform/publish/what-api-product.html">What is an API product?</a>.</p>
+
+  <div class="video">
+    <p>Watch this video to learn how to create an API product.</p>
+
+    <div style="text-align: left;">
+      <iframe allowfullscreen="" frameborder="0" height="315" src=
+      "https://www.youtube.com/embed/HWRSKZwCwkY" width="560"></iframe>
+    </div>
+  </div>
+
+  <aside class="warning">
+    <b>Warning:</b> In order for an API product to work correctly, do the following:
+
+    <ul>
+      <li>Include the appropriate security policy in your API proxies, such as Verify API Key or
+      OAuth v2.0. The API product uses API keys and/or OAuth access tokens to enforce API
+      access. For more, see <a href="/api-platform/security/api-keys.html">API keys</a> and
+      <a href="/api-platform/security/oauth/oauth-home.html">OAuth home</a>.</li>
+
+      <li>Add API proxies and/or resources to your API product to restrict access. Otherwise, any
+      app associated with the API product will be able to make calls to any API in your Edge
+      organization.</li>
+    </ul>
+  </aside>
+
+  <h2 id="understandkeyconcepts">Understand key concepts</h2>
+
+  <p>Review the following key concepts before you create your API products.</p>
+
+  <h3 id="understandkeyconcepts-apikeys">API keys</h3>
+
+  <p>When you register a developer's app in your organization, the app must be associated with at
+  least one API product. As a result of pairing an app with one or more API products, Edge assigns
+  the app a unique consumer key. When the app makes a request to an API resource in an API product,
+  the request must include its unique API key.</p>
+
+  <p>API key enforcement doesn't happen automatically. You must enforce API key checking in your
+  API proxies with a policy, such as the Verify API Key policy. Without some type of key
+  enforcement policy, anyone can make calls to your APIs. For more information, see <a href=
+  "/api-platform/reference/policies/verify-api-key-policy.html">Verify API Key policy</a>.</p>
+
+  <p>Bottom line, Edge automatically generates keys, but you have to enforce key checking in your
+  APIs.</p>
+
+  <h3 id="understandkeyconcepts-automaticversusmanualapproval">Automatic versus manual
+  approval</h3>
+
+  <p>By default, all key requests to an API product from an app are automatically approved. You can
+  instead choose to approve keys manually. If you set this option in the Edge management UI when
+  creating the product, you will have to approve key requests that come in from any app that adds
+  the API product. For more information, see <a href=
+  "/api-platform/publish/creating-apps-surface-your-api.html">Register apps and manage API
+  keys</a>.</p>
+
+  <h3 id="understandkeyconcepts-quotas">Quotas</h3>
+
+  <p>Quotas can protect your backend servers for high traffic, and differentiate your product line.
+  For example, you might want to bundle resources with a high quota as a premium product and use
+  the same bundle with a lower quota as a basic product. A quota can help protect your servers from
+  being overwhelmed if a product is particularly popular.</p>
+
+  <aside class="note">
+    <b>Note:</b> Setting quota limits on a product does not automatically enforce quota. It's
+    simply a default limit that can be referenced in quota policies. Here are some advantages of
+    setting a quota on the product for quota policies to reference:
+
+    <ul>
+      <li>Quota policies can use a uniform setting across all API proxies in the API product.</li>
+
+      <li>You can make runtime changes to the quota setting on an API product, and quota policies
+      that reference the value automatically have updated quota values.</li>
+    </ul>
+  </aside>
+
+  <p>For information on configuring quota, see <a href=
+  "/api-platform/reference/policies/quota-policy.html">Quota policy</a>. For information on on
+  using product quota settings in quota policies, see <a href=
+  "https://community.apigee.com/questions/1488/how-do-the-quota-settings-on-an-api-product-intera.html">
+  https://community.apigee.com/questions/1488/how-do-the-quota-settings-on-an-api-product-intera.html</a>.</p>
+
+  <h3 id="understandkeyconcepts-scope">Scope</h3>
+
+  <p>As an added level of security, you can define any OAuth scopes, as a comma-separated list,
+  that must be present in access tokens sent through the product. When you're creating a product,
+  you need to be aware of all the scopes your organization uses. The scopes you add to a product
+  must match existing scopes or the product is not secure.</p>
+
+  <p>For more information about using scopes with Edge OAuth policies, see <a href=
+  "/api-platform/security/oauth/working-scopes.html">Working with OAuth2 scopes</a>.</p>
+
+  <h2 id="createproduct"><a id="creating-an-api-product" name="creating-an-api-product" rel=
+  "bookmark" title="Creating an API product"></a>Creating an API product</h2>
+
+  <p>You can create an API product in the Apigee Edge management UI at <a href=
+  "https://enterprise.apigee.com">https://enterprise.apigee.com</a> or with the management API.
+  This procedure shows the management UI version. For the API version, (see <a href=
+  "/api-platform/publish/using-edge-management-api-publish-apis.html">Using the Edge management API
+  to Publish APIs</a>).</p>
+
+  <p><img alt="" src="/api-platform/images/create-product-1.png"></p>
+
+  <p>To create a new API product:</p>
+
+  <ol>
+    <li>Login to the Edge management UI at <a href=
+    "https://enterprise.apigee.com">https://enterprise.apigee.com</a>. (You can obtain a free
+    account at <a href="https://login.apigee.com/sign_up" target=
+    "_blank">https://login.apigee.com/sign_up</a>.)</li>
+
+    <li>Click the <strong>Publish</strong> tab, then <strong>Products</strong>.</li>
+
+    <li>Click the <strong>(+) Product</strong> button.</li>
+
+    <li>On the Add Products page, enter a <strong>Name</strong>. This will be the internal name of
+    the product. You cannot edit the name once the product is created. You cannot use special
+    characters in the name. </li>
+
+    <li>Enter a <strong>Display Name</strong>. The display name displays in the UI. The Display
+    Name field is automatically populated using the contents of the Name field, but you can edit
+    it. You can change the display name at any time by editing the product. You can use special
+    characters in the display  name. </li>
+
+    <li>Optionally, enter a <strong>Description</strong> for the API product. </li>
+
+    <li>Add at least one API proxy to the product. Click <strong>+API Proxy</strong>.<br>
+      This limits access to the API proxies listed. You'll configure resources later in this
+      procedure.<br>
+
+      <aside class="warning"><b>Warning:</b> If you don't select an API proxy, any app associated
+      with the product can make calls to any API in your entire organization.</aside>
+    </li>
+
+    <li>
+      <strong>Environment</strong>: Select the environments the product will allow access to. For
+      example, select the <strong>test</strong> environment for internal-facing products or the
+      <strong>prod</strong> environment for public-facing products.<br>
+
+      <aside class="note"><b>Note:</b> The environments you specify here restrict access to API
+      proxies based on where they are deployed. For example, if API proxy A is deployed to both the
+      test and prod environments, but the Product only has the test environment selected, then an
+      API call for the corresponding Developer App only allows access to API proxy A deployed in
+      the test environment.</aside>
+
+      <aside class="warning"><b>Warning:</b> If you select no environments, the product allows
+      access to <em>all</em> environments.</aside>
+    </li>
+
+    <li>Specify an <strong>Access</strong> level.
+
+      <ul>
+        <li><strong>Public</strong> - When developers create or modify their developer apps in
+        a Developer Services Portal, they can see and select public products.</li>
+
+        <li><strong>Internal only</strong> or <strong>Private</strong> - There is no
+        functional difference between these two options. When an API product is internal only or
+        private, the product doesn't appear in the Developer Services Portal. To let a developer
+        use the product, you must manually add the product to a developer app in the management UI
+        or with the management API. Once you do this, the developer sees the product associated
+        with her app in the Developer Services Portal.<br>
+        <img alt="" src="/api-platform/images/product-environment-create.png"></li>
+      </ul>
+    </li>
+
+    <li>Select a <strong>Key Approval Type</strong> as <strong>Automatic</strong> or
+    <strong>Manual</strong>.<br>
+      If you select automatic key approval, all key requests that come in from any app that uses
+      this API product are automatically approved. If you select manual key approval, you will have
+      to approve key requests that come in from any app that uses this API product. To manually
+      approve keys:
+
+      <ul>
+        <li><strong>UI: Publish &gt; Developer Apps &gt; developer_app &gt;</strong> click
+        <strong>Edit</strong> to edit the app &gt; <strong>Approve</strong></li>
+
+        <li><strong>API:</strong> Use the <a href="/api/developer-app-keys" target=
+        "_blank">Developer App Keys API</a>.</li>
+      </ul>
+    </li>
+
+    <li>
+      <p>Entering a quota <strong>Quota</strong> limit does not automatically enforce
+      restrictions on the number of calls that can be made through the product. For more
+      information, see the <a href="#understandkeyconcepts-quotas">Quota</a> section above.</p>
+
+      <p>Enter a quota limit that you want to reference from quota policies.</p>
+    </li>
+
+    <li>Optionally, if you are using OAuth with the API product, enter the <strong>Allowed OAuth
+    Scopes</strong> that you want the product to allow (such as 'Read' or any other scopes that
+    apps will send with their API calls). You can specify multiple scopes as a comma-separated
+    list. <br>
+    <br>
+    For more about scopes, see <a href="/api-platform/security/oauth/working-scopes.html">Working
+    with OAuth2 scopes</a>.<br>
+    <img alt="" src="/api-platform/images/product_key_quota_scope_v1407.png"></li>
+
+    <li>In the <strong>Resources</strong> section, add an <strong>API Proxy</strong>,
+    <strong>Revision</strong>, and <strong>Resource Path</strong> to the API product.<br>
+
+      <aside class="note"><b>Note:</b> See also this Apigee Community article: <a href=
+      "https://community.apigee.com/articles/38309/making-sense-of-api-product-configuration.html">Making
+      sense of API Product configuration</a>. </aside>Adding <strong>Resource Paths</strong>
+      lets you further restrict API access with relation to the API proxies included in the
+      product. For example, let's say you add a "music" API proxy to the product with a base path
+      of <span style="font-family:courier new,courier,monospace;">/music</span>. That means the
+      product allows calls to <span style=
+      "font-family:courier new,courier,monospace;">/music</span>.<br>
+      <br>
+      However, you want the product to allow access to only the <span style=
+      "font-family:courier new,courier,monospace;">venues</span> resource, which has a URI
+      of <span style="font-family: 'courier new', courier, monospace;">/music/venues</span>.
+      By adding a <span style=
+      "font-family:courier new,courier,monospace;">/<code>venues</code></span> <strong>Resource
+      Path</strong> to the product, the product allows calls to only that URI. For example, calls
+      to <code><span style=
+      "font-family: 'courier new', courier, monospace;">/music</span>/<strong>venues</strong>?name=paramount</code>
+      go through, but calls to <code><span style=
+      "font-family: 'courier new', courier, monospace;">/music</span>/<strong>artists</strong>?name=Jack%Johnson</code>
+      get rejected.<br>
+      <br>
+      You can add <strong>Resource Paths</strong> either by selecting one from an existing API
+      proxy <strong>API Proxy</strong>, <strong>Revision</strong>, and a <strong>Resource
+      Path</strong> (then click <strong>Import Resource</strong>), or by clicking <strong>+Custom
+      Resource</strong> and adding a free-form resource pattern.<br>
+
+      <aside class="note"><b>Note:</b> You can select a specific path, or you can select the base
+      path and all subpaths by specifying the resource path as '/'.<br>
+      <br>
+      The <strong>Resource Path</strong> also supports the wildcards /** and /*. The
+      double asterisk wildcard indicates that all sub-URIs of the base path are supported (but
+      not the base path). A single asterisk indicates that only URIs one level down from the base
+      path are supported.<br>
+      <br>
+      See <a href="#resourcebehavior">Configuring the behavior of a Resource Path of '/', '/*', and
+      '/**'</a> below for more.</aside>
+    </li>
+
+    <li>(Optional) You can also add up to 18 custom attributes to an API product. Custom attributes
+    are key/value pairs that can be used in many ways, including helping control API proxy
+    execution. For example, you could create a custom attribute called
+    <code>deprecated</code> with a value of true or false. In your API proxy flow, you could
+    check the value of the API product's <code>deprecated</code> attribute (for example, using the
+    <code>verifyapikey.{policy_name}.apiproduct.deprecated</code> variable that is automatically
+    available after you create the custom attribute). If its value is true (deprecated), you can
+    throw an error with the Raise Fault policy.</li>
+
+    <li>Save your product.</li>
+  </ol>
+
+  <h2 id="editinganapiproduct">Editing an API product</h2>
+
+  <aside class="note"><b>Note:</b> To improve performance, API product information, such as
+  resource path definitions, are cached for a short period of time (approximately five minutes). As
+  a result, edits that you make to an API product may not take effect immediately.</aside>
+
+  <p>To edit an API product:</p>
+
+  <ol>
+    <li>Login to the Edge management UI at <a href=
+    "https://enterprise.apigee.com">https://enterprise.apigee.com</a>.</li>
+
+    <li>Click the <strong>Publish</strong> tab, then <strong>Products</strong>.</li>
+
+    <li>Click the name of the API product that you want to edit.</li>
+
+    <li>Click <strong>Edit</strong> on the API product page.</li>
+
+    <li>Edit the fields, as required.</li>
+
+    <li>Click <strong>Save</strong>.</li>
+  </ol>
+
+  <h2 id="resourcebehavior">Configuring the behavior of a Resource Path of '/', '/*', and
+  '/**'</h2>
+
+  <p>The following table describes the default behavior of an API product for
+  different <strong>Resource Paths</strong>. In this example, the API proxy has a base path of
+  <code>/v1/weatherapikey</code>. The API product resource path applies to the path suffix after
+  the base path.</p>
+
+  <aside class="note"><b>Note:</b> See also this Apigee Community article: <a href=
+  "https://community.apigee.com/articles/38309/making-sense-of-api-product-configuration.html">Making
+  sense of API Product configuration</a>. </aside>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Request path</th>
+
+        <th>Allowed for /</th>
+
+        <th>Allowed for /*</th>
+
+        <th>Allowed for /**</th>
+
+        <th>Allowed for /*/2/**</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td>
+          <p>/v1/weatherapikey</p>
+        </td>
+
+        <td>
+          <p style="text-align: center;">Y</p>
+        </td>
+
+        <td>
+          <p style="text-align: center;">N</p>
+        </td>
+
+        <td>
+          <p style="text-align: center;">N</p>
+        </td>
+
+        <td>
+          <p style="text-align: center;">N</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>/v1/weatherapikey<strong>/</strong></p>
+        </td>
+
+        <td>
+          <p style="text-align: center;">Y</p>
+        </td>
+
+        <td>
+          <p style="text-align: center;">N</p>
+        </td>
+
+        <td>
+          <p style="text-align: center;">N</p>
+        </td>
+
+        <td>
+          <p style="text-align: center;">N</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>/v1/weatherapikey<strong>/1</strong></p>
+        </td>
+
+        <td>
+          <p style="text-align: center;">Y</p>
+        </td>
+
+        <td>
+          <p style="text-align: center;">Y</p>
+        </td>
+
+        <td>
+          <p style="text-align: center;">Y</p>
+        </td>
+
+        <td>
+          <p style="text-align: center;">N</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>/v1/weatherapikey<strong>/1/</strong></p>
+        </td>
+
+        <td>
+          <p style="text-align: center;">Y</p>
+        </td>
+
+        <td>
+          <p style="text-align: center;">Y</p>
+        </td>
+
+        <td>
+          <p style="text-align: center;">Y</p>
+        </td>
+
+        <td>
+          <p style="text-align: center;">N</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>/v1/weatherapikey<strong>/1/2</strong></p>
+        </td>
+
+        <td>
+          <p style="text-align: center;">Y</p>
+        </td>
+
+        <td>
+          <p style="text-align: center;">N</p>
+        </td>
+
+        <td>
+          <p style="text-align: center;">Y</p>
+        </td>
+
+        <td>
+          <p style="text-align: center;">N</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>/v1/weatherapikey<strong>/1/2/</strong></p>
+        </td>
+
+        <td>
+          <p style="text-align: center;">Y</p>
+        </td>
+
+        <td>
+          <p style="text-align: center;">N</p>
+        </td>
+
+        <td>
+          <p style="text-align: center;">Y</p>
+        </td>
+
+        <td>
+          <p style="text-align: center;">Y</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>/v1/weatherapikey<strong>/1/2/3/</strong></p>
+        </td>
+
+        <td>
+          <p style="text-align: center;">Y</p>
+        </td>
+
+        <td>
+          <p style="text-align: center;">N</p>
+        </td>
+
+        <td>
+          <p style="text-align: center;">Y</p>
+        </td>
+
+        <td>
+          <p style="text-align: center;">Y</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>/v1/weatherapikey<strong>/1/a/2/3/</strong></p>
+        </td>
+
+        <td>
+          <p style="text-align: center;">Y</p>
+        </td>
+
+        <td>
+          <p style="text-align: center;">N</p>
+        </td>
+
+        <td>
+          <p style="text-align: center;">Y</p>
+        </td>
+
+        <td>
+          <p style="text-align: center;">N</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>By default, a <strong>Resource Path</strong> of <strong>'</strong>/' in an API product
+  supports the base path and all sub-URIs. For example, if the <strong>Base Path</strong> of
+  the API proxy is <code>/v1/weatherapikey</code>, then the API product supports requests to
+  <code>/v1/weatherapikey</code> and to any sub-URIs, such as
+  <code>/v1/weatherapikey/forecastrss</code>, <code>/v1/weatherapikey/region/CA</code>, etc.</p>
+
+  <p>You can change this default so that a <strong>Resource Path</strong> of '/' corresponds only
+  to the <strong>Base Path</strong> of the API proxy, meaning the API product will not allow access
+  to a URI that has anything after the '<strong>/</strong>'. If you make this change, then in the
+  table above, only the first two rows under "Allowed for '/'" would contain "Y".</p>
+
+  <aside class="note"><b>Note:</b> <strong>Monetization</strong>: If your products will be used in
+  monetization, where product resource paths are used to define transaction recording policies, use
+  '<strong>/**</strong>' explicitly. Monetization treats '<strong>/</strong>' as base-path-only and
+  not '<strong>/**</strong>'. </aside>
+
+  <p>To change the default, a system administrator must set the value of the <span style=
+  "font-family:courier new,courier,monospace;">features.isSingleForwardSlashBlockingEnabled</span>
+  property on your organization to <span style=
+  "font-family:courier new,courier,monospace;">true</span>. Cloud customers can make that request
+  to <a href="https://community.apigee.com/content/apigee-customer-support">Apigee Support</a>.</p>
+
+  <aside class="note">
+    <b>Private Cloud:</b> Apigee Edge for Private Cloud customers can make a request in the form
+    below to set the property on an organization:
+    <pre class="prettyprint">
+curl -u <em>username</em>:<em>password</em> -X POST -H "Content-type:application/xml" http://<em>host</em>:8080/v1/o/<em>myorg</em> -d \
+"&lt;Organization name='<em>myorg</em>' type='trial'&gt; \
+&lt;Properties&gt; \
+&lt;Property name='features.isSingleForwardSlashBlockingEnabled'&gt;true&lt;/Property&gt; \
+&lt;!-- other existing org properties here --&gt; \
+&lt;/Properties&gt; \
+&lt;/Organization&gt;"
+</pre>
+
+    <p>Be sure to include other existing organization properties in this API call. If you don't,
+    the old properties are wiped out and replaced by the property set in this call.</p>
+  </aside>
+
+  <h2 id="deletingresources">Deleting resources </h2>
+
+  <p>You can delete resources that you've added to an API product. You might want to do this if a
+  resource is malfunctioning or requires more development. When deleted, that resource is no longer
+  part of the API product. Any app that uses the API product can no longer access the deleted
+  resource. Deleted resources are removed from the product but are not deleted from the system, so
+  they can still be used by other products.</p>
+
+  <h4>To delete a resource</h4>
+
+  <ul>
+    <li>In the <strong>API Resource Paths for Product</strong> section of the product details
+    window, locate the resource you want to disable, then click <strong>Delete</strong> in the
+    Actions column.
+
+      
+    </li>
+  </ul>
+
+  {% endblock %}

@@ -1,0 +1,547 @@
+  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}Adding a data center{% endblock %} {% block body %}
+
+  <p>This document describes how to add a data center (also called a region) to an existing data
+  center. </p>
+
+  <aside class="note"><b>Note:</b> If you require three or more data centers, please contact
+  your Sales Rep or Account Executive to engage with Apigee Edge Professional Services and Customer
+  Success.</aside>
+
+  <h2 id="considerationsbeforeaddingadatacenter">Considerations before adding a data center</h2>
+
+  <p>Before you install add a data center, you must understand how to configure OpenLDAP,
+  ZooKeeper, Cassandra, and Postgres servers across the data centers. You must also ensure that the
+  necessary ports are open between the nodes in the two data centers.</p>
+
+  <ul>
+    <li><strong>OpenLDAP</strong><br>
+    Each data center has its own OpenLDAP server configured with replication enabled. When you
+    install the new data center, you must configure OpenLDAP to use replication, and you must
+    reconfigure the OpenLDAP server in the existing data center to use replication.</li>
+
+    <li><strong>ZooKeeper</strong><br>
+    For the <span style="font-family:courier new,courier,monospace;">ZK_HOSTS</span> property for
+    both data centers, specify the IP addresses or DNS names of all ZooKeeper nodes from both data
+    centers, in the same order, and mark any nodes with the with &#8220;:observer&#8221; modifier.
+    Nodes without the &#8220;:observer&#8221; modifier are called "voters". You must have an odd
+    number of "voters" in your configuration.<br>
+    <br>
+    In this topology, the ZooKeeper host on host 9 is the observer:<br>
+    <br>
+    <img alt="" src="/private-cloud/images/zookeperDC.png"><br>
+    <br>
+    In the example configuration file shown below, node 9 is tagged with the
+    &#8220;:observer&#8221; modifier so that you have five voters: Nodes 1, 2, 3, 7, and 8.<br>
+    <br>
+    For the <span style="font-family:courier new,courier,monospace;">ZK_CLIENT_HOSTS</span>
+    property for each data center, specify the IP addresses or DNS names of only the ZooKeeper
+    nodes in the data center, in the same order, for all ZooKeeper nodes in the data
+    center. </li>
+
+    <li><strong>Cassandra</strong><br>
+    All data centers must to have the same number of Cassandra nodes.<br>
+    <br>
+    For <span style="font-family:courier new,courier,monospace;">CASS_HOSTS</span> for each data
+    center, ensure that you specify all Cassandra IP addresses (not DNS names) for both data
+    centers. For data center 1, list the Cassandra nodes in that data center first. For data center
+    2, list the Cassandra nodes in that data center first. List the Cassandra nodes in the same
+    order for all Cassandra nodes in the data center. <br>
+    <br>
+    All Cassandra nodes must have a suffix ':&lt;d&gt;,&lt;r&gt;', for example '&lt;ip&gt;:1,1 =
+    data center 1 and rack/availability zone 1 and '&lt;ip&gt;:2,1 = data center 2 and
+    rack/availability zone 1.<br>
+    For example, "192.168.124.201:1,1 192.168.124.202:1,1 192.168.124.203:1,1 192.168.124.204:2,1
+    192.168.124.205:2,1 192.168.124.206:2,1"<br>
+    <br>
+    The first node in rack/availability zone 1 of each data center will be used as the seed
+    server. In this deployment model, Cassandra setup will look like this:<br>
+    <br>
+    <img alt="" src="/private-cloud/images/cassandraDC.png"><br>
+     </li>
+
+    <li>
+      <strong>Postgres</strong><br>
+      By default, Edge installs all Postgres nodes in master mode. However, when you have multiple
+      data centers, you configure Postgres nodes to use master-standby replication so that if the
+      master node fails, the standby node can continue to server traffic. Typically, you configure
+      the master Postgres server in one data center, and the standby server in the second data
+      center.<br>
+      <br>
+      If the existing data center is already configured to have two Postgres nodes running in
+      master/standby mode, then as part of this procedure, deregister the existing standby node and
+      replace it with a standby node in the new data center. <br>
+      <br>
+      The following table shows the before and after Postgres configuration for both scenarios:<br>
+      <br>
+
+      <table>
+        <thead>
+          <tr>
+            <th>
+              <p><strong>Before</strong></p>
+            </th>
+
+            <th>
+              <p><strong>After</strong></p>
+            </th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr>
+            <td>
+              <p>Single Master Postgres node in <strong>dc-1</strong></p>
+            </td>
+
+            <td>
+              <p>Master Postgres node in <strong>dc-1</strong></p>
+
+              <p>Standby Postgres node in <strong>dc-2</strong></p>
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <p>Master Postgres node in <strong>dc-1</strong></p>
+
+              <p>Standby Postgres node in <strong>dc-1</strong></p>
+            </td>
+
+            <td>
+              <p>Master Postgres node in <strong>dc-1</strong></p>
+
+              <p>Standby Postgres node in <strong>dc-2</strong></p>
+
+              <p>Deregister old Standby Postgres node in <strong>dc-1</strong></p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </li>
+
+    <li><strong>Port requirements</strong><br>
+    You must ensure that the necessary ports are open between the nodes in the two data centers.
+    For a port diagram, see <a href="installation-requirements.html">Installation
+    Requirements</a>.</li>
+  </ul>
+
+  <h2 id="updatingtheexistingdatacenter">Updating the existing data center</h2>
+
+  <p>Adding a data center requires you to perform the steps to install and configure the new data
+  center nodes, but it also requires you to update nodes in the original data center. These
+  modifications are necessary because you are adding new Cassandra and ZooKeeper nodes in the new
+  data center that have to be accessible to the existing data center, and you have to reconfigure
+  OpenLDAP to use replication.</p>
+
+  <h2 id="creatingtheconfigurationfiles">Creating the configuration files</h2>
+
+  <p>Shown below are the silent configuration files for the two data centers, where each data
+  center has 6 nodes as shown in <a href="installation-topologies.html">Installation
+  Topologies</a>. Notice that the config file for dc-1 adds additional settings to:</p>
+
+  <ul>
+    <li>Configure OpenLDAP with replication across two OpenLDAP nodes.</li>
+
+    <li>Add the new Cassandra and ZooKeeper nodes from dc-2 to the config file for dc-1.</li>
+  </ul>
+
+  <table>
+    <tbody>
+      <tr>
+        <td>
+          <pre class="prettyprint">
+<strong># Datacenter 1
+IP1=IPorDNSnameOfNode1
+IP2=IPorDNSnameOfNode2
+IP3=IPorDNSnameOfNode3
+IP7=IPorDNSnameOfNode7
+IP8=IPorDNSnameOfNode8
+IP9=IPorDNSnameOfNode9 </strong>
+HOSTIP=$(hostname -i)
+MSIP=$IP1
+ADMIN_EMAIL=opdk@google.com
+APIGEE_ADMINPW=Secret123
+LICENSE_FILE=/tmp/license.txt
+USE_LDAP_REMOTE_HOST=n
+<strong>LDAP_TYPE=2
+LDAP_SID=1
+LDAP_PEER=$IP7</strong>
+APIGEE_LDAPPW=secret
+MP_POD=gateway-1
+REGION=dc-1
+<strong>ZK_HOSTS="$IP1 $IP2 $IP3 $IP7 $IP8 $IP9:observer"
+ZK_CLIENT_HOSTS="$IP1 $IP2 $IP3"
+# Must use IP addresses for CASS_HOSTS, not DNS names.
+CASS_HOSTS="$IP1:1,1 $IP2:1,1 $IP3:1,1 $IP7:2,1 $IP8:2,1 $IP9:2,1"</strong>
+SKIP_SMTP=n
+SMTPHOST=smtp.example.com
+SMTPUSER=smtp@example.com 
+SMTPPASSWORD=smtppwd   
+SMTPSSL=n
+SMTPPORT=25
+SMTPMAILFROM="My Company &lt;myco@company.com&gt;"
+</pre>
+        </td>
+
+        <td>
+          <pre class="prettyprint">
+<strong># Datacenter 2
+IP1=IPorDNSnameOfNode1
+IP2=IPorDNSnameOfNode2
+IP3=IPorDNSnameOfNode3
+IP7=IPorDNSnameOfNode7
+IP8=IPorDNSnameOfNode8
+IP9=IPorDNSnameOfNode9 </strong>
+HOSTIP=$(hostname -i)
+MSIP=$IP7
+ADMIN_EMAIL=opdk@google.com
+APIGEE_ADMINPW=Secret123
+LICENSE_FILE=/tmp/license.txt
+USE_LDAP_REMOTE_HOST=n
+<strong>LDAP_TYPE=2
+LDAP_SID=2
+LDAP_PEER=$IP1</strong>
+APIGEE_LDAPPW=secret
+MP_POD=gateway-2
+REGION=dc-2
+<strong>ZK_HOSTS="$IP1 $IP2 $IP3 $IP7 $IP8 $IP9:observer"
+ZK_CLIENT_HOSTS="$IP7 $IP8 $IP9"
+# Must use IP addresses for CASS_HOSTS, not DNS names.
+CASS_HOSTS="$IP7:2,1 $IP8:2,1 $IP9:2,1 $IP1:1,1 $IP2:1,1 $IP3:1,1"</strong>
+SKIP_SMTP=n
+SMTPHOST=smtp.example.com
+SMTPUSER=smtp@example.com 
+SMTPPASSWORD=smtppwd   
+SMTPSSL=n
+SMTPPORT=25
+SMTPMAILFROM="My Company &lt;myco@company.com&gt;"
+</pre>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="proceduretoaddanewdatacenter"><span style=
+  "font-family: Arial, Verdana, sans-serif;">Procedure to add a new data center</span></h2>
+
+  <p>In this procedure, the data centers are named:</p>
+
+  <ul>
+    <li><strong>dc-1</strong>: the existing data center</li>
+
+    <li><strong>dc-2</strong>: the new data center</li>
+  </ul>
+
+  <ol>
+    <li><strong>On dc-1</strong>, rerun setup.sh on the original Cassandra nodes with the new dc-1
+    confiig file that includes the Cassandra nodes from dc-2:<br>
+    <span style="font-family:courier new,courier,monospace;">/opt/apigee/apigee-setup/bin/setup.sh
+    -p ds -f <em><strong>configFile1</strong></em></span></li>
+
+    <li><strong>On dc-1</strong>, rerun setup.sh on the Management Server node:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt;
+    /opt/apigee/apigee-setup/bin/setup.sh -p ms -f
+    <em><strong>configFile1</strong></em></span></li>
+
+    <li><strong>On dc-2</strong>, install <span style=
+    "font-family:courier new,courier,monospace;">apigee-setup</span> on all nodes. See <a href=
+    "install-edge-apigee-setup-utility.html">Install the Edge apigee-setup utility</a> for more
+    info.</li>
+
+    <li><strong>On dc-2</strong>, install Cassandra and ZooKeeper on the appropriate nodes:<br>
+    <span style="font-family:courier new,courier,monospace;">/opt/apigee/apigee-setup/bin/setup.sh
+    -p ds -f <em><strong>configFile2</strong></em></span></li>
+
+    <li><strong>On dc-2</strong>, run the rebuild command on all Cassandra nodes, specifying the
+    region name of dc-1:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt;
+    /opt/apigee/apigee-cassandra/bin/nodetool -h <em><strong>cassIP</strong></em> rebuild
+    dc-1</span></li>
+
+    <li><strong>On dc-2</strong>, install the Management Server on the appropriate node:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt;
+    /opt/apigee/apigee-setup/bin/setup.sh -p ms -f
+    <em><strong>configFile2</strong></em></span></li>
+
+    <li><strong>On dc-2</strong>, install the Routes and Message Processors on the appropriate
+    nodes:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt;
+    /opt/apigee/apigee-setup/bin/setup.sh -p rmp -f
+    <em><strong>configFile2</strong></em></span></li>
+
+    <li><strong>On dc-2</strong>, install Qpid on the appropriate nodes:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt;
+    /opt/apigee/apigee-setup/bin/setup.sh -p qs -f
+    <em><strong>configFile2</strong></em></span></li>
+
+    <li><strong>On dc-2</strong>, install Postgres on the appropriate node:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt;
+    /opt/apigee/apigee-setup/bin/setup.sh -p ps -f
+    <em><strong>configFile2</strong></em></span></li>
+
+    <li>Setup Postgres master/standby for the Postgres nodes. The Postgres node in dc-1 is the
+    master, and the Postgres node in dc-2 is the standby server.<br>
+      <br>
+      <strong>Note</strong>: If <strong>dc-1</strong> is already configured to have two Postgres
+      nodes running in master/standby mode, then as part of this procedure, use the
+      <strong>existing master Postgres node in dc-1</strong> as the master, and the
+      <strong>Postgres node in dc-2</strong> as the standby server. Later in this procedure, you
+      will deregister the existing Postgres standby server in <strong>dc-1</strong>.
+
+      <ol style="list-style: lower-alpha outside">
+        <li>On the master node in <strong>dc-1</strong>, edit the config file to set:<br>
+        <span style=
+        "font-family:courier new,courier,monospace;">PG_MASTER=<em><strong>IPorDNSofDC1Master</strong></em><br>
+
+        PG_STANDBY=<em><strong>IPorDNSofDC2Standby</strong></em></span></li>
+
+        <li>Enable replication on the new master:<br>
+        <span style="font-family:courier new,courier,monospace;">&gt;
+        /opt/apigee/apigee-service/bin/apigee-service apigee-postgresql setup-replication-on-master
+        -f <em><strong>configFIle</strong></em></span></li>
+
+        <li>On the standby node in <strong>dc-2</strong>, edit the config file to set:<br>
+        <span style=
+        "font-family:courier new,courier,monospace;">PG_MASTER=<em><strong>IPorDNSofDC1Master</strong></em><br>
+
+        PG_STANDBY=<em><strong>IPorDNSofDC2Standby</strong></em></span></li>
+
+        <li>On the standby node in <strong>dc-2</strong>, stop the server and then delete any
+        existing Postgres data:<br>
+        <span style="font-family:courier new,courier,monospace;">&gt;
+        /opt/apigee/apigee-service/bin/apigee-service apigee-postgresql stop<br>
+        &gt; rm -rf /opt/apigee/data/apigee-postgresql/</span><br>
+        <strong>Note</strong>: If necessary, you can backup this data before deleting it.</li>
+
+        <li>Configure the standby node in <strong>dc-2</strong>:<br>
+        <span style="font-family:courier new,courier,monospace;">&gt;
+        /opt/apigee/apigee-service/bin/apigee-service apigee-postgresql
+        setup-replication-on-standby -f <em><strong>configFile</strong></em></span></li>
+      </ol>
+    </li>
+
+    <li>On dc-1, update analytics configuration and configure the organizations.
+
+      <ol style="list-style: lower-alpha outside">
+        <li><strong>On the Management Server node of dc-1</strong>, get the UUID of the Postgres
+        node:<br>
+        <span style="font-family:courier new,courier,monospace;">&gt; apigee-adminapi.sh servers
+        list -r dc-1 -p analytics -t postgres-server --admin adminEmail --pwd
+        <strong>adminPword</strong> --host <strong>localhost</strong></span><br>
+        <br>
+        The UUID appears at the end of the returned data. Save that value. <br>
+        <br>
+        <strong>Note</strong>: If dc-1 is configured to have two Postgres nodes running in
+        master/standby mode, you see two IP addresses and UUIDs in the output. Save both UUIDs.
+        From the IPs, you should be able to determine which UUID is for the master and which is for
+        the standby node.</li>
+
+        <li><strong>On the Management Server node of dc-2</strong>, get the UUID of the Postgres
+        node as shown in the previous step. Save that value.</li>
+
+        <li><strong>On the Management Server node of dc-1</strong>, determine the name of the
+        analytics and consumer groups. Many of the commands below require that information.<br>
+        By default, the name of the analytics group is axgroup-001, and the name of the consumer
+        group is consumer-group-001. In the silent config file for a region, you can set the name
+        of the analytics group by using the AXGROUP property.<br>
+        <br>
+        If you are unsure of the names of the analytics and consumer groups, use the following
+        command to display them:<br>
+        <span style="font-family:courier new,courier,monospace;">&gt; apigee-adminapi.sh analytics
+        groups list --admin <strong>adminEmail</strong> --pwd <strong>adminPword</strong> --host
+        localhost</span><br>
+        <br>
+        This command returns the analytics group name in the name field, and the consumer group
+        name in the consumer-groups field.</li>
+
+        <li>On the <strong>Management Server node of dc-1</strong>, remove the existing Postgres
+        server from the analytics group:
+
+          <ol>
+            <li>Remove the Postgres node from the consumer-group:<br>
+            <span style="font-family:courier new,courier,monospace;">&gt; apigee-adminapi.sh
+            analytics groups consumer_groups datastores remove -g axgroup-001 -c consumer-group-001
+            -u <strong>UUID</strong> -Y --admin <strong>adminEmail</strong> --pwd
+            <strong>adminPword</strong> --host localhost</span><br>
+            <br>
+            If <strong>dc-1</strong> is configured to have two Postgres nodes running in
+            master/standby mode, remove both:<br>
+            <span style="font-family:courier new,courier,monospace;">&gt; apigee-adminapi.sh
+            analytics groups consumer_groups datastores remove -g axgroup-001 -c consumer-group-001
+            -u "<strong>UUID_1,UUID_2"</strong> -Y --admin adminEmail --pwd
+            <strong>adminPword</strong> --host <strong>localhost</strong></span></li>
+
+            <li>Remove the Postgres node from the analytics group:<br>
+            <span style="font-family:courier new,courier,monospace;">&gt; apigee-adminapi.sh
+            analytics groups postgres_server remove -g axgroup-001 -u <strong>UUID</strong> -Y
+            --admin <strong>adminEmail</strong> --pwd <strong>adminPword</strong> --host
+            localhost</span><br>
+            <br>
+            If dc-1 is configured to have two Postgres nodes running in master/standby mode, remove
+            both:<br>
+            <span style="font-family:courier new,courier,monospace;">&gt; apigee-adminapi.sh
+            analytics groups postgres_server remove -g axgroup-001 -u
+            <strong>UUID1,UUID2</strong> -Y --admin <strong>adminEmail</strong> --pwd
+            <strong>adminPword</strong> --host localhost</span></li>
+          </ol>
+        </li>
+
+        <li>
+          <strong>On the Management Server node of dc-1</strong>, add the new master/standby
+          Postgres servers to the analytics group:
+
+          <ol>
+            <li>Add both Postgres servers to the analytics group:<br>
+            <span style="font-family:courier new,courier,monospace;">&gt; apigee-adminapi.sh
+            analytics groups postgres_server add -g axgroup-001 -u "<strong>UUID_1,UUID_2</strong>"
+            --admin <strong>adminEmail</strong> --pwd <strong>adminPword</strong> --host
+            localhost</span><br>
+            <br>
+            where <strong>UUID_1</strong> corresponds to the master Postgres node in
+            <strong>dc-1</strong>, and <strong>UUID_2</strong> corresponds to the standby Postgres
+            node in <strong>dc-2</strong>. </li>
+
+            <li>Add the PG servers to the consumer-group as master/standby: <br>
+            <span style="font-family:courier new,courier,monospace;">&gt; apigee-adminapi.sh
+            analytics groups consumer_groups datastores add -g axgroup-001 -c consumer-group-001 -u
+            "<strong>UUID_1,UUID_2</strong>" --admin <strong>adminEmail</strong> --pwd
+            <strong>adminPword</strong> --host localhost</span></li>
+          </ol>
+        </li>
+
+        <li>Add the Qpid servers from <strong>dc-2</strong> to the analytics group:
+
+          <ol>
+            <li><strong>On the Management Server node of dc-1</strong>, get the UUIDs of the Qpid
+            nodes in <strong>dc-2</strong>:<br>
+            <span style="font-family:courier new,courier,monospace;">&gt; apigee-adminapi.sh
+            servers list -r <strong>dc-2</strong> -p central -t qpid-server --admin
+            <strong>adminEmail</strong> --pwd <strong>adminPword</strong> --host
+            localhost</span><br>
+            <br>
+            The UUIDs appear at the end of the returned data. Save those values.</li>
+
+            <li><strong>On the Management Server node of dc-1</strong>, add the Qpid nodes to the
+            analytics group:<br>
+            <span style="font-family:courier new,courier,monospace;">&gt;apigee-adminapi.sh
+            analytics groups qpid_server add -g axgroup-001 -u
+            "<strong>UUID_1 </strong><strong>UUID_2"</strong> --admin
+            <strong>adminEmail</strong> --pwd <strong>adminPword</strong> --host
+            localhost</span></li>
+
+            <li><strong>On the Management Server node of dc-1</strong>, add the Qpid nodes to the
+            consumer group:<br>
+            <span style="font-family:courier new,courier,monospace;">&gt; apigee-adminapi.sh
+            analytics groups consumer_groups consumers add -g axgroup-001 -c consumer-group-001 -u
+            "<strong>UUID_1,UUID_2"</strong> --admin <strong>adminEmail</strong> --pwd
+            <strong>adminPword</strong> --host localhost</span></li>
+          </ol>
+        </li>
+
+        <li>Deregister and delete the old Postgres standby server from dc-1:
+
+          <ol>
+            <li>Deregister the existing <strong>dc-1</strong> Postgres standby server:<br>
+            <span style="font-family:courier new,courier,monospace;">&gt; apigee-adminapi.sh
+            servers deregister -u <strong>UUID</strong> -r dc-1 -p analytics -t postgres-server -Y
+            --admin <strong>adminEmail</strong> --pwd <strong>adminPword</strong> --host
+            localhost<br>
+            <br>
+            <span style="font-family:arial,helvetica,sans-serif;">where UUID is the old standby
+            Postgres node in dc-1. </span></span></li>
+
+            <li>Delete the existing dc-1 Postgres standby server:<br>
+            <strong>Note</strong>: This command does not uninstall the Postgres server node. It
+            only removes it from the list of Edge nodes. You can later uninstall Postgres from the
+            node, if necessary. <br>
+            <span style="font-family:courier new,courier,monospace;">&gt; apigee-adminapi.sh
+            servers delete -u <strong>UUID</strong> --admin <strong>adminEmail</strong> --pwd
+            <strong>adminPword</strong> --host localhost</span></li>
+          </ol>
+        </li>
+      </ol>
+    </li>
+
+    <li>Update Cassandra keyspaces with correct replication factor for the two data centers. You
+    only have to run this step once on any Cassandra server in either data center:<br>
+      <br>
+      <strong>Note</strong>: The commands below all set the replication factor to "3", indicating
+      three Cassandra nodes in the cluster. Modify this value as necessary for your installation.
+
+      <ol style="list-style: lower-alpha outside">
+        <li>Start the Cassandra cqlsh utility:<br>
+        <span style="font-family:courier new,courier,monospace;">&gt;
+        /opt/apigee/apigee-cassandra/bin/cqlsh <strong>cassandraIP</strong></span></li>
+
+        <li>Execute the following CQL commands at the "cqlsh&gt;" prompt to set the replication
+        levels for Cassandra keyspaces:
+
+          <ol>
+            <li> cqlsh&gt; <span style="font-family:courier new,courier,monospace;">ALTER
+            KEYSPACE "identityzone" WITH replication = { 'class': 'NetworkTopologyStrategy',
+            'dc-1': '3','dc-2': '3' }; </span></li>
+
+            <li>cqlsh&gt; <span style="font-family:courier new,courier,monospace;">ALTER KEYSPACE
+            "system_traces" WITH replication = { 'class': 'NetworkTopologyStrategy', 'dc-1':
+            '3','dc-2': '3' };</span></li>
+
+            <li>View the keyspaces by using the command:<br>
+            cqlsh&gt; <span style="font-family:courier new,courier,monospace;">select * from
+            system.schema_keyspaces;</span></li>
+
+            <li>Exit cqlsh:<br>
+            cqlsh&gt; <span style="font-family:courier new,courier,monospace;">exit</span></li>
+          </ol>
+        </li>
+      </ol>
+    </li>
+
+    <li>Run the following nodetool command on all Cassandra nodes in dc-1 to free memory:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt;
+    /opt/apigee/apigee-cassandra/bin/nodetool -h <em><strong>cassandraIP</strong></em>
+    cleanup</span></li>
+
+    <li>For each organization and for each environment that you want to support across data
+    centers:
+
+      <ol style="list-style: lower-alpha outside">
+        <li><strong>On the Management Server node of dc-1</strong>, add the new MP_POD to the
+        Organization:<br>
+        <span style="font-family:courier new,courier,monospace;">&gt; apigee-adminapi.sh orgs pods
+        add -o <strong>orgName</strong> -r dc-2 -p <strong>gateway-2</strong> --admin
+        <strong>adminEmail</strong> --pwd <strong>adminPword</strong> --host localhost</span><br>
+        <br>
+        where <strong>gateway-2</strong> is the name of the gateway pod as defined by the MP_POD
+        property in the dc-2 config file.</li>
+
+        <li>Add the new Message Processors to the org and environment:
+
+          <ol>
+            <li><strong>On the Management Server node of dc-2</strong>, get the UUIDs of the
+            Message Processor nodes in dc-2:<br>
+            <span style="font-family:courier new,courier,monospace;">&gt; apigee-adminapi.sh
+            servers list -r dc-2 -p <strong>gateway-2</strong> -t message-processor --admin
+            <strong>adminEmail</strong> --pwd <strong>adminPword</strong> --host
+            localhost</span><br>
+            <br>
+            The UUIDs appear at the end of the returned data. Save those values.</li>
+
+            <li><strong>On the Management Server node of dc-1</strong>, for each Message Processor
+            in dc-2, add the Message Processor to an environment for the org:<br>
+            <span style="font-family:courier new,courier,monospace;">&gt; apigee-adminapi.sh orgs
+            envs servers add -o <strong>orgName</strong> -e <strong>envName</strong> -u
+            <strong>UUID</strong> --admin <strong>adminEmail</strong> --pwd
+            <strong>adminPword</strong> --host localhost</span></li>
+          </ol>
+        </li>
+
+        <li><strong>On the Management Server node of dc-1</strong>, check the organization:<br>
+        <span style="font-family:courier new,courier,monospace;">&gt; apigee-adminapi.sh orgs apis
+        deployments -o <strong>orgName</strong> -a <strong>apiProxyName</strong> --admin
+        <strong>adminEmail</strong> --pwd <strong>adminPword</strong> --host localhost</span><br>
+        <br>
+        where <em><strong>apiProxyName</strong></em> is the name of an API proxy deployed in the
+        organization.</li>
+      </ol>
+    </li>
+  </ol>{% endblock %}

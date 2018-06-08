@@ -1,0 +1,167 @@
+  {% extends "_base.html" %} {% block title %}Accessing key value maps in Node.js{% endblock %} {% block body %}
+
+  <p>You can use the <code>apigee-access</code> module to get Edge key value map (KVM)
+  data from within a Node.js application. This method of KVM retrieval is an alternative to using
+  the <a href="/api-platform/reference/policies/key-value-map-operations-policy.html">Key Value Map
+  Operations policy</a> to retrieve KVM data in an API proxy flow.</p>
+
+  <p>KVMs provide long-term persistence of arbitrary key/value pairs that you can retrieve at
+  runtime. For example, you can store quota values, OAuth access token expiration values, and OAuth
+  refresh token expiration values in a KVM for each deployment environment, then retrieve the
+  values in your code.</p>
+
+  <p>You can create a KVM at one of three scopes: <code>organization</code>,
+  <code>environment</code>, and <code>apiproxy</code>. For example, if you create a KVM at the
+  apiproxy scope for the "foo" proxy, only the "foo" proxy can access the KVM; or if you create a
+  KVM at the "test" environment scope, all API proxies deployed in an organization's "test"
+  environment can access the KVM, but none of the proxies deployed in the "prod" environment can
+  access it.</p>
+
+  <p>After you create a KVM with the management API, management UI, or the Key Value Map Operations
+  policy (see <a href=
+  "/api-platform/cache/persistence-tools.html#longtermpersistenceofkeyvaluedata">Long-term
+  persistence caching</a>), use the functions here to retrieve the data.</p>
+
+  <p>For a great KVM pattern, see <a href=
+  "https://community.apigee.com/content/kbentry/24906/a-pattern-for-caching-kvm-values.html">https://community.apigee.com/content/kbentry/24906/a-pattern-for-caching-kvm-values.html</a>. </p>
+
+  <p>For an introduction to the <code>apigee-access</code> module and its other features,
+  see <a href="/api-platform/nodejs/using-apigee-access.html">Using the apigee-access
+  module</a>.</p>
+
+  <h2 id="methods">Methods</h2>
+
+  <p>The following methods work on both encrypted and unencrypted KVMs.</p>
+
+  <ul>
+    <li><a href="#getKeyValueMap">getKeyValueMap()</a></li>
+
+    <li><a href="#getKeys">getKeys()</a></li>
+
+    <li><a href="#get">get()</a></li>
+  </ul>
+  <hr>
+
+  <h3 id="methods-getkeyvaluemap"><a id="getKeyValueMap" name=
+  "getKeyValueMap"></a>getKeyValueMap</h3>
+  <pre class="prettyprint">
+var kvm = apigee.getKeyValueMap('<em>kvm_name</em>', '<em>scope</em>');
+var kvm = apigee.getKeyValueMap('<em>kvm_name</em>', 'api', '<em>proxy_name</em>');
+</pre>
+
+  <p>Retrieves a KVM at a particular scope (organization, environment, api, or revision). After the
+  KVM object is returned, use the <code>getKeys</code> and <code>get</code> functions to return the
+  key names or a specific key value.</p>
+
+  <p><strong>Parameters:</strong></p>
+
+  <ul>
+    <li><strong><em>kvm_name</em></strong> - The name of the KVM to access.</li>
+
+    <li><em><strong>scope</strong></em> - The scope of the KVM. One of <span style=
+    "font-family:courier new,courier,monospace;"><code>organization</code>, <code>environment,
+    api,</code></span> or <span style=
+    "font-family:courier new,courier,monospace;"><code>revision</code></span>.</li>
+
+    <li><em><strong>proxy_name</strong></em> - For a <em><strong>scope</strong></em> of
+    <span style="font-family:courier new,courier,monospace;">api</span> only, the name of the API
+    proxy.</li>
+  </ul>
+
+  <p><strong>Returns:</strong></p>
+
+  <p style="margin-left: 40px;">A KVM object.</p>
+
+  <p><strong>Example:</strong></p>
+  <pre class="prettyprint">
+var apigee = require('apigee-access');
+var kvm = apigee.getKeyValueMap('my_kvm', 'environment');
+</pre>
+
+  <p>If you set <em><strong>scope</strong></em> to <span style=
+  "font-family:courier new,courier,monospace;">api</span> then a third parameter is required -
+  the name of the API proxy. For example: </p>
+  <pre class="prettyprint">
+var kvm = apigee.getKeyValueMap('my_kvm', 'api', 'myApiProxy');
+</pre>
+
+  
+  <hr>
+
+  <h3 id="methods-getkeys"><a id="getKeys" name="getKeys"></a>getKeys</h3><code>var kvmKeys =
+  apigee.getKeys(function(<em>err</em>, <em>keys_array</em>);</code><br>
+  <br>
+
+  <p>Returns an array containing the names of all keys in the KVM.</p>
+
+  <p><strong>Parameters:</strong></p>
+
+  <ul>
+    <li>
+      <strong><em><code>callback</code></em></strong>: (Required) The callback function uses two
+      parameters:
+
+      <ul>
+        <li>An Error object if the operation fails.</li>
+
+        <li>An object (<code><em>keys_array</em></code> in the example above) that represents the
+        array of KVM key names.</li>
+      </ul>
+    </li>
+  </ul>
+
+  <p><strong>Returns:</strong></p>
+
+  <p style="margin-left: 40px;">An array of KVM key names.</p>
+
+  <p><strong>Example:</strong></p>
+  <pre class="prettyprint">
+var apigee = require('apigee-access');
+var kvm = apigee.getKeyValueMap('my_kvm', 'environment');
+  kvm.getKeys(function(err, keys_array) {
+    //use the array of key names here
+}); 
+</pre>
+
+  
+  <hr>
+
+  <h3 id="methods-get"><a id="get" name=
+  "get"></a>get</h3><code>kvm.get('<em>key</em>', function(<em>err,
+  key_value</em>));</code><br>
+  <br>
+
+  <p>Gets the value of a KVM key.</p>
+
+  <p><strong>Parameters:</strong></p>
+
+  <ul>
+    <li>
+      <p><strong><em><code>key</code></em></strong>: (Required) A string that uniquely identifies
+      the item in the cache.</p>
+    </li>
+
+    <li>
+      <p><strong><em><code>callback</code></em></strong>: (Required) The callback function uses two
+      parameters:</p>
+
+      <ul>
+        <li>An Error object if the operation fails.</li>
+
+        <li>The object containing the KVM key value as a String.</li>
+      </ul>
+    </li>
+  </ul>
+
+  <p><strong>Example:</strong></p>
+  <pre class="prettyprint">
+var apigee = require('apigee-access');
+var kvm = apigee.getKeyValueMap('my_kvm', 'environment');
+  kvm.get('foo_key', function(err, key_value) {
+    //Use the key value here. For example the following assigns the value
+    //to a 'kvmvalue' variable in the response, which can be used by policies:
+      apigee.setVariable(response, 'kvmvalue', key_value);
+});
+</pre>
+
+  {% endblock %}

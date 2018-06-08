@@ -1,0 +1,107 @@
+  {% extends "_base.html" %} {% block title %}Shaping, accessing, and converting messages{% endblock %} {% block body %}
+
+  <p>You can use policies included with Apigee Edge to manipulate the messages flowing through your
+  API proxies. With policies, you can:</p>
+
+  <ul>
+    <li>Convert messages between formats, such as from XML to JSON.</li>
+
+    <li>Set variable values from message content, and create messages from variable values.</li>
+
+    <li>Use procedural code, such as JavaScript, Java, and Python, to handle messages and data in
+    more complex ways.</li>
+  </ul>
+
+  <p>In general, when using these policies, you specify input and output as a flow variables. At
+  run time, Apigee Edge retrieves the input value from a source variable and writes the output
+  value to an output variable.</p>
+
+  <p>This topic introduces these capabilities. For more complete and technical information, see the
+  policy references for each.</p>
+
+  <h2 id="simplehandlingforxmlandjson">Simple handling for XML and JSON</h2>
+
+  <p>Apigee Edge includes policies that make it easier to convert between XML and JSON, and to
+  transform XML with XSL.</p>
+
+  <h3 id="simplehandlingforxmlandjson-convertingjsontoxml">Converting JSON to XML</h3>
+
+  <p>The <a href="/api-platform/reference/policies/json-xml-policy.html">JSON to XML policy</a>
+  takes your JSON input and converts it to XML.</p>
+
+  <p>In the following policy example, the policy takes a JSON-formatted message from the
+  <code>request</code> variable, then replaces the variable value with an XML-formatted message.
+  The input is specified in the <code>&lt;Source&gt;</code> element, while the output is specified
+  in the <code>&lt;OutputVariable&gt;</code> element.</p>
+  <pre class="prettyprint">
+&lt;JSONToXML name="jsontoxml"&gt;
+     &lt;Source&gt;request&lt;/Source&gt;
+     &lt;OutputVariable&gt;request&lt;/OutputVariable&gt;
+&lt;/JSONToXML&gt;
+</pre>
+
+  <h3 id="simplehandlingforxmlandjson-convertingxmltojson">Converting XML to JSON</h3>
+
+  <p>The <a href="/api-platform/reference/policies/xml-json-policy.html">XML to JSON policy</a>
+  converts XML input message into JSON.</p>
+
+  <p>In the following policy example, the policy takes an XML-formatted message from the
+  <code>response</code> variable, then replaces the variable value with a JSON-formatted message.
+  The input is specified in the <code>&lt;Source&gt;</code> element, while the putput is specified
+  in the <code>&lt;OutputVariable&gt;</code> element.</p>
+  <pre class="prettyprint">
+&lt;XMLToJSON name="ConvertToJSON"&gt;
+   &lt;OutputVariable&gt;response&lt;/OutputVariable&gt;
+   &lt;Source&gt;response&lt;/Source&gt;
+&lt;/XMLToJSON&gt;
+</pre>
+
+  <h3 id="simplehandlingforxmlandjson-transformingxmlwithxsl">Transforming XML with XSL</h3>
+
+  <p>You can use the <a href="/api-platform/reference/policies/xsl-transform-policy.html">XSL
+  Transform policy</a> to transform messages using XSL. For example, after converting a JSON
+  payload to XML, you can use the XSL Transform policy with a style sheet to perform the
+  transformation you need.</p>
+
+  <p>In the following policy example, the policy takes an XML-formatted message from the
+  <code>response</code> variable, then replaces the variable value with a message formatted by
+  <code>my_transform.xsl</code>. The input is specified in the <code>&lt;Source&gt;</code> element,
+  while the output is specified in the <code>&lt;OutputVariable&gt;</code> element.</p>
+  <pre class="prettyprint">
+&lt;XSL name="TransformXML"&gt;
+    &lt;ResourceURL&gt;xsl://my_transform.xsl&lt;/ResourceURL&gt;
+    &lt;Source&gt;response&lt;/Source&gt;
+    &lt;OutputVariable&gt;response&lt;/OutputVariable&gt;
+&lt;/XSL&gt;
+
+    &lt;Source&gt;request&lt;/Source&gt;
+    &lt;ResourceURL&gt;xsl://XSL-Transform-1.xsl&lt;/ResourceURL&gt;
+    &lt;OutputVariable/&gt;
+</pre>
+
+  <h2 id="handlingvariabledata">Handling variable data</h2>
+
+  <p>Data handling within a proxy often involves simply working with state data as flow variable
+  values. You can often do this by using a policy that gets or sets variable values. For example,
+  you might want to shape variable values into a message, or extract the contents of a message to
+  set variable values.</p>
+
+  <p>Be sure to see references for the following two policies:</p>
+
+  <ul>
+    <li><a href="/api-platform/reference/policies/assign-message-policy.html">Assign Message
+    policy</a> to create messages from variable values.</li>
+
+    <li><a href="/api-platform/reference/policies/extract-variables-policy.html">Extract Variables
+    policy</a> to assign variables from message content.</li>
+  </ul>
+
+  <h2 id="creatingmorecomplextransformations">Creating more complex transformations</h2>
+
+  <p>For data handling whose complexity is outside the capability of included policies, you can use
+  procedural languages such as JavaScript, Java, or Python.</p>
+
+  <p>Generally, this involves writing code in one of these languages, then invoking the code from a
+  policy specific to the language. For more about this, see <a href=
+  "/api-platform/develop/incorporating-procedural-code-api-proxy.html">Incorporating procedural
+  code</a>.</p>{% endblock %}

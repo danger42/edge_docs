@@ -1,0 +1,3308 @@
+  {% extends "_base.html" %} {% block title %}Variables reference{% endblock %} {% block body %}
+
+  <p>Apigee Edge defines a set of variables that are available out-of-the-box. This document
+  defines all of the variables the are "predefined" by API Services. </p>
+
+  <aside class="note"><b>Note:</b> If you're new to flow variables or have general questions about
+  them, see <a href="/api-platform/fundamentals/introduction-flow-variables.html">Managing proxy
+  state with flow variables</a>. For information about how variables are used in conditional flows,
+  see <a href="/api-platform/fundamentals/flow-variables-and-conditions.html">Flow variables and
+  conditions</a>. For information about modifying the variables in your API proxy flow, see
+  <a href="/api-platform/reference/policies/assign-message-policy.html">Assign Message
+  policy</a>.</aside>
+
+  <h2 id="aboutvariablescope">About variable scope</h2>
+
+  <p>Flow variables have scope. By scope, we mean the point in the proxy flow life cycle when a
+  variable is first instantiated. For example, if you have a policy attached to the ProxyEndpoint
+  request segment, that policy will not be able to access any variables that are scoped to the
+  TargetEndpoint request segment. The reason for this is that the TargetEndpoint request segment of
+  the flow has not executed yet, so the API proxy hasn't had a chance to populate variables in that
+  scope.</p>
+
+  <aside class="note"><b>Note:</b> It's important to note that if you try to access a flow variable
+  that is out of scope, you will receive a NULL value. If you try to set a flow variable before it
+  is in scope, the proxy does nothing; it does not generate an error and does not set the
+  variable.</aside>
+
+  <p>For more information, see <a href=
+  "/api-platform/fundamentals/introduction-flow-variables.html#FlowVariableScope">Flow variable
+  scope</a>.</p>
+
+  <h2 id="request">Request message variables</h2>
+
+  <p>Using the variables that apply to the request message, policies may access message components
+  including the header, the query parameters, and form parameters, the source IP address, the HTTP
+  message body, and so on.</p>
+
+  <p>The proxy receives an incoming request message, then applies to it a series of policies, based
+  on conditions evaluated on the request, which can modify or transform the request.  In the
+  normal flow, the proxy then sends the transformed request to the target.</p>
+
+  <p>Policies can examine request variables, then transform or reject the request based on the
+  content of those variables. Policies transform the request by setting the appropriate variables,
+  for example variables corresponding to the request headers.</p>
+
+  <aside class="key-point">
+    <b>Tip:</b> You can use variables to reconstruct the incoming request URL. For example, the
+    following code in a JavaScript policy assembles the request URL from its parts:
+    <pre class="prettyprint">
+var req_verb = context.getVariable('request.verb');
+var req_scheme = context.getVariable('client.scheme');
+var req_host = context.getVariable('request.header.host');
+var req_request_uri = context.getVariable('request.uri');
+var req_url = req_scheme + "://" + req_host + req_request_uri;
+</pre>
+
+    <p>The result of the concatenation would look something like this:<br>
+    <code>https://myorg-test.apigee.net/foo</code></p>
+  </aside>
+
+  <table>
+    <thead>
+      <tr>
+        <th scope="col">Request message variables</th>
+
+        <th scope="col">Description</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td>client.host</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The HTTP host IP associated with the request received by the ProxyEndpoint.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>client.ip</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The IP address of the client or system sending the message to the Edge router. For
+          example, this could be the original client IP or a load balancer IP.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>client.port</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: Integer<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The HTTP port associated with the originating client request to ProxyEndpoint.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>client.received.end.time</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The time, expressed in string form, at which the proxy finished receiving the request
+          from the originating client at the ProxyEndpoint. For example: Wed, 21 Aug 2013 19:16:47
+          UTC</p>
+
+          <p>This time value is the string representation of the corresponding 32-bit timestamp
+          quantity. For example, 'Wed, 21 Aug 2013 19:16:47 UTC' corresponds to the timestamp value
+          of 1377112607413.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>client.received.end.timestamp</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: Long<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The timestamp value specifying when the proxy finished receiving the request from the
+          originating client at the ProxyEndpoint. This value is a 64-bit (long) integer containing
+          the number of milliseconds elapsed since midnight, on January 1, 1970 UTC.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>client.received.start.time</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The time, expressed in string form, at which the proxy began receiving the request
+          from the originating client at the ProxyEndpoint. For example: Wed, 21 Aug 2013 19:16:47
+          UTC</p>
+
+          <p>This time value is the string representation of the corresponding 32-bit timestamp
+          quantity. For example, 'Wed, 21 Aug 2013 19:16:47 UTC' corresponds to the timestamp value
+          of 1377112607413.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>client.received.start.timestamp</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: Long<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The timestamp value specifying when the proxy began receiving the request from the
+          originating client at the ProxyEndpoint. This value is a 64-bit (long) integer containing
+          the number of milliseconds elapsed since midnight, on January 1, 1970 UTC.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>client.sent.end.time</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy response<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The time, expressed in string form, when the ProxyEndpoint finished returning the
+          response to the originating client app. For example: Wed, 21 Aug 2013 19:16:47 UTC</p>
+
+          <p>This time value is the string representation of the corresponding 32-bit timestamp
+          quantity. For example, 'Wed, 21 Aug 2013 19:16:47 UTC' corresponds to the timestamp value
+          of 1377112607413.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>client.sent.end.timestamp</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy response<br>
+          <strong>Type</strong>: Long<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The timestamp value specifying when the ProxyEndpoint finished returning the response
+          to the originating client app. This value is a 64-bit (long) integer containing the
+          number of milliseconds elapsed since midnight, on January 1, 1970 UTC.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>client.sent.start.time</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy response<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The time, expressed in string form, when the ProxyEndpoint started returning the
+          response to the originating client app. For example: Wed, 21 Aug 2013 19:16:47 UTC</p>
+
+          <p>This time value is the string representation of the corresponding 32-bit timestamp
+          quantity. For example, 'Wed, 21 Aug 2013 19:16:47 UTC' corresponds to the timestamp value
+          of 1377112607413.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>client.sent.start.timestamp</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy response<br>
+          <strong>Type</strong>: Long<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The timestamp value specifying when the ProxyEndpoint started returning the response
+          to the originating client app. This value is a 64-bit (long) integer containing the
+          number of milliseconds elapsed since midnight, on January 1, 1970 UTC.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>client.scheme</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>Returns http or https depending on the transport used by client app to send the
+          request message.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>message.path</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read/Write</p>
+
+          <p>The complete request message path in URL excluding any query parameters. </p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>message.queryparam.{queryparam_name}</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>Returns the specified message query parameter.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>message.queryparam.{queryparam_name}.<br>
+        values</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: Collection<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>All the values of a particular query parameter in the message, formatted as a
+          comma-separated list. For example: if the querystring is
+          <code>a=hello&amp;a=world</code>, then the value of
+          <code>message.queryparam.a.values</code> is a collection: <code>['hello', 'world']</code>
+          .</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>message.queryparam.{queryparam_name}.values.count</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: Integer<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The total count of a specified query parameter associated with the request sent to the
+          ProxyEndpoint from the client app.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>message.queryparam.{queryparam_name}.{N}</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read/Write</p>
+
+          <p>The value of the Nth particular query parameter in the message. For example: if the
+          querystring is <code>a=hello&amp;a=world</code>, then the return value of
+          <code>message.queryparam.a.1</code> is "hello" .</p>
+
+          <p>As an example of writing multiple values for a single query parameter name, such as
+          "type=siteid:1&amp;type=language:us-en&amp;type=currency:USD", set the variable
+          <code>message.queryparam.type.1</code> to "siteid:1",
+          <code>message.queryparam.type.2</code> to "language:en-us", and
+          <code>message.queryparam.type.3</code> to "currency:USD" .</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>message.queryparams.count</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: Integer<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The total count of all query parameters associated with the request sent to the
+          ProxyEndpoint from the client app. </p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>message.queryparams.names</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: Collection (JavaObject)<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>A list of all query parameter names associated with the request sent to the
+          ProxyEndpoint from the client app.</p>
+
+          <p>To iterate over the query parameter names using JavaScript, see the following Apigee
+          Community post: <a href=
+          "https://community.apigee.com/questions/12782/how-do-you-iterate-collection-from-requestquerypar.html">https://community.apigee.com/questions/12782/how-do-you-iterate-collection-from-requestquerypar.html</a></p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>message.querystring</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>A string containing all query parameter names and values associated with the request
+          sent to the ProxyEndpoint from the client app.</p>
+
+          <p>For example, where the request is: <br>
+          <br>
+          <code>http://api.apifactory.com/inventors?name=nikola&amp;surname=tesla</code><br>
+          <br>
+          this variable returns:<br>
+          <br>
+          <code>name=nikola&amp;surname=tesla</code></p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>message.uri</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The complete URI path (following the domain URL) including query parameters.</p>
+
+          <p>For example, where the request is: <br>
+          <br>
+          <code>http://api.apifactory.com/inventors?name=nikola&amp;surname=tesla</code><br>
+          <br>
+          this variable returns:<br>
+          <br>
+          <code>inventors?name=nikola&amp;surname=tesla</code></p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>message.verb</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The HTTP verb (<code>GET</code>, <code>PUT</code>, <code>POST</code>,
+          <code>DELETE</code>, etc.) associated with the request</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>message.version</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read/Write</p>
+
+          <p>The HTTP version associated with the request sent to the ProxyEndpoint from the client
+          app.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>messageid</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>Holds the globally unique ID for the request, which includes the router host name.
+          This ID allows requests received at the router to be tracked after they are sent to the
+          message processor. </p>
+
+          <p>This ID is logged in Edge error logs to correlate the messageId with the
+          errors. </p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>proxy.basepath</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The value of the Base Path in your API proxy configuration. The base path is the URI
+          fragment that follows the host in the URL. Conditional flow URIs follow the base
+          path.</p>
+
+          <p>In the following sample URL, the host is myorg-test.apigee.net (which includes the org
+          name and environment), and the base path is /v2/weatherapi. The only way you'd know this
+          is by looking at the API proxy definition or checking the value of the proxy.basepath
+          variable. The proxy path suffix follows the base path (/forecastrss), along with any
+          query parameters. </p>
+
+          <p>http://myorg-test.apigee.net<strong>/v2/weatherapi</strong>/forecastrss?w=12797282</p>
+
+          <p><strong>Note</strong>: If you define a dynamic Base Path in your API proxy
+          configuration, such as /v2/*/weatherapi, then this variable is set to the dynamic path
+          (/v2/*/weatherapi), even though the base path resolves to a static value, such as
+          /v2/foo/weatherapi.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>proxy.client.ip</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The <code>X-Forwarded-For</code> address of the inbound call, which is the
+          IP address Edge received from the last external TCP handshake. This could be the calling
+          client or a load balancer.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>proxy.pathsuffix</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The value of API proxy basepath suffix that is sent from the client and received at
+          the ProxyEndpoint.</p>
+
+          <p>The basepath is defined as the path component that uniquely identifies the API proxy.
+          The public-facing URL of an API proxy is comprised of your organization name, the
+          environment where the proxy is deployed, the basepath, the basepath suffix, and any query
+          parameters. </p>
+
+          <p>For example, in the following request:</p>
+
+          <p>http://myorg-test.apigee.net/v2/weatherapi/forecastrss?w=12797282</p>
+
+          <p>The basepath suffix is /forecastrss</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>proxy.url</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>Gets the complete URL associated with the proxy request received by the ProxyEndpoint,
+          including any query parameters present. Note that the host in proxy.url is the router
+          host, not the host used in the original request. For information on constructing the full
+          request URL using the original host, see the <a href="#request">top of this
+          section</a>.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>request</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: Message<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The complete request, including any payload present.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>request.content</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read/Write</p>
+
+          <p>Gets or sets the payload of the request message.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>request.formparam.{formparam_name}</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read/Write</p>
+
+          <p>Gets or sets the value of the specified form parameter in the request sent from
+          the client app. </p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>request.formparam.{formparam_name}.<br>
+        values</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: Collection<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>All the values of a particular form parameter in the request, formatted as a
+          comma-separated list. For example: if the payload is
+          <code>a=hello&amp;x=greeting&amp;a=world</code>, then the value of
+          <code>request.formparam.a.values</code> is a collection: <code>['hello', 'world']</code>
+          .</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>request.formparam.{formparam_name}.<br>
+        values.count</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: Integer<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>Count of all values for the specified form parameter associated with the request.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>request.formparam.{formparam_name}.{N}</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read/Write</p>
+
+          <p>The value of the Nth particular form parameter in the message. For example: if the
+          form string is <code>a=hello&amp;a=world</code>, then the return value of
+          <code>request.formparam.a.1</code> is "hello" .</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>request.formparams.count</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: Integer<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>Count of all form parameters associated with the request sent from the client
+          app. </p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>request.formparams.names</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: Collection<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>A list of all form parameter names associated with the request.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>request.formstring</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The complete formparam in the request sent from the client app.</p>
+
+          <p>For example: name=test&amp;type=first&amp;group=A</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>request.header.{header_name}</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read/Write</p>
+
+          <p>Gets or sets the value of a particular header found in the request. If the header
+          contains a comma, upon read you will receive only the segment of the text up to the first
+          comma. If you want the entire header, use the form
+          <code>request.header.{header_name}.values</code></p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>request.header.{header_name}.values</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: Collection<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>All the values of a particular header in the request.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>request.header.{header_name}.values.count</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: Integer<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>Count of all the values of a particular header in the request.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>request.header.{header_name}.{N}</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read/Write</p>
+
+          <p>The value of the Nth particular header value in the request. Apigee Edge splits header
+          text values by commas. For example: if the <code>Cache-control</code> header is
+          <code>public, maxage=16544</code>, then the return value of
+          <code>request.header.cache-control.1</code> is <code>maxage=16544</code> .</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>request.headers.count</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: Integer<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>Count of all the headers in the request.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>request.headers.names</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: Collection<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>Names of all the headers in the request.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>request.path</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The un-proxied resource path (not including the host) to the backend service,
+          excluding query parameters.</p>
+
+          <p>For example: If the URI to the backend service is https://example.com/rest/api/latest,
+          the request.path is /rest/api/latest.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>request.queryparam.{queryparam_name}</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read/Write</p>
+
+          <p>The value of a particular query parameter found in the request.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>request.queryparam.{queryparam_name}.<br>
+        values</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: Collection<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>All the values of a particular query parameter in the request, formatted as a
+          comma-separated list. For example: if the querystring is
+          <code>a=hello&amp;b=lovely&amp;a=world</code>, then the value of
+          <code>request.queryparam.a.values</code> is a collection: <code>['hello', 'world']</code>
+          .</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>request.queryparam.{queryparam_name}.<br>
+        values.count</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: Integer<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The count of all the values of a particular query parameter in the request.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>request.queryparam.{queryparam_name}.{N}</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read/Write</p>
+
+          <p>The value of the Nth particular query parameter in the request. For example: if the
+          querystring is <code>a=hello&amp;a=world</code>, then the return value of is
+          request.queryparam.a.1 is "hello" .</p>
+
+          <p>As an example of writing multiple values for a single query parameter name, such as
+          "type=siteid:1&amp;type=language:us-en&amp;type=currency:USD", set the variable
+          <code>request.queryparam.type.1</code> to "siteid:1",
+          <code>request.queryparam.type.2</code> to "language:en-us", and
+          <code>request.queryparam.type.3</code> to "currency:USD" .</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>request.queryparams.count</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: Integer<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The count of all the query parameters in the request.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>request.queryparams.names</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: Collection (JavaObject)<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The names of all the query parameters in the request.</p>
+
+          <p><strong>Related</strong></p>
+
+          <p>To iterate over the query parameter names using JavaScript, see the following Apigee
+          Community post: <a href=
+          "https://community.apigee.com/questions/12782/how-do-you-iterate-collection-from-requestquerypar.html">https://community.apigee.com/questions/12782/how-do-you-iterate-collection-from-requestquerypar.html</a></p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>request.querystring</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The complete list of query parameters in the request sent from the client app.</p>
+
+          <p>For example, if the request is</p>
+
+          <p>http://host.com/123?name=first&amp;surname=second&amp;place=address</p>
+
+          <p>then this variable returns</p>
+
+          <p>name=first&amp;surname=second&amp;place=address</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>request.transportid</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>ID of the request as type TransportMessage which is a contextual object</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>request.transport.message</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: Transport Message<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>Request of type TransportMessage which is a contexual object </p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>request.uri</td>
+
+        <td>
+          <!-- Set to read-only per APIRT-2605 -->
+
+          <p><strong>Scope begins</strong>: Proxy request (differs in the response)<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>In an API proxy, the proxy <code>&lt;BasePath&gt;</code> in the ProxyEndpoint (in
+          addition to the proxy's base URL) maps to the target service URL in
+          the TargetEndpoint. For example:</p>
+          <pre class="prettyprint">
+&lt;ProxyEndpoint&gt;
+...
+  &lt;BasePath&gt;/my-mock-proxy&lt;/BasePath&gt;
+</pre>
+
+          <p>points to</p>
+          <pre class="prettyprint">
+&lt;TargetEndpoint&gt;
+...
+  &lt;HTTPTargetConnection&gt;
+    http://mocktarget.apigee.net
+  &lt;/HTTPTargetConnection&gt;
+</pre>
+
+          <p>In the <strong>request</strong>, the <code>request.uri</code> is the proxy base path +
+          the remainder of the address, including query parameters.</p>
+
+          <p>In the <strong>response</strong>, the <code>request.uri</code> is the remainder of the
+          address, including query parameters, after the HTTPTargetConnection.</p>
+
+          <p>The difference is because the original request came into the proxy, but then the proxy
+          makes another request to the target service.</p>
+
+          <p>Let's say the following call is made to our sample proxy, which has a base path
+          of <span style="font-family: monospace;">/my-mock-proxy</span>:</p>
+
+          <p>
+          <code>http://my_org-test.apigee.net/my-mock-proxy/<strong>user?user=Dude</strong></code></p>
+
+          <p>and the proxy calls</p>
+
+          <p><code>http://mocktarget.apigee.net</code> (which
+          appends <code>/user?user=Dude</code> to that URL).</p>
+
+          <p><strong>Request</strong>: <code>request.uri</code> =
+          <code>/my-mock-proxy/user?user=Dude</code></p>
+
+          <p><strong>Response</strong>: <code>request.uri</code> = <code>/user?user=Dude</code></p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>request.url</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Target response<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>Returns the complete URL of the request made to the target endpoint, including the
+          query string parameters, but not including the port number (if specified).</p>
+
+          <p>For example, if you make the following call to a sample proxy:</p>
+
+          <p><code>http://my_org-test.apigee.net/my-mock-proxy/user?user=Dude</code></p>
+
+          <p>and the target endpoint is:</p>
+
+          <p><code>http://example.com:8080</code></p>
+
+          <p>Then the value is:</p>
+
+          <p><strong>Request</strong>: n/a</p>
+
+          <p><strong>Response</strong>: <code>request.url</code> =
+          <code>http://example.com/user?user=Dude</code></p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>request.verb</td>
+
+        <td>
+          <p><!-- Set to read-only per APIRT-2605 --><strong>Scope begins</strong>: Proxy
+          request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The HTTP verb used for the request. For example: GET, PUT, DELETE</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>request.version</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>Gets the HTTP version of the request.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>response.formstring</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Target request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The complete list of form parameters in the request.</p>
+
+          <p>For example: name=test&amp;type=first&amp;group=A</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>route.name</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Target request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The name of the RouteRule that was executed in the ProxyEndpoint. For example:
+          default. A RouteRule references an API proxy TargetEndpoint to execute.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>route.target</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Target request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The name of the TargetEndpoint that was executed. For example: default.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><span style=
+          "font-family:arial,helvetica,sans-serif;">servicecallout.requesturi</span></p>
+        </td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read/Write</p>
+
+          <p>The TargetEndpoint URI for a ServiceCallout policy. The URI is the TargetEndpoint URL
+          without the protocol and domain specification.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>servicecallout.{policy-name}.expectedcn</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read/Write</p>
+
+          <p>The expected Common Name of the TargetEndpoint as referred to in a ServiceCallout
+          policy. This is meaningful only when the TargetEndpoint refers to an TLS/SSL
+          endpoint.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>servicecallout.{policy-name}.target.url</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read/Write</p>
+
+          <p>The TargetEndpoint URL for a particular ServiceCallout policy. See also, <a href=
+          "/api-platform/reference/policies/service-callout-policy.html">Service Callout
+          policy</a>.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>target.basepath</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Target request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The resource path (not including the domain) to the target service, excluding query
+          parameters, that is defined in the proxy's TargetEndpoint.</p>
+
+          <p>For example, say an API proxy calls the following target:</p>
+          <pre class="prettyprint">
+&lt;TargetEndpoint name="default"&gt;
+...
+    &lt;HTTPTargetConnection&gt;
+        &lt;URL&gt;http://mocktarget.apigee.net/user?user=Dude&lt;/URL&gt;
+    &lt;/HTTPTargetConnection&gt;
+  
+</pre>
+
+          <p>In this example, the target.basepath is <code>/user</code>.</p>
+
+          <p>If the target were this:</p>
+          <pre class="prettyprint">
+&lt;TargetEndpoint name="default"&gt;
+...
+    &lt;HTTPTargetConnection&gt;
+        &lt;URL&gt;http://mocktarget.apigee.net&lt;/URL&gt;
+    &lt;/HTTPTargetConnection&gt;
+  
+</pre>
+
+          <p>the target.basepath would be null.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>target.copy.pathsuffix</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Target request<br>
+          <strong>Type</strong>: Boolean<br>
+          <strong>Permission</strong>: Read/Write</p>
+
+          <p>When true, request forwarded from ProxyEndpoint to TargetEndpoint retains path sufffix
+          (the URI path fragment following the URI defined in the ProxyEndpoint base path.)</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>target.copy.queryparams</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Target request<br>
+          <strong>Type</strong>: Boolean<br>
+          <strong>Permission</strong>: Read/Write</p>
+
+          <p>When true, request forwarded from ProxyEndpoint to TargetEndpoint retains query
+          parameters.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>target.cn</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Target request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The Common Name of the TargetEndpoint. This is meaningful only when the TargetEndpoint
+          refers to an TLS/SSL endpoint.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>target.expectedcn</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read/Write</p>
+
+          <p>The expected Common Name of the TargetEndpoint. This is meaningful only when the
+          TargetEndpoint refers to an TLS/SSL endpoint.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>target.name</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Target request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>Target to which message is reaching from targetendpoint</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>target.sent.end.time</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Target request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The time, expressed in string form, at which the proxy stopped sending the request to
+          the URL specified in the TargetEndpoint. For example: Wed, 21 Aug 2013 19:16:47 UTC</p>
+
+          <p>This time value is the string representation of the corresponding 32-bit timestamp
+          quantity. For example, 'Wed, 21 Aug 2013 19:16:47 UTC' corresponds to the timestamp value
+          of 1377112607413.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>target.sent.end.timestamp</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Target request<br>
+          <strong>Type</strong>: Long<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The timestamp value specifying when the proxy finished sending the request to the URL
+          specified in the TargetEndpoint. This value is a 64-bit (long) integer containing the
+          number of milliseconds elapsed since midnight, on January 1, 1970 UTC.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>target.sent.start.time</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Target request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The time, expressed in string form, at which the proxy began sending the request to
+          the URL specified in the TargetEndpoint. For example: Wed, 21 Aug 2013 19:16:47 UTC</p>
+
+          <p>This time value is the string representation of the corresponding 32-bit timestamp
+          quantity. For example, 'Wed, 21 Aug 2013 19:16:47 UTC' corresponds to the timestamp value
+          of 1377112607413.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>target.sent.start.timestamp</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Target request<br>
+          <strong>Type</strong>: Long<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The timestamp value specifying when the proxy started sending the request to the URL
+          specified in the TargetEndpoint. This value is a 64-bit (long) integer containing the
+          number of milliseconds elapsed since midnight, on January 1, 1970 UTC.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>target.ssl.enabled</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: Boolean<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>Whether TargetEndpoint is running on TLS/SSL</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>target.url</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Target request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read/Write</p>
+
+          <p>The URL configured in the TargetEndpoint XML file or the dynamic target URL (if
+          target.url is set during the message flow). The variable does not include any additional
+          path elements or query parameters. Returns null if called out of scope or otherwise
+          unset.</p>
+
+          <aside class="note"><b>Note:</b> Use a JavaScript policy attached to the TargetEndpoint
+          to set this variable. </aside>
+        </td>
+      </tr>
+
+      <tr>
+        <td>variable.expectedcn</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read/Write</p>
+
+          <p>Variable exposed for the common name if it's running on TLS/SSL</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>virtualhost.aliases</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: String_array<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>Host aliases of the virtual host that is hit during a particular request</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>virtualhost.name</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>Name of the virtual host that serves the originating client request</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>virtualhost.ssl.enabled</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: Boolean<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>Returns true if TLS/SSL is enabled in the virtual host configuration</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="response">Response message variables</h2>
+
+  <p>Using the variables that apply to the response message, policies may access message components
+  including the header, the query parameters, and form parameters, the source IP address, the HTTP
+  message body, and so on.</p>
+
+  <p>The proxy receives a response message, then applies to it a series of policies, based on
+  conditions evaluated on the response, which can modify or transform the response.</p>
+
+  <p>Policies can examine response variables, then transform or reject the request based on the
+  content of those variables. Policies transform the response by setting the appropriate variables,
+  for example variables corresponding to the response headers.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th scope="col">Response message variable</th>
+
+        <th scope="col">Description</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td>client.sent.end.time</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy response<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The time, expressed in string form, at which the proxy finished sending the response
+          from the ProxyEndpoint to the client. For example: Wed, 21 Aug 2013 19:16:47 UTC</p>
+
+          <p>This time value is the string representation of the corresponding 32-bit timestamp
+          quantity. For example, 'Wed, 21 Aug 2013 19:16:47 UTC' corresponds to the timestamp value
+          of 1377112607413.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>client.sent.end.timestamp</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy response<br>
+          <strong>Type</strong>: Long<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The timestamp value specifying when the proxy finished sending the response to the
+          client from the ProxyEndpoint. This value is a 64-bit (long) integer containing the
+          number of milliseconds elapsed since midnight, on January 1, 1970 UTC.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>client.sent.start.time</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy response<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The time, expressed in string form, at which the proxy began sending the response from
+          the ProxyEndpoint to the client. For example: Wed, 21 Aug 2013 19:16:47 UTC</p>
+
+          <p>This time value is the string representation of the corresponding 32-bit timestamp
+          quantity. For example, 'Wed, 21 Aug 2013 19:16:47 UTC' corresponds to the timestamp value
+          of 1377112607413.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>client.sent.start.timestamp</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy response<br>
+          <strong>Type</strong>: Long<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The timestamp value specifying when the proxy began sending the response to the client
+          from the ProxyEndpoint. This value is a 64-bit (long) integer containing the number of
+          milliseconds elapsed since midnight, on January 1, 1970 UTC.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>loadbalancing.failedservers</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Target response<br>
+          <strong>Type</strong>: String_array<br>
+          <strong>Permission</strong>: Read</p>
+
+          List of failed TargetServers during load balancing at TargetEndpoint
+        </td>
+      </tr>
+
+      <tr>
+        <td>loadbalancing.isfallback</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Target response<br>
+          <strong>Type</strong>: Boolean<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>Return true if fallback is enabled for the TargetServer invoked during load balancing
+          at TargetEndpoint </p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>loadbalancing.targetserver</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Target response<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>TargetServer invoked during load balancing at TargetEndpoint. Set only if the
+          &lt;Path&gt; element is set while defining the load balancer element.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>message.reason.phrase</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Target response<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>ReasonPhrase of the response message from target</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>message.status.code</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Target response<br>
+          <strong>Type</strong>: Integer<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>HTTP status code of the response message from target</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>response</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Target response<br>
+          <strong>Type</strong>: Message<br>
+          <strong>Permission</strong>: Read/Write</p>
+
+          <p>Complete response message returned by target</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>response.content</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Target response<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read/Write</p>
+
+          <p>Payload content of the response message returned by the target</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>response.formparam.{formparam_name}</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Target response<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read/Write</p>
+
+          <p>The value of a form parameter in the response</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>response.formparam.{formparam_name}.values.count</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Target response<br>
+          <strong>Type</strong>: Integer<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>Count of all the values of the specified form parameter in response</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>response.formparams.count</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Target response<br>
+          <strong>Type</strong>: Integer<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>Count of all form prameters in the response</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>response.formparams.names</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Target response<br>
+          <strong>Type</strong>: Collection<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The names of all the form parameters in the response</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>response.header.{header_name}</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Target response<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read/Write</p>
+
+          <p>Gets or sets the value of a specified HTTP header in the response. If the header text
+          includes a comma, Apigee Edge infers multiple values, and a read of this variable returns
+          the first value only. If you want to read the entire header, use the form
+          <code>response.header.{header_name}.values</code></p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>response.header.{header_name}.values</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Target response<br>
+          <strong>Type</strong>: Collection<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>All the values of a specified HTTP header in response.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>response.header.{header_name}.values.count</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Target response<br>
+          <strong>Type</strong>: Integer<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>Count of all the values of the specified HTTP header in response.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>response.header.{header_name}.{N}</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Target response<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read/Write</p>
+
+          <p>The value of the Nth particular header value in the response. Apigee Edge splits
+          header text values by commas. For example: if the <code>Cache-control</code> header is
+          <code>public, maxage=16544</code>, then the return value of
+          <code>response.header.cache-control.1</code> is <code>maxage=16544</code> .</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>response.headers.count</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Target response<br>
+          <strong>Type</strong>: Integer<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>Count of all the headers in the response</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>response.headers.names</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Target response<br>
+          <strong>Type</strong>: Collection<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The names of all the headers in the response</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>response.reason.phrase</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Target response<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read/Write</p>
+
+          <p>The response reason phrase for a particular request</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>response.status.code</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Target response<br>
+          <strong>Type</strong>: Integer<br>
+          <strong>Permission</strong>: Read/Write</p>
+
+          <p>The response code returned for a request. You can use this variable to override the
+          response status code, which is stored in message.status.code.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>response.transport.message</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Target response<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>Response of type TransportMessage which is a contexual object </p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>target.country</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Target response<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>Country of the TLS/SSL certificate presented by the target server</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>target.email.address</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Target response<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>Email address of the TLS/SSL certificate presented by the target server</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>target.organization</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Target response<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>Organization of the TLS/SSL certificate presented by the target server</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>target.organization.unit</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Target response<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>Organization unit of the TLS/SSL certificate presented by the target server</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>target.locality</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Target response<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>Locality (city) of the TLS/SSL certificate presented by the target server</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>target.received.end.time</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Target response<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The time, expressed in string form, at which the TargetEndpoint finished receiving the
+          response from the target. For example: Wed, 21 Aug 2013 19:16:47 UTC</p>
+
+          <p>This time value is the string representation of the corresponding 32-bit timestamp
+          quantity. For example, 'Wed, 21 Aug 2013 19:16:47 UTC' corresponds to the timestamp value
+          of 1377112607413.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>target.received.end.timestamp</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Target response<br>
+          <strong>Type</strong>: Long<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The timestamp value specifying when the TargetEndpoint finished receiving the response
+          from the target. This value is a 64-bit (long) integer containing the number of
+          milliseconds elapsed since midnight, on January 1, 1970 UTC.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>target.received.start.time</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Target response<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The time, expressed in string form, at which the TargetEndpoint started receiving the
+          response from the target. For example: Wed, 21 Aug 2013 19:16:47 UTC</p>
+
+          <p>This time value is the string representation of the corresponding 32-bit timestamp
+          quantity. For example, 'Wed, 21 Aug 2013 19:16:47 UTC' corresponds to the timestamp value
+          of 1377112607413.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>target.received.start.timestamp</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Target response<br>
+          <strong>Type</strong>: Long<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The timestamp value specifying when the TargetEndpoint started receiving the response
+          from the target. This value is a 64-bit (long) integer containing the number of
+          milliseconds elapsed since midnight, on January 1, 1970 UTC.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>target.state       </td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Target response<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>State of the TLS/SSL certificate presented by the target server</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>target.host</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Target response<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The domain name of the target service returning the response to the API proxy.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>target.ip</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: <span style="font-size: 12px;">Target
+          response</span><br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The IP address of the target service returning the response to the API proxy.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>target.port</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: <span style="font-size: 12px;">Target
+          response</span><br>
+          <strong>Type</strong>: Integer<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The port number of the target service returning the response to the API proxy.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>target.scheme</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Target response<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read/Write</p>
+
+          <p>Returns http or https depending on the request message</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="messagevariables"><a name="message" id="message"></a>Message variables</h2>
+
+  <p>Message variables are contextual: they refer to different message types (request, response, or
+  error) depending on the point within the API Proxy Flow in which they are called. The supported
+  message variables are listed below.</p>
+
+  <h3 id="messagevariables-usesformessagevariables">Uses for message variables</h3>
+
+  <p>There are good use cases message variables. Principally, when your proxy enters the error
+  flow, the request and response flow variables are out of scope. For example, the
+  <strong>response</strong> object is not available from within the error flow. You will not be
+  able to use a JavaScript policy to set response headers on the response object if you are in the
+  error flow. Instead, you can use either
+  the <strong>error</strong> or <strong>message</strong> object for that
+  purpose. Both of these objects are available in the error flow, and can be used to set response
+  headers from within a JavaScript policy or be accessed in other policies that can use flow
+  variables. See also <a href="#ErrorVariables">Error variables</a>.</p>
+
+  <p><strong>Note:</strong> You can use the AssignMessage policy to assign values, such as headers,
+  to the <strong>response</strong> <strong>type</strong>. AssignMessage automatically handles
+  the switch in context from request/response flow to error flow. See <a href=
+  "/api-platform/reference/policies/assign-message-policy.html">Assign Message policy</a> for
+  details. </p>
+
+  <p><strong>Examples:</strong></p>
+
+  <p>In an error flow, you can set a response header from a JavaScript policy using either the
+  error object or the message object, for example, like this<span style=
+  "font-size: 12px;">:</span></p>
+  <pre class="prettyprint">
+context.setVariable('error.header.FOO-1', 'error_header');
+
+  or
+
+context.setVariable('message.header.FOO-2', 'message_header');
+</pre>
+
+  <p>The following expression, however, will not work. The response object is out of scope in the
+  error flow. (Note that, in a trace, this is visually indicated by variables shown with a sign
+  showing an equals sign with a slash through it.)</p>
+  <pre class="prettyprint">
+context.setVariable('response.header.FOO-3', 'response_header');
+</pre>
+
+  <p>If you want to set response headers for both success and error flows in a single policy, you
+  can use the message object inside a JavaScript policy. For example:</p>
+  <pre class="prettyprint">
+&lt;faultrules&gt;
+        &lt;faultrule name="invalid_key_rule"&gt;
+            &lt;step&gt;
+                &lt;name&gt;SetResponseHeaders&lt;/name&gt;
+            &lt;/step&gt;
+            &lt;condition&gt;(fault.name = "InvalidApiKey")&lt;/condition&gt;
+        &lt;/faultrule&gt;
+    &lt;/faultrules&gt;
+</pre>
+
+  <p>Where in the SetResponseHeaders JavaScript policy, code like this will set the error/response
+  header in any flow context:</p>
+  <pre class="prettyprint">
+context.setVariable('message.header.FOO-1', 'the header value');
+</pre>
+
+  <p>This same policy can be reused on the normal ProxyResponse flow and it will succeed because
+  the <strong>message</strong> object is available from all contexts.</p>
+
+  <p>Another use case for the message variables is to use them to log response data in the
+  PostClientFlow with the MessageLogging policy. If you use the <strong>message</strong> object,
+  you can seamlessly log response information following both success and error conditions in the
+  proxy.</p>
+
+  
+
+  <table>
+    <thead>
+      <tr>
+        <th scope="col">Message variables</th>
+
+        <th scope="col">Description </th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td>message</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: Message<br>
+          <strong>Permission</strong>: Read/Write</p>
+
+          <p>A contextual object, with the same value as <code>request</code> in the request Flow
+          or as <code>response</code> in the response Flow or as <code>error</code> in the Error
+          flow.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>message.content</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read/Write</p>
+
+          <p>Content of the request, response, or error message</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>message.formparam.{formparam_name}</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read/Write</p>
+
+          <p>Value of the specified form parameter</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>message.formparam.{formparam_name}.values</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: Collection<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>All values of the specified form parameter in the message</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>message.formparam.{formparam_name}.values.count</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: Integer<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>Count of the values of the specified form parameters in the message</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>message.formparams.count</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: Integer<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>Count of all form parameters in the message</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>message.formparams.names</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: Collection<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>Value of all form parameters in the message</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>message.formstring</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>Value of form string in the message</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>message.header.{header_name}</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read/Write</p>
+
+          <p>Gets or sets the value of the specified HTTP header in the message. If the header
+          contains a comma, upon read you will receive only the segment of the text up to the first
+          comma. If you want the entire header, use the form
+          <code>request.header.{header_name}.values</code></p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>message.header.{header_name}.values</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: Collection<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>All the values of a particular header in the message.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>message.header.{header_name}.values.count</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: Integer<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>Count of all the values of a particular header in the message.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>message.header.{header_name}.{N}</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read/Write</p>
+
+          <p>The value of the Nth particular header value in the message, either request or
+          response, depending on the state of the flow. Apigee Edge splits header text values by
+          commas. For example: if the <code>Cache-control</code> header is <code>public,
+          maxage=16544</code>, then the return value of <code>message.header.cache-control.1</code>
+          is <code>maxage=16544</code> .</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>message.reason.phrase</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Target response<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>ReasonPhrase of the response message from target</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>message.status.code</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Target response<br>
+          <strong>Type</strong>: Integer<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>HTTP status code of the response message from target</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>message.header.{header_name}.values</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: Collection<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>All values of the specified HTTP header name in the message</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>message.header.{header_name}.values.count</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: Integer<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>Count of the values of the specified HTTP header name in the message</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>message.headers.count</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: Integer<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>Count of all HTTP headers in the message</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>message.headers.names</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: Collection<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>Value of all HTTP headers in the message</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>messagelogging.{policy-name}.failed</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: Boolean<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>Failure flag for the referenced Message logging policy</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>messagelogging.failed</td>
+
+        <td>
+          <p><strong>Scope</strong>:<br>
+          <strong>Type</strong>:<br>
+          <strong>Permission</strong>:</p>
+
+          Failure flag for Message logging policy
+        </td>
+      </tr>
+
+      <tr>
+        <td>message.queryparam.{queryparam_name}.values</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: Integer<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>Value of the specified query parameter in the message</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>message.transport.message</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: Transport_Message<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>Message of type <code>TransportMessage</code> which is a contextual object</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="errorvariables"><a id="ErrorVariables" name="ErrorVariables"></a>Error variables</h2>
+
+  <p>Error variables are only available in the Error Flow. </p>
+
+  <p><strong>Note:</strong> You can use the AssignMessage policy to assign values, such as
+  headers, to the <strong>response</strong>. AssignMessage automatically handles the switch in
+  context from request/response flow to error flow. See <a href=
+  "/api-platform/reference/policies/assign-message-policy.html">Assign Message policy</a> for
+  details. </p>
+
+  <table>
+    <thead>
+      <tr>
+        <th scope="col">Message variables</th>
+
+        <th scope="col">Description </th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td>error</td>
+
+        <td>
+          <p><strong>Scope</strong>: Error<br>
+          <strong>Type</strong>: Message<br>
+          <strong>Permission</strong>: Read/Write</p>
+
+          <p>Error of type Message which is a contextual object in the error flow</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>error.content</td>
+
+        <td>
+          <p><strong>Scope</strong>: Error<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read/Write</p>
+
+          <p>Content of the error </p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>error.message</td>
+
+        <td>
+          <p><strong>Scope</strong>: Error<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>Message associated with an error, whose value is available only before the error Flow
+          is executed.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>error.status.code</td>
+
+        <td>
+          <p style="font-size: 12px;"><strong>Scope</strong>: Error<br>
+          <strong>Type</strong>: Integer<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p style="font-size: 12px;">The HTTP status code associated with the error. For example:
+          400.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>error.reason.phrase</td>
+
+        <td>
+          <p style="font-size: 12px;"><strong>Scope</strong>: Error<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p style="font-size: 12px;">The reason phrase associated with the error. For example:
+          "Bad Request".</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>error.transport.message</td>
+
+        <td>
+          <p><strong>Scope</strong>: Error<br>
+          <strong>Type</strong>: Transport_Message<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>Any error of type TransportMessage</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>error.state</td>
+
+        <td>
+          <p><strong>Scope</strong>: Error<br>
+          <strong>Type</strong>: Integer<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>State in the Flow where an error occurred</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>error.header.&lt;name&gt;</td>
+
+        <td>
+          <p><strong>Scope</strong>: Error<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read/Write</p>
+
+          <p>Get or set the response header.</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="pathvariables"><a name="path" id="path"></a>Path variables</h2>
+
+  <p>Path variables are predefined variables that can be used to retrieve different parts of the
+  request path.</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <td><strong>Variables</strong></td>
+
+        <td><strong>Path</strong></td>
+
+        <td><strong>Description</strong></td>
+      </tr>
+
+      <tr>
+        <td colspan="1" rowspan="3">Request variables</td>
+
+        <td>request.uri</td>
+
+        <td>The HTTP request path, which includes a path and a query string separated by a question
+        mark ( ? )</td>
+      </tr>
+
+      <tr>
+        <td>request.path</td>
+
+        <td><!-- Set to read-only per APIRT-2605 -->The HTTP request path without the query
+        string</td>
+      </tr>
+
+      <tr>
+        <td>request.querystring</td>
+
+        <td>The portion of the HTTP request path after the question mark ( ? )</td>
+      </tr>
+
+      <tr>
+        <td>Application variables</td>
+
+        <td>application.basepath</td>
+
+        <td>The deployment base path (specified during API deployment)</td>
+      </tr>
+
+      <tr>
+        <td colspan="1" rowspan="2">Proxy variables</td>
+
+        <td>proxy.basepath</td>
+
+        <td>The base path as configured in the proxy XML file.</td>
+      </tr>
+
+      <tr>
+        <td>proxy.pathsuffix</td>
+
+        <td>The portion of the request path after the proxy basepath, which is determined by any
+        conditional flow URIs.</td>
+      </tr>
+
+      <tr>
+        <td colspan="1" rowspan="3">Target variables</td>
+
+        <td>request.url</td>
+
+        <td>The complete URL of the final request made.</td>
+      </tr>
+
+      <tr>
+        <td>target.basepath</td>
+
+        <td>The path (without host or port) in the URL configured in the target XML file or the
+        dynamic target URL (if target.url is set during the message flow)</td>
+      </tr>
+
+      <tr>
+        <td>target.url</td>
+
+        <td>The URL configured in the target XML file or the dynamic target URL (if target.url is
+        set during the message flow). Returns null if called out of scope or otherwise unset.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h4>Example</h4>
+
+  <p>Consider the following deployment:</p>
+
+  <ol>
+    <li>Deployment path: /dev/</li>
+
+    <li>Proxy base path: /twitter/</li>
+
+    <li>Virtual host port: 8090</li>
+
+    <li>Virtual host alias: mytwitter.com</li>
+
+    <li>Target URL: http://api.twitter.com/1/</li>
+  </ol>
+
+  <p><strong>Request from client</strong> - The client makes the request:</p>
+  <pre class="prettyprint">
+            GET /dev/twitter/help/test.json
+            curl http://{host}:8090/dev/twitter/help/test.json -H 'host: mytwitter.com'
+</pre>
+
+  <p><strong>The path is visualized as :</strong></p>
+  <pre class="prettyprint">
+            {VERB} {proxy.basepath}/{proxy.pathsuffix}
+</pre>
+
+  <p><strong>Request is sent to target as:</strong></p>
+  <pre class="prettyprint">
+            GET /1/help/test.json
+            equivalent to:  curl http://api.twitter.com/1/help/test.json
+</pre>
+
+  <p><strong>The path is visualized as:</strong></p>
+  <pre class="prettyprint">
+            {VERB} {target.basepath}/{proxy.pathsuffix}?{query params}
+</pre>
+
+  <h4>Usage in flows</h4>
+
+  <p>Paths are usually used to classify requests as REST <em>resources</em>. This is achieved using
+  conditional flows in a path match condition. Consider the following two requests based on the
+  example above, which are two resources:</p>
+  <pre class="prettyprint">
+          GET /dev/twitter/help/test.json
+          GET /dev/twitter/statuses/public_timeline.json
+</pre>
+
+  <p>You can enforce different policies on these resources. The <strong>proxy.pathsuffix
+  variable</strong> policy is recommended in conditions.</p>
+
+  <h2 id="configurationvariables"><a name="configuration" id="configuration"></a>Configuration
+  variables</h2>
+
+  <p>Configuration variables represent the configuration settings for an organization on Apigee
+  Edge. The supported configuration variables are listed below.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th scope="col">Configuration variables</th>
+
+        <th scope="col">Description</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td>organization.name</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>Name of the organization</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>environment</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>Container for environment.name.</p>
+
+          <aside class="warning"><b>Warning:</b> Do not attempt to overwrite this variable.</aside>
+        </td>
+      </tr>
+
+      <tr>
+        <td>environment.name</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>Name of the environment in which the transaction ran.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>apiproxy.name</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>Name of the apiproxy</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>apiproxy.revision</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The revision number of an API proxy</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>is.error</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: Boolean<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>Error flag</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>proxy.name</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The name attribute configured for the ProxyEndpoint</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="systemvariables"><a name="system" id="system"></a>System variables</h2>
+
+  <p>System variables contain system-related information. A system variable is prefixed with
+  <code>_system.</code> wherever it is referenced. The part of the variable that appears after the
+  prefix specifies the function in the system, such as date, time, and interfaces. The supported
+  system variables are listed below.</p>
+
+
+  <table>
+    <thead>
+      <tr>
+        <th scope="col">System variable</th>
+
+        <th scope="col">Description </th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td>system.timestamp</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: Long<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The timestamp value specifying when the request is received from the client at the
+          ProxyEndpoint. This value is a 64-bit (long) integer containing the number of
+          milliseconds elapsed since midnight, on January 1, 1970 UTC.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>system.time</td>
+
+        <td>
+          <div>
+            <p><strong>Scope begins</strong>: Proxy request<br>
+            <strong>Type</strong>: String<br>
+            <strong>Permission</strong>: Read</p>
+
+            <p>The time, expressed in string form, at which the proxy received a request from a
+            client at the ProxyEndpoint. For example: Wed, 21 Aug 2013 19:16:47 UTC.</p>
+
+            <p>This time value is the string representation of the corresponding 32-bit timestamp
+            quantity. For example, 'Wed, 21 Aug 2013 19:16:47 UTC' corresponds to the timestamp
+            value of 1377112607413.</p>
+          </div>
+        </td>
+      </tr>
+
+      <tr>
+        <td>system.time.year</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: Integer<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The year portion of the system.time variable.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>system.time.month</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: Integer<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The month portion of the system.time variable.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>system.time.day</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: Integer<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The day of month portion of the system.time variable.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>system.time.dayofweek</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: Integer<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The day of the week portion of the system.time variable.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>system.time.hour</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: Integer<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The hour portion of the system.time variable.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>system.time.minute</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: Integer<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The minute portion of the system.time variable.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>system.time.second</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: Integer<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The second portion of the system.time variable.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>system.time.millisecond</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: Integer<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The millisecond portion of the system.time variable.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>system.time.zone</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>Timezone of the system.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>system.interface.{interface_name}</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>IP Address of the system.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>system.pod.name</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The name of the pod where the proxy is running.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>system.region.name</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The name of the data center region where the proxy is running.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>system.uuid</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The UUID of the message processor handling the proxy.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>router.uuid</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>Deprecated and returns null. (Formerly: The UUID of the router handling the
+          proxy.)</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="tlssslvariables">TLS/SSL variables</h2>
+
+  <p>The following variables are populated when an API proxy executes a transaction over inbound
+  TLS/SSL.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th scope="col">Request message variables</th>
+
+        <th scope="col">Description</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td>client.cn</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The common name specified in the TLS/SSL certificate presented by the client app.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>client.country</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The country in the TLS/SSL certificate presented by the client app.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>client.email.address</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The email address in the TLS/SSL certificate presented by the client app.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>client.organization</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>The organization in the TLS/SSL certificate
+          presented by the client. (Not necessarily equivalent to the organization on Apigee Edge.)
+        </td>
+      </tr>
+
+      <tr>
+        <td>client.organization.unit</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The organizational unit in the TLS/SSL certificate presented by the client.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>client.locality</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The locality (City) in the TLS/SSL certificate presented by the client.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>client.state</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The state in the TLS/SSL certificate presented by the client.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>client.ssl.enabled</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>Returns true or false, depending on whether the ProxyEndpoint is configured for
+          TLS/SSL.</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <aside class="note"><b>Note:</b> The previous <code>propagate.additional.ssl.headers</code>
+  ProxyEndpoint feature that allowed TLS/SSL variable population is not available in the current
+  Nginx router.</aside><!-- No longer available with Nginx
+        <pre>
+&lt;ProxyEndpoint name="myProxy"&gt;
+  &lt;HTTPProxyConnection&gt;
+    &lt;BasePath&gt;/v1/weather&lt;/BasePath&gt;
+    &lt;VirtualHost&gt;secure&lt;/VirtualHost&gt;
+    &lt;Properties&gt;
+      &lt;Property name="propagate.additional.ssl.headers"&gt;true&lt;/Property&gt;
+    &lt;/Properties&gt;
+  &lt;/HTTPProxyConnection&gt;
+&lt;/ProxyEndpoint&gt;</pre>
+        <p>The variables are designed to be at parity with the <a href="http://httpd.apache.org/docs/2.2/mod/mod_ssl.html">Apache web server SSL settings</a>.</p>
+        <table class="table">
+                <thead>
+                        <tr>
+                                <th scope="col">TLS/SSL variable</th>
+                                <th scope="col">Description</th>
+                        </tr>
+                </thead>
+                <tbody>
+                        <tr>
+                                <td>ssl.protocol</td>
+                                <td>
+                                        <p><strong>Scope begins</strong>: Proxy request<br />
+                                                <strong>Permission</strong>: Read</p>
+                                        <p>The negotiated TLS/SSL protocol version (SSLv2, SSLv3, TLSv1, TLSv1.1, TLSv1.2).</p>
+                                </td>
+                        </tr>
+                        <tr>
+                                <td>ssl.session.id</td>
+                                <td>
+                                        <p><strong>Scope begins</strong>: Proxy request<br />
+                                                <strong>Permission</strong>: Read</p>
+                                        <p>The hex-encoded TLS/SSL session id.</p>
+                                </td>
+                        </tr>
+                        <tr>
+                                <td>ssl.cipher</td>
+                                <td>
+                                        <p><strong>Scope begins</strong>: Proxy request<br />
+                                                <strong>Permission</strong>: Read</p>
+                                        <p>The name of the negotiated cipher.</p>
+                                </td>
+                        </tr>
+                        <tr>
+                                <td>ssl.server.m.version</td>
+                                <td>
+                                        <p><strong>Scope begins</strong>: Proxy request<br />
+                                                <strong>Permission</strong>: Read</p>
+                                        <p>The version of the server certificate.</p>
+                                </td>
+                        </tr>
+                        <tr>
+                                <td>ssl.server.m.serial</td>
+                                <td>
+                                        <p><strong>Scope begins</strong>: Proxy request<br />
+                                                <strong>Permission</strong>: Read</p>
+                                        <p>The serial number of the server certificate.</p>
+                                </td>
+                        </tr>
+                        <tr>
+                                <td>ssl.server.i.dn</td>
+                                <td>
+                                        <p><strong>Scope begins</strong>: Proxy request<br />
+                                                <strong>Permission</strong>: Read</p>
+                                        <p>The distinguished name of the server certificate's issuer.</p>
+                                </td>
+                        </tr>
+                        <tr>
+                                <td>ssl.server.i.dn.cn</td>
+                                <td>
+                                        <p><strong>Scope begins</strong>:<br />
+                                                <strong>Permission</strong>:</p>
+                                        <p>&nbsp;</p>
+                                        The common name of the server certificate's issuer.</td>
+                        </tr>
+                        <tr>
+                                <td>ssl.server.i.dn.c</td>
+                                <td>
+                                        <p><strong>Scope begins</strong>: Proxy request<br />
+                                                <strong>Permission</strong>: Read</p>
+                                        <p>The country of the server certificate's issuer.</p>
+                                </td>
+                        </tr>
+                        <tr>
+                                <td>ssl.server.i.dn.o</td>
+                                <td>
+                                        <p><strong>Scope begins</strong>: Proxy request<br />
+                                                <strong>Permission</strong>: Read</p>
+                                        <p>The organization of the server certificate's issuer.</p>
+                                </td>
+                        </tr>
+                        <tr>
+                                <td>ssl.server.i.dn.l</td>
+                                <td>
+                                        <p><strong>Scope begins</strong>: Proxy request<br />
+                                                <strong>Permission</strong>: Read</p>
+                                        <p>The locality of the server certificate's issuer.</p>
+                                </td>
+                        </tr>
+                        <tr>
+                                <td>ssl.server.s.dn</td>
+                                <td>
+                                        <p><strong>Scope begins</strong>: Proxy request<br />
+                                                <strong>Permission</strong>: Read</p>
+                                        <p>The distinguished name of the server certificate.</p>
+                                </td>
+                        </tr>
+                        <tr>
+                                <td>ssl.server.s.dn.cn</td>
+                                <td>
+                                        <p><strong>Scope begins</strong>: Proxy request<br />
+                                                <strong>Permission</strong>: Read</p>
+                                        <p>The common name of the server certificate.</p>
+                                </td>
+                        </tr>
+                        <tr>
+                                <td>ssl.server.s.dn.c</td>
+                                <td>
+                                        <p><strong>Scope begins</strong>: Proxy request<br />
+                                                <strong>Permission</strong>: Read</p>
+                                        <p>The country of the server certificate.</p>
+                                </td>
+                        </tr>
+                        <tr>
+                                <td>ssl.server.s.dn.o</td>
+                                <td>
+                                        <p><strong>Scope begins</strong>: Proxy request<br />
+                                                <strong>Permission</strong>: Read</p>
+                                        <p>The organization of the server certificate.</p>
+                                </td>
+                        </tr>
+                        <tr>
+                                <td>ssl.server.s.dn.l</td>
+                                <td>
+                                        <p><strong>Scope begins</strong>: Proxy request<br />
+                                                <strong>Permission</strong>: Read</p>
+                                        <p>The locality of the server certificate.</p>
+                                </td>
+                        </tr>
+                        <tr>
+                                <td>ssl.server.v.start</td>
+                                <td>
+                                        <p><strong>Scope begins</strong>: Proxy request<br />
+                                                <strong>Permission</strong>: Read</p>
+                                        <p>Valid start time of the server certificate.</p>
+                                </td>
+                        </tr>
+                        <tr>
+                                <td>ssl.server.v.end</td>
+                                <td>
+                                        <p><strong>Scope begins</strong>: Proxy request<br />
+                                                <strong>Permission</strong>: Read</p>
+                                        <p>Valid end time of the server certificate.</p>
+                                </td>
+                        </tr>
+                        <tr>
+                                <td>ssl.server.v.remain</td>
+                                <td>
+                                        <p><strong>Scope begins</strong>: Proxy request<br />
+                                                <strong>Permission</strong>: Read</p>
+                                        <p>Number of days until server certificate expires.</p>
+                                </td>
+                        </tr>
+                        <tr>
+                                <td>ssl.server.a.sig</td>
+                                <td>
+                                        <p><strong>Scope begins</strong>: Proxy request<br />
+                                                <strong>Permission</strong>: Read</p>
+                                        <p>Algorithm used for the signature of the server certificate.</p>
+                                </td>
+                        </tr>
+                        <tr>
+                                <td>ssl.server.a.key</td>
+                                <td>
+                                        <p><strong>Scope begins</strong>: Proxy request<br />
+                                                <strong>Permission</strong>: Read</p>
+                                        <p>Algorithm used for the public key of the server certificate.</p>
+                                </td>
+                        </tr>
+                        <tr>
+                                <td>ssl.client.m.version</td>
+                                <td>
+                                        <p><strong>Scope begins</strong>: Proxy request<br />
+                                                <strong>Permission</strong>: Read</p>
+                                        <p>The version of the client certificate.</p>
+                                </td>
+                        </tr>
+                        <tr>
+                                <td>ssl.client.m.serial</td>
+                                <td>
+                                        <p><strong>Scope begins</strong>: Proxy request<br />
+                                                <strong>Permission</strong>: Read</p>
+                                        <p>The serial number of the client certificate.</p>
+                                </td>
+                        </tr>
+                        <tr>
+                                <td>ssl.client.i.dn</td>
+                                <td>
+                                        <p><strong>Scope begins</strong>: Proxy request<br />
+                                                <strong>Permission</strong>: Read</p>
+                                        <p>The distinguished name of the client certificate's issuer.</p>
+                                </td>
+                        </tr>
+                        <tr>
+                                <td>ssl.client.i.dn.cn</td>
+                                <td>
+                                        <p><strong>Scope begins</strong>: Proxy request<br />
+                                                <strong>Permission</strong>: Read</p>
+                                        <p>The common name of the client certificate's issuer.</p>
+                                </td>
+                        </tr>
+                        <tr>
+                                <td>ssl.client.i.dn.c</td>
+                                <td>
+                                        <p><strong>Scope begins</strong>: Proxy request<br />
+                                                <strong>Permission</strong>: Read</p>
+                                        <p>The country of the client certificate's issuer.</p>
+                                </td>
+                        </tr>
+                        <tr>
+                                <td>ssl.client.i.dn.o</td>
+                                <td>
+                                        <p><strong>Scope begins</strong>: Proxy request<br />
+                                                <strong>Permission</strong>: Read</p>
+                                        <p>The organization of the client certificate's issuer.</p>
+                                </td>
+                        </tr>
+                        <tr>
+                                <td>ssl.client.i.dn.l</td>
+                                <td>
+                                        <p><strong>Scope begins</strong>: Proxy request<br />
+                                                <strong>Permission</strong>: Read</p>
+                                        <p>The locality of the client certificate's issuer.</p>
+                                </td>
+                        </tr>
+                        <tr>
+                                <td>ssl.client.s.dn</td>
+                                <td>
+                                        <p><strong>Scope begins</strong>: Proxy request<br />
+                                                <strong>Permission</strong>: Read</p>
+                                        <p>The distinguished name of the client certificate.</p>
+                                </td>
+                        </tr>
+                        <tr>
+                                <td>ssl.client.s.dn.cn</td>
+                                <td>
+                                        <p><strong>Scope begins</strong>: Proxy request<br />
+                                                <strong>Permission</strong>: Read</p>
+                                        <p>The common name of the client certificate.</p>
+                                </td>
+                        </tr>
+                        <tr>
+                                <td>ssl.client.s.dn.c</td>
+                                <td>
+                                        <p><strong>Scope begins</strong>: Proxy request<br />
+                                                <strong>Permission</strong>: Read</p>
+                                        <p>The country of the client certificate.</p>
+                                </td>
+                        </tr>
+                        <tr>
+                                <td>ssl.client.s.dn.o</td>
+                                <td>
+                                        <p><strong>Scope begins</strong>: Proxy request<br />
+                                                <strong>Permission</strong>: Read</p>
+                                        <p>The organization of the client certificate.</p>
+                                </td>
+                        </tr>
+                        <tr>
+                                <td>ssl.client.s.dn.l</td>
+                                <td>
+                                        <p><strong>Scope begins</strong>: Proxy request<br />
+                                                <strong>Permission</strong>: Read</p>
+                                        <p>The locality of the client certificate.</p>
+                                </td>
+                        </tr>
+                        <tr>
+                                <td>ssl.client.v.start</td>
+                                <td>
+                                        <p><strong>Scope begins</strong>: Proxy request<br />
+                                                <strong>Permission</strong>: Read</p>
+                                        <p>Valid start time of the client certificate.</p>
+                                </td>
+                        </tr>
+                        <tr>
+                                <td>ssl.client.v.end</td>
+                                <td>
+                                        <p><strong>Scope begins</strong>: Proxy request<br />
+                                                <strong>Permission</strong>: Read</p>
+                                        <p>Valid end time of the client certificate.</p>
+                                </td>
+                        </tr>
+                        <tr>
+                                <td>ssl.client.v.remain</td>
+                                <td>
+                                        <p><strong>Scope begins</strong>: Proxy request<br />
+                                                <strong>Permission</strong>: Read</p>
+                                        <p>Number of days until client certificate expires.</p>
+                                </td>
+                        </tr>
+                        <tr>
+                                <td>ssl.client.a.sig</td>
+                                <td>
+                                        <p><strong>Scope begins</strong>: Proxy request<br />
+                                                <strong>Permission</strong>: Read</p>
+                                        <p>Algorithm used for the signature of the client certificate.</p>
+                                </td>
+                        </tr>
+                        <tr>
+                                <td>ssl.client.a.key</td>
+                                <td>
+                                        <p><strong>Scope begins</strong>: Proxy request<br />
+                                                <strong>Permission</strong>: Read</p>
+                                        <p>Algorithm used for the public key of the client certificate.</p>
+                                </td>
+                        </tr>
+                </tbody>
+        </table>
+end no longer available with Nginx -->
+
+  <h2 id="variablesforapiproxyflows">Variables for API proxy flows</h2>
+
+  <p>The following variables contain information about API proxy flows.</p>
+
+  <aside class="note"><b>Note:</b> Select <b>Show All FlowInfos</b> under View Options in the
+  left pane to see these variables in the API proxy editor's Trace view (in the Edge management
+  UI). This view is disabled by default.</aside>
+
+  <table>
+    <thead>
+      <tr>
+        <th scope="col">Variable</th>
+
+        <th scope="col">Description</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td>current.flow.name</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The name of the currently executed flow (such as "PreFlow", "PostFlow", or the name of
+          a conditional flow).</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>current.flow.description</td>
+
+        <td>
+          <p><strong>Scope begins</strong>: Proxy request<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The description (<code>&lt;Description&gt;</code> element value) of the currently
+          executed flow.</p>
+        </td>
+      </tr><!--
+                <tr>
+                        <td>proxy.flow.name</td>
+                        <td>
+                                <p><strong>Scope begins</strong>: Proxy request<br />
+                                        <strong>Type</strong>: String<br />
+                                        <strong>Permission</strong>: Read</p>
+                                <p>The name of the most recently executed ProxyEndpoint flow (such as "PreFlow", "PostFlow", or the name of a conditional flow).</p>
+                        </td>
+                </tr>
+                <tr>
+                        <td>proxy.flow.description</td>
+                        <td>
+                                <p><strong>Scope begins</strong>: Proxy request<br />
+                                        <strong>Type</strong>: String<br />
+                                        <strong>Permission</strong>: Read</p>
+                                <p>The description (<code>&lt;Description&gt;</code> element value) of the most recently executed ProxyEndpoint flow.</p>
+                        </td>
+                </tr>
+                <tr>
+                        <td>target.flow.name</td>
+                        <td>
+                                <p><strong>Scope begins</strong>: Target request<br />
+                                        <strong>Type</strong>: String<br />
+                                        <strong>Permission</strong>: Read</p>
+                                <p>The name of the most recently executed TargetEndpoint flow (such as "PreFlow", "PostFlow", or the name of a conditional flow).</p>
+                        </td>
+                </tr>
+                <tr>
+                        <td>target.flow.description</td>
+                        <td>
+                                <p><strong>Scope begins</strong>: Target request<br />
+                                        <strong>Type</strong>: String<br />
+                                        <strong>Permission</strong>: Read</p>
+                                <p>The description (<code>&lt;Description&gt;</code> element value) of the most recently executed TargetEndpoint flow.</p>
+                        </td>
+                </tr>
+-->
+    </tbody>
+  </table>
+
+  <h2 id="policyvariables">Policy variables<a name="policy" id="policy"></a></h2>
+
+  <p>Each Policy type defines a set of policy-specific variables. For details, see each Policy type
+  under the <a href="/api-platform/reference/policies/reference-overview-policy.html">Policy
+  reference overview</a>.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th scope="col">Variable</th>
+
+        <th scope="col">Description</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td>apigee.metrics.policy.{policy_name}.timeTaken</td>
+
+        <td>
+          <p><strong>Scope</strong>: Policy<br>
+          <strong>Type</strong>: Integer<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The time it took for the policy to execute, in nanoseconds.</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  {% endblock %}

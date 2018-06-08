@@ -1,0 +1,83 @@
+  {% extends "_base.html" %} {% block title %}Verifying access tokens{% endblock %} {% block body %}
+
+  <p>When you call an API proxy on Apigee Edge that has OAuth security, Edge is responsible for
+  verifying access tokens. Think of Edge as the gatekeeper -- no API call can pass through that
+  does not have an access token that can be verified. </p>
+
+  <aside class="key-point"><b>Tip:</b> When verifying an access token, if you happen to see this
+  error: "Invalid API call as no apiproduct match found", go to this <a href=
+  "https://community.apigee.com/content/kbentry/6831/oauth20-access-token-verification-throws-invalid-a.html">
+  Apigee Community article</a> for details on the cause of this error and steps to correct
+  it. </aside>
+
+  <h2 id="addingaverifyaccesstokenpolicy">Adding a VerifyAccessToken policy</h2>
+
+  <p>To configure token verification, place an OAuthV2 policy with the
+  <strong>VerifyAccessToken</strong> operation at the very beginning of the API proxy flow (the
+  beginning of the ProxyEndpoint Preflow). If placed there, access tokens will be verified before
+  any other processing takes place, and if a token is rejected, Edge stops processing and returns
+  an error back to the client. </p>
+
+  <ol>
+    <li>Log in to your Apigee Edge account.</li>
+
+    <li>From the main menu, select <strong>APIs &gt; API Proxies</strong>. </li>
+
+    <li>From the list, select the proxy you wish to protect.</li>
+
+    <li>In the overview page, click <strong>DEVELOP</strong>. </li>
+
+    <li>In the Navigator, select <strong>PreFlow</strong> for an endpoint listed under Proxy
+    Endpoints. Typically, the endpoint you want is called "default", although it is possible to
+    create multiple proxy endpoints. If you do have multiple endpoints, you will probably want to
+    follow these steps to perform token verification on each one.<br>
+    <br>
+    <img alt="" src="/api-platform/images/select-preflow-3.png"><br>
+     </li>
+
+    <li>In the proxy flow editor, click <strong>+ Step</strong>.<br>
+    <br>
+    <img alt="" src="/api-platform/images/select-step-3.png"><br>
+     </li>
+
+    <li>Select <strong>Policy Instance New</strong>.</li>
+
+    <li>From the policy list, select <strong>OAuth v2.0</strong>.</li>
+
+    <li>Optionally, change the policy name and display name. For example, for better readability,
+    you might change the display name and name both to "VerifyAccessToken".</li>
+
+    <li>Click <strong>Add</strong>.</li>
+  </ol>
+
+  <p>The default policy is already configured with the VerifyAccessToken operation, so you do not
+  have to do anything further:</p>
+  <pre class="prettyprint">
+&lt;?xml version="1.0" encoding="UTF-8" standalone="yes"?&gt;
+&lt;OAuthV2 async="false" continueOnError="false" enabled="true" name="OAuth-v20-1"&gt;
+    &lt;DisplayName&gt;OAuth v2.0 1&lt;/DisplayName&gt;
+    &lt;FaultRules/&gt;
+    &lt;Properties/&gt;
+    &lt;Attributes/&gt;
+    &lt;ExternalAuthorization&gt;false&lt;/ExternalAuthorization&gt;
+    &lt;Operation&gt;VerifyAccessToken&lt;/Operation&gt;
+    &lt;SupportedGrantTypes/&gt;
+    &lt;GenerateResponse enabled="true"/&gt;
+    &lt;Tokens/&gt;
+&lt;/OAuthV2&gt;
+</pre>
+
+  <aside class="note">
+    <b>Note:</b> By default, VerifyAccessToken expects the access token to be sent in an
+    Authorization header as a Bearer token. For example:
+    <pre class="prettyprint">
+-H "Authorization: Bearer Rft3dqrs56Blirls56a"
+</pre>
+
+    <p>You can change this default in the <code>&lt;AccessToken&gt; </code> element in the
+    OAuthV2 policy, as explained in the <a href=
+    "/api-platform/reference/policies/oauthv2-policy.html#accesstokenelement">policy
+    documentation</a>.</p>
+  </aside>
+
+  {% endblock %}

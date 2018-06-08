@@ -1,0 +1,615 @@
+  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}Installing Monetization
+  Services{% endblock %} {% block body %}
+
+  <p>Monetization Services is an extension to Apigee Edge, hence it does not run as a standalone
+  process. It runs within any existing Apigee Edge setup.</p>
+
+  <h2 id="monetizationrequirements">Monetization requirements</h2>
+
+  <ul>
+    <li>If you are installing Monetization on an Edge topology that use multiple Management Server
+    nodes, such as a 13-node installation, then you must install both Edge Management Server nodes
+    before installing Monetization.</li>
+
+    <li>To install Monetization on Edge where the Edge installation has multiple Postgres nodes,
+    the Postgres nodes must be configured in Master/Standby mode. You cannot install Monetization
+    on Edge if you have multiple Postgres master nodes. For more, see <a href=
+    "set-master-standby-replication-postgres.html">Set up Master-Standby Replication for
+    Postgres</a>.</li>
+  </ul>
+
+  <h2 id="installationoverview">Installation overview</h2>
+
+  <p>The following steps illustrate how to add Monetization Services on an existing Apigee Edge
+  installation:</p>
+
+  <ul>
+    <li>Use the <span style="font-family:courier new,courier,monospace;">apigee-setup</span>
+    utility to update the Apigee Management Server node to enable the Monetization Services, for
+    example, catalog management, limits and notifications configuration, billing and
+    reporting. <br>
+    <br>
+    If you have multiple Management Server nodes, such as a 13-node installation, then you must
+    install both Edge Management Server nodes before installing Monetization.</li>
+
+    <li>Use the <span style="font-family:courier new,courier,monospace;">apigee-setup</span>
+    utility to update the Apigee Message Processor to enable the runtime components of the
+    Monetization Services, for example, transaction recording policy and limit enforcement. If you
+    have multiple Message Processors, install Monetization on all of them.</li>
+
+    <li>Perform the Monetization onboarding process for your Edge organizations.</li>
+
+    <li>Configure the Developer Services portal to support monetization. For more information, see
+    <a href=
+    "/api-platform/monetization/configure-monetization-developer-portal.html">http://apigee.com/docs/monetization/content/configure-monetization-developer-portal</a>.</li>
+  </ul>
+
+  <h2 id="creatingasilentconfigurationfileformonetization">Creating a silent configuration file for
+  Monetization</h2>
+
+  <p>Shown below is an example silent configuration file for a Monetization installation. Edit this
+  file as necessary for your configuration. Use the -f option to setup.sh to include this file.</p>
+
+  <p><strong>Note</strong>: Typically, you add these properties to the same configuration file that
+  you used to install Edge, as shown in <a href="install-edge-components-node.html">Install Edge
+  components on a node</a>.</p>
+  <pre class="prettyprint">
+# Edge configuration properties
+# Specify IP address or DNS name of node.
+IP1=192.168.1.1  # Management Server, OpenLDAP, UI, ZooKeeper, Cassandra
+IP2=192.168.1.2  # ZooKeeper, Cassandra
+IP3=192.168.1.3  # ZooKeeper, Cassandra
+IP4=192.168.1.4  # Router, Message Processor
+IP5=192.168.1.5  # Router, Message Processor
+IP6=192.168.1.6  # Qpid
+IP7=192.168.1.7  # Qpid
+IP8=192.168.1.8  # Postgres
+IP9=192.168.1.9  # Postgres
+
+# Must resolve to IP address or DNS name of host - not to 127.0.0.1 or localhost.
+HOSTIP=$(hostname -i)
+
+# Edge sys admin credentials
+ADMIN_EMAIL=your@email.com
+APIGEE_ADMINPW=yourPassword    # If omitted, you are prompted for it.
+
+# Specify the Management Server port.
+APIGEE_PORT_HTTP_MS=8080
+
+#
+# Monetization configuration properties.
+#
+# Postgres credentials from Edge installation.
+PG_USER=apigee    # Default from Edge installation
+PG_PWD=postgres    # Default from Edge installation
+
+# Specify Postgres server.
+MO_PG_HOST="$IP8"    # Only specify one Postgres node.
+
+# Create a Postgres user for Monetization.
+# Default username is "postgre". 
+# If you specify a different user, that user must already exist.
+MO_PG_USER=postgre    
+MO_PG_PASSWD=moUserPWord
+
+# Specify one ZooKeeper host.
+# Ensure this is a ZooKeeper leader node in a multi-datacenter environment.
+ZK_HOSTS="$IP2"
+
+# Specify Cassandra information.
+# Ensure CASS_HOSTS is set to the same value as when you installed Edge.
+# Must use IP addresses for CASS_HOSTS, not DNS names.
+CASS_HOSTS="$IP1:1,1 $IP2:1,1 $IP3:1,1"
+
+# Default is "Apigee", unless it was changed during Edge install.  
+CASS_CLUSTERNAME=Apigee
+
+# Cassandra uname/pword required only if you enabled Cassandra authentication. 
+# CASS_USERNAME= 
+# CASS_PASSWORD= 
+
+# Specify the region. 
+# Default is dc-1 unless you are in a multi-datacenter environment. 
+REGION=dc-1 
+
+# If your Edge config file did not specify SMTP information, add it. 
+# Monetization requires an SMTP server. 
+SMTPHOST=smtp.gmail.com 
+SMTPPORT=465 
+SMTPUSER=your@email.com 
+SMTPPASSWORD=yourEmailPassword 
+SMTPSSL=y
+SMTPMAILFROM="My Company &lt;myco@company.com&gt;"
+</pre><strong>Notes</strong>:
+
+  <ul>
+    <li>If your Edge config file did not specify SMTP information, add it. Monetization requires an
+    SMTP server.</li>
+
+    <li>In a single data center installation, all ZooKeeper nodes are by default configures as
+    leaders. When you are installing Edge across multiple data centers, some ZooKeeper nodes will
+    be configured as observers. Ensure that the ZK_HOSTS property above specifies a leader node in
+    a multiple data center installation.</li>
+
+    <li>If you enable Cassandra authentication, you can pass the Cassandra user name and password
+    by using the following properties:<br>
+    <span style="font-family:courier new,courier,monospace;">CASS_USERNAME<br>
+    CASS_PASSWORD</span></li>
+  </ul>
+
+  <h2 id="integratemonetizationserviceswithallmanagementservers">Integrate Monetization Services
+  with all Management Servers</h2>
+
+  <p>Use the following procedure to integrate monetization on Management Server nodes. </p>
+
+  <ol>
+    <li>If you are installing Monetization on an Edge topology that uses multiple Management Server
+    nodes, such as a 13-node installation, then ensure that you installed both Management Server
+    nodes before installing Monetization.</li>
+
+    <li>On the Management Server node, run the setup script:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt;
+    /opt/apigee/apigee-setup/bin/setup.sh -p mo -f <em><strong>configFile</strong></em></span><br>
+    <br>
+    The &#8220;-p mo&#8221; option specifies to integrate Monetization.<br>
+    <br>
+    The configuration file must be accessible or readable by the "apigee" user. </li>
+
+    <li>If you are installing Monetization on multiple Management Server nodes, repeat step 2 on
+    the second Management Server node.</li>
+  </ol>
+
+  <p>On successful configuration, an RDBMS schema for Monetization Services is created in the
+  PostgreSQL database. This completes the integration of Monetization Services and its associated
+  components with Postgres Server.</p>
+
+  <h2 id="integratemonetizationserviceswithallmessageprocessors">Integrate Monetization Services
+  with all Message Processors </h2>
+
+  <p>Use the following procedure to integrate monetization on all Message Processor
+  nodes. </p>
+
+  <ol>
+    <li>On the first Message Processor node, at the command prompt, run the setup script:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt;
+    /opt/apigee/apigee-setup/bin/setup.sh -p mo -f <em><strong>configFile</strong></em></span><br>
+    <br>
+    The &#8220;-p mo&#8221; option specifies to integrate Monetization.<br>
+    <br>
+    The configuration file must be accessible or readable by the "apigee" user. </li>
+
+    <li>Repeat this procedure on all Message Processor nodes.</li>
+  </ol>
+
+  <p>On successful configuration, the Message Processor is updated with Monetization Services. This
+  completes the integration of Monetization Services and its associated components with the Message
+  Processors.</p>
+
+  <h2 id="monetizationonboarding">Monetization Onboarding</h2>
+
+  <p>To create a new organization with monetization enabled, you first create the organization as
+  you would for any new organization. For more information, see <a href=
+  "onboard-organization.html">Onboard an organization</a>.</p>
+
+  <h3 id="monetizationonboarding-additionalonboardingtoenablemonetizationforanorganization">
+  Additional Onboarding to enable Monetization for an organization</h3>
+
+  <p>To complete monetization onboarding of an organization, you have to:</p>
+
+  <ol>
+    <li>Create the monetization group: <span style=
+    "font-family:courier new,courier,monospace;">mxgroup</span>.</li>
+
+    <li>Add Qpid to the group.</li>
+
+    <li>Enable monetization for the organization.</li>
+
+    <li>Enable notification settings for the organization.</li>
+
+    <li>Repeat this process for all organizations where you want to enable Monetization.</li>
+  </ol>
+
+  <p>Use the <span style="font-family:courier new,courier,monospace;">enable-monetization</span>
+  command to perform all of these tasks. This script takes a configuration file containing the
+  following properties:</p>
+  <pre class="prettyprint">
+MSIP=IPorDNSofManagementServer
+APIGEE_PORT_HTTP_MS=8080    # Default is 8080.
+ADMIN_EMAIL=your@email.com
+APIGEE_ADMINPW=yourPassword    # If omitted, you are prompted for it.
+# Must use IP addresses for CASS_HOSTS, not DNS names.
+CASS_HOSTS="$IP1:1,1 $IP2:1,1 $IP3:1,1"
+# Space-separated list IP/DNS names of all Qpid nodes in the data center being configured.
+QPID_HOST="$IP6 $IP7"    
+QPID_PORT=8083     # Default is 8083.
+REGION=dc-1
+ORG_NAME=myorg    # The Edge org where you want to enable monetization. 
+MX_GROUP=mxgroup    # Default Monetization group.
+</pre>
+
+  <p><strong>Notes:</strong></p>
+
+  <ul>
+    <li>Set <span style="font-family:courier new,courier,monospace;">CASS_HOSTS</span> and
+    <span style="font-family:courier new,courier,monospace;">REGION</span> to the same values as
+    you used when installing Monetization.</li>
+
+    <li>If you are enabling Monetization in a multiple data center configuration:
+
+      <ul>
+        <li>You must repeat the onboarding process on the Management Server in each data
+        center.</li>
+
+        <li>The configuration file should only list the Qpid nodes in the data center being
+        configured.</li>
+      </ul>
+    </li>
+  </ul>
+
+  <p>To run the script:</p>
+
+  <ol>
+    <li>Invoke the script:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt;
+    /opt/apigee/apigee-service/bin/apigee-service apigee-provision enable-monetization -f
+    <strong><em>configFile</em></strong></span><br>
+    <br>
+    The configuration file must be accessible or readable by the "apigee" user. <br>
+    <br>
+    If you have multiple Management Servers, you only have to run this script on one of them.<br>
+    <br>
+    This script replicates the organization, products, developers and applications from Cassandra
+    database to Monetization PostgreSQL database. After successful installation of Monetization
+    Services the data is synchronized automatically.</li>
+
+    <li>Repeat this procedure for every organization where you want to enable Monetization.</li>
+
+    <li>If you are in a multiple data center environment, repeat this process on the Management
+    Server in the other data center. Ensure that the config file list only the Qpid nodes in the
+    data center being configured.</li>
+  </ol>
+
+  <p>When you next log in to the Edge UI, you see the Monetization entry in the top-level menu for
+  the organization:</p>
+
+  <p><img alt="" src="/private-cloud/images/mon_ui.png"></p>
+
+  <h3 id="monetizationonboarding-configurethedeveloperservicesportal">Configure the Developer
+  Services portal</h3>
+
+  <p>To configure the Developer Services portal to support monetization, see <a href=
+  "/api-platform/monetization/configure-monetization-developer-portal.html">http://apigee.com/docs/monetization/content/configure-monetization-developer-portal</a>.</p>
+
+  <h2 id="addingamanagementservernodetoamonetizationinstallation">Adding a Management Server node
+  to a Monetization Installation</h2>
+
+  <p>If you add a Management Server to an existing Edge installation, you must ensure that you add
+  Monetization services to the new Management Server and configure all Management Servers so they
+  can communicate. </p>
+
+  <p>To add a Management Server:</p>
+
+  <ol>
+    <li>Install the <strong>new</strong> Management Server.</li>
+
+    <li>Install Monetization on the <strong>new</strong> Management Server.</li>
+
+    <li>On the <strong>original</strong> Management Server, call the following:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt;
+    /opt/apigee/apigee-service/bin/apigee-service edge-mint-management-server
+    mint-configure-mgmt-cluster</span></li>
+
+    <li>Restart the <strong>original</strong> Management Server:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt;
+    /opt/apigee/apigee-service/bin/apigee-service edge-management-server restart</span></li>
+
+    <li>On the <strong>new</strong> Management Server, call the following:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt;
+    /opt/apigee/apigee-service/bin/apigee-service edge-mint-management-server
+    mint-configure-mgmt-cluster</span></li>
+
+    <li>Restart the <strong>new</strong> Management Server:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt;
+    /opt/apigee/apigee-service/bin/apigee-service edge-management-server restart</span></li>
+  </ol>
+
+  <h2 id="additionalconfiguration">Additional configuration</h2>
+
+  <h3 id="additionalconfiguration-providebillingdocumentsaspdffiles">Provide Billing Documents as
+  PDF Files</h3>
+
+  <p>Monetization displays billing documents to end users in HTML format. To provide billing
+  documents as PDF files, you can integrate Monetization with a billing system that provides PDF
+  generation or license a supported third-party PDF library.</p>
+
+  <h3 id="additionalconfiguration-configureorganizationsettings">Configure Organization
+  Settings</h3>
+
+  <p><strong>Backend settings</strong>: The following table lists the organization level attributes
+  that are available to configure a mint organization. You can use a PUT call to add/update these
+  attributes as shown below:</p>
+  <pre class="prettyprint">
+&gt; curl -u ${ADMIN_EMAIL}:${ADMINPW} -v http://&lt;management-ip&gt;:8080/v1/organizations/{orgId} -d '{org object with attributes}' -X PUT
+</pre>
+
+  <p>For example, the output of the above CURL command will look something like this:</p>
+  <pre class="prettyprint">
+<span style="font-family:arial,helvetica,sans-serif;">{</span>
+...
+    "displayName": "Orgnization name",
+    "name": "org4",
+    "properties": {
+        "property": [
+...
+            {
+                "name": "MINT_CURRENCY",
+                "value": "USD"
+            },
+            {
+                "name": "MINT_COUNTRY",
+                "value": "US"
+            },
+            {
+                "name": "MINT_TIMEZONE",
+                "value": "GMT"
+            }
+        ]
+    }
+}
+</pre>
+
+  <table>
+    <thead>
+      <tr>
+        <th>
+          <p><strong>Attributes</strong></p>
+        </th>
+
+        <th>
+          <p><strong>Description</strong></p>
+        </th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td>
+          <p>MINT_TAX_MODEL</p>
+        </td>
+
+        <td>
+          <p>Accepted values are DISCLOSED,</p>
+
+          <p>UNDISCLOSED, HYBRID (default is null)</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>MINT_CURRENCY</p>
+        </td>
+
+        <td>
+          <p>ISO currency code (default is null)</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>MINT_TAX_NEXUS</p>
+        </td>
+
+        <td>
+          <p>Tax nexus (default is null)</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>MINT_DEFAULT_PROD_TAX_CATEGORY</p>
+        </td>
+
+        <td>
+          <p>Default product tax category (default is null)</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>MINT_IS_GROUP_ORG</p>
+        </td>
+
+        <td>
+          <p>IS group organization (default is false)</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>MINT_HAS_BROKER</p>
+        </td>
+
+        <td>
+          <p>Has broken (default is false)</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>MINT_TIMEZONE</p>
+        </td>
+
+        <td>
+          <p>Timezone (default is null)</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>MINT_TAX_ENGINE_EXTERNAL_ID</p>
+        </td>
+
+        <td>
+          <p>Tax engine ID (default is null)</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>MINT_COUNTRY</p>
+        </td>
+
+        <td>
+          <p>Organization's country (default is null)</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>MINT_REG_NO</p>
+        </td>
+
+        <td>
+          <p>Organization's registration number, United Kingdom gives different number than tax ID
+          (default is null)</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>MINT_BILLING_CYCLE_TYPE</p>
+        </td>
+
+        <td>
+          <p>PRORATED, CALENDAR_MONTH (default is CALENDAR_MONTH)</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>MINT_SUPPORTED_BILLING_TYPE</p>
+        </td>
+
+        <td>
+          <p>PREPAID/POSTPAID/BOTH (default is PREPAID)</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>MINT_IS_SEPARATE_INV_FOR_FEES</p>
+        </td>
+
+        <td>
+          <p>Indicates whether a separate fee invoice should be generated (default is false)</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>MINT_ISSUE_NETTING_STMT</p>
+        </td>
+
+        <td>
+          <p>Indicates whether netting statement should be issued (default is false)</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>MINT_NETTING_STMT_PER_CURRENCY</p>
+        </td>
+
+        <td>
+          <p>Indicates whether netting statement should be generated per currency (default is
+          false)</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>MINT_HAS_SELF_BILLING</p>
+        </td>
+
+        <td>
+          <p>Indicates whether the organization has self billing (default is false)</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>MINT_SELF_BILLING_FOR_ALL_DEV</p>
+        </td>
+
+        <td>
+          <p>Indicates whether the organization has self billing for all developers(default is
+          false)</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>MINT_HAS_SEPARATE_INV_FOR_PROD</p>
+        </td>
+
+        <td>
+          <p>Indicates whether the organization has separate invoice per product (default is
+          false)</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>MINT_HAS_BILLING_ADJUSTMENT</p>
+        </td>
+
+        <td>
+          <p>Indicates whether the organization supports billing adjustments (default is false)</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>features.isMonetizationEnabled</p>
+        </td>
+
+        <td>
+          <p>Used by the management UI to display monetization specific menu (default is false)</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td style="height:19px;">
+          <p>ui.config.isOperator</p>
+        </td>
+
+        <td style="height:19px;">
+          <p>Used by management UI to display provider as Operator verses Organization</p>
+
+          <p>(default is true)</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>For configuring business organization settings using the management UI, see <a href=
+  "/api-platform/monetization/get-started-using-monetization.html">http://apigee.com/docs/monetization-services/content/get-started-using-monetization-services</a>.</p>
+
+  <p><strong>Note</strong>: If you are using Monetization Services Limits and Notifications
+  features, please instruct your developers to attach a Limit Policy in the proxy flow after the
+  access token validation policy. </p>
+
+  <p>Limit Policy is an explicit policy designed to block an API call if certain limit has been
+  reached. The policy checks business limits and raises a fault if there are any limits exceeding
+  the configured value. This is an extension of raise fault policy but the conditions are derived
+  from business variables. </p>
+
+  <p>A UI template is available in the management UI for proxy developers. Proxy developer should
+  attach mint policy in the message flow. Upon execution of this policy the fault will be raised
+  with the fault response as per policy. If <span style=
+  "font-family:courier new,courier,monospace;">ContinueOnError</span> is set to true then the fault
+  will not be raised and flow variables "<span style=
+  "font-family:courier new,courier,monospace;">mint.limitsViolated</span>", "<span style=
+  "font-family:courier new,courier,monospace;">mint.isDeveloperSuspended</span>" and "<span style=
+  "font-family:courier new,courier,monospace;">mint.limitsPolicyError</span>" variables will be set
+  which could be used for further exception handling if required.</p>{% endblock %}

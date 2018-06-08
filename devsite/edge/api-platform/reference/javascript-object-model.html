@@ -1,0 +1,1319 @@
+  {% extends "_base.html" %} {% block title %}JavaScript object model{% endblock %} {% block body %}
+
+  <p>This topic discusses the Apigee Edge JavaScript Object Model. It's important you understand
+  this model if you intend to use the JavaScript policy to add custom JavaScript to an API
+  proxy.</p>
+
+  <h2 id="abouttheedgejavascriptobjectmodel">About the Edge JavaScript object model</h2>
+
+  <p>The Apigee Edge JavaScript object model defines objects with associated properties that are
+  available to JavaScript code executing within an Apigee Edge proxy flow. You use the JavaScript
+  policy to attach this custom code to an API proxy flow.</p>
+
+  <p>The objects defined by this model have <em>scope</em> within the API proxy flow, which means
+  that certain objects and properties are available only at specific points in the flow. When your
+  JavaScript is executed, a scope is created for the execution. In that scope, these
+  object references are created: <strong>context</strong>, <strong>request</strong>,
+  <strong>response</strong>, and <strong>crypto</strong>. The object model also includes a
+  <strong>print</strong> function that you can use for debugging.</p>
+
+  <h3 id="abouttheedgejavascriptobjectmodel-thecontextobject">The context object</h3>
+
+  <p>The <code>context</code> object has global scope. It is available everywhere within the API
+  proxy flow. It has four child objects: <code>proxyRequest</code>, <code>proxyResponse</code>,
+  <code>targetRequest</code>, <code>targetResponse</code>. These child objects are scoped to the
+  ambient request and response, either the proxy request and response or the target request and
+  response. For example, if the JavaScript policy executes in the proxy endpoint part of the flow,
+  then the <code>context.proxyRequest</code> and <code>context.proxyResponse</code> objects are in
+  scope. If the JavaScript runs in a target flow, then the <code>context.targetRequest</code> and
+  <code>context.targetResponse</code> objects are in scope.</p>
+
+  <p>The <code>context</code> object also has properties and methods, which are described in detail
+  in this topic. For example, the following JavaScript code example uses the
+  <code>context.flow</code> property and calls the get/setVariable() methods on
+  <code>context</code>. </p>
+  <pre class="prettyprint">
+if (context.flow=="PROXY_REQ_FLOW") {
+     var username = context.getVariable("request.formparam.user");
+     context.setVariable("USER.name", username);
+}
+</pre>
+
+  <p>These methods interact directly with <a href=
+  "/api-platform/reference/variables-reference.html">flow variables</a>.
+  The <code>context.flow</code> property value is the current flow scope. In the proxy
+  request flow, it's set to the constant <code>PROXY_REQ_FLOW</code>. If in the target
+  response flow, it's set to <code>TARGET_RESP_FLOW</code>. This constant is handy for
+  executing scope-specific code. The getter lets you get flow variables and the setter lets you set
+  flow variables. These variables are generally available in the proxy flow and can be consumed by
+  other policies.</p>
+
+  <p>See "<a href="#contextObj">context object reference</a>" below for more details and
+  examples.</p>
+
+  <h3 id="abouttheedgejavascriptobjectmodel-thecryptoobject">The crypto object</h3>
+
+  <p>The crypto object adds basic, high performance cryptographic support to the JavaScript Object
+  Model. See <a href="#crypto">crypto object reference</a> below for more details and examples.</p>
+
+  <h3 id="abouttheedgejavascriptobjectmodel-therequestandresponseobjects">The request and response
+  objects</h3>
+
+  <p>The <code>request</code> and <code>response</code> objects are "shorthand" references to the
+  ambient request and response, either the proxy request and response or the target request and
+  response. The objects these variables refer to depend upon the context in which the JavaScript
+  policy executes. If the JavaScript runs in the flow of a proxy endpoint, then the request and
+  response variables refer to <code>context.proxyRequest</code> and
+  <code>context.ProxyResponse</code>. If the JavaScript runs in a target flow, then the variables
+  refer to the <code>context.targetRequest</code> and <code>context.targetResponse</code>.</p>
+
+  <h3 id="abouttheedgejavascriptobjectmodel-theprintfunction">The print() function</h3>
+
+  <p>The JavaScript object model includes a print() function that you can use to output debug
+  information to the Edge Trace tool. See "<a href="#debug">Debug with JavaScript print()
+  statements</a>". </p>
+
+  <h2 id="cryptoobjectreference"><a id="crypto" name="crypto"></a>crypto object reference</h2>
+
+  <p>The crypto object lets you perform basic cryptographic hashing functions in JavaScript.</p>
+
+  <aside class="note"><b>Note:</b> The crypto functions support hashing only -- there is no support
+  for 2-way encryption.</aside>
+
+  <p>The crypto object has global scope. It is available everywhere within the API proxy flow.
+  Crypto lets you work with these hash objects:</p>
+
+  <ul>
+    <li>SHA-1</li>
+
+    <li>SHA256</li>
+
+    <li>SHA512</li>
+
+    <li>MD5</li>
+  </ul>
+
+  <aside class="key-point"><b>Tip:</b> Apigee recommends that you use the crypto object to perform
+  basic cryptographic functions in your JavaScript programs running on Edge.</aside>
+
+  <h3 id="cryptoobjectreference-workingwithsha1objects">Working with SHA-1 objects</h3>
+
+  <p>You can create SHA-1 objects, update them, and convert them to hex and base64 values.</p>
+
+  <p><strong>Create a new SHA-1 object</strong></p>
+  <pre class="prettyprint">
+var _sha1 = crypto.getSHA1();
+</pre>
+
+  <p><strong>Update an SHA-1 object</strong></p>
+
+  <p><strong><em>Syntax</em></strong></p>
+  <pre class="prettyprint">
+_sha1.update(value);
+</pre>
+
+  <p><strong><em>Parameters</em></strong></p>
+
+  <ul>
+    <li><strong>value</strong> - (String) Any string value.</li>
+  </ul>
+
+  <p><strong><em>Example</em></strong></p>
+
+  <p>Update an SHA-1 object:</p>
+  <pre class="prettyprint">
+_sha1.update("salt_value");
+
+_sha1.update("some text");
+</pre>
+
+  <p><strong>Return the SHA-1 object as a hex string</strong></p>
+  <pre class="prettyprint">
+var _hashed_token = _sha1.digest();
+</pre>
+
+  <p><strong>Return the SHA-1 object as a base64 string</strong></p>
+  <pre class="prettyprint">
+var _hashed_token = _sha1.digest64();
+</pre>
+
+
+
+  <h3 id="cryptoobjectreference-workingwithsha256objects">Working with SHA-256 objects</h3>
+
+  <p>You can create SHA-256 objects, update them, and convert them to hex and base64 values.</p>
+
+  <p><strong>Create a new SHA-256 object</strong></p>
+  <pre class="prettyprint">
+var _sha256 = crypto.getSHA256();
+</pre>
+
+  <p><strong>Update an SHA-256 object</strong></p>
+
+  <p><strong><em>Syntax</em></strong></p>
+  <pre class="prettyprint">
+_sha256.update(value);
+</pre>
+
+  <p><strong><em>Parameters</em></strong></p>
+
+  <ul>
+    <li><strong>value</strong> - (String) Any string value.</li>
+  </ul>
+
+  <p><strong><em>Example</em></strong></p>
+
+  <p>Update an SHA-256 object:</p>
+  <pre class="prettyprint">
+_sha256.update("salt_value");
+
+_sha256.update("some text");
+</pre>
+
+  <p><strong>Return the SHA-256 object as a hex string</strong></p>
+  <pre class="prettyprint">
+var _hashed_token = _sha256.digest();
+</pre>
+
+  <p><strong>Return the SHA-256 object as a base64 string</strong></p>
+  <pre class="prettyprint">
+var _hashed_token = _sha256.digest64();
+</pre>
+
+
+
+  <h3 id="cryptoobjectreference-workingwithsha512objects">Working with SHA-512 objects</h3>
+
+  <p>You can create SHA-512 objects, update them, and convert them to hex and base64 values.</p>
+
+  <p><strong>Create a new SHA-512 object</strong></p>
+  <pre class="prettyprint">
+var _sha512 = crypto.getSHA512();
+</pre>
+
+  <p><strong>Update an SHA-512 object</strong></p>
+
+  <p><strong><em>Syntax</em></strong></p>
+  <pre class="prettyprint">
+_sha512.update(value);
+</pre>
+
+  <p><strong><em>Parameters</em></strong></p>
+
+  <ul>
+    <li><strong>value</strong> - (String) Any string value.</li>
+  </ul>
+
+  <p><strong><em>Example</em></strong></p>
+
+  <p>Update an SHA-512 object:</p>
+  <pre class="prettyprint">
+_sha512.update("salt_value");
+
+_sha512.update("some text");
+</pre>
+
+  <p><strong>Return the SHA-512 object as a hex string</strong></p>
+  <pre class="prettyprint">
+var _hashed_token = _sha512.digest();
+</pre>
+
+  <p><strong>Return the SHA-512 object as a base64 string</strong></p>
+  <pre class="prettyprint">
+var _hashed_token = _sha512.digest64();
+</pre>
+
+  <h3 id="cryptoobjectreference-workingwithmd5objects">Working with MD5 objects</h3>
+
+  <p>You can create MD5 objects, update them, and convert them to hex and base64 values.</p>
+
+  <p><strong>Create a new MD5 object</strong></p>
+  <pre class="prettyprint">
+var _md5 = crypto.getMD5();
+</pre>
+
+  <p><strong>Update an MD5 object</strong></p>
+
+  <p><strong><em>Syntax</em></strong></p>
+  <pre class="prettyprint">
+_md5.update(value);
+</pre>
+
+  <p><strong><em>Parameters</em></strong></p>
+
+  <ul>
+    <li><strong>value</strong> - (String) Any string value.</li>
+  </ul>
+
+  <p><strong><em>Example</em></strong></p>
+
+  <p>Update an MD5 object:</p>
+  <pre class="prettyprint">
+_md5.update("salt_value");
+
+_md5.update("some text");
+</pre>
+
+  <p><strong>Return the MD5 object as a hex string</strong></p>
+  <pre class="prettyprint">
+var _hashed_token = _md5.digest();
+</pre>
+
+  <p><strong>Return the MD5 object as a base64 string</strong></p>
+  <pre class="prettyprint">
+var _hashed_token = _md5.digest64();
+</pre>
+
+
+
+
+
+  <h3 id="cryptoobjectreference-cryptodatetimesupport">Crypto date/time support</h3>
+
+  <p>The crypto object supports date/time formatting patterns.</p>
+
+  <p><strong>crypto.dateFormat()</strong></p>
+
+  <p>Returns a date in string format.</p>
+
+  <p><strong><em>Syntax</em></strong></p>
+  <pre class="prettyprint">
+crypto.dateFormat(format, [timezone], [time])
+</pre>
+
+  <p><strong><em>Parameters</em></strong></p>
+
+  <ul>
+    <li><strong>format</strong> - (String) The underlying implementation for this parameter
+    is <a href=
+    "https://docs.oracle.com/javase/7/docs/api/java/text/SimpleDateFormat.html">java.text.SimpleDateFormat</a>.
+    For example: 'YYYY-MM-DD HH:mm:ss.SSS'</li>
+
+    <li><strong>timezone</strong> - (String, optional) The underlying implementation for this
+    parameter is <a href=
+    "https://docs.oracle.com/javase/7/docs/api/java/util/TimeZone.html">java.util.TimeZone</a>.
+    This parameter is the sameDefault: UTC</li>
+
+    <li><strong>time</strong> - (Number, optional) A Unix timestamp value to format. Default:
+    current time</li>
+  </ul>
+
+  <p><strong><em>Examples</em></strong></p>
+
+  <aside class="note"><b>Note:</b> The <a href=
+  "https://docs.oracle.com/javase/7/docs/api/java/text/SimpleDateFormat.html">java.text.SimpleDateFormat</a> documentation
+  provides a complete list of all of the date/time formatting characters and character
+  combinations, as well as detailed examples.</aside>
+
+  <p>Get the current time, down to milliseconds:</p>
+  <pre class="prettyprint">
+var _now = crypto.dateFormat('YYYY-MM-DD HH:mm:ss.SSS');
+</pre>
+
+  <p>Get the current time for the Pacific Time Zone:</p>
+  <pre class="prettyprint">
+var _pst = crypto.dateFormat('YYYY-MM-DD HH:mm:ss.SSS','PST');
+</pre>
+
+  <p>Get the value of ten seconds from now:</p>
+  <pre class="prettyprint">
+var _timeNow = Number(context.getVariable('system.timestamp'));
+var ten_seconds = crypto.dateFormat('YYYY-MM-DD HH:mm:ss.SSS','PST', _timeNow + 10 * 1000);
+</pre>
+
+  <p>Additional examples. See also the <a href=
+  "https://docs.oracle.com/javase/7/docs/api/java/text/SimpleDateFormat.html">java.text.SimpleDateFormat</a> documentation.</p>
+  <pre class="prettyprint">
+var _pst = crypto.dateFormat('M');
+</pre>
+  <pre class="prettyprint">
+var _pst = crypto.dateFormat('EEE, d MMM yyyy HH:mm:ss Z');
+</pre>
+  <pre class="prettyprint">
+var _pst = crypto.dateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+</pre>
+
+  <h3 id="cryptoobjectreference-usegethashtogetanyofthesupportedhashobjects">Use getHash() to get
+  any of the supported hash objects</h3>
+
+  <p><strong><em>Examples</em></strong></p>
+  <pre class="prettyprint">
+var _hash1 = crypto.getHash('MD5');
+
+var _hash2 = crypto.getHash('SHA-1');
+
+var _hash3 = crypto.getHash('SHA-256');
+
+var _hash4 = crypto.getHash('SHA-512');
+</pre>
+
+
+
+  <h3 id="cryptoobjectreference-samplewithcrypto">Sample with crypto</h3>
+  <pre class="prettyprint">
+try {
+    //get values to use with hash functions
+    var salt = context.getVariable("salt") || 'SomeHardCodedSalt';
+    var host = context.getVariable("request.header.Host");
+    var unhashed_token = "";
+
+    var _timeNow = Number(context.getVariable('system.timestamp'));
+    var now = crypto.dateFormat('YYYY-MM-DD HH:mm:ss.SSS','PST', _timeNow);
+    unhashed_token = "|" + now + "|" + host
+
+    //generate a hash with the unhashedToken:
+    var sha512 = crypto.getSHA512();
+    sha512.update(salt);
+    sha512.update(unhashed_token);
+
+    //convert to base64
+    var base64_token = sha512.digest64();
+
+    // set headers
+    context.setVariable("request.header.now", now);
+    context.setVariable("request.header.token", base64_token);
+
+} catch(e) {
+    throw 'Error in Javascript';
+}
+</pre>
+
+  <h2 id="contextobjectreference"><a id="contextObj" name="contextObj"></a>context object
+  reference</h2>
+
+  <ul>
+    <li><a href="#summary">context object summary</a></li>
+
+    <li><a href="#methods">context object methods</a></li>
+
+    <li><a href="#properties">context object properties</a></li>
+
+    <li><a href="#children">context object children</a></li>
+  </ul>
+
+  <p>A <code>context</code> object is created for each request/response transaction executed by an
+  API proxy. The <code>context</code> object exposes methods to get, set, and remove variables
+  related to each transaction.</p>
+
+  <p>Variables define properties specific to a transaction. The time of day, the locale of the
+  requesting client, the user-agent of the requesting client, and the URL of the target service are
+  all examples of variables that are available in the <code>context</code>. Therefore,
+  <code>context</code> is useful for building logic that relies on these properties to execute
+  custom behavior.</p>
+
+  <p>See <a href="/api-platform/reference/variables-reference.html">Variables reference</a> and
+  <a href="/api-platform/reference/policies/extract-variables-policy.html">Extract Variables
+  policy</a>.</p>
+
+  <h3 id="contextobjectreference-contextobjectsummary"><a id="summary" name="summary"></a>context
+  object summary</h3>
+
+  <p>This table briefly describes the context object and its children, and lists the properties
+  that are bound to each.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+
+        <th>Description</th>
+
+        <th>Properties</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td><code>context</code></td>
+
+        <td>A wrapper for the message processing pipeline context and the request and response
+        Flows that are executed by the ProxyEndpoint and TargetEndpoint.</td>
+
+        <td>flow, session</td>
+      </tr>
+
+      <tr>
+        <td><code>context.</code><code>proxyRequest</code></td>
+
+        <td>An object that represents the inbound request message to the ProxyEndpoint (from the
+        requesting app to the API proxy)</td>
+
+        <td>headers, query parameters, method, body, url</td>
+      </tr>
+
+      <tr>
+        <td><code>context.</code><code>targetRequest</code></td>
+
+        <td>An object that represents the outbound request message from the TargetEndpoint (from
+        the API proxy to the backend service).</td>
+
+        <td>headers, query parameters, method, body, url</td>
+      </tr>
+
+      <tr>
+        <td><code>context.</code><code>targetResponse</code></td>
+
+        <td>An object that represents the inbound target response message (from the backend service
+        to the API proxy)</td>
+
+        <td>headers, content, status</td>
+      </tr>
+
+      <tr>
+        <td><code>context.</code><code>proxyResponse</code></td>
+
+        <td>An object that represents the outbound proxy response message (from the API proxy to
+        the requesting app)</td>
+
+        <td>headers, content, status</td>
+      </tr>
+
+      <tr>
+        <td><code>context.flow</code></td>
+
+        <td>The name of the current flow.</td>
+
+        <td>See <a href="#flow">context.flow</a> below.</td>
+      </tr>
+
+      <tr>
+        <td><code>context.session</code></td>
+
+        <td>A map of name/value pairs that you can use to pass objects between two different steps
+        executing in the same context. For example: context.session['key'] = 123.</td>
+
+        <td>For more information on when and when not to use this object, see this <a href=
+        "https://community.apigee.com/questions/34449/what-is-the-difference-between-contextsessionhello.html?childToView=37790#answer-37790">
+        Apigee Community discussion</a>.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="contextobjectreference-contextobjectmethods"><a id="methods" name="methods"></a>context
+  object methods</h3>
+
+  <p><strong>context.getVariable()</strong></p>
+
+  <p>Retrieves the value of a pre-defined or custom variable.</p>
+
+  <p><strong><em>Syntax</em></strong></p>
+  <pre class="prettyprint">
+context.getVariable("variable-name");
+</pre>
+
+  <p><strong><em>Example</em></strong></p>
+
+  <p>To get the value for the current year:</p>
+  <pre class="prettyprint">
+var year = context.getVariable('system.time.year');
+</pre>
+
+  <p><strong>context.setVariable()</strong></p>
+
+  <p>Sets the value for a custom variable or for any <i>writable</i> <a href=
+  "/api-platform/reference/variables-reference.html">pre-defined variables</a>.</p>
+
+  <p><strong><em>Syntax</em></strong></p>
+  <pre class="prettyprint">
+context.setVariable("variable-name", value);
+</pre>
+
+  <p><strong><em>Example</em></strong></p>
+
+  <p>A common scenario for setting a variable is when an API proxy must dynamically write the
+  target URL. The following JavaScript obtains the value of a variable called <font face=
+  "monospace">USER.name</font>, appends that value as a query parameter to the URL
+  <code>http://mocktarget.apigee.net?user=</code>, and then sets the pre-defined
+  <code>target.url</code> to that value.</p>
+  <pre class="prettyprint">
+context.setVariable("target.url", "http://mocktarget.apigee.net/user?user="+context.getVariable("USER.name"));
+</pre>
+
+  <aside class="key-point"><b>Tip:</b> Any writable pre-defined variable and any custom variable
+  can be dynamically set from JavaScript. For a complete list of pre-defined variables, see
+  <a href="/api-platform/reference/variables-reference.html">Variables reference</a>.</aside>
+
+  <p><strong>context.removeVariable()</strong></p>
+
+  <p>Removes a variable from the context.</p>
+
+  <p><strong><em>Syntax</em></strong></p>
+  <pre class="prettyprint">
+context.removeVariable('variable-name');
+</pre>
+
+  <h3 id="contextobjectreference-contextobjectproperties"><a id="properties" name=
+  "properties"></a>context object properties</h3>
+
+  <p><b><a id="flow" name="flow"></a>context.flow</b></p>
+
+  <p>The <code>flow</code> property is a string that identifies the current API proxy flow. This
+  property is used to indicate the Flow to which the JavaScript is attached. Supported values
+  are:</p>
+
+  <ul>
+    <li><code>PROXY_REQ_FLOW</code></li>
+
+    <li><code>PROXY_RESP_FLOW</code></li>
+
+    <li><code>TARGET_REQ_FLOW</code></li>
+
+    <li><code>TARGET_RESP_FLOW</code></li>
+  </ul>
+
+  <p>Each Flow name encompasses the PreFlow, PostFlow, and any conditional Flows defined in the
+  ProxyEndpoint(s) or TargetEndpoint(s).</p>
+
+  <div class="bestpractice">
+    <p>This optional property is useful when common JavaScript is executed in more than one Flow,
+    but might vary its behavior depending on the Flow in which it executes. Use the Flow property
+    for JavaScript modules intended to be reused in multiple API proxies, in which the code is
+    required to check the current Flow before executing logic.</p>
+  </div>
+
+  <p><strong>Example</strong></p>
+
+  <p>Set an HTTP header only on the targetRequest Flow:</p>
+  <pre class="prettyprint">
+if (context.flow=="TARGET_REQ_FLOW") {
+     context.targetRequest.headers['TARGET-HEADER-X']='foo';
+}
+</pre>
+
+  <p>Set the content only on the proxyResponse Flow:</p>
+  <pre class="prettyprint">
+if (context.flow=="PROXY_RESP_FLOW") {
+     context.proxyResponse.content='bar';
+}
+</pre>
+
+  <p><b><a id="session" name="session"></a>context.session</b></p>
+
+  <p>A map of name/value pairs that can be used to pass objects between two policies executing
+  within the same message context.</p>
+
+  <aside class="note"><b>Note:</b> It is important to understand the difference between using
+  <code>context.session</code> to get/set variables versus using <code>context.getVariable()</code>
+  and <code>context.setVariable()</code>. See this <a href=
+  "https://community.apigee.com/questions/34449/what-is-the-difference-between-contextsessionhello.html?childToView=37790#answer-37790">
+  Apigee Community discussion</a> for more details. </aside>
+
+  <p><strong>Example</strong></p>
+
+  <p>Set a value in the session:</p>
+  <pre class="prettyprint">
+context.session['key']  = 123;
+</pre>
+
+  <p>Get the value from the session:</p>
+  <pre class="prettyprint">
+var value = context.session['key']; // 123
+</pre>
+
+  <aside class="note"><b>Sample:</b> For a working example that uses the
+  <code>context.sessio</code>n object see the <a href=
+  "https://github.com/apigee/api-platform-samples/tree/master/sample-proxies/async-callout">Asynchronous
+  callout</a> sample API proxy.</aside>
+
+  <h3 id="contextobjectreference-contextobjectchildren"><a id="children" name=
+  "children"></a>context object children</h3>
+
+  <p>As shown below, a complete API proxy Flow encompasses four distinct phases, each of which has
+  an associated message object that is a child of the context object:</p>
+
+  <ul>
+    <li><code>context.proxyRequest</code>: The inbound request message received from the requesting
+    client.</li>
+
+    <li><code>context.targetRequest</code>: The outbound request message sent to the backend
+    service.</li>
+
+    <li><code>context.proxyResponse</code>: The outbound response message returned to the
+    requesting client.</li>
+
+    <li><code>context.targetResponse</code>: The inbound request message received from the backend
+    service.</li>
+  </ul>
+
+  <p><img src="/api-platform/images/proxy_endpoints.png" width="650"></p>
+
+  <p>The following sections describe the methods and properites of these objects:</p>
+
+  <ul>
+    <li><a href="#Request">context.*Request child objects</a></li>
+
+    <li><a href="#Response">context.*Response child objects</a></li>
+  </ul>
+
+  <h3 id="contextobjectreference-contextrequestchildobjects"><a name="Request" id="Request"></a>
+  context.*Request child objects</h3>
+
+  <p>For each HTTP transaction the executes in an API proxy, two request message objects are
+  created: one "inbound" (the request from the client) and one "outbound" (the request generated by
+  the API proxy and submitted to the backend target.)</p>
+
+  <p>The <code>context</code> object has child objects that represent these request messages:
+  <code>context.proxyRequest</code> and <code>context.targetRequest</code>. These objects let you
+  access properties within the request flow that is in scope when your JavaScript code
+  executes.</p>
+
+  <p><strong>Note:</strong> You can also use the "shorthand" object <code>request</code> to access
+  these properties in a request flow. The <code>request</code> object refers to either
+  <code>context.proxyRequest</code> or <code>context.targetRequest</code>, depending on where in
+  the flow your JavaScript code executes.</p>
+
+  <h4>context.*Request child object properties</h4>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Property name</th>
+
+        <th>Description</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <!-- begin property    -->
+
+      <tr>
+        <td rowspan="2"><code>url</code></td>
+
+        <td>
+          <p>The <code>url</code> property is a read/write convenience property that combines
+          scheme, host, port, path and query parameters for the targetRequest.</p>
+
+          <p>The complete URL of the request is composed of the following properties:</p>
+
+          <ul>
+            <li>protocol: The protocol of the URL (for example, HTTP, HTTPS)</li>
+
+            <li>port: The port (for example, :80, :443)</li>
+
+            <li>host: The host of the URL (for example, www.example.com)</li>
+
+            <li>path: The path of the URI (for example, /v1/mocktarget)</li>
+          </ul>
+
+          <p>When getting <code>url</code>, a URL is returned in the following format:</p>
+
+          <p><code>protocol://host:port/path?queryParams</code></p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>Examples:</p>
+          <pre class="prettyprint">
+context.targetRequest.url = 'http://www.example.com/path?q1=1'
+context.targetRequest.protocol ='https';
+</pre>
+        </td>
+      </tr><!-- end property --><!-- begin property        -->
+
+      <tr>
+        <td rowspan="2"><code>headers</code></td>
+
+        <td>
+          <p>HTTP request headers as a mapping of <code>String =&gt; List</code></p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>Examples:</p>
+
+          <p>For this HTTP request:</p>
+          <pre class="prettyprint">
+POST /v1/blogs HTTP/1.1
+Host: api.example.com
+Content-Type: application/json
+Authorization: Bearer ylSkZIjbdWybfs4fUQe9BqP0LH5Z
+</pre>The following JavaScript:
+          <pre class="prettyprint">
+context.proxyRequest.headers['Content-Type'];
+context.proxyRequest.headers['Authorization'];
+</pre>
+
+          <p>will return the following values</p>
+          <pre class="prettyprint">
+application/json
+Bearer ylSkZIjbdWybfs4fUQe9BqP0LH5Z
+</pre>
+        </td>
+      </tr><!-- end property --><!-- begin property        -->
+
+      <tr>
+        <td rowspan="2"><code>queryParams</code></td>
+
+        <td>
+          <p>The request message query parameters as a mapping of <code>String =&gt;
+          List</code>.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>Examples:</p>
+          <pre class="prettyprint">
+"?city=PaloAlto&amp;city=NewYork"
+</pre>
+
+          <p>can be accessed as:</p>
+          <pre class="prettyprint">
+context.proxyRequest.queryParams['city'];  // == 'PaloAlto'
+context.proxyRequest.queryParams['city'][0]     // == 'PaloAlto'
+context.proxyRequest.queryParams['city'][1];    // == 'NewYork'
+context.proxyRequest.queryParams['city'].length(); // == 2
+</pre>
+        </td>
+      </tr><!-- end property --><!-- begin property        -->
+      <tr>
+        <td rowspan="2"><code>method</code></td>
+
+        <td>
+          <p>The HTTP verb (GET, POST, PUT, DELETE. PATCH, etc.) associated with the request</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>Examples:</p>
+
+          <p>For this request:</p>
+          <pre class="prettyprint">
+POST /v1/blogs HTTP/1.1
+Host: api.example.com
+Content-Type: application/json
+Authorization: Bearer ylSkZIjbdWybfs4fUQe9BqP0LH5Z
+</pre>
+
+          <p>The following JavaScript:</p>
+          <pre class="prettyprint">
+context.proxyRequest.method;
+</pre>
+
+          <p>will return the following value</p>
+          <pre class="prettyprint">
+POST
+</pre>
+        </td>
+      </tr><!-- end property --><!-- begin property        -->
+
+      <tr>
+        <td rowspan="2"><code>body</code></td>
+
+        <td>
+          <p>The message body (payload) of the HTTP request.</p>
+
+          <p>The request body has the following members:</p>
+
+          <ul>
+            <li><code>context.targetRequest.body.asXML;</code></li>
+
+            <li><code>context.targetRequest.body.asJSON;</code></li>
+
+            <li><code>context.targetRequest.body.asForm;</code></li>
+          </ul>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>Examples:</p>
+
+          <p>For an XML body:</p>
+          <pre class="prettyprint">
+&lt;customer number='1'&gt;
+&lt;name&gt;Fred&lt;name/&gt;
+&lt;customer/&gt;
+</pre>
+
+          <p>To access the elements of the XML object as follows:</p>
+          <pre class="prettyprint">
+var name = context.targetRequest.body.asXML.name;
+</pre>
+
+          <p>To access XML attributes attributes, use the <code>@</code> notation.</p>
+          <pre class="prettyprint">
+var number = context.targetRequest.body.asXML.@number;
+</pre>
+
+          <p>For a JSON request body:</p>
+          <pre class="prettyprint">
+{
+"a":  1 ,
+"b" : "2"
+}
+</pre>
+          <pre class="prettyprint">
+var a = context.proxyRequest.body.asJSON.a;    // == 1
+var b = context.proxyRequest.body.asJSON.b;    // == 2
+</pre>
+
+          <p>To read form parameters:</p>
+          <pre class="prettyprint">
+"vehicle=Car&amp;vehicle=Truck"
+</pre>
+          <pre class="prettyprint">
+v0 = context.proxyRequest.body.asForm['vehicle'][0];
+v1 = context.proxyRequest.body.asForm['vehicle'][1];
+</pre>
+        </td>
+      </tr><!-- end property -->
+    </tbody>
+  </table>
+
+  <h3 id="contextobjectreference-contextresponsechildobjects"><a name="Response" id=
+  "Response"></a>context.*Response child objects</h3>
+
+  <p>For each HTTP transaction the executes in an API proxy, two response message objects are
+  created: one "inbound" (the response from the backend service) and one "outbound" (the response
+  sent back to the client.)</p>
+
+  <p>The context object has child objects that represent these response messages:
+  <code>context.proxyResponse</code> and <code>context.targetResponse</code>. These objects let you
+  access properties within the response flow that is in scope when your JavaScript code
+  executes.</p>
+
+  <p><strong>Note:</strong> You can also use the "shorthand" object <code>response</code> to access
+  these properties from a response flow. The <code>response</code> object refers to either
+  <code>context.proxyResponse</code> or <code>context.targetResponse</code>, depending on where in
+  the flow your JavaScript code executes.</p>
+
+  <h4>context.*Response object properties</h4>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Property name</th>
+
+        <th>Description</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <!-- begin property    -->
+
+      <tr>
+        <td rowspan="2"><code>headers</code></td>
+
+        <td>
+          <p>The HTTP headers of the response message as a mapping of <code>String =&gt;
+          List</code>.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>Example:</p>
+          <pre class="prettyprint">
+var cookie = context.targetResponse.headers['Set-Cookie'];
+</pre>
+        </td>
+      </tr><!-- end property --><!-- begin property        -->
+
+      <tr>
+        <td rowspan="2"><code>status</code></td>
+
+        <td>
+          <p>The status code with status message as a property. Both status code and status message
+          are available as properties.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>Example:</p>
+          <pre class="prettyprint">
+var status = context.targetResponse.status;        // 200
+var msg = context.targetResponse.status.message;   // "OK"
+</pre>
+        </td>
+      </tr><!-- end property --><!-- begin property        -->
+
+      <tr>
+        <td rowspan="2"><code>content</code></td>
+
+        <td>
+          <p>The HTTP body (payload content) of the response message.</p>
+
+          <p>Response content has the following members:</p>
+          <pre class="prettyprint">
+context.targetResponse.content.asXML;
+context.targetResponse.content.asJSON;
+</pre>
+        </td>
+      </tr>
+
+      <tr>
+        <td> </td>
+      </tr><!-- end property -->
+    </tbody>
+  </table>
+
+  <h2 id="usingasxmlnotation">Using .asXML notation</h2>
+
+  <p>There is a handy way to walk through an XML document using the <code>.asXML</code> notation.
+  This section describes how to use this notation, and how it differs from
+  <code>request.content</code> and <code>context.proxyRequest.content</code>.</p>
+
+  <p>For example:</p>
+
+  <p><code>request.content.asXML</code></p>
+
+  <p>or</p>
+
+  <p><code>context.proxyRequest.content.asXML</code></p>
+
+  <p>Both the <code>*.content</code> and <code>*.content.asXML</code> forms can be used in a string
+  context, and JavaScript will coerce them to become strings. In the former case
+  (<code>*.content</code>), the string includes all declarations as well as XML comments. In the
+  latter case (<code>*.content.asXML</code>), the string value of the result is cleaned of
+  declarations and comments.</p>
+
+  <h3 id="usingasxmlnotation-example">Example</h3>
+
+  <p><strong>msg.content:</strong></p>
+  <pre class="prettyprint">
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;yahoo:error xmlns:yahoo="http://yahooapis.com/v1/base.rng" xml:lang="en-US"&gt;
+   &lt;yahoo:description&gt;Please provide valid credentials. OAuth oauth_problem="unable_to_determine_oauth_type", realm="yahooapis.com"
+   &lt;/yahoo:description&gt;
+&lt;/yahoo:error&gt;
+&lt;!-- mg023.mail.gq1.yahoo.com uncompressed/chunked Sat Dec 14 01:23:35 UTC 2013 --&gt;
+</pre>
+
+  <p><strong>msg.content.asXML:</strong></p>
+  <pre class="prettyprint">
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;yahoo:error xmlns:yahoo="http://yahooapis.com/v1/base.rng" xml:lang="en-US"&gt;
+   &lt;yahoo:description&gt;Please provide valid credentials. OAuth oauth_problem="unable_to_determine_oauth_type", realm="yahooapis.com"
+   &lt;/yahoo:description&gt;
+&lt;/yahoo:error&gt;
+</pre>
+
+  <p>Furthermore, you can use the <code>.asXML</code> form to traverse the XML hierarchy, by
+  specifying the names of elements and attributes. It is not possible to traverse the hierarchy
+  using the other syntax.</p>
+
+  <h2 id="debugwithjavascriptprintstatements"><a name="debug" id="debug"></a>Debug with JavaScript
+  print() statements</h2>
+
+  <p>If you're using the JavaScript policy to execute custom JavaScript code, note that you can use
+  the print() function to output debug information to the <a href=
+  "/api-platform/debug/using-trace-tool-0.html">Trace tool</a>. This function is available directly
+  through the JavaScript object model. For example:</p>
+  <pre class="prettyprint">
+if (context.flow=="PROXY_REQ_FLOW") {
+     print("In proxy request flow");
+     var username = context.getVariable("request.queryparam.user");
+     print("Got query param: " + username);
+     context.setVariable("USER.name", username);
+     print("Set query param: " + context.getVariable("USER.name"));
+}
+
+
+if (context.flow=="TARGET_REQ_FLOW") {
+     print("In target request flow");
+     var username = context.getVariable("USER.name");
+     var url = "http://mocktarget.apigee.net/user?"
+     context.setVariable("target.url", url + "user=" + username);
+     print("callout to URL: ", context.getVariable("target.url"));
+}
+</pre>
+
+  <p>To see the output, select <strong>Output from all transactions</strong> at the bottom of the
+  Trace window. You can also find output in the Trace property called "<span style=
+  "color: rgb(51, 51, 51); font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 13px; line-height: 18px; white-space: nowrap;"><strong>stepExecution-stdout</strong>". </span></p>
+
+  <h2 id="makingjavascriptcalloutswithhttpclient">Making JavaScript callouts with httpClient</h2>
+
+  <p>Use <code>httpClient</code> to make multiple, parallel, asynchronous HTTP requests to any URL
+  from within custom JavaScript code executing in an API proxy flow.
+  The <code>httpClient</code> object is exposed by the <a href=
+  "/api-platform/reference/javascript-object-model.html">Apigee Edge Javascript object
+  model</a>. </p>
+
+  <h3 id="makingjavascriptcalloutswithhttpclient-abouthttpclient">About httpClient</h3>
+
+  <p>The <code>httpClient</code> object is exposed to custom JavaScript code running on Apigee Edge
+  through the JavaScript object model. To attach custom JavaScript to an API proxy, you use the
+  <a href="/api-platform/reference/policies/javascript-policy.html">JavaScript policy</a>. When the
+  policy runs, the custom JavaScript code executes.</p>
+
+  <p>The <code>httpClient</code> object is useful for developing <a href=
+  "/api-platform/samples/cookbook/implementing-http-clients-javascript.html">composite services or
+  mashups</a>. For example, you can consolidate multiple backend calls into a single API method.
+  This object is commonly used as an alternative to the ServiceCallout policy.</p>
+
+  <aside class="note"><b>Note:</b> One use case we don't recommend for the JavaScript policy is
+  logging. The <a href="/api-platform/reference/policies/message-logging-policy.html">Message
+  Logging policy</a> is much better suited for logging to third-party logging platforms such as
+  Splunk, Sumo, and Loggly, and you improve API proxy performance by executing the Message Logging
+  policy in the PostClientFlow, which executes after the response has been sent back to the
+  client.</aside>
+
+  <p>Here's a basic usage pattern. Instantiate a Request object, assign to it a URL (e.g., to a
+  backend service you wish to call), and call <code>httpClient.send</code> with that request
+  object.</p>
+  <pre class="prettyprint">
+var myRequest = new Request();
+myRequest.url = "http://www.example.com";
+var exchangeObj = httpClient.send(myRequest);
+</pre>
+
+  <h3 id="makingjavascriptcalloutswithhttpclient-httpclientreference">httpClient Reference</h3>
+
+  <p>The HTTP Client exposes two methods: <code>get()</code> and <code>send()</code>.</p>
+
+  <h4><b>httpClient.get()</b></h4>
+
+  <p>A convenience method for simple HTTP GETs, with no support for HTTP headers.</p>
+
+  <p><strong>Usage</strong></p>
+  <pre class="prettyprint">
+var exchangeObj = httpClient.get(url);
+</pre>
+
+  <p><strong>Returns</strong></p>
+
+  <p>The method returns an <code>exchange</code> object. This object has no properties, and it
+  exposes the following methods:</p>
+
+  <ul>
+    <li><code>isError()</code>: (boolean) Returns <code>true</code> if the httpClient was unable to
+    connect to the server. HTTP status codes <code>4xx</code> and <code>5xx</code> result in
+    <code>isError()</code> <code>false</code>, as the connection completed and a valid response
+    code was returned. If <code>isError()</code> returns <code>true</code>, then a call to
+    <code>getResponse()</code> returns the JavaScript <code>undefined</code>.</li>
+
+    <li><code>isSuccess()</code>: (boolean) Returns <code>true</code> if the send was complete and
+    successful.</li>
+
+    <li><code>isComplete()</code>: (boolean) Returns <code>true</code> if the request is
+    complete.</li>
+
+    <li><code>waitForComplete()</code>: Pauses the thread until the request is complete (by success
+    or error).</li>
+
+    <li><code>getResponse()</code>: (object) Returns the response object if the
+    <code>httpClient.send()</code> was complete and successful. The returned object has the
+    identical methods and properties as the context.proxyResponse object. See <a href=
+    "#summary">Context object summary</a>. </li>
+
+    <li><code>getError()</code>: (string) If the call to <code>httpClient.send()</code> resulted in
+    an error, returns the error message as a string.</li>
+  </ul>
+
+  <p>You can use the <code>exchange</code> object later to get the actual HTTP response,
+  or to check whether the response has timed out. For example:</p>
+  <pre class="prettyprint">
+var ex1 = httpClient.get("http://www.example.com?api1");
+context.session["ex1"] = ex1;  // Put the object into the session
+
+var ex2 = httpClient.get("http://www.example.com?api2");
+context.session["ex2"] = ex2;  // Put the object into the session
+</pre>
+
+  <p>You can access the returned object later during flow processing. Here, we access the exchange
+  objects in another JavaScript policy by first getting the exchange objects from the session.</p>
+  <pre class="prettyprint">
+var ex1 = context.session["ex1"]; // Get exchange objs from the session.
+var ex2 = context.session["ex2"];
+
+ex1.waitForComplete();      // pause until the response is returned,
+                            // or error occurs, or JS step time
+                            // limit has been reached.
+ex2.waitForComplete(100);   // pause for a maximum of 100 ms.
+
+if (ex1.isSuccess() &amp;&amp; ex2.isSuccess()) {
+   response.content = ex1.getResponse().content + ex2.getResponse().content;
+}
+</pre>
+
+  <h3 id="makingjavascriptcalloutswithhttpclient-example1"><strong>Example 1</strong></h3>
+  <pre class="prettyprint">
+var exchangeObj = httpClient.get("http://www.example.com");
+</pre>
+
+  <h4><b>httpClient.send()</b></h4>
+
+  <p>Lets you send a fully configured Request object containing the properties of the HTTP
+  request.</p>
+
+  <p><strong>Usage</strong></p>
+  <pre class="prettyprint">
+var request = new Request(url, operation, headers);
+var exchangeObj = httpClient.send(request);
+</pre>
+
+  <p><strong>Returns</strong></p>
+
+  <p>A call to <code>httpClient.send()</code> returns an <code>exchange</code> object. For details
+  about this object, see the <code>httpclient.get()</code> method description.</p>
+
+  <h3 id="makingjavascriptcalloutswithhttpclient-example2"><strong>Example 2</strong></h3>
+  <pre class="prettyprint">
+var headers = {'X-SOME-HEADER' : 'some value' };
+var myRequest = new Request("http://www.example.com","GET",headers);
+var exchange = httpClient.send(myRequest);
+</pre>
+
+  <h3 id="makingjavascriptcalloutswithhttpclient-example3"><strong>Example 3</strong></h3>
+  <pre class="prettyprint">
+var headers = {'Content-Type' : 'application/xml' };
+var myRequest = new Request("http://www.example.com","POST",headers,""&lt;foo&gt;);
+var exchange = httpClient.send(myRequest);
+</pre>
+
+  <h3 id="makingjavascriptcalloutswithhttpclient-example4"><strong>Example 4</strong></h3>
+
+  <p>Call a backend service, retrieve the response payload, and extract a variable from it.</p>
+
+  <p>(<strong>Note:</strong> You can find the complete, working code from which this snippet was
+  extracted in the "<a href=
+  "https://github.com/apigee/api-platform-samples/tree/master/sample-proxies/outbound-oauth">Outbound
+  OAuth</a>" sample on GitHub.) </p>
+  <pre class="prettyprint">
+/**
+ * Retrieve an access token for the Microsoft Translator API
+ * http://msdn.microsoft.com/en-us/library/hh454950.aspx
+ */
+function getAccessToken() {
+  var bodyObj = {
+    'grant_type': translatorApi.grantType,
+    'scope': translatorApi.scopeUrl,
+    'client_id': translatorApi.clientId,
+    'client_secret': translatorApi.clientSecret
+  };
+
+  var req = new Request(translatorApi.authUrl, 'POST', {'Content-Type':'application/json'}, JSON.stringify(bodyObj));
+  var exchange = httpClient.send(req);
+
+  // Wait for the asynchronous POST request to finish
+  exchange.waitForComplete();
+
+  if (exchange.isSuccess()) {
+    var responseObj = exchange.getResponse().content.asJSON;
+
+    if (responseObj.error) {
+      throw new Error(responseObj.error_description);
+    }
+
+    return responseObj.access_token;
+  } else if (exchange.isError()) {
+    throw new Error(exchange.getError());
+  }
+}
+
+context.setVariable('twitter-translate.apiAccessToken', getAccessToken());
+
+</pre>
+
+  <h3 id="makingjavascriptcalloutswithhttpclient-example5"><strong>Example 5</strong></h3>
+
+  <p>Track the status of an HTTP request.</p>
+  <pre class="prettyprint">
+function userCheck() {
+  var url = getAppServicesUrl() + '/users/' + username,
+      headers = {
+        Authorization : 'Bearer ' + appServicesAccessToken
+      },
+      req = new Request(url, 'GET', headers),
+      exchange = httpClient.send(req),
+      response, status;
+
+  // Wait for the asynchronous GET request to finish
+  exchange.waitForComplete();
+
+  // get the response object from the exchange
+  response = exchange.getResponse();
+
+  // get the HTTP status code from the response
+  status = response.status;
+
+  if (status == 200) {
+    context.setVariable('userCheck.trace', 'user exists');
+  }
+  else if (status == 404) {
+    context.setVariable('userCheck.trace', 'user does not exist');
+  }
+  else {
+    context.setVariable('userCheck.trace', 'user-inquiry-status:' + status);
+  }
+  return true;
+}
+
+</pre>
+
+  <h3 id="makingjavascriptcalloutswithhttpclient-example6iteratethroughresponseheaders">
+  <strong>Example 6: Iterate through response headers</strong></h3>
+
+  <p>Check out <a href=
+  "https://github.com/apigee/api-platform-samples/tree/master/sample-proxies/iterate-headers">this
+  working sample</a> that demonstrates how to iterate through the response headers returned in an
+  <code>httpClient.get()</code> response. </p>
+
+  <p>Here's the relevant JavaScript code used in the sample:</p>
+  <pre class="prettyprint">
+var response = httpClient.get("http://mocktarget.apigee.net/json");
+// set the pending request into a context variable
+context.setVariable('pendingResponse', response);
+
+var headers = "";
+
+var response = context.getVariable('pendingResponse');
+if (response) { // retrieve the pending request from the context variable
+    response.waitForComplete();
+    if (response.isSuccess()) {
+        for (var n in response.getResponse().headers) {
+            headers = headers + n + " --&gt; " + response.getResponse().headers[n] + "\n";
+        }
+    }
+    context.setVariable("response_headers", headers);
+}
+</pre>
+
+  <h2 id="usingthejavascriptpolicy">Using the JavaScript policy</h2>
+
+  <p>Use the JavaScript policy to attach custom JavaScript code to a proxy flow. See <a href=
+  "/api-platform/reference/policies/javascript-policy.html">JavaScript policy</a>.</p>
+
+  <h2 id="relatedtopics">Related topics</h2>
+
+  <ul>
+    <li><a href="/api-platform/reference/policies/javascript-policy.html">JavaScript
+    policy</a></li>
+
+    <li><a href="/api-platform/reference/javascript-object-model.html">JavaScript object
+    model</a></li>
+
+    <li>For basic samples and instructions, see <a href=
+    "/api-platform/samples/cookbook/programming-api-proxies-javascript.html">Programming API
+    proxies with JavaScript</a>.</li>
+
+    <li>For working JavaScript code samples, see the <a href=
+    "https://github.com/apigee/api-platform-samples">Apigee Edge samples</a> on GitHub.</li>
+
+    <li>For an example of more advanced JavaScript programming on Apigee Edge, see <a href=
+    "/api-platform/samples/cookbook/implementing-http-clients-javascript.html">Implementing HTTP
+    clients in JavaScript</a>.</li>
+  </ul>
+
+
+
+  <h2 id="apigeecommunityarticles">Apigee Community articles</h2>
+
+  <p>You can find these related articles on the <a href="https://community.apigee.com/">Apigee
+  Community</a>:</p>
+
+  <ul>
+    <li><a href=
+    "https://community.apigee.com/articles/2319/how-to-handle-multi-value-headers-in-javascript.html"
+    target="_blank">How to handle multi-value headers in Javascript</a>?</li>
+
+    <li><a href=
+    "https://community.apigee.com/content/kbentry/44662/the-book-of-apigee-edge-antipatterns.html"
+    target="_blank">The Book of Apigee Edge Antipatterns</a></li>
+  </ul>{% endblock %}

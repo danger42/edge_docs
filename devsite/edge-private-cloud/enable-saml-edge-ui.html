@@ -1,0 +1,65 @@
+  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}Enable SAML on the Edge UI{% endblock %} {% block body %}
+
+  <p>After installing the Edge SSO module, you have to configure the Edge UI to supports SAML. The
+  Edge UI is typically installed on the same node as the Edge Management Server, meaning it s on
+  the same node as <span style="font-family:courier new,courier,monospace;">apigee-sso</span>.</p>
+
+  <p>After you enable SAML on the Edge UI, the Edge UI uses OAuth to connect to the Management
+  Server. You do not have to worry about expiring OAuth tokens between the Edge UI and the Edge
+  Management Server. Expired tokens are automatically refreshed.</p>
+
+  <aside class="note"><b>Note:</b> Automatic refresh of tokens only occurs for the token use by the
+  Edge UI to make calls to the Management Server. Tokens generated for users when they log in to
+  the Edge UI expire in one hour and the refresh token expires in 12 hours.</aside>
+
+  <p>You must create a config file to configure the Edge UI:</p>
+  <pre class="prettyprint">
+IP1=<em><strong>hostname_or_ip_of_apigge_sso</strong></em>
+
+# Comma separated list of URLs for the Edge UI, 
+# in the format:  <em><strong>http_or_https://IP_or_hostname_of_UI:9000</strong></em>. 
+# You can have multiple URLs when you have multiple installations
+# of the Edge UI or you have multiple data centers. 
+EDGEUI_PUBLIC_URIS=<em><strong>http_or_https://IP_or_hostname_of_UI:9000</strong></em>
+
+# Publicly accessible URLs for Edge UI.
+EDGEUI_SSO_REGISTERD_PUBLIC_URIS=$EDGEUI_PUBLIC_URIS
+
+# Required variables
+# Default is "n" to disable SAML support.
+EDGEUI_SSO_ENABLED=y
+
+# Information about apigee-sso.
+# Externally accessible IP or DNS of apigee-sso.
+SSO_PUBLIC_URL_HOSTNAME=$IP1
+SSO_PUBLIC_URL_PORT=9099
+# Default is http. Set to https if you enabled TLS on apigee-sso.
+SSO_PUBLIC_URL_SCHEME=http
+
+# SSO admin credentials as set when you installed apigee-sso.
+SSO_ADMIN_NAME=ssoadmin
+SSO_ADMIN_SECRET=Secret123
+
+# The name of the OAuth client used to connect to apigee-sso. 
+# The default client name is edgeui.
+EDGEUI_SSO_CLIENT_NAME=edgeui
+# Oauth client password using uppercase, lowercase, number, and special chars. 
+EDGEUI_SSO_CLIENT_SECRET=ssoClient123
+
+# If set, the existing EDGEUI client is deleted and new one is created.
+# The default value is "n".
+# Set to "y" when you configure SAML and change the value of 
+# any of the EDGEUI_* properties.
+EDGEUI_SSO_CLIENT_OVERWRITE=y
+</pre>
+
+  <p>To configure the Edge UI to enable SAML support:</p>
+
+  <ol>
+    <li>Run the following command:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt;
+    /opt/apigee/apigee-service/bin/apigee-service edge-ui configure-sso -f
+    <strong><em>configFile</em></strong></span></li>
+  </ol>
+
+  <p>To later change these values, update the config file and run the command again.</p>{% endblock %}

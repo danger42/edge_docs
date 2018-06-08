@@ -1,0 +1,591 @@
+  {% extends "_base.html" %} {% block title %}LookupCache policy{% endblock %} {% block body %}
+  <img src="/api-platform/images/icon_policy_traffic-management.jpg">
+
+  <h3>What</h3>
+
+  <p>Configures how cached values should be retrieved at runtime.</p>
+
+  <h2 id="element_reference">Element reference</h2>
+
+  <p>The following lists the elements you can configure on this policy.</p>
+  <pre class="prettyprint">
+&lt;LookupCache async="false" continueOnError="false" enabled="true" name="Lookup-Cache-1"&gt;
+    &lt;DisplayName&gt;Lookup Cache 1&lt;/DisplayName&gt;
+    &lt;Properties/&gt;
+    &lt;CacheKey&gt;
+        &lt;Prefix/&gt;
+        &lt;KeyFragment ref=""/&gt;
+    &lt;/CacheKey&gt;
+    &lt;!-- Omit this element if you're using the included shared cache. --&gt;
+    &lt;CacheResource/&gt;
+    &lt;CacheLookupTimeoutInSeconds/&gt;
+    &lt;Scope&gt;Exclusive&lt;/Scope&gt;
+    &lt;AssignTo&gt;flowVar&lt;/AssignTo&gt;
+&lt;/LookupCache&gt;
+</pre>
+
+  <p>A shared cache is included by default. To use the shared cache, omit the
+  <code>&lt;CacheResource&gt;</code> element in this policy configuration.</p>
+
+  <p>For more about the underlying data store, see <a href=
+  "/api-platform/cache/cache-internals.html">Cache internals</a>. For more about configuring
+  caches, see <a href="/api-platform/cache/manage-caches-environment.html">Creating and editing an
+  environment cache</a>.</p>
+
+  <h2 id="lookupcacheattributes">&lt;LookupCache&gt; attributes</h2>{% dynamic include /includes/___policies-parent-element-attributes %}
+
+  <h2 id="LookupCache_AssignTo">&lt;AssignTo&gt; element</h2>
+
+  <p>Specifies the variable where the cache entry is assigned after it has been retrieved from the
+  cache. The variable must be writable. If the cache lookup doesn't retrieve a value, the variable
+  will not be set.</p>
+  <pre class="prettyprint">
+&lt;AssignTo&gt;<i>variable_to_receive_cached_value</i>&lt;/AssignTo&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td style="width:90px">
+          <p><strong>Default:</strong></p>
+        </td>
+
+        <td>
+          <p>N/A</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Presence:</strong></p>
+        </td>
+
+        <td>Required</td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Type:</strong></p>
+        </td>
+
+        <td>
+          <p>String</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="CacheKeyElement">&lt;CacheKey&gt; element</h2>
+
+  <p>Configures a unique pointer to a piece of data stored in the cache.</p>
+  <pre class="prettyprint">
+&lt;CacheKey&gt;
+    &lt;Prefix&gt;<i>string</i>&lt;/Prefix&gt;
+    &lt;KeyFragment ref="<i>variable_name</i>" /&gt;
+    &lt;KeyFragment&gt;<em>literal_string</em>&lt;/KeyFragment&gt;
+&lt;/CacheKey&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td style="width:90px">
+          <p><strong>Default:</strong></p>
+        </td>
+
+        <td>
+          <p>N/A</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Presence:</strong></p>
+        </td>
+
+        <td>Required</td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Type:</strong></p>
+        </td>
+
+        <td>
+          <p>N/A</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p><code>&lt;CacheKey&gt;</code> constructs the name of each piece of data stored in the
+  cache.</p>
+
+  <p>At runtime, <code>&lt;KeyFragment&gt;</code> values are prepended with either the
+  <code>&lt;Scope&gt;</code> element value or <code>&lt;Prefix&gt;</code> value. For example, the
+  following results in a cache key of
+  <code>UserToken__apiAccessToken__</code>&lt;<i>value_of_client_id&gt;</i>:</p>
+  <pre class="prettyprint">
+&lt;CacheKey&gt;
+    &lt;Prefix&gt;UserToken&lt;/Prefix&gt;
+    &lt;KeyFragment&gt;apiAccessToken&lt;/KeyFragment&gt;
+    &lt;KeyFragment ref="request.queryparam.client_id" /&gt;
+&lt;/CacheKey&gt;
+</pre>
+
+  <p>You use the <code>&lt;CacheKey&gt;</code> element in conjunction with
+  <code>&lt;Prefix&gt;</code> and <code>&lt;Scope&gt;</code>. For more information, see <a href=
+  "/api-platform/reference/policies/working-cachekeys.html">Working with cache keys</a>.</p>
+
+  <h2 id="CacheLookupTimeoutInSeconds">&lt;CacheLookupTimeoutInSeconds&gt; element</h2>
+
+  <p>Specifies the number of seconds after which an unsuccessful cache lookup will be considered a
+  cache miss. If this occurs, flow resumes along the cache-miss path.</p>
+  <pre class="prettyprint">
+&lt;CacheLookupTimeoutInSeconds&gt;30&lt;/CacheLookupTimeoutInSeconds&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td style="width:90px">
+          <p><strong>Default:</strong></p>
+        </td>
+
+        <td>
+          <p>30</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Presence:</strong></p>
+        </td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Type:</strong></p>
+        </td>
+
+        <td>
+          <p>Integer</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="cacheresourceelement"><a id="CacheResourceElement" name=
+  "CacheResourceElement"></a>&lt;CacheResource&gt; element</h2>
+
+  <p>Specifies the cache where messages should be stored.</p>
+
+  <p>Omit this element completely if this policy (and your corresponding PopulateCache and
+  InvalidateCache policies) is using the included shared cache.</p>
+  <pre class="prettyprint">
+&lt;CacheResource&gt;<i>cache_to_use</i>&lt;/CacheResource&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td style="width:90px">
+          <p><strong>Default:</strong></p>
+        </td>
+
+        <td>
+          <p>N/A</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Presence:</strong></p>
+        </td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Type:</strong></p>
+        </td>
+
+        <td>
+          <p>String</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>For more about configuring caches, see <a href=
+  "/api-platform/cache/manage-caches-environment.html">Creating and editing an environment
+  cache</a>.</p>
+
+  <h2 id="KeyFragmentElement">&lt;CacheKey&gt;/&lt;KeyFragment&gt; element</h2>
+
+  <p>Specifies a value that should be included in the cache key, creating a namespace for matching
+  requests to cached responses.</p>
+  <pre class="prettyprint">
+&lt;KeyFragment ref="<i>variable_name</i>"/&gt;
+&lt;KeyFragment&gt;<i>literal_string</i>&lt;/KeyFragment&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td style="width:90px">
+          <p><strong>Default:</strong></p>
+        </td>
+
+        <td>
+          <p>N/A</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Presence:</strong></p>
+        </td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Type:</strong></p>
+        </td>
+
+        <td>
+          <p>N/A</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>This can be a key (a static name that you provide) or a value (a dynamic entry set by
+  referencing a variable). All specified fragments combined (plus the prefix) are concatenated to
+  create the cache key.</p>
+  <pre class="prettyprint">
+&lt;KeyFragment&gt;apiAccessToken&lt;/KeyFragment&gt;
+&lt;KeyFragment ref="request.queryparam.client_id" /&gt;
+</pre>
+
+  <p>You use the <code>&lt;KeyFragment&gt;</code> element in conjunction with
+  <code>&lt;Prefix&gt;</code> and <code>&lt;Scope&gt;</code>. For more information, see <a href=
+  "/api-platform/reference/policies/working-cachekeys.html">Working with cache keys</a>.</p>
+
+  <h3 id="cachekeykeyfragmentelement-attributes">Attributes</h3>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Attribute</th>
+
+        <th>Type</th>
+
+        <th>Default</th>
+
+        <th>Required</th>
+
+        <th>Description</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td>ref</td>
+
+        <td>string</td>
+
+        <td> </td>
+
+        <td>No</td>
+
+        <td>
+          <p>The variable from which to get the value. Should not be used if this element contains
+          a literal value.</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="PrefixElement">&lt;CacheKey&gt;/&lt;Prefix&gt; element</h2>
+
+  <p>Specifies a value to use as a cache key prefix.</p>
+  <pre class="prettyprint">
+&lt;Prefix&gt;<i>prefix_string</i>&lt;/Prefix&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td style="width:90px">
+          <p><strong>Default:</strong></p>
+        </td>
+
+        <td>
+          <p>N/A</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Presence:</strong></p>
+        </td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Type:</strong></p>
+        </td>
+
+        <td>
+          <p>String</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>Use this value instead of <code>&lt;Scope&gt;</code> when you want to specify your own value
+  rather than a <code>&lt;Scope&gt;</code> -enumerated value. If defined,
+  <code>&lt;Prefix&gt;</code> prepends the cache key value for entries written to the cache. A
+  <code>&lt;Prefix&gt;</code> element value overrides a <code>&lt;Scope&gt;</code> element
+  value.</p>
+
+  <p>You use the <code>&lt;Prefix&gt;</code> element in conjunction with
+  <code>&lt;CacheKey&gt;</code> and <code>&lt;Scope&gt;</code>. For more information, see <a href=
+  "/api-platform/reference/policies/working-cachekeys.html">Working with cache keys</a>.</p>
+
+  <h2 id="ScopeElement">&lt;Scope&gt; element</h2>
+
+  <p>Enumeration used to construct a prefix for a cache key when a <code>&lt;Prefix&gt;</code>
+  element is not provided in the <code>&lt;CacheKey&gt;</code> element.</p>
+  <pre class="prettyprint">
+&lt;Scope&gt;<i>scope_enumeration</i>&lt;/Scope&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td style="width:90px">
+          <p><strong>Default:</strong></p>
+        </td>
+
+        <td>
+          <p>"Exclusive"</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Presence:</strong></p>
+        </td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Type:</strong></p>
+        </td>
+
+        <td>
+          <p>String</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>The <code>&lt;Scope&gt;</code> setting determines a cache key that is prepended according to
+  the <code>&lt;Scope&gt;</code> value. For example, a cache key would take the following form when
+  scope is set to <code>Exclusive</code> :
+  <i>orgName__envName__</i><i>application</i><i>Name__deployedRevisionNumber__proxy|TargetName__</i>
+  [ <i>serializedCacheKey</i> ].</p>
+
+  <p>If a <code>&lt;Prefix&gt;</code> element is present in <code>&lt;CacheKey&gt;</code>, it
+  supercedes a <code>&lt;Scope&gt;</code> element value. Valid values include the enumerations
+  below.</p>
+
+  <p>You use the <code>&lt;Scope&gt;</code> element in conjunction with
+  <code>&lt;CacheKey&gt;</code> and <code>&lt;Prefix&gt;</code>. For more information, see <a href=
+  "/api-platform/reference/policies/working-cachekeys.html">Working with cache keys</a>.</p>
+
+  <h3 id="scopeelement-acceptablevalues">Acceptable values</h3>
+
+  <table>
+    <tbody>
+      <tr>
+        <td><code>Global</code></td>
+
+        <td>
+          <p>Cache key is shared across all API proxies deployed in the environment. Cache key is
+          prepended in the form  <i>orgName</i> __ <i>envName</i> __.</p>
+
+          <p>If you define a <code>&lt;CacheKey&gt;</code> entry with the
+          <code>&lt;KeyFragment&gt;</code> apiAccessToken and a <code>&lt;Global&gt;</code> scope,
+          each entry is stored as <code>orgName__envName__apiAccessToken</code>, followed by the
+          serialized value of the access token. For an API proxy deployed in an environment called
+          'test' in an organization called 'apifactory', access tokens would be stored under the
+          following cache key: <code>apifactory__test__apiAccessToken</code>.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td><code>Application</code></td>
+
+        <td>
+          <p>API proxy name is used as the prefix.</p>
+
+          <p>Cache key is prepended in the form
+          <i>orgName__envName__</i><i>application</i><i>Name</i>.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td><code>Proxy</code></td>
+
+        <td>
+          <p>ProxyEndpoint configuration is used as the prefix.</p>
+
+          <p>Cache key is prepended in the form
+          <i>orgName__envName__</i><i>application</i><i>Name__deployedRevisionNumber__proxyEndpointName</i>
+          .</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td><code>Target</code></td>
+
+        <td>
+          <p>TargetEndpoint configuration is used as the prefix.</p>
+
+          <p>Cache key prepended in the form
+          <i>orgName__envName__</i><i>application</i><i>Name__deployedRevisionNumber__targetEndpointName</i>
+          .</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td><code>Exclusive</code></td>
+
+        <td>
+          <p>Default. This is the most specific, and therefore presents minimal risk of namespace
+          collisions within a given cache.</p>
+
+          <p>Prefix is one of two forms:</p>
+
+          <ul>
+            <li>If the policy is attached to the <code>ProxyEndpoint</code> flow, prefix is of the
+            form <i>ApiProxyName_ProxyEndpointName</i>.</li>
+
+            <li>If the policy is attached at <code>TargetEndpoint</code>, prefix is of the form
+            <i>ApiProxyName_TargetName</i>.</li>
+          </ul>
+
+          <p>Cache key prepended in the form
+          <i>orgName__envName__</i><i>application</i><i>Name__deployedRevisionNumber__proxyNameITargetName</i></p>
+
+          <p>For example, the full string might look like this:</p>
+          <pre class="prettyprint">
+apifactory__test__weatherapi__16__default__apiAccessToken
+</pre>.
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="usage_notes">Usage notes</h2>
+
+  <p>Use this policy for general-purpose caching. At runtime, the LookupCache policy retrieves a
+  value from the cache, assigning the value to the variable you specify with the AssignTo element
+  (if no value is retrieved, the variable will not be set). It looks for the value based on a cache
+  key created through configuration that combines the CacheKey and Scope elements. In other words,
+  to retrieve a particular value added to the cache by a PopulateCache policy, your LookupCache
+  policy must have cache key-related elements configured in the same way as the PopulateCache
+  policy.</p>
+
+  <p>General purpose caching with the <a href=
+  "/api-platform/reference/policies/populate-cache-policy.html">Populate Cache policy</a>,
+  LookupCache policy, and <a href=
+  "/api-platform/reference/policies/invalidate-cache-policy.html">InvalidateCache policy</a> uses
+  either a cache you configure or a shared cache that's included by default. In most cases, the
+  underlying shared cache should meet your needs. To use the default cache, simply omit
+  the <code>&lt;CacheResource&gt;</code> element.</p>
+
+  <p>For more about configuring caches, see <a href=
+  "/api-platform/cache/manage-caches-environment.html">Creating and editing an environment
+  cache</a>. For more about the underlying data store, see <a href=
+  "/api-platform/cache/cache-internals.html">Cache internals</a>.</p>
+
+  <h2 id="flowvariables">Flow variables</h2>
+
+  <p>Flow variables can be used to configure dynamic runtime behavior for policies and flows, based
+  on HTTP headers or message content, or the context available in the Flow. For more information
+  about flow variables, see <a href="/api-platform/reference/variables-reference.html">Variables
+  reference</a>.</p>
+
+  <p>The following predefined Flow variables are available after you customize the behavior of the
+  cache you define in a LookupCache policy.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th scope="col">Variables</th>
+
+        <th scope="col">Type</th>
+
+        <th scope="col">Permission</th>
+
+        <th scope="col">Description</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td>lookupcache.{policy-name}.cachename</td>
+
+        <td>String</td>
+
+        <td>Read-Only</td>
+
+        <td>Returns the cache name used in the policy.</td>
+      </tr>
+
+      <tr>
+        <td>lookupcache.{policy-name}.cachekey</td>
+
+        <td>String</td>
+
+        <td>Read-Only</td>
+
+        <td>Returns the key used.</td>
+      </tr>
+
+      <tr>
+        <td>lookupcache.{policy-name}.cachehit</td>
+
+        <td>Boolean</td>
+
+        <td>Read-Only</td>
+
+        <td>True if the policy found a value for the specified cache key.</td>
+      </tr>
+
+      <tr>
+        <td>lookupcache.{policy-name}.assignto</td>
+
+        <td>String</td>
+
+        <td>Read-Only</td>
+
+        <td>Returns the variable to which cache is assigned.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="errorcodes">Error codes</h2>{% dynamic include /includes/___lookup-cache-policy-error-codes %} {% endblock %}

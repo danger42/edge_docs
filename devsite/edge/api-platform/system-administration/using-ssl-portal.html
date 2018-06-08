@@ -1,0 +1,420 @@
+  {% extends "_base.html" %} {% block title %}Using TLS on the portal{% endblock %} {% block body %}
+
+  <p>You can configure the portal to use TLS. The TLS configuration procedure for the portal
+  depends on how you have deployed the portal:</p>
+
+  <ul>
+    <li><strong>Cloud</strong>: Configure TLS from Pantheon or Acquia, the cloud-based hosting
+    services for the portal. </li>
+
+    <li><strong>Apigee Edge for Private Cloud</strong>: Configure TLS on-premises on the server
+    hosting the portal. </li>
+  </ul>
+
+  <aside class="note"><b>Note:</b> When configuring TLS settings in the cloud, if an update
+  to <span style=
+  "font-family: 'courier new', courier, monospace;">sites/default/settings.php</span> is required,
+  to avoid Git conflicts Apigee recommends that you edit <span style=
+  "font-family: 'courier new', courier, monospace;">sites/default/settings.local.php</span> instead
+  of editing <span style=
+  "font-family: 'courier new', courier, monospace;">sites/default/settings.php</span>
+  directly.</aside>
+
+  <h2 id="tlsandtheportal">TLS and the portal</h2>
+
+  <p>The following image show the two places where the portal uses TLS:</p>
+
+  <p><img alt="" src="/api-platform/images/portalSSL_v2.png"></p>
+
+  <ol>
+    <li>For communication between the portal and the Edge management API.<br>
+    <br>
+    The portal does not function as a stand-alone system. Instead, much of the information used by
+    the portal is actually stored on Edge, where Edge can be deployed either in the cloud or
+    on-premises as a Private Cloud installation. When necessary, the portal makes an HTTP or HTTPS
+    request to the Edge management API to retrieve information or to send information.<br>
+    <br>
+    When you create your portal, one of the first steps you must perform is to specify the URL of
+    the Edge management API. Depending on how the Edge management API is configured, that URL
+    can use TLS. See <a href="/api-platform/publish/drupal/creating-developer-portal.html">Creating
+    a developer portal</a> for more.</li>
+
+    <li>For communication between developers and the portal.<br>
+    <br>
+    When you use the Developer Services portal to deploy your APIs, your developers log in to the
+    portal to register apps and receive API keys. The login credentials and the API key are
+    proprietary information that you want to send over HTTPS to ensure their security. This
+    type of proprietary information should be sent over HTTPS. <br>
+    <br>
+    The way you configure TLS for this scenario depends on how you have deployed the
+    portal: cloud or Apigee Edge for Private Cloud. The following sections describe
+    both scenarios.</li>
+  </ol>
+
+  <h2 id="configuringtlsbetweentheportalandtheedgemanagementapi">Configuring TLS between the portal
+  and the Edge management API</h2>
+
+  <p>The configuration of the Edge management API determines whether or not communication can use
+  TLS. If the Edge management API is configured to use TLS, then the portal can use HTTPS.
+  Otherwise, the portal communicates with Edge over HTTP. Therefore, as a portal developer, you
+  only need to know how Edge is configured to set the connection between the portal and
+  Edge. </p>
+
+  <aside class="note"><b>Note:</b> Apigee recommends that you configure the Private Cloud version
+  of the Edge management API to use TLS, unless you have deployed both Edge and the portal behind a
+  firewall with no public access. For information on configuring Edge to use TLS, see <a href=
+  "/private-cloud/v4.18.01/configuring-ssl-edge-premises.html">Configuring TLS/SSL for Edge On
+  Premises</a>.</aside>
+
+  <p>For the procedure that you use to configure the connection to the Edge management API, see
+  <a href="/api-platform/publish/drupal/creating-developer-portal.html">Creating a developer
+  portal</a>.</p>
+
+  <h3 id="configuringtlsbetweentheportalandtheedgemanagementapi-cloudbasedversionofedge">
+  Cloud-based version of Edge</h3>
+
+  <p>If your portal connects to the cloud-based version of Edge, then the URL for the Edge
+  management API is preconfigured by Apigee to use TLS. When configuring the portal, you access the
+  Edge management API by using the URL <span style=
+  "font-family: 'courier new', courier, monospace;">https://api.enterprise.apigee.com/v1</span>.</p>
+
+  <h3 id="configuringtlsbetweentheportalandtheedgemanagementapi-privatecloudinstallationofedge">
+  Private Cloud installation of Edge</h3>
+
+  <p>For a Private Cloud installation of Edge, the URL of the Edge management API is in the
+  form:<br>
+  <span style=
+  "font-family: 'courier new', courier, monospace;">http://<strong><em>EdgePrivateCloudIp</em></strong>:8080/v1</span><br>
+
+  or:<br>
+  <span style=
+  "font-family: 'courier new', courier, monospace;">https://<strong><em>EdgePrivateCloudIp</em></strong>:<strong><em>TLSport</em></strong>/v1</span></p>
+
+  <p>where <strong><em>EdgePrivateCloudIp</em></strong> is the IP address of the Edge Management
+  Server server and <strong><em>TLSport</em></strong> is the TLS port for the Edge management API.
+  For example, the port number could be 8443 or even 8080 based on the Edge configuration.</p>
+
+  <h2 id="configuringtlsbetweendevelopersandtheportal">Configuring TLS between developers and the
+  portal</h2>
+
+  <p>The way you configure TLS between developers and the portal depends on how you deployed the
+  portal: cloud or Apigee Edge for Private Cloud. </p>
+
+  <h3 id="configuringtlsbetweendevelopersandtheportal-cloudbasedportals">Cloud-based portals</h3>
+
+  <p><strong>Pantheon</strong></p>
+
+  <p>Pantheon provides free automated HTTPS for all sites on its platform through the <a href=
+  "https://pantheon.io/docs/global-cdn/" target="_blank">Pantheon Global CDN</a> and using <a href=
+  "https://letsencrypt.org/" target="_blank">Let's Encrypt</a>. See also <a href=
+  "https://pantheon.io/docs/https/" target="_blank">HTTPS on Pantheon's Global CDN</a>.</p>
+
+  <aside class="note"><b>Note:</b> For customers using Pantheon's legacy HTTPS support, to upgrade
+  see <a href="https://pantheon.io/docs/global-cdn/#enabling-the-global-cdn" target=
+  "_blank">Enabling the Global CDN</a> and the <a href=
+  "https://pantheon.io/docs/global-cdn/#frequently-asked-questions" target=
+  "_blank">FAQ</a>.</aside>
+
+  <p><strong>Acquia</strong></p>To enable TLS/SSL using Acquia, see <a href=
+  "/api-platform/publish/drupal/working-acquia.html#ssl">Enabling SSL</a>.
+  <!--<p>Portals deployed in the cloud on Pantheon are preconfigured with three environments: development, test, and production. The way you configure and use TLS depends on the environment:</p>
+<ul>
+        <li><strong>Development and test environments</strong>: Requests can use <span style="font-family:courier new,courier,monospace;">http://</span> or <span style="font-family:courier new,courier,monospace;">https://</span>. Requests over <span style="font-family:courier new,courier,monospace;">https://</span> use the Apigee TLS certificate so that you can build and test your portal. However, you must obtain your own TLS certificate to move to a production environment.</li>
+        <li><strong>Production environment</strong>: If you want to encrypt portal data transfers, then you require&nbsp;your own TLS certificate.&nbsp;</li>
+</ul>
+<p>You use the Pantheon UI to configure TLS for the portal. Before starting this process, you should be familiar with the Pantheon documentation:</p>
+<p><a href="http://helpdesk.getpantheon.com/customer/portal/articles/385443">http://helpdesk.getpantheon.com/customer/portal/articles/385443</a></p>
+<div class="note">
+        <p>You must have access to the Pantheon dashboard to configure TLS. You can get access by requesting it from your portal administrator, or by making a request to <a href="https://community.apigee.com/content/apigee-customer-support">Apigee Support</a>.</p>
+</div>
+<p><strong>To configure TLS for the portal in Pantheon:</strong></p>
+<ol>
+        <li>Obtain an TLS certificate.</li>
+        <li>Log in to Pantheon at <a href="https://dashboard.getpantheon.com/login">https://dashboard.getpantheon.com/login</a>.</li>
+        <li>Use the instructions at <a href="http://helpdesk.getpantheon.com/customer/portal/articles/385443">http://helpdesk.getpantheon.com/customer/portal/articles/385443</a> to:
+                <ul>
+                        <li>Generate the RSA Key (.key) and CSR (certificate signing request).</li>
+                        <li>Enable TLS.</li>
+                        <li>Enter the RSA Key and CSR.</li>
+                </ul>
+        </li>
+        <li>In Pantheon, select <strong>Domains &gt; Domain Setup</strong>.</li>
+        <li>Ensure that the IP address generated when you registered your TLS certificate appears as a record type of A, references the generated IP directly, and does not use a redirect.</li>
+</ol>-->
+
+  <h3 id="configuringtlsbetweendevelopersandtheportal-edgeforprivatecloudportals">Edge for Private
+  Cloud portals</h3>
+
+  <p>All Apigee recommended Private Cloud installations of the portal require the portal to be
+  behind a load balancer, as shown below:</p>
+
+  <p><img alt="" src="/api-platform/images/portalSSL_elb.png"></p>
+
+  <p>Therefore, for on-premises installations, you have two options for configuring TLS:</p>
+
+  <ul>
+    <li><strong>Configure TLS on the load balancer</strong>: Configure TLS on the load balancer
+    itself, and not on the portal. The procedure that you use to configure TLS is therefore
+    dependent on the load balancer. See the documentation on your load balancer for more
+    information.</li>
+
+    <li><strong>Configure TLS on the portal itself</strong>: If necessary, you can configure TLS on
+    the web server that hosts the portal. See <a href=
+    "/private-cloud/v4.18.01/configuring-portal-use-https.html">Configuring the portal to use
+    HTTPS</a> for more information. </li>
+  </ul>
+
+  <p>You must obtain your own TLS certificate before you can deploy the portal to a production
+  environment. </p>
+
+  <h3 id="configuringtlsbetweendevelopersandtheportal-configuringadditionaltlssettings">Configuring
+  additional TLS settings</h3>
+
+  <p>You can edit the <span style=
+  "font-family: 'courier new', courier, monospace;">sites/default/settings.local.php</span> (cloud)
+  or <span style=
+  "font-family: 'courier new', courier, monospace;">sites/default/settings.php</span> (Private
+  Cloud) file to make configuration changes to TLS for the portal.</p>
+
+  <p>When editing the file, add instances of the <span style=
+  "font-family: 'courier new', courier, monospace;">ini_set()</span> function to set a property.
+  For more information on this function, see: <a href=
+  "https://php.net/manual/en/function.ini-set.php">http://php.net/manual/en/function.ini-set.php</a>. </p>
+
+  <p>You can set the following properties in the <span style=
+  "font-family: 'courier new', courier, monospace;">sites/default/settings.local.php</span> (cloud)
+  or <span style=
+  "font-family: 'courier new', courier, monospace;">sites/default/settings.php</span> (Private
+  Cloud) file:</p>
+
+  <ul>
+    <li><a href=
+    "https://php.net/manual/en/session.configuration.php#ini.session.cookie-httponly">cookie_httponly</a>:
+    (Recommended) Specifies that cookie as accessible only over the HTTP protocol. Set this
+    property as:<br>
+    <br>
+    <span style="font-family:courier new,courier,monospace;">ini_set('session.cookie_httponly',
+    true);</span></li>
+
+    <li><a href=
+    "https://php.net/manual/en/session.configuration.php#ini.session.cookie-secure">session.cookie_secure</a>
+    - (Optional) Specifies that cookies can only be sent over secure connections. However, this
+    means that all content must be served over HTTPS. If this setting is enabled, the site will not
+    work over HTTP. Set this property as:<br>
+    <br>
+    <span style="font-family:courier new,courier,monospace;">ini_set('session.cookie_secure',
+    true);</span></li>
+
+    <li><a href=
+    "https://php.net/manual/en/session.configuration.php#ini.session.gc-maxlifetime">gc_maxlifetime</a>
+    and <a href=
+    "https://php.net/manual/en/session.configuration.php#ini.session.cookie-lifetime">cookie_lifetime</a>:
+    (Optional) <span style="font-family:courier new,courier,monospace;">gc_lifeteime</span>
+    specifies the number of seconds after which data can potentially be cleaned up, and
+    <span style="font-family:courier new,courier,monospace;">cookie_lifetime</span> specifies the
+    lifetime of the cookie in seconds. Set these properties as:<br>
+    <br>
+    <span style="font-family:courier new,courier,monospace;">ini_set('session.gc_maxlifetime',
+    3600);<br>
+    ini_set('session.cookie_lifetime', 3600);</span></li>
+  </ul>
+
+  <p>For more information on setting up TLS between the developer portal and clients, see <a href=
+  "https://pantheon.io/docs/articles/sites/domains/adding-a-ssl-certificate-for-secure-https-communication/">
+  Enable SSL for Secure HTTPS Communication</a> on the Pantheon doc site.</p>
+
+  <h3 id="configuringtlsbetweendevelopersandtheportal-configuringtlswithloadbalancers">Configuring
+  TLS with Load Balancers</h3>
+
+  <p>For better performance, load balancers are sometimes configured to perform TLS termination.
+  With TLS termination, load balancers decrypt messages sent over <span style=
+  "font-family:courier new,courier,monospace;">https://</span> and forward the messages to backend
+  servers over <span style="font-family:courier new,courier,monospace;">http://</span>. That saves
+  backend servers the overhead of decrypting <span style=
+  "font-family: 'courier new', courier, monospace;">https://</span> messages themselves.</p>
+
+  <p>If load balancers forward unencrypted http messages to servers in the same data center,
+  security is not an issue. However, if load balancers forward messages over <span style=
+  "font-family: 'courier new', courier, monospace;">http://</span> to servers outside the data
+  center, such as your Apigee developer portal, the messages are unencrypted, which opens a
+  security hole.</p>
+
+  <p>If your developer portal sits behind load balancers that are using TLS termination, and you
+  want all traffic served over <span style=
+  "font-family: 'courier new', courier, monospace;">https://</span>, the website pages will need to
+  contain <span style="font-family: 'courier new', courier, monospace;">https://</span> links only
+  and you will need to add the following code to your developer portal <span style=
+  "font-family: 'courier new', courier, monospace;">sites/default/settings.local.php</span> (cloud)
+  or <span style=
+  "font-family: 'courier new', courier, monospace;">sites/default/settings.php</span> (Private
+  Cloud) file. Because the load balancer does not automatically transform the content of the
+  HTML pages, the code ensures that all links passed to the client start with <span style=
+  "font-family: 'courier new', courier, monospace;">https://</span>.</p>
+
+  <p>To configure TLS with load balancers, add the following lines to the <span style=
+  "font-family: 'courier new', courier, monospace;">sites/default/settings.local.php</span> (cloud)
+  or <span style=
+  "font-family: 'courier new', courier, monospace;">sites/default/settings.php</span> (Private
+  Cloud) file:</p>
+
+  <aside class="note"><b>Note:</b> The following assumes your load balancer is configured to
+  include the <code>X-Forwarded-Proto</code> HTTP header.</aside>
+  <pre class="prettyprint">
+// Only check for SSL if we are not using PHP from the command line.
+if (PHP_SAPI != 'cli') {
+  // Assume we can't detect SSL unless proven otherwise.
+  $can_detect_ssl = FALSE;
+
+  // Set HTTPS URL of portal 
+  $base_url = 'https://developers.myCo.com';
+
+  if (isset($_SERVER['HTTP_X_<wbr>FORWARDED_PROTO']) || (isset($_SERVER['HTTPS']) &amp;&amp; $_SERVER['HTTPS'] == 'on')) {
+    $can_detect_ssl = TRUE;
+  }
+
+  if (isset($_SERVER['HTTP_X_<wbr>FORWARDED_PROTO']) &amp;&amp; strtolower($_SERVER['HTTP_X_<wbr>FORWARDED_PROTO']) == 'https') {
+    $_SERVER['HTTPS'] = 'on';
+  }
+
+  if ($can_detect_ssl &amp;&amp; $_SERVER['HTTPS'] != 'on') {
+    header('HTTP/1.0 301 Moved Permanently');
+    // You could optionally substitute a canonical server name for $_SERVER['HTTP_HOST'] here.
+    header('Location: <a>https://</a>' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI']);
+    exit;
+  }
+}
+</pre>
+
+  <p>For more information, see:</p>
+
+  <ul>
+    <li><a href="https://www.drupal.org/node/425990" target="_blank">https://drupal.org/node/425990</a></li>
+
+    <li><a href="https://www.drupal.org/node/313145" target="_blank">https://drupal.org/node/313145</a></li>
+
+    <li><a href=
+    "https://drupal.stackexchange.com/questions/102091/drupal-behind-a-ssl-offloading-reverse-proxy-is-this-config-correct"
+    target=
+    "_blank">http://drupal.stackexchange.com/questions/102091/drupal-behind-a-ssl-offloading-reverse-proxy-is-this-config-correct </a></li>
+  </ul>
+
+  <h2 id="redirectingportaltraffictohttps">Redirecting portal traffic to HTTPS</h2>
+
+  <p>You can redirect all portal traffic to HTTPS by updating your <span style=
+  "font-family: 'courier new', courier, monospace;">sites/default/settings.local.php</span> (cloud)
+  or <span style=
+  "font-family: 'courier new', courier, monospace;">sites/default/settings.php</span> (Private
+  Cloud) file. The updates required vary based on whether you are redirecting to HTTPS on the same
+  hostname or multiple hostnames.</p>
+
+  <aside class="note"><b>Note:</b> All Canonical Name records (CNAMEs) in your DNS must have
+  corresponding certificates. For <span style=
+  "font-family: 'courier new', courier, monospace;">*.devportal.apigee.io</span>, a default
+  certificate is provided.</aside>
+
+  <h3 id="redirectingportaltraffictohttps-redirectingtohttpsonthesamehostname">Redirecting to HTTPS
+  on the same hostname</h3>
+
+  <p>Add the following code to your <span style=
+  "font-family: 'courier new', courier, monospace;">sites/default/</span><span style=
+  "font-family: 'courier new', courier, monospace;">settings.local.php</span> (cloud)  or
+  <span style="font-family: 'courier new', courier, monospace;">sites/default/</span><span style=
+  "font-family: 'courier new', courier, monospace;">settings.php</span> (Private Cloud) file to
+  redirect to all portal traffic to HTTPS on the same hostname (for example, <span style=
+  "font-family: 'courier new', courier, monospace;">*.devportal.apigee.io</span>).</p>
+
+  <p>In this scenario, if a developer is visiting your portal at <span style=
+  "font-family: 'courier new', courier, monospace;">live-example.devportal.apigee.io</span>, but
+  needs to access a certificate that was uploaded for <span style=
+  "font-family: 'courier new', courier, monospace;">devportal.example.com</span>, the request will
+  fail.</p>
+  <pre class="prettyprint">
+// Only check for SSL if we are not using PHP from the command line.
+if (PHP_SAPI != 'cli') {
+  // Assume we can't detect SSL unless proven otherwise.
+  $can_detect_ssl = FALSE;
+
+  if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) || (isset($_SERVER['HTTPS']) &amp;&amp; $_SERVER['HTTPS'] == 'on')) {
+    $can_detect_ssl = TRUE;
+  }
+
+  if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) &amp;&amp; strtolower($_SERVER['HTTP_X_FORWARDED_PROTO']) == 'https') {
+    $_SERVER['HTTPS'] = 'on';
+  }
+
+  if ($can_detect_ssl &amp;&amp; $_SERVER['HTTPS'] != 'on') {
+    header('HTTP/1.0 301 Moved Permanently');
+    header('Location: https://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI']);
+    exit;
+  }
+}
+</pre>
+
+  <h3 id="redirectingportaltraffictohttps-redirectingtohttpsonmultiplehostnames">Redirecting to
+  HTTPS on multiple hostnames</h3>
+
+  <p>Add the following code to your <span style=
+  "font-family: 'courier new', courier, monospace;">sites/default/</span><span style=
+  "font-family: 'courier new', courier, monospace;">settings.local.php</span> file (cloud) or
+  <span style="font-family: 'courier new', courier, monospace;">sites/default/</span><span style=
+  "font-family: 'courier new', courier, monospace;">settings.php</span> file (Private Cloud) to
+  redirect to all portal traffic to HTTPS on multiple hostnames.</p>
+
+  <aside class="note"><b>Note:</b> Replace <strong><span style=
+  "font-family: 'courier new', courier, monospace;"><em>devportal.example.com</em></span></strong>
+  with your custom hostname. In addition, Apigee Edge on-premise users need to replace the
+  <span style=
+  "font-family: 'courier new', courier, monospace;"><strong>PANTHEON_ENVIRONMENT</strong></span>
+  switch condition with a value that makes sense in their environment.</aside>
+  <pre class="prettyprint">
+  // Only check for SSL if we are not using PHP from the command line.
+if (PHP_SAPI != 'cli') {
+  // Assume we can't detect SSL unless proven otherwise.
+  $can_detect_ssl = FALSE;
+  // Assume we are not forcing a redirect until proven otherwise.
+  $force_redirect = FALSE;
+
+  if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) || (isset($_SERVER['HTTPS']) &amp;&amp; $_SERVER['HTTPS'] == 'on')) {
+    $can_detect_ssl = TRUE;
+  }
+
+  if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) &amp;&amp; strtolower($_SERVER['HTTP_X_FORWARDED_PROTO']) == 'https') {
+    $_SERVER['HTTPS'] = 'on';
+  }
+  
+  if ($can_detect_ssl &amp;&amp; $_SERVER['HTTPS'] != 'on') {
+    // We will force a redirect because HTTPS is required.
+    $force_redirect = TRUE;
+  }
+  
+  // This works on Pantheon only; the constant is undefined elsewhere.
+  switch (PANTHEON_ENVIRONMENT) {
+    case 'dev':
+      $canonical_hostname = 'dev.<strong><em>devportal.example.com</em></strong>';
+      break;
+    case 'test':
+      $canonical_hostname = 'test.<strong><em>devportal.example.com</em></strong>';
+      break;
+    case 'live':
+      $canonical_hostname = '<strong><em>devportal.example.com</em></strong>';
+      break;
+    default:
+      $canonical_hostname = strtolower($_SERVER['HTTP_HOST']);
+      break;
+  }
+  if ($canonical_hostname != strtolower($_SERVER['HTTP_HOST'])) {
+    // We will force a redirect because hostname is not canonical.
+    $force_redirect = TRUE;
+  }
+
+  if ($force_redirect) {
+    header('HTTP/1.0 301 Moved Permanently');
+    header('Location: https://' . $canonical_hostname . $_SERVER['REQUEST_URI']);
+    exit;
+  }
+}
+</pre>
+
+  <div>
+     
+  </div>{% endblock %}

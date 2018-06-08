@@ -1,0 +1,125 @@
+  {% extends "_base.html" %} {% block title %}Creating and editing environment key value maps{% endblock %} {% block body %}
+
+  <p>This topic shows you how to create and edit key value maps (KVMs) in the management UI. The
+  KVMs you create in the UI are environment scoped. For more information about KVMs and scope, see
+  <a href="/api-platform/cache/key-value-maps.html">Working with key value maps</a>.</p>
+
+  <h2 id="enablingencryptedkvmsintheedgeuiwithedgeforprivatecloud">Enabling encrypted KVMs in the
+  Edge UI with Edge for Private Cloud </h2>
+
+  <p>Encrypted KVMs are supported in Edge for Private Cloud version 4.17.01 and later. However,
+  support for encrypted KVMs in the Edge UI is disabled by default. To enable the Edge UI to
+  support encrypted KVMs:</p>
+
+  <ol>
+    <li>On the Edge UI server, open the <span style=
+    "font-family:courier new,courier,monospace;">ui.properties</span> file in an editor. If the
+    file does not exist, create it:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt; vi
+    /opt/apigee/customer/application/ui.properties</span></li>
+
+    <li>Set the <span style=
+    "font-family:courier new,courier,monospace;">conf_apigee_apigee.feature.kvmencryption</span>
+    token to true:<br>
+    <span style=
+    "font-family:courier new,courier,monospace;">conf_apigee_apigee.feature.kvmencryption=true</span></li>
+
+    <li>Save your changes.</li>
+
+    <li>Change the owner of <span style=
+    "font-family:courier new,courier,monospace;">ui.properties</span> to "apigee":<br>
+    <span style="font-family:courier new,courier,monospace;">&gt; chown apigee:apigee
+    /opt/apigee/customer/application/ui.properties</span>  </li>
+
+    <li>Restart the Edge UI:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt;
+    /&lt;inst_root&gt;/apigee/apigee-service/bin/apigee-service edge-ui restart</span></li>
+  </ol>
+
+  <h2 id="creatingandeditingenvironmentkeyvaluemaps">Creating and editing environment key value
+  maps</h2>
+
+  <p>These steps describe how to create or edit a key value map in the management UI. Key value
+  maps created this way are at the <strong>environment</strong> scope. For example, if you create a
+  key value map in the 'test' environment, API proxies running in the 'prod' environment won't have
+  access to the key value map.</p>
+
+  <ol>
+    <li>In the management UI, select <b>APIs &gt; Environment Configuration</b>.</li>
+
+    <li>Select the <strong>Environment</strong> for which you want to configure key value maps,
+    such as <strong>test</strong> or <strong>prod</strong>.</li>
+
+    <li>On the <strong>Key Value Maps</strong> tab, click <strong>+Key Value Map</strong> to
+    create an new one (or expand an existing key value map and
+    click <strong>Edit)</strong>.</li>
+
+    <li>Select <strong>Encrypted</strong> if you want the key value map to be encrypted. In the UI,
+    values to appear as asterisks (*****). Encryption is set on the entire map. You cannot set
+    encryption entry by entry. <br>
+    You can only encrypt key value maps when you create them. You can't encrypt or decrypt a key
+    value map after it's created.</li>
+
+    <li>Click the <b>+Entry</b> button to add a new key/value pair.
+
+      <p><img alt="" src="/api-platform/images/kvm-ui.png"></p>
+    </li>
+
+    <li>Enter key/value properties as described in the following table.
+
+      <table width="690">
+        <thead>
+          <tr>
+            <th>Property Name</th>
+
+            <th>Default Value</th>
+
+            <th>Description</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr>
+            <td>Key</td>
+
+            <td>N/A</td>
+
+            <td>
+              <p>The key name that you'll use to access the data value in your API proxies.</p>
+
+              <p>In organizations with Core Persistence Services (see below), key names cannot be
+              larger than 2 KB.</p>
+            </td>
+          </tr>
+
+          <tr>
+            <td>Value</td>
+
+            <td>N/A</td>
+
+            <td>
+              <p>The value of the key. Enter any combination of numbers, letters, or special
+              characters.</p>
+
+              <p>Note that the total size of a KVM cannot be larger than 15 MB.</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </li>
+
+    <li>Click <b>Save</b>.</li>
+  </ol>
+
+  <p>To view or modify maps with more than 150 keys, the UI directs you to use the management
+  API.</p>
+
+  <aside class="note"><b>Note:</b> If your organization is enabled with Core Persistence Services
+  (CPS), working with key value maps is slightly different than in non-CPS organizations. For
+  example, with CPS, you add, modify, and save individual key/value entries. Without CPS, you add
+  and modify key/value entries, then save the entire key value map. For more information on CPS,
+  see "About Core Persistence Services (CPS)" in <a href=
+  "/api-platform/reference/apis/api-reference-getting-started.html">API reference getting
+  started</a>.</aside>
+
+  {% endblock %}

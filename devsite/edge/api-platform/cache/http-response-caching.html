@@ -1,0 +1,427 @@
+  {% extends "_base.html" %} {% block title %}Support for HTTP response headers{% endblock %} {% block body %}
+
+  <p>This topic describes how Edge handles HTTP/1.1 caching headers when you're using the
+  ResponseCache policy. Apigee Edge currently supports a subset of the HTTP/1.1 caching headers and
+  directives (unsupported features are listed in this topic) received from backend target (origin)
+  servers.</p>
+
+  <p>In addition, with certain headers Edge takes action based on their directives. In some cases,
+  these HTTP/1.1 cache headers override whatever behavior is specified in the ResponseCache policy.
+  For example, if the <code>Cache-Control</code> header is returned from a backend server, you can
+  have the header's <code>s-maxage</code> directive potentially override other expiration settings
+  in the policy.</p>
+
+  <aside class="note"><b>Note:</b> The <a href=
+  "https://www.w3.org/Protocols/rfc2616/rfc2616.html">HTTP/1.1 specification</a> describes standard
+  caching headers and control mechanisms that support caching along the HTTP request/response
+  chain. These headers and mechanisms provide information about cached resources. They also help
+  servers determine how to manage cached data. The specification itself contains detailed
+  information about <a href="https://www.w3.org/Protocols/rfc2616/rfc2616-sec13.html#sec13">caching
+  in HTTP</a>. There are also many blogs, articles, and other resources available on the Internet
+  that explain HTTP caching.</aside>
+
+  <aside class="note">
+    <b>Note:</b> <b>Using headers to influence cache keys and cache entry TTL</b> You can have Edge
+    use response headers when constructing response cache keys and setting cache entry TTL. To do
+    this, you use these flag elements of the ResponseCache policy:
+
+    <ul>
+      <li><code>&lt;UseResponseCacheHeaders&gt;</code> -- When this is set to <code>true</code>,
+      Edge will consider HTTP response headers used when setting the "time to live" (TTL) of the
+      response in the cache. For details, see "Setting cache entry expiration" and
+      <code>&lt;UseResponseCacheHeaders&gt;</code> in <a href=
+      "/api-platform/reference/policies/response-cache-policy.html">Response Cache policy</a>.</li>
+
+      <li><code>&lt;UseAcceptHeader&gt;</code> -- When this is set to <code>true</code>, Edge will
+      use response <code>Accept</code> headers to augment the cache key. For more, see
+      <code>&lt;UseAcceptHeader&gt;</code> in <a href=
+      "/api-platform/reference/policies/response-cache-policy.html">Response Cache policy</a>.</li>
+    </ul>
+  </aside>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Header</th>
+
+        <th>Support</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td><a href="#cache-control">Cache-Control</a></td>
+
+        <td>Supported on responses returned from backend origin servers, but not client requests.
+        Edge supports a subset of directives.</td>
+      </tr>
+
+      <tr>
+        <td><a href="#expires">Expires</a></td>
+
+        <td>Supported. Can be overridden.</td>
+      </tr>
+
+      <tr>
+        <td><a href="#Entity_Tag_support_">Entity Tags</a> (ETags)</td>
+
+        <td>Specific behavior for <a href="#If-Match_header_support">If-Match</a> and <a href=
+        "#If-None-Match">If-None-Match</a>.</td>
+      </tr>
+
+      <tr>
+        <td><a href="#The_If-Modified-Since_header">If-Modified-Since</a></td>
+
+        <td>On GET requests, header is passed to the origin server even if a valid cache entry
+        exists.</td>
+      </tr>
+
+      <tr>
+        <td><a href="#Accept-Encoding">Accept-Encoding</a></td>
+
+        <td>Edge sends either compressed or uncompressed responses depending on the incoming
+        headers.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="cache-control">Cache-Control</h2>
+
+  <p>Apigee Edge supports the <code>Cache-Control</code> header only on responses returned from
+  backend origin servers (the HTTP/1.1 spec allows <code>Cache-Control</code> headers in both
+  client requests and origin server responses). Origin servers can include both target endpoints
+  defined in an Apigee Edge API proxy and those created using TargetServer API calls.</p>
+
+  <h3 id="cachecontrol-cachecontrolsupportlimitations">Cache-Control support limitations</h3>
+
+  <p>Apigee Edge supports a subset of <code>Cache-Control</code> response header capabilities
+  defined in the HTTP/1.1 specification. Please note the following:</p>
+
+  <ul>
+    <li>Apigee Edge does not support <code>Cache-Control</code> headers that arrive with inbound
+    client requests.</li>
+
+    <li>Apigee Edge supports only the notion of public caches. (According to the HTTP
+    specification, <code>Cache-Control</code> can either be public (shared) or private (single
+    user).)</li>
+
+    <li>Apigee Edge supports only a subset of <code>Cache-Control</code> response directives in the
+    HTTP/1.1 specification. See <a href="#responseDirectives">Support for Cache-Control response
+    header directives</a> for details.</li>
+  </ul>
+
+  <h3 id="responseDirectives">Support for Cache-Control response header directives</h3>
+
+  <p>Apigee supports a subset directives from the HTTP/1.1 specification on responses from origin
+  servers. The following table describes Apigee Edge support for HTTP Cache-Control response header
+  directives.</p>
+
+  <p>For more detailed information on the directives listed here, see <a href=
+  "https://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.9">Cache-Control</a> in the
+  HTTP/1.1 specification.</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <td width="150"><strong>Cache-Control directive</strong></td>
+
+        <td><strong>How Apigee Edge processes the directive</strong></td>
+      </tr>
+
+      <tr>
+        <td><code>cache-extension</code></td>
+
+        <td>Not supported.</td>
+      </tr>
+
+      <tr>
+        <td><code>max-age</code></td>
+
+        <td>
+          <p>If your ResponseCache policy sets the <code>&lt;UseResponseCacheHeaders&gt;</code>
+          element to <code>true</code>, the response can be cached for the number of seconds
+          specified by this directive.</p>
+
+          <p>This directive is overridden by the <code>s-maxage</code> directive and overrides the
+          <code>Expires</code> header. It can also be overridden by the policy's
+          <code>&lt;ExpirySettings&gt;</code> element. For more, see "Setting cache entry
+          expiration" and <code>&lt;UseResponseCacheHeaders&gt;</code> in <a href=
+          "/api-platform/reference/policies/response-cache-policy.html">Response Cache
+          policy</a>.</p>
+
+          <aside class="note"><b>Note:</b> Content cached with the ResponseCache policy will retain
+          the max-age value set by its origin. This means that when retrieved from the cache, the
+          content might be older than its max-age value suggests (older than the client
+          knows).</aside>
+        </td>
+      </tr>
+
+      <tr>
+        <td><code>must-revalidate</code></td>
+
+        <td>Not supported. All cache entries are deleted by Apigee Edge as soon as they
+        expire.</td>
+      </tr>
+
+      <tr>
+        <td><code>no-cache</code></td>
+
+        <td>
+          <p>Edge caches the origin response, but it must be revalidated with the origin server
+          before being used to satisfy any subsequent client requests. This rule allows the origin
+          to return a 304 Not Modified response in order to indicate that the response should be
+          returned from cache, thus saving the processing required to return the entire response.
+          If the origin server returns a full response, it replaces the existing cache entry. Any
+          field names specified with this directive are ignored.</p>
+
+          <aside class="note"><b>Note:</b> The HTTP/1.0 header, <code>Pragma: no-cache</code> is
+          treated as equivalent to <code>Cache-Control: no-cache</code>.</aside>
+        </td>
+      </tr>
+
+      <tr>
+        <td><code>no-store</code></td>
+
+        <td>Not supported.</td>
+      </tr>
+
+      <tr>
+        <td><code>no-transform</code></td>
+
+        <td>Not supported.</td>
+      </tr>
+
+      <tr>
+        <td><code>private</code></td>
+
+        <td>Not supported. If this directive is received, the origin response is not cached. Any
+        field names are ignored.</td>
+      </tr>
+
+      <tr>
+        <td><code>proxy-revalidate</code></td>
+
+        <td>Not supported. All cache entries are deleted by Apigee Edge as soon as they
+        expire.</td>
+      </tr>
+
+      <tr>
+        <td><code>public</code></td>
+
+        <td>Edge caches the origin response, even when other directives indicate otherwise. Per the
+        HTTP/1.1 specification, the only exception to this rule is if the response includes an
+        Authorization header.</td>
+      </tr>
+
+      <tr>
+        <td><code>s-maxage</code></td>
+
+        <td>
+          <p>If your ResponseCache policy sets the <code>&lt;UseResponseCacheHeaders&gt;</code>
+          element to <code>true</code>, the response can be cached for the number of seconds
+          specified by this directive.</p>
+
+          <p>This directive is overrides the <code>max-age</code> directive and the
+          <code>Expires</code> header. It can be overridden by the policy's
+          <code>&lt;ExpirySettings&gt;</code> element. For more, see "Setting cache entry
+          expiration" and <code>&lt;UseResponseCacheHeaders&gt;</code> in <a href=
+          "/api-platform/reference/policies/response-cache-policy.html">Response Cache
+          policy</a>.</p>
+
+          <aside class="note"><b>Note:</b> Content cached with the ResponseCache policy will retain
+          the s-maxage value set by its origin. This means that when retrieved from the cache, the
+          content might be older than its s-maxage value suggests (older than the client
+          knows).</aside>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="expires">Expires</h2>
+
+  <p>When the <code>UseResponseCacheHeaders</code> flag in the ResponseCache policy is set to
+  <code>true</code>, Edge can use the <code>Expires</code> header to determine the time to live
+  (TTL) of a cached entry. This header specifies a date/time after which a response's cache entry
+  is considered stale. This header allows servers to signal when it's okay to return a cached value
+  based on a time stamp.</p>
+
+  <aside class="note"><b>Note:</b> The <code>Cache-Control</code> header directives
+  <code>max-age</code> and <code>s-maxage</code> take precedence over and override the
+  <code>Expires</code> header. For more, see "Setting cache entry expiration" and
+  <code>&lt;UseResponseCacheHeaders&gt;</code> in <a href=
+  "/api-platform/reference/policies/response-cache-policy.html">Response Cache policy</a>.</aside>
+
+  <p>Acceptable date formats for the <code>Expires</code> header are described in the HTTP/1.1
+  specification. For example:</p>
+
+  <p>Expires: Thu, 01 Dec 1994 16:00:00 GMT</p>
+
+  <p>For detailed information on HTTP date/time formats, see "<a href=
+  "https://www.w3.org/Protocols/rfc2616/rfc2616-sec3.html#sec3.3">Date/Time Formats</a>" in the
+  HTTP/1.1 specification.</p>
+
+  <aside class="note"><b>Note:</b> While section 14.21 of the specification indicates that an
+  <code>Expires</code> value of more than one year in the future means that a cache entry never
+  expires, Apigee interprets such a value to mean that the entry should be cached until the
+  specified date and time.</aside>
+
+  <p>For more information on <code>Expires</code> header, see "<a href=
+  "https://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.9">Header Field Definitions</a>"
+  in the HTTP/1.1 specification.</p>
+
+  <h2 id="Entity_Tag_support_">ETag</h2>
+
+  <p>An entity tag (ETag) is an identifier associated with a requested resource. Using an ETag, a
+  server can determine if the requested resource and the associated cached resource match. For
+  example, the server could re-cache the response if it doesn't match what's currently cached. It
+  could return the cached resource if the ETags match.</p>
+
+  <p>When a target endpoint sends a response back to Edge with an ETag, Edge caches the ETag along
+  with the response.</p>
+
+  <p>You can read more about Entity Tags in " <a href=
+  "https://www.w3.org/Protocols/rfc2616/rfc2616-sec3.html#sec3.11">Protocol Parameters</a>" in the
+  HTTP/1.1 specification.</p>
+
+  <h3 id="If-Match_header_support">If-Match</h3>
+
+  <p>With the <code>If-Match</code> request header, a cached entity is current if the ETag in the
+  header matches the cached ETag. Any requests other than GET that specify an <code>If-Match</code>
+  header are passed on to the origin server to ensure that any origin caching facilities have a
+  chance to process the request.</p>
+
+  <p>You can read more about <code>If-Match</code> in "<a href=
+  "https://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.9">Header Field Definitions</a>"
+  in the HTTP/1.1 specification.</p>
+
+  <p>If Edge receives an inbound GET request from a client that includes an <code>If-Match</code>
+  header:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>If</th>
+
+        <th>Then</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td>The <code>If-Match</code> header specifies one or more ETags</td>
+
+        <td>
+          <ol>
+            <li>Apigee Edge retrieves any unexpired cache entries for the specified resource and
+            compares any strong ETags on those cached entries with those specified in the
+            <code>If-Match</code> header.</li>
+
+            <li>If a match is found, the cache entry is returned.</li>
+
+            <li>If not, the request is passed to the origin server.</li>
+          </ol>
+        </td>
+      </tr>
+
+      <tr>
+        <td>The <code>If-Match</code> header specifies "*"</td>
+
+        <td>The request is passed on to the origin server to ensure that any origin caching
+        facilities have a chance to process the request</td>
+      </tr>
+
+      <tr>
+        <td>A cache entry with the same request URI is found, but it contains only weak ETags</td>
+
+        <td>The entry must be revalidated by the origin server before being returned to the
+        client</td>
+      </tr>
+
+      <tr>
+        <td>The ETags comes from the origin server.</td>
+
+        <td>The ETag is returned unchanged to the client</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="If-None-Match">If-None-Match</h3>
+
+  <p>With the <code>If-None-Match</code> header, a cached entity is current if the ETag in the
+  header <em>does not match</em> the cached ETag. Requests other than a GET that contain this
+  header are passed to the origin server.</p>
+
+  <p>If Edge receives an inbound GET request with this header:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>If</th>
+
+        <th>Then</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td>The <code>If-None-Match</code> header specifies one or more ETags</td>
+
+        <td>
+          <ol>
+            <li>Apigee Edge retrieves any unexpired cache entries for the specified URI and
+            compares any strong ETags on those cached entries with those specified in the
+            <code>If-None-Match</code> header.</li>
+
+            <li>If a match is found, Edge returns a 304 Not Modified status. If no match is found,
+            Edge passes the request to the origin server.</li>
+          </ol>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>The <code>If-None-Match</code> header specifies "*" and an unexpired cached entry for
+          the requested URI exists</p>
+        </td>
+
+        <td>Edge returns a 304 Not Modified status</td>
+      </tr>
+
+      <tr>
+        <td>A cache entry with the same request URI is found but contains only weak ETags</td>
+
+        <td>The entry must be revalidated by the origin server before Edge returns it to the
+        client</td>
+      </tr>
+
+      <tr>
+        <td>Edge receives an ETag from an origin server</td>
+
+        <td>The ETag is returned unchanged to the client</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="The_If-Modified-Since_header">If-Modified-Since</h2>
+
+  <p>If Apigee Edge receives an <code>If-Modified-Since</code> header in a GET request, it is
+  passed along to the origin server even if a valid cache entry exists.</p>
+
+  <p>This ensures that any updates to a resource that did not pass through Apigee Edge are
+  accounted for. If the origin server returns a new entity, then Edge replaces the existing cache
+  entry with the new value. If the server returns a 304 Not Modified status, Edge returns the
+  response value if the cached response's <code>Last-Modified</code> header indicates that it has
+  not changed.</p>
+
+  <h2 id="Accept-Encoding">Accept-Encoding</h2>
+
+  <p>When an incoming request includes the header <code>Accept-Encoding</code> with values of
+  <code>gzip</code>, <code>deflate</code> or <code>compress</code>, the origin server responds with
+  compressed data. When subsequent requests come without the <code>Accept-Encoding</code> headers,
+  they expect an uncompressed response. Apigee's response caching mechanism is capable of sending
+  both compressed and uncompressed responses depending on the incoming headers without going back
+  to the origin server.</p>
+
+  <p>You can have Accept header values appended to cache keys to make the keys more meaningful for
+  each cached item. For more details, see "Configuring a cache key" in <a href=
+  "/api-platform/reference/policies/response-cache-policy.html">Response Cache policy</a>.</p>{% endblock %}

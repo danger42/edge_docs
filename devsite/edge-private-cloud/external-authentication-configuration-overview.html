@@ -1,0 +1,122 @@
+  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}External Authentication{% endblock %} {% block body %}
+
+  <p>This document explains how to integrate an external directory service into an existing Apigee
+  Edge Private Cloud installation. This feature is designed to work with any directory service that
+  supports LDAP, such as Active Directory, OpenLDAP, and others. All the steps are included here to
+  get Apigee Edge working with your LDAP service.</p>
+
+  <p>An external LDAP solution allows system administrators to manage user credentials from a
+  centralized directory management service, external to systems like Apigee Edge that use them. The
+  feature described in this document supports both direct and indirect binding
+  authentication. </p>
+
+  <h2 id="audience">Audience</h2>
+
+  <p>This document assumes that you are an Apigee Edge for Private Cloud global system
+  administrator and that you have an account the external directory service. </p>
+
+  <h2 id="overview">Overview</h2>
+
+  <p>By default, Apigee Edge uses an internal OpenLDAP instance to store credentials that are used
+  for user <strong>authentication</strong>. However, you can configure Edge to use an
+  <strong>external authentication LDAP service</strong> instead of the internal one. The procedure
+  for this external configuration is explained in this document. </p>
+
+  <p>Edge also stores role-based access <strong>authorization credentials</strong> in a separate,
+  internal LDAP instance. Whether or not you configure an external authentication service,
+  authorization credentials are <strong>always</strong> stored in this internal LDAP instance. The
+  procedure for adding users that exist in the external LDAP system to the Edge authorization LDAP
+  are explained in this document.</p>
+
+  <p>Note that <em>authentication</em> refers to validating a user's identity, while authorization
+  refers to verifying the level of permission an authenticated user is granted to use Apigee Edge
+  features.  </p>
+
+  <h2 id="whatyouneedtoknowaboutedgeauthenticationandauthorization">What you need to know about
+  Edge authentication and authorization</h2>
+
+  <p>It's useful to understand the difference between authentication and authorization and how
+  Apigee Edge manages these two activities.</p>
+
+  <h3 id="whatyouneedtoknowaboutedgeauthenticationandauthorization-aboutauthentication">About
+  authentication</h3>
+
+  <p>Users who access Apigee Edge either through the UI or APIs must be authenticated. By default,
+  Edge user credentials for authentication are stored in an internal OpenLDAP instance. Typically,
+  users must register or be asked to register for an Apigee account, and at that time they supply
+  their username, email address, password credentials, and other metadata. This information is
+  stored in and managed by the authentication LDAP.</p>
+
+  <p>However, if you wish to use an external LDAP to manage user credentials on behalf of Edge, you
+  can do so by configuring Edge to use the external LDAP system instead of the internal one. When
+  an external LDAP is configured, user credentials are validated against that external store, as
+  explained in this document.</p>
+
+  <h3 id="whatyouneedtoknowaboutedgeauthenticationandauthorization-aboutauthorization">About
+  authorization</h3>
+
+  <p>Edge organization administrators can grant specific permissions to users to interact with
+  Apigee Edge entities like API proxies, products, caches, deployments, and so on. Permissions are
+  granted through the assignment of roles to users. Edge includes several built-in roles, and, if
+  needed, org administrators can define custom roles. For example, a user can be granted
+  authorization (through a role) to create and update API proxies, but not to deploy them to a
+  production environment. </p>
+
+  <p>The <strong>key credential used by the Edge authorization system is the user's email
+  address</strong>. This credential (along with some other metadata) is always stored in Edge's
+  internal authorization LDAP. This LDAP is entirely separate from the authentication LDAP (whether
+  internal or external). </p>
+
+  <p>Users who are authenticated through an external LDAP must also be manually provisioned into
+  the authorization LDAP system. Details are explained in this document. </p>
+
+  <aside class="note"><b>Note:</b> User passwords from the external LDAP system are never
+  stored/cached in the internal authorization system. </aside>
+
+  <p>For more background on authorization and RBAC, see <a href=
+  "/api-platform/system-administration/managing-organization-users.html">Managing organization
+  users</a> and <a href="/api-platform/system-administration/understanding-roles.html">Assigning
+  roles</a>. </p>
+
+  <p>For a deeper view, see also <a href=
+  "understanding-edge-authentication-and-authorization-flows.html">Understanding Edge
+  authentication and authorization flows</a>.</p>
+
+  <h2 id="understandingdirectandindirectbindingauthentication">Understanding direct and indirect
+  binding authentication </h2>
+
+  <p>The external authorization feature supports both <strong>direct</strong> and
+  <strong>indirect</strong> binding authentication through the external LDAP system. </p>
+
+  <p><strong>Summary</strong>: Indirect binding authentication requires a search on the external
+  LDAP for credentials that match the email address, username, or other ID supplied by the user at
+  login. With direct binding authentication, no search is performed--credentials are sent to and
+  validated by the LDAP service directly. Direct binding authentication is considered to be more
+  efficient because there is no searching involved.</p>
+
+  <h3 id="understandingdirectandindirectbindingauthentication-aboutindirectbindingauthentication">
+  About indirect binding authentication</h3>
+
+  <p>With indirect binding authentication, the user enters a credential, such as an email address,
+  username, or some other attribute, and Edge searches authentication system for this
+  credential/value. If the search result is successful, the system extracts the LDAP DN from the
+  search results and uses it with a provided password to authenticate the user. </p>
+
+  <p>The key point to know is that indirect binding authentication requires the caller (e.g.,
+  Apigee Edge) to provide external LDAP admin credentials so that Edge can "log in" to the external
+  LDAP and perform the search. You must provide these credentials in an Edge configuration file,
+  which is described later in this document. Steps are also described for encrypting the password
+  credential. </p>
+
+  <h3 id="understandingdirectandindirectbindingauthentication-aboutdirectbindingauthentication">
+  About direct binding authentication</h3>
+
+  <p>With direct binding authentication, Edge sends credentials entered by a user directly to the
+  external authentication system. In this case, no search is performed on the external system.
+  Either the provided credentials succeed or they fail (e.g., if the user is not present in the
+  external LDAP or if the password is incorrect, the login will fail). </p>
+
+  <p>Direct binding authentication does not require you to configure admin credentials for the
+  external auth system in Apigee Edge (as with indirect binding authentication); however, there is
+  a simple configuration step that you must perform, which is described later in this
+  document. </p>{% endblock %}

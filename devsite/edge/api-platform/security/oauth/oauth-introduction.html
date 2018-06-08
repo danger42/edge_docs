@@ -1,0 +1,367 @@
+  {% extends "_base.html" %} {% block title %}Introduction to OAuth 2.0{% endblock %} {% block body %}
+
+  <p><strong><a href="/api-platform/security/oauth/oauth-home.html">OAuth home</a></strong>:
+  <strong>See the OAuth home page for a top-level view of the OAuth guidance we
+  provide</strong>.</p>
+
+  <p>This topic offers a basic overview of OAuth 2.0 on Apigee Edge. </p>
+
+  <h2 id="whatisoauth20">What is OAuth 2.0?</h2>
+
+  <p>There are many books, blogs, and sites devoted to OAuth 2.0. We highly recommend that you
+  begin by reviewing the <a href="https://tools.ietf.org/html/rfc6749">IETF OAuth 2.0
+  specification</a>. Here's the definition of OAuth 2.0 from the OAuth 2.0 IETF specification
+  itself:</p>
+
+  <p style="margin-left: 40px;">"The OAuth 2.0 authorization framework enables a third-party
+  application to obtain limited access to an HTTP service, either on behalf of a resource owner by
+  orchestrating an approval interaction between the resource owner and the HTTP service, or by
+  allowing the  third-party application to obtain access on its own behalf."</p>
+
+  <p>The main thing you need to know is that OAuth 2.0 provides a way for apps to gain <a href=
+  "#scopes">limited access</a> to a user's protected resources (think of bank account or any other
+  sensitive information a user might wish to access from an app) without the need for the user to
+  divulge their login credentials to the app. </p>
+
+  <aside class="key-point"><b>Tip:</b> Let's say you found an app that lets you access multiple
+  bank accounts. Maybe the app is used to help with your taxes, or for managing your budget. You
+  have three bank accounts that you want to manage with the app, and you have a different username
+  and password for each one. Now, for the app to access your bank accounts, it needs those
+  sensitive credentials. Basically, you're giving this sensitive information to the app. Do you
+  trust the app to possess your passwords and usernames? What if the app is hacked? Now, you've got
+  to remember to change your bank credentials for each account. This is the fundamental
+  problem that OAuth 2.0 solves. Read on to learn how.</aside>
+
+  <h2 id="theoauth20flow">The OAuth 2.0 flow</h2>
+
+  <p>Here is the general flow for the OAuth 2.0 security framework. We'll discuss this flow in more
+  detail in this topic, starting with a diagram, which illustrates a lot about how OAuth 2.0 works.
+  If you're unfamiliar with the terms used in this diagram, read this section for a quick
+  introduction. </p>
+
+  <p><img alt="" src="/api-platform/images/oauth-abstract.png"></p>
+
+  <h3 id="theoauth20flow-termsyoushouldknow">Terms you should know</h3>
+
+  <ul>
+    <li><strong>Client</strong> -- Also called "the app". It can be an app running on a mobile
+    device or a traditional web app. The app makes requests to the resource server for protected
+    assets on behalf of the resource owner. The resource owner must give the app permission to
+    access the protected resources. </li>
+
+    <li><strong>Resource owner</strong> -- Also called an "end user". This is generally the
+    person (or other entity) who is capable of granting access to a protected resource. For
+    example, if an app needs to use data from one of your social media sites, then you are the
+    resource owner -- the only person who can grant the app access to your data.</li>
+
+    <li><strong>Resource server</strong> -- Think of the resource server as a service like
+    Twitter or Facebook, or an HR service on your intranet, or a partner service on your B2B
+    extranet. Apigee Edge is a resource server whenever OAuth token validation is required to
+    process API requests. The resource server needs some kind of authorization before it will serve
+    up protected resources to the app. </li>
+
+    <li><strong>Authorization server </strong>-- The authorization server is implemented
+    in compliance with the OAuth 2.0 specification, and it is responsible for
+    validating <strong>authorization grants</strong> and issuing the <strong>access
+    tokens </strong>that give the app access to the user's data on the resource server. You
+    can configure "token endpoints" on Apigee Edge, in which case Edge takes on the role of
+    authorization server. </li>
+
+    <li><strong>Authorization grant</strong> -- Gives the app permission to retrieve an access
+    token on behalf of the end user. OAuth 2.0 defines four specific "grant types". See "<a href=
+    "#granttypes">What are the OAuth 2.0 grant types</a>" below. </li>
+
+    <li><strong>Access token</strong> -- A long string of characters that serves as a credential
+    used to access protected resources. See also "<a href="#accesstoken">What is an access
+    token?</a>" below. </li>
+
+    <li><strong>Protected resource</strong> -- Data owned by the resource owner. For example, the
+    user's contact list, account information, or other sensitive data. </li>
+  </ul>
+
+  <h2 id="whereapigeeedgefitsin">Where Apigee Edge fits in</h2>
+
+  <p>You can protect any API proxied through Apigee Edge with OAuth 2.0. Edge includes an
+  authorization server implementation, and as such, can generate and validate access tokens.
+  Developers begin by <a href="#registering">registering their apps</a> with Apigee Edge.
+  Registered apps can request access tokens through any of the four <a href="#granttypes">grant
+  type</a> interactions.</p>
+
+  <p>Apigee provides a multi-faceted <strong>OAuthV2 policy</strong> that implements the
+  details of each grant type, making it relatively easy to set up OAuth on Apigee Edge. For
+  example, you can configure a policy that receives a request for an access token, evaluates all
+  required credentials, and returns an access token if the credentials are valid. </p>
+  <!-- Pending tutorial update <p>If you want to see how it fits together, check out the <a href="/node/8399.html">8399</a> end-to-end tutorial</a>. The tutorial steps through the process of configuring the OAuth 2.0 policy, requesting an access token, and calling a protected API.&nbsp;</p>-->
+
+  <p>Note that any resource servers that your secure API proxy calls should be behind a firewall
+  (that is, the resources must not be accessible through any means besides the API proxy or another
+  API that is well secured).</p>
+
+  <h2 id="whatareoauth20granttypes"><a id="granttypes" name="granttypes"></a>What are OAuth 2.0
+  grant types?</h2>
+
+  <p>Think of grant types as different paths or interactions an app can take to gain an access
+  token. Each grant type addresses one or more use cases, and you'll need to select which grant
+  type(s) to use based on your own needs. In general, each grant type has advantages and
+  disadvantages, and you'll need to weigh the tradeoffs based on your business use cases. One
+  important consideration is the "trustworthiness" of the apps that will be accessing your data.
+  Generally, third-party apps are less trustworthy than apps that are developed and used within an
+  enterprise.</p>
+
+  <p>Apigee Edge supports the four main OAuth 2.0 grant types:</p>
+
+  <ul>
+    <li><strong>authorization code</strong> -- Considered the most secure grant type. Before the
+    authorization server issues an access token, the app must first receive an authorization code
+    from the resource server. You've seen this flow anytime your app opens a browser to the
+    resource server's login page and invites you log in to your actual account (for example,
+    Facebook or Twitter).</li>
+  </ul>
+
+  <p style="margin-left: 40px;">If you successfully log in, the app will receive an authorization
+  code that it can use to negotiate an access token with the authorization server. Typically, this
+  grant type is used when the app resides on a server rather than on the client. This grant type is
+  considered highly secure because the client app never handles or sees the user's username or
+  password for the resource server (that is, for example, the app never sees or handles your
+  Twitter credentials). This grant type flow is also called "three-legged" OAuth.</p>
+
+  <ul>
+    <li><strong>implicit</strong> -- Considered a simplified version of authorization code.
+    Typically this grant type is used when the app resides on the client. For example, the app's
+    code is implemented in a browser using JavaScript or another scripting language (instead of
+    residing and running on a separate web server). In this grant type flow, the authorization
+    server returns an access token directly when the user is authenticated, rather than issuing an
+    authorization code first. Implicit grants can improve app responsiveness in some cases, but
+    this advantage needs to be weighed against possible security implications as described in the
+    IETF specification. </li>
+
+    <li><strong>resource owner password credentials</strong> -- In this flow, the client is issued
+    an access token when the user's username/password are validated by the authorization server.
+    This flow is recommended for highly trusted applications. An advantage of this flow over, say,
+    basic authentication, is that the user only presents their username/password once. From then
+    on, the access token is used. </li>
+
+    <li><strong>client credentials</strong> -- Consider using for situations where the client
+    app is acting on its own behalf. That is, the client is also the resource owner. This grant
+    type is typically used when the app needs to access a backend data storage service, for
+    example. The app needs to use the service to do its work, and the service is otherwise opaque
+    to the end user. With this grant type, an app can receive an access token by presenting it's
+    client ID and client secret keys to the authorization server. No further steps are required.
+    Edge provides an out-of-the-box client credentials solution that's easy to implement for any
+    API proxy. <span style="font-size: 12px;"> </span></li>
+  </ul>
+
+  <h2 id="whatisanaccesstoken"><a id="accesstoken" name="accesstoken"></a>What is an access
+  token?</h2>
+
+  <p>An access token is a long string of characters that serves as a credential used to access
+  protected resources. Resources tokens (also called bearer tokens) are passed in Authorization
+  headers, like this:</p>
+  <pre class="terminal prettyprint prettyprinted">
+$ curl -H "Authorization: Bearer UAj2yiGAcMZGxfN2DhcUbl9v8WsR" \
+  http://myorg-test.apigee.net/v0/weather/forecastrss?w=12797282
+</pre>
+
+  <p>The resource server understands that the access token "stands in" for credentials like
+  username and password. In addition, the access tokens can be issued with restrictions, so that,
+  for example, the app can read but not write or delete data on the resource server. Note that an
+  access token can be revoked if, for instance, the app is compromised. In this case, you will need
+  to get a new access token to continue using the app; however, you will not have to change your
+  username or password on the protected resources server (for example, Facebook or
+  Twitter). </p>
+
+  <p>Access tokens generally have an expiration (for security reasons). Some grant types allow the
+  authorization server to issue an refresh token, which allows the app to fetch a new access token
+  when the old one expires. For more details on access and refresh tokens, refer to the IETF OAuth
+  2.0 specification. </p>
+
+  <h2 id="limitedaccessthroughscopes"><a id="scopes" name="scopes"></a>Limited access through
+  scopes</h2>
+
+  <p>Through the mechanism of scopes, OAuth 2.0 can grant an app limited access to protected
+  resources. For example, an app may have access only to specific resources, may be able to update
+  resources, or may only be granted read-only access. Under so-called "three-legged" OAuth flows,
+  the user typically specifies the level of access through a consent page (for example, a web page
+  where the user selects the scope with a checkbox of other mechanism). </p>
+
+  <h2 id="registeringanapp"><a id="registering" name="registering"></a>Registering an app</h2>
+
+  <p>All clients (apps) must register with the OAuth 2.0 authorization server from which they
+  intend to request access tokens. When you register an app, you receive back a set of keys. One is
+  a public key called the client identifier, and the other is a secret key called the client
+  secret. Without these keys, an app cannot issue requests for authorization codes or access tokens
+  to the authorization server. Note that while the IETF OAuth specification calls these keys client
+  ID and client secret, the Apigee Edge UI calls them the Consumer ID and Consumer secret. They are
+  equivalent. </p>
+
+  <h2 id="summaryofoauth20usecases">Summary of OAuth 2.0 use cases</h2>
+
+  <p>Which OAuth 2.0 grant type flow you chose to implement depends on your specific use case, as
+  some grant types are more secure than others. Your choice of grant types depends on the
+  trustworthiness of the client app and requires very careful consideration, as described in the
+  following table:</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <th scope="col" width="162">Use Case</th>
+
+        <th scope="col" width="391">Trustworthiness</th>
+
+        <th scope="col" width="389">Suggested OAuth 2.0 Authorization Grant Types</th>
+
+        <th scope="col" width="389">Description</th>
+      </tr>
+
+      <tr>
+        <td>B2B (extranet), intranet, other</td>
+
+        <td>
+          <p>Highly trusted apps, written by internal developer or developers with a trusted
+          business relationship with the API provider. </p>
+
+          <p>Apps that need to access resources on their own behalf.</p>
+
+          
+        </td>
+
+        <td>
+          <ul>
+            <li>Client credentials</li>
+          </ul>
+        </td>
+
+        <td>
+          <ul>
+            <li>Typically, the app is also the resource owner </li>
+
+            <li>Requires Client ID and Client secret keys</li>
+
+            <li>Requires app to be registered with service provider</li>
+          </ul>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Intranet sites, portals</td>
+
+        <td>
+          <p>Trusted apps written by internal or trusted third-party developers.</p>
+
+          <p>A good example is logging in to your company HR site to make insurance selections,
+          submit reviews, or change personal information. </p>
+        </td>
+
+        <td>
+          <ul>
+            <li>Password</li>
+
+            <li>Implicit</li>
+          </ul>
+        </td>
+
+        <td>
+          <ul>
+            <li>Requires client Id and secret, plus username and password</li>
+
+            <li>Requires app to be registered with service provider</li>
+          </ul>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Publicly available apps</td>
+
+        <td>Untrusted apps are written by third-party developers who do not have a trusted business
+        relationship with the API provider. For example, developers who register for public API
+        programs should not generally be trusted. </td>
+
+        <td>
+          <ul>
+            <li>Authorization code</li>
+          </ul>
+        </td>
+
+        <td>
+          <ul>
+            <li>Requires user to log in to third-party resource provider (e.g., Twitter,
+            Facebook)</li>
+
+            <li>App never sees user's username and password</li>
+
+            <li>Requires app to be registered with service provider</li>
+          </ul>
+        </td>
+      </tr>
+
+      <tr>
+        <td>B2C</td>
+
+        <td>There is an individual end user (mobile user) involved, and user credentials are stored
+        on the mobile device. </td>
+
+        <td>
+          <ul>
+            <li>Implicit</li>
+          </ul>
+        </td>
+
+        <td>
+          <ul>
+            <li>Requires app to be registered with the service provider. </li>
+
+            <li>User credentials are stored on the device running the app.</li>
+          </ul>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div>
+     
+  </div>
+
+  <h2 id="oauth20vsapikeysecurity"><a id="apikey" name="apikey"></a>OAuth 2.0 vs. API key
+  security</h2>
+
+  <p>API key validation requires an app to send a key to Edge. The key must be a valid consumer key
+  from an Apigee Edge developer app that is associated with the API proxy. If for some reason you
+  need to revoke permission for a client app to make calls to a proxy, you must revoke that
+  consumer key. Any client apps using that key will also be unable to access the API proxy. On the
+  other hand, an OAuth token can be revoked at any time without revoking the app's keys. The app
+  can simply request a new token on behalf of the user, and if a token is granted, the app can
+  continue using the API proxy. </p>
+
+  <p>Another difference between an API key and a token is that a token can include metadata
+  attributes that you can retrieve and use later. For example, you might store the ID of the user
+  making the API call and use it to customize calls to the backend target service.</p>
+
+  <p>For details on API key validation, see <a href="/api-platform/security/api-keys.html">API
+  keys</a>. For information about using custom attributes with OAuth tokens, see <a href=
+  "/api-platform/security/oauth/customizing-access-tokens.html">Customizing Tokens and
+  Authorization Codes</a>. </p>
+
+  <h2 id="recommendedresources"><a id="recommended" name="recommended"></a>Recommended
+  resources</h2>
+
+  <h3 id="recommendedresources-reading">Reading</h3>
+
+  <ul>
+    <li><a href="https://tools.ietf.org/html/draft-ietf-oauth-v2-31">IETF
+    Specification</a> (Highly recommended, with a good conceptual overview)</li>
+
+    <li><a href="https://pages.apigee.com/ebook-oauth-the-big-picture-reg.html" target=
+    "_blank">OAuth the Big Picture</a> (Free Apigee ebook)</li>
+  </ul>
+
+  <h3 id="recommendedresources-webinarsandvideos">Webinars and videos</h3>
+
+  <ul>
+    <li><a href="https://apigee.com/about/resources/webcasts/oauth-big-picture">OAuth the Big
+    Picture</a> (Apigee webcast)</li>
+
+    <li><a href="https://academy.apigee.com/courses/elearning/foundation_training">Apigee Edge
+    Foundational Training</a></li>
+  </ul>
+
+  {% endblock %}

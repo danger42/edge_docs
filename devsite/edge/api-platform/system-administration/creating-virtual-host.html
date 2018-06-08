@@ -1,0 +1,464 @@
+  {% extends "_base.html" %} {% block title %}Configuring TLS access to an API for the Private
+  Cloud{% endblock %} {% block body %}
+
+  <p>A virtual host on Edge defines the domains and ports on which an API proxy is exposed, and, by
+  extension, the URL that apps use to access an API proxy.</p>
+
+  <p>A virtual host also defines whether the API proxy is accessed by using the HTTP protocol, or
+  by the encrypted HTTPS protocol that uses TLS. When configuring a virtual host to use HTTPS and
+  TLS, you create a virtual host on Edge and configure the virtual host to use a <em>keystore</em>
+  and<em> truststore</em>.</p>
+
+  <aside class="note"><b>Private Cloud:</b> This document describes how to create a virtual host
+  for an on-premises deployment of Edge. To create a virtual host for a cloud deployment of Edge,
+  see <a href="configuring-ssl-cloud-based-edge-installation">Using
+  TLS in a cloud-based Edge installation</a>.</aside>
+
+  <p><strong>Learn more:</strong></p>
+
+  <ul>
+    <li><a href="about-ssl">About TLS/SSL</a></li>
+    <li><a href="using-ssl-edge">Using TLS with Edge</a></li>
+    <li><a href="/api-platform/fundamentals/virtual-hosts">About virtual hosts</a></li>
+    <li><a href="/api-platform/fundamentals/configuring-virtual-hosts-private-cloud">Configuring virtual hosts for the Private Cloud</a></li>
+    <li><a href="/api-platform/fundamentals/virtual-host-property-reference">Virtual host property reference</a></li>
+    <li><a href="keystores-and-truststores">Keystores and Truststores</a></li>
+  </ul>
+
+  <aside class="note"><b>Note:</b> If your installation uses a load balancer, and the load balancer
+  is responsible for handling encrypted traffic, then you still need to create the virtual host.
+  However, your network configuration will determine whether or not the virtual host has to support
+  TLS between the load balancer and the Router. See <a href=
+  "configuring-ssl-premises-edge-installation">Using TLS
+  in a Private Cloud installation</a> for more. </aside>
+
+  <h2 id="whatyouneedtocreateavirtualhost">What you need to create a virtual host</h2>
+
+  <p>Before you create a virtual host, you should have the following information:</p>
+
+  <ul>
+    <li>The publicly facing domain name of the virtual host. For example, you should know if
+    the publicly facing name is <code>api.myCompany.com</code>, <code>myapi.myCompany.com</code>, etc. That information
+    is used when you create the virtual host and also when you create the DNS record for the
+    virtual host.</li>
+
+    <li>
+      <strong>For one-way TLS</strong>, you need to create a keystore where the keystore contains
+      the following:
+
+      <ul>
+        <li>TLS certificate - either a certificate signed by a certificate authority (CA), or
+        a chain of certificates where the last certificate is signed by a CA.</li>
+
+        <li>Private key - Edge supports key sizes up to 2048 bits. A passphrase is optional.</li>
+      </ul>
+    </li>
+
+    <li><strong>For two-way TLS</strong>, you need a keystore and you need a truststore to hold the
+    client's certificate and, optionally, certificate's CA chain. You need the truststore even if
+    the cert is signed by a CA.</li>
+  </ul>
+
+  <p>See <a href="keystores-and-truststores">Keystores and
+  Truststores</a> for more information on creating keystores and truststores.</p>
+
+
+  <h2 id="virtualhostconfiguration">Virtual host configuration for TLS</h2>
+
+  <p>To create a virtual host, create an XML object that defines the virtual host.
+    The following XML object uses the <code>&lt;SSLInfo&gt;</code> element to define a virtual
+  host for a one-way TLS configuration over HTTPS:</p>
+
+  <pre class="prettyprint">
+&lt;VirtualHost name="myTLSVHost"&gt;
+    &lt;HostAliases&gt; 
+        &lt;HostAlias&gt;apiTLS.myCompany.com&lt;/HostAlias&gt; 
+    &lt;/HostAliases&gt; 
+    &lt;Interfaces/&gt; 
+    &lt;Port&gt;9006&lt;/Port&gt; 
+    &lt;OCSPStapling&gt;off&lt;/OCSPStapling&gt;     
+    <strong>&lt;SSLInfo&gt; 
+        &lt;Enabled&gt;true&lt;/Enabled&gt; 
+        &lt;ClientAuthEnabled&gt;false&lt;/ClientAuthEnabled&gt; 
+        &lt;KeyStore&gt;ref://myTestKeystoreRef&lt;/KeyStore&gt; 
+        &lt;KeyAlias&gt;myKeyAlias&lt;/KeyAlias&gt; 
+    &lt;/SSLInfo&gt;</strong>
+&lt;/VirtualHost&gt;
+</pre>
+
+  <aside class="note"><b>Note:</b> Because Edge originally supported SSL, the tag that you use to
+  configure TLS is named <code>&lt;SSLInfo&gt;</code>. </aside>
+
+  <p>In this example, the <code>&lt;Enabled&gt;</code> element is set to true to
+  enable one-way TLS, and the <code>&lt;KeyStore&gt;</code> and &lt;<code>KeyAlias&gt;</code> elements specify the keystore
+  and key used by the TLS connection. </p>
+
+  <p>To enable two-way TLS, set the <code>&lt;ClientAuthEnabled&gt;</code> element to
+  <code>true</code>, and specify a truststore
+  using the <code>&lt;TrustStore&gt;</code>
+  element. The truststore holds the client's certificate and, optionally, certificate's CA
+  chain.</p>
+
+  <h3 id=
+  "virtualhostconfiguration-decidinghowtospecifythekeystoreandtruststorenameinthevirtualhost">
+  Deciding how to specify the keystore and truststore name in the virtual host</h3>
+
+  <p>In the virtual host example above, you specified the keystore by using a <em>reference</em>. A
+  reference is a variable that contains the name of the keystore, rather than specifying the
+  keystore name directly.</p>
+
+  <p>The advantage to using a reference is that you can change the value of the reference to change
+  the keystore used by the virtual host, usually because the cert in the current keystore is
+  expiring in the near future. Changing the value of the reference does not require you to restart
+  the Edge Router. </p>
+
+  <aside class="note"><b>Note:</b> You can only use a reference to the keystore and truststore; you
+  cannot use a reference to the alias. When you change the reference to a keystore, ensure that the
+  alias name of the cert in the new keystore is the same as in the old keystore.</aside>
+
+  <p>Alternatively, you can use a literal keystore name in the virtual host. However, if you ever
+  modify the virtual host to change the keystore name, you have to restart the Edge Routers.</p>
+
+  <h4>Restrictions in using references to keystores and truststore</h4>
+
+  <p>You must take into account the following restriction when using references to keystores and
+  truststores:</p>
+
+  <ul>
+    <li>You can only use keystore and truststore references in virtual hosts if you support SNI and
+    you terminate SSL on the Apigee Routers.</li>
+
+    <li>If you have a load balancer in front of the Apigee Routers, and you terminate TLS on the
+    load balancer, then you cannot use keystore and truststore references in virtual
+    hosts. </li>
+  </ul>
+
+  <h4>Modifying an existing virtual host to use references to the keystore and truststore</h4>
+
+  <p>Apigee strongly recommends that virtual hosts use reference to keystores and truststores.
+  References let you change the keystore and truststore used by the virtual host without
+  having to restart the Edge Routers. </p>
+
+  <p>If your virtual hosts are currently configured to use the literal name of the keystore or
+  truststore, you can convert them to use references. To do so, update the virtual host to use
+  references, and then restart the Edge Routers. </p>
+
+  <h3 id=
+  "virtualhostconfiguration-settingthetlsciphersandprotocolssupportedbythevirtualhostforedge41507andearlier">
+  Setting the TLS ciphers and protocols for Edge 4.15.07 and earlier</h3>
+
+  <p>If you are using Edge version 4.15.07 and earlier, then you set the TLS protocol and ciphers
+  used by the virtual host by using the <code>&lt;Ciphers&gt;</code> and <code>&lt;Protocols&gt;</code> child tags of the
+  <code>&lt;SSLInfo&gt;</code> tag. These tags
+  are described in the table below.</p>
+
+  <p>For example:</p>
+  <pre class="prettyprint">
+    &lt;SSLInfo&gt; 
+        &lt;Enabled&gt;true&lt;/Enabled&gt; 
+        &lt;ClientAuthEnabled&gt;false&lt;/ClientAuthEnabled&gt; 
+        &lt;KeyStore&gt;myTestKeystore&lt;/KeyStore&gt; 
+        &lt;KeyAlias&gt;myKeyAlias&lt;/KeyAlias&gt; 
+        &lt;SSLInfo&gt;
+            &lt;Enabled&gt;true&lt;/Enabled&gt;
+            &lt;ClientAuthEnabled&gt;false&lt;/ClientAuthEnabled&gt;
+            &lt;KeyStore&gt;myTestKeystore&lt;/KeyStore&gt;
+            &lt;KeyAlias&gt;myKeyAlias&lt;/KeyAlias&gt;
+            <strong>&lt;Ciphers&gt;
+                &lt;Cipher&gt;TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA&lt;/Cipher&gt;    
+                &lt;Cipher&gt;TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256&lt;/Cipher&gt;
+            &lt;/Ciphers&gt;
+            &lt;Protocols&gt;
+                &lt;Protocol&gt;TLSv1.2&lt;/Protocol&gt;
+            &lt;/Protocols&gt;</strong>
+        &lt;/SSLInfo&gt;
+   &lt;/SSLInfo&gt;
+</pre>
+
+  <p>The <code>&lt;Cipher&gt;</code> tag uses
+  the Java and JSSE name of the cipher. For example, for Java 8 see <a href=
+  "https://docs.oracle.com/javase/8/docs/technotes/guides/security/StandardNames.html#ciphersuites">
+  http://docs.oracle.com/javase/8/docs/technotes/guides/security/StandardNames.html#ciphersuites</a>. </p>
+
+  <h3 id=
+  "virtualhostconfiguration-specifyingthetlsciphersandprotocolssupportedbythevirtualhostforedge41601to41609">
+  Specifying the TLS ciphers and protocols for Edge 4.16.01 to 4.16.09</h3>
+
+  <p>In Edge 4.16.01 through 4.16.09, you set the default ciphers and protocols for virtual hosts
+  globally on the Router. These defaults then apply to all virtual hosts.</p>
+
+  <aside class="note"><b>Note:</b> You cannot override these value for specific virtual hosts. All
+  virtual hosts use the same values for protocol and cipher.</aside>
+
+  <p>Use tokens to specify the default protocols and ciphers:</p>
+
+  <ul>
+    <li>To specify the default protocols, use the token <code>conf_load_balancing_load.balancing.driver.server.ssl.protocols</code></li>
+
+    <li>To specify the default ciphers for the Router, use the token <code>conf_load_balancing_load.balancing.driver.server.ssl.ciphers</code></li>
+  </ul>
+
+  <p>The default value of the <code>conf_load_balancing_load.balancing.driver.server.ssl.protocols</code> token
+  is:</p>
+  <pre class="prettyprint">
+conf_load_balancing_load.balancing.driver.server.ssl.protocols=TLSv1 TLSv1.1 TLSv1.2
+</pre>
+
+  <p>This setting specifies that the Router supports TLS versions 1.0, 1.1, and 1.2. Specify a
+  space delimited list of values to the token.</p>
+
+  <p>The default value of the <code>conf_load_balancing_load.balancing.driver.server.ssl.ciphers</code> token
+  is:</p>
+  <pre class="prettyprint">
+conf_load_balancing_load.balancing.driver.server.ssl.ciphers=HIGH:!aNULL:!MD5:!DH+3DES:!RSA+3DES
+</pre>
+
+  <p>This setting specifies:</p>
+
+  <ul>
+    <li>Key length of 128 bits or more required (<code>HIGH</code>).</li>
+
+    <li>Exclude ciphers with no authentication (<code>!aNULL</code>)</li>
+
+    <li>Exclude cipher suites using MD5 (<code>!MD5</code>)</li>
+
+    <li>Exclude cipher suites using DH (including anonymous DH, ephemeral DH and fixed DH) AND
+    triple DES (<code>!DH+3DES</code>)</li>
+
+    <li>Exclude cipher suites using RSA key exchange AND triple DES (<code>!RSA+3DES</code>)</li>
+  </ul>
+
+  <p>For information on the syntax and values allowed by this token, see <a href=
+  "https://www.openssl.org/docs/man1.0.2/apps/ciphers.html">https://www.openssl.org/docs/man1.0.2/apps/ciphers.html</a>.
+  Note that this token uses the OpenSSL cipher names, such as AES128-SHA256, and not the
+  Java/JSSE cipher names, such as TLS_RSA_WITH_AES_128_CBC_SHA256.</p>
+
+  <p>To set the token for the Router:</p>
+
+  <ol>
+    <li>Edit the <code>/opt/apigee/customer/application/router.properties</code>
+    file. If that file does not exist, create it.</li>
+
+    <li>Set the <code>conf_load_balancing_load.balancing.driver.server.ssl.ciphers</code>
+    token. For example, to specify TLSv1.2 only and exclude cipher suites using pre-shared keys,
+    add<code>!PSK</code>:
+
+    <pre class="prettyprint">conf_load_balancing_load.balancing.driver.server.ssl.protocols=TLSv1.2
+conf_load_balancing_load.balancing.driver.server.ssl.ciphers=HIGH:!aNULL:!MD5:!DH+3DES:!RSA+3DES:!PSK</pre></li>
+
+    <li>Ensure that the <code>router.properties</code> file is owned by
+    apigee:
+
+    <pre class="devsite-terminal">chown apigee:apigee /opt/apigee/customer/application/router.properties</pre></li>
+
+    <li>Restart the Edge Router:
+
+    <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-router restart</pre></li>
+
+    <li>Check the value of the token:
+
+    <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-router configure -search conf_load_balancing_load.balancing.driver.server.ssl.ciphers</pre></li>
+  </ol>
+
+  <h3 id="virtualhostconfiguration-settingvirtualhostparametersforedgeversion41701andlater">Setting
+  TLS virtual host parameters for Edge version 4.17.01 and later</h3>
+
+  <p>If you are using Edge version 4.17.01 and later, then you can set some TLS properties for an
+  individual virtual host, such as TLS protocol and cipher, by using the <code>&lt;Properties&gt;</code> child tag of the
+  <code>&lt;VirtualHost&gt;</code>
+  tag. These tags are described at <a href=
+  "/api-platform/fundamentals/virtual-host-property-reference">Virtual host property reference</a>.</p>
+
+  <aside class="note"><b>Note:</b> You can still use tokens to set the default ciphers and
+  protocols for virtual hosts globally on the Router, as described in the previous section for Edge
+  4.16.01 through 4.16.09. This section describes new properties added in 4.17.01 that let you
+  override those defaults for an individual virtual host.</aside>
+
+  <p>For example:</p>
+  <pre class="prettyprint">
+&lt;VirtualHost name="myTLSVHost"&gt;
+    &lt;HostAliases&gt;
+        &lt;HostAlias&gt;apiTLS.myCompany.com&lt;/HostAlias&gt;
+    &lt;/HostAliases&gt;
+    &lt;Interfaces/&gt;
+    &lt;Port&gt;9006&lt;/Port&gt;
+    &lt;OCSPStapling&gt;off&lt;/OCSPStapling&gt;     
+    &lt;SSLInfo&gt;
+        &lt;Enabled&gt;true&lt;/Enabled&gt;
+        &lt;ClientAuthEnabled&gt;false&lt;/ClientAuthEnabled&gt;
+        &lt;KeyStore&gt;ref://myTestKeystoreRef&lt;/KeyStore&gt;
+        &lt;KeyAlias&gt;myKeyAlias&lt;/KeyAlias&gt;
+    &lt;/SSLInfo&gt;
+<strong>    &lt;Properties&gt;
+        &lt;Property name="proxy_read_timeout"&gt;50&lt;/Property&gt;
+        &lt;Property name="keepalive_timeout"&gt;300&lt;/Property&gt;
+        &lt;Property name="proxy_request_buffering"&gt;off&lt;/Property&gt;
+        &lt;Property name="proxy_buffering"&gt;off&lt;/Property&gt;
+        &lt;Property name="ssl_protocols"&gt;TLSv1.2 TLSv1.1&lt;/Property&gt;
+        &lt;Property name="ssl_ciphers"&gt;HIGH:!aNULL:!MD5:!DH+3DES:!kEDH&lt;/Property&gt;
+    &lt;/Properties&gt;
+</strong>&lt;/VirtualHost&gt;
+</pre>
+
+  <p>For information on the syntax and values allowed by the <code>ssl_ciphers</code> token, see <a href=
+  "https://www.openssl.org/docs/man1.0.2/apps/ciphers.html">https://www.openssl.org/docs/man1.0.2/apps/ciphers.html</a>.
+  Note that this token uses the OpenSSL cipher names, such as AES128-SHA256, and not
+  the Java/JSSE cipher names, such as TLS_RSA_WITH_AES_128_CBC_SHA256.</p>
+
+  <h2 id="creatingavirtualhostthatuseshttps">Creating a virtual host that uses HTTPS</h2>
+
+  <p>This example specifies the keystore to the virtual host by using a reference. Using a
+  reference allows you to change the keystore without having to restart Routers. </p>
+
+  <p>Use the following procedure to create the virtual host:</p>
+
+  <ol>
+    <li>Create and configure a keystore named <strong>myTestKeystore</strong> by using the
+    procedure described here: <a href="keystores-and-truststores">Keystores and
+    Truststores</a>. Ensure that the keystore uses an alias name
+    of <strong>myKeyAlias</strong> for the cert and private key.</li>
+
+    <li>
+      <p>Use the following POST API call to create the reference
+      named <strong>keystoreref</strong> to the keystore you created above:</p>
+      <pre class="devsite-terminal">
+curl -X POST  -H "Content-Type:application/xml" https://api.enterprise.apigee.com/v1/o/{org_name}/e/{env_name}/references \
+  -d '&lt;ResourceReference name="<strong>keystoreref</strong>"&gt;
+    &lt;Refers&gt;<strong>myTestKeystore</strong>&lt;/Refers&gt;
+    &lt;ResourceType&gt;<strong>KeyStore</strong>&lt;/ResourceType&gt;
+  &lt;/ResourceReference&gt;'
+  -u <var>email</var>:<var>password</var>
+</pre>
+
+      <p>The reference specifies the name of the keystore and the reference type as <code>KeyStore</code>.</p>
+
+      <p>Use the following GET API call to view the reference:</p>
+      <pre pre class="devsite-terminal">
+curl -X GET https://api.enterprise.apigee.com/v1/o/[org_name}/e/{env_name}/references/keystoreref -u uname:password
+</pre>
+    </li>
+
+    <li><p>Create the virtual host  by using the <a href=
+    "/management/apis/post/organizations/{org_name}/environments/{env_name}/virtualhosts">Create a
+    Virtual Host</a> API, where <code>&lt;ms-IP&gt;</code> is the IP address
+      or domain name of the Management Server node.</p>
+
+    <p>Make sure to specify the correct keystore reference and key alias:</p>
+
+      <pre class="devsite-terminal">curl -X POST -H "Content-Type:application/xml" \
+  http://&lt;ms-IP&gt;:8080/v1/o/{org_name}/environments/{env_name}/virtualhosts \
+  -d '&lt;VirtualHost  name="newTLSTrustStore2"&gt;
+    &lt;HostAliases&gt;
+      &lt;HostAlias&gt;apiTLS.myCompany.com&lt;/HostAlias&gt;
+    &lt;/HostAliases&gt;
+    &lt;Interfaces/&gt;
+    &lt;Port&gt;9005&lt;/Port&gt;
+    &lt;OCSPStapling&gt;off&lt;/OCSPStapling&gt;
+<strong>    &lt;SSLInfo&gt;
+      &lt;Enabled&gt;true&lt;/Enabled&gt;
+      &lt;ClientAuthEnabled&gt;false&lt;/ClientAuthEnabled&gt;
+      &lt;KeyStore&gt;ref://keystoreref&lt;/KeyStore&gt;
+      &lt;KeyAlias&gt;myKeyAlias&lt;/KeyAlias&gt;
+    &lt;/SSLInfo&gt;</strong>
+  &lt;/VirtualHost&gt;' \
+  -u <var>email</var>:<var>password</var></pre>
+
+      <aside class="note"><b>Note: </b> If you are performing two-way TLS with the client,
+      then set <code>&lt;ClientAuthEnabled&gt;</code> to <code>true</code> and specify the truststore
+      using the <code>&lt;TrustStore&gt;</code> element. The
+      client must be configured correctly for two-way TLS, meaning Edge has a truststore containing
+      the client's cert and certificate chain. Create the truststore by using the procedure
+      described here: <a href="keystores-and-truststores">Keystores and
+      Truststores</a>. </aside>
+    </li>
+
+    <li>Create a DNS record for the virtual host  that matches the host alias.</li>
+
+    <li><p>If you have any existing API proxies, add the virtual host to the <code>&lt;HTTPConnection&gt;</code> element in the
+    ProxyEndpoint. The virtual host is added automatically to all new API proxies.</p>
+
+      <p>See <em>Updating an API proxy after creating a virtual host</em> in
+        <a href="/api-platform/fundamentals/virtual-hosts">About virtual hosts</a>.</p>
+
+      <aside class="warning"><b>Warning:</b> All virtual hosts are automatically added to all new
+      API proxies. Therefore, if you create a new API proxy that should not be accessible over a
+      particular virtual host, then you must edit the API proxy to remove that virtual host from
+      its ProxyEndpoint.</aside>
+    </li>
+  </ol>
+
+  <p>After updating an API proxy to use the virtual host, and creating the DNS record for the host
+  alias, you can access the API proxy as shown below:</p>
+
+  <pre class="prettyprint">https://apiTLS.myCompany.com/v1/{project-base-path}/{resource-path}</pre>
+
+  <p>For example:</p>
+
+  <pre class="prettyprint">https://apiTLS.myCompany.com/v1/weather/forecastrss?w=12797282</pre>
+
+  <h2 id="creatingandmodifyingreferencestoakeystoreortruststore">Creating and modifying references
+  to a keystore or truststore</h2>
+
+  <p>You can optionally configure the virtual host to use a <em>reference</em> to the keystore or
+  truststore instead. The advantage to using a reference is that you can update the reference to
+  point to a different keystore or truststore to update the TLS cert without having to restart a
+  Router.    </p>
+
+  <aside class="note"><b>Note:</b> You can only use a reference to the keystore and truststore; you
+  cannot use a reference to the alias. When you change the reference to a keystore, ensure that the
+  alias name of the cert is the same as in the old keystore.</aside>
+
+  <aside class="note"><b>Note:</b> If your virtual host currently uses literal keystore or
+  truststore names, you can convert the virtual hosts to use references. However, after you update
+  the virtual hosts to use references, you must restart the Edge Routers, one at a
+  time. </aside>
+
+  <p>For example, shown below is a virtual host that uses a reference to the keystore:</p>
+  <pre class="prettyprint">
+&lt;VirtualHost name="myTLSVHost"&gt; 
+    &lt;HostAliases&gt; 
+        &lt;HostAlias&gt;apiTLS.myCompany.com&lt;/HostAlias&gt; 
+    &lt;/HostAliases&gt; 
+    &lt;Interfaces/&gt; 
+    &lt;Port&gt;9006&lt;/Port&gt; 
+    <strong>&lt;SSLInfo&gt; 
+        &lt;Enabled&gt;true&lt;/Enabled&gt; 
+        &lt;ClientAuthEnabled&gt;false&lt;/ClientAuthEnabled&gt; 
+        &lt;KeyStore&gt;ref://keystoreref&lt;/KeyStore&gt; 
+        &lt;KeyAlias&gt;myKeyAlias&lt;/KeyAlias&gt; 
+    &lt;/SSLInfo&gt;</strong>
+&lt;/VirtualHost&gt;
+</pre>
+
+  <p>Use the following POST API call to create the reference named <strong>keystoreref</strong>:</p>
+
+  <pre class="devsite-terminal">
+curl -X POST  -H "Content-Type:application/xml" https://api.enterprise.apigee.com/v1/o/{org_name}/e/{env_name}/references \
+  -d '&lt;ResourceReference name="<strong>keystoreref</strong>"&gt;
+    &lt;Refers&gt;<strong>myTestKeystore</strong>&lt;/Refers&gt;
+    &lt;ResourceType&gt;KeyStore&lt;/ResourceType&gt;
+  &lt;/ResourceReference&gt;'
+  -u <var>email</var>:<var>password</var>
+</pre>
+
+  <p>The reference specifies the name of the keystore and its type.</p>
+
+  <p>Use the following GET API call to view the reference:</p>
+
+  <pre class="devsite-terminal">
+curl -X GET https://api.enterprise.apigee.com/v1/o/[org_name}/e/{env_name}/references/keystoreref -u uname:password
+</pre>
+
+  <p>To later change the reference to point to a different keystore, ensuring that the alias has
+  the same name, use the following PUT call:</p>
+
+  <pre class="devsite-terminal">
+curl -X PUT -H "Content-Type:application/xml" https://api.enterprise.apigee.com/v1/o/{org_name}/e/{env_name}/references/<strong>keystoreref</strong> \
+  -d '&lt;ResourceReference name="<strong>keystoreref</strong>"&gt;
+    &lt;Refers&gt;<strong>myNewKeystore</strong>&lt;/Refers&gt;
+    &lt;ResourceType&gt;KeyStore&lt;/ResourceType&gt;
+  &lt;/ResourceReference&gt;'
+  -u <var>email</var>:<var>password</var>
+</pre>
+
+{% endblock %}

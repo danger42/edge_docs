@@ -1,0 +1,89 @@
+  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}Allowing the Edge UI Access to
+  Local IP Addresses{% endblock %} {% block body %}
+
+  <p>There are several places where the Edge UI might attempt to access a local IP address. These
+  local IP address might correspond to private or otherwise protected resources that should not be
+  exposed to external users:</p>
+
+  <ul>
+    <li>The Trace tool in the Edge UI has the ability to send and receive API request to any
+    specified URL. In certain deployment scenarios where Edge components are co-hosted with other
+    internal services, a malicious user may misuse the power of the Trace tool by making requests
+    to private IP addresses. </li>
+
+    <li>When creating an API proxy from an OpenAPI specification, the specification describes such
+    elements of an API as its base path, paths and verbs, headers, and more. As part of the spec, a
+    malicious user can specify a base path of the proxy that refers to a private IP
+    address. </li>
+
+    <li>When creating an API proxy from a WSDL file located on your local file system.</li>
+  </ul>
+
+  <p>For security reasons, by default, the Edge UI is prevented from referencing private IP
+  addresses. The list of private IP addresses includes:</p>
+
+  <ul>
+    <li>Loopback address (127.0.0.1 or localhost)</li>
+
+    <li>Site-Local Addresses (For IPv4 - 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16)</li>
+
+    <li>Any Local Address (any address resolving to localhost).</li>
+  </ul>
+
+  <p>If you want to enable the Edge UI to access private IP addresses, set the following
+  tokens: </p>
+
+  <ul>
+    <li>For the Trace tool, the <span style=
+    "font-family: &quot;courier new&quot;, courier, monospace;">conf_apigee-base_apigee.feature.enabletraceforinternaladdresses</span> property
+    is disabled by default. Set it to true to enable the Trace tool access to private IP
+    addresses.</li>
+
+    <li>For OpenAPI specs, the <span style=
+    "font-family: &quot;courier new&quot;, courier, monospace;">conf_apigee-base_apigee.feature.</span><span style="font-family: &quot;courier new&quot;, courier, monospace;">enableopenapiforinternaladdresses</span> property
+    is disabled by default. Set it to true to enable an OpenAPI access to private IP
+    addresses.  </li>
+
+    <li>For WSDL files, the <span style=
+    "font-family:courier new,courier,monospace;">conf_apigee-base_apigee.feature.enablewsdlforinternaladdresses</span> property
+    is disabled by default. Set it to true to enable the upload of a WSDL file from private IP
+    addresses. </li>
+  </ul>
+
+  <aside class="note"><b>Note:</b> If the Apigee Routers are reachable only over the above private
+  IP ranges, Apigee recommends that you set the <span style=
+  "font-family:courier new,courier,monospace;">conf_apigee-base_apigee.feature.enabletraceforinternaladdresses</span>
+  property to <span style="font-family:courier new,courier,monospace;">true</span>.</aside>
+
+  <p>To set these properties to true:</p>
+
+  <ol>
+    <li>Open the <span style="font-family:courier new,courier,monospace;">ui.properties</span> file
+    in an editor. If the file does not exist, create it.<br>
+    <span style="font-family:courier new,courier,monospace;">&gt; vi
+    /opt/apigee/customer/application/ui.properties</span></li>
+
+    <li>Set the following properties to true:<br>
+    <span style=
+    "font-family:courier new,courier,monospace;">conf_apigee-base_apigee.feature.enabletraceforinternaladdresses="true"<br>
+
+    conf_apigee-base_apigee.feature.enableopenapiforinternaladdresses="true"<br>
+    conf_apigee-base_apigee.feature.enablewsdlforinternaladdresses="true"</span></li>
+
+    <li>Save your changes to <span style=
+    "font-family:courier new,courier,monospace;">ui.properties</span>.</li>
+
+    <li>Make sure the properties file is owned by the 'apigee' user:<br>
+    <span style="font-family: &quot;courier new&quot;, courier, monospace;">&gt;
+    chown apigee:apigee /opt/apigee/customer/application/ui.properties</span></li>
+
+    <li>Restart the Edge UI:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt;
+    /opt/apigee/apigee-service/bin/apigee-service edge-ui restart</span></li>
+  </ol>
+
+  <p>The Edge UI can now access local IP addresses.</p>
+
+  <div>
+     
+  </div>{% endblock %}

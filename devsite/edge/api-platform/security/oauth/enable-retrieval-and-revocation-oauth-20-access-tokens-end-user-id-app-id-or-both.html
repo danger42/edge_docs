@@ -1,0 +1,244 @@
+{% extends "_base.html" %}
+{% block title %}Enable retrieval and revocation of OAuth 2.0 access
+  tokens by end user ID, app id, or both{% endblock %}
+{% block body %}
+
+  <p>This section describes how to enable retrieval and revocation of OAuth 2.0 access tokens by
+  end user ID, app ID, or both. The end user ID feature requires special setup as described in this
+  topic. By end user, we mean the user of the app that is calling the API.</p>
+
+  <p>{% dynamic include /includes/___edge-price-plan-note %}</p>
+
+  <h2 id="whentoenableenduseridaccess">When to enable end user ID access</h2>
+
+  <p>Sometimes, it is useful to store the user id in an access token. Enable the end user ID access
+  feature only if you have a good use case for it. For example:</p>
+
+  <ul>
+    <li>A feature for your website or app where users can see which third-party apps they have
+    authorized, and to provide an option to revoke access to those apps.</li>
+
+    <li>A feature that allows an authorized user to revoke all access tokens associated with a
+    specific Developer App.</li>
+  </ul>
+
+  <h2 id="aboutoauthaccesstokens">About OAuth access tokens</h2>
+
+  <p>App IDs are automatically added to an OAuth access token. Therefore, after you enable token
+  access for an organization as described below, you can revoke access tokens by app ID.</p>
+
+  <p>To retrieve and revoke OAuth 2.0 access tokens by end user ID, an end user ID must be present
+  in the access tokens. The procedure below describes how add an end user ID to an existing
+  token.</p>
+
+  <p>By default, when Edge generates an OAuth 2.0 access token, the token has the format shown
+  below:</p>
+  <pre class="prettyprint">
+{
+ "issued_at" : "1421847736581",
+<strong> "application_name" : "a68d01f8-b15c-4be3-b800-ceae8c456f5a",
+</strong> "scope" : "READ",
+ "status" : "approved",
+ "api_product_list" : "[PremiumWeatherAPI]",
+ "expires_in" : "3599", //--in seconds
+ "developer.email" : "tesla@weathersample.com",
+ "organization_id" : "0",
+ "token_type" : "BearerToken",
+ "client_id" : "k3nJyFJIA3p62DWOkLO6OJNi87GYXFmP",
+<strong> "access_token" : "7S22UqXGJDTuUADGzJzjXzXSaGJL",
+</strong> "organization_name" : "myorg",
+ "refresh_token_expires_in" : "0", //--in seconds
+ "refresh_count" : "0"
+}
+</pre>
+
+  <p>Note the following:</p>
+
+  <ul>
+    <li>The <span style="font-family:courier new,courier,monospace;">application_name</span> field
+    contains the UUID of the app associated with the token. If you enable retrieval and revocation
+    of OAuth 2.0 access tokens by app ID, then this is the app ID you use.</li>
+
+    <li>The <span style="font-family:courier new,courier,monospace;">access_token</span> field
+    contains the OAuth 2.0 access token value.</li>
+  </ul>
+
+  <p>There is no field for end user ID in the default OAuth access token. To enable retrieval and
+  revocation of OAuth 2.0 access tokens by end user ID, you have to configure the OAuth 2.0 policy
+  to include the user ID in the token, as described in the procedure below. Note that if you only
+  want to retrieve and revoke OAuth 2.0 access tokens by app ID, then there is no need to enable
+  access by end user ID.</p>
+
+  <p>You pass in the end user ID to the token creation endpoint. You can pass the end user's ID as a query parameter, form parameter, or
+  in a header (as explained later in this topic). After you configure Edge to include the end user
+  ID in the token, it is included as the <span style=
+  "font-family:courier new,courier,monospace;">app_enduser</span> field, as shown below:</p>
+  <pre class="prettyprint">
+{
+ "issued_at" : "1421847736581",
+<strong> "application_name" : "a68d01f8-b15c-4be3-b800-ceae8c456f5a",</strong>
+ "scope" : "READ",
+<strong> "app_enduser" : "6ZG094fgnjNf02EK",</strong>
+ "status" : "approved",
+ "api_product_list" : "[PremiumWeatherAPI]",
+ "expires_in" : "3599", //--in seconds
+ "developer.email" : "tesla@weathersample.com",
+ "organization_id" : "0",
+ "token_type" : "BearerToken",
+ "client_id" : "k3nJyFJIA3p62DWOkLO6OJNi87GYXFmP",
+<strong> "access_token" : "7S22UqXGJDTuUADGzJzjXzXSaGJL",</strong>
+ "organization_name" : "myorg",
+ "refresh_token_expires_in" : "0", //--in seconds
+ "refresh_count" : "0"
+}
+</pre>
+
+  <p>To learn how to make the API calls that perform these retrievals and revocations, see
+  following Smart Docs:</p>
+
+  <ul>
+    <li><a href="/management/apis/post/organizations/{org_name}/oauth2/revoke">Revoke OAuth2 Access
+    Token by End User or App ID</a></li>
+
+    <li><a href="/management/apis/get/organizations/{org_name}/oauth2/search">Get OAuth2 Access
+    Token by End User or App ID</a></li>
+  </ul>
+
+  <h2 id="enablingaccesstooauth20tokensbyuseridandappid">Enabling access to OAuth 2.0 tokens by
+  user ID and app ID</h2>
+
+  <p>How you enable access to OAuth 2.0 tokens by user ID and app ID depends on how you deployed
+  Edge:</p>
+
+  <ul>
+    <li><strong>Cloud-based deployment</strong><br>
+    <br>
+    A cloud-based deployment of Edge means that most of the configuration is handled by Apigee. You
+    are only responsible for configuring the OAuth 2.0 policy to add the user ID to the access
+    token. For more, see the procedure below.</li>
+
+    <li><strong>Edge for Private Cloud deployment</strong><br>
+    <br>
+    In Apigee Edge for Private Cloud (on-premises), you are completely responsible for
+    configuration. For more, see the <a href=
+    "/private-cloud/v4.17.09/operations-and-configuration.html">Operations and
+    Configuration</a>.</li>
+  </ul>
+
+  <h2 id="enablingaccessinthecloud">Enabling access in the cloud</h2>
+
+  <h3 id="enablingaccessinthecloud-step1enableanorgtosupportthisfeature">Step 1: Enable an org to
+  support this feature</h3>
+
+  <p>This feature must be enabled for each org that you want to support this feature.</p>
+
+  <p>Contact <a href="https://community.apigee.com/content/apigee-customer-support" target=
+  "new">Apigee Support</a> to have them update your org.</p>
+
+  <h3 id=
+  "enablingaccessinthecloud-step2provideoauth2resourcepermissionstoopsadminandorgadminroles">Step
+  2: Provide oauth2 Resource Permissions to opsadmin and orgadmin Roles</h3>
+
+  <p>Only your <strong>orgadmin</strong> and <strong>opsadmin</strong> roles should be given
+  permissions to make these retrieve (<code>get</code>) and revoke (<code>put</code>) calls to the
+  <code>oauth2</code> resource based on end user ID or app ID.</p>
+
+  <p>You can use the <a href=
+  "/management/apis/get/organizations/{org_name}/userroles/{role_name}/permissions">Get Permission
+  for a Resource</a> API call to see which roles have <code>get</code> and <code>put</code>
+  permissions for the <code>oauth2</code> resource.</p>
+
+  <p>If you need to add or remove any permissions, contact <a href=
+  "https://community.apigee.com/content/apigee-customer-support" target="new">Apigee Support</a> to
+  have them perform the updates.</p>
+
+  <h3 id="enablingaccessinthecloud-step3copyexistingoauth20accesstokenstoyourcassandranodes">Step
+  3: Copy existing OAuth 2.0 access tokens to your Cassandra nodes</h3>
+
+  <aside class="note">
+    <b>Note:</b> <!-- The not-required-with-CPS line added per DBS-1676 -->
+
+    <p>This step is not required if <a href=
+    "/api-platform/reference/apis/api-reference-getting-started.html#cps" target="_blank">Core
+    Persistence Services (CPS)</a> is enabled for your organization.</p>
+
+    <p>For non-CPS organizations, this task is optional if you do not need to retrieve and revoke
+    existing OAuth 2.0 access tokens by end user ID. Contact <a href=
+    "https://community.apigee.com/content/apigee-customer-support" target="new">Apigee Support</a>
+    to have them perform this step for you.</p>
+  </aside>
+
+  <p><strong>Performed by Apigee Support</strong>: In this task, copies of existing OAuth 2.0
+  access tokens in impacted orgs will be copied and stored in your Cassandra nodes. This procedure
+  will be performed on the Cassandra nodes for each of your Apigee Edge pods. This will allow the
+  retrieve and revoke API calls to run against all of your OAuth 2.0 access tokens, existing and
+  newly generated.</p>
+
+  <h3 id=
+  "enablingaccessinthecloud-step4addtheoauth_max_search_limitpropertytoyourmanagementserverandmessageprocessor">
+  Step 4: Add the oauth_max_search_limit property to your management server and message
+  processor</h3>
+
+  <p>In this task, the <code>keymanagement.properties</code> files for your management server and
+  message processor will be updated to include this property: <code>oauth_max_search_limit =
+  100</code>. <code>100</code> is Apigee's recommended value, but can be set as you see fit.</p>
+
+  <p>Contact <a href="https://community.apigee.com/content/apigee-customer-support" target=
+  "new">Apigee Support</a> to have them make this addition.</p>
+
+  <h3 id=
+  "enablingaccessinthecloud-step5configureanoauth20policytogenerateaccesstokensthatincludeenduserids">
+  Step 5: Configure an OAuth 2.0 policy to generate access tokens that include end user IDs</h3>
+
+  <aside class="note"><b>Note:</b> This task is optional. You only need to perform it if you want
+  to retrieve and revoke OAuth 2.0 access tokens by end user ID.</aside>
+
+  <p>Configure the OAuth 2.0 policy used to generate access tokens to include end user ID in the
+  token. By including end user IDs in access tokens, you will then be able to perform retrievals
+  and revokes by end user ID.</p>
+
+  <p>To configure the policy to include an end user ID in an access token, you must specify the
+  input variable that contains the end user ID. Use the <span style=
+  "font-family: 'courier new', courier, monospace;">&lt;AppEndUser&gt;</span> tag to specify the
+  variable.</p>
+
+  <p>The OAuth 2.0 policy below, named <span style=
+  "font-family:courier new,courier,monospace;">GenerateAccessTokenClient</span>, generates an OAuth
+  2.0 access token. Note the addition of the <span style=
+  "font-family:courier new,courier,monospace;">&lt;AppEndUser&gt;</span> tag in bold:</p>
+  <pre class="prettyprint">
+&lt;OAuthV2 async="false" continueOnError="false" enabled="true" name="GenerateAccessTokenClient"&gt;
+  &lt;DisplayName&gt;OAuth 2.0.0 1&lt;/DisplayName&gt;
+  &lt;ExternalAuthorization&gt;false&lt;/ExternalAuthorization&gt;
+  &lt;Operation&gt;GenerateAccessToken&lt;/Operation&gt;
+  &lt;SupportedGrantTypes&gt;
+    &lt;GrantType&gt;client_credentials&lt;/GrantType&gt;
+  &lt;/SupportedGrantTypes&gt;
+  &lt;GenerateResponse enabled="true"/&gt;
+  &lt;GrantType&gt;request.queryparam.grant_type&lt;/GrantType&gt;
+<strong>  &lt;AppEndUser&gt;request.header.appuserID&lt;/AppEndUser&gt;
+</strong>  &lt;ExpiresIn&gt;960000&lt;/ExpiresIn&gt;
+&lt;/OAuthV2&gt;
+</pre>
+
+  <p>You can then use the following cURL command to generate the OAuth 2.0 access token, passing
+  the user ID as the <span style="font-family:courier new,courier,monospace;">appuserID</span>
+  header:</p>
+  <pre class="prettyprint">
+curl -H "appuserID:6ZG094fgnjNf02EK" /
+  https://myorg-test.apigee.net/oauth/client_credential/accesstoken?grant_type=client_credentials /
+  -X POST /
+  -d 'client_id=k3nJyFJIA3p62TKIkLO6OJNi87GYXFmP&amp;client_secret=gk58jK5lIp943AY4'
+</pre>
+
+  <p>In this example, the <span style="font-family:courier new,courier,monospace;">appuserID</span>
+  is passed as a request header. You can pass information as part of a request in many ways. For
+  example, as an alternative, you can:</p>
+
+  <ul>
+    <li>Use a form parameter variable: <span style=
+    "font-family:courier new,courier,monospace;">request.formparam.appuserID</span></li>
+
+    <li>Use a flow variable providing the end user ID</li>
+  </ul>
+{% endblock %}

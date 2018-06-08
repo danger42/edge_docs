@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html devsite>
+  <head>
+    <title>Quota Policy Error Codes</title>
+  </head>
+  <body>
+
+  <p>This section describes the error messages and flow variables that are set when this policy
+  triggers an error. This information is important to know if you are developing fault rules for a
+  proxy. To learn more, see <a href=
+  "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html">What you need to know
+  about policy errors</a> and <a href="/api-platform/fundamentals/fault-handling.html">Handling
+  faults</a>.</p>
+
+  <h3>Error code prefix</h3>
+
+  <p><code>policies.ratelimit</code> <span style="font-size: 10pt">(<a href=
+  "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html#aboutthedefaultpolicyerrorresponse">What's
+  this?</a>)</span></p>
+
+  <h3>Runtime errors</h3>
+
+  <p>These errors can occur when the policy executes.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th scope="col" width="271">Error name</th>
+
+        <th scope="col" width="58">HTTP status</th>
+
+        <th scope="col" width="379">Occurs when</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td><code>QuotaViolation</code></td>
+
+        <td>500</td>
+
+        <td>The quota limit is exceeded.</td>
+      </tr>
+
+      <tr>
+        <td><code>InvalidMessageWeight</code></td>
+
+        <td>500</td>
+
+        <td>The message weight value must be an integer.</td>
+      </tr>
+
+      <tr>
+        <td><code>InvalidQuotaInterval</code></td>
+
+        <td>500</td>
+
+        <td>The quota interval must be an integer.</td>
+      </tr>
+
+      <tr>
+        <td><code>FailedToResolveQuota\<br>
+        IntervalReference</code></td>
+
+        <td>500</td>
+
+        <td>See fault string. </td>
+      </tr>
+
+      <tr>
+        <td><code>FailedToResolveQuota\<br>
+        IntervalTimeUnitReference</code></td>
+
+        <td>500</td>
+
+        <td>See fault string. </td>
+      </tr>
+
+      <tr>
+        <td><code>InvalidQuotaTimeUnit</code></td>
+
+        <td>500</td>
+
+        <td>If no default value is specified, then the specified variable reference must be set to
+        minute, hour, day, week, or month.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Deployment errors</h3>
+
+  <table>
+    <thead>
+      <tr>
+        <th scope="col" width="271">Error name</th>
+
+        <th scope="col" width="379">Occurs when</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td><code>InvalidQuotaInterval</code></td>
+
+        <td>The quota interval must be an integer.</td>
+      </tr>
+
+      <tr>
+        <td><code>InvalidQuotaTimeUnit</code></td>
+
+        <td>If specified, default value must be set to minute, hour, day, week, or month.</td>
+      </tr>
+
+      <tr>
+        <td><code>InvalidQuotaType</code></td>
+
+        <td>See fault string. Valid types are listed in the documentation.</td>
+      </tr>
+
+      <tr>
+        <td><code>InvalidStartTime</code></td>
+
+        <td>See fault string.</td>
+      </tr>
+
+      <tr>
+        <td><code>StartTimeNotSupported</code></td>
+
+        <td>See fault string and Quota policy documentation for more information about
+        <code>&lt;StartTime&gt;</code>.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Other errors</h3>
+
+  <table width="851">
+    <thead>
+      <tr>
+        <th scope="col" width="399">Error name</th>
+
+        <th scope="col" width="458">Occurs when</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td><code>InvalidTimeUnitForDistributedQuota</code></td>
+
+        <td>See fault string.</td>
+      </tr>
+
+      <tr>
+        <td><code>InvalidSynchronizeIntervalForAsyncConfiguration</code></td>
+
+        <td>See fault string.</td>
+      </tr>
+
+      <tr>
+        <td><code>InvalidSynchronizeMessageCountForAsyncConfiguration</code></td>
+
+        <td>See fault string.</td>
+      </tr>
+
+      <tr>
+        <td><code>InvalidAsynchronizeConfigurationForSynchronousQuota</code></td>
+
+        <td>See fault string.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Fault variables</h3>
+
+  <p>These variables are set when this policy triggers an error. For more information, see <a href=
+  "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html">What you need to know
+  about policy errors</a>.</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <th width="324">Variables set <code><span style="font-size: 10pt">(<a href=
+        "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html">Learn
+        more</a>)</span></code></th>
+
+        <th width="428">Where</th>
+
+        <th width="428">Example</th>
+      </tr>
+
+      <tr>
+        <td width="324"><code>[prefix].[policy_name].failed</code></td>
+
+        <td width="428">The fault variable <code>[prefix]</code> is
+        <code><strong>ratelimit</strong>.</code><br>
+        The <code>[policy_name]</code> is the name of the policy that threw the error.</td>
+
+        <td width="428"><code>ratelimit.QT-QuotaPolicy.failed = true</code></td>
+      </tr>
+
+      <tr>
+        <td><code>fault.[error_name]</code></td>
+
+        <td><code>[error_name]</code> = The specific error name to check for as listed in the table
+        above.</td>
+
+        <td><code>fault.name Matches "QuotaViolation"</code></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Example error response</h3>
+
+  <aside class="note"><b>Note:</b> For error handling, the best practice is to trap the
+  <code>errorcode</code> part of the error response. Do not rely on the text in the
+  <code>faultstring</code>, because it could change.</aside>
+  <pre class="prettyprint">
+<span id="s-1">{  </span>
+   <span id="s-2">"fault"</span><span id="s-3">:</span><span id="s-4">{  </span>
+      <span id="s-5">"detail"</span><span id="s-6">:</span><span id="s-7">{  </span>
+         <span id="s-8">"errorcode"</span><span id="s-9">:</span><span id=
+"s-10">"policies.ratelimit.QuotaViolation"</span>
+      <span id="s-11">}</span><span id="s-12">,</span>
+      <span id="s-13">"faultstring"</span><span id="s-14">:</span><span id=
+"s-15">"Rate limit quota violation. Quota limit  exceeded. Identifier : _default"</span>
+   <span id="s-16">}</span>
+<span id="s-17">}</span>
+</pre>
+
+  <h3>Example fault rule</h3>
+  <pre class="prettyprint">
+&lt;FaultRules&gt;
+    &lt;FaultRule name="Quota Errors"&gt;
+        &lt;Step&gt;
+            &lt;Name&gt;JavaScript-1&lt;/Name&gt;
+            &lt;Condition&gt;(fault.name Matches "QuotaViolation") &lt;/Condition&gt;
+        &lt;/Step&gt;
+        &lt;Condition&gt;ratelimit.Quota-1.failed=true&lt;/Condition&gt;
+    &lt;/FaultRule&gt;
+&lt;/FaultRules&gt;
+</pre>
+  </body>
+</html>

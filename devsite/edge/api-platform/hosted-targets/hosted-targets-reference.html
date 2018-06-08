@@ -1,0 +1,359 @@
+  {% extends "_base.html" %} {% block title %}Hosted Targets reference (Beta){% endblock %} {% block body %}
+
+<aside class="note">This is the Beta release of Hosted Targets. To learn more, see
+  <a href="https://cloud.google.com/terms/launch-stages">Google Cloud Platform Launch Stages</a>.</aside>
+
+   <h2>Memory and CPU limits</h2>
+
+   <p>Each Hosted Targets instance receives the following resources:</p>
+
+   <ul>
+      <li>256 MB memory</li>
+      <li>1.2 GHz CPU</li>
+   </ul>
+
+   <h2>Scaling</h2>
+
+   <ul>
+      <li>A Trial version of Apigee Edge is limited to one Hosted Targets instance per proxy.</li>
+     <li>Paid Apigee Edge accounts receive automatic scaling based on request rate, response latencies,
+       and other application metrics per proxy.<br />
+     </li>
+      <li>Hosted Targets apps deployed to both paid and trial versions of Apigee Edge scale to zero on periods of inactivity.</li>
+   </ul>
+
+   <h2>Undeploying a Hosted Targets proxy</h2>
+
+   <p>When you undeploy an Edge proxy that includes a Hosted Targets application, the associated
+     Hosted Targets app is undeployed, but the underlying application image not deleted. If you
+     redeploy the proxy, the Hosted Targets app is redeployed.</p>
+
+   <h2>Deleting a Hosted Targets proxy</h2>
+
+   <p>After you delete a Hosted Targets proxy, the underlying runtime instances will stop running
+     within some amount of time. The application code will persist, however.</p>
+
+   <aside class="note">During the Beta release, if you would like to remove the code and you have an
+     Apigee support contract, please contact Apigee Support.</aside>
+
+   <h2>About the Manifest file</h2>
+
+   <p>To gather runtime information for building and deploying the hosted application, Edge looks for
+     a manifest file  named <strong>app.yaml</strong> in the <strong>resources/hosted</strong>&nbsp;directory.
+     This file contain information necessary to build and deploy the Hosted Targets proxy.</p>
+
+   <p>A <strong>app.yaml</strong>&nbsp;manifest file includes these elements:</p>
+
+   <ul>
+      <li><strong>runtime</strong> - (Required) Specifies the type of application you are deploying.
+        You must specify <code>node</code>.</li>
+
+      <li><strong>runtimeVersion</strong>&nbsp;- (Optional) The version of the runtime that
+        your application uses. Default:
+        <ul>
+          <li>Node.js LTS (v8.x). Refer to the <a href="https://hub.docker.com/r/library/node/tags/">Docker official repository for Node</a>
+            for other options.</li>
+      </ul>
+
+      <li><strong>command</strong> - (Optional) Lets you specify a command to run other than the
+        default command used to start your application. Default:
+        <ul>
+          <li><code>Node.js=npm</code></li>
+        </ul>
+
+      <li><strong>args</strong> - (Optional) Array of command line arguments to pass to the
+        application. Typically, these are added to the default command. Default:
+        <ul>
+        <li>Node.js - The default is <strong>start</strong>. For example, the Node.js app will be passed the command
+          <code>npm start</code>.</li>
+        </ul>
+
+        <li><strong>env</strong> - (Optional) An array of environment variables (name/value pairs)
+          to set in the Hosted Targets runtime environment. These variables are available to your
+     deployed Hosted Targets app.</li>
+
+   <ul>
+      <li><strong>name</strong>&nbsp;- The variable name.</li>
+
+      <li><strong>value | valueRef</strong> - You have two options. You can set a <b>literal value</b>
+        or reference a value stored in a <b>Key Value Map</b>. The Key Value Map must
+        already exist in your Edge environment. See <a href="http://docs.apigee.com/api-services/content/key-value-maps">Working with Key Value Maps</a>
+        <ul>
+        <li>If you use <strong>value</strong>, then you must
+          specify a variable <code>name</code> and a literal <code>value</code>. For example:
+          <pre class="prettyprint">
+   runtime:&nbsp;node
+   env:
+     - name:&nbsp;NODE_ENV
+       value:&nbsp;production</pre>
+          </li>
+        <li>If you use <strong>valueRef</strong>,
+          then you must supply the <b>name</b> of a KVM that you previously created in Edge and a <b>key</b>.
+          For example:
+          <pre class="prettyprint">
+runtime:&nbsp;node
+env:
+  - name:&nbsp;DB_ENV
+    value:&nbsp;production
+  - name:&nbsp;DB_PASSWORD
+    valueRef:
+      name:&nbsp;hosted-kvm
+      key:&nbsp;db-password</pre>
+<aside class="note">The KVM lookup is scoped to the environment. KVM organization and application/proxy
+scope are not supported. The KVM values are injected into the KVM once when the Node.js app starts.
+          Modifying the KVM later will have no effect. The KVM option let you store sensitive information
+     in the Edge encrypted KVM, rather than placing it in the proxy bundle itself.
+          See <a href="http://docs.apigee.com/api-services/content/key-value-maps">Working with Key Value Maps</a>.</aside></li>
+</ul>
+
+   <h2>Example manifest files</h2>
+
+   <p>This section contains example manifest files (app.yaml files) for Node.js
+     applications. A manifest file is required to deploy a Hosted Targets app, and must be located
+     in the <strong>apiproxy/resources/hosted</strong>&nbsp;directory.</p>
+
+   <h3>Example Node.js app manifest files</h3>
+
+        <aside class="note">Remember that you do not need to include a <code>node_modules</code> directory with a Hosted Targets
+          Node.js app. Upon deployment, Hosted Targets runs <code>npm install</code> to pull in any dependencies
+          specified in the <code>package.json</code> file.</aside>
+
+   <p>Following are example <strong>app.yaml</strong>&nbsp;(manifest) files for Node.js apps.</p>
+
+   <p>Example that defines an literal environment variable. </p>
+
+   <pre class="prettyprint">
+   runtime:&nbsp;node
+   env:
+     - name:&nbsp;NODE_ENV
+       value:&nbsp;production</pre>
+
+   <p>Example with a command, args, and environment variable.</p>
+
+   <pre class="prettyprint">
+   runtime:&nbsp;node
+   command: ./node_modules/pm2/bin/pm2
+   env:
+     - name:&nbsp;NODE_ENV
+       value:&nbsp;production
+   args:
+     -&nbsp;app.js</pre>
+
+
+
+   <p><br />Example with a KVM reference:</p>
+<p>For more information about KVM access, see <a href="#about-the-manifest-file">About the Manifest file</a></p>
+
+<pre class="prettyprint">
+runtime:&nbsp;node
+env:
+  - name:&nbsp;DB_ENV
+    value:&nbsp;production
+  - name:&nbsp;DB_PASSWORD
+    valueRef:
+      name:&nbsp;hosted-kvm
+      key:&nbsp;db-password</pre>
+
+   <h2>About log files</h2>
+
+   <p>Log files are useful for debugging and troubleshooting. You can view two types of log files for
+     a Hosted Targets deployment:</p>
+
+   <ul>
+      <li><strong>Build log</strong>&nbsp;- Shows you output related to deploying and building a Hosted Targets app.</li>
+      <li><strong>Runtime log</strong>&nbsp;- Shows output related to the running Hosted Targets app. Runtime logs
+        are scoped to the environment and return logs for the currently deployed proxy revision.</li>
+   </ul>
+
+   <h3>Access logs from the Edge UI</h3>
+
+   <ol start="1">
+      <li>Go to: <a href="http://apigee.com/edge">apigee.com/edge</a></li>
+      <li>Enter your login credentials and click Sign In.</li>
+      <li>Ensure that you are in the New Edge UI. If not, click <strong>Try New Edge</strong>&nbsp;in
+        the Classic Edge navigation bar.</li>
+      <li>Select <strong>Develop &gt; API Proxies</strong>&nbsp;in the side navigation menu.</li>
+      <li>Select the proxy for which you want to view logs.</li>
+      <li>Click the <strong>Develop</strong>&nbsp;tab.</li>
+      <li>To see the build log, click <strong>Build Logs</strong>.
+<aside class="note">Build logs are not scoped to an environment. They are the same no matter which
+  environment you deployed to. </aside></li>
+      <li>To see the deployment log, click <strong>Runtime Logs</strong>.</li>
+   </ol>
+
+<h3>Access logs with the API</h3>
+
+<p>You can also use an Edge Management API to retrieve Hosted Targets logs. For details, see
+  <a href="https://apidocs.apigee.com/management/apis/get/o/%7Borg_name%7D/e/%7Benv_name%7D/apis/%7Bapi_name%7D/cachedlogs/categories/nodejs">Get Cached Node.js Logs</a>
+
+   <h2>Using a private npm repository</h2>
+
+   <p>To use modules provided from a private NPM repository, follow these steps:</p>
+
+   <ol>
+      <li>Log into npm:
+        <pre class="devsite-terminal">npm login</pre></li>
+      <li>Get an npm auth token:</li>
+
+   <ol>
+      <li>Locate your <strong>.npmrc</strong>&nbsp;(should be in <strong>~/.npmrc</strong>).</li>
+     <li>In your <b>.npmrc</b>, note the token at the end of the line that looks like this: <br /><br />
+      <code>//registry.npmjs.org/:_authToken=****</code></li>
+
+
+  <aside class="note">The token is not derived from your password, but changing your password will
+    invalidate all tokens. The token will be valid until the password is changed. You can also
+    invalidate a single token by logging out on a machine that is logged in with that token.</aside>
+
+
+      <li>Or use the <code>npm token &lt;list | create | revoke&gt;</code>&nbsp;commands to list,
+        create, or revoke an auth token. See the <a href="https://docs.npmjs.com/cli/token">npm-token
+        documentation</a>&nbsp;for more details.</li>
+   </ol>
+
+     <li>In a browser, log into your Apigee account: <code>login.apigee.com</code></li>
+      <li>Go to the Key Value Maps configuration page:
+        <ol>
+          <li>In the New Edge UI: <b>Admin &gt; Environments &gt; Key Value Maps</b></li>
+          <li>In the Classic UI: <b>APIs &gt; Environment Configuration &gt; Key Value
+            Maps</b></li>
+        </ol>
+      <li>Click <strong>+ Key Value Map</strong>.</li>
+      <li>In the New Key Value Map dialog, enter a name and select <strong>Encrypted</strong>.
+<aside class="note">Add an Encrypted Key Value Map for each environment that you plan to use.</aside>
+</li>
+      <li>Click <strong>Add</strong>.</li>
+      <li>Add the auth token you previously located or created as a new entry in each of the KVMs
+        that you just created.</li>
+      <li>In your<strong> app.yaml</strong> file add an entry that references the KVM and key
+        associated with the npm auth token. It should look something like this:</li>
+
+       <pre class="prettyprint">
+       env:
+       - name:&nbsp;NPM_TOKEN
+         valueRef:
+           name:&nbsp;npm_store
+           key:&nbsp;private_token</pre>
+
+<p>Where:</p>
+<ul>
+     <li>The top level <strong>name</strong>&nbsp;attribute corresponds to the name of the environment
+       variable that will be created.
+     <li>The <strong>name</strong>&nbsp;under <strong>valueRef</strong>&nbsp;corresponds to the KVM you
+       created previously.
+     <li>The <strong>key</strong>&nbsp;attribute corresponds to the key that maps to the npm token you
+       added to the KVM.
+</ul>
+
+      <li>Create a <strong>.npmrc</strong>&nbsp;file in the same directory as your package.json. This
+        file should look similar to this:
+        <pre>//registry.npmjs.org/:_authToken=${NPM_TOKEN}</pre>
+        or if you&rsquo;re not using <code>registry.npmjs.org</code>&nbsp;you can set the scope
+        in the .npmrc&nbsp;file
+     by adding a line like this <code>@myscope:registry=https://mycustomregistry.example.org</code>
+        See also the <a href="https://docs.npmjs.com/files/npmrc">npmrc documentation</a>. </li>
+      <li>Upload or update your Node.js proxy with the <strong>.npmrc</strong>&nbsp;file and <strong>app.yaml</strong>&nbsp;files included.</li>
+      <li>Make sure your new or updated proxy deploys and works with the desired private repository
+        module.</li>
+
+   <ol>
+      <li>If the proxy does not deploy, check the build logs to see if it failed on installing the
+        private npm module. If so:</li>
+
+   <ol>
+      <li>Under the develop tab, make sure the <strong>.npmrc</strong>&nbsp;is present.</li>
+      <li>Make sure your token is valid (try installing the module locally with the token present
+        in the kvm).</li>
+      <li>If you are using a custom scope, make sure that is set.</li>
+   </ol>
+</ol>
+</ol>
+
+   <h2>Sample Hosted Targets applications on GitHub</h2>
+
+   <p>Apigee provides sample proxies on GitHub with Hosted Targets applications written
+     in Node.js. You can clone this repo and follow the README instructions to
+     deploy any of the proxies.</p>
+
+   <h3>Prerequisites</h3>
+
+   <p>To deploy the samples, you must have two tools installed on your system:</p>
+
+   <ul>
+      <li><a href="https://www.npmjs.com/package/apigeetool">apigeetool</a>&nbsp;-- A command line
+        tool for deploying Edge proxies.</li>
+      <li><a href="https://apidocs.apigee.com/api-reference/content/using-oauth2-security-apigee-edge-management-api#installingtheacurlandgettokenscripts">get_token</a>&nbsp;- A command line tool for obtaining an authorization token required by apigeetool.</li>
+   </ul>
+
+   <p>If you want to test samples locally, you must also have the runtime environment set up for
+     whichever language the sample uses. For example, to test a Node.js app, you must have Node.js installed.</p>
+
+   <h3>Obtaining the sample repo</h3>
+
+   <ol>
+      <li>In a browser, go to <a href="https://github.com/apigee/api-platform-samples">https://github.com/apigee/api-platform-samples</a>.</li>
+      <li>Click <strong>Clone or download</strong>&nbsp;and pull the repo to your local system, using
+        your preferred method.</li>
+      <li><strong>cd</strong>&nbsp;to <strong>&lt;your install dir&gt;/api-platform-samples/doc-samples/hosted-targets</strong></li>
+      <li>Once the repo is downloaded, you can cd&nbsp;to any of the sample directories and follow the
+        README instructions to deploy a sample proxy to Edge. The deploy command is shown below, simply
+        replace the indicated parameters with ones for your Apigee account:</li>
+
+     <pre class="prettyprint">get_token &amp;&amp;&nbsp;apigeetool deployproxy \
+          -o YOUR_ORGANIZATION \
+          -e YOUR_ENVIRONMENT \
+          --json \
+          --token "$(&lt; ~/.sso-cli/valid_token.dat)"\
+          --api NAME_OF_THE_PROXY \
+          --directory .</pre>
+</ol>
+
+   <h3>Example</h3>
+     <pre class="prettyprint">
+     ## Clone the samples repository
+     cd ~/myhome
+     git clone https://github.com/apigee/api-platform-samples.git
+     cd ~/myhome/api-platform-samples/hosted-targets
+     cd node-hosted-hello
+
+     ## Test the application locally (Node.js must be installed)
+     PORT=8081&nbsp;node apiproxy/resources/hosted/index.js
+     curl http://localhost:8081
+     {"date":"2018-03-12T21:45:22.161Z","msg":"Hello, World!"}
+
+     ## Deploy the proxy
+     get_token &amp;&amp;&nbsp;apigeetool deployproxy \
+     -o myorg \
+     -e test \
+     --json \
+     --token "$(&lt; ~/.sso-cli/valid_token.dat)"\
+     --api node-hosted-hello \
+     --directory .
+
+     ## Test the deployment. The deployment may take a few minutes to complete.
+     ## If you get a deployment error, execute the deploy command again.
+     curl http://myorg-test/node-hosted-hello
+
+     ## Test the deployment
+     curl http://myorg-test.apigee.net/node-hosted-hello
+     {"date":"2018-03-23T18:59:18.668Z","msg":"Hello, World!"
+     </pre>
+
+   <h2>Known Issues</h2>
+
+   <ul>
+      <li><strong>Network Latencies</strong>&nbsp;- Now that the Node.js application no longer runs
+        in the MP&rsquo;s JVM, there is now a network hop between the MP and the deployment. Of course
+        this comes at a cost but initial benchmarks show it to be well within a reasonable amount</li>
+      <li><strong>Slow API Responses</strong>&nbsp;- The infrastructure running your applications
+        automatically scales based on need. This means your application can actually scale down to
+        zero instances and if that is the case, the next API request will take a little longer than
+        typical API requests since the infrastructure is spinning up the instance(s) to process the
+        request(s).</li>
+      <li><strong>Deployment error</strong>&nbsp;- If you receive a deployment error when deploying a
+        Hosted Targets proxy, try redeploying the proxy. In some cases, the deployment can time out
+        and if you redeploy, the problem will resolve itself.</li>
+   </ul>
+
+
+{% endblock %}

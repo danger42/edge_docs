@@ -1,0 +1,345 @@
+  {% extends "_base.html" %} {% block title %}Register apps and manage API keys{% endblock %} {% block body %}
+
+  <p>This topic explains how to register and manage apps by using the Apigee Edge management UI.
+  The steps described in this topic require an Edge user with an org admin role or, otherwise, a
+  role that grants sufficient permission to create and/or edit developer apps.</p>
+
+  <aside class="note"><b>Note:</b> If you have a Developer Services portal, developers can register
+  their own apps. See <a href="/api-platform/publish/drupal/what-developer-portal.html">What is a
+  developer portal?</a> for more.</aside>
+
+  <h2 id="whatisadeveloperapp">What is a developer app?</h2>
+
+  <p>Let's assume you are an API provider and you have created one or more API products to bundle
+  your APIs, as explained in <a href="/api-platform/publish/create-api-products.html">Create API
+  products</a>. Typically, developers who want to consume your APIs go to your developer portal and
+  register to use them. When registering, the developer gets to select which of your API products
+  they want to use. For example, some products may be offered for free, while others require
+  payment depending on a service plan. Upon completion, this registration step produces an Edge
+  entity called a <strong>developer app</strong>. A developer app includes the products the
+  developer selected and a set of API keys that the developer will be required to use to access the
+  APIs that are associated with those products. See <a href=
+  "/api-platform/publish/drupal/what-developer-portal.html">What is a developer portal?</a> for
+  more on developer portals.</p>
+
+  <p>However, a developer portal is not the only way to create developer apps. An Edge org admin,
+  or another individual with the appropriate permissions, can also create developer apps directly
+  in the Edge UI. As an API provider, you might want to maintain complete control over the app
+  registration process and choose to register apps by using the Edge management UI. For example,
+  you may want to register apps for your internal development teams or on behalf of a developer
+  without access to your portal. Similar to registration through a portal, when you register an app
+  in the Edge UI, you decide which API products to associate with it. When the app is registered,
+  Edge automatically generates an API key to grant access to the selected API products. It is then
+  up to you (the API provider) to determine how to pass that key to the app developer. Note that
+  any additional API products you associate with the app all use the same key.</p>
+
+  <p>Apps provide the main mechanism for API providers to control who can access their APIs. At any
+  time, someone with appropriate Edge organization permissions can revoke an app's key, preventing
+  it from accessing all API products referenced by that app. Or access to a single API product
+  associated with the app can be revoked.</p>
+
+  <p><img src="/api-platform/images/Apps.png" width="561"></p>
+  <hr>
+
+  <p>As an org admin (or someone with appropriate role permissions), you can see all of your
+  organization's apps in the Edge management UI on the <strong>Publish &gt; Developer Apps</strong>
+  summary page. This page displays performance data for each app, and general information on app
+  keys. You can select a specific app from the table to get more detailed information, including
+  the API products that app can access and the resources those products expose. You can also see
+  the key associated with the app.</p>
+
+  <h2 id="registeringanappintheedgemanagementui">Registering an app in the Edge management UI</h2>
+
+  <p><strong>Note:</strong> You must be an org admin or someone with sufficient role permissions to
+  perform these tasks.</p>
+
+  <p><strong>To register an app:</strong></p>
+
+  <ol>
+    <li>Login to the Edge management UI at <a href=
+    "https://enterprise.apigee.com">https://enterprise.apigee.com</a>.</li>
+
+    <li>Click the <strong>Publish</strong> tab, then <strong>Developer Apps</strong>.</li>
+
+    <li>Click <strong>(+) Developer App</strong> on the Developer Apps page.</li>
+
+    <li>Enter an application <strong>Name</strong>. This is the internal name you can later use in
+    management API calls. You can't change the name after you create the app.</li>
+
+    <li><strong>Display Name</strong> appears in the management UI, and it's the app name
+    developers see in the developer portal. API administrators and developers can change the
+    display name any time.</li>
+
+    <li>Select a developer from the <strong>Developer</strong> list.<br>
+      An app must be associated with a registered developer. If the developer does not appear in
+      the list, you can register them. See <a href=
+      "/api-platform/publish/adding-developers-your-api-product.html">Managing app developers</a>
+      for more.<br>
+
+      <aside class="note"><b>Note:</b> For performance reasons, not all developers are displayed in
+      the Developer drop-down list. Start typing the developer email in the search box to locate
+      the developer you want.</aside>
+    </li>
+
+    <li>If necessary, enter the <strong>Callback URL</strong>.<br>
+    A callback URL is the location of a resource that belongs to the app. For example, if you are
+    using OAuth, this could be the location of a login screen where users enter their username and
+    password. This value is not required for all API products.</li>
+
+    <li>Optionally, add a descriptive note for the app.</li>
+
+    <li>The <strong>Credentials</strong> section means "API keys." Set an expiration time or date
+    for the API key that is automatically generated when the app is created. Then associate one or
+    more API <strong>Products</strong> to the key. The developer will pass the API key in each call
+    to API proxies contained in those API products. After the app is created, edit the app to add
+    more credentials/keys with different expiration dates and products. For more information,
+    see <a href="/api-platform/publish/create-api-products.html">Create API products</a>.</li>
+
+    <li>Add any custom attributes for the app. You can add up to 18 of them. For each custom
+    attribute:
+
+      <ul>
+        <li>Click <strong>(+) Add Custom Attribute</strong>.</li>
+
+        <li>Add the attribute name and value.</li>
+      </ul>
+    </li>
+
+    <li>Click <strong>Save</strong>.<br>
+    Your app is added to the apps list on the Developer Apps page.</li>
+
+    <li>If the product(s) you associated with the app require manual approval for their API keys:
+
+      <ol type="a">
+        <li>Click the new app name.</li>
+
+        <li>Click <strong>Edit</strong> to edit the app.</li>
+
+        <li>Click <strong>Approve</strong> next to the Consumer Key and Consumer Secret.</li>
+      </ol>
+    </li>
+  </ol>
+
+  <h2 id="managingapikeys"><a name="control_access" id="control_access"></a>Managing API keys</h2>
+
+  <p><strong>Note</strong>: You must be an org admin or someone with sufficient role permissions to
+  perform these tasks.</p>
+
+  <p>API calls to API proxies usually require an <a href="/api-platform/security/api-keys.html">API
+  key</a>. Edge lets the calls through only if the API key is active, valid, and meets the
+  conditions defined by the API product containing the API.</p>
+
+  <aside class="note"><b>Note:</b> When you create an API product, you can also set its access mode
+  to <strong>Internal only</strong> or <strong>Private</strong>. API products marked
+  <strong>Internal only</strong> or <strong>Private</strong> do not appear to developers on the
+  developer portal. To get access to these products, you manually add them to a developer's app
+  from the Edge management UI.</aside>
+
+  <h3 id="managingapikeys-approvinganapikey">Approving an API key</h3>
+
+  <p>If an API product is configured for Automatic approval of API keys, you don't need to do
+  anything. However, if a product requires manual approval of API keys, follow this procedure.</p>
+
+  <ol>
+    <li>In the menu, select <strong>Publish &gt; Developer Apps &gt;
+    developer_app_name</strong>.</li>
+
+    <li>Click <strong>Edit</strong> to edit the app.</li>
+
+    <li>Click <strong>Approve</strong> for the corresponding product.</li>
+
+    <li>Click <strong>Save</strong>.</li>
+  </ol>
+
+  <p>You can also approve API keys using the <a href="/api/developer-app-keys" target=
+  "_blank">management API</a>.</p>
+
+  <h3 id="managingapikeys-revokinganapikey">Revoking an API key</h3>
+
+  <p>You can revoke an API key, which means that particular key and secret are no longer valid for
+  accessing APIs in the associated API product(s). You can re-enable access at any time by clicking
+  Approve.</p>
+
+  <p>(If you want to keep the key approved but prevent it from being used on a particular product,
+  see the next section, "Revoking or removing an API product from an API key.")</p>
+
+  <ol>
+    <li>In the menu, select <strong>Publish &gt; Developer Apps &gt;
+    developer_app_name</strong>.</li>
+
+    <li>Click <strong>Edit</strong> to edit the app.</li>
+
+    <li>Click <strong>Revoke</strong> in the same row as the key and secret.</li>
+
+    <li>Click <strong>Save</strong>.</li>
+  </ol>
+
+  <p>You can also revoke API keys using the <a href="/api/developer-app-keys" target=
+  "_blank">management API</a>.</p>
+
+  <h3 id="managingapikeys-revokingorremovinganapiproductfromanapikey">Revoking or removing an API
+  product from an API key</h3>
+
+  <p>If you want to keep an API key active but not allow it to be used with one or more API
+  products, you can revoke or remove the products associated with the API key. Revoking keeps a
+  product associated with the API key but doesn't allow the key to be used with it, and removing
+  completely disassociates the API product from the API key.</p>
+
+  <ol>
+    <li>In the menu, select <strong>Publish &gt; Developer Apps &gt;
+    developer_app_name</strong>.</li>
+
+    <li>Click <strong>Edit</strong> to edit the app.</li>
+
+    <li>Click <strong>Revoke</strong> or <strong>Remove</strong> next to the desired
+    product.</li>
+
+    <li>Click <strong>Save</strong>.</li>
+  </ol>
+
+  <p>You can re-approve a revoked product or re-add a removed product.</p>
+
+  <p>You can also use the management API for this procedure. See <a href=
+  "/management/apis/post/organizations/{org_name}/developers/{developer_email_or_id}/apps/{app_name}/keys/{consumer_key}/apiproducts/{apiproduct_name}">
+  Approve or Revoke API Product for an API Key</a> and <a href=
+  "/management/apis/delete/organizations/{org_name}/developers/{developer_email_or_id}/apps/{app_name}/keys/{consumer_key}/apiproducts/{apiproduct_name}">
+  Remove API Product for a Specific Key</a>.</p>
+
+  <h3 id="managingapikeys-deletinganapikey">Deleting an API key</h3>
+
+  <p>Deleting an API key removes the key and secret, which can no longer be used in API calls to
+  APIs in the associated product(s).</p>
+
+  <ol>
+    <li>In the menu, select <strong>Publish &gt; Developer Apps &gt;
+    developer_app_name</strong>.</li>
+
+    <li>Click <strong>Edit</strong> to edit the app.</li>
+
+    <li>Click <strong>Remove</strong> for the corresponding product.</li>
+
+    <li>Click <strong>Save</strong>.</li>
+  </ol>
+
+  <p>You can also delete API keys using the <a href="/api/developer-app-keys" target=
+  "_blank">management API</a>.</p>
+
+  <h3 id="managingapikeys-generatinganewkey">Generating a new key</h3>
+
+  <p>You can generate a new API key/secret pair for a developer app. For instance, if you're using
+  API key rotation, you can generate new keys whose expiration overlaps keys that will be out of
+  rotation when they expire. You might also generate a new key/secret if the security of the
+  original key/secret is compromised. After generating a new key, be sure to revoke or remove any
+  other keys you no longer want to be used.</p>
+
+  <ol>
+    <li>In the menu, select <strong>Publish &gt; Developer Apps &gt;
+    developer_app_name</strong>.</li>
+
+    <li>Click <strong>Edit</strong>.</li>
+
+    <li>Click <strong>+ Credential</strong> to generate a new API key with the desired expiration,
+    then associate one or more API products with that key.</li>
+
+    <li>In this screen you can also revoke or remove any other API keys with the
+    <strong>Revoke</strong> and <strong>Remove</strong> buttons, which renders the keys unusable.
+    Revoked keys can be re-approved and used later. Removed keys are deleted.</li>
+
+    <li>Click <strong>Save</strong>.</li>
+  </ol>
+
+  <p>To generate a new API key with the management API, see <a href=
+  "/management/apis/post/organizations/{org_name}/developers/{developer_email_or_id}/apps/{app_name}-0">
+  Generate a new key pair for a developer app</a>.</p>
+
+  <p>If you create custom keys (next procedure), this procedure does <em>not</em> regenerate those
+  keys.</p>
+
+  <h3 id="managingapikeys-importingexistingapikeyscreatingcustomkeys">Importing existing API keys,
+  creating custom keys</h3>
+
+  <p>If you have existing consumer keys and secrets you want to import into Edge, or you want to
+  create custom API keys, see <a href=
+  "/api-platform/publish/import-existing-consumer-keys-and-secrets.html">Import existing consumer
+  keys and secrets</a>.</p>
+
+  <h2 id="editinganappintheedgemanagementui">Editing an app in the Edge management UI</h2>
+
+  <p><strong>Note: </strong>You must be an org admin or someone with sufficient role
+  permissions to perform these tasks.</p>
+
+  <p><strong>To edit an app:</strong></p>
+
+  <ol>
+    <li>In the menu, select <strong>Publish &gt; Developer Apps &gt;
+    developer_app_name</strong>.</li>
+
+    <li>Click <strong>Edit</strong>.</li>
+
+    <li>Modify the configuration.<br>
+    <strong>Note:</strong> Be careful when you edit custom attributes. You may have a system
+    that has dependencies on custom attributes.</li>
+
+    <li>Click <strong>Save</strong>.</li>
+  </ol>
+
+  <h2 id="revokingadeveloperapp">Revoking a developer app</h2>
+
+  <p><strong>Note: </strong>You must be an org admin or someone with sufficient role
+  permissions to perform these tasks.</p>
+
+  <p>When you revoke a developer app, any approved API keys can no longer be used in API calls to
+  Edge. On the Developer App Details page, the key status label on the API keys is shown in
+  strikethrough text (<strike>Approved</strike> or <strike>Revoked</strike>); and if you
+  mouse over the label, the tooltip says the app is revoked. If you re-approve the app, the
+  strikethrough text on API key status disappears, and approved API keys are valid again.</p>
+
+  <p><strong>Revoke a developer app in the management UI</strong></p>
+
+  <ol>
+    <li>Select <strong>Publish &gt; Developer Apps &gt; [app] &gt; Edit</strong>.</li>
+
+    <li>Click <strong>Revoke</strong> in the App Status field.</li>
+
+    <li>Click <strong>Save</strong>.</li>
+  </ol>
+
+  <p>It may take a few minutes for the change to be recognized by all message processors. Until
+  then, it's possible that some calls using the API keys might continue to get through. </p>
+
+  <p><strong>Revoke a developer app with the management API</strong></p>
+
+  <p>See <a href=
+  "/management/apis/post/organizations/{org_name}/developers/{developer_email_or_id}/apps/{app_name}">
+  Approve or Revoke Developer App</a>.</p>
+
+  <p>If the app is registered in other organizations, you must also revoke it in each of those
+  organizations as well.</p>
+
+  <p>You can re-approve a developer app by editing the app and clicking <strong>Approve</strong> in
+  the App Status field. When you do, all approved API keys are available for use. Again, it may
+  take a few minutes for the change to be recognized on all message processors.</p>
+
+  <h2 id="deletinganappintheedgemanagementui">Deleting an app in the Edge management UI</h2>
+
+  <p><strong>Note: </strong>You must be an org admin or someone with sufficient role
+  permissions to perform these tasks.</p>
+
+  <p>If you delete an app, all client keys associated with the apps become invalid. Using an
+  invalid key on a request causes the request to fail.</p>
+
+  <p> <strong>To delete an app:</strong></p>
+
+  <ol>
+    <li>In the menu, select <strong>Publish &gt; Developer Apps</strong>.</li>
+
+    <li>Click <strong>Delete</strong> next to the app, then click <strong>Delete</strong>
+    in the confirmation dialog.</li>
+  </ol>
+
+  <h2 id="searchingthedeveloperappspage">Searching the Developer Apps page</h2>
+
+  <p><span style="font-size: 12px;">The search menu has a dropdown menu that you can use to search
+  for specific developer app attributes, such as App Family, Consumer Key, and others.</span></p>
+
+  <p><img alt="" src="/api-platform/images/dev-search.png"></p>{% endblock %}

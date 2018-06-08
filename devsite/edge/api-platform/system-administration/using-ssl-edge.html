@@ -1,0 +1,442 @@
+  {% extends "_base.html" %} {% block title %}Using TLS with Edge{% endblock %} {% block body %}
+
+  <p>Apigee Edge has several entry points that you might want to secure with TLS. In addition, Edge
+  add-ons, such as the Developer Services portal, have entry points that can be configured to use
+  TLS.</p>
+
+  <p>The Edge TLS configuration procedure depends on how you deployed Edge: <strong>Apigee
+  Edge cloud</strong> or <strong>Apigee Edge for Private Cloud</strong>.</p>
+
+  <h2>Cloud-based deployment</h2>
+
+  <p>In a cloud-based deployment of Edge you are only responsible for configuring TLS access from
+  to API proxies and to your target endpoints.</p>
+
+  <aside class="note"><b>Note:</b> Free and trial accounts cannot configure TLS for API proxies.
+  Instead, Apigee automatically provides a TLS certificate and private key to support HTTPS on a
+  secure virtual host so that trial customers can get started developing and testing APIs. For more
+  information on Edge pricing plans, see <a href=
+  "https://,%20or%20in%20a%20custom%20role%20with%20permissions%20to%20modify%20a%20virtual%20host">
+  https://apigee.com/api-management/#/pricing</a>.  </aside>
+
+  <p>For the cloud version of the Developer Services portal, you configure TLS on on the Pantheon
+  hosting server.</p>
+
+  <p>For more, see <a href=
+  "/api-platform/system-administration/configuring-ssl-cloud-based-edge-installation.html">Using
+  TLS in a cloud-based Edge installation</a>.</p>
+
+  <h2>Private Cloud deployment</h2>
+
+  <p>For an Apigee Edge for Private Cloud installation of the Developer Services portal, you are
+  completely responsible for configuring TLS. That means you not only have to obtain the TLS
+  certificate and private key, but you also have to configure Edge to use TLS.</p>
+
+  <p>For more, see <a href=
+  "/api-platform/system-administration/configuring-ssl-premises-edge-installation.html">Using TLS
+  in a Private Cloud installation</a>.</p>
+
+  <h2>Supported versions of TLS</h2>
+
+  <p>The supported versions of TLS depend on wether you are using Edge in the Cloud or
+    Edge for the Private Cloud:</p>
+
+  <ul>
+    <li><strong>Edge in the Cloud</strong>:
+
+      Supports TLS version 1.2 only. Support for TLS versions 1.0 and 1.1 for the Cloud
+      have been retired. For more information,
+      see <a class="external" href="https://docs.apigee.com/release/notes/tls-retirement">TLS 1.0 and 1.1 retirement</a>.</li>
+
+    <li><strong>Edge for the Private Cloud</strong>:
+
+      Supports TLS versions 1.0, 1.1, and 1.2.</li>
+  </ul>
+
+  <h2 id="whereedgeusestls">Where Edge uses TLS</h2>
+
+  <p>The following images shows the places in an Edge installation where you can configure TLS:</p>
+
+  <p><img alt="" src="/api-platform/images/EdgeSSL_v2.png"></p>
+
+  <aside class="note"><b>Note:</b> Most of the connections between the Edge components have been
+  omitted to simplify this image.</aside>
+
+  <p>Apigee Edge for Private Cloud customers typically configure all connections to use TLS.
+  However, for cloud customers, Apigee handles most of the TLS configuration for you and only have
+  to configure TLS for connections 3 and 4 shown in the figure.  </p>
+
+  <p>The following table describes these TLS connections:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th> </th>
+
+        <th>
+          <p><strong>Source</strong></p>
+        </th>
+
+        <th>
+          <p><strong>Destination</strong></p>
+        </th>
+
+        <th>
+          <p><strong>Description</strong></p>
+        </th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td>
+          <p>1</p>
+        </td>
+
+        <td>
+          <p>API developer</p>
+        </td>
+
+        <td>
+          <p>Edge management UI</p>
+        </td>
+
+        <td>
+          <p>The Edge management UI is a browser-based tool that API developers use to perform most
+          of the tasks necessary to create, configure, and manage API proxies and API products.
+           </p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>2</p>
+        </td>
+
+        <td>
+          <p>API Developer</p>
+        </td>
+
+        <td>
+          <p>Edge management API</p>
+        </td>
+
+        <td>
+          <p>All Edge services can be configured through the Edge management API, a REST-based API.
+          That means you can use these APIs to create, configure, and manage API proxies and API
+          products, create and manage apps and app developers, and to perform many other types of
+          operations.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>3</p>
+        </td>
+
+        <td>
+          <p>API Client (app)</p>
+        </td>
+
+        <td>
+          <p>API</p>
+        </td>
+
+        <td>
+          <p>Apps access your APIs by making requests to API proxies through virtual hosts on the
+          Edge Router.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>4</p>
+        </td>
+
+        <td>
+          <p>Edge</p>
+        </td>
+
+        <td>
+          <p>Target endpoint</p>
+        </td>
+
+        <td>
+          <p>An API proxy functions as a mapping of a publicly available endpoint on Edge to a
+          target endpoint, which is often defined by an endpoint on your backend service. The Edge
+          Message Processor accesses your backend service in response to a request to an API
+          proxy.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>5</p>
+        </td>
+
+        <td>
+          <p>Router</p>
+        </td>
+
+        <td>
+          <p>Message Processor</p>
+        </td>
+
+        <td>
+          <p>A Router handles all Edge incoming API traffic, determines the API proxy that handles
+          the request, balances requests across available Message Processors, and dispatches the
+          request.</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>The following image shows a scenario where the API client accesses Edge through a load
+  balancer, rather than accessing the Router directly:</p>
+
+  <p><img alt="" src="/api-platform/images/EdgeSSLELB.png"></p>
+
+  <p>The cloud-based version of Edge is typically configured to use a load balancer. For Private
+  Cloud installations, the presence of a load balancer is dependent on your network configuration
+  of Edge.</p>
+
+  <aside class="note"><b>Note:</b> Load balancers often cannot be configured to support two-way
+  TLS.</aside>
+
+  <p>When using a load balancer, you can configure TLS between the API client and the load balancer
+  and, if necessary, between the load balancer and the Router, as the following table
+  describes:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th> </th>
+
+        <th>
+          <p><strong>Source</strong></p>
+        </th>
+
+        <th>
+          <p><strong>Destination</strong></p>
+        </th>
+
+        <th>
+          <p><strong>Description</strong></p>
+        </th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td>
+          <p>6</p>
+        </td>
+
+        <td>
+          <p>API Client (app)</p>
+        </td>
+
+        <td>
+          <p>Load Balancer</p>
+        </td>
+
+        <td>
+          <p>Apps access your APIs by making requests to API proxies through a load balancer. The
+          load balancer forwards the request to an Edge Router.</p>
+
+          <p>You can configure TLS on the entry point of the load balancer. The way you configure
+          TLS is based on the load balancer.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>7</p>
+        </td>
+
+        <td>
+          <p>Load Balancer</p>
+        </td>
+
+        <td>
+          <p>Router</p>
+        </td>
+
+        <td>
+          <p>Depending on your configuration, you might configure TLS access to the Router from the
+          load balancer. In that case, you configure TLS just as if the load balancer was not
+          present.</p>
+
+          <p>Or, if the load balancer and Router are in the same security domain, TLS configuration
+          may not be necessary. However, that is dependent on your network configuration.</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="whereapibaasusestls">Where API BaaS uses TLS</h2>
+
+  <p>The following image shows the places where API BaaS uses TLS:</p>
+
+  <p><img alt="" src="/api-platform/images/arch_ports_baas_tls_v2.png"></p>
+
+  <p>The following table describes these TLS connections:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th> </th>
+
+        <th>
+          <p><strong>Source</strong></p>
+        </th>
+
+        <th>
+          <p><strong>Destination</strong></p>
+        </th>
+
+        <th>
+          <p><strong>Description</strong></p>
+        </th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td>
+          <p>1</p>
+        </td>
+
+        <td>
+          <p>Browser</p>
+        </td>
+
+        <td>
+          <p>BaaS Portal</p>
+        </td>
+
+        <td>
+          <p>The BaaS Portal is a browser-based tool that developers use to create apps, add and
+          configure users, add and update collections, and perform many other tasks.
+           </p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>2</p>
+        </td>
+
+        <td>
+          <p>BaaS Portal and BaaS API</p>
+        </td>
+
+        <td>
+          <p>Load Balancer</p>
+        </td>
+
+        <td>
+          <p>A production installation of BaaS typically uses a load balancer in front of the BaaS
+          Stack nodes. The Portal running in a Browser and the BaaS API then make TLS requests to
+          the Stack nodes through the load balancer. </p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>3</p>
+        </td>
+
+        <td>
+          <p>Load Balancer</p>
+        </td>
+
+        <td>
+          <p>BaaS Stack</p>
+        </td>
+
+        <td>
+          <p>Configure TLS on the BaaS Stack nodes. You can configure TLS on the Stack nodes
+          even if you do not have a load balancer.</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="wherethedeveloperservicesportalusestls">Where the Developer Services portal uses TLS</h2>
+
+  <p>The following image show the two places where the portal uses TLS:</p>
+
+  <p><img alt="" src="/api-platform/images/portalSSLIntro.png"></p>
+
+  <p>Apigee Edge for Private Cloud and Edge cloud customers configure TLS on both connections. The
+  following table describes these connections in more detail:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th> </th>
+
+        <th>
+          <p><strong>Source</strong></p>
+        </th>
+
+        <th>
+          <p><strong>Destination</strong></p>
+        </th>
+
+        <th>
+          <p><strong>Description</strong></p>
+        </th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td>
+          <p>1</p>
+        </td>
+
+        <td>
+          <p>Portal</p>
+        </td>
+
+        <td>
+          <p>Edge management API</p>
+        </td>
+
+        <td>
+          <p>The portal does not function as a stand-alone system. Instead, much of the information
+          used by the portal is actually stored on Edge, where Edge can be deployed either in the
+          cloud or Edge for Private Cloud.</p>
+
+          <p>The portal acts as the TLS client in this scenario by making requests to the Edge
+          management API. As the TLS server, it is up to Edge to configure TLS.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>2</p>
+        </td>
+
+        <td>
+          <p>App developers</p>
+        </td>
+
+        <td>
+          <p>Portal</p>
+        </td>
+
+        <td>
+          <p>Developers log in to the portal to register apps and receive API keys. Because the
+          connection requires the developer to pass login credentials, and for the portal to send
+          app keys, it should be configured to use TLS.</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>For more information on configuring TLS for the cloud-based version and the Apigee Edge for
+  Private Cloud version of the portal, see <a href=
+  "/api-platform/system-administration/using-ssl-portal.html">Using TLS on the portal</a>.</p>{% endblock %}

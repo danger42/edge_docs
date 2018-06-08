@@ -1,0 +1,1116 @@
+  {% extends "_base.html" %} {% block title %}XML to JSON policy{% endblock %} {% block body %}
+  <img src="/api-platform/images/icon_policy_xml-to-json.jpg">
+
+  <h3>What</h3>
+
+  <p>This policy converts messages from the extensible markup language (XML) format to JavaScript
+  Object Notation (JSON), giving you several options for controlling how messages are
+  converted.</p>
+
+  <p>Assuming that the intent is to convert an XML-formatted response into a JSON-formatted
+  response, the policy would be attached to a response Flow (for example, Response / ProxyEndpoint
+  / PostFlow).</p>
+
+  <h3 id="usage">About</h3>
+
+  <p>In a typical mediation scenario, a JSON to XML policy on the inbound request flow is often
+  paired with an XML to JSON policy on the outbound response flow. By combining policies this way,
+  a JSON API can be exposed for backend services that natively support only XML.</p>
+
+  <p>For scenarios where APIs are consumed by diverse client apps that may require either JSON or
+  XML, the response format can be dynamically set by configuring JSON to XML and XML to JSON
+  policies to execute conditionally. See <a href=
+  "/api-platform/fundamentals/flow-variables-and-conditions.html">Flow variables and conditions</a>
+  for an implementation of this scenario.</p>
+  <hr>
+
+  <h3 id="samples">Samples</h3>
+
+  <p>For a detailed discussion on converting between JSON and XML, see <a href=
+  "https://community.apigee.com/articles/1839/converting-between-xml-and-json-what-you-need-to-k.html">http://community.apigee.com/articles/1839/converting-between-xml-and-json-what-you-need-to-k.html</a>.</p><!-- Begin tab list -->
+  <!-- End tab list --><!-- Begin tabbed region -->
+
+  <div class="ds-selector-tabs">
+    <section>
+      <h3 class="two-line-tab">Converting a response</h3>
+      <pre class="prettyprint">
+&lt;XMLToJSON name="ConvertToJSON"&gt;
+  &lt;Options&gt;
+  &lt;/Options&gt;
+  &lt;OutputVariable&gt;response&lt;/OutputVariable&gt;
+  &lt;Source&gt;response&lt;/Source&gt;
+&lt;/XMLToJSON&gt;
+</pre>
+
+      <p>This configuration&#8212;which is the minimal configuration required to convert XML to
+      JSON&#8212;takes an XML-formatted response message as the source, and then creates a
+      JSON-formatted message that is populated in the <code>response</code> OutputVariable. Edge
+      automatically uses the content of this variable as the message for next processing step.</p>
+    </section>
+  </div><!-- End tabbed region. -->
+  <hr>
+
+  <h2 id="elements">Element reference</h2>
+
+  <p>Following are elements and attributes you can configure on this policy.</p>
+  <pre class="prettyprint">
+&lt;XMLToJSON async="false" continueOnError="false" enabled="true" name="XML-to-JSON-1"&gt;
+    &lt;DisplayName&gt;XML to JSON 1&lt;/DisplayName&gt;
+    &lt;<a href="#source">Source</a>&gt;response&lt;/Source&gt;
+    &lt;<a href="#outputvariable">OutputVariable</a>&gt;response&lt;/OutputVariable&gt;
+    &lt;Options&gt;
+        &lt;<a href="#recognizenumber">RecognizeNumber</a>&gt;true&lt;/RecognizeNumber&gt;
+        &lt;<a href="#recognizeboolean">RecognizeBoolean</a>&gt;true&lt;/RecognizeBoolean&gt;
+        &lt;<a href="#recognizenull">RecognizeNull</a>&gt;true&lt;/RecognizeNull&gt;
+        &lt;<a href="#nullvalue">NullValue</a>&gt;NULL&lt;/NullValue&gt;
+        &lt;<a href="#namespace">NamespaceBlockName</a>&gt;#namespaces&lt;/NamespaceBlockName&gt;
+        &lt;<a href=
+"#namespace">DefaultNamespaceNodeName</a>&gt;&amp;&lt;/DefaultNamespaceNodeName&gt;
+        &lt;<a href="#namespace">NamespaceSeparator</a>&gt;***&lt;/NamespaceSeparator&gt;
+        &lt;<a href="#text">TextAlwaysAsProperty</a>&gt;true&lt;/TextAlwaysAsProperty&gt;
+        &lt;<a href="#text">TextNodeName</a>&gt;TEXT&lt;/TextNodeName&gt;
+        &lt;<a href="#attribute">AttributeBlockName</a>&gt;FOO_BLOCK&lt;/AttributeBlockName&gt;
+        &lt;<a href="#attribute">AttributePrefix</a>&gt;BAR_&lt;/AttributePrefix&gt;
+        &lt;<a href="#output">OutputPrefix</a>&gt;PREFIX_&lt;/OutputPrefix&gt;
+        &lt;<a href="#output">OutputSuffix</a>&gt;_SUFFIX&lt;/OutputSuffix&gt;
+        &lt;<a href="#striplevels">StripLevels</a>&gt;2&lt;/StripLevels&gt;
+        &lt;<a href="#treatasarray">TreatAsArray</a>&gt;
+            &lt;Path unwrap="true"&gt;teachers/teacher/studentnames/name&lt;/Path&gt;
+        &lt;/TreatAsArray&gt;
+    &lt;/Options&gt;
+    &lt;!-- Use Options or Format, not both --&gt;
+    &lt;<a href="#format">Format</a>&gt;yahoo&lt;/Format&gt;
+&lt;/XMLToJSON&gt;
+</pre>
+
+  <h2 id="xmltojsonattributes">&lt;XMLtoJSON&gt; attributes</h2>
+  <pre class="prettyprint">
+&lt;XMLtoJSON async="false" continueOnError="false" enabled="true" name="XML-to-JSON-1"&gt; 
+</pre>{% dynamic include /includes/___policies-parent-element-attributes %}
+
+  <h2 id="source">&lt;Source&gt; element</h2>
+
+  <p>The variable, request or response, that contains the XML message that you want to convert to
+  JSON.</p>
+
+  <p>The HTTP Content-type header of the source message must be set to
+  <code>application/xml</code>, otherwise the policy is not enforced.</p>
+
+  <p>If <code>&lt;Source&gt;</code> is not defined, then it is treated as message (which resolves
+  to request when the policy is attached to a request flow, or response when the policy is attached
+  to a response flow).</p>
+
+  <p>If the source variable cannot be resolved, or resolves to a non-message type, the policy
+  throws an error.</p>
+  <pre class="prettyprint">
+&lt;Source&gt;response&lt;/Source&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default</b></td>
+
+        <td>request or response, determined by where the policy is added to the API proxy flow</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type</b></td>
+
+        <td>message</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="outputvariable">&lt;OutputVariable&gt; element</h2>
+
+  <p>Stores the output of the XML to JSON format conversion. This is usually the same value as the
+  source, that is, usually XML response is converted to a JSON response.</p>
+
+  <p>The payload of the XML message is parsed and converted into JSON, and the HTTP Content-type
+  header of the XML-formatted message is set to <code>application/json</code>.</p>
+
+  <p>If <code>OutputVariable</code> is not specified, the <code>source</code> is treated as
+  <code>OutputVariable</code>. For example, if the <code>source</code> is <code>response</code>,
+  then <code>OutputVariable</code> defaults to <code>response</code>.</p>
+  <pre class="prettyprint">
+&lt;OutputVariable&gt;response&lt;/Response&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default</b></td>
+
+        <td>request or response, determined by where the policy is added to the API proxy flow</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type</b></td>
+
+        <td>message</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="options">&lt;Options&gt;</h2>
+
+  <p>Options give you control over the conversion from XML to JSON. Use either the
+  <code>&lt;Options&gt;</code> group, which lets you add specific conversion settings, or the
+  <a href="#format"><code>&lt;Format&gt;</code></a> element, which lets you reference a template of
+  predefined options. You cannot use both <code>&lt;Options&gt;</code> and
+  <code>&lt;Format&gt;</code>.</p>
+
+  <p><code>&lt;Options&gt;</code> is required if <code>&lt;Format&gt;</code> isn't used.</p>
+
+  <h2 id="recognizenumber">&lt;Options&gt;/&lt;RecognizeNumber&gt; element</h2>
+
+  <p>If true, then number fields in the XML payload retain their original format.</p>
+  <pre class="prettyprint">
+&lt;RecognizeNumber&gt;true&lt;/RecognizeNumber&gt;
+</pre>
+
+  <p>Consider the following XML example:</p>
+  <pre class="prettyprint">
+&lt;a&gt;
+  &lt;b&gt;100&lt;/b&gt;
+  &lt;c&gt;value&lt;/c&gt;
+&lt;/a&gt;
+</pre>
+
+  <p>If <code>true</code>, converts to:</p>
+  <pre class="prettyprint">
+{
+    "a": {
+        "b": 100,
+        "c": "value"
+    }
+}
+</pre>
+
+  <p>If <code>false</code>, converts to:</p>
+  <pre class="prettyprint">
+{
+    "a": {
+        "b": "100",
+        "c": "value"
+    }
+}
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default</b></td>
+
+        <td>false</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type</b></td>
+
+        <td>Boolean</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="recognizeboolean">&lt;Options&gt;/&lt;RecognizeBoolean&gt; element</h2>
+
+  <p>Lets the conversion maintain boolean true/false values rather than turning the values into
+  strings.</p>
+  <pre class="prettyprint">
+&lt;RecognizeBoolean&gt;true&lt;/RecognizeBoolean&gt;
+</pre>
+
+  <p>For the following XML example:</p>
+  <pre class="prettyprint">
+&lt;a&gt;
+  &lt;b&gt;true&lt;/b&gt;
+  &lt;c&gt;value&lt;/c&gt;
+&lt;/a&gt;
+</pre>
+
+  <p>If <code>true</code>, converts to:</p>
+  <pre class="prettyprint">
+{
+    "a": {
+        "b": true,
+        "c": "value"
+    }
+}
+</pre>
+
+  <p>If <code>false</code>, converts to:</p>
+  <pre class="prettyprint">
+{
+    "a": {
+        "b": "true",
+        "c": "value"
+    }
+}
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default</b></td>
+
+        <td>false</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type</b></td>
+
+        <td>Boolean</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="recognizenull">&lt;Options&gt;/&lt;RecognizeNull&gt; element</h2>
+
+  <p>Lets you convert empty values to null values.</p>
+  <pre class="prettyprint">
+&lt;RecognizeNull&gt;true&lt;/RecognizeNull&gt;
+</pre>
+
+  <p>For the following XML:</p>
+  <pre class="prettyprint">
+&lt;a&gt;
+  &lt;b&gt;&lt;/b&gt;
+  &lt;c&gt;value&lt;/c&gt;
+&lt;/a&gt;
+</pre>
+
+  <p>If <code>true</code>, converts to:</p>
+  <pre class="prettyprint">
+{
+  "a": {
+    "b": null,
+    "c": "value"
+  }
+}
+</pre>
+
+  <p>If <code>false</code>, converts to:</p>
+  <pre class="prettyprint">
+{
+  "a": {
+    "b": {},
+    "c": "value"
+  }
+}
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default</b></td>
+
+        <td>false</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type</b></td>
+
+        <td>Boolean</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="nullvalue">&lt;Options&gt;/&lt;NullValue&gt; element</h2>
+
+  <p>Indicates what constitutes a null value in the message to be converted. By default the value
+  is <code>NULL</code>.</p>
+  <pre class="prettyprint">
+&lt;NullValue&gt;NULL&lt;/NullValue&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default</b></td>
+
+        <td><code>NULL</code></td>
+      </tr>
+
+      <tr>
+        <td><b>Presence</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type</b></td>
+
+        <td>String</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="namespace">&lt;Options&gt;/&lt;NamespaceBlockName&gt;<br>
+  &lt;Options&gt;/&lt;DefaultNamespaceNodeName&gt;<br>
+  &lt;Options&gt;/&lt;NamespaceSeparator&gt; elements</h2>
+
+  <p>Use these elements together.</p>
+  <pre class="prettyprint">
+&lt;<a href="#namespace">NamespaceBlockName</a>&gt;#namespaces&lt;/NamespaceBlockName&gt;
+&lt;<a href="#namespace">DefaultNamespaceNodeName</a>&gt;&amp;&lt;/DefaultNamespaceNodeName&gt;
+&lt;<a href="#namespace">NamespaceSeparator</a>&gt;***&lt;/NamespaceSeparator&gt;
+</pre>
+
+  <p>Consider the following XML example:</p>
+  <pre class="prettyprint">
+&lt;a xmlns="http://ns.com" xmlns:ns1="http://ns1.com"&gt;
+  &lt;ns1:b&gt;value&lt;/ns1:b&gt;
+&lt;/a&gt;
+</pre>
+
+  <p>If <code>NamespaceSeparator</code> is not specified, the following JSON structure is
+  generated:</p>
+  <pre class="prettyprint">
+{
+    "a": {
+        "b": "value"
+    }
+}
+</pre>
+
+  <p>If the elements <code>NamespaceBlockName</code>, <code>DefaultNamespaceNodeName</code>, and
+  <code>NamespaceSeparator</code> are specified as <code>#namespaces</code>, <code>&amp;</code>,
+  and <code>***</code>, respectively, then the following JSON structure is generated:</p>
+  <pre class="prettyprint">
+{
+    "a": {
+        "#namespaces": {
+            "&amp;": "http://ns.com",
+            "ns1": "http://ns1.com"
+        },
+        "ns1***b": "value"
+    }
+}
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default</b></td>
+
+        <td>See examples above.</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence</b></td>
+
+        <td>Optional<br>
+        However, if you specify <code>&lt;NamespaceBlockName&gt;</code>, you must also specify the
+        other two elements.</td>
+      </tr>
+
+      <tr>
+        <td><b>Type</b></td>
+
+        <td>Strings</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="text">&lt;Options&gt;/&lt;TextAlwaysAsProperty&gt;<br>
+  &lt;Options&gt;/&lt;TextNodeName&gt; elements</h2>
+
+  <p>Use these elements together.</p>
+
+  <p>If set to <code>true</code>, the content of the XML element is converted to a string
+  property.</p>
+  <pre class="prettyprint">
+&lt;<a href="#text">TextAlwaysAsProperty</a>&gt;true&lt;/TextAlwaysAsProperty&gt;
+&lt;<a href="#text">TextNodeName</a>&gt;TEXT&lt;/TextNodeName&gt;
+</pre>
+
+  <p>For the following XML:</p>
+  <pre class="prettyprint">
+&lt;a&gt;
+  &lt;b&gt;value1&lt;/b&gt;
+  &lt;c&gt;value2&lt;d&gt;value3&lt;/d&gt;value4&lt;/c&gt;
+&lt;/a&gt;
+</pre>
+
+  <p>If <code>TextAlwaysAsProperty</code> is set to <code>true</code> and <code>TextNodeName</code>
+  specified as <code>TEXT</code>, the following JSON structure is generated:</p>
+  <pre class="prettyprint">
+{
+  "a": {
+    "b": {
+      "TEXT": "value1"
+    },
+    "c": {
+      "TEXT": [
+        "value2",
+        "value4"
+        ],
+        "d": {
+          "TEXT": "value3"
+        }
+      }
+    }
+}
+</pre>
+
+  <p>If <code>TextAlwaysAsProperty</code> is set to <code>false</code> and
+  <code>TextNodeName</code> specified as <code>TEXT</code>, the following JSON structure is
+  generated:</p>
+  <pre class="prettyprint">
+{
+  "a": {
+    "b": "value1",
+    "c": {
+      "TEXT": [
+        "value2",
+        "value4"
+      ],
+      {
+        "d": "value3",
+      }
+    }
+}
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default</b></td>
+
+        <td><code>&lt;TextAlwaysAsProperty&gt;</code>: false<br>
+        <code>&lt;TextNodeName&gt;</code>: N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type</b></td>
+
+        <td><code>&lt;TextAlwaysAsProperty&gt;</code>: Boolean<br>
+        <code>&lt;TextNodeName&gt;</code>: String</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="attribute">&lt;Options&gt;/&lt;AttributeBlockName&gt;<br>
+  &lt;Options&gt;/&lt;AttributePrefix&gt; elements</h2>
+
+  <p>Use these elements together.</p>
+
+  <p>Lets you group values into a JSON block and append prefixes to the attribute names.</p>
+  <pre class="prettyprint">
+&lt;<a href="#attribute">AttributeBlockName</a>&gt;FOO_BLOCK&lt;/AttributeBlockName&gt;
+&lt;<a href="#attribute">AttributePrefix</a>&gt;BAR_&lt;/AttributePrefix&gt;
+</pre>
+
+  <p>Consider the following XML example:</p>
+  <pre class="prettyprint">
+&lt;a attrib1="value1" attrib2="value2"/&gt;
+</pre>
+
+  <p>If both the attributes (<code>AttributeBlockName</code> and <code>AttributePrefix</code>) are
+  specified as defined in the XML to JSON example, the following JSON structure is generated:</p>
+  <pre class="prettyprint">
+{
+  "a": {
+    "FOO_BLOCK": {
+      "BAR_attrib1": "value1",
+      "BAR_attrib2": "value2"
+    }
+  }
+}
+</pre>
+
+  <p>If only <code>AttributeBlockName</code> is specified, the following JSON structure is
+  generated:</p>
+  <pre class="prettyprint">
+{
+    "a": {
+        "FOO_BLOCK": {
+            "attrib1": "value1",
+            "attrib2": "value2"
+        }
+    }
+}
+</pre>
+
+  <p>If only <code>AttributePrefix</code> is specified, the following JSON structure is
+  generated:</p>
+  <pre class="prettyprint">
+{
+    "a": {
+        "BAR_attrib1": "value1",
+        "BAR_attrib2": "value2"
+    }
+}
+</pre>
+
+  <p>If neither is specified, the following JSON structure is generated:</p>
+  <pre class="prettyprint">
+{
+    "a": {
+        "attrib1": "value1",
+        "attrib2": "value2"
+    }
+}
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default</b></td>
+
+        <td>See examples above.</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type</b></td>
+
+        <td>String</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="output">&lt;Options&gt;/&lt;OutputPrefix&gt;<br>
+  &lt;Options&gt;/&lt;OutputSuffix&gt; elements</h2>
+
+  <p>Use these elements together.</p>
+  <pre class="prettyprint">
+&lt;<a href="#output">OutputPrefix</a>&gt;PREFIX_&lt;/OutputPrefix&gt;
+&lt;<a href="#output">OutputSuffix</a>&gt;_SUFFIX&lt;/OutputSuffix&gt;
+</pre>
+
+  <p>Consider the following XML example:</p>
+  <pre class="prettyprint">
+&lt;a&gt;value&lt;/a&gt;
+</pre>
+
+  <p>If both the attributes (<code>OutputPrefix</code> and <code>OutputSuffix</code>) are specified
+  as defined in the XML to JSON example, the following JSON structure is generated:</p>
+  <pre class="prettyprint">
+PREFIX_{
+    "a": "value"
+}_SUFFIX
+</pre>
+
+  <p>If only <code>OutputPrefix</code> is specified, the following JSON structure is generated:</p>
+  <pre class="prettyprint">
+PREFIX_{
+  "a" : "value"
+}
+</pre>
+
+  <p>If only <code>OutputSuffix</code> is specified, the following JSON structure is generated:</p>
+  <pre class="prettyprint">
+{
+  "a" : "value"
+}_SUFFIX
+</pre>
+
+  <p>If neither <code>OutputPrefix</code> nor <code>OutputSuffix</code> is specified, the following
+  JSON structure is generated:</p>
+  <pre class="prettyprint">
+{
+    "a": "value"
+}
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default</b></td>
+
+        <td>See samples above.</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type</b></td>
+
+        <td>String</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="striplevels">&lt;Options&gt;/&lt;StripLevels&gt; element</h2>
+  <pre class="prettyprint">
+&lt;Options&gt;
+    &lt;StripLevels&gt;4&lt;/StripLevels&gt;
+&lt;/Options&gt;
+</pre>
+
+  <p>Sometimes XML payloads, such as SOAP, have many parent levels you don't want to include in the
+  converted JSON. Here's an example SOAP response containing many levels:</p>
+  <pre class="prettyprint">
+&lt;soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/Schemata-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"&gt;
+  &lt;soap:Body&gt;
+      &lt;GetCityWeatherByZIPResponse xmlns="http://ws.cdyne.com/WeatherWS/"&gt;
+          &lt;GetCityWeatherByZIPResult&gt;
+              &lt;State&gt;CO&lt;/State&gt;
+              &lt;City&gt;Denver&lt;/City&gt;
+              &lt;Description&gt;Sunny&lt;/Description&gt;
+              &lt;Temperature&gt;62&lt;/Temperature&gt;
+          &lt;/GetCityWeatherByZIPResult&gt;
+      &lt;/GetCityWeatherByZIPResponse&gt;
+  &lt;/soap:Body&gt;
+&lt;/soap:Envelope&gt;
+</pre>
+
+  <p>There are 4 levels before you get to the State, City, Description, and Temperature level.
+  Without using <code>&lt;StripLevels&gt;</code>, the converted JSON response would look like
+  this:</p>
+  <pre class="prettyprint">
+{
+   "Envelope" : {
+      "Body" : {
+         "GetCityWeatherByZIPResponse" : {
+            "GetCityWeatherByZIPResult" : {
+               "State" : "CO",
+               "City" : "Denver",
+               "Description" : "Sunny",
+               "Temperature" : "62"
+            }
+         }
+      }
+   }
+}
+</pre>
+
+  <p>If you want to strip those first 4 levels in the JSON response, you'd set
+  <code>&lt;StripLevels&gt;4&lt;/StripLevels&gt;</code>, which would give you the following
+  JSON:</p>
+  <pre class="prettyprint">
+{
+  "State" : "CO",
+  "City" : "Denver",
+  "Description" : "Sunny",
+  "Temperature" : "62"
+}
+</pre>
+
+  <p>You can strip levels away up to the first element that contains multiple children. What does
+  that mean? Let's look at a more complex JSON example:</p>
+  <pre class="prettyprint">
+{
+   "Envelope" : {
+      "Body" : {
+         "GetCityForecastByZIPResponse" : {
+            "GetCityForecastByZIPResult" : {
+               "ResponseText" : "City Found",
+               "ForecastResult" : {
+                  "Forecast" : [
+                     {
+                        "ProbabilityOfPrecipiation" : {
+                           "Nighttime" : "00",
+                           "Daytime" : 10
+                        }  ...
+</pre>
+
+  <p>Level 3 in this example is <code>GetCityForecastByZIPResponse</code>, which has only one
+  child. So if you were to use <code>&lt;StripLevels&gt;3&lt;/StripLevels&gt;</code> (remove the
+  first three levels), the JSON would look like this:</p>
+  <pre class="prettyprint">
+{
+   "GetCityForecastByZIPResult" : {
+      "ResponseText" : "City Found",
+      "ForecastResult" : {
+         "Forecast" : [
+            {
+               "ProbabilityOfPrecipiation" : {
+                  "Nighttime" : "00",
+                  "Daytime" : 10
+               }  ...
+</pre>
+
+  <p>Notice that <code>GetCityForecastByZIPResult</code> has multiple children. Since it's the
+  first element containing multiple children, you can strip this last level using
+  <code>&lt;StripLevels&gt;4&lt;/StripLevels&gt;</code>, which will give you the following
+  JSON:</p>
+  <pre class="prettyprint">
+{
+   "ResponseText" : "City Found",
+   "ForecastResult" : {
+      "Forecast" : [
+         {
+            "ProbabilityOfPrecipiation" : {
+               "Nighttime" : "00",
+               "Daytime" : 10
+            }  ...
+</pre>
+
+  <p>Because level 4 is the first level containing multiple children, you can't strip any levels
+  lower than this. If you set the strip level to 5, 6, 7, and so on, you'll continue to get the
+  response above.</p>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default</b></td>
+
+        <td>0 (no level stripping)</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type</b></td>
+
+        <td>Integer</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="treatasarray">&lt;Options&gt;/&lt;TreatAsArray&gt;/&lt;Path&gt; element</h2>
+  <pre class="prettyprint">
+&lt;Options&gt;
+    &lt;TreatAsArray&gt;
+        &lt;Path unwrap="true"&gt;teachers/teacher/studentnames/name&lt;/Path&gt;
+    &lt;/TreatAsArray&gt;
+&lt;/Options&gt;
+</pre>
+
+  <p>This element combination lets you ensure that values from an XML document are put in a JSON
+  array. This is useful, for example, when the number of child elements can vary (from one to
+  multiple), and you want to ensure the values are always in an array. Doing this helps keep your
+  code stable, because you can get data from the array the same way every time. For
+  example: <code>$.teachers.teacher.studentnames[0]</code> gets the first student name value
+  in the array regardless of the number of values in the array.</p>
+
+  <p>Let's take a step back and look at the XML to JSON default behavior, then explore how to
+  control the output using <code>&lt;TreatAsArray&gt;/&lt;Path&gt;</code>.</p>
+
+  <p>When an XML document contains an element with multiple child values (usually based on a schema
+  where the element's <code>maxOccurs='unbounded'</code>), the XML to JSON policy automatically
+  puts those values in an array. For example, the following XML block</p>
+  <pre class="prettyprint">
+&lt;teacher&gt;
+    &lt;name&gt;teacherA&lt;/name&gt;
+    &lt;studentnames&gt;
+        &lt;name&gt;student1&lt;/name&gt;
+        &lt;name&gt;student2&lt;/name&gt;
+    &lt;/studentnames&gt;
+&lt;/teacher&gt;
+</pre>
+
+  <p>...gets converted into the following JSON automatically with no special policy
+  configuration:</p>
+  <pre class="prettyprint">
+{
+  "teachers" : {
+      "teacher" : {
+          "name" : "teacherA",
+          "studentnames" : {
+              "name" : <strong>[
+                 "student1",
+                 "student2"
+              ]</strong>}
+           }
+      }
+}
+</pre>
+
+  <p>Notice that the two student names are put into an array.</p>
+
+  <p>However, if only one student appears in the XML document, the XML to JSON policy automatically
+  treats the value as a single string, not an array of strings, as shown in the following
+  example:</p>
+  <pre class="prettyprint">
+{
+  "teachers" : {
+      "teacher" : {
+          "name" : "teacherA",
+          "studentnames" : {
+              "name" : <strong>"student1"
+</strong>              }
+          }
+      }
+}
+</pre>
+
+  <p>In the previous examples, similar data was converted differently, once as an array, another as
+  a single string. This is where the <code>&lt;TreatAsArray&gt;/&lt;Path&gt;</code> element lets
+  you control the output. You can, for example, make sure that the student names are always put in
+  an array even if there's only one value. You configure this by identifying the Path to the
+  element whose values you want to put in an array, like so:</p>
+  <pre class="prettyprint">
+&lt;Options&gt;
+    &lt;TreatAsArray&gt;
+        &lt;Path&gt;teachers/teacher/studentnames/name&lt;/Path&gt;
+    &lt;/TreatAsArray&gt;
+&lt;/Options&gt;
+</pre>
+
+  <aside class="note"><b>Note:</b> The Path is <strong>not</strong> JSONPath. It's simply the
+  hierarchical path to the element whose values you want to put in an array.</aside>
+
+  <p>The configuration above would write the JSON like this:</p>
+  <pre class="prettyprint">
+{
+  "teachers" : {
+      "teacher" : {
+          "name" : "teacherA",
+          "studentnames" : {
+              "name" : <strong>["student1"]
+</strong>              }
+            ]
+          }
+      }
+}
+</pre>
+
+  <p>Notice that student1 is now in an array. Now, regardless of whether there are one or multiple
+  students, you can retrieve them from a JSON array in your code using the following JSONPath:
+  <code>$.teachers.teacher.studentnames.name[0]</code></p>
+
+  <p>The <code>&lt;Path&gt;</code> element also has an <code>unwrap</code> attribute, explained in
+  the next section.</p>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default</b></td>
+
+        <td>NA</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type</b></td>
+
+        <td>String</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="optionstreatasarraypathelement-attributes">Attributes</h3>
+  <pre class="prettyprint">
+<strong> </strong>&lt;Options&gt;
+    &lt;TreatAsArray&gt;
+        &lt;Path <strong>unwrap="true"</strong>&gt;teachers/teacher/studentnames/name&lt;/Path&gt;
+    &lt;/TreatAsArray&gt;
+&lt;/Options&gt;
+</pre>
+
+  <table width="700">
+    <tbody>
+      <tr>
+        <th scope="col" style="width: 50px;">Attribute</th>
+
+        <th scope="col" width="382">Description</th>
+
+        <th scope="col" style="width: 50px;">Presence</th>
+
+        <th scope="col" style="width: 50px;">Type</th>
+      </tr>
+
+      <tr>
+        <td>unwrap</td>
+
+        <td>
+          <p>Default: false</p>
+
+          <p>Removes the element from the JSON output. Use this to streamline or flatten ("unwrap")
+          the JSON, which also shortens the JSONPath needed to retrieve values. For example,
+          instead of <code>$.teachers.teacher.studentnames.name[*]</code>, you could flatten the
+          JSON and use <code>$.teachers.studentnames[*]</code>.</p>
+
+          <p>Here's a JSON example:</p>
+          <pre class="prettyprint">
+{
+  "teachers" : {
+      "teacher" : {
+          "name" : "teacherA",
+          "studentnames" : {
+              "name" : [
+                 "student1",
+                 "student2"
+              ]}...
+</pre>
+
+          <p>In this example, you could argue that the <code>teacher</code> element and the
+          studentnames <code>name</code> element are unnecessary. So you can remove, or unwrap
+          them. Here's how you'd configure the <code>&lt;Path&gt;</code> element to do this:</p>
+          <pre class="prettyprint">
+&lt;TreatAsArray&gt;
+    &lt;Path unwrap="true"&gt;teachers/teacher&lt;/Path&gt;
+    &lt;Path unwrap="true"&gt;teachers/teacher/studentnames/name&lt;/Path&gt;
+&lt;/TreatAsArray&gt;
+</pre>
+
+          <p>The <code>unwrap</code> attribute is set to true, and the paths to the elements to
+          unwrap are provided. The JSON output will now look like this:</p>
+          <pre class="prettyprint">
+{
+  "teachers" : [{
+      "name" : "teacherA",
+      "studentnames" : ["student1","student2"]
+      }]...
+</pre>
+
+          <p>Note that because the <code>&lt;Path&gt;</code> element is in the
+          <code>&lt;TreatAsArray&gt;</code> element, both of the elements in the Path will be
+          treated as arrays in the JSON output.</p>
+        </td>
+
+        <td>Optional</td>
+
+        <td>Boolean</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>For more examples and a feature walkthrough, see this Apigee Community article: <a href=
+  "https://community.apigee.com/content/kbentry/33374/new-edge-minifeature-the-treatasarray-option-in-th.html"
+  target=
+  "_blank">https://community.apigee.com/content/kbentry/33374/new-edge-minifeature-the-treatasarray-option-in-th.html</a>.</p>
+
+  <h2 id="format">&lt;Format&gt;</h2>
+
+  <p>Format gives you control over the conversion from XML to JSON. Enter the name of a predefined
+  template that contains a specific combination of Options elements described in this topic.
+  Predefined formats include: <code>xml.com</code>, <code>yahoo</code>, <code>google</code>,
+  <code>badgerFish</code>.</p>
+
+  <p>Use either the <code>&lt;Format&gt;</code> element or the <a href=
+  "#options"><code>&lt;Options&gt;</code></a> group. You cannot use
+  both <code>&lt;Format&gt;</code> and <code>&lt;Options&gt;</code>.</p>
+
+  <p>Following are the Format definitions of each predefined template.</p>
+
+  <h3 id="format-xmlcom">xml.com</h3>
+  <pre class="prettyprint">
+&lt;RecognizeNull&gt;true&lt;/RecognizeNull&gt;
+&lt;TextNodeName&gt;#text&lt;/TextNodeName&gt;
+&lt;AttributePrefix&gt;@&lt;/AttributePrefix&gt;
+</pre>
+
+  <h3 id="format-yahoo">yahoo</h3>
+  <pre class="prettyprint">
+&lt;RecognizeNumber&gt;true&lt;/RecognizeNumber&gt;
+&lt;TextNodeName&gt;content&lt;/TextNodeName&gt;
+</pre>
+
+  <h3 id="format-google">google</h3>
+  <pre class="prettyprint">
+&lt;TextNodeName&gt;$t&lt;/TextNodeName&gt;
+&lt;NamespaceSeparator&gt;$&lt;/NamespaceSeparator&gt;
+&lt;TextAlwaysAsProperty&gt;true&lt;/TextAlwaysAsProperty&gt;
+</pre>
+
+  <h3 id="format-badgerfish">badgerFish</h3>
+  <pre class="prettyprint">
+&lt;TextNodeName&gt;$&lt;/TextNodeName&gt;
+&lt;TextAlwaysAsProperty&gt;true&lt;/TextAlwaysAsProperty&gt;
+&lt;AttributePrefix&gt;@&lt;/AttributePrefix&gt;
+&lt;NamespaceSeparator&gt;:&lt;/NamespaceSeparator&gt;
+&lt;NamespaceBlockName&gt;@xmlns&lt;/NamespaceBlockName&gt;
+&lt;DefaultNamespaceNodeName&gt;$&lt;/DefaultNamespaceNodeName&gt;
+</pre>
+
+  <aside class="note"><b>Private Cloud:</b> If you're an Apigee Edge for Private Cloud customer,
+  you can add your own Formats to the following file on each message processor:
+  /opt/apigee/conf/apigee/message-processor/xmltojson-formats.xml. Restart your message processors
+  after modifying the file.</aside>
+
+  <p>Element syntax:</p>
+  <pre class="prettyprint">
+&lt;Format&gt;yahoo&lt;/Format&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default</b></td>
+
+        <td>Enter the name of an available format:<br>
+        <code>xml.com</code>, <code>yahoo</code>, <code>google</code>, <code>badgerFish</code></td>
+      </tr>
+
+      <tr>
+        <td><b>Presence</b></td>
+
+        <td>Required if <code>&lt;Options&gt;</code> isn't used.</td>
+      </tr>
+
+      <tr>
+        <td><b>Type</b></td>
+
+        <td>String</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="format-schemas">Schemas</h3>
+
+  <aside class="note"><b>Sample:</b> See our <a href=
+  "https://github.com/apigee/api-platform-samples/tree/master/schemas/policy">GitHub
+  repository</a> samples for the most recent schemas.</aside>
+  <hr>
+
+  <h2 id="errors">Error reference</h2>
+
+  <p>{% dynamic include /includes/___xml-json-policy-error-codes-0 %}</p>
+
+  <h2 id="relatedtopics">Related topics</h2>
+
+  <aside class="note"><b>Sample:</b> For working samples of API proxies, see the <a href=
+  "/api-platform/samples/samples-reference.html">Samples list</a>.</aside>
+
+  <p>JSON to XML: <a href="/api-platform/reference/policies/json-xml-policy.html">JSON to XML
+  policy</a></p>{% endblock %}

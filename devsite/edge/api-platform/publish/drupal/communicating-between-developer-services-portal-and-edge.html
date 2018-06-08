@@ -1,0 +1,161 @@
+  {% extends "_base.html" %} {% block title %}Communicating between the portal and Edge{% endblock %} {% block body %}
+
+  <aside class="warning"><b>Warning:</b> <strong>Do not enable <a href=
+  "/api-platform/system-administration/enable-two-factor-auth-your-apigee-account.html">two-factor
+  authentication</a> on Apigee Edge</strong> if you publish your APIs using an Apigee developer
+  portal. Otherwise, the developer portal will not be able to communicate with Edge.</aside>
+
+  <p>The Developer Services portal acts as a client for Apigee Edge. That means the portal does not
+  function as a stand-alone system. Instead, much of the information used by the portal is actually
+  stored on Edge. When necessary, the portal makes an HTTP or HTTPS request to retrieve information
+  from Edge or to send information to Edge.</p>
+
+  <p><img alt="" src="/api-platform/images/portalEdge_v14_2.png" width="539"></p>
+
+  <p>Edge does not make requests to the portal, it only responds to requests made from the portal.
+  Therefore, all interactions between the portal and Edge are initiated by the portal.</p>
+
+  <h2 id="ensuringaccesstoedgefromtheportal">Ensuring access to Edge from the portal</h2>
+
+  <p>Because much of the information used by the portal is stored on Edge, you must ensure that the
+  portal can access Edge. The portal initiates communication with Edge by making REST requests over
+  HTTP and HTTPS. For example, when a developer registers a new app on the portal, the portal makes
+  a request to Edge to send information about the app to Edge.</p>
+
+  <p>Both Edge and the portal can be deployed in the cloud or on prem, and you can mix deployments
+  types. For example, you can deploy both in the cloud, both on prem, or deploy one in the cloud
+  and one on prem:</p>
+
+  <ul>
+    <li><strong>If both the portal and Edge are deployed by Apigee in the cloud</strong>, then
+    there should be no issues in making requests from the portal to Edge.</li>
+
+    <li><strong>If you deploy the portal on prem</strong>, then you must ensure that the portal can
+    make requests to Edge, regardless of whether Edge is deployed in the cloud or on prem.</li>
+
+    <li><strong>If you deploy Edge on prem</strong>, then you must ensure that the portal has
+    access to Edge. That means your Edge server must accept requests from the portal regardless of
+    whether the portal is deployed in the cloud or on prem.</li>
+  </ul>
+
+  <aside class="note"><b>Note:</b> If either Edge or the portal is deployed in the cloud, then all
+  requests use HTTPS. If both are on-prem, and accessible only over an internal network, then
+  requests can use HTTP.</aside>
+
+  <div class="video">
+    <p><strong>Video:</strong> Watch a short video to learn more about how the developer portal
+    communicates with Apigee Edge and to ensure that the connection is working.</p>
+
+    <div style="text-align: left; margin:15px">
+      <iframe allowfullscreen="" frameborder="0" height="480" src=
+      "https://www.youtube.com/embed/vuGR_y9sj5E" width="854"></iframe>
+    </div>
+  </div>
+
+  <h2 id="managingappsandapikeysfromtheportal">Managing apps and API keys from the portal</h2>
+
+  <p>When the developer completes the app registration process on the portal, the portal sends
+  information about the app to Edge, including the app name and the API products associated with
+  the app.</p>
+
+  <p>If Edge successfully registers the app, Edge returns a single API key to the portal. The
+  developer then uses that API key to access the API products associated with the app.</p>
+
+  <p>No information about apps and API keys is actually stored on the portal. Instead, all of that
+  information is stored on Edge. Therefore, any time a developer uses the portal to view
+  information about an app, the portal makes a request to Edge to access that information. Any time
+  the developer modifies an app, the portal automatically sends those modifications to Edge.</p>
+
+  <p>For example, a developer logs in to the portal and navigates to their My Apps page. To
+  populate the My Apps page, the portal makes a request to Edge to retrieve information about the
+  developer's apps and API keys. That information then appears on the developer's My Apps page in
+  the portal:</p>
+
+  <p><img alt="" src="/api-platform/images/myApps_v14.png" width="511"></p>
+
+  <p>If the developer then adds, removes, or modifies an app, the portal sends those modifications
+  to Edge.</p>
+
+  <p>Because all information about apps and API keys is stored on Edge, an Edge administrator can
+  manipulate that information by using the Edge UI. For example, an administrator can:</p>
+
+  <ul>
+    <li>Add, remove, or modify a developer's app</li>
+
+    <li>Revoke or approve an API key for an app</li>
+  </ul>
+
+  <p>Shown below is the same app, the 'My Weather App', as it appears to an administrator on the
+  Edge UI:</p>
+
+  <p><img src="/api-baas/images/app_regenerate_button.png" width="973"></p>
+
+  
+
+  <h2 id="managingdevelopersfromtheportal">Managing developers from the portal</h2>
+
+  <p>When a developer registers as a new portal user, the developer is created on Edge and on the
+  portal. Therefore, unlike apps and API keys, information about developers is actually stored on
+  both Edge and the portal.</p>
+
+  <p>The developer information stored on Edge includes:</p>
+
+  <ul>
+    <li>First name</li>
+
+    <li>Last name</li>
+
+    <li>Email address</li>
+
+    <li>Optional additional information sent from the portal</li>
+  </ul>
+
+  <aside class="note"><b>Note:</b> The email address is the primary key used by Edge to identify
+  the developer. Therefore, all developers have a unique email address on Edge.</aside>
+
+  <p>The portal stores the same information as Edge, but it also stores additional information,
+  including:</p>
+
+  <ul>
+    <li>Portal password</li>
+
+    <li>Portal account status: active or blocked</li>
+
+    <li>Portal role: authenticated user, administrator, other</li>
+
+    <li>Role based permissions: determine the actions the developer is allowed to perform on the
+    portal</li>
+  </ul>
+
+  <p>When a developer logs in to the portal, it is the portal that is responsible for
+  authenticating the developer and for enforcing role-based permissions.</p>
+
+  <p>Because the portal stores all of the information about a developer, consider the portal as the
+  system of record for developer information, not Edge. When the developer modifies their
+  information on the portal, that information is stored on the portal and, if applicable, sent to
+  Edge. For example, if the developer changes their first name, that information is sent to Edge.
+  But if the developer changes their password, that information is only stored locally on the
+  portal.</p>
+
+  <p>For more information, see <a href=
+  "/api-platform/publish/drupal/add-and-manage-user-accounts.html">Add and manage user
+  accounts</a>.</p>
+
+  <h3 id="managingdevelopersfromtheportal-synchronizingchangesmadetoadeveloperonedgewiththeportal">
+  Synchronizing changes made to a developer on Edge with the portal</h3>
+
+  <p>Edge does not initiate communication with the portal. If you, as an Edge administrator,
+  manipulate information about a developer in the Edge UI, there is no guarantee when that
+  information will be pushed down to the portal. Therefore, use the administration features of the
+  portal to create, modify, and delete developers, not Edge.</p>
+
+  <p>A portal administrator can force a sync between the portal and Edge to download information to
+  the portal from Edge. However, if you only modify developers on the portal and not on Edge, you
+  should never have to perform this sync. Additionally, because Edge does not let you set a
+  password when you create a developer, any developer created on Edge has their portal password set
+  to a random value. Therefore, the developer must go through the password recovery process before
+  they can log in to the portal.  </p>
+
+  <p>For more information, see <a href=
+  "/api-platform/publish/adding-developers-your-api-product.html">Managing app
+  developers</a>.</p>{% endblock %}

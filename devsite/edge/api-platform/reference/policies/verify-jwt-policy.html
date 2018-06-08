@@ -1,0 +1,886 @@
+  {% extends "_base.html" %} {% block title %}Verify JWT policy{% endblock %} {% block body %} <img src="/api-platform/images/icon_policy_security.jpg">
+
+  <h3 id="verify-jwt-policy">What</h3>
+
+  <p>Verifies the signature on a JWT received from clients or other systems. This policy also
+  extracts the claims into context variables so that subsequent policies or conditions can examine
+  those values to make authorization or routing decisions.</p>
+
+  <p>When this policy executes, Edge verifies the signature of a JWT, and verifies that the JWT is
+  valid according to the expiry and not-before times if they are present. The policy can optionally
+  also verify the values of specific claims on the JWT, such as the subject, the issuer, the
+  audience, or the value of additional claims.</p>
+
+  <p>If the JWT is verified and valid, then all of the claims contained within the JWT are
+  extracted into context variables for use by subsequent policies or conditions, and the request is
+  allowed to proceed. If the JWT signature cannot be verified or if the JWT is invalid because of
+  one of the timestamps, all processing stops and an error is returned in the response.</p>
+
+  <p>To learn about the parts of a JWT and how they are encrypted and signed, refer to <a href=
+  "https://tools.ietf.org/html/rfc7519">RFC7519</a>.</p>
+
+  <h3 id="samples"><a id="Samples" name="Samples"></a>Samples</h3>
+
+  <ul>
+    <li><a href="#verify-a-jwt-signed-with-the-hs256-algorithm">Verify a JWT signed with the HS256
+    algorithm</a></li>
+
+    <li><a href="#verify-a-jwt-signed-with-the-rs256-algorithm">Verify a JWT signed with the RS256
+    algorithm</a></li>
+  </ul>
+
+  <h3 id="verify-a-jwt-signed-with-the-hs256-algorithm">Verify a JWT signed with the HS256
+  algorithm</h3>
+
+  <p>This example policy verifies a JWT that was signed with the HS256 encryption algorithm, HMAC
+  using a SHA-256 checksum.</p>
+
+  <p>The policy configuration includes the information Edge needs to decode and evaluate the JWT,
+  such as where to find the JWT (in a flow variable specified in the Source element), the required
+  signing algorithm, where to find the secret key (stored in an Edge flow variable, which could
+  have been retrieved from the Edge KVM, for example), and a set of required claims and their
+  values.</p>
+  <pre class="prettyprint">
+&lt;VerifyJWT name="JWT-Verify-HS256"&gt;
+    &lt;DisplayName&gt;JWT Verify HS256&lt;/DisplayName&gt;
+    &lt;Algorithm&gt;HS256&lt;/Algorithm&gt;
+    &lt;Source&gt;request.formparam.jwt&lt;/Source&gt;
+    &lt;IgnoreUnresolvedVariables&gt;false&lt;/IgnoreUnresolvedVariables&gt;
+    &lt;SecretKey&gt;
+        &lt;Value ref="private.secretkey"/&gt;
+    &lt;/SecretKey&gt;
+    &lt;Subject&gt;monty-pythons-flying-circus&lt;/Subject&gt;
+    &lt;Issuer&gt;urn://apigee-edge-JWT-policy-test&lt;/Issuer&gt;
+    &lt;Audience&gt;fans&lt;/Audience&gt;
+    &lt;AdditionalClaims&gt;
+        &lt;Claim name="show"&gt;And now for something completely different.&lt;/Claim&gt;
+    &lt;/AdditionalClaims&gt;
+&lt;/VerifyJWT&gt;
+</pre>
+
+  <h3 id="verify-a-jwt-signed-with-the-rs256-algorithm">Verify a JWT signed with the RS256
+  algorithm</h3>
+
+  <p>This example policy verifies a JWT that was signed with the RS256 algorithm. For signing, a
+  private key must be provided, and to verify, you need to provide the corresponding public
+  key.</p>
+
+  <p>See the Element reference for details on the requirements and options for each element in this
+  sample policy.</p>
+  <pre class="prettyprint">
+&lt;VerifyJWT name="JWT-Verify-RS256"&gt;
+    &lt;Algorithm&gt;RS256&lt;/Algorithm&gt;
+    &lt;Source&gt;json.jwt&lt;/Source&gt;
+    &lt;IgnoreUnresolvedVariables&gt;false&lt;/IgnoreUnresolvedVariables&gt;
+    &lt;PublicKey&gt;
+        &lt;Value ref="public.publickey"/&gt;
+    &lt;/PublicKey&gt;
+    &lt;Subject&gt;apigee-seattle-hatrack-montage&lt;/Subject&gt;
+    &lt;Issuer&gt;urn://apigee-edge-JWT-policy-test&lt;/Issuer&gt;
+    &lt;Audience&gt;urn://c60511c0-12a2-473c-80fd-42528eb65a6a&lt;/Audience&gt;
+    &lt;AdditionalClaims&gt;
+        &lt;Claim name="show"&gt;And now for something completely different.&lt;/Claim&gt;    
+    &lt;/AdditionalClaims&gt;
+&lt;/VerifyJWT&gt;
+</pre>
+
+  <p>For the above configuration, a JWT with this header &#8230;</p>
+  <pre class="prettyprint">
+{
+  "typ" : "JWT", 
+  "alg" : "RS256"
+}
+</pre>
+
+  <p>And this payload &#8230;</p>
+  <pre class="prettyprint">
+{ 
+  "sub" : "apigee-seattle-hatrack-montage",
+  "iss" : "urn://apigee-edge-JWT-policy-test",
+  "aud" : "urn://c60511c0-12a2-473c-80fd-42528eb65a6a",
+  "show": "And now for something completely different."
+}
+</pre>
+
+  <p>&#8230; will be deemed as valid, if the signature can be verified with the provided public
+  key.</p>
+
+  <p>A JWT with the same header but with this payload &#8230;</p>
+  <pre class="prettyprint">
+{ 
+  "sub" : "monty-pythons-flying-circus",
+  "iss" : "urn://apigee-edge-JWT-policy-test",
+  "aud" : "urn://c60511c0-12a2-473c-80fd-42528eb65a6a",
+  "show": "And now for something completely different."
+}
+</pre>
+
+  
+
+  <p>&#8230; will be determined to be invalid, even if the signature can be verified, because the
+  "sub" claim included in the JWT does not match the required value of the "Subject" element as
+  specified in the policy configuration.</p>
+
+  <h2 id="element-reference-verify">Element reference</h2>
+
+  <p>The policy reference describes the elements and attributes of the Verify JWT policy.</p>
+
+  <p><strong>Note:</strong> Configuration will differ somewhat depending on the encryption
+  algorithm you use. Refer to the <a href="#Samples">Samples</a> for examples that demonstrate
+  configurations for specific use cases.</p>
+
+  <h3 id="elementreference-attributesthatapplytothetoplevelelement">Attributes that apply to the
+  top-level element</h3>
+  <pre class="prettyprint">
+&lt;VerifyJWT name="JWT" continueOnError="false" enabled="true" async="false"&gt;
+</pre>
+
+  <p>The following attributes are common to all policy parent elements.</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <th><strong>Attribute</strong></th>
+
+        <th><strong>Description</strong></th>
+
+        <th><strong>Default</strong></th>
+
+        <th><strong>Presence</strong></th>
+      </tr>
+
+      <tr>
+        <td>name</td>
+
+        <td>
+          The internal name of the policy. Characters you can use in the name are restricted to:
+          <code>A-Z0-9._\-$ %</code>. However, the Edge management UI enforces additional
+          restrictions, such as automatically removing characters that are not alphanumeric.
+
+          <p>Optionally, use the <code>&lt;displayname&gt;&lt;/displayname&gt;</code> element to
+          label the policy in the management UI proxy editor with a different, natural-language
+          name.</p>
+        </td>
+
+        <td>N/A</td>
+
+        <td>Required</td>
+      </tr>
+
+      <tr>
+        <td>continueOnError</td>
+
+        <td>
+          Set to <code>false</code> to return an error when a policy fails. This is expected
+          behavior for most policies.
+
+          <p>Set to <code>true</code> to have flow execution continue even after a policy
+          fails.</p>
+        </td>
+
+        <td>false</td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td>enabled</td>
+
+        <td>
+          Set to <code>true</code> to enforce the policy.
+
+          <p>Set to <code>false</code> to "turn off" the policy. The policy will not be enforced
+          even if it remains attached to a flow.</p>
+        </td>
+
+        <td>true</td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td>async</td>
+
+        <td>This attribute is deprecated.</td>
+
+        <td>false</td>
+
+        <td>Deprecated</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="displayname">&lt;DisplayName&gt;</h2>
+  <pre class="prettyprint">
+&lt;DisplayName&gt;Policy Display Name&lt;/DisplayName&gt;
+</pre>
+
+  <p>Use in addition to the name attribute to label the policy in the management UI proxy editor
+  with a different, natural-language name.</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <td><strong>Default</strong></td>
+
+        <td>If you omit this element, the value of the policy's name attribute is used.</td>
+      </tr>
+
+      <tr>
+        <td><strong>Presence</strong></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><strong>Type</strong></td>
+
+        <td>String</td>
+      </tr>
+    </tbody>
+  </table>
+
+  
+
+  <h2 id="algorithm">&lt;Algorithm&gt;</h2>
+  <pre class="prettyprint">
+&lt;Algorithm&gt;HS256|RS256&lt;/Algorithm&gt;
+</pre>
+
+  <p>Specifies the encryption algorithm to sign the token. RS256 employs a public/secret key pair,
+  while HS256 employs a shared secret. See also <a href=
+  "/api-platform/reference/policies/jwt-policies-overview.html#about-signature-encryption-algorithms">
+  About signature encryption algorithms</a>.</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <td><strong>Default</strong></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><strong>Presence</strong></td>
+
+        <td>Required</td>
+      </tr>
+
+      <tr>
+        <td><strong>Type</strong></td>
+
+        <td>String</td>
+      </tr>
+
+      <tr>
+        <td><strong>Valid values</strong></td>
+
+        <td>HS256, HS384, HS512, RS256, RS384, RS512</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="audience">&lt;Audience&gt;</h2>
+  <pre class="prettyprint">
+&lt;Audience&gt;audience-here&lt;/Audience&gt;
+</pre>
+
+  <p>The policy verifies that the audience claim in the JWT matches the value specified in the
+  configuration. If there is no match, the policy throws an error. This claim identifies the
+  recipients that the JWT is intended for. This is one of the registered claims mentioned in
+  <a href="https://tools.ietf.org/html/rfc7519">RFC7519</a>.</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <td><strong>Default</strong></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><strong>Presence</strong></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><strong>Type</strong></td>
+
+        <td>String</td>
+      </tr>
+
+      <tr>
+        <td><strong>Valid values</strong></td>
+
+        <td>Anything that identifies the audience.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="additionalclaimsclaim"><a id="AdditionalClaims" name=
+  "AdditionalClaims"></a>&lt;AdditionalClaims/Claim&gt;</h2>
+  <pre class="prettyprint">
+&lt;AdditionalClaims&gt;
+    &lt;Claim name='claim1'&gt;explicit-value-of-claim-here&lt;/Claim&gt;
+    &lt;Claim name='claim2' ref='variable-name-here'/&gt;
+    &lt;Claim name='claim3' ref='variable-name-here' type='boolean'/&gt;
+ &lt;/AdditionalClaims&gt;
+</pre>
+
+  <p>Validates that the JWT payload contains the specified additional claim(s) and that the
+  asserted claim values match. </p>
+
+<aside class="note">The <code>&lt;Claim&gt;</code> element supports the dynamic string substitution feature called
+  <a href="/api-platform/reference/message-template-intro.html">message templating</a>.</aside>
+
+  <p>An additional claim uses a name that is not one of the standard, registered JWT claim names.
+  The value of a additional claim can be a string, a number, a boolean, a map, or an array. A map
+  is simply a set of name/value pairs. The value for a claim of any of these types can be specified
+  explicitly in the policy configuration, or indirectly via a reference to a flow variable.</p>
+
+  <aside class="note"><b>Note:</b> Do not use any of the registered claim names in this element.
+  The registered claims are specified in <a href="https://tools.ietf.org/html/rfc7519">RFC7519</a>.
+  They include: "iss", "sub", "aud", "iat", "exp", "nbf", and "jti".</aside>
+
+  <table>
+    <tbody>
+      <tr>
+        <td><strong>Default</strong></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><strong>Presence</strong></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><strong>Type</strong></td>
+
+        <td>String, number, boolean, or map</td>
+      </tr>
+
+      <tr>
+        <td><strong>Array</strong></td>
+
+        <td>Set to <strong>true</strong> to indicate if the value is an array of types. Default:
+        false</td>
+      </tr>
+
+      <tr>
+        <td><strong>Valid values</strong></td>
+
+        <td>Any value that you want to use for an additional claim.</td>
+      </tr>
+    </tbody>
+  </table>
+
+<p>The <code>&lt;Claim&gt;</code> element takes these attribues:</p>
+  <ul>
+    <li><b>name</b> - (Required) The name of the claim.
+      <aside class="note"><b>Note:</b> Do not use any of the registered claim names in this element.
+      The registered claims are specified in <a href="https://tools.ietf.org/html/rfc7519">RFC7519</a>.
+      They include: "iss", "sub", "aud", "iat", "exp", "nbf", and "jti".</aside>
+    </li>
+    <li><b>ref</b> - (Optional) The name of a flow variable. If present, the policy will use the value of this
+      variable as the claim. If both a <b>ref</b> attribute and an explicit claim value are specified, the
+      explicit value is the default, and is used if the referenced flow variable is unresolved.</li>
+    <li><b>type</b> - (Optional) One of: string (default), number, boolean, or map</li>
+    <li><b>array</b> - (Optional) Set to <strong>true</strong> to indicate if the value is an array of types. Default:
+        false.
+  </ul>
+
+  <h2 id="additionalheadersclaim">&lt;AdditionalHeaders/Claim&gt;</h2>
+  <pre class="prettyprint">
+&lt;AdditionalHeaders&gt;
+    &lt;Claim name='claim1'&gt;explicit-value-of-claim-here&lt;/Claim&gt;
+    &lt;Claim name='claim2' ref='variable-name-here'/&gt;
+    &lt;Claim name='claim3' ref='variable-name-here' type='boolean'/&gt;
+    &lt;Claim name='claim4' ref='variable-name' type='string' array='true'/&gt;
+ &lt;/AdditionalHeaders&gt;
+</pre>
+
+  <p>Validates that the JWT header contains the specified additional claim name/value pair(s) and that the asserted claim values match.</p>
+<aside class="note">The <code>&lt;Claim&gt;</code> element supports the dynamic string substitution feature called
+  <a href="/api-platform/reference/message-template-intro.html">message templating</a>.</aside>
+
+  <p>An additionl claim uses a name that is not one of the standard, registered JWT claim names.
+  The value of an additional claim can be a string, a number, a boolean, a map, or an array. A map
+  is simply a set of name/value pairs. The value for a claim of any of these types can be specified
+  explicitly in the policy configuration, or indirectly via a reference to a flow variable.</p>
+
+  <aside class="note"><b>Note:</b> Do not use any of the registered claim names in this element.
+  The registered claims are specified in <a href="https://tools.ietf.org/html/rfc7519">RFC7519</a>.
+  They include: "iss", "sub", "aud", "iat", "exp", "nbf", and "jti".</aside>
+
+  <table>
+    <tbody>
+      <tr>
+        <td><strong>Default</strong></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><strong>Presence</strong></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><strong>Type</strong></td>
+
+        <td>
+          <p>String (default), number, boolean, or map.</p>
+
+          <p>The type defaults to String if no type is specified.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td><strong>Array</strong></td>
+
+        <td>Set to <strong>true</strong> to indicate if the value is an array of types. Default:
+        false</td>
+      </tr>
+
+      <tr>
+        <td><strong>Valid values</strong></td>
+
+        <td>Any value that you want to use for an additional claim.</td>
+      </tr>
+    </tbody>
+  </table>
+
+<p>The <code>&lt;Claim&gt;</code> element takes these attribues:</p>
+  <ul>
+    <li><b>name</b> - (Required) The name of the claim.
+      <aside class="note"><b>Note:</b> Do not use any of the registered claim names in this element.
+      The registered claims are specified in <a href="https://tools.ietf.org/html/rfc7519">RFC7519</a>.
+      They include: "iss", "sub", "aud", "iat", "exp", "nbf", and "jti".</aside>
+    </li>
+    <li><b>ref</b> - (Optional) The name of a flow variable. If present, the policy will use the value of this
+      variable as the claim. If both a <b>ref</b> attribute and an explicit claim value are specified, the
+      explicit value is the default, and is used if the referenced flow variable is unresolved.</li>
+    <li><b>type</b> - (Optional) One of: string (default), number, boolean, or map</li>
+    <li><b>array</b> - (Optional) Set to <strong>true</strong> to indicate if the value is an array of types. Default:
+        false.
+  </ul>
+
+  <h2 id="customclaims">&lt;CustomClaims&gt;</h2>
+
+  <p><strong>Note:</strong> Currently, a CustomClaims element is inserted when you add a new
+  GenerateJWT policy through the UI. This element is not functional and is ignored. The correct
+  element to use instead is <a href="#AdditionalClaims">&lt;AdditionalClaims&gt;</a>. The UI
+  will be updated to insert the correct elements at a later time.</p>
+
+  <h2 id="id">&lt;Id&gt;</h2>
+  <pre class="prettyprint">
+&lt;Id&gt;explicit-jti-value-here&lt;/Id&gt;
+ -or-
+&lt;Id ref='variable-name-here'/&gt;
+ -or-
+&lt;Id/&gt;
+</pre>
+
+  <p>Verifies that the JWT has the specific <strong>jti</strong> claim. When the text value and ref
+  attribute are both empty, the policy will generate a jti containing a random UUID. The JWT ID
+  (jti) claim is a unique identifier for the JWT. For more information on jti, refer to <a href=
+  "https://tools.ietf.org/html/rfc7519">RFC7519</a>.</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <td><strong>Default</strong></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><strong>Presence</strong></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><strong>Type</strong></td>
+
+        <td>String, or reference.</td>
+      </tr>
+
+      <tr>
+        <td><strong>Valid values</strong></td>
+
+        <td>Either a string or the name of a flow variable containing the ID.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="ignoreunresolvedvariables">&lt;IgnoreUnresolvedVariables&gt;</h2>
+  <pre class="prettyprint">
+&lt;IgnoreUnresolvedVariables&gt;true|false&lt;/IgnoreUnresolvedVariables&gt;
+</pre>
+
+  <p>Set to false if you want the policy to throw an error when any referenced variable specified
+  in the policy is unresolvable. Set to true to treat any unresolvable variable as an empty string
+  (null).</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <td><strong>Default</strong></td>
+
+        <td>False</td>
+      </tr>
+
+      <tr>
+        <td><strong>Presence</strong></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><strong>Type</strong></td>
+
+        <td>Boolean</td>
+      </tr>
+
+      <tr>
+        <td><strong>Valid values</strong></td>
+
+        <td>true or false</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="issuer">&lt;Issuer&gt;</h2>
+  <pre class="prettyprint">
+&lt;Issuer ref='variable-name-here'/&gt;
+&lt;Issuer&gt;issuer-string-here&lt;/Issuer&gt;
+</pre>
+
+  <p>The policy verifies that the issuer in the JWT matches the string specified in the
+  configuration element. A claim that identifies the issuer of the JWT. This is one of the
+  registered set of claims mentioned in <a href=
+  "https://tools.ietf.org/html/rfc7519">RFC7519</a>.</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <td><strong>Default</strong></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><strong>Presence</strong></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><strong>Type</strong></td>
+
+        <td>String, or reference</td>
+      </tr>
+
+      <tr>
+        <td><strong>Valid values</strong></td>
+
+        <td>Any</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="publickeyjwks">&lt;PublicKey/JWKS&gt;</h2>
+  <pre class="prettyprint">
+&lt;PublicKey&gt;
+   &lt;JWKS ref="public.jwks"/&gt;
+&lt;/PublicKey&gt;
+
+or
+
+&lt;PublicKey&gt;
+   &lt;JWKS&gt;jwks-value-here&lt;/JWKS&gt;
+&lt;/PublicKey&gt;
+</pre>
+
+  <p>Specifies a value in JWKS format (<a href="https://tools.ietf.org/html/rfc7517">RFC 7517</a>)
+  containing a set of public keys. If the inbound JWT bears a key ID which present in the set of
+  JWKS, then the policy will use the correct public key to verify the JWT signature. For details
+  about this feature, see <a href=
+  "/api-platform/reference/policies/jwt-policies-overview.html#usingajsonwebkeysetjwkstoverifyajwt">
+  Using a JSON Web Key Set (JWKS) to verify a JWT</a>.</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <td><strong>Default</strong></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><strong>Presence</strong></td>
+
+        <td>To verify a JWT using an RSA algorithm, you must either either use the JWKS or Value
+        element.</td>
+      </tr>
+
+      <tr>
+        <td><strong>Type</strong></td>
+
+        <td>String</td>
+      </tr>
+
+      <tr>
+        <td><strong>Valid values</strong></td>
+
+        <td>A flow variable or string.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="publickeyvalue">&lt;PublicKey/Value&gt;</h2>
+  <pre class="prettyprint">
+&lt;PublicKey&gt;
+   &lt;Value ref="public.publickey"/&gt;
+&lt;/PublicKey&gt;
+-or-
+&lt;PublicKey&gt;
+    &lt;Value&gt;
+    -----BEGIN PUBLIC KEY-----
+    MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAw2kPrRzcufvUNHvTH/WW
+    Q0UrCw5c0+Y707KX3PpXkZGbtTT4nvU1jC0d1lHV8MfUyRXmpmnNxJHAC2F73IyN
+    C5TBtXMORc+us7A2cTtC4gZV256bT4h3sIEMsDl0Joz9K9MPzVPFxa1i0RgNt06n
+    Xn/Bs2UbbLlKP5Q1HPxewUDEh0gVMqz9wdIGwH1pPxKvd3NltYGfPsUQovlof3l2
+    ALvO7i5Yrm96kknfFEWf1EjmCCKvz2vjVbBb6mp1ZpYfc9MOTZVpQcXSbzb/BWUo
+    ZmkDb/DRW5onclGzxQITBFP3S6JXd4LNESJcTp705ec1cQ9Wp2Kl+nKrKyv1E5Xx
+    DQIDAQAB
+    -----END PUBLIC KEY-----
+    &lt;/Value&gt;
+&lt;/PublicKey&gt;
+</pre>
+
+  <p>Specifies the public key used to verify the signature on the JWT. Use the ref attribute to
+  pass the key in a flow variable, or specify the PEM-encoded key directly. Use this only with the
+  VerifyJWT policy, when the algorithm is an RSA variant.</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <td><strong>Default</strong></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><strong>Presence</strong></td>
+
+        <td>To verify a JWT signed with an RSA algorithm, you must either either use the JWKS or
+        Value elements.</td>
+      </tr>
+
+      <tr>
+        <td><strong>Type</strong></td>
+
+        <td>String</td>
+      </tr>
+
+      <tr>
+        <td><strong>Valid values</strong></td>
+
+        <td>A flow variable or string.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="secretkeyvalue">&lt;SecretKey/Value&gt;</h2>
+  <pre class="prettyprint">
+&lt;SecretKey&gt;
+  &lt;Value ref="private.your-variable-name"/&gt;
+&lt;/SecretKey&gt;
+</pre>
+
+  <p>Provides the secret key used to verify or sign tokens with an HMAC algorithm. <strong>Use only
+  when the algorithm is one of HS256, HS384, HS512.</strong> Use the <strong>ref</strong> attribute
+  to pass the key in a flow variable.</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <td><strong>Default</strong></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><strong>Presence</strong></td>
+
+        <td>Required for HMAC algorithms.</td>
+      </tr>
+
+      <tr>
+        <td><strong>Type</strong></td>
+
+        <td>String</td>
+      </tr>
+
+      <tr>
+        <td><strong>Valid values</strong></td>
+
+        <td>
+          A flow variable referring to a string.
+
+          <p>Note: If a flow variable, it must have the prefix "private". For example,
+          <code>private.mysecret</code></p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="source">&lt;Source&gt;</h2>
+  <pre class="prettyprint">
+&lt;Source&gt;jwt-variable&lt;/Source&gt;
+</pre>
+
+  <p>If present, specifies the flow variable in which the policy expects to find the JWT to
+  verify.</p>
+
+  <aside class="note">
+    <b>Note:</b> By default, the JWT is retrieved from the variable
+    <strong>request.header.authorization</strong>. In this case, Edge looks for the JWT in the
+    request Authorization header. If you pass the JWT in the Authorization header, you do not need
+    to include the Source element in the policy; however, you <strong>must</strong> include
+    <strong>Bearer</strong> in the auth header. For example, you would pass the JWT in the
+    Authorization header like this:
+    <pre class="prettyprint">
+curl -v http://52.200.92.187:9001/doctest-jwt/verify-rs256 -H "Authorization: Bearer &lt;your JWT&gt;"
+</pre>
+
+    <p>You can configure to policy to retrieve the JWT from a form or query parameter variable or
+    any other variable. If the variable does not exist or if the policy otherwise can't find the
+    JWT, the policy returns an error.</p>
+  </aside>
+
+  <table>
+    <tbody>
+      <tr>
+        <td><strong>Default</strong></td>
+
+        <td><code>request.header.authorization</code> (See the note above for important information
+        about the default).</td>
+      </tr>
+
+      <tr>
+        <td><strong>Presence</strong></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><strong>Type</strong></td>
+
+        <td>String</td>
+      </tr>
+
+      <tr>
+        <td><strong>Valid values</strong></td>
+
+        <td>An Edge flow variable name.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="subject">&lt;Subject&gt;</h2>
+  <pre class="prettyprint">
+&lt;Subject&gt;subject-string-here&lt;/Subject&gt;
+</pre>
+
+  <p>The policy verifies that the subject in the JWT matches the string specified in the policy
+  configuration. This claim identifies or makes a statement about the subject of the JWT. This is
+  one of the standard set of claims mentioned in <a href=
+  "https://tools.ietf.org/html/rfc7519">RFC7519</a>.</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <td><strong>Default</strong></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><strong>Presence</strong></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><strong>Type</strong></td>
+
+        <td>String</td>
+      </tr>
+
+      <tr>
+        <td><strong>Valid values</strong></td>
+
+        <td>Any value uniquely identifying a subject.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="timeallowance">&lt;TimeAllowance&gt;</h2>
+  <pre class="prettyprint">
+&lt;TimeAllowance&gt;120s&lt;/TimeAllowance&gt;
+</pre>
+
+  <p>The "grace period" for times. For example, if the time allowance is configured to be 60s, then
+  an expired JWT would be treated as still valid, for 60s after the asserted expiry. The
+  not-before-time will be evaluated similarly. Defaults to 0 seconds (no grace period).</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <td><strong>Default</strong></td>
+
+        <td>0 seconds (no grace period)</td>
+      </tr>
+
+      <tr>
+        <td><strong>Presence</strong></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><strong>Type</strong></td>
+
+        <td>String</td>
+      </tr>
+
+      <tr>
+        <td><strong>Valid values</strong></td>
+
+        <td>
+          An value or a reference to a flow variable containing the value. Time spans can be
+          specified as follows:
+
+          <ul>
+            <li>s = seconds</li>
+
+            <li>m = minutes</li>
+
+            <li>h = hours</li>
+
+            <li>d = days</li>
+          </ul>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p><a id="Errors" name="Errors"></a>{% dynamic include /includes/___jwt-policy-error-codes %}</p>{% endblock %}

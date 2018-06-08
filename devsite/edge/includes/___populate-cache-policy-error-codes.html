@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html devsite>
+  <head>
+    <title>Populate Cache Policy Error Codes</title>
+  </head>
+  <body>
+
+  <p>This section describes the error messages and flow variables that are set when this policy
+  triggers an error. This information is important to know if you are developing fault rules for a
+  proxy. To learn more, see <a href=
+  "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html">What you need to know
+  about policy errors</a> and <a href="/api-platform/fundamentals/fault-handling.html">Handling
+  faults</a>.</p>
+
+  <h3>Error code prefix</h3>
+
+  <p><code>policies.populatecache</code> <span style="font-size: 10pt">(<a href=
+  "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html#aboutthedefaultpolicyerrorresponse">What's
+  this?</a>)</span></p>
+
+  <h3>Runtime errors</h3>
+
+  <table>
+    <thead>
+      <tr>
+        <th scope="col" width="271">Error name</th>
+
+        <th scope="col" width="271">HTTP Status</th>
+
+        <th scope="col" width="379">Occurs when</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td><code>EntryCannotBeCached</code></td>
+
+        <td>500</td>
+
+        <td>An entry cannot be cached. The message object being cached is not an instance of a
+        class that is Serializable.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Deployment errors</h3>
+
+  <table>
+    <thead>
+      <tr>
+        <th scope="col" width="271">Error name</th>
+
+        <th scope="col" width="379">Occurs when</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td><code>InvalidCacheResourceReference</code></td>
+
+        <td>The cache specified in the <code>&lt;CacheResource&gt;</code> element does not
+        exist.</td>
+      </tr>
+
+      <tr>
+        <td><code>CacheNotFound</code></td>
+
+        <td>The cache specified in the <code>&lt;CacheResource&gt;</code> element does not
+        exist.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Fault variables</h3>
+
+  <p>These variables are set when this policy triggers an error. For more information, see <a href=
+  "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html">What you need to know
+  about policy errors</a>.</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <th width="324">Variables set <code><span style="font-size: 10pt">(<a href=
+        "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html">Learn
+        more</a>)</span></code></th>
+
+        <th width="428">Where</th>
+
+        <th width="428">Example</th>
+      </tr>
+
+      <tr>
+        <td width="324"><code>[prefix].[policy_name].failed</code></td>
+
+        <td width="428"><code>[prefix]: populatecache</code><br>
+        <code>[policy_name]:</code> The name of the policy to check.</td>
+
+        <td width="428"><code>populatecache.POP-CACHE-1.failed = true</code></td>
+      </tr>
+
+      <tr>
+        <td><code>fault.[error_name]</code></td>
+
+        <td><code>[error_name]</code> = The specific error name to check for as listed in the table
+        above.</td>
+
+        <td><code>fault.name Matches "EntryCannotBeCached"</code></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Example error response</h3>
+  <pre class="prettyprint">
+{
+  "fault": {
+    "faultstring": "[entry] can not be cached. Only serializable entries are cached.",
+    "detail": {
+      "errorcode": "steps.populatecache.EntryCannotBeCached"
+    }
+  }
+}
+</pre>
+
+  <h3>Example fault rule</h3>
+  <pre class="prettyprint">
+&lt;FaultRule name="Populate Cache Fault"&gt;
+    &lt;Step&gt;
+        &lt;Name&gt;AM-EntryCannotBeCached&lt;/Name&gt;
+        &lt;Condition&gt;(fault.name Matches "EntryCannotBeCached") &lt;/Condition&gt;
+    &lt;/Step&gt;
+    &lt;Condition&gt;(populatecache.POP-CACHE-1.failed = true) &lt;/Condition&gt;
+&lt;/FaultRule&gt;
+</pre>
+  </body>
+</html>

@@ -1,0 +1,97 @@
+{% extends "_base.html" %}
+{% block title %}Persistence tools in Edge{% endblock %}
+{% block body %}
+
+  <p><strong>What's here</strong></p>
+
+  <p>Apigee Edge mechanisms for caching and persistence include <strong>short-term</strong> and
+  <strong>long-term</strong> persistence. There are policies for <strong>response</strong> caching
+  and <strong>general purpose</strong> caching. Use the management API to <strong>manage
+  caches</strong>.</p>
+
+  <h2 id="backendresponsecaching">Backend response caching</h2>
+
+  <p>You can cache the response of a backend resource with the
+  <a href="/api-platform/reference/policies/response-cache-policy">Response Cache policy</a>.</p>
+
+  <p>This is especially helpful when backend data is updated only periodically. The ResponseCache
+  policy can reduce calls to backend data sources.</p>
+
+  <p>Through the ResponseCache policy, you can also have Edge look at certain HTTP response caching
+  headers and take actions according to header directives. For example, on responses from backend
+  targets, Edge supports the <code>Cache-Control</code> header. This header can be used to control
+  the maximum age of a cached response, among other things. For more information, see
+  <a href="/api-platform/cache/http-response-caching">Support for HTTP response headers</a>.</p>
+
+  <aside class="note"><strong>Note:</strong> The policy uses either a cache you configure or a
+  shared cache that's included by default. To use the underlying shared cache, simply omit the
+  <code>&lt;CacheResource&gt;</code> element when configuring the policy. For more about
+  configuring caches, see <a href="/api-platform/cache/manage-caches-environment">Creating and
+  editing an environment cache</a>.</aside>
+
+  <h2 id="shorttermgeneralpurposecaching">Short-term general purpose caching</h2>
+
+  <p>Using policies for general purpose caching, you can persist any objects your proxy requires
+  across multiple request/response sessions.</p>
+
+  <p>With the <a href="/api-platform/reference/policies/populate-cache-policy">Populate Cache
+  policy</a>, <a href="/api-platform/reference/policies/lookup-cache-policy">LookupCache
+  policy</a>, and <a href="/api-platform/reference/policies/invalidate-cache-policy">InvalidateCache policy</a>,
+  you can populate, retrieve, and flush cached data at runtime.</p>
+
+  <p>For example, you might temporarily store:</p>
+
+  <ul>
+    <li>Session IDs for session management.</li>
+    <li>Credentials for outbound calls (such as API keys or OAuth access tokens).</li>
+    <li>Response content that must be paginated for apps.</li>
+  </ul>
+
+  <p>At runtime, your cache policies copy values between proxy variables and the configured cache
+  you specify. When a value is placed in the cache, it is copied from the variable you specify to
+  the cache. When it is retrieved from the cache, it is copied into the variable for use by your
+  proxy.</p>
+
+  <p>For an example with code, see
+  <a href="/api-platform/cache/optimize-performance-using-cache">Example: General purpose caching</a>.</p>
+
+  <aside class="note"><strong>Note:</strong> These policies use either a cache you configure or a shared
+  cache that's included by default. To use the underlying shared cache, simply omit the
+  <code>&lt;CacheResource&gt;</code> element when configuring the policy. For more about
+  configuring caches, see <a href="/api-platform/cache/manage-caches-environment">Creating and
+  editing an environment cache</a>.</aside>
+
+  <aside class="key-point"><strong>Tip:</strong> If you're wondering about how to cache an SSL certificate
+  needed to make HTTP calls from a Node.js app running on Edge, see this
+  <a href="https://community.apigee.com/questions/9028/caching-files-in-nodejs.html" class="external">Apigee Community
+  post</a> for suggestions.</aside>
+
+  <h2 id="longtermpersistenceofkeyvaluedata">Long-term persistence with key value maps (KVMs)</h2>
+
+  <p>To indefinitely store structured data either encrypted or unencrypted, you can create and
+  populate key value maps (KVMs) that contain arbitrary key/value pairs. For example, you might
+  store:</p>
+
+  <ul>
+    <li>A map correlating IP addresses to country codes.</li>
+    <li>A list of IP addresses for whitelisting/blacklisting.</li>
+    <li>A map correlating long URLs to shortened URLs.</li>
+    <li>Environment-specific data, such as quota counts and OAuth token expiration times.</li>
+  </ul>
+
+  <p>KVMs can have one of three scopes: organization, environment, apiproxy. For example, if
+  key/value pairs are to be used for all APIs in an organization, create a KVM at the organization
+  scope; or if only a specific API proxy should have access to keys/values, create the KVM at the
+  apiproxy scope. You can create, manage, and retrieve key value maps in a number of ways. For more
+  information, see <a href="/api-platform/cache/key-value-maps">Working with key value maps</a>.</p>
+
+  <h2 id="managingcachewiththemanagementapi">Managing cache with the management API</h2>
+
+  <p>If you want to create, view, update, delete, and clear cache outside the scope of policies in
+  a message flow, you can use the <a href="/api/caches">Caches management API</a>.</p>
+
+  <aside class="note"><strong>Note:</strong> Note that you cannot manage the Edge "shared" cache
+  with the management API. For more information on the shared cache, see
+  <a href="/api-platform/cache/cache-internals">Cache internals</a>.</aside>
+
+{% endblock %}

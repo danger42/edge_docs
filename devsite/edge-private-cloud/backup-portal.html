@@ -1,0 +1,91 @@
+{% extends "private-cloud/v4.18.01/_base.html" %}
+{% block title %}Back up the portal{% endblock %}
+{% block body %}
+
+  <p>This document describes the backup and restore tasks in an on-premises installation of the
+  portal using the Postgres <code>pg_dump</code> and <code>pg_restore</code> commands. </p>
+
+  <aside class="note"><strong>Note:</strong> Alternatively, you can use the Drupal Backup and Migrate
+  module, which lets you schedule regular backups to local, cloud, or FTP storage locations. To
+  access the Backup and Migrate module, go to <strong>Configuration &gt; System &gt; Backup
+  and Migrate</strong> in the Drupal menu. For more information, see
+  <a href="https://www.drupal.org/project/backup_migrate" class="external">Backup and Migrate</a> in the
+  Drupal documentation.</aside>
+
+  <h2 id="beforeyoubackup">Before you backup</h2>
+
+  <p>You use the <code>PG_NAME</code> property
+  in the portal installation config file to specify the name of its database. The install
+  instructions for the portal specify to name the database <code>devportal</code>. If you are unsure of the database
+  name, check the config file, or use the following <code>psql</code> command to show the list of
+  databases:</p>
+  <pre class="prettyprint">psql -h localhost -d apigee -U postgres -l</pre>
+
+  <p>where <code>-U</code> specifies the
+  Postgres username used by the portal to access the database as specified by the
+  <code>DRUPAL_PG_USER</code> property in the portal
+  installation config file. You will be prompted for the database password.</p>
+
+  <p>This command displays the following list of databases:</p>
+  <pre class="prettyprint">
+    Name     | Owner  | Encoding |   Collate   |    Ctype    |  Access privileges  
+-------------+--------+----------+-------------+-------------+---------------------
+ apigee      | apigee | UTF8     | en_US.UTF-8 | en_US.UTF-8 | =Tc/apigee         +
+             |        |          |             |             | apigee=CTc/apigee  +
+             |        |          |             |             | postgres=CTc/apigee
+ <strong>devportal   | apigee | UTF8     | en_US.UTF-8 | en_US.UTF-8 | </strong>
+ newportaldb | apigee | UTF8     | en_US.UTF-8 | en_US.UTF-8 | 
+ postgres    | apigee | UTF8     | en_US.UTF-8 | en_US.UTF-8 | 
+ template0   | apigee | UTF8     | en_US.UTF-8 | en_US.UTF-8 | =c/apigee          +
+             |        |          |             |             | apigee=CTc/apigee
+ template1   | apigee | UTF8     | en_US.UTF-8 | en_US.UTF-8 | =c/apigee          +
+             |        |          |             |             | apigee=CTc/apigee
+</pre>
+
+  <h2 id="backuptheportal">Back up the portal </h2>
+
+  <p>To backup the portal:</p>
+
+  <ol>
+    <li>Change to the Drupal directory, <code>/opt/apigee/apigee-drupal</code> by
+      default:
+      <pre class="devsite-terminal">cd /opt/apigee/apigee-drupal</pre>
+    </li>
+    <li>Back up your Drupal database instance. The <code>pg_dump</code> command creates a copy of the
+    database:
+      <pre class="devsite-terminal">pg_dump --dbname=<var>devportal</var> --host=<var>host_IP_address</var>
+  --username=<var>drupaladmin</var> --password --format=c &gt; /tmp/portal.bak</pre>
+      <p>where:</p>
+      <ul>
+        <li><code>dbname</code> specifies the database name as specified by the
+        <code>PG_NAME</code> property in the portal installation configuration file.</li>
+        <li><code>host</code> specifies the IP address of the portal node.</li>
+        <li><code>username</code> specifies the Postgres username used by the portal to access the
+        data base as specified by the <code>DRUPAL_PG_USER</code> property in the
+        portal installation configuration file.</li>
+        <li>You are prompted for the Postgres user password as defined by the
+        <code>DRUPAL_PG_PASS</code> property in the portal installation configuration file.</li>
+      </ul>
+    </li>
+    <li>Make a backup of your entire Drupal web root directory. The default webroot location
+      is <code>/opt/apigee/apigee-drupal/wwwroot</code>.</li>
+    <li>Make a backup of the public files. By default, these files are located in
+      <code>/opt/apigee/apigee-drupal/wwwroot/sites/default/files</code>.
+      If that is the correct location, they will be backed up in Step 3. You only have to explicitly
+      back them up if you moved them from the default location.</li>
+    <li>Make a backup of the private files in <code>/opt/apigee/data/apigee-drupal-devportal/private</code>.
+      <p>If you are unsure of the location of this directory, use the
+      <code>drush status</code> command to determine the location of the private file system.</p>
+    </li>
+  </ol>
+
+  <h2 id="restoretheportal">Restore the portal</h2>
+
+  <p>To restore from the backup <strong>to an existing database</strong>, use the command:</p>
+  <pre class="devsite-terminal">pg_restore --clean --dbname=devportal --host=localhost  --username=apigee &lt; /tmp/portal.bak</pre>
+
+  <p>To restore from the backup <strong>and create a new database</strong>, use the command:</p>
+  <pre class="devsite-terminal">pg_restore --clean --create --dbname=devportal --host=localhost  --username=apigee &lt; /tmp/portal.bak</pre>
+
+  <p>You can also restore the backup files to the Drupal web root directory and the private
+  files.</p>{% endblock %}

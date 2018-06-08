@@ -1,0 +1,104 @@
+  {% extends "_base.html" %} {% block title %}Last-mile security{% endblock %} {% block body %}
+
+  <p>Last-mile security protects the backend services that are proxied by API Services. The primary
+  goal of last-mile security is to prevent so-called "end-run" attacks, where an app developer
+  discovers the URL for a backend service and bypasses any API proxies to directly hit the backend
+  URL.</p>
+
+  <p>Following are the primary options for setting up last-mile security:</p>
+
+  <ul>
+    <li>Client TLS/SSL</li>
+
+    <li>Outbound authentication</li>
+
+    <li>Node.js <span style="font-family:courier new,courier,monospace;">tls</span> module</li>
+  </ul>
+
+  <h2 id="clienttlsssl">Client TLS/SSL</h2>
+
+  <p>The primary mechanism for securing the last-mile is client TLS/SSL, which is also known as
+  'mutual authentication'.</p>
+
+  <p>See <a href=
+  "/api-platform/system-administration/configuring-ssl-edge-backend-service.html">Configuring TLS
+  from Edge to the backend (Cloud and Private Cloud)</a>.</p>
+
+  <h2 id="outboundauthentication">Outbound authentication</h2>
+
+  <p>Last-mile security can also be enforced by requiring the API proxy to present a credential to
+  the backend service.</p>
+
+  <p>For example, you may wish to have an API proxy present an API key to your backend service. You
+  could also have an API proxy obtain and present a OAuth client credentials access token.</p>
+
+  <h3 id="outboundauthentication-apikey">API key</h3>
+
+  <p>API keys can be applied to outbound requests from API proxies to backend services. This
+  assumes that the backend service is an API that is capable of issuing and validating API
+  keys.</p>
+
+  <p>If you do set up an API proxy to present an API key on outbound requests, you must store the
+  API key in a place where it can be retrieved by the API proxy at runtime. One location available
+  for storing API keys is a key/value map. See <a href=
+  "/api-platform/reference/policies/key-value-map-operations-policy.html">Key Value Map Operations
+  policy</a>.</p>
+
+  <p>You can use the AssignMessage policy type to add the API key as an HTTP header, query
+  parameter, or payload element to the outbound request. See <a href=
+  "/api-platform/reference/policies/assign-message-policy.html">Assign Message policy</a>.</p>
+
+  <aside class="key-point"><b>Best practice:</b> To avoid exposing API keys over network, always
+  configure server-side TLS/SSL on your backend services for outbound transactions that use API
+  keys</aside>
+
+  <h3 id="outboundauthentication-oauthclientcredentials">OAuth client credentials</h3>
+
+  <p>OAuth client credentials can be used to add a layer of revocability to API keys. If your
+  backend services support OAuth client credentials, you can configure an API proxy to present a
+  client credentials access token for each request.</p>
+
+  <p>The API proxy must be configured to perform a callout to obtain the access token from your
+  token endpoint. The API proxy is also required to cache the access token, to prevent it from
+  obtaining a new access token for each call.</p>
+
+  <aside class="warning">
+    <b>Warning:</b> Your backend services must be capable of issuing and validating access tokens
+    using the client credentials grant type for this to work.
+
+    <p>Always configure server-side TLS/SSL on your backend services for transactions that use
+    access tokens.</p>
+  </aside>
+
+  <p>A number of approaches can be used to implement outbound client credentials.</p>
+
+  <aside class="note"><b>Sample:</b> A working outbound OAuth sample that uses client credentials
+  is implemented in the <a href=
+  "https://github.com/apigee/api-platform-samples/tree/master/sample-proxies/outbound-oauth">Outbound
+  OAuth sample</a> on GitHub.</aside>
+
+  <p>You can modify this sample to call your token endpoint to obtain an access token. This sample
+  uses JavaScript to attach the token to the outbound request as an HTTP Authorization header. You
+  could also use <a href="/api-platform/reference/policies/assign-message-policy.html">Assign
+  Message policy</a> for this purpose.</p>
+
+  <h3 id="outboundauthentication-saml">SAML</h3>
+
+  <p>The GenerateSAMLAssertion policy type can be used to attach a SAML assertion to an outbound
+  XML request message, from the API proxy to a backend service. This enables the backend service to
+  perform authentication and authorization on requests received from API proxies.</p>
+
+  <p>See <a href="/api-platform/reference/policies/saml-assertion-policy.html">SAML Assertion
+  policies</a>.</p>
+
+  <h2 id="nodejs">Node.js</h2>
+
+  <p>If your API proxy target is a Node.js application, you can use the
+  Node.js <code>tls</code> module to create secure connections to backend
+  services. You make outgoing requests with the <code>tls</code> module the same way you would
+  normally in Node.js. Basically, you need to add client-side keys and certificates (.pem files) to
+  the resources/node directory and load them inside your script. For information on using the
+  <code>tls</code> module and its methods, see the <a href=
+  "https://nodejs.org/api/tls.html">Node.js tls module documentation</a>. For more information, see
+  <a href="/api-platform/nodejs/understanding-edge-support-nodejs-modules.html">Understanding Edge
+  support for Node.js modules</a>.</p>{% endblock %}

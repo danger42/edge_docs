@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html devsite>
+  <head>
+    <title>Extract Variables Policy Error Codes</title>
+  </head>
+  <body>
+
+  <p>This section describes the error messages and flow variables that are set when this policy
+  triggers an error. This information is important to know if you are developing fault rules for a
+  proxy. To learn more, see <a href=
+  "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html">What you need to know
+  about policy errors</a> and <a href="/api-platform/fundamentals/fault-handling.html">Handling
+  faults</a>.</p>
+
+  <h3>Error code prefix</h3>
+
+  <p><code>steps.extractvariables</code> <span style="font-size: 10pt">(<a href=
+  "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html#aboutthedefaultpolicyerrorresponse">What's
+  this?</a>)</span></p>
+
+  <h3>Runtime errors</h3>
+
+  <p>These errors can occur when the policy executes.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th scope="col" width="323">Error name</th>
+
+        <th scope="col" width="49">HTTP status</th>
+
+        <th scope="col" width="463">Cause</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td><code>ExecutionFailed</code></td>
+
+        <td>500</td>
+
+        <td>
+          <p>The policy tried to parse input that is malformed or otherwise invalid.</p>
+
+          <p>The policy tried to parse XML with a namespace that is not declared in the
+          <code>&lt;Namespace&gt;</code> element.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td><code>SourceMessageNotAvailable</code></td>
+
+        <td>500</td>
+
+        <td>A variable specified in <code>&lt;Source&gt;</code> is out of scope or can't
+        be resolved. For example, if the policy executes in the request flow,
+        the <code>&lt;Source&gt;</code> variable cannot be set
+        to response or error.</td>
+      </tr>
+
+      <tr>
+        <td><code>SetVariableFailed</code></td>
+
+        <td>500</td>
+
+        <td>The policy was not able to set a variable value.</td>
+      </tr>
+
+      <tr>
+        <td><code>ImmutableVariable</code></td>
+
+        <td>500</td>
+
+        <td>A variable used in the policy is immutable. The policy was unable to set this
+        variable.</td>
+      </tr>
+
+      <tr>
+        <td><code>VariableResolutionFailed</code></td>
+
+        <td>500</td>
+
+        <td>The policy could not resolve a variable. Be sure the variable you are trying to set
+        exists in the runtime flow.</td>
+      </tr>
+
+      <tr>
+        <td><code>UnsupportedOperation</code></td>
+
+        <td>500</td>
+
+        <td>The policy tried to perform an unsupported operation on named flow variables.</td>
+      </tr>
+
+      <tr>
+        <td><code>InvalidJSONPath</code></td>
+
+        <td>500</td>
+
+        <td>A JSON path used in the policy is invalid.</td>
+      </tr>
+
+      <tr>
+        <td><code>UnableToCast</code></td>
+
+        <td>500</td>
+
+        <td>The policy was unable to cast a variable.</td>
+      </tr>
+
+      <tr>
+        <td><code>JSONPathCompilationFailed</code></td>
+
+        <td>500</td>
+
+        <td>The policy was unable to compile a JSON path expression.</td>
+      </tr>
+
+      <tr>
+        <td><code>JsonPathParsingFailure</code></td>
+
+        <td>500</td>
+
+        <td>The policy was unable to parse a JSON path to extract data into flow variables.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Deployment errors</h3>
+
+  <p>These errors can occur when you deploy a proxy containing this policy.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th scope="col" width="324">Error name</th>
+
+        <th scope="col" width="386">Cause</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td><code>NothingToExtract</code></td>
+
+        <td>A required element is missing from the policy. At least one of these elements is
+        required: <code>URIPath, QueryParam, Header, FormParam, XMLPayload,
+        JSONPayload.</code></td>
+      </tr>
+
+      <tr>
+        <td><code>NONEmptyPrefixMappedToEmptyURI</code></td>
+
+        <td>The <code>&lt;XMLPayload&gt;</code> element is not configured properly. A non-empty
+        prefix cannot be mapped to an empty URI.</td>
+      </tr>
+
+      <tr>
+        <td><code>DuplicatePrefix</code></td>
+
+        <td>The <code>&lt;XMLPayload&gt;</code> element is not configured properly. There is a
+        duplicate prefix.</td>
+      </tr>
+
+      <tr>
+        <td><code>NoXPathsToEvaluate</code></td>
+
+        <td>There are no XPaths to evaluate. An<code> &lt;XPath&gt;</code> child element
+        must be specified.</td>
+      </tr>
+
+      <tr>
+        <td><code>EmptyXPathExpression</code></td>
+
+        <td>The policy has invalid configuration of
+        the <code>&lt;Variable&gt;</code> child element of
+        an <code>&lt;XMLPayload&gt;</code> element.</td>
+      </tr>
+
+      <tr>
+        <td><code>NoJSONPathsToEvaluate</code></td>
+
+        <td>You do not specify a<code> &lt;JSONPath&gt;</code> child element where it is
+        required.</td>
+      </tr>
+
+      <tr>
+        <td><code>EmptyJSONPathExpression</code></td>
+
+        <td>The policy has an empty child element <code>&lt;JSONPath&gt;</code> in a element
+        <code>&lt;JSONPayload&gt;</code>.</td>
+      </tr>
+
+      <tr>
+        <td><code>MissingName</code></td>
+
+        <td>The <code>name</code> attribute is missing from a policy element that requires it.</td>
+      </tr>
+
+      <tr>
+        <td><code>PatternWithoutVariable</code></td>
+
+        <td>A <code>&lt;Pattern&gt;</code> element that does not have a variable
+        specified. The element requires the name of the variable in which extracted data will be
+        stored.</td>
+      </tr>
+
+      <tr>
+        <td><code>CannotBeConvertedToNodeset</code></td>
+
+        <td>The result of an XPath expression cannot be converted to type nodeset.</td>
+      </tr>
+
+      <tr>
+        <td><code>JSONPathCompilationFailed</code></td>
+
+        <td>The policy could not compile a specified JSON Path.</td>
+      </tr>
+
+      <tr>
+        <td><code>InstantiationFailed</code></td>
+
+        <td>The policy could not be instantiated.</td>
+      </tr>
+
+      <tr>
+        <td><code>XPathCompilationFailed</code></td>
+
+        <td>The policy could not compile a specified XPath. Be sure to declare any namespaces that
+        are used in the XPath.</td>
+      </tr>
+
+      <tr>
+        <td><code>InvalidPattern</code></td>
+
+        <td>A <code>&lt;Pattern&gt;</code> element is invalid in one of these elements:
+        <code>URIPath, QueryParam, Header, FormParam, XMLPayload, JSONPayload.</code></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Fault variables</h3>
+
+  <p>These variables are set when this policy triggers an error at runtime. For more information,
+  see <a href="/api-platform/fundamentals/what-you-need-know-about-policy-errors.html">What you
+  need to know about policy errors</a>.</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <th width="324">Variables set <code><span style="font-size: 10pt">(<a href=
+        "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html">Learn
+        more</a>)</span></code></th>
+
+        <th width="428">Where</th>
+
+        <th width="428">Example</th>
+      </tr>
+
+      <tr>
+        <td width="324"><code>[prefix].[policy_name].failed</code></td>
+
+        <td width="428">The <code>[prefix] is <strong>extractvariables</strong>.</code><br>
+        The <code>[policy_name]</code> is the name of the policy to check.</td>
+
+        <td width="428"><code>extractvariables.EV-ParseJsonResponse.failed = true</code></td>
+      </tr>
+
+      <tr>
+        <td><code>fault.[error_name]</code></td>
+
+        <td><code>[error_name]</code> = The specific error name to check for as listed in the table
+        above.</td>
+
+        <td><code>fault.name = "SourceMessageNotAvailable"</code></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Example error response</h3>
+
+  <aside class="note"><b>Note:</b> For error handling, the best practice is to trap the
+  <code>errorcode</code> part of the error response. Do not rely on the text in the
+  <code>faultstring</code>, because it could change.</aside>
+  <pre class="prettyprint">
+{  
+   "fault":{  
+      "detail":{  
+         "errorcode":"steps.extractvariables.SourceMessageNotAvailable"
+      },
+      "faultstring":"request message is not available for ExtractVariable: EV-ParseJsonResponse"
+   }
+}
+</pre>
+
+  <h3>Example fault rule</h3>
+  <pre class="prettyprint">
+&lt;FaultRule name="Extract Variable Faults"&gt;
+    &lt;Step&gt;
+        &lt;Name&gt;AM-CustomErrorMessage&lt;/Name&gt;
+        &lt;Condition&gt;(fault.name = "SourceMessageNotAvailable") &lt;/Condition&gt;
+    &lt;/Step&gt;
+    &lt;Condition&gt;(extractvariables.EM-ParseJsonResponse.failed = true) &lt;/Condition&gt;
+&lt;/FaultRule&gt;
+</pre>
+  </body>
+</html>

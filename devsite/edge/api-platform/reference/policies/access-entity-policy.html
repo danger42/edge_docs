@@ -1,0 +1,920 @@
+  {% extends "_base.html" %} {% block title %}Access Entity policy{% endblock %} {% block body %}
+
+  <p><img src="/api-platform/images/icon_policy_mediation.jpg"></p>
+
+  <h3>What</h3>
+
+  <p>Retrieves entity profiles you specify from the Apigee Edge data store. The policy places the
+  profile in a variable whose name follows the format <code>AccessEntity.{policy_name}</code>. You
+  can use <code>AccessEntity</code> to access profiles for the following entities:</p>
+
+  <ul>
+    <li>App</li>
+
+    <li>API product</li>
+
+    <li>Company</li>
+
+    <li>Company developer</li>
+
+    <li>Consumer key</li>
+
+    <li>Developer</li>
+  </ul>
+
+  <p>The <code>AccessEntity</code> policy functions as a policy-based runtime database lookup. You
+  can use the profile information returned by this policy to enable dynamic behavior, such as
+  conditional endpoint routing, flow execution, policy enforcement.</p>
+
+  <p>You use the <code>AccessEntity</code> policy to get entity profile data <strong>as
+  XML</strong> and put it into a variable. You identify the entity to get by specifying an entity
+  type and one or more identifiers that specify which entity of that type you want. Later, in
+  another policy, you can retrieve the entity profile data with another policy, such as a <a href=
+  "/api-platform/reference/policies/extract-variables-policy.html">Extract Variables policy</a> or
+  <a href="/api-platform/reference/policies/assign-message-policy.html">Assign Message
+  policy</a>.</p>
+
+  <aside class="note"><b>Note:</b> For examples of XML representing entity profiles, be sure to see
+  "<a href="#profiles">Example entity profile XML</a>".</aside>
+
+  <h3 id="samples">Samples</h3>
+
+  <p>The following samples show <code>AccessEntity</code> used in conjunction with the
+  <code>ExtractVariables</code> and <code>AssignMessage</code> policies to extract a developer's
+  email and add it to the HTTP header.</p><!-- Begin tab list -->
+  <!-- End tab list --><!-- Begin tabbed region -->
+
+  <div class="ds-selector-tabs">
+    <section>
+      <h3 class="two-line-tab">Getting developer email for use in other policies</h3>
+
+      <p><b>Set up the <code>AccessEntity</code> policy to specify which entity profile to get from
+      Edge, as well as where to put the profile data.</b></p>
+
+      <p>In the following example the policy gets a <code>developer</code> entity profile, using an
+      API key passed as a query param to identify the developer. The profile is placed in a
+      variable whose name follows the form <code>AccessEntity.{policy_name}</code>. So the variable
+      set by this policy would be <code>AccessEntity.GetDeveloperProfile</code>.</p>
+      <pre class="prettyprint">
+&lt;AccessEntity name="GetDeveloperProfile"&gt;
+  &lt;!-- This is the type entity whose profile we need to pull from the Edge datastore. --&gt;
+  &lt;EntityType  value="developer"/&gt;
+  &lt;!-- We tell the policy to use the API key (presented as query parameter) to identify the developer. --&gt;
+  &lt;EntityIdentifier ref="request.queryparam.apikey" type="consumerkey"/&gt; 
+&lt;/AccessEntity&gt;
+</pre>
+
+      <p><b>Use another policy to retrieve the entity profile value from the variable set by
+      <code>AccessEntity</code>.</b></p>
+
+      <p>In the following example, an <code>ExtractVariables</code> policy retrieves a value from
+      the <code>AccessEntity.GetDeveloperProfile</code> variable set earlier by
+      <code>AccessEntity</code>.</p>
+
+      <p>Note that the value retrieved is specified as an XPath expression in the
+      <code>XMLPayload</code> element. The extracted value is placed in a
+      <code>developer.email</code> variable.</p>
+      <pre class="prettyprint">
+&lt;ExtractVariables name="SetDeveloperProfile"&gt;
+  &lt;!-- The source element points to the variable populated by AccessEntity policy. 
+  The format is &lt;policy-type&gt;.&lt;policy-name&gt;.
+  In this case, the variable contains the whole developer profile. --&gt;
+  &lt;Source&gt;AccessEntity.GetDeveloperProfile&lt;/Source&gt; 
+  &lt;VariablePrefix&gt;developer&lt;/VariablePrefix&gt;
+  &lt;XMLPayload&gt;
+    &lt;Variable name="email" type="string"&gt; 
+        &lt;!-- You parse elements from the developer profile using XPath. --&gt;
+      &lt;XPath&gt;/Developer/Email&lt;/XPath&gt;
+    &lt;/Variable&gt;
+  &lt;/XMLPayload&gt;
+&lt;/ExtractVariables&gt;
+</pre>
+
+      <p>The following <code>AssignMessage</code> policy retrieves the developer email set by the
+      <code>ExtraceVariables</code> policy.</p>
+      <pre class="prettyprint">
+&lt;!-- We'll use this policy to return the variables set in the developer profile, 
+just so that we can easily see them in the response. --&gt;
+&lt;AssignMessage name="EchoVariables"&gt;
+  &lt;AssignTo createNew="false" type="response"&gt;&lt;/AssignTo&gt;
+  &lt;IgnoreUnresolvedVariables&gt;true&lt;/IgnoreUnresolvedVariables&gt;
+  &lt;Set&gt;
+    &lt;Headers&gt;
+      &lt;Header name="X-Developer-email"&gt;{developer.email}&lt;/Header&gt;
+    &lt;/Headers&gt;
+  &lt;/Set&gt;
+&lt;/AssignMessage&gt;
+</pre>
+    </section>
+  </div><!-- End tabbed region. -->
+  <hr>
+
+  <h2 id="elements">Element reference</h2>
+
+  <p>The basic of structure of an <code>AccessEntity</code> policy is:</p>
+  <pre class="prettyprint">
+&lt;AccessEntity name="policy_name"&gt;
+  &lt;EntityType  value="entity_type"/&gt;
+  &lt;EntityIdentifier ref="entity_identifier" type="identifer_type"/&gt; 
+  &lt;SecondaryIdentifier ref="secondary_identifier" type="identifer_type"/&gt;
+&lt;/AccessEntity&gt;
+</pre>
+
+  <p>You can access multiple entities of the same type by grouping them in an
+  <code>Identifiers</code> element:</p>
+  <pre class="prettyprint">
+&lt;AccessEntity name="name_of_the_policy"&gt;
+  &lt;EntityType  value="type_of_entity"/&gt;
+  &lt;Identifiers&gt;
+    &lt;Identifier&gt;
+      &lt;EntityIdentifier ref="reference_to_entity_identifier" type*="identifer_type"/&gt; 
+      &lt;SecondaryIdentifier ref="reference_to_secondary_entity_identifier" type="identifer_type"/&gt;&lt;!-- optional --&gt;
+    &lt;/Identifier &gt;
+    &lt;Identifier&gt;
+      &lt;EntityIdentifier ref="reference_to_entity_identifier" type*="identifer_type"/&gt; 
+      &lt;SecondaryIdentifier ref="reference_to_secondary_entity_identifier" type="identifer_type"/&gt;&lt;!-- optional --&gt;
+    &lt;/Identifier &gt;
+  &lt;/Identifiers&gt;
+&lt;/AccessEntity&gt;
+</pre>
+
+  <h2 id="access_entity_attributes">&lt;AccessEntity&gt; attributes</h2>
+  <pre class="prettyprint">
+&lt;AccessEntity async="false" continueOnError="false" enabled="true" name="policy_name"&gt;
+</pre>{% dynamic include /includes/___policies-parent-element-attributes %}
+
+  <h2 id="EntityIdentifierElement">&lt;EntityIdentifier&gt; element</h2>
+
+  <p>Specifies the particular entity -- of the type given in EntityType -- to get.</p>
+  <pre class="prettyprint">
+&lt;EntityIdentifier ref="value_variable" type="identifier_type"/&gt; 
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td style="width:90px">
+          <p><strong>Default</strong></p>
+        </td>
+
+        <td>
+          <p>N/A</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Presence</strong></p>
+        </td>
+
+        <td>
+          <p>Required</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Type</strong></p>
+        </td>
+
+        <td>
+          <p>String</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="entityidentifierelement-attributes">Attributes</h3>
+
+  <table width="700">
+    <tbody>
+      <tr>
+        <th scope="col" width="118">Attribute</th>
+
+        <th scope="col" width="382">Description</th>
+
+        <th scope="col" width="382">Default</th>
+
+        <th scope="col" width="92">Presence</th>
+
+        <th scope="col" width="88">Type</th>
+      </tr>
+
+      <tr>
+        <td>ref</td>
+
+        <td>
+          <p>The variable that provides the source of the identifier, such as
+          <code>request.queryparam.apikey</code>.</p>
+        </td>
+
+        <td style="vertical-align: top;">N/A</td>
+
+        <td>Required.</td>
+
+        <td>String</td>
+      </tr>
+
+      <tr>
+        <td>type</td>
+
+        <td>The type populated by the variable in the ref attribute. such as
+        <code>consumerkey</code>. See the <a href="#Entities">Entity types and identifiers</a> for
+        a list of values.</td>
+
+        <td style="vertical-align: top;"> </td>
+
+        <td>Required.</td>
+
+        <td>String</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="entityidentifierelement-example">Example</h3>
+  <pre class="prettyprint">
+&lt;?xml version="1.0" encoding="UTF-8" standalone="yes"?&gt;
+&lt;AccessEntity async="false" continueOnError="false" enabled="true" name="GetCompany"&gt;
+    &lt;DisplayName&gt;GetCompanyProfile&lt;/DisplayName&gt;
+    &lt;EntityType value="company"&gt;&lt;/EntityType&gt;
+    &lt;EntityIdentifier ref="request.queryparam.apikey" type="appid"/&gt; 
+&lt;/AccessEntity&gt;
+</pre>
+
+  <h2 id="EntityTypeElement">&lt;EntityType&gt; element</h2>
+
+  <p>Specifies the type of entity to retrieve from the data store.</p>
+  <pre class="prettyprint">
+&lt;EntityType  value="entity_type"/&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td>
+          <p><strong>Default</strong></p>
+        </td>
+
+        <td>
+          <p>N/A</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Presence</strong></p>
+        </td>
+
+        <td>
+          <p>Required</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Type</strong></p>
+        </td>
+
+        <td>
+          <p>String</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>Use an <a href="#EntityIdentifierElement"><code>EntityIdentifier</code></a> element to specify
+  which entity of the given type you want. For a reference of entity types, see the <a href=
+  "#Entities">Entity types and identifiers</a>.</p>
+
+  <h3 id="entitytypeelement-attributes">Attributes</h3>
+
+  <table width="700">
+    <tbody>
+      <tr>
+        <th scope="col" width="118">Attribute</th>
+
+        <th scope="col" width="382">Description</th>
+
+        <th scope="col" width="382">Default</th>
+
+        <th scope="col" width="92">Presence</th>
+
+        <th scope="col" width="88">Type</th>
+      </tr>
+
+      <tr>
+        <td>value</td>
+
+        <td>One of the supported entity types. See <a href="#Entities">Entity types and
+        identifiers</a> for a list.</td>
+
+        <td style="vertical-align: top;">None.</td>
+
+        <td>Required.</td>
+
+        <td>String</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="SecondaryIdentifierElement">&lt;SecondaryIdentifier&gt; element</h2>
+
+  <p>In conjunction with <code>EntityIdentifier</code>, specifies a value to identify the desired
+  instance of the given <code>EntityType</code>.</p>
+  <pre class="prettyprint">
+&lt;SecondaryIdentifier ref="value_variable" type="identifier_type"/&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td>
+          <p><strong>Default</strong></p>
+        </td>
+
+        <td>
+          <p>N/A</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Presence</strong></p>
+        </td>
+
+        <td>
+          <p>Optional</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Type</strong></p>
+        </td>
+
+        <td>
+          <p>String</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>Use <code>SecondaryIdentifier</code> when specifying only an <code>EntityIdentifier</code>
+  will not guarantee that you get a single entity. See <a href="#secondary_identifiers">Narrowing
+  results with secondary identifiers</a> for more information.</p>
+
+  <p>Using multiple <code>SecondaryIdentifier</code> elements is not supported.</p>
+
+  <h3 id="secondaryidentifierelement-attributes">Attributes</h3>
+
+  <table width="700">
+    <tbody>
+      <tr>
+        <th scope="col" width="118">Attribute</th>
+
+        <th scope="col" width="382">Description</th>
+
+        <th scope="col" width="382">Default</th>
+
+        <th scope="col" width="92">Presence</th>
+
+        <th scope="col" width="88">Type</th>
+      </tr>
+
+      <tr>
+        <td>ref</td>
+
+        <td>
+          <p>The variable that provides the source of the identifier, such as
+          <code>request.queryparam.apikey</code>.</p>
+        </td>
+
+        <td style="vertical-align: top;">N/A</td>
+
+        <td>Required.</td>
+
+        <td>String</td>
+      </tr>
+
+      <tr>
+        <td>type</td>
+
+        <td>The type populated by the variable in the ref attribute. such as
+        <code>consumerkey</code>. See the <a href="#Entities">Entity types and identifiers</a> for
+        a list of values.</td>
+
+        <td style="vertical-align: top;"> </td>
+
+        <td>Required.</td>
+
+        <td>String</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="secondaryidentifierelement-example">Example</h3>
+  <pre class="prettyprint">
+&lt;?xml version="1.0" encoding="UTF-8" standalone="yes"?&gt;
+&lt;AccessEntity async="false" continueOnError="false" enabled="true" name="GetAPIProduct"&gt;
+    &lt;DisplayName&gt;GetAPIProduct&lt;/DisplayName&gt;
+    &lt;EntityType value="apiproduct"&gt;&lt;/EntityType&gt;
+    &lt;EntityIdentifier ref="developer.app.name" type="appname"/&gt; 
+    &lt;SecondaryIdentifier ref="developer.id" type="developerid"/&gt; 
+&lt;/AccessEntity&gt;
+</pre>
+
+  <h2 id="usage">Usage notes</h2>
+
+  <h3 id="secondary_identifiers">Narrowing results with secondary identifiers</h3>
+
+  <p>For some entities, giving one identifier might not be specific enough to get the entity you
+  want. In those cases, you can use a secondary identifier to narrow the results.</p>
+
+  <aside class="note"><b>Note:</b> Where multiple matches exist for a given
+  <code>EntityIdentifier</code> and <code>SecondaryIdentifier</code> combination, the first match
+  will be populated in the flow. For example, consider a case in which you're wanting to get an API
+  product profile by using an app ID.</aside>
+
+  <p>Your first, possibly broad policy configuration might look like this:</p>
+  <pre class="prettyprint">
+&lt;?xml version="1.0" encoding="UTF-8" standalone="yes"?&gt;
+&lt;AccessEntity async="false" continueOnError="false" enabled="true" name="GetApp"&gt;
+    &lt;DisplayName&gt;GetAppProfile&lt;/DisplayName&gt;
+    &lt;EntityType value="apiproduct"&gt;&lt;/EntityType&gt;
+    &lt;EntityIdentifier ref="request.queryparam.apikey" type="appid"/&gt; 
+&lt;/AccessEntity&gt;
+</pre>
+
+  <p>Because an app can be associated with multiple API products, using just the app ID might not
+  return the API product you want (you could get just the first of multiple matched products).</p>
+
+  <p>Instead, to get a more exact result, you could use a <code>SecondaryIdentifier</code>. For
+  example, you might have <code>appname</code> and <code>developerid</code> variables in the flow
+  because these are populated by default during an OAuth 2.0 exchange. You could use the values of
+  those variables in an <code>AccessEntity</code> policy to get profile details on the requesting
+  app.</p>
+
+  <p>Your more specific policy configuration might look like this:</p>
+  <pre class="prettyprint">
+&lt;?xml version="1.0" encoding="UTF-8" standalone="yes"?&gt;
+&lt;AccessEntity async="false" continueOnError="false" enabled="true" name="GetApp"&gt;
+    &lt;DisplayName&gt;GetAppProfile&lt;/DisplayName&gt;
+    &lt;EntityType value="apiproduct"&gt;&lt;/EntityType&gt;
+    &lt;EntityIdentifier ref="developer.app.name" type="appname"/&gt; 
+    &lt;SecondaryIdentifier ref="developer.id" type="developerid"/&gt; 
+&lt;/AccessEntity&gt;
+</pre>
+
+  <h3 id="Entities">Supported entity types and identifiers</h3>
+
+  <p><code>AccessEntity</code> supports the following entity types and identifiers.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>EntityType Value</th>
+
+        <th>EntityIdentifier Types</th>
+
+        <th>SecondaryIdentifier Types</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td rowspan="4"><code>apiproduct</code></td>
+
+        <td><code>appid</code></td>
+
+        <td><code>apiresource</code></td>
+      </tr>
+
+      <tr>
+        <td><code>apiproductname</code></td>
+
+        <td> </td>
+      </tr>
+
+      <tr>
+        <td><code>appname</code></td>
+
+        <td><code>apiresource</code><br>
+        <code>developeremail</code><br>
+        <code>developerid</code><br>
+        <code>companyname</code></td>
+      </tr>
+
+      <tr>
+        <td><code>consumerkey</code></td>
+
+        <td><code>apiresource</code></td>
+      </tr>
+
+      <tr>
+        <td rowspan="3"><code>app</code></td>
+
+        <td><code>appid</code></td>
+
+        <td> </td>
+      </tr>
+
+      <tr>
+        <td><code>appname</code></td>
+
+        <td><code>developeremail</code><br>
+        <code>developerid</code><br>
+        <code>companyname</code></td>
+      </tr>
+
+      <tr>
+        <td><code>consumerkey</code></td>
+
+        <td> </td>
+      </tr>
+
+      <tr>
+        <td><code>authorizationcode</code></td>
+
+        <td><code>authorizationcode</code></td>
+
+        <td> </td>
+      </tr>
+
+      <tr>
+        <td rowspan="3"><code>company</code></td>
+
+        <td><code>appid</code></td>
+
+        <td> </td>
+      </tr>
+
+      <tr>
+        <td><code>company</code></td>
+
+        <td> </td>
+      </tr>
+
+      <tr>
+        <td><code>consumerkey</code></td>
+
+        <td> </td>
+      </tr>
+
+      <tr>
+        <td><code>companydeveloper</code></td>
+
+        <td><code>companyname</code></td>
+
+        <td> </td>
+      </tr>
+
+      <tr>
+        <td><code>consumerkey</code></td>
+
+        <td><code>consumerkey</code></td>
+
+        <td> </td>
+      </tr>
+
+      <tr>
+        <td><code>consumerkey_scope</code></td>
+
+        <td><code>consumerkey</code></td>
+
+        <td> </td>
+      </tr>
+
+      <tr>
+        <td rowspan="4"><code>developer</code></td>
+
+        <td><code>appid</code></td>
+
+        <td> </td>
+      </tr>
+
+      <tr>
+        <td><code>consumerkey</code></td>
+
+        <td> </td>
+      </tr>
+
+      <tr>
+        <td><code>developeremail</code></td>
+
+        <td> </td>
+      </tr>
+
+      <tr>
+        <td><code>developerid</code></td>
+
+        <td> </td>
+      </tr>
+
+      <tr>
+        <td><code>requesttoken</code></td>
+
+        <td><code>requesttoken</code></td>
+
+        <td><code>consumerkey</code></td>
+      </tr>
+
+      <tr>
+        <td><code>verifier</code></td>
+
+        <td><code>verifier</code></td>
+
+        <td> </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="Profiles"><a id="profiles" name="profiles"></a>Example entity profile XML</h3>
+
+  <p>To retrieve the entity profile value you want with XPath, you'll need to know something about
+  the profile XML's structure. For an example of the structure, use a management API call to get
+  XML for the entity you want. For details, refer to the <a href="/management/apis">management API
+  reference</a>.</p>
+
+  <p>The following sections include code for API calls, along with example XML from the call.</p>
+
+  <h4>Apps</h4>
+  <pre class="prettyprint">
+$ curl -H "Accept:text/xml" -X GET \
+https://api.enterprise.apigee.com/v1/o/{org_name}/apps/{app_id} \
+-u email:password
+</pre>
+
+  <p>See also <a href="/management/apis/get/organizations/{org_name}/apps/{app_id}">Get App in an
+  Organization by App ID</a> in the Edge management API reference.</p>
+
+  <p>Or:</p>
+  <pre class="prettyprint">
+$ curl -H "Accept:text/xml" -X GET \
+https://api.enterprise.apigee.com/v1/o/{org_name}/developers/{developer_email}/apps/{app_name} \
+-u email:password
+</pre>
+
+  <p>See also <a href=
+  "/management/apis/get/organizations/{org_name}/developers/{developer_email}/apps/{app_name}">Get
+  Developer App Details</a> in the Edge management API reference.</p>
+
+  <p>Sample profile:</p>
+  <pre class="prettyprint">
+&lt;?xml version="1.0" encoding="UTF-8" standalone="yes"?&gt;
+&lt;App name="thomas-app"&gt;
+    &lt;AccessType&gt;read&lt;/AccessType&gt;
+    &lt;ApiProducts/&gt;
+    &lt;Credentials&gt;
+        &lt;Credential&gt;
+            &lt;Attributes/&gt;
+            &lt;ConsumerKey&gt;wrqOOOiPArFI0WRoB1gAJMRbOguekJ5w&lt;/ConsumerKey&gt;
+            &lt;ConsumerSecret&gt;WvOhDrJ8m6kzz7Ni&lt;/ConsumerSecret&gt;
+            &lt;ApiProducts&gt;
+                &lt;ApiProduct&gt;
+                    &lt;Name&gt;FreeProduct&lt;/Name&gt;
+                    &lt;Status&gt;approved&lt;/Status&gt;
+                &lt;/ApiProduct&gt;
+            &lt;/ApiProducts&gt;
+            &lt;Scopes/&gt;
+            &lt;Status&gt;approved&lt;/Status&gt;
+        &lt;/Credential&gt;
+    &lt;/Credentials&gt;
+    &lt;AppFamily&gt;default&lt;/AppFamily&gt;
+    &lt;AppId&gt;ab308c13-bc99-4c50-8434-0e0ed1b86075&lt;/AppId&gt;
+    &lt;Attributes&gt;
+        &lt;Attribute&gt;
+            &lt;Name&gt;DisplayName&lt;/Name&gt;
+            &lt;Value&gt;Tom's Weather App&lt;/Value&gt;
+        &lt;/Attribute&gt;
+    &lt;/Attributes&gt;
+    &lt;CallbackUrl&gt;http://tom.app/login&lt;/CallbackUrl&gt;
+    &lt;CreatedAt&gt;1362502872727&lt;/CreatedAt&gt;
+    &lt;CreatedBy&gt;admin@apigee.com&lt;/CreatedBy&gt;
+    &lt;DeveloperId&gt;PFK8IwOeAOW01JKA&lt;/DeveloperId&gt;
+    &lt;LastModifiedAt&gt;1362502872727&lt;/LastModifiedAt&gt;
+    &lt;LastModifiedBy&gt;admin@apigee.com&lt;/LastModifiedBy&gt;
+    &lt;Scopes/&gt;
+    &lt;Status&gt;approved&lt;/Status&gt;
+&lt;/App&gt;
+</pre>
+
+  <h4>API product</h4>
+  <pre class="prettyprint">
+$ curl  -H "Accept:text/xml" -X GET \
+https://api.enterprise.apigee.com/v1/o/{org_name}/apiproducts/{apiproduct_name} \
+-u email:password
+</pre>
+
+  <p>See also <a href=
+  "/management/apis/get/organizations/{org_name}/apiproducts/{apiproduct_name}-0">Get API
+  Product</a> in the Edge management API reference.</p>
+
+  <p>Sample XPath, retrieves the second API resource (URI) from the API product named
+  <code>weather_free</code>:</p>
+  <pre class="prettyprint">
+/ApiProduct['@name=weather_free']/ApiResources/ApiResource[1]/text()
+</pre>
+
+  <p>Sample profile returned as XML:</p>
+  <pre class="prettyprint">
+&lt;?xml version="1.0" encoding="UTF-8" standalone="yes"?&gt;
+&lt;ApiProduct name="weather_free"&gt;
+    &lt;ApiResources&gt;
+        &lt;ApiResource&gt;/forecastrss, /reports&lt;/ApiResource&gt;
+    &lt;/ApiResources&gt;
+    &lt;ApprovalType&gt;auto&lt;/ApprovalType&gt;
+    &lt;Attributes&gt;
+        &lt;Attribute&gt;
+            &lt;Name&gt;description&lt;/Name&gt;
+            &lt;Value&gt;Introductory API Product&lt;/Value&gt;
+        &lt;/Attribute&gt;
+        &lt;Attribute&gt;
+            &lt;Name&gt;developer.quota.interval&lt;/Name&gt;
+            &lt;Value&gt;1&lt;/Value&gt;
+        &lt;/Attribute&gt;
+        &lt;Attribute&gt;
+            &lt;Name&gt;developer.quota.limit&lt;/Name&gt;
+            &lt;Value&gt;1&lt;/Value&gt;
+        &lt;/Attribute&gt;
+        &lt;Attribute&gt;
+            &lt;Name&gt;developer.quota.timeunit&lt;/Name&gt;
+            &lt;Value&gt;minute&lt;/Value&gt;
+        &lt;/Attribute&gt;
+        &lt;Attribute&gt;
+            &lt;Name&gt;servicePlan&lt;/Name&gt;
+            &lt;Value&gt;Introductory&lt;/Value&gt;
+        &lt;/Attribute&gt;
+    &lt;/Attributes&gt;
+    &lt;CreatedAt&gt;1355847839224&lt;/CreatedAt&gt;
+    &lt;CreatedBy&gt;andrew@apigee.com&lt;/CreatedBy&gt;
+    &lt;Description&gt;Free API Product&lt;/Description&gt;
+    &lt;DisplayName&gt;Free API Product&lt;/DisplayName&gt;
+    &lt;Environments/&gt;
+    &lt;LastModifiedAt&gt;1355847839224&lt;/LastModifiedAt&gt;
+    &lt;LastModifiedBy&gt;andrew@apigee.com&lt;/LastModifiedBy&gt;
+    &lt;Proxies/&gt;
+    &lt;Scopes/&gt;
+&lt;/ApiProduct&gt;
+</pre>
+
+  <h4>Company</h4>
+  <pre class="prettyprint">
+$ curl   -H "Accept:text/xml" -X GET \
+https://api.enterprise.apigee.com/v1/o/{org_name}/companies/{company_name} \
+-u email:password
+</pre>
+
+  <p>See also <a href="/management/apis/get/organizations/{org_name}/companies/{company_name}">Get
+  Company Details</a> in the Edge management API reference.</p>
+
+  <p>Sample profile:</p>
+  <pre class="prettyprint">
+&lt;?xml version="1.0" encoding="UTF-8" standalone="yes"?&gt;
+&lt;Company name="theramin"&gt;
+    &lt;Apps/&gt;
+    &lt;DisplayName&gt;Theramin Corporation&lt;/DisplayName&gt;
+    &lt;Organization&gt;apigee-pm&lt;/Organization&gt;
+    &lt;Status&gt;active&lt;/Status&gt;
+    &lt;Attributes&gt;
+        &lt;Attribute&gt;
+            &lt;Name&gt;billing_code&lt;/Name&gt;
+            &lt;Value&gt;13648765&lt;/Value&gt;
+        &lt;/Attribute&gt;
+    &lt;/Attributes&gt;
+    &lt;CreatedAt&gt;1349208631291&lt;/CreatedAt&gt;
+    &lt;CreatedBy&gt;andrew@apigee.com&lt;/CreatedBy&gt;
+    &lt;LastModifiedAt&gt;1349208631291&lt;/LastModifiedAt&gt;
+    &lt;LastModifiedBy&gt;andrew@apigee.com&lt;/LastModifiedBy&gt;
+&lt;/Company&gt;
+</pre>
+
+  <h4>Company developer</h4>
+  <pre class="prettyprint">
+$ curl -H "Accept:text/xml" -X GET \
+https://api.enterprise.apigee.com/v1/o/{org_name}/companies/{company_name}/developers/{developer_name} \
+-u email:password
+</pre>
+
+  <p>Sample profile:</p>
+  <pre class="prettyprint">
+&lt;?xml version="1.0" encoding="UTF-8" standalone="yes"?&gt;
+&lt;Developers&gt;
+    &lt;Developer&gt;
+        &lt;Email&gt;ntesla@theramin.com&lt;/Email&gt;
+        &lt;Role&gt;developer&lt;/Role&gt;
+    &lt;/Developer&gt;
+&lt;/Developers&gt;
+</pre>
+
+  <h4>Consumer key</h4>
+  <pre class="prettyprint">
+$ curl -H "Accept:text/xml" -X GET \
+https://api.enterprise.apigee.com/v1/o/{org_name}/developers/{developer_email}/apps/{app_name}/keys/{consumer_key} \
+-u email:password
+</pre>
+
+  <p>See also <a href=
+  "/management/apis/get/organizations/{org_name}/developers/{developer_email}/apps/{app_name}/keys/{consumer_key}-0">
+  Get Key Details for a Developer App</a> in the Edge management API reference.</p>
+
+  <p>Sample XPath:</p>
+  <pre class="prettyprint">
+/Credential/ApiProducts/ApiProduct[Name='weather_free']/Status/text()
+</pre>
+
+  <p>Sample profile:</p>
+  <pre class="prettyprint">
+&lt;?xml version="1.0" encoding="UTF-8" standalone="yes"?&gt;
+&lt;Credential&gt;
+    &lt;Attributes/&gt;
+    &lt;ConsumerKey&gt;XLotL3PRxNkUGXhGAFDPOr6fqtvAhuZe&lt;/ConsumerKey&gt;
+    &lt;ConsumerSecret&gt;iNUyEaOOh96KR3YL&lt;/ConsumerSecret&gt;
+    &lt;ApiProducts&gt;
+        &lt;ApiProduct&gt;
+            &lt;Name&gt;weather_free&lt;/Name&gt;
+            &lt;Status&gt;approved&lt;/Status&gt;
+        &lt;/ApiProduct&gt;
+    &lt;/ApiProducts&gt;
+    &lt;Scopes/&gt;
+    &lt;Status&gt;approved&lt;/Status&gt;
+&lt;/Credential&gt;
+</pre>
+
+  <h4>Developer</h4>
+  <pre class="prettyprint">
+$ curl -H "Accept:text/xml" -X GET \
+https://api.enterprise.apigee.com/v1/o/{org_name}/developers/{developer_email} \
+-u email:password
+</pre>
+
+  <p>See also <a href=
+  "/management/apis/get/organizations/{org_name}/developers/{developer_email}">Get Developer</a> in
+  the Edge management API reference.</p>
+
+  <p>Sample XPath:</p>
+  <pre class="prettyprint">
+/Developer/Attributes/Attribute[Name='my_custom_attribute']/Value/text()
+</pre>
+  <pre class="prettyprint">
+/Developer/Email/text()
+</pre>
+
+  <p>Sample profile:</p>
+  <pre class="prettyprint">
+&lt;?xml version="1.0" encoding="UTF-8" standalone="yes"?&gt;
+&lt;Developer&gt;
+    &lt;Apps&gt;
+        &lt;App&gt;weatherappx&lt;/App&gt;
+        &lt;App&gt;weatherapp&lt;/App&gt;
+    &lt;/Apps&gt;
+    &lt;Email&gt;ntesla@theramin.com&lt;/Email&gt;
+    &lt;DeveloperId&gt;4Y4xd0KRZ1wmHJqu&lt;/DeveloperId&gt;
+    &lt;FirstName&gt;Nikola&lt;/FirstName&gt;
+    &lt;LastName&gt;Tesla&lt;/LastName&gt;
+    &lt;UserName&gt;theramin&lt;/UserName&gt;
+    &lt;OrganizationName&gt;apigee-pm&lt;/OrganizationName&gt;
+    &lt;Status&gt;active&lt;/Status&gt;
+    &lt;Attributes&gt;
+        &lt;Attribute&gt;
+            &lt;Name&gt;project_type&lt;/Name&gt;
+            &lt;Value&gt;public&lt;/Value&gt;
+        &lt;/Attribute&gt;
+    &lt;/Attributes&gt;
+    &lt;CreatedAt&gt;1349797040634&lt;/CreatedAt&gt;
+    &lt;CreatedBy&gt;rsaha@apigee.com&lt;/CreatedBy&gt;
+    &lt;LastModifiedAt&gt;1349797040634&lt;/LastModifiedAt&gt;
+    &lt;LastModifiedBy&gt;rsaha@apigee.com&lt;/LastModifiedBy&gt;
+&lt;/Developer&gt;
+</pre>
+  <hr>
+
+  <h2 id="variables">Flow variables</h2>
+
+  <p>When the entity profile specified in the AccessEntity policy is retrieved, the XML-formatted
+  profile object is added to the message context as a variable. It can be accessed like any other
+  variable, with reference to the variable name. The user-provided name of the AccessEntity policy
+  is set as the variable prefix of the variable name.</p>
+
+  <p>For example, if an AccessEntity policy with name of <code>GetDeveloper</code> is executed,
+  then the XML-formatted profile is stored in the variable named
+  <code>AccessEntity.GetDeveloper</code>. The XML-formatted profile can then be parsed using an
+  XPath defined in an ExtractVariables policy that specifies <code>AccessEntity.GetDeveloper</code>
+  as its source.</p>
+
+  <h2 id="errors">Error reference</h2>
+
+  <p>{% dynamic include /includes/___access-entity-policy-error-codes %}</p>
+
+  <h2 id="relatedtopics">Related topics</h2>
+
+  <aside class="note"><b>Sample:</b> For working samples of API proxies, see the <a href=
+  "/api-platform/samples/samples-reference.html">Samples list</a>.</aside>
+
+  <ul>
+    <li><code>ExtractVariables</code>: <a href=
+    "/api-platform/reference/policies/extract-variables-policy.html">Extract Variables
+    policy</a></li>
+
+    <li><code>AssignMessage</code>: <a href=
+    "/api-platform/reference/policies/assign-message-policy.html">Assign Message policy</a></li>
+  </ul>{% endblock %}

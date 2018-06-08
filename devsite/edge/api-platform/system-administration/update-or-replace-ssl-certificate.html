@@ -1,0 +1,39 @@
+  {% extends "_base.html" %} {% block title %}Update a TLS certificate{% endblock %} {% block body %}
+
+  <p>If a TLS certificate expires, or if your system configuration changes such that the
+  certificate is no longer valid, then you need to update the certificate. The process of updating
+  a certificate depends on your deployment of Edge: cloud or on-premises.</p>
+
+  <aside class="note"><b>Note:</b> You cannot update an existing keystore to add a new certificate.
+  You must create a new keystore when updating a certificate.</aside>
+
+  <aside class="note"><b>Note:</b> If you configured the virtual host or the TargetEndpoint to
+  use a reference to the keystore or truststore, you can update the reference to point to a
+  different keystore or truststore to update the TLS cert. That means Cloud customers do not have
+  to contact Apigee Support and Private Cloud customers do not need to restart a Router or Message
+  Processor. However, Cloud customers must contact Apigee Support if they require an update to the
+  virtual host. See <a href=
+  "/api-platform/system-administration/creating-virtual-host.html">Configuring TLS access to an API
+  for the Private Cloud</a> for more on using a reference in a virtual host or
+  TargetEndpoint.</aside>
+
+  <aside class="note">
+    <b>Note:</b> You can optionally choose to delete the existing keystore and then create a new
+    one with the same name. However, for the time from when the certificate expired until you
+    create the new keystore, you cannot service requests.<br>
+
+    <p>If the keystore is used for two-way TLS between Edge and the backend service, and you are
+    using Edge for the Private Cloud, then after deleting and recreating the keystore with the same
+    name, you must restart the Edge Message Processors.</p>
+  </aside>
+
+  <h2 id="determinewhenacertisduetoexpire">Determine when a cert is due to expire</h2>
+
+  <p>Typically, you create a new keystore before the current certificate expires, and then
+  update your virtual hosts or target endpoints to use the new keystore so that you can continue to
+  service requests without interruption due to an expired certificate. You can then delete the old
+  keystore after ensuring that the new keystore is working correctly.</p>
+
+  <p>To check when a certificate is due to expire, go to the <strong>Admin &gt; SSL
+  Certificates</strong> menu in the Edge management UI. You can also configure that page to
+  indicate if a certificate is due to expire in 10, 15, 30, or 90 days. </p>{% endblock %}

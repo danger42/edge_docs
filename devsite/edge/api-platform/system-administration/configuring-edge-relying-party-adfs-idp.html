@@ -1,0 +1,122 @@
+  {% extends "_base.html" %} {% block title %}Configuring Edge as a Relying Party in ADFS IDP{% endblock %} {% block body %}
+
+  <p>This document describes how to configure the Microsoft Active Directory Federation Services
+  (ADFS) as the identity provider for an Edge organization that has SAML authentication enabled.
+  This example uses Windows 2012 R2 ADFS 3.0 version.</p>
+
+  <p>For information on enabling SAML authentication for an Edge organization, see <a href=
+  "/api-platform/system-administration/enabling-saml-authentication-edge.html">Enabling SAML
+  Authentication for Edge</a>.</p>
+
+  <h2 id="configuringtherelyingparty">Configuring the Relying Party</h2>
+
+  <ol>
+    <li>Open the ADFS Management console.</li>
+
+    <li>Expand <strong>Trust Relationships</strong> in the tree structure. The <strong>Relying
+    Party Trusts</strong> folder appears. <br>
+    <img alt="" src="/api-platform/images/relying_party.png"></li>
+
+    <li>Right click on <strong>Relying Party Trusts</strong> and then select <strong>Add Relying
+    Party Trust</strong> to open the <strong>Relying Party Trust Wizard</strong>. <br>
+    <img alt="" src="/api-platform/images/add_relying_party_trust.png"></li>
+
+    <li>Click <strong>Start</strong> in the wizard to begin.</li>
+
+    <li>In the <strong>Select Data Source</strong> dialog box, use the <strong>Import data about
+    the relying party published online or on a local network</strong> option to import the metadata
+    URL provided to you by Apigee, and click <strong>Next</strong>.<br>
+    <img alt="" src="/api-platform/images/select_data_source.png"></li>
+
+    <li>Specify the display name, and click <strong>Next</strong>. By default, ADFS uses
+    &#8220;<strong>zonename.login.apigee.com</strong>&#8221; as the display name. You can leave it
+    or change it to &#8220;<strong>Apigee Edge</strong>&#8221; as the relying party display
+    name.<br>
+    <img alt="" src="/api-platform/images/specify_display_name.png"></li>
+
+    <li>In the Configure <strong>Multi-factor Authentication Now?</strong> dialog box, select
+    <strong>I do not want to configure multi-factor authentication settings for this relying party
+    trust at this time</strong>, and select <strong>Next</strong>.<br>
+    <img alt="" src="/api-platform/images/i_do_not_want_to.png"></li>
+
+    <li>In the <strong>Choose Issuance Authorization Rules</strong> dialog box, select
+    <strong>Permit all users to access this relying party</strong>, and click
+    <strong>Next</strong>.<br>
+    <img alt="" src="/api-platform/images/choose_issuance_rule.png"></li>
+
+    <li>In the <strong>Ready to Add Trust</strong> dialog box, review the settings, and then click
+    <strong>Next</strong> to save your settings.<br>
+    <img alt="" src="/api-platform/images/review.png"></li>
+
+    <li>Click <strong>Close</strong> to close the wizard. The <strong>Edit Claim Rules</strong>
+    dialog box should appear, as described in the next section.</li>
+  </ol>
+
+  <h2 id="addclaimrules">Add Claim Rules</h2>
+
+  <p>The <strong>Edit claim rules</strong> dialog box should open automatically when you complete
+  the <strong>Relying Party Trust Wizard</strong> in the previous section. If it does not appear,
+  click <strong>Edit Claim Rules</strong> in the left panel. </p>
+
+  <p>In this section you add two claim rules.</p>
+
+  <ol>
+    <li>Click A<strong>dd Rule</strong>.<br>
+    <img alt="" src="/api-platform/images/edit_rule_after_first_rule.png"></li>
+
+    <li>In <strong>Choose Rule Type</strong>, set <strong>Claim rule template</strong> as
+    &#8220;Send LDAP Attributes as Claims&#8221;, and click <strong>Next</strong>.<br>
+    <img alt="" src="/api-platform/images/choose_rule_type_1.png"></li>
+
+    <li>Specify the following information:
+
+      <ul>
+        <li><strong>Claim rule name</strong> = Email Address</li>
+
+        <li><strong>Attribute store</strong> = Active Directory</li>
+
+        <li><strong>Outgoing Claim Type</strong> = E-Mail Address<br>
+        <img alt="" src="/api-platform/images/email_address_rule.png"></li>
+      </ul>
+    </li>
+
+    <li>Click <strong>Finish</strong>. The <strong>Edit claim rules</strong> dialog box
+    appears:<br>
+    <img alt="" src="/api-platform/images/edit_rule_after_second_rule.png"></li>
+
+    <li>Click <strong>Add Rule</strong> to add a second claim that transforms the incoming
+    claim. </li>
+
+    <li>Select <strong>Transform an Incoming Claim</strong> as the <strong>Claim rule
+    template</strong>, and click <strong>Next</strong>: <br>
+    <img alt="" src="/api-platform/images/transform_claim_rule_type.png"></li>
+
+    <li>Specify the following information:
+
+      <ul>
+        <li><strong>Claim rule name</strong> = Incoming Email Claim</li>
+
+        <li><strong>Incoming Claim Type</strong> = E-Mail Address</li>
+
+        <li><strong>Outgoing claim type</strong> = Name ID</li>
+
+        <li><strong>Outgoing name ID format</strong> = Email <br>
+        <img alt="" src="/api-platform/images/claim_rule.png"></li>
+      </ul>
+    </li>
+
+    <li>Click <strong>OK</strong>. You should see two claim rules in the <strong>Edit claim
+    rules</strong> dialog box: <br>
+    <img alt="" src="/api-platform/images/edit_rule_after_second_rule.png"></li>
+
+    <li>Click <strong>OK</strong>. The new relying party trust appears in the left navigation
+    tree.</li>
+
+    <li>Right-click on the relying party trust and select <strong>Properties</strong>.</li>
+
+    <li>Browse to the <strong>Advanced</strong> tab. Set the <strong>Secure hash algorithm</strong>
+    to <strong>SHA-256</strong> and then click <strong>Apply</strong>.<br>
+    <img alt="" src="/api-platform/images/sha256.png"></li>
+  </ol>
+
+  <p>You have completed the configuration.</p>{% endblock %}

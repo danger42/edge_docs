@@ -1,0 +1,272 @@
+  {% extends "_base.html" %} {% block title %}Set OAuth V2 Info policy{% endblock %} {% block body %} <img src="/api-platform/images/icon_policy_security.jpg">
+
+  <h3>What</h3>
+
+  <p>Lets you add or update custom attributes associated with an access token. Custom attributes
+  might include things like department name, a customer ID, or a session identifier. See also
+  <a href="/api-platform/security/oauth/customizing-access-tokens.html">Customizing Tokens and
+  Authorization Codes</a>.</p>
+
+  <p>You can only add or modify custom attributes. You cannot use this policy to change fields like
+  scope, status, expires_in, developer_email, client_id, org_name, or refresh_count. If an
+  attribute already exists, this policy updates it. If it does not exist, the policy adds it. The
+  access token referenced must be valid and in an approved state.</p>
+
+  
+
+  <h2 id="samples">Samples</h2><!-- Begin tab list -->
+  <!-- End tab list --><!-- Begin tabbed region -->
+
+  <div class="ds-selector-tabs">
+    <section>
+      <h3 class="two-line-tab">Basic example</h3>
+
+      <p>Below is an example policy used to update an OAuth 2.0 access token. The example below
+      locates the access token on the request message by looking for a query parameter called
+      <code>access_token</code>. When an access token is presented by a client app, the policy
+      below will locate the access token in the query parameter. It will then update the access
+      token's profile. It adds a custom property called <code>department.id</code> to the
+      profile. </p>
+      <pre class="prettyprint">
+&lt;SetOAuthV2Info name="SetOAuthV2Info"&gt; 
+  &lt;AccessToken ref="request.queryparam.access_token"&gt;&lt;/AccessToken&gt;
+  &lt;Attributes&gt;
+    &lt;Attribute name="department.id" ref="request.queryparam.department_id"&gt;&lt;/Attribute&gt;
+  &lt;/Attributes&gt;
+&lt;/SetOAuthV2Info&gt;
+</pre>
+
+      <aside class="note"><b>Note:</b> If an attribute already exists in the access token profile,
+      then it will be updated with the new value in the policy. If an attribute does not exist,
+      then the attribute will be added to the access token's profile.</aside>
+    </section>
+  </div><!-- End tabbed region. -->
+  <hr>
+
+  <h2 id="elementreference">Element Reference</h2>
+
+  <p>The element reference describes the elements and attributes of the SetOAuthV2 policy.</p>
+  <pre class="prettyprint">
+&lt;?xml version="1.0" encoding="UTF-8" standalone="yes"?&gt;
+&lt;SetOAuthV2Info async="false" continueOnError="false" enabled="true" name="SetOAuthV2Info-1"&gt;    
+    &lt;DisplayName&gt;Set OAuth v2.0 Info 1&lt;/DisplayName&gt;
+    &lt;AccessToken ref={some-variable}&gt;&lt;/AccessToken&gt;
+    &lt;Attributes/&gt;
+&lt;/SetOAuthV2Info&gt;
+&lt;/xml&gt;
+</pre>
+
+  <h2 id="setoauthv2infoattributes">&lt;SetOAuthV2Info&gt; attributes</h2>
+  <pre class="prettyprint prettyprinted">
+&lt;SetOAuthV2Info async="false" continueOnError="false" enabled="true" name="Set-OAuth-v20-Info-1"&gt;
+</pre>{% dynamic include /includes/___policies-parent-element-attributes %}
+
+  <h2 id="accesstokenelement">&lt;AccessToken&gt; element</h2>
+
+  <p>Identifies the variable where the access token is located. For example, if the access token is
+  attached to request message as a query parameter, specify
+  <code>request.queryparam.access_token</code>. You can use any valid variable that references the
+  token. Or, could pass in the literal token string (rare case).</p>
+  <pre class="prettyprint">
+ &lt;AccessToken ref="request.queryparam.access_token"&gt;&lt;/AccessToken&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td width="61"><b>Default:</b></td>
+
+        <td width="138">N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Required</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>String</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="accesstokenelement-attributes">Attributes</h3>
+
+  <table width="650">
+    <tbody>
+      <tr>
+        <th scope="col">Attribute</th>
+
+        <th scope="col">Description</th>
+
+        <th scope="col">Default</th>
+
+        <th scope="col">Presence</th>
+      </tr>
+
+      <tr>
+        <td>ref</td>
+
+        <td>
+          <p>An access token variable. Typically, retrieved from a flow variable.</p>
+        </td>
+
+        <td>N/A</td>
+
+        <td>Optional</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="attributeselement">&lt;Attributes&gt; element</h2>
+
+  <p>A set of attributes in the access token profile that will be modified or augmented.</p>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td width="61"><b>Default:</b></td>
+
+        <td width="159">N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Required</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>N/A</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="attributesattributeelement">&lt;Attributes&gt;/&lt;Attribute&gt; element</h2>
+
+  <p>An individual attribute to update.</p>
+
+  <p>The name attribute identifies the custom property of the access token profile to be
+  updated. This example shows how to use a referenced variable value and a static value. </p>
+  <pre class="prettyprint">
+  &lt;Attributes&gt;
+    &lt;Attribute name="department.id" ref="request.queryparam.department_id"&gt;&lt;/Attribute&gt;
+    &lt;Attribute name="foo"&gt;bar&lt;/Attribute&gt;
+  &lt;/Attributes&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td width="61"><b>Default:</b></td>
+
+        <td width="159">N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>N/A</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="attributesattributeelement-attributes">Attributes</h3>
+
+  <table width="650">
+    <tbody>
+      <tr>
+        <th scope="col">Attribute</th>
+
+        <th scope="col">Description</th>
+
+        <th scope="col">Default</th>
+
+        <th scope="col">Presence</th>
+      </tr>
+
+      <tr>
+        <td>name</td>
+
+        <td>The name of the profile attribute to add or change.</td>
+
+        <td>N/A</td>
+
+        <td> </td>
+      </tr>
+
+      <tr>
+        <td>ref</td>
+
+        <td>
+          <p>The value to assign to the profile attribute.</p>
+        </td>
+
+        <td>N/A</td>
+
+        <td>Optional</td>
+      </tr>
+    </tbody>
+  </table>
+
+  
+
+  <h2 id="flowvariables">Flow variables</h2>
+
+  <p>On success, the following flow variables will be set:</p>
+
+  <ul>
+    <li><code>oauthv2accesstoken.{policyName}.access_token</code></li>
+
+    <li><code>oauthv2accesstoken.{policyName}.client_id</code></li>
+
+    <li><code>oauthv2accesstoken.{policyName}.refresh_count</code></li>
+
+    <li><code>oauthv2accesstoken.{policyName}.organization_name</code></li>
+
+    <li><code>oauthv2accesstoken.{policyName}.expires_in //--in seconds</code></li>
+
+    <li><code>oauthv2accesstoken.{policyName}.refresh_token_expires_in //--in seconds</code></li>
+
+    <li><code>oauthv2accesstoken.{policyName}.issued_at</code></li>
+
+    <li><code>oauthv2accesstoken.{policyName}.status</code></li>
+
+    <li><code>oauthv2accesstoken.{policyName}.api_product_list</code></li>
+
+    <li><code>oauthv2accesstoken.{policyName}.token_type</code></li>
+
+    <li><code>oauthv2accesstoken.{policyName}.{custom_attribute_name}</code></li>
+  </ul>
+
+  <h2 id="schema">Schema</h2>
+
+  <p>Each policy type is defined by an XML schema (<code>.xsd</code>). For reference, <a href=
+  "https://github.com/apigee/api-platform-samples/tree/master/schemas/policy">policy schemas</a>
+  are available on GitHub.</p>
+
+  <h2 id="errorreference">Error reference</h2>
+
+  <p>{% dynamic include /includes/___set-oauthv2-info-policy-error-codes %}</p>
+
+  <h2 id="relatedtopics">Related topics</h2>
+
+  <ul>
+    <li><a href="/api-platform/reference/policies/oauthv2-policy.html">OAuthV2 policy</a></li>
+
+    <li><a href="/api-platform/security/oauth/oauth-home.html">OAuth home</a></li>
+
+    <li><a href="/api-platform/security/oauth/customizing-access-tokens.html">Customizing Tokens
+    and Authorization Codes</a></li>
+  </ul>{% endblock %}

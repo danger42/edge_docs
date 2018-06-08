@@ -1,0 +1,498 @@
+  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}External Role Mapping{% endblock %} {% block body %}
+
+  <p>External Role Mapping lets you map your own groups or roles to role-based access control
+  (RBAC) roles and groups created on Apigee Edge. This feature is only available with Edge Private
+  Cloud.</p>
+
+  <h2 id="what's-new">What's New</h2>
+
+  <p>The External Role Mapping service for Edge for Private Cloud releases prior to 4.18.01 has
+  been deprecated. Release 4.18.01 of External Role Mapping is an updated version with bugs fixed
+  and new features added:</p>
+
+  <ul>
+    <li>Fixed the problem where you received authentication 403 forbidden responses when
+    authenticating with users who should have access.</li>
+
+    <li><span style="font-family:courier new,courier,monospace;">X-Apigee-Current-User</span>
+    header is supported now in External Role Mapping. Users with proper access (sysadmin) can now
+    view the roles assigned to another user.</li>
+  </ul>
+
+  <h2 id="prerequisites">Prerequisites</h2>
+
+  <ul>
+    <li>You must be an Apigee Private Cloud system administrator with global system admin
+    credentials to perform this configuration.</li>
+
+    <li>
+      <p>You need to know the root directory of your Apigee Edge Private Cloud installation. The
+      default root directory is <span style=
+      "font-family:courier new,courier,monospace;">/opt</span>.</p>
+    </li>
+  </ul>
+
+  <h2 id="stepbystepsetupexample">Step-by-step setup example</h2>
+
+  <p>See <a href=
+  "https://community.apigee.com/content/kbentry/53336/external-role-mapping-step-by-step-guide.html">
+  this article</a> on the Apigee Community Forums for a step-by-step example of setting up external
+  role mapping.</p>
+
+  <h2 id="default-configuration">Default configuration</h2>
+
+  <p>External role mapping is <strong>disabled</strong> by default.</p>
+
+  <h2 id="enabling-external-role-mapping-v2">Enabling External Role Mapping</h2>
+
+  <ol>
+    <li>Before you can complete the following configuration, you must create a Java class that
+    implements the ExternalRoleMapperServiceV2 interface and include your implementation in the
+    Management Server classpath:<br>
+    <br>
+    <span style=
+    "font-family:courier new,courier,monospace;">/opt/apigee/edge-management-server/lib/thirdparty/</span><br>
+
+    <br>
+    For details about this implementation, see the section <a href=
+    "#about-the-externalrolemapperimpl-sample-implementation">About the ExternalRoleMapperImpl
+    sample implementation</a> later in this document.</li>
+
+    <li>Log into your Apigee Edge management server and then stop the management server
+    process:<br>
+    <span style=
+    "font-family:courier new,courier,monospace;">&gt; /opt/apigee/apigee-service/bin/apigee-service
+    management-server stop</span></li>
+
+    <li>Open <span style=
+    "font-family:courier new,courier,monospace;">/opt/apigee/customer/application/management-server.properties</span>
+    in a text editor. If this file does not exist, create it.</li>
+
+    <li>Edit the properties file to make the following settings:<br>
+    <span style="font-family:courier new,courier,monospace;"># The user store to be used for
+    authentication.<br>
+    # Use "externalized.authentication" for LDAP user store.<br>
+    # Note that for authorization, we continue to use LDAP.<br>
+    # See <a href="enabling-external-authentication.html">Enabling external authentication</a> more
+    on enabling external auth.<br>
+    conf_security_authentication.user.store=<strong>externalized.authentication</strong><br>
+    <br>
+    #Enable the external authorizations role mapper.<br>
+    conf_security_externalized.authentication.role.mapper.enabled=<strong>true</strong>
+    conf_security_externalized.authentication.role.mapper.implementation.class=</span><strong><span style="font-family:courier new,courier,monospace;"><em>com.customer.authorization.impl.ExternalRoleMapperImpl</em></span><br>
+
+    <br>
+    <span style="font-family:arial,helvetica,sans-serif;">Important:</span></strong> The
+    implementation class and package name referenced in the above configuration
+    (ExternalRoleMapperImpl) are only examples -- it is a class that you must implement and that
+    you can name the class and package whatever you wish. For details about implementing this
+    class, see <a href="#about-the-externalrolemapperimpl-sample-implementation">About the
+    ExternalRoleMapperImpl sample implementation</a> class below. This is a class that you
+    must implement to reflect your own groups.</li>
+
+    <li>Save the <span style=
+    "font-family:courier new,courier,monospace;">management-server.properties</span> file.</li>
+
+    <li>Make sure <span style=
+    "font-family:courier new,courier,monospace;">management-server.properties</span> is owned by
+    the apigee user:?<br>
+    <span style="font-family:courier new,courier,monospace;">&gt; chown apigee:apigee
+    /opt/apigee/customer/application/management-server.properties</span></li>
+
+    <li>Start the management server:<br>
+    <span style=
+    "font-family:courier new,courier,monospace;">&gt; /opt/apigee/apigee-service/bin/apigee-service
+    management-server start</span></li>
+  </ol>
+
+  <h2 id="disabling-external-authorization">Disabling External Authorization</h2>
+
+  <p>To disable external authorization:</p>
+
+  <ol>
+    <li>Open <span style=
+    "font-family:courier new,courier,monospace;">/opt/apigee/customer/application/management-server.properties</span>
+    in a text editor. If the file doesn't exist, create it.</li>
+
+    <li>Change the authentication user store to ldap:<br>
+    <span style=
+    "font-family:courier new,courier,monospace;">conf_security_authentication.user.store=<strong>ldap</strong></span></li>
+
+    <li>Set this property to false:<br>
+    <span style=
+    "font-family:courier new,courier,monospace;">conf_security_externalized.authentication.role.mapper.enabled=<strong>false</strong></span></li>
+
+    <li>Restart the management server:<br>
+    <span style=
+    "font-family:courier new,courier,monospace;">&gt; /opt/apigee/apigee-service/bin/apigee-service
+    management-server start</span></li>
+  </ol>
+
+  <h2 id="about-the-externalrolemapperimpl-sample-implementation">About the ExternalRoleMapperImpl
+  sample implementation</h2>
+
+  <p>In the security.properties config file described previously in <a href=
+  "#enabling-external-role-mapping-v2">Enabling external role mapping</a>, note the this line:</p>
+  <pre class="prettyprint">
+externalized.authentication.role.mapper.implementation.class=com.customer.authorization.impl.ExternalRoleMapperImpl
+</pre>
+
+  <p>This class implements the ExternalRoleMapperServiceV2 interface, and is required. You need to
+  create your own implementation of this class that reflects your respective groups. When finished,
+  place the compiled class in a JAR and put that JAR in the Management Server's classpath in:</p>
+  <pre class="prettyprint">
+/opt/apigee/edge-management-server/lib/thirdparty/
+</pre>
+
+  <aside class="warning">
+    <b>Warning:</b> To compile this class, you must reference the following JAR file included with
+    Edge:
+    <pre class="prettyprint">
+/opt/apigee/edge-management-server/lib/infra/libraries/authentication-1.0.0.jar
+</pre>
+  </aside>
+
+  <p>You can name the class and package whatever you wish as long as it implements
+  ExternalRoleMapperServiceV2, is accessible in your classpath, and is referenced correctly in the
+  management-server.properties config file.</p>
+
+  <p>Below we offer a well-commented sample implementation of an ExternalRoleMapperImpl class.</p>
+
+  <aside class="note"><b>Note:</b> For better readability, we recommend that you copy the code into
+  a text editor or IDE with wider margins.</aside>
+  <pre class="prettyprint">
+package com.customer.authorization.impl;
+
+import com.apigee.authentication.*;
+import com.apigee.authorization.namespace.OrganizationNamespace;
+import com.apigee.authorization.namespace.SystemNamespace;
+import java.util.Collection;
+import java.util.HashSet;
+import javax.naming.NamingEnumeration;
+import javax.naming.NamingException;
+import javax.naming.directory.Attributes;
+import javax.naming.directory.DirContext;
+import javax.naming.directory.InitialDirContext;
+import javax.naming.directory.SearchControls;
+import javax.naming.directory.SearchResult;
+
+/** *
+* Sample Implementation constructed with dummy roles with expected namespaces.
+*/
+
+<strong>public class ExternalRoleMapperImpl
+       implements ExternalRoleMapperServiceV2 {</strong>
+
+   InitialDirContext dirContext = null;
+
+   <strong>@Override
+   public void start(ConfigBean arg0) throws ConnectionException {</strong>
+
+       try {
+           // Customer Specific Implementation will override the
+           // ImplementDirContextCreationLogicForSysAdmin method implementation.
+           // Create InitialDirContext based on the system admin user credentials.
+           dirContext = ImplementDirContextCreationLogicForSysAdmin();
+       } catch (NamingException e) {
+           // TODO Auto-generated catch block
+           throw new ConnectionException(e);
+       }
+   }
+
+  <strong> @Override
+   public void stop() throws Exception {</strong>
+   }
+
+   /**
+    * This method should be replaced with customer's implementation
+    * For given roleName under expectedNamespace, return all users that belongs to this role
+    * @param roleName
+    * @param expectedNamespace
+    * @return All users that belongs to this role. For each user, please return the username/email that is stored in Apigee LDAP
+    * @throws ExternalRoleMappingException
+    */
+ <strong>  @Override
+   public Collection&lt;String&gt; getUsersForRole(String roleName, NameSpace expectedNamespace) throws ExternalRoleMappingException {</strong>
+       Collection&lt;String&gt; users = new HashSet&lt;&gt;();
+       if (expectedNamespace instanceof SystemNamespace) {
+           //If requesting all users with sysadmin role
+           if (roleName.equalsIgnoreCase("sysadmin")) {
+               //Add sysadmin's email to results
+               users.add("sysadmin@wacapps.net");
+           }
+       } else {
+           String orgName = ((OrganizationNamespace) expectedNamespace).getOrganization();
+           //If requesting all users of engRole in Apigee LDAP
+           if (roleName.equalsIgnoreCase("engRole")) {
+               //Get all users in corresponding groups in customer's LDAP. In this case looking for 'engGroup';
+               SearchControls controls = new SearchControls();
+               controls.setSearchScope(1);
+               try {
+                   NamingEnumeration&lt;SearchResult&gt; res = dirContext.search("ou=groups,dc=corp,dc=wacapps,dc=net",
+                           "cn=engGroup", new Object[]{"",""}, controls);
+                   while (res.hasMoreElements()) {
+                       SearchResult sr = res.nextElement();
+                       //Add all users into return
+                       users.addAll(sr.getAttributes().get("users").getAll());
+                   }
+               } catch (NamingException e) {
+                   //Customer needs to handle the exception here
+               }
+           }
+       }
+       return users;
+   }
+
+   /**
+    *
+    * This method would be implemented by the customer and would be invoked
+    * while including using X-Apigee-Current-User header in request.
+    *
+    * X-Apigee-Current-User allows the customer to login as another user
+    *
+    * Below is the basic example.
+    *
+    * If User has sysadmin role then it's expected to set SystemNameSpace
+    * along with the expected NameSpace. Otherwise role's expectedNameSpace
+    * to be set for the NameSpacedRole.
+    *
+    * Collection&lt;NameSpacedRole&gt; results = new HashSet&lt;NameSpacedRole&gt;();
+    *
+    * NameSpacedRole sysNameSpace = new NameSpacedRole("sysadmin",
+    * SystemNamespace.get());
+    *
+    * String orgName =
+    * ((OrganizationNamespace) expectedNameSpace).getOrganization();
+    *
+    * NameSpacedRole orgNameSpace = new NameSpacedRole ("orgadmin",
+    * expectedNameSpace);
+    *
+    * results.add(sysNameSpace);
+    *
+    * results.add(orgNameSpace);
+    *
+    *
+    * @param username UserA's username
+    * @param password UserA's password
+    * @param requestedUsername UserB's username. Allow UserA to request UserB's userroles with
+    *                          UserA's credentials when requesting UserB as X-Apigee-Current-User
+    * @param expectedNamespace
+    * @return
+    * @throws ExternalRoleMappingException
+    */
+  <strong> @Override
+   public Collection&lt;NameSpacedRole&gt; getUserRoles(String username, String password, String requestedUsername, NameSpace expectedNamespace) throws ExternalRoleMappingException {
+</strong>       /************************************************************/
+       /******************** Authenticate UserA ********************/
+       /************************************************************/
+
+       // Customer Specific Implementation will override the
+       // ImplementDnameLookupLogic method implementation.
+
+       // obtain dnName for given username.
+       String dnName = ImplementDnNameLookupLogic(username);
+       // Obtain dnName for given requestedUsername.
+       String requestedDnName = ImplementDnNameLookupLogic(requestedUsername);
+
+       if (dnName == null || requestedDnName == null) {
+           System.out.println("Error ");
+       }
+
+       DirContext dirContext = null;
+       try {
+
+           // Customer Specific Implementation will override the
+           // ImplementDirectoryContextCreationLogic method implementation
+
+           // Create a directory context with dnName or requestedDnName and password
+           dirContext = ImplementDirectoryContextCreationLogic();
+
+           /************************************************/
+           /*** Map internal groups to apigee-edge roles ***/
+           /************************************************/
+           return apigeeEdgeRoleMapper(dirContext, requestedDnName, expectedNamespace);
+
+       } catch (Exception ex) {
+           ex.printStackTrace();
+           System.out.println("Error in authenticating User: {}" + new Object[] { username });
+
+       } finally {
+           // Customer implementation to close
+           // ActiveDirectory/LDAP context.
+       }
+
+       return null;
+
+   }
+
+   /**
+    *
+    * This method would be implemented by the customer and would be invoked
+    * wihle using username and password for authentication and without the
+    * X-Apigee-Current-User header
+    *
+    * The customer can reuse implementations in
+    *      getUserRoles(String username, String password, String requestedUsername, NameSpace expectedNamespace)
+    * by
+    *      return getUserRoles(username, password, username, expectedNamespace)
+    * in implementations.
+    *
+    * or the customer can provide new implementations as shown below.
+    */
+
+<strong>   @Override
+   public Collection&lt;NameSpacedRole&gt; getUserRoles(String username, String password, NameSpace expectedNamespace) throws ExternalRoleMappingException {
+ </strong>      /*************************************************************/
+       /****************** Authenticate Given User ******************/
+       /*************************************************************/
+
+       // Customer Specific Implementation will override the
+       // ImplementDnameLookupLogic implementation.
+
+       // Obtain dnName for given username or email address.
+       String dnName = ImplementDnNameLookupLogic(username);
+
+       if (dnName == null) {
+           System.out.println("Error ");
+       }
+
+       DirContext dirContext = null;
+       try {
+           // Create a directory context with username or dnName and password
+           dirContext = ImplementDirectoryContextCreationLogic();
+
+           /************************************************/
+           /*** Map internal groups to apigee-edge roles ***/
+           /************************************************/
+           return apigeeEdgeRoleMapper(dirContext, dnName, expectedNamespace);
+
+       } catch (Exception ex) {
+           ex.printStackTrace();
+           System.out.println("Error in authenticating User: {}" + new Object[] { username });
+
+       } finally {
+           // Customer implementation to close
+           // ActiveDirectory/LDAP context.
+       }
+
+       return null;
+   }
+
+   /**
+    *
+    * This method would be implemented by the customer and would be invoked
+    * while using security token or access token as authentication credentials.
+    *
+    */
+<strong>   @Override
+   public Collection&lt;NameSpacedRole&gt; getUserRoles(String username, NameSpace expectedNamespace) throws ExternalRoleMappingException {
+</strong>
+       /*************************************************************/
+       /****************** Authenticate Given User ******************/
+       /*************************************************************/
+
+       // Customer Specific Implementation will override the
+       // ImplementDnameLookupLogic implementation.
+
+       // Obtain dnName for given username or email address.
+       String dnName = ImplementDnNameLookupLogic(username);
+
+       if (dnName == null) {
+           System.out.println("Error ");
+       }
+
+       DirContext dirContext = null;
+       try {
+           // Create a directory context with username or dnName and password
+           dirContext = ImplementDirectoryContextCreationLogic();
+
+           /************************************************/
+           /*** Map internal groups to apigee-edge roles ***/
+           /************************************************/
+           return apigeeEdgeRoleMapper(dirContext, dnName, expectedNamespace);
+
+       } catch (Exception ex) {
+           ex.printStackTrace();
+           System.out.println("Error in authenticating User: {}" + new Object[] { username });
+
+       } finally {
+           // Customer implementation to close
+           // ActiveDirectory/LDAP context.
+       }
+
+       return null;
+   }
+
+   /**
+    *  This method should be replaced with Customer Specific Implementations
+    *
+    *  Provided as a sample Implementation of mapping user groups to apigee-edge roles
+    */
+<strong>   private Collection&lt;NameSpacedRole&gt; apigeeEdgeRoleMapper(DirContext dirContext, String dnName, NameSpace expectedNamespace) throws Exception {
+</strong>
+       Collection&lt;NameSpacedRole&gt; results = new HashSet&lt;NameSpacedRole&gt;();
+
+       /****************************************************/
+       /************ Fetch internal groups *****************/
+       /****************************************************/
+
+       String groupDN = "OU=Groups,DC=corp,DC=wacapps,DC=net";
+       String userFilter = "(user=userDnName)";
+       SearchControls controls = new SearchControls();
+       controls.setSearchScope(SearchControls.ONELEVEL_SCOPE);
+
+       //Looking for all groups the user belongs to in customer's LDAP
+       NamingEnumeration&lt;SearchResult&gt; groups = dirContext.search(groupDN,userFilter.replace("userDnName", dnName), new Object[] { "", "" }, controls);
+
+       if (groups.hasMoreElements()) {
+           while (groups.hasMoreElements()) {
+               SearchResult searchResult = groups.nextElement();
+               Attributes attributes = searchResult.getAttributes();
+               String groupName = attributes.get("name").get().toString();
+
+               /************************************************/
+               /*** Map internal groups to apigee-edge roles ***/
+               /************************************************/
+
+               if (groupName.equals("BusDev")) {
+                   results.add(new NameSpacedRole("businessAdmin",SystemNamespace.get()));
+
+               } else if (groupName.equals("Engineering")) {
+                   if (expectedNamespace instanceof OrganizationNamespace) {
+                       String orgName = ((OrganizationNamespace) expectedNamespace).getOrganization();
+                       results.add(new NameSpacedRole("orgadmin", new OrganizationNamespace(orgName)));
+                   }
+
+               } else if (groupName.equals("Marketing")) {
+                   results.add(new NameSpacedRole("marketAdmin",SystemNamespace.get()));
+
+               } else {
+                   results.add(new NameSpacedRole("readOnly",SystemNamespace.get()));
+               }
+           }
+
+       } else {
+           // In case of no group found or exception found we throw empty roles.
+           System.out.println(" !!!!! NO  GROUPS FOUND !!!!!");
+       }
+       return results;
+   }
+
+   /**
+    * The customer need to replace with own implementations for getting dnName for given user
+    */
+ <strong>  private String ImplementDnNameLookupLogic(String username) {</strong>
+       // Connect to the customer's own LDAP to fetch user dnName
+       return customerLDAP.getDnName(username);
+   }
+
+   /**
+    * The customer need to replace with own implementations for creating DirContext
+    */
+  <strong> private DirContext ImplementDirectoryContextCreationLogic() {</strong>
+       // Connect to the customer's own LDAP to create DirContext for given user
+       return customerLDAP.createLdapContextUsingCredentials();
+   }
+
+}
+</pre>{% endblock %}

@@ -1,0 +1,453 @@
+  {% extends "_base.html" %} {% block title %}Creating global users{% endblock %} {% block body %}
+
+  <p>You can create a global user through the Edge management UI, Edge management API, or directly
+  from the Apigee web site:</p>
+
+  <ul>
+    <li>
+      <strong>Edge management UI</strong><br>
+      For both Edge for the Cloud and for the Private Cloud, an organization administrator uses the
+      Edge UI to add a global user to an existing organization with a specific role. If the user
+      already exists, the user is added to the organization. <br>
+      <br>
+      If the user does not exist, then Edge creates the user and sends the user an email message to
+      activate the account and to set a password. The user appears in the Edge UI immediately, even
+      before the user activates the account.<br>
+      <br>
+      While the organization administrator does not have the permission necessary to directly
+      create the user, adding a new user to the organization in the Edge UI initiates the Edge
+      workflow that creates the user.  <br>
+
+      <aside class="note"><b>Private Cloud:</b> For an Edge for the Private Cloud installation, you
+      must configure a connection to an SMTP email server so that Edge can send email to users. See
+      the Edge Operations Guide for more.</aside>
+    </li>
+
+    <li>
+      <strong>Edge management API</strong><br>
+      In an Edge for the Private Cloud installation, a system administrator uses the Edge API to
+      create a global user. <br>
+      <br>
+      After creating the user, you must make a second API call to add the user to a system
+      administrator role, to an organization and organization role, or both. The new user cannot
+      log in to the Edge UI until added to an organization.<br>
+      <br>
+
+      <aside class="note"><b>Note:</b> While an organization administrator cannot create a global
+      user, an organization administrator can use the Edge API to assign a user to an organization
+      and organization role. </aside>
+    </li>
+
+    <li><strong>Apigee web site</strong><br>
+    Anyone can register for a free Edge cloud account at <a href=
+    "https://login.apigee.com/sign_up">https://login.apigee.com/sign_up</a>. When you create an
+    account directly on Edge, Edge automatically creates a global user and an organization for you,
+    and your user account is assigned to the role of organization administrator for your
+    organization. After you create the account, another organization administrator can add you to
+    their organization.<br>
+    <br>
+    See <a href="/api-platform/get-started/creating-apigee-edge-account.html">Creating an Apigee
+    Edge account</a> for more.</li>
+  </ul>
+
+  <h2 id="creatingaglobaluserthroughtheedgeui">Creating a global user through the Edge UI</h2>
+
+  <p>An organization administrator can create a user in the Edge UI, and assign a role to the new
+  user in the organization:</p>
+
+  <ol>
+    <li>In the Edge management UI, while logged in as an organization administrator, select
+    <strong>Admin &gt; Organization Users</strong>. If you are not an org admin, this menu does not
+    show up. </li>
+
+    <li>Click <strong>+ User</strong>. The "Add a User" screen appears.</li>
+
+    <li>Enter the user's email address.</li>
+
+    <li>Select the role you want to offer to the user. You can add more than one role to a
+    user. </li>
+
+    <li>Click <strong>Save</strong>. The user appears in the Edge UI and Edge sends the new
+    user an email with instructions for account activation, password reset, and logging in.</li>
+  </ol>
+
+  <p>The user can log in to the Edge UI with either:</p>
+
+  <ul>
+    <li>email address</li>
+
+    <li>username, which is the part of the email address before @.</li>
+  </ul>
+
+  <p>After logging in for the first time, a new user should select the down arrow next to their
+  email address in the menu, and then select <strong>User Settings</strong> to set their first and
+  last name:</p>
+
+  <p><img alt="" src="/api-platform/images/setFirstLastName.png"></p>
+
+  <h2 id="creatingaglobaluserthroughtheedgeapi">Creating a global user through the Edge API</h2>
+
+  <aside class="note"><b>Private Cloud:</b> This procedure is for Edge for Private Cloud only. In
+  Apigee Edge for Private Cloud, adding a new user through the Edge API is a two-step
+  process:</aside>
+
+  <ol>
+    <li>
+      <strong>As the system administrator</strong>, make the API call to add the new global
+      user:<br>
+      <pre class="prettyprint">
+curl -H "Content-Type:application/xml" -u &lt;sysAdminEmail:pword&gt; \
+  -X POST https://&lt;ms_IP&gt;:8080/v1/users \
+  -d '&lt;User&gt; \
+    &lt;FirstName&gt;Foo&lt;/FirstName&gt; \
+    &lt;LastName&gt;Bar&lt;/LastName&gt; \
+    &lt;Password&gt;myPword&lt;/Password&gt; \
+    &lt;EmailId&gt;foo@bar.com&lt;/EmailId&gt; \
+  &lt;/User&gt;'
+</pre>where <span style="font-family:courier new,courier,monospace;">&lt;ms_IP&gt;</span> is the IP
+address or DNS name of the Edge Management Server. 
+    </li>
+
+    <li>Assign the new user to a role by performing one or both of the following:
+
+      <ol style="list-style: lower-alpha outside">
+        <li>If the new user is going to function as a system administrator, then <strong>as the
+        system administrator</strong> use the following API call to add the user to the system
+        administrator role, <span style=
+        "font-family:courier new,courier,monospace;">sysadmin</span>, or read-only system
+        administrator role, <span style=
+        "font-family:courier new,courier,monospace;">sysadmin-readonly</span>:
+          <pre class="prettyprint">
+curl -u &lt;sysAdminEmail&gt;:&lt;passwd&gt; \
+ -X POST https://&lt;ms_IP&gt;:8080/v1/userroles/sysadmin/users \
+ -d 'id=foo@bar.com'
+</pre>
+        </li>
+
+        <li>
+          <strong>As the system administrator or organization administrator</strong>, assign the
+          new user to a role in an organization. A global user does not appear in the Edge UI, and
+          cannot log into the Edge UI, until that user is assigned to a role in an
+          organization. <br>
+          <pre class="prettyprint">
+curl -H "Content-Type:application/x-www-form-urlencoded" \
+  -u &lt;orgOrSysAdminEmail:pword&gt; -X POST \
+  https://&lt;ms_IP&gt;:8080/v1/organizations/{org_name}/userroles/{role_name}/users?id=foo@bar.com
+</pre>Replace <span style="font-family:courier new,courier,monospace;">{role_name} </span>with
+the specific role for the new user. Roles include:
+
+          <ul>
+            <li>Organization administrator: <span style=
+            "font-family:courier new,courier,monospace;">orgadmin</span></li>
+
+            <li>Read-only organization administrator (Cloud only): <span style=
+            "font-family:courier new,courier,monospace;">readonlyadmin</span></li>
+
+            <li>Operations administrator: <span style=
+            "font-family:courier new,courier,monospace;">opsadmin</span></li>
+
+            <li>Business user: <span style=
+            "font-family:courier new,courier,monospace;">businessuser</span></li>
+
+            <li>User: <span style="font-family:courier new,courier,monospace;">user</span></li>
+          </ul>
+        </li>
+      </ol>
+    </li>
+  </ol>
+
+  <h2 id="performingadditionaltaskstomanageusers">Performing additional tasks to manage users</h2>
+
+  <p>The following table shows operations that you can perform on a global user. </p>
+
+  <p>Many of these operations, such as deleting a global user, require system administrator
+  privileges. For a Cloud-based installation of Edge, contact <a href=
+  "https://community.apigee.com/page/apigee-customer-support">Apigee Support</a> to perform these
+  actions. For an Edge for Private Cloud installation, the system administrator can perform
+  them. </p>
+
+  <aside class="note"><b>Note:</b> All of the APIs listed below that require the system
+  administrator role are described in the the Edge
+  <a href="/private-cloud/latest/operations-and-configuration">Edge Operations and Configurations</a>
+  in the Edge for Private Cloud documentation. All of the APIs that require
+  the organization administrator role are described at
+  <a href="/management/apis">http://apigee.com/docs/management/apis</a> using SmartDocs so that you
+  can run them from the Apigee documentation pages.</aside>
+
+  <table>
+    <thead>
+      <tr>
+        <th> </th>
+
+        <th>
+          <p><strong>Action</strong></p>
+        </th>
+
+        <th>
+          <p><strong>Required role</strong></p>
+        </th>
+
+        <th>
+          <p><strong>How</strong></p>
+        </th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td rowspan="5" style="height:28px;">
+          <p><strong>Manage global users</strong></p>
+        </td>
+
+        <td style="height:28px;">
+          <p>List all users</p>
+        </td>
+
+        <td style="height:28px;">
+          <p>sys admin</p>
+        </td>
+
+        <td style="height:28px;">
+          <p>API</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td style="height:28px;">
+          <p>Add user<strong>*</strong></p>
+        </td>
+
+        <td style="height:28px;">
+          <p>sys admin</p>
+        </td>
+
+        <td style="height:28px;">
+          <p>API*</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td style="height:28px;">
+          <p>Delete user</p>
+        </td>
+
+        <td style="height:28px;">
+          <p>sys admin</p>
+        </td>
+
+        <td style="height:28px;">
+          <p>API</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td style="height:28px;">
+          <p>Changing user password or other information</p>
+        </td>
+
+        <td style="height:28px;">
+          <p>sys admin</p>
+        </td>
+
+        <td style="height:28px;">
+          <p>API</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td style="height:28px;">
+          <p>List all roles for user</p>
+        </td>
+
+        <td style="height:28px;">
+          <p>sys admin</p>
+        </td>
+
+        <td style="height:28px;">
+          <p>API</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td colspan="4" style="height:28px;"><strong>*</strong>While only the sys admin can create
+        the user, an organization administrator can trigger the workflow by adding a new user to an
+        organization in the Edge management UI.</td>
+      </tr>
+
+      <tr>
+        <td rowspan="4" style="height:28px;">
+          <p><strong>Manage sys admin roles</strong></p>
+        </td>
+
+        <td style="height:28px;">
+          <p>List sys admin roles</p>
+        </td>
+
+        <td style="height:28px;">
+          <p>sys admin</p>
+        </td>
+
+        <td style="height:28px;">
+          <p>API</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td style="height:28px;">
+          <p>Add user to sys admin role</p>
+        </td>
+
+        <td style="height:28px;">
+          <p>sys admin</p>
+        </td>
+
+        <td style="height:28px;">
+          <p>API</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td style="height:28px;">
+          <p>List users in sys admin role</p>
+        </td>
+
+        <td style="height:28px;">
+          <p>sys admin</p>
+        </td>
+
+        <td style="height:28px;">
+          <p>API</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td style="height:28px;">
+          <p>Remove user from sys admin role</p>
+        </td>
+
+        <td style="height:28px;">
+          <p>sys admin</p>
+        </td>
+
+        <td style="height:28px;">
+          <p>API</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td rowspan="6" style="height:28px;">
+          <p><strong>Manage organization roles</strong></p>
+        </td>
+
+        <td style="height:28px;">
+          <p><a href="/management/apis/get/organizations/{org_name}/userroles">List Roles of
+          Organization</a></p>
+        </td>
+
+        <td style="height:28px;">
+          <p>sys admin</p>
+
+          <p>org admin</p>
+        </td>
+
+        <td style="height:28px;">
+          <p>API/UI</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td style="height:28px;">
+          <p><a href=
+          "/management/apis/post/organizations/{org_name}/userroles/{role_name}/users-0">Add a user
+          to a role</a></p>
+        </td>
+
+        <td style="height:28px;">
+          <p>sys admin</p>
+
+          <p>org admin</p>
+        </td>
+
+        <td style="height:28px;">
+          <p>API/UI</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td style="height:28px;">
+          <p><a href=
+          "/management/apis/get/organizations/{org_name}/userroles/{role_name}/users">Get users for
+          a role</a></p>
+        </td>
+
+        <td style="height:28px;">
+          <p>sys admin</p>
+
+          <p>org admin</p>
+        </td>
+
+        <td style="height:28px;">
+          <p>API/UI</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td style="height:28px;">
+          <p>List users in an organization<strong>**</strong></p>
+        </td>
+
+        <td style="height:28px;">
+          <p>sys admin</p>
+
+          <p>org admin</p>
+        </td>
+
+        <td style="height:28px;">
+          <p>UI</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td style="height:28px;">
+          <p><a href=
+          "/management/apis/delete/organizations/{org_name}/userroles/{role_name}/users/{user_email}">
+          Remove user membership in role</a></p>
+        </td>
+
+        <td style="height:28px;">
+          <p>sys admin</p>
+
+          <p>org admin</p>
+        </td>
+
+        <td style="height:28px;">
+          <p>API/UI</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td style="height:28px;">
+          <p>For additional operations, see <a href="/api/user-roles">User roles</a></p>
+        </td>
+
+        <td style="height:28px;">
+          <p>sys admin</p>
+
+          <p>org admin</p>
+        </td>
+
+        <td style="height:28px;">
+          <p>API/UI</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td colspan="4" style="height:28px;"><strong>**</strong> There is no single API call that
+        lists all users in an organization. Instead, you make one call to get all roles in the
+        organization. Then you iterate through the list of roles to get all users in each
+        role.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  {% endblock %}

@@ -1,0 +1,169 @@
+  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}Installing Edge SSO for high
+  availability{% endblock %} {% block body %}
+
+  <p>You install multiple instances of Edge SSO for high availability in two scenarios:</p>
+
+  <ul>
+    <li>In a single data center environment, install two Edge SSO instances to create a high
+    availability environment, meaning the system continues to operate if one of the Edge SSO
+    modules goes down.</li>
+
+    <li>In an environment with two data centers, install Edge SSO in both data centers so that the
+    system continues to operate if one of the Edge SSO modules goes down.</li>
+  </ul>
+
+  <h2 id="installtwoedgessomodulesinthesamedatacenter">Install two Edge SSO modules in the same
+  data center</h2>
+
+  <p>You deploy two instances of Edge SSO, on different nodes, in single data center to support
+  high availability. In this scenario:</p>
+
+  <ul>
+    <li>Both instances of Edge SSO must be connected to the same Postgres server. Apigee recommends
+    using a dedicated Postgres server for Edge SSO and not use the same Postgres server that you
+    installed with Edge.</li>
+  </ul>
+
+  <ul>
+    <li>You require a load balancer in front of the two instances of Edge SSO:
+
+      <ul>
+        <li>The load balancer must support application generated cookie stickiness, and the session
+        cookie must be named <code>JSESSIONID</code>.</li>
+
+        <li>Configure the load balancer to perform a TCP or HTTP health check on Edge SSO. For TCP,
+        use the URL of Edge SSO:<br>
+        <br>
+        <strong><code><em>http_or_https</em>://<em>edge_sso_IP_DNS</em>:</code></strong><code>9099</code><br>
+
+        <br>
+        Specify the port as set by Edge SSO. Port 9099 is the default.<br>
+        <br>
+        For HTTP, include <code>/healthz</code>:<br>
+        <br>
+        <strong><code><em>http_or_https</em>://<em>edge_sso_IP_DNS</em></code></strong><code>:9099/healthz</code></li>
+
+        <li>Some load balancer settings depend on whether you enabled HTTPS on Edge SSO. See the
+        following sections for more information.</li>
+      </ul>
+    </li>
+  </ul>
+
+  <h3 id="installtwoedgessomodulesinthesamedatacenter-usinghttpaccesstoedgesso">Using HTTP access
+  to Edge SSO</h3>
+
+  <p>If you are using HTTP access to Edge SSO, then configure the load balancer to:</p>
+
+  <ul>
+    <li>Use HTTP mode to connect to Edge SSO</li>
+
+    <li>Listen on the same port as Edge SSO<br>
+    <br>
+    By default, Edge SSO listens for HTTP requests on port 9099. Optionally, you can use
+    <code>SSO_TOMCAT_PORT</code> to set the Edge SSO port. If you used <code>SSO_TOMCAT_PORT</code>
+    to change the Edge SSO port from the default, ensure that the load balancer listens on that
+    port.</li>
+  </ul>
+
+  <p>For example, on each Edge SSO instance you set the port to 9033 by adding the following to the
+  config file:</p>
+  <pre class="prettyprint">
+SSO_TOMCAT_PORT=9033
+</pre>
+
+  <p>You then configure the load balancer to listen on port 9033 and forwarding requests to an Edge
+  SSO instance on port 9033. The public URL of Edge SSO in this scenario is:</p>
+  <pre class="prettyprint">
+http://LB_DNS_NAME:9033
+</pre>
+
+  <h3 id="installtwoedgessomodulesinthesamedatacenter-usinghttpsaccesstoedgesso">Using HTTPS access
+  to Edge SSO</h3>
+
+  <p>You can configure the Edge SSO instances to use HTTPS. In this scenario, follow the steps in
+  <a href="configure-apigee-sso-https-access.html">Configure apigee-sso for HTTPS access</a>. As
+  part of the process of enabling HTTPS, you set <code>SSO_TOMCAT_PROFILE</code> in the Edge SSO
+  config file as shown below:</p>
+  <pre class="prettyprint">
+SSO_TOMCAT_PROFILE=SSL_TERMINATION 
+</pre>
+
+  <p>You can also optionally set the port used by Edge SSO for HTTPS access:</p>
+  <pre class="prettyprint">
+SSO_TOMCAT_PORT=9443
+</pre>
+
+  <p>If you are using HTTPS access to Edge SSO, then configure the load balancer to:</p>
+
+  <ul>
+    <li>Use TCP mode, not HTTP mode, to connect to Edge SSO</li>
+
+    <li>Listen on the same port as Edge SSO as defined by <code>SSO_TOMCAT_PORT</code></li>
+  </ul>
+
+  <p>You then configure the load balancer to forward requests to an Edge SSO instance on port 9433.
+  The public URL of Edge SSO in this scenario is:</p>
+  <pre class="prettyprint">
+https://LB_DNS_NAME:9443
+</pre>
+
+  <h2 id="installedgessoinmultipledatacenters">Install Edge SSO in multiple data centers</h2>
+
+  <p>In a multiple data center environment, you install an Edge SSO instance in each data center.
+  One Edge SSO instance then handles all traffic. If that Edge SSO instance goes down you can then
+  switch to the second Edge SSO instance.</p>
+
+  <p>Before you install Edge SSO in two data centers, you need the following:</p>
+
+  <ul>
+    <li>The IP address or domain name of the Master Postgres server.<br>
+    <br>
+    In a multiple data center environment, you typically install one Postgres server in each data
+    center and configure them in Master-Standby replication mode. For this example, <strong>data
+    center 1</strong> contains the <strong>Master</strong> Postgres server and <strong>data center
+    2</strong> contains the <strong>Standby</strong>. For more information, see <a href=
+    "set-master-standby-replication-postgres.html">Set up Master-Standby Replication for
+    Postgres</a>.</li>
+
+    <li>A single DNS entry that points to one Edge SSO instance. For example, you create a DNS
+    entry in the form below that points to the Edge SSO instance in data center 1:<br>
+    <br>
+    <code>my-sso.domain.com =&gt; <strong><em>apigee-sso-dc1-ip-or-lb</em></strong></code></li>
+  </ul>
+
+  <p>When you install Edge SSO in each data center, you configure both to use the Postgres Master
+  in data center 1:</p>
+  <pre class="prettyprint">
+## Postgres configuration.
+PG_HOST=<strong><em>IP_or_DNS_of_PG_Master_in_DC1</em></strong>
+?PG_PORT=5432
+</pre>
+
+  <p>You also configure both to use the DNS entry as the publicly accessible URL:</p>
+  <pre class="prettyprint">
+# Externally accessible URL of Edge SSO.
+SSO_PUBLIC_URL_HOSTNAME=my-sso.domain.com
+# Default port is 9099.
+SSO_PUBLIC_URL_PORT=9099
+</pre>
+
+  <p>If Edge SSO in data center 1 goes down, you can then switch to the Edge SSO instance in data
+  center 2:</p>
+
+  <ul>
+    <li>Convert the Postgres Standby server in data center 2 to Master as described in <a href=
+    "handling-postgressql-database-failover.html">Handling a PostgresSQL Database
+    Failover</a>.</li>
+
+    <li>Update the DNS record to point <code>my-sso.domain.com</code> to the Edge SSO instance in
+    data center 2:<br>
+    <code>my-sso.domain.com =&gt; <strong><em>apigee-sso-dc2-ip-or-lb</em></strong></code></li>
+
+    <li>Update the config file for Edge SSO in data center 2 to point to the new Postgres Master
+    server in data center 2:<br>
+    <code>## Postgres configuration.<br>
+    PG_HOST=<strong><em>IP_or_DNS_of_PG_Master_in_DC2</em></strong></code></li>
+
+    <li>Restart Edge SSO in data center 2 to update its configuration:<br>
+    <code>/opt/apigee/apigee-service/bin/apigee-service apigee-sso restart</code></li>
+  </ul>{% endblock %}

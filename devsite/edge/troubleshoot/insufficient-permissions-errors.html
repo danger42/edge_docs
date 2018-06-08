@@ -1,0 +1,121 @@
+  {% extends "_base.html" %} {% block title %}Insufficient Permissions Errors{% endblock %} {% block body %}
+
+  <h2 id="errortext">Error text</h2>
+  <pre class="prettyprint">
+Insufficient permissions [Description] 
+</pre>
+
+  <p>where <code>[Description]</code> is a string that describes the cause of the error.</p>
+
+  <h2 id="example">Example</h2>
+  <pre class="prettyprint">
+Insufficient Permissions You do not have permission to view API proxies. 
+</pre>
+
+  <h2 id="screenshot">Screenshot</h2>
+
+  <p>In the Edge UI, the <strong>Insufficient permissions</strong> error is indicated by a an error
+  message. For example, if you try to view the list of API proxies and do not have sufficient
+  permissions:</p>
+
+  <p><img alt="" src="/api-platform/images/insufficientperms.png"></p>
+
+  <h2 id="whatthiserrormeans">What this error means</h2>
+
+  <p>Every user in an Edge organization is assigned to a role, where roles are essentially
+  CRUD-based permission sets. CRUD means "create, read, update, delete". For example, a user may be
+  given a role that permits them to read, or "get", details about an entity, but not permission to
+  "update" or "delete" it.</p>
+
+  <p>The <strong>Insufficient permissions</strong> error typically means that the role assigned to
+  the user does not have permissions to perform the requested operation. For example, the user
+  tries to create an API proxy but their role only has permissions to view a proxy.</p>
+
+  <p>See <a href="/api-platform/system-administration/understanding-roles.html">Assigning roles</a>
+  for more.</p>
+
+  <h2 id="troubleshooting">Troubleshooting</h2>
+
+  <h3 id="troubleshooting-generaltroubleshootingsteps">General troubleshooting steps</h3>
+
+  <p>Although you may need expert help from Apigee to resolve this error, you can try the following
+  general troubleshooting steps before contacting support or posting to the Apigee Community.</p>
+
+  <h4>Are you a new customer who just created your first organization?</h4>
+
+  <p>For new users to Apigee who are creating their first organization, it can take Apigee several
+  hours to complete the creation process. If you see <strong>Insufficient permissions</strong>
+  errors in a new organization, wait a few hours and try again.</p>
+
+  <h4>Check to see if another user recently changed permissions</h4>
+
+  <p>In the Edge UI, select <strong>Admin &gt; Organization History</strong> to see if there were
+  any recent changes to permissions. Look for permissions that were recently created or
+  removed:</p>
+
+  <p><img alt="" src="/api-platform/images/org_history_v2.png"></p>
+
+  <h4>Determine if this error is occurring in only one organization</h4>
+
+  <p>You often create multiple organizations, and define the same permissions in each organization.
+  However, if you update the permissions in one organization, but forget to update them in all
+  organizations, you can see <strong>Insufficient permissions</strong> errors.</p>
+
+  <p>If applicable, ensure that if you updated the permissions in one organization that you updated
+  them in all organizations.</p>
+
+  <h4>Try creating a role with global permissions and then reduce them</h4>
+
+  <p>Often you will encounter <strong>Insufficient permissions</strong> errors when you create a
+  new role because the new role does not have all necessary permissions enabled.</p>
+
+  <p>Rather than creating a new role with a subset of the available permissions enabled, create the
+  role with all permissions enabled. Then remove permissions as necessary and test the role.
+  Continue to test the role as you remove permissions to ensure that you do not encounter
+  <strong>Insufficient permissions</strong> errors.</p>
+
+  <h4>For Cloud customers, check the Apigee status page for outages</h4>
+
+  <p><strong>Insufficient permissions</strong> errors can occur when there is an outage in Edge for
+  the Cloud. Use the following URL to check the current Edge status to see if there is an
+  outage:</p>
+
+  <p><a href="https://status.apigee.com/">https://status.apigee.com/</a></p>
+
+  <h3 id="troubleshooting-areyouusingaversionofedgecloudthatincludescustomersupport">Are you using
+  a version of Edge Cloud that includes customer support?</h3>
+
+  <p>Although you may need to contact Apigee support to resolve this error, you might first try the
+  steps described above in <a href="#troubleshooting-generaltroubleshootingsteps">General
+  troubleshooting steps</a>. If you need Apigee help, please see <a href=
+  "/troubleshoot/what-include-if-you-contact-tech-support-or-community.html">What to include if you
+  contact Tech Support or the Community</a>. </p>
+
+  <h3 id="troubleshooting-areyouusingedgeprivatecloud">Are you using Edge Private cloud?</h3>
+
+  <p>Private Cloud customers can encounter <strong>Insufficient permissions</strong> errors when a
+  user tries to log in to the Edge UI. If you create a custom role in Edge for the Private Cloud,
+  the role must have these permissions enabled for users in the role to be able to log in to the
+  Edge UI:</p>
+  <pre class="prettyprint">
+{"path" : "/","permissions" : [ "get" ]}
+{"path" : "/*","permissions" : [ ]}
+{"path" : "/environments","permissions" : [ "get" ]}
+{"path" : "/userroles","permissions" : [ "get" ]}
+</pre>
+
+  <p>You can use the following curl command to see the current permissions for a role:</p>
+  <pre class="prettyprint">
+curl -X GET -u orgAdminEmail:password https:/{MS_IP}:8080/v1/organizations/{org_name}/userroles/{role_name}/permissions
+</pre>
+
+  <p>See <a href="/api-platform/system-administration/managing-roles-api.html">Creating roles with
+  the API</a> for more.</p>
+
+  <h3 id="troubleshooting-areyouusingafreeevaluationversionofapigeeedge">Are you using a free
+  evaluation version of Apigee Edge?</h3>
+
+  <p>Although you may need to post your issue to the <a href=
+  "https://community.apigee.com/index.html">Apigee Community</a> to resolve this error, you might
+  first try the steps described above in <a href=
+  "#troubleshooting-generaltroubleshootingsteps">General troubleshooting steps</a>. </p>{% endblock %}

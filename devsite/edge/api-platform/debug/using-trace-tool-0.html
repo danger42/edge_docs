@@ -1,0 +1,548 @@
+  {% extends "_base.html" %} {% block title %}Using the Trace tool{% endblock %} {% block body %}
+
+  <h2 id="whatisthetracetool">What is the Trace tool?</h2>
+
+  <p>Trace is a tool for troubleshooting and monitoring API proxies running on Apigee Edge. Trace
+  lets you probe the details of each step through an API proxy flow. </p>
+
+  <div class="video">
+    <p>Watch this video for an introduction to the Trace tool.</p>
+
+    <div style="text-align: left;">
+      <iframe allowfullscreen="" frameborder="0" height="315" src=
+      "https://www.youtube.com/embed/X_35aBpJmA8" width="560"></iframe>
+    </div>
+  </div>
+
+  <h2 id="howtousetrace">How to use Trace</h2>
+
+  <p>Trace is simple to use. You start a trace session, then make an API call to the Edge platform,
+  and read the results.</p>
+
+  <ol>
+    <li>Select <strong>API Proxies</strong> from the APIs menu. </li>
+
+    <li>Select an API proxy from the API Proxies page.</li>
+
+    <li>Be sure the API you wish to trace is deployed.</li>
+
+    <li>Click <strong>Trace</strong> to go to the Trace tool view. </li>
+
+    <li>Use the <strong>Deployment to Trace</strong> dropdown menu to select which
+    deployment environment and proxy revision you wish to trace. </li>
+
+    <li>Click <b>Start Trace Session</b>. When the Trace session is active, the API proxy
+    records details of each step in the processing pipeline. While the Trace session is running,
+    messages and contextual data are captured from live traffic.<br>
+
+      <p><img src="/api-platform/images/start-trace-session.png" width="118"></p>
+    </li>
+
+    <li>If you don't have any live traffic flowing through your proxy, then simply send a request
+    to the API. You can use whatever tool you wish to send the request, such as cURL, Postman, or
+    any familiar tool. Or, you can send the request directly from the Trace tool itself. Just enter
+    the URL and click <strong>Send</strong>. <br>
+    <br>
+    <strong>Note:</strong> One Trace session can support 10 request/response transactions per
+    message processor through the selected API proxy. In Edge cloud, with 2 messages processors
+    handling traffic, 20 request/response transactions are supported. A trace session automatically
+    stops after 10 minutes if you don't manually stop it. <br>
+     </li>
+
+    <li>When you've captured a sufficient number of requests, click <b>Stop Trace
+    Session</b>.</li>
+
+    <li>A list of captured request/response transactions displays in the left menu. Click on any of
+    the transactions to view detailed results.</li>
+  </ol>
+
+  <h2 id="howtoreadatrace">How to read a trace</h2>
+
+  <p>The trace tool has two main parts, the transaction map and the phase details:</p>
+
+  <ul>
+    <li>The transaction map uses <a href="#TraceMapLegend">icons</a> to mark each notable
+    step that occurs during an API proxy transaction, including policy execution, conditional
+    steps, and transitions. Hover over any <a href="#TraceMapLegend">icon</a> to see summary
+    information. The request flow steps appear along the top of the transaction map and response
+    flow steps along the bottom.</li>
+
+    <li>The <a href="#PhaseDetails">phase details</a> section of the tool lists
+    information about the proxy's internal processing, including variables that were set or read,
+    request and response headers, and much more. Click any icon to see the <a href=
+    "#PhaseDetails">phase details</a> for that step.</li>
+  </ul>
+
+  <p>Here's a sample trace tool map with the main proxy processing segments labeled:</p>
+
+  <p><strong>Trace tool's transaction map</strong></p>
+
+  <p><img src="/api-platform/images/new-trace-7-17-14.png" width="755"></p>
+
+  <h2 id="transactionmaplegend"><a id="TraceMapLegend" name="TraceMapLegend"></a>Transaction map
+  legend</h2>
+
+  <p>The following table describes the intent of the icons you will see in the transaction
+  map. These icons mark each of the notable processing steps throughout the proxy flow.</p>
+
+  <p><strong>Transaction map icons</strong></p>
+
+  <table width="700px">
+    <tbody>
+      <tr>
+        <td style="text-align: center; width: 30px;"><img src="/api-platform/images/app.png" width=
+        "50"></td>
+
+        <td>The client app that sends a request to the ProxyEndpoint of the API proxy. </td>
+      </tr>
+
+      <tr>
+        <td style="text-align: center; width: 30px;"><img src=
+        "/api-platform/images/transitional-endpoint.png" width="35"></td>
+
+        <td>The circles mark transitional endpoints in the proxy flow. They are there when a
+        request comes in from the client, when the request goes to the target, when the response
+        comes back from the target, and when the response goes back to the client.</td>
+      </tr>
+
+      <tr>
+        <td style="text-align: center; width: 30px;"><img src=
+        "/api-platform/images/flow-segment.png" width="16"></td>
+
+        <td style="text-align: left;">
+          <p>The tall bars indicate the beginning of a flow segment in the API proxy flow. Flow
+          segments are: ProxyEndpoint request, TargetEndpoint request, TargetEndpoint response, and
+          ProxyEndpoint response. A segment includes the PreFlow, Conditional Flows, and
+          PostFlow. </p>
+
+          <p>See <a href="/api-platform/fundamentals/flow-configurations.html">Configuring
+          flows</a> for more information. </p>
+        </td>
+      </tr>
+
+      <tr>
+        <td style="text-align: center; width: 30px;"><img src="/api-platform/images/ax-icon.png"
+        width="21"></td>
+
+        <td style="text-align: left;">
+          <p>Indicates that Analytics actions have occurred in the background. </p>
+        </td>
+      </tr>
+
+      <tr>
+        <td style="text-align: center; width: 30px;"><img src=
+        "/api-platform/images/true-condition.png" width="30"></td>
+
+        <td>
+          <p>A conditional flow that evaluates to true. For an introduction to conditional flows,
+          see <a href="/api-platform/fundamentals/flow-configurations.html">Configuring
+          flows</a>.</p>
+
+          <p>Note that some conditions are Edge-generated. For example, the following is an
+          expression that Edge uses to check if an error occurred in the
+          ProxyEndpoint:</p><code>((error.state equals PROXY_REQ_FLOW) or (error.state equals
+          PROXY_RESP_FLOW))</code>
+        </td>
+      </tr>
+
+      <tr>
+        <td style="text-align: center; width: 30px;"><img src=
+        "/api-platform/images/false-condition.png" width="30"></td>
+
+        <td>
+          <p>A conditional flow that evaluates to false. For an introduction to conditional
+          flows, see <a href="/api-platform/fundamentals/flow-configurations.html">Configuring
+          flows</a>.</p>
+
+          <p>Note that some conditions are Edge-generated. For example, the following is an
+          expression that Edge uses to check if an error occurred in the
+          TargetEndpoint:</p><code>(((error.state equals TARGET_REQ_FLOW) or (error.state equals
+          TARGET_RESP_FLOW)) or ((error.state equals REQ_SENT) or (error.state equals
+          RESP_START)))</code>
+        </td>
+      </tr>
+
+      <tr>
+        <td style="text-align: center; width: 30px;">
+          <p><img src="/api-platform/images/xml-to-json.jpg" width="41"></p>
+
+          <p><img src="/api-platform/images/quota.jpg" width="41"></p>
+
+          <p><img src="/api-platform/images/security.jpg" width="41"></p>
+
+          
+        </td>
+
+        <td>
+          <p>Polices. Each type of policy has a unique icon. This one is for the AssignMessage
+          policy. These icons let you see where policies are executed in the proper order and if
+          they are successful or not. You can click a policy icon to see the results of its
+          execution and if they are expected or not. For example, you can see if the message was
+          transformed properly or if it is being cached. </p>
+
+          <p><span style="font-size: 12px;">Properly executing policies are clearly indicated by
+          check-marks. In the case of an error, a red exclamation mark is displayed on the
+          icon.</span></p>
+
+          <p><strong><span style="font-size: 12px;">Tip: </span></strong><span style=
+          "font-size: 12px;">Pay attention to the tooltip or the time line to see if any policy is
+          taking longer than expected.</span></p>
+        </td>
+      </tr>
+
+      <tr>
+        <td style="text-align: center; width: 30px;"><img src="/api-platform/images/node.png"
+        width="50"></td>
+
+        <td>Appears when the backend target is a Node.js application. See <a href=
+        "/api-platform/nodejs/overview-nodejs-apigee-edge.html">Overview of Node.js on Apigee
+        Edge</a>.</td>
+      </tr>
+
+      <tr>
+        <td style="text-align: center; width: 30px;"><img src="/api-platform/images/server.png"
+        width="50"></td>
+
+        <td>The backend target called by the API proxy.</td>
+      </tr>
+
+      <tr>
+        <td style="text-align: center; width: 30px;"><img src=
+        "/api-platform/images/milliseconds.png" width="61"></td>
+
+        <td>The time line indicates how long (in milliseconds) that the processing time took to
+        complete. Comparing the elapsed time segments helps you isolate the policies that are
+        taking the longest to execute that are slowing down your API calls.</td>
+      </tr>
+
+      <tr>
+        <td style="text-align: center; width: 30px;"><img src="/api-platform/images/epsilon.png"
+        width="39"></td>
+
+        <td>The Epsilon indicates a time-span smaller than a millisecond.</td>
+      </tr>
+
+      <tr>
+        <td style="text-align: center; width: 30px;"><img src="/api-platform/images/disabled.png"
+        width="17"></td>
+
+        <td style="text-align: left;">
+          <p>Disabled. Appears on a policy icon when a policy is disabled. A policy can be disabled
+          with the public API. See <a href=
+          "/api-platform/reference/policies/api-proxy-configuration-reference.html">API proxy
+          configuration reference</a>.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td style="text-align: center; width: 30px;"><img src="/api-platform/images/error.png"
+        width="17"></td>
+
+        <td>Error. Appears on a policy icon when the Policy Step condition evaluates to false (see
+        <a href="/api-platform/fundamentals/flow-variables-and-conditions.html">Flow variables and
+        conditions</a>), or on the RaiseFault policy icon whenever a RaiseFault policy
+        executes.</td>
+      </tr>
+
+      <tr>
+        <td style="text-align: center; width: 30px;"><img src="/api-platform/images/skipped.png"
+        width="17"></td>
+
+        <td>Skipped. Appears on a policy icon when the policy was not executed because the step
+        condition evaluated to false. See <a href=
+        "/api-platform/fundamentals/flow-variables-and-conditions.html">Flow variables and
+        conditions</a> for more information. </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="understandingthephasedetails"><a id="PhaseDetails" name="PhaseDetails"></a>Understanding
+  the phase details</h2>
+
+  <p>The <strong>Phase Details</strong> part of the tool tells you a lot about the state of your
+  proxy at each processing step. Here are some of the details provided in the Phase Details. Click
+  any icon in the trace tool to see details for the selected step, or use the
+  <strong>Next</strong>/<strong>Back</strong> buttons to move from one step to another. </p>
+
+  <aside class="warning"><b>Warning:</b> Trace captures message content. If your message payloads
+  contain sensitive information, then you should enable data masking. For instructions, see
+  <a href="/api-platform/security/data-masking.html">Data masking and hiding</a>.</aside>
+
+  <table width="600px">
+    <tbody>
+      <tr>
+        <td><strong>Phase Detail</strong></td>
+
+        <td><strong>Description</strong></td>
+      </tr>
+
+      <tr>
+        <td>Proxy Endpoint</td>
+
+        <td>Indicates which ProxyEndpoint flow was selected for execution. An API proxy can have
+        multiple named proxy endpoints. </td>
+      </tr>
+
+      <tr>
+        <td>Variables</td>
+
+        <td>
+          <p>Lists the flow variables that were read and assigned a value by a policy, See
+          also <a href="/api-platform/fundamentals/introduction-flow-variables.html">Managing proxy
+          state with flow variables</a>.</p>
+
+          <p><strong>Note</strong>:</p>
+
+          <ul>
+            <li>An equals sign (=) indicates the value that was assigned to the variable.</li>
+
+            <li>A crossed-out equals sign (?) indicates that the variable could not be assigned a
+            value because it is <a href=
+            "/api-platform/reference/variables-reference.html">read-only</a> or there was an error
+            in policy execution.</li>
+
+            <li>An empty field indicates that the variable value was read.</li>
+          </ul>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Request Headers</td>
+
+        <td>Lists the HTTP request headers.</td>
+      </tr>
+
+      <tr>
+        <td>Request Content</td>
+
+        <td>Shows the HTTP request body.</td>
+      </tr>
+
+      <tr>
+        <td>Properties</td>
+
+        <td>Properties represent the internal state of the API proxy. These are not shown by
+        default.</td>
+      </tr>
+
+      <tr>
+        <td>Target Endpoint</td>
+
+        <td>Indicates which TargetEndpoint was selected for execution. </td>
+      </tr>
+
+      <tr>
+        <td>Response Headers</td>
+
+        <td>Lists the HTTP response headers.</td>
+      </tr>
+
+      <tr>
+        <td>Response Content</td>
+
+        <td>Shows the HTTP response body. </td>
+      </tr>
+
+      <tr>
+        <td>PostClientFlow</td>
+
+        <td>Shows information about the PostClientFlow, which executes after the request is
+        returned to the requesting client app. Only MessageLogging policies can be attached to the
+        PostClientFlow. The PostClientFlow is currently used primarily for measuring the time
+        interval between the start and end timestamps for the response message.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="refiningmessagecaptureusingfilters">Refining message capture using filters</h2>
+
+  <p>You can filter which requests show up in the Trace tool by specifying header and/or query
+  parameter values. Filters enable you to target specific calls that may be causing problems.
+  For example, you may need to zero in on requests that have specific content or requests coming
+  from specific partners or apps. You can filter on:</p>
+
+  <ul>
+    <li><strong>HTTP headers</strong> - Limit the trace to only calls that contain a specific
+    header. This is a good way of helping you troubleshoot issues. You can send a header to your
+    app developer and ask them to include it in the call that is causing issues. Then Apigee Edge
+    will only record calls with that specific header so you can examine the results.  </li>
+
+    <li><strong>Query parameters</strong> - Only calls with a  specific value of a parameter
+    will be recorded.</li>
+  </ul>
+
+  <h3 id="refiningmessagecaptureusingfilters-thingsyouneedtoknowaboutthefilterfeature">
+  <strong>Things you need to know about the Filter feature</strong></h3>
+
+  <ul>
+    <li>You must restart your Trace session after specifying filter parameters in the filter
+    fields.</li>
+
+    <li>Filter parameters are AND'ed together. All specified query and/or header name/value pairs
+    must be present in the request for a successful match. </li>
+
+    <li>Pattern matching is not supported in the Filters tool.</li>
+
+    <li>Filter parameters and values are case sensitive. </li>
+  </ul>
+
+  <h3 id="refiningmessagecaptureusingfilters-howtocreateatracefilter"><strong>How to create a trace
+  filter</strong></h3>
+
+  <ol>
+    <li>If a trace session is running, stop it by clicking <strong>Stop Trace
+    Session</strong>.</li>
+
+    <li>Click <strong>Filters</strong> in the upper-left corner of the Trace tool to expand the
+    Filters field.<br>
+    <br>
+    <img alt="" src="/api-platform/images/trace-filters-closed.png"><br>
+     </li>
+
+    <li>In the Filters field, specify the query parameter and/or header values you wish to filter
+    on. In this example, we specify two query parameters to filter on. Both parameters must be
+    present in the request for a successful match. <br>
+    <br>
+    <img alt="" src="/api-platform/images/trace-filters-opened-3.png"><br>
+     </li>
+
+    <li>Start the trace session.</li>
+
+    <li>Call your APIs. Only requests that include all of the specified header(s) and/or query
+    parameter(s) produce a successful match.</li>
+  </ol>
+
+  <p><img alt="" src="/api-platform/images/trace-filters-results.png"></p>
+
+  <p>In the above example, this API call will show up in Trace:</p>
+  <pre class="prettyprint">
+http://docs-test.apigee.net/cats?name=Penny&amp;breed=Calico
+</pre>
+
+  <p>But this will not:</p>
+  <pre class="prettyprint">
+http://docs-test.apigee.net/cats?name=Penny
+</pre>
+
+  <h2 id="debuggingwithtrace">Debugging with Trace</h2>
+
+  <p>Trace lets you see a lot of internal details about an API proxy. For example:</p>
+
+  <ul>
+    <li>You can see at a glance which policies are executing correctly or failing. </li>
+
+    <li>Let's say you noticed through one of the Analytics dashboards that one of your APIs is
+    experiencing an unusual decrease in performance. Now, you can use Trace to help identify where
+    the bottleneck is occurring. Trace gives the time, in milliseconds, that it takes for each
+    processing step to complete. If you find one step is taking too long, you can take corrective
+    action. </li>
+
+    <li>By looking at the phase details, you can check headers that are being sent to the backend,
+    view variables set by policies, and so on.</li>
+
+    <li>By verifying the base path, you can ensure that a policy is routing the message to correct
+    server.</li>
+  </ul>
+
+  <h2 id="selectingviewoptions">Selecting View Options</h2>
+
+  <p>Choose the view options for the trace session.</p>
+
+  <p><img src="/api-platform/images/view-options.png" width="320"><img src=
+  "/api-platform/images/view-options.png" width="320"><img src=
+  "/api-platform/images/view-options.png" width="320"></p>
+
+  <table width="600px">
+    <tbody>
+      <tr>
+        <td><strong>Option</strong></td>
+
+        <td><strong>Description</strong></td>
+      </tr>
+
+      <tr>
+        <td>Show Disabled Policies</td>
+
+        <td>Show any disabled policies. A policy can be disabled with the public API. See <a href=
+        "/api-platform/reference/policies/api-proxy-configuration-reference.html">API proxy
+        configuration reference</a>.</td>
+      </tr>
+
+      <tr>
+        <td>Show Skipped Phases</td>
+
+        <td>Show any phases that were skipped. A skipped phase occurs when policy was not executed
+        because the step condition evaluated to false. See <a href=
+        "/api-platform/fundamentals/flow-variables-and-conditions.html">Flow variables and
+        conditions</a> for more information. </td>
+      </tr>
+
+      <tr>
+        <td>Show all FlowInfos</td>
+
+        <td>Represent transitions within a flow segment.</td>
+      </tr>
+
+      <tr>
+        <td>Automatically Compare Selected Phase</td>
+
+        <td>Compares the selected phase to the previous one. Turn this off to see only the selected
+        phase.</td>
+      </tr>
+
+      <tr>
+        <td>Show Variables</td>
+
+        <td>Show or hide variables that were read and/or assigned a value.</td>
+      </tr>
+
+      <tr>
+        <td>Show Properties</td>
+
+        <td>Properties represent the internal state of the API proxy. (Hidden by default.)</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="downloadingtraceresults">Downloading trace results</h2>
+
+  <p>You can download an XML file of raw trace results for viewing and searching offline in a text
+  editor. The file shows the complete details of the listening session including the contents of
+  all headers, variables, and policies.</p>
+
+  <p>To download, click <b>Download Trace Session</b>.</p>
+
+  <h2 id="showingrequestsascurl">Showing requests as cURL</h2>
+
+  <p>After you trace an API call made to a target server, you can view the request as a cURL
+  command. This is particularly useful for debugging for a couple of reasons:</p>
+
+  <ul>
+    <li>The API proxy may modify the request, so it's useful to see how request from the proxy to
+    the target server differs from the original request. The cURL command represents the modified
+    request.</li>
+
+    <li>For larger message payloads, the cURL allows you to see the HTTP headers and message
+    content in a single place. (There's currently a limit of about 1,000 characters. For a tip on
+    getting past this limit, see <a href=
+    "https://community.apigee.com/content/kbentry/41114/how-to-trace-a-soap-message-on-apigee.html"
+    target="_blank">this community post</a>.)</li>
+  </ul>
+
+  <p>For security, the cURL feature masks the HTTP Authorization header.</p>
+
+  <aside class="note"><b>Note:</b> If request streaming is enabled on the API proxy (see <a href=
+  "/api-platform/develop/enabling-streaming.html">Streaming requests and responses</a>), the
+  request body won't be available.</aside>
+
+  <p>To see requests as cURL after an API call comes through in Trace, select the "Request sent to
+  target server" stage in the Transaction Map diagram, then click the <strong>Show Curl</strong>
+  button on the "Request sent to target server" column in the Phase Details pane.</p>
+
+  <p><img alt="" src="/api-platform/images/trace_curl.png"></p>
+<h2 id="apigee-support">Apigee Support use of Trace</h2>
+{% dynamic include /includes/___apigee-support-trace %}
+<aside class="note"><strong>Note</strong>: This features is available in the new Edge UI only. It is not available in the Classic UI.
+</aside>
+
+{% endblock %}

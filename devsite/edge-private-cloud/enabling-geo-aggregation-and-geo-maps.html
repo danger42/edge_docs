@@ -1,0 +1,187 @@
+  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}Enabling Geo Aggregation and
+  Geo Maps{% endblock %} {% block body %}
+
+  <p>Geo aggregations lets you collect analytics data for API calls based on geographical
+  attributes such as region, continent, country, and city. From this analytics data, you can view a
+  GeoMap in the Edge UI that shows the location of API requests:</p>
+
+  <p><img alt="" src="/private-cloud/images/geo_map_v1.png"></p>
+
+  <p>Geo aggregations work by extracting geographical data from a third-party database and adding
+  it to the analytics data collected by Edge. The geographical information can contain the city,
+  country, continent, time zone, and region of a request made to an API proxy. </p>
+
+  <p>To use geo aggregation, you must purchase the Maxmind GeoIp2 database that contains this
+  geographical information. See <a href=
+  "https://www.maxmind.com/en/geoip2-databases">https://www.maxmind.com/en/geoip2-databases</a> for
+  more information. </p>
+
+  <aside class="note"><b>Note:</b> Geo aggregations require that the IP address of a machine making
+  the request to the API proxy is in the Maxmind GeoIp2 database. Otherwise, Edge will not be able
+  to determine the location of the request.   </aside>
+
+  <h2 id="enablinggeoaggregation">Enabling geo aggregation</h2>
+
+  <p>By default the geo aggregations are not enabled. To enable geo aggregations, you must:</p>
+
+  <ul>
+    <li>On all Qpid servers, install the MaxMind database and configure the Qpid server to use
+    it.</li>
+
+    <li>Enable the Geo Map display in the Edge UI.</li>
+  </ul>
+
+  <h3 id="enablinggeoaggregation-installthemaxminddatabaseonalledgeqpidservers">Install the MaxMind
+  database on all Edge Qpid servers </h3>
+
+  <p>Use the following procedure to install the MaxMind database on all Edge Qpid servers:</p>
+
+  <ol>
+    <li>Obtain the Maxmind GeoIp2 database.<br>
+    <strong>Note</strong>: Geo aggregations work by adding geographical data from a third-party
+    database to the analytics data collected by Edge. To use geo aggregation, you must purchase the
+    Maxmind GeoIp2 database that contains this information. See <a href=
+    "https://www.maxmind.com/en/geoip2-databases">https://www.maxmind.com/en/geoip2-databases</a>
+    for more information. </li>
+
+    <li>Create the following folder on the Qpid server node:<br>
+    <span style="font-family:courier new,courier,monospace;">/opt/apigee/maxmind</span></li>
+
+    <li>Download the Maxmind GeoIp2 database to <span style=
+    "font-family:courier new,courier,monospace;">/opt/apigee/maxmind</span>. </li>
+
+    <li>Change the ownership of the database file to the 'apigee' user:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt; chown apigee:apigee
+    /opt/apigee/maxmind/GeoIP2-City_20160127.mmdb</span></li>
+
+    <li>Set the permissions on the database to 744: <br>
+    <span style="font-family:courier new,courier,monospace;">&gt; chmod 744
+    /opt/apigee/maxmind/GeoIP2-City_20160127.mmdb</span></li>
+
+    <li>Set the following tokens in <span style=
+    "font-family:courier new,courier,monospace;">/opt/apigee/customer/application/qpid-server.properties</span>.
+    If that file does not exist, create it:<br>
+    <span style=
+    "font-family:courier new,courier,monospace;">conf_ingestboot-service_vdim.geo.ingest.enabled=true<br>
+
+    conf_ingestboot-service_vdim.geo.maxmind.db.path=<em><strong>/opt/apigee/maxmind/GeoIP2-City_20160127.mmdb</strong></em></span><br>
+
+    <br>
+    If you stored the Maxmind GeoIp2 database in a different location, edit the path property
+    accordingly.<br>
+    <br>
+    Note that this database file contains a version number. If you later receive an updated
+    database file, it might have a different version number. As an alternative, create a symlink to
+    the database file and use the symlink in <span style=
+    "font-family:courier new,courier,monospace;">qpid-server.properties</span>. <br>
+    <br>
+    For example, create a symlink for "GeoIP2-City-current.mmdb" to "GeoIP2-City_20160127.mmdb". If
+    you later receive a new database with a different file name, you only have to update the
+    symlink rather than having to reconfigure and restart the Qpid server.  </li>
+
+    <li>Change ownership of the <span style=
+    "font-family:courier new,courier,monospace;">qpid-server.properties</span> file to the 'apigee'
+    user:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt; chown apigee:apigee
+    /opt/apigee/customer/application/qpid-server.properties</span></li>
+
+    <li>Restart the Qpid server:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt;
+    /opt/apigee/bin/apigee-service/bin/apigee-service edge-qpid-server restart </span></li>
+
+    <li>Repeat this process on every Qpid node.</li>
+
+    <li>To validate that geo aggregation is working:
+
+      <ol style="list-style: lower-alpha outside">
+        <li>Trigger several API proxy calls on a sample API proxy. </li>
+
+        <li>Wait about 5 - 10 mins for the aggregations to complete. </li>
+
+        <li>Open a console and connect to the Edge Postgres server:<br>
+        <span style="font-family:courier new,courier,monospace;">&gt; psql -h
+        /opt/apigee/var/run/apigee-postgresql/ -U apigee -d apigee</span></li>
+
+        <li>Perform a SELECT query on the table analytics.agg_geo to show the rows with
+        geographical attributes:<br>
+        <span style="font-family:courier new,courier,monospace;">apigee=# select * from
+        analytics.agg_geo;</span><br>
+        <br>
+        You should see the following columns in the query results which are extracted from the
+        Maxmind GeoIp2 database: <span style=
+        "font-family:courier new,courier,monospace;">ax_geo_city,  ax_geo_country,
+        ax_geo_continent, ax_geo_timezone, ax_geo_region</span>.<br>
+        <br>
+        If the <span style="font-family:courier new,courier,monospace;">agg_geo</span> table is not
+        getting populated, check the Qpid server logs at <span style=
+        "font-family:courier new,courier,monospace;">/opt/apigee/var/log/edge-qpid-server/logs/</span>
+        to detect any potential exceptions. </li>
+      </ol>
+    </li>
+  </ol>
+
+  <h3 id="enablinggeoaggregation-enablegeomapsintheedgeui">Enable Geo Maps in the Edge UI</h3>
+
+  <p>Use the following procedure to enable Geo Maps in the Edge UI: </p>
+
+  <ol>
+    <li>Set the following token in <span style=
+    "font-family:courier new,courier,monospace;">/opt/apigee/customer/application/ui.properties</span>
+    to enable Geo Maps. If that file does not exist, create it:<br>
+    <span style=
+    "font-family:courier new,courier,monospace;">conf_apigee_apigee.feature.disablegeomap=false</span></li>
+
+    <li>Change ownership of the ui.properties file to the 'apigee' user:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt; chown apigee:apigee
+    /opt/apigee/customer/application/ui.properties</span></li>
+
+    <li>Restart the Edge UI:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt;
+    /opt/apigee/bin/apigee-service/bin/apigee-service edge-ui restart</span></li>
+
+    <li>In the Edge UI, select <strong>Analytics &gt; GeoMap</strong> to display the geo
+    aggregation data.</li>
+  </ol>
+
+  <h2 id="updatingthemaxmindgeoip2database">Updating the MaxMind GeoIp2 database</h2>
+
+  <p>MaxMind issues periodic updates to the Maxmind GeoIp2 database. If you receive an updated
+  database, use the following procedure to install it on Edge:</p>
+
+  <ol>
+    <li>Obtain the updated Maxmind GeoIp2 database.</li>
+
+    <li>Download the Maxmind GeoIp2 database to <span style=
+    "font-family:courier new,courier,monospace;">/opt/apigee/maxmind</span>. </li>
+
+    <li>Check the name of the database file. If it is the same as the old file, as defined in
+    ?<span style=
+    "font-family:courier new,courier,monospace;">/opt/apigee/customer/application/qpid-server.properties</span>,
+    proceed to the next step. However, if the file has a different name, you have to edit the
+    <span style="font-family:courier new,courier,monospace;">qpid-server.properties</span> file to
+    specify the name of the new database file and then restart the Qpid server, as described
+    above.<br>
+    <br>
+    As an alternative, you can create symlink to the file. For example, create a symlink for
+    "GeoIP2-City-current.mmdb" to "GeoIP2-City_20160127.mmdb". If you later receive a new database
+    with a different file name, you only have to update the symlink rather than having to
+    reconfigure the Qpid server.  </li>
+
+    <li>Change the ownership of the database file to the 'apigee' user:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt; chown apigee:apigee
+    /opt/apigee/maxmind/GeoIP2-City_20160127.mmdb</span></li>
+
+    <li>Set the permissions on the database to 744: <br>
+    <span style="font-family:courier new,courier,monospace;">&gt; chmod 744
+    /opt/apigee/maxmind/GeoIP2-City_20160127.mmdb</span></li>
+
+    <li>Restart the Qpid server:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt;
+    /opt/apigee/bin/apigee-service/bin/apigee-service edge-qpid-server restart </span></li>
+
+    <li>Repeat this process on every Qpid node.</li>
+  </ol>
+
+  <div>
+     
+  </div>{% endblock %}

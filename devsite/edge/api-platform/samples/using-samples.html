@@ -1,0 +1,186 @@
+  {% extends "_base.html" %} {% block title %}Using the sample API proxies{% endblock %} {% block body %}
+
+  <aside class="note">
+    <b>Sample:</b> Apigee provides a set of samples on GitHub that you can download and run
+    locally. For a list of samples, see <a href=
+    "/api-platform/samples/samples-reference.html">Samples list</a>.
+
+    <p>The <a href=
+    "https://github.com/apigee/api-platform-samples/blob/master/setup/README.md">setup README</a>
+    in the samples also contains the information in this topic.</p>
+  </aside>
+
+  <h2 id="prerequisites">Prerequisites</h2>
+
+  <p>You'll need an account on <a href=
+  "https://enterprise.apigee.com">http://enterprise.apigee.com</a>. You can sign up for a trial
+  account at <a href=
+  "https://accounts.apigee.com/accounts/sign_up?callback=https://enterprise.apigee.com">http://accounts.apigee.com/accounts/sign_up</a>.</p>
+
+  <aside class="note"><b>Note:</b> For more information on creating accounts, see <a href=
+  "/api-platform/get-started/creating-apigee-edge-account.html">Creating an Apigee Edge
+  account</a>.</aside>
+
+  <p>To use samples, you should also have the following:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Tool</th>
+
+        <th>Description</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td>Git</td>
+
+        <td>The samples are located on GitHub. If you do not have Git installed, please refer to
+        <a href="https://help.github.com/articles/set-up-git">GitHub's git setup instructions</a>.
+        If you don't want to install Git, you can browse the files and download a ZIP from <a href=
+        "https://github.com/apigee/api-platform-samples">https://github.com/apigee/api-platform-samples</a>.</td>
+      </tr>
+
+      <tr>
+        <td>Python</td>
+
+        <td>
+          <p>Python is required to run the Apigee deploy tool. Python is present in most Linux
+          environments, on a Mac with XCode installed, on a Windows machine with <a href=
+          "https://www.cygwin.com/">Cygwin</a> installed, and in many other places.</p>
+
+          <p>To obtain Python, please refer to the <a href=
+          "https://www.python.org/downloads/">Python download page</a>. </p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>cURL</td>
+
+        <td>The sample setup scripts also use cURL. Make sure cURL is installed and available on
+        your PATH (run the <code>which curl</code> command to see if it's available on your
+        system).</td>
+      </tr>
+
+      <tr>
+        <td>dos2unix</td>
+
+        <td>If you're running Cygwin on Windows, you may also need the <strong>dos2unix</strong>
+        utility. (The Cygwin installer lets you install the utility.) See the <a href=
+        "/api-platform/troubleshoot/troubleshooting-introduction.html#cygwin">Windows/Cygwin
+        Troubleshooting</a> topic for more information.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="downloadingthesamples">Downloading the samples</h2>
+
+  <p>To obtain the sample files, run:</p>
+  <pre class="terminal">
+$ git clone https://github.com/apigee/api-platform-samples.git
+</pre>
+
+  <h2 id="importinganddeployingthesampleapiproxies">Importing and deploying the sample API
+  proxies</h2>
+
+  <p>Import and deploy the samples from the command line:</p>
+
+  <ol>
+    <li>After you download the samples, go to the <code>/setup</code> directory.
+      <pre class="terminal">
+$ cd setup
+</pre>
+    </li>
+
+    <li>In the <code>/setup</code> directory, locate the file <code>setenv.sh</code>. Edit this
+    file to set your organization, the email address associated with your username, and the
+    environment (prod or test) where you want to deploy the API proxies.  </li>
+
+    <li>After you edit <code>setenv.sh</code>, run:
+      <pre class="terminal">
+$ sh deploy_all.sh
+</pre>This script deploys all API proxy samples to your organization. (The process takes 3-4
+minutes.) Follow prompts to deploy API products, developers, and apps (which are used for OAuth).
+ 
+    </li>
+
+    <li>After the deploy script completes, navigate to the sample-proxies directory. In the
+    directory <code>sample-proxies</code>, you will find one directory per sample proxy. In each
+    directory is a README.md file with information about running the sample, and two scripts that
+    help you as you make small changes to the samples, deploy, and then invoke the sample to see
+    what effect you change had:
+
+      <ul>
+        <li><code>invoke.sh</code>: Run this script to invoke the deployed version of the API
+        proxy.</li>
+
+        <li><code>deploy.sh</code>: Run this script to deploy the API proxy after you make any
+        changes.</li>
+      </ul>
+    </li>
+  </ol>
+
+  <h2 id="invokingthesampleapiproxies">Invoking the sample API proxies</h2>
+
+  <p>Each sample proxy has an associated shell script that can be used to invoke the API proxy
+  after you deploy it.</p>
+
+  <p>From the <code>/sample-proxies/{proxy_name}</code> directory, run:</p>
+  <pre class="terminal">
+$ sh invoke.sh
+</pre>
+
+  <p>This will invoke the proxy that is running in the test environment in your organization.</p>
+
+  <h2 id="troubleshooting">Troubleshooting</h2>
+
+  <p>If you run into issue with the sample, see <a href=
+  "/api-platform/troubleshoot/troubleshooting-introduction.html">Troubleshooting introduction</a>.
+  The topic includes a <a href=
+  "/api-platform/troubleshoot/troubleshooting-introduction.html#cygwin">Windows/Cygwin
+  Troubleshooting</a> section for fixing deployment errors in Cygwin on Windows.</p>
+
+  <h2 id="modifyingandreusingthesampleapiproxies">Modifying and reusing the sample API proxies</h2>
+
+  <p>Typical usage of the sample proxies is to modify, deploy, and invoke. This enables you to make
+  small modifications, and then to see what effect they have on the response message.</p>
+
+  <p>If you need to modify a sample API proxy to point at a different backend service, modify the
+  XML configuration file under:</p>
+  <pre class="prettyprint">
+/apiproxy/targets/{target_name}.xml
+</pre>
+
+  <p>For example, to point the API key sample at your own backend service, locate this file:</p>
+  <pre class="prettyprint">
+/apikey/apiproxy/targets/default.xml
+</pre>
+
+  <p>If the default configuration points to <code>http://mocktarget.apigee.net</code>, such as:</p>
+  <pre class="prettyprint">
+&lt;TargetEndpoint name="default"&gt;
+  &lt;HTTPTargetConnection&gt;
+    &lt;!-- This is where we define the target. For this sample we just use a simple URL. --&gt;
+    &lt;URL&gt;http://mocktarget.apigee.net&lt;/URL&gt;
+  &lt;/HTTPTargetConnection&gt;
+&lt;/TargetEndpoint&gt;
+</pre>
+
+  <p>and your backend service is available at <code>http://api.myproject.com/</code>, then you
+  modify the configuration to look like the following:</p>
+  <pre class="prettyprint">
+&lt;TargetEndpoint name="default"&gt;
+  &lt;HTTPTargetConnection&gt;
+    &lt;!-- This is where we define the target. For this sample we just use a simple URL. --&gt;
+    &lt;URL&gt;http://api.myproject.com/&lt;/URL&gt;
+  &lt;/HTTPTargetConnection&gt;
+&lt;/TargetEndpoint&gt;
+</pre>After you have saved your changes, deploy the API proxy:
+  <pre class="terminal">
+$ sh deploy.sh
+</pre>
+
+  <p>The other API proxies can be modified the same way in order to use the API proxy functionality
+  against your existing target services. In some cases, however, API proxy behavior is dependent on
+  specific message formats, so the proxies might need additional configuration changes.</p>{% endblock %}

@@ -1,0 +1,121 @@
+  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}Deleting a Virtual
+  Host/Environment/Organization{% endblock %} {% block body %}
+
+  <p>This section explains the removal of organizations, environments, and virtual hosts. Note that
+  the order of API calls is very important&#8211; that means, for example, the step to remove an
+  organization can only be executed after you remove all associated environments in the
+  organization.</p>
+
+  <h2 id="deleteavirtualhost">Delete a Virtual Host</h2>
+
+  <p>Before you can delete a virtual host from an environment, you must update any API proxies that
+  reference the virtual host to remove the reference. See <a href=
+  "/api-platform/fundamentals/virtual-hosts.html">Virtual hosts</a> for more. </p>
+
+  <p>Use the following API to delete a virtual host:</p>
+  <pre class="prettyprint">
+curl -u &lt;admin user&gt;:&lt;admin passwd&gt; -X DELETE \
+"http://&lt;ms-ip&gt;:8080/v1/organizations/&lt;org-name&gt;/environments/&lt;env-name&gt;/virtualhosts/{virtualhost_name}" 
+</pre>
+
+  <h2 id="deleteanenvironment">Delete an Environment</h2>
+
+  <p>You can only delete an environment after you have:</p>
+
+  <ol>
+    <li>Deleted all virtual hosts in the environment as described above.</li>
+
+    <li>Disassociated the environment from all Message Processors.</li>
+
+    <li>Cleaned up analytics.</li>
+  </ol>
+
+  <h3 id="deleteanenvironment-disassociateanenvironmentfrommessageprocessor">Disassociate an
+  Environment from Message Processor</h3>
+
+  <p>Use the following API to remove an association of an environment with a Message Processor. If
+  you want to delete the environment, you must disassociate it from all Message Processors:</p>
+  <pre class="prettyprint">
+curl -H "Content-Type: application/x-www-form-urlencoded" \
+-u &lt;admin user&gt;:&lt;admin passwd&gt; -X POST \
+"http://&lt;ms-ip&gt;:8080/v1/organizations/&lt;org-name&gt;/environments/&lt;env-name&gt;/servers" \
+-d "action=remove&amp;uuid=&lt;uuid&gt;"
+</pre>
+
+  <p>Where "<span style="font-family:courier new,courier,monospace;">&lt;uuid&gt;</span>" is the
+  UUID of Message Processor.</p>
+
+  <aside class="note"><b>Note:</b> To retrieve the UUID of the Message Processor, run the following
+  command:</aside>
+  <pre class="prettyprint">
+&gt; curl http://&lt;mp-ip&gt;:8082/v1/servers/self
+</pre>
+
+  <p>Where "<span style="font-family:courier new,courier,monospace;">&lt;mp-ip&gt;</span>" is the
+  IP address of the Message Processor.</p>
+
+  <h3 id="deleteanenvironment-cleanupanalytics">Cleanup analytics</h3>
+
+  <p>Remove analytics information about the organization:</p>
+  <pre class="prettyprint">
+curl -u &lt;admin user&gt;:&lt;admin passwd&gt; -X DELETE \
+http://&lt;ms-IP&gt;:8080/v1/analytics/groups/ax/&lt;<em><strong>analytics_group</strong></em>&gt;/scopes?org=&lt;org-name&gt;&amp;env=&lt;env-name&gt;
+</pre>
+
+  <p>where <em><strong>analytics_group</strong></em> defaults to analytics-001. </p>
+
+  <p>If you are unsure of the name of the analytics group, use the following command to display
+  it:</p>
+  <pre class="prettyprint">
+&gt; apigee-adminapi.sh analytics groups list --admin <em><strong>adminEmail</strong></em> --pwd <em><strong>adminPword</strong></em> --host localhost
+</pre>
+
+  <p>This command returns the analytics group name in the <span style=
+  "font-family:courier new,courier,monospace;">name</span> field.</p>
+
+  <h3 id="deleteanenvironment-deletetheenvironment">Delete the environment</h3>
+
+  <p>Use the following API to delete an environment:</p>
+  <pre class="prettyprint">
+curl -u &lt;admin user&gt;:&lt;admin passwd&gt; \
+http://&lt;ms-ip&gt;:8080/v1/organizations/&lt;org-name&gt;/environments/&lt;env-name&gt; \
+-X DELETE
+</pre>
+
+  <h2 id="deleteanorganization">Delete an Organization</h2>
+
+  <p>You can only delete an organization after you have:</p>
+
+  <ol>
+    <li>Deleted all virtual hosts in all environments in the organization as described above.</li>
+
+    <li>Deleted all environments in the organization as described above.</li>
+
+    <li>Disassociated the organization from all pods.</li>
+  </ol>
+
+  <h3 id="deleteanorganization-disassociateanorganizationfrompod">Disassociate an Organization from
+  Pod</h3>
+
+  <p>Use the following API to delete disassociate an organization from a pod:</p>
+  <pre class="prettyprint">
+curl -H "Content-Type: application/x-www-form-urlencoded" \
+-u &lt;admin user&gt;:&lt;admin passwd&gt; -X POST \
+"http://&lt;ms-ip&gt;:8080/v1/organizations/&lt;org-name&gt;/pods" \
+-d "action=remove&amp;region=&lt;region-name&gt;&amp;pod=&lt;pod-name&gt;"
+</pre>
+
+  <aside class="note"><b>Note:</b> To find out what region and pods an organization is associated
+  with, run the following command:</aside>
+  <pre class="prettyprint">
+curl -u &lt;admin user&gt;:&lt;admin passwd&gt;  \
+"http://&lt;ms-ip&gt;:8080/v1/organizations/&lt;org-name&gt;/pods"
+</pre>
+
+  <h3 id="deleteanorganization-deletetheorganization">Delete the organization</h3>
+
+  <p>Use the following API to delete an organization:</p>
+  <pre class="prettyprint">
+curl -u &lt;admin user&gt;:&lt;admin passwd&gt; -X DELETE \
+"http://&lt;ms-ip&gt;:8080/v1/organizations/&lt;org-name&gt;" 
+</pre>{% endblock %}

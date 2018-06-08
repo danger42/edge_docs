@@ -1,0 +1,209 @@
+  {% extends "_base.html" %} {% block title %}Assigning roles{% endblock %} {% block body %}
+
+  <p>This topic discusses role-based access control for Apigee Edge organizations and explains how
+  to create roles and assign users to them. You must be an organization administrator to perform
+  the tasks described here. </p>
+
+  <div class="video">
+    <p><strong>Video:</strong> Watch a short video to learn about Apigee Edge built-in and custom
+    roles.</p>
+
+    <div style="text-align: left; margin:15px">
+      <iframe allowfullscreen="" frameborder="0" height="315" src=
+      "https://www.youtube.com/embed/2rW9f38T3_I" width="560"></iframe>
+    </div>
+  </div>
+
+  <h2 id="whatareroles">What are roles?</h2>
+
+  <p>Roles are essentially CRUD-based permission sets. CRUD means "create, read, update, delete".
+  For example, a user may be given a role that permits her to read or "get" details about a
+  protected entity, but not permission to update or delete it. The organization administrator is
+  the highest-level role, and has permissions to perform any operation on protected entities, which
+  include:</p>
+
+  <ul>
+    <li>API proxies</li>
+
+    <li>Trace sessions</li>
+
+    <li>API products</li>
+
+    <li>Developer apps</li>
+
+    <li>Developers</li>
+
+    <li>Environments (Trace tool sessions and deployments)</li>
+
+    <li>Custom reports (Analytics)</li>
+  </ul>
+
+  <h2 id="gettingstarted">Getting started</h2>
+
+  <p><strong>You must be an org administrator</strong></p>
+
+  <p>You must be an Apigee Edge organization administrator to create users and assign roles. Only
+  organization admins can see and use the Admin menu, which is for managing users and roles. See
+  also <a href="/api-platform/system-administration/managing-organization-users.html">Managing
+  organization users</a>.</p>
+
+  <p><img alt="" src="/api-platform/images/admin_menu.png"></p>
+
+  <h2 id="whatyouneedtoknowaboutuserroles"><a name="user%20roles"></a>What you need to know
+  about user roles</h2>
+
+  <p>In Apigee Edge, user roles form the basis of role-based access, meaning that you can control
+  what functions a person can access by assigning them a role (or roles). Here are a few things you
+  need to know about roles:</p>
+
+  <ul>
+    <li>When you create your own Apigee Edge account, your role is set automatically to
+    <strong>organization administrator</strong> in your organization. If you add users to your
+    organization, you set the user role (or roles) at the time that you add them.</li>
+
+    <li>When an org admin adds <strong>you</strong> to an org, your role (or roles) are determined
+    by the administrator. The organization administrator can later change your role(s) if
+    necessary. See <a href="#AddMultipleRoles">Assigning roles to a user</a> below. </li>
+
+    <li>Users can be assigned more than one role. If a user has multiple roles assigned, the
+    greater permission takes precedence. For example, if one role doesn't allow the user to create
+    API proxies, but another role does, then the user can create API proxies. In general, it is not
+    a common use case to assign users multiple roles. See <a href="#AddMultipleRoles">Assigning
+    roles to a user</a> below. </li>
+
+    <li>By default, all users associated with an organization can view details about other
+    organization users, such as email address, first name, and last name.</li>
+  </ul>
+
+  <p>It's important to understand that user roles are specific to the organization in which they
+  were assigned. An Apigee Edge user can belong to multiple organizations, but roles are
+  organization-specific. For example, a user can be have the organization administrator role in one
+  org and only the user role in another.</p>
+
+  <h2 id="assigningrolestoauser"><a id="AddMultipleRoles" name="AddMultipleRoles"></a>Assigning
+  roles to a user</h2>
+
+  <p>You can add one or more roles to a user when you create a new user or if you edit an existing
+  user. Details about each role are explained in <a href="#defaultroles">Default role
+  permissions</a>. </p>
+
+  <aside class="note"><b>Note:</b> If a user has multiple roles assigned, the greater permission
+  takes precedence. For example, if one role doesn't allow the user to create API proxies, but
+  another role does, then the user can create API proxies. In general, it is not a common use case
+  to assign users multiple roles.</aside>
+
+  <ol>
+    <li>Select <strong>Admin &gt; Organization Users</strong>.</li>
+
+    <li>Either click <strong>+ User</strong> or click an existing user.</li>
+
+    <li>Click in the <strong>Roles</strong> field, and a dropdown appears.</li>
+
+    <li>Select a role to add.</li>
+
+    <li>Repeat steps 3 and 4 to add additional roles to the user if you want.</li>
+  </ol>
+
+  <p><img alt="" src="/api-platform/images/add-multiple-roles.png"></p>
+
+  <h3 id="assigningrolestoauser-assigningrolestouserswiththeedgeapi">Assigning roles to users with
+  the Edge API</h3>
+
+  <p>You can use the Edge API to assign users to a role. The following example uses the <a href=
+  "/management/apis/post/organizations/{org_name}/userroles/{role_name}/users-0">Add a user to a
+  role</a> API to add the user to the Operations Administrator role:</p>
+  <pre class="prettyprint">
+curl -X POST -H "Content-Type:application/x-www-form-urlencoded" \
+  -u &lt;orgAdminEmail:pword&gt; \
+  https://api.enterprise.apigee.com/v1/o/{org_name}/userroles/opsadmin/users?id=jdoe@example.com
+</pre>
+
+  <p>Where <span style="font-family:courier new,courier,monospace;">{org_name}</span> is the name
+  of your organization. </p>
+
+  <h2 id="defaultrolepermissions"><a id="defaultroles" name="defaultroles"></a>Default role
+  permissions</h2>
+
+  <p>Apigee Edge provides a set of default roles, out-of-the-box. For more information, see
+  <a href="/api-platform/system-administration/edge-built-roles.html">Edge built-in roles</a>.</p>
+
+  <h3 id="defaultrolepermissions-ifyouareanorganizationadmin">If you are an organization admin</h3>
+
+  <p>Organization admins can see the entire list of permissions for each type of user. Just go to
+  <strong>Admin &gt; Organization Roles</strong>. When you click on a role, it takes you to a table
+  that looks like this:</p>
+
+  <p><img alt="" src="/api-platform/images/user-role-table.png"></p>
+
+  <p>The table shows you the levels of protection for <strong>resources</strong>. In this context,
+  resources refer to "entities" that users can interact with through the Edge management UI
+  <strong>and</strong> API.</p>
+
+  <ul>
+    <li>The first column lists the <strong>general names of resources</strong> that users interact
+    with. It also includes some other things like API Proxies, Products, Deployments, etc. This
+    column reflects the names of things as you see them in the management UI.</li>
+
+    <li>The second column lists the <strong>paths used to access resources</strong> through the
+    management API.</li>
+
+    <li>The third column lists the <strong>operations the role can perform</strong> on each
+    resource and path. The operations are GET, PUT, and DELETE. In the UI, these same operations
+    are referred to as View, Edit, and Delete. Just keep in mind that the UI and API uses different
+    terms for these operations.</li>
+  </ul>
+
+  <h3 id="defaultrolepermissions-ifyouarenotanorgadmin">If you are not an org admin</h3>
+
+  <p>You are not permitted to add or change a user's roles or view the role properties in the UI.
+  See {node:20021] for information about the permissions granted to each role.</p>
+
+  <h2 id="roleoperations">Role operations</h2>
+
+  <p>You can assign roles through management APIs or through the management UI. Either way, you're
+  working with CRUD permissions, although the API and UI use slightly different terminology.</p>
+
+  <p>The Edge <strong>management APIs</strong> allow these CRUD operations:</p>
+
+  <ul>
+    <li><strong>GET:</strong> Enables a user to view a list of protected resources or to view
+    a singleton RBAC resource</li>
+
+    <li><strong>PUT:</strong> Enables a user to create or update a protected resource
+    (encompassing both PUT and POST HTTP methods)</li>
+
+    <li><strong>DELETE:</strong> Enables a user to delete an instance of a protected
+    resource. <strong>Note:</strong> You can only delete a specific instance of a
+    resource. You cannot, for example, delete ALL API proxies, only a specific one. </li>
+  </ul>
+
+  <p>The Edge <strong>management UI</strong> refers to the same CRUD operations, but with
+  different wording:</p>
+
+  <ul>
+    <li><strong>View:</strong> Enables a user to view protected resources. Typically, you
+    can view resources one at a time, or view a list of resources.</li>
+
+    <li><strong>Edit:</strong> Enables a user to update a protected resource.</li>
+
+    <li><strong>Create:</strong> Enables a user to create a protected resource.</li>
+
+    <li><strong>Delete: </strong>Enables a user to delete an instance of a protected
+    resource. <strong>Note:</strong> You can only delete a specific instance of a
+    resource. You cannot, for example, delete ALL API proxies, only a specific one. </li>
+  </ul>
+
+  <p><!--changed heading level to remove this from the TOC link menu per BugHerd issue
+<h3>About roles with script automation</h3>
+<p>When you run scripts against APIs for automation, the resource endpoints being invoked require role-based access. So the scripts == acting as a client == require the same role-based permissions that human users need when performing similar tasks, either in the UI or with an API. The access difference between automation clients and human users is that automation clients don't have access to the user interface; that is, if you create an automation client, a human user can't log into Apigee Enterprise with automation client credentials. For information on how to create clients for automation, see <a href="/node/9906.html">9906</a>.</p>
+--></p>
+
+  <h2 id="creatingcustomroles">Creating custom roles</h2>
+
+  <p>Custom roles let you apply fine-grained permissions to these Apigee Edge entities such as API
+  proxies, products, developer apps, developers, and custom reports.</p>
+
+  <p>You can create and configure custom roles either through the UI or using APIs. See <a href=
+  "/api-platform/system-administration/creating-custom-roles.html">Creating custom roles in the
+  UI</a> and <a href="/api-platform/system-administration/managing-roles-api.html">Creating roles
+  with the API</a>.</p>{% endblock %}

@@ -1,0 +1,1201 @@
+  {% extends "_base.html" %} {% block title %}Analytics metrics, dimensions, and filters
+  reference{% endblock %} {% block body %}
+
+  <p>This topic is a reference for analytics metrics, dimensions, and filters. For more context on
+  using these, see <a href="/api-platform/analytics/analytics-services-overview.html">Analytics
+  Services overview</a>.</p>
+
+  <p>This topic shows the names for metrics and dimensions as they appear in the UI and as you need
+  to use them in API calls.</p>
+
+  <ul>
+    <li>You'll see the UI names when you create <a href=
+    "/api-platform/analytics/create-custom-reports.html" target="_blank">Custom Reports</a>.</li>
+
+    <li>Use the API-specific names when <a href=
+    "/management/apis/get/organizations/%7Borg_name%7D/environments/%7Benv_name%7D/stats/%7Bdimension_name%7D-0"
+    target="_blank">getting metrics</a>, <a href=
+    "/management/apis/post/organizations/%7Borg_name%7D/reports" target="_blank">creating a
+    report</a> definition, or <a href=
+    "/management/apis/get/organizations/%7Borg_name%7D/environments/%7Benv_name%7D/stats/%7Bdimension_name%7D"
+    target="_blank">updating a report</a> definition.</li>
+  </ul>
+
+  <h2 id="metrics">Metrics</h2>
+
+  <p>Following are the API metrics you can retrieve in custom reports and management API calls.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th width="10%">Custom reports name</th>
+
+        <th width="10%">Name to use in the management API</th>
+
+        <th width="10%">Functions</th>
+
+        <th>Description</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td>Average Transactions per Second</td>
+
+        <td>tps</td>
+
+        <td>None</td>
+
+        <td>
+          <p>The average number of transactions per second. Note that if you have a relatively low
+          number of transactions over the time period, the average number of transactions per
+          second could appear to be zero in UI custom reports if the number is smaller than two
+          decimal places.</p>
+
+          <p>API syntax: <code>tps</code></p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Cache Hit</td>
+
+        <td>cache_hit</td>
+
+        <td>sum</td>
+
+        <td>
+          <p>The number of successful API requests that use the Response Cache instead of the
+          response from the target service.</p>
+
+          <p>API syntax: <code>sum(cache_hit)</code></p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>L1 Cache Elements Count</td>
+
+        <td>ax_cache_l1_count</td>
+
+        <td>avg, min, max</td>
+
+        <td>
+          <p>Returns the number of elements in L1 (in-memory) cache per transaction over a given
+          time period. For example, if you choose <code>max</code> for the period of a day, and
+          within that day the highest number of elements in cache is 12 for a specific transaction,
+          then the count will be 12. For <code>avg</code>, if there are three transactions in the
+          time period you're querying, and their cache counts are 5, 6, and 7, the average is 6. L1
+          cache is in-memory cache as opposed to L2 database cache, as described in <a href=
+          "/api-platform/cache/cache-internals.html">Cache internals</a>.</p>
+
+          <p>API syntax: <code>avg(ax_cache_l1_count)</code></p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Policy Errors</td>
+
+        <td>policy_error</td>
+
+        <td>sum</td>
+
+        <td>
+          <p>The total number of policy errors over the specified time period.</p>
+
+          <p>Policy errors usually occur by design. For example, the Verify API Key policy throws
+          an error when an invalid API key is passed in the request, and a Spike Arrest policy
+          throws an error if the number of API calls exceeds the limit defined in the policy. So
+          this metric is useful for finding potential trouble spots in your APIs. For example,
+          policy_error metrics, grouped by the developer_app dimension, might help you discover
+          that an API key or OAuth token has expired for a given app; or you might find that a
+          specific API proxy is throwing a lot of Spike Arrest errors, leading you to discover that
+          the proxy's spike arrest limit doesn't account for an increase in holiday traffic.</p>
+
+          <p>A policy error is logged in analytics only if the error results in API proxy failure.
+          For example, if a policy's <code>continueOnError</code> attribute is set to
+          <code>true</code>, the API proxy continues processing a request even if the policy fails.
+          In that case, a policy error is not logged in analytics.</p>
+
+          <p>The Policy Name on Error (ax_execution_fault_policy_name) dimension is useful for
+          grouping policy errors by policy name.</p>
+
+          <p>A target failure (such as a 404 or 503) does not count as a policy failure. Those
+          count as API proxy failures (is_error).</p>
+
+          <p>API syntax: <code>sum(policy_error)</code></p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Proxy Errors</td>
+
+        <td>is_error</td>
+
+        <td>sum</td>
+
+        <td>
+          <p>The total number of times API proxies failed over the specified time period. Proxy
+          failure can occur when a policy fails or when there's a runtime failure, such as a 404 or
+          503 from the target service.</p>
+
+          <p>The Proxy (apiproxy) dimension is useful for grouping API proxy failures by proxy.</p>
+
+          <p>API syntax: <code>sum(is_error)</code></p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Request Processing Latency</td>
+
+        <td>request_processing_latency</td>
+
+        <td>avg, min, max</td>
+
+        <td>
+          <p>The amount of time (average, minimum, or maximum), in <strong>milliseconds</strong>,
+          that it takes Edge to process incoming requests. The time starts when the request reaches
+          Edge and ends when Edge forwards the request to the target service.</p>
+
+          <p>Using different dimensions, you can examine request processing latencies by API proxy,
+          developer app, region, and so on.</p>
+
+          <p>API syntax: <code>max(request_processing_latency)</code></p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Request Size</td>
+
+        <td>request_size</td>
+
+        <td>sum, avg, min, max</td>
+
+        <td>
+          <p>The size of the request payload received by Edge, in <strong>bytes</strong>.</p>
+
+          <p>API syntax: <code>avg(request_size)</code></p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Response Cache Executed</td>
+
+        <td>ax_cache_executed</td>
+
+        <td>sum</td>
+
+        <td>
+          <p>The total number of times a Response Cache policy was executed over the given time
+          period.</p>
+
+          <p>Since the Response Cache policy is attached in two places in an API proxy (once in the
+          request and once in the response), it usually executes twice in an API call. A cache
+          'get' and a cache 'put' each count as one execution.</p>
+
+          <p>However, response cache execution is 0 if the <code><a href=
+          "/api-platform/reference/policies/response-cache-policy.html#SkipCacheLookupElement"
+          target="_blank">&lt;SkipCacheLookup&gt;</a></code> element in the policy evaluates to
+          true (in the request), and 0 if the <code><a href=
+          "/api-platform/reference/policies/response-cache-policy.html#SkipCachePopulationElement"
+          target="_blank">&lt;SkipCachePopulation&gt;</a></code> element in the policy evaluates to
+          true (in the response).</p>
+
+          <p>In the <a href="/api-platform/debug/using-trace-tool-0.html" target="_blank">Trace
+          tool</a>, you can click the Response Cache icon in an executed API call and view the
+          <code>responsecache.executed</code> <a href=
+          "/api-platform/reference/variables-reference.html" target="_blank">flow variable</a> to
+          see whether or not there was a cache execution (a value of 1).</p>
+
+          <p>API syntax: <code>sum(ax_cache_executed)</code></p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Response Processing Latency</td>
+
+        <td>response_processing_latency</td>
+
+        <td>avg, min, max</td>
+
+        <td>
+          <p>The amount of time (average, minimum, or maximum), in <strong>milliseconds</strong>,
+          that it takes Edge to process API responses. The time starts when the API proxy receives
+          the target service response and ends when Apigee forwards the response to the original
+          caller.</p>
+
+          <p>Using different dimensions, you can examine response processing latencies by API
+          proxy, region, and so on.</p>
+
+          <p>API syntax: <code>min(response_processing_latency)</code></p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Response Size</td>
+
+        <td>response_size</td>
+
+        <td>sum, avg, min, max</td>
+
+        <td>
+          <p>The size of the response payload returned to the client, in
+          <strong>bytes</strong>.</p>
+
+          <p>API syntax: <code>max(response_size)</code></p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Target Errors</td>
+
+        <td>target_error</td>
+
+        <td>sum</td>
+
+        <td>
+          <p>The total number of 5xx responses from the target service. These are target service
+          errors not caused by Apigee.</p>
+
+          <p>API syntax: <code>sum(target_error)</code></p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Target Response Time</td>
+
+        <td>target_response_time</td>
+
+        <td>sum, avg, min, max</td>
+
+        <td>
+          <p>The amount of time (sum, average, minimum, or maximum), in
+          <strong>milliseconds</strong>, for the target server to respond to a call. This metric
+          tells you how target servers are performing. The time starts when Edge forwards a request
+          to the target service and ends when Edge receives the response.</p>
+
+          <p>Note that if an API call returns a response from cache (using the Response Cache
+          policy, for example), the call will never reach the target service, and no target
+          response time metrics are logged.</p>
+
+          <p>API syntax: <code>avg(target_response_time)</code></p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Total Response Time</td>
+
+        <td>total_response_time</td>
+
+        <td>sum, avg, min, max</td>
+
+        <td>
+          <p>The amount of time (sum, average, minimum, or maximum), in
+          <strong>milliseconds</strong>, from when Edge receives a request from a client to when
+          Edge sends the response back to the client. The time includes network overhead (such as
+          the time it takes load balancers and routers to do their work), request processing
+          latency, response processing latency, and target response time (if the response is served
+          from the target service instead of cache).</p>
+
+          <p>Using different dimensions, you can examine processing latencies by API proxy,
+          developer app, region, and so on.</p>
+
+          <p>API syntax: <code>avg(total_response_time)</code></p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Traffic</td>
+
+        <td>message_count</td>
+
+        <td>sum</td>
+
+        <td>
+          <p>The total number of API calls processed by Edge in the specified time period.</p>
+
+          <p>Use dimensions to group traffic counts in ways that are most meaningful to you.</p>
+
+          <p>API syntax: <code>sum(message_count)</code></p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="dimensions">Dimensions</h2>
+
+  <p>Dimensions let you view metrics in meaningful groupings. For example, seeing total traffic
+  counts becomes much more powerful when you view them for each developer app or API proxy.</p>
+
+  <p>Following are the dimensions Apigee provides out of the box. In addition, you can create your
+  own dimensions, as described in <a href=
+  "/api-platform/analytics/analyze-api-message-content-using-custom-analytics.html">Analyze API
+  message content using custom analytics</a>.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th width="10%">Custom Reports name</th>
+
+        <th width="10%">Name to use in the management API</th>
+
+        <th>Description</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td colspan="3"><strong>Apigee entities</strong></td>
+      </tr>
+
+      <tr>
+        <td>Access Token</td>
+
+        <td>access_token</td>
+
+        <td>The app end user's OAuth access token.</td>
+      </tr>
+
+      <tr>
+        <td>API Product</td>
+
+        <td>api_product</td>
+
+        <td>
+          <p>The name of the API product containing the API proxies being called. In order to get
+          this dimension, developer apps making the calls must be associated with one or more API
+          products that contain the API proxies, and the proxies being called must check for an API
+          key or OAuth token sent with the API call. The key or token is associated with an API
+          product. For more information, see <a href=
+          "/api-platform/analytics/analytics-services-overview.html#ax_firstthingsfirst">First
+          things first: How to generate complete analytics data</a>.</p>
+
+          <p>If the above criteria aren't met, you'll see the value "(not set)". See also <a href=
+          "/api-platform/analytics/why-am-i-seeing-analytics-entity-named-not-set.html">mean?</a>.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Cache Key</td>
+
+        <td>ax_cache_key</td>
+
+        <td>
+          <p>The key containing the Response Cache value that was accessed. For more information on
+          how the key is constructed for response cache, see <a href=
+          "/api-platform/reference/policies/response-cache-policy.html">Response Cache
+          policy</a>.</p>
+
+          <p>In the <a href="/api-platform/debug/using-trace-tool-0.html" target="_blank">Trace
+          tool</a>, when you select a Response Cache policy that read from or wrote to cache, you
+          can see this value in the <code>responsecache.cachekey</code> <a href=
+          "/api-platform/reference/variables-reference.html" target="_blank">flow variable</a>.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Cache Name</td>
+
+        <td>ax_cache_name</td>
+
+        <td>
+          <p>The name of the cache containing the keys/values used by the Response Cache policy,
+          prefixed with <em>orgName__envName__</em>. For example, if the org is "foo," the
+          environment is "test," and the cache name is "myCache," the ax_cache_name is
+          foo__test__myCache.</p>
+
+          <p>In the <a href="/api-platform/debug/using-trace-tool-0.html" target="_blank">Trace
+          tool</a>, when you select a Response Cache policy, you can see this value in the
+          <code>responsecache.cachename</code> <a href=
+          "/api-platform/reference/variables-reference.html" target="_blank">flow variable</a>.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Cache Source</td>
+
+        <td>ax_cache_source</td>
+
+        <td>
+          <p>The cache level ("L1" in-memory or "L2" database) from which the Response Cache was
+          retrieved. This dimension also shows "CACHE_MISS" when the response was delivered from
+          the target instead of cache (and response cache was refreshed with the target response);
+          or when a cache key in the request is invalid. Cache keys are limited to 2 KB in
+          size.</p>
+
+          <p>In the <a href="/api-platform/debug/using-trace-tool-0.html" target="_blank">Trace
+          tool</a>, when you select the Response Cache policy, you can see this value in the
+          <code>responsecache.cachesource</code> <a href=
+          "/api-platform/reference/variables-reference.html" target="_blank">flow variable</a>.</p>
+
+          <p>For more information on cache levels, see <a href=
+          "/api-platform/cache/cache-internals.html">Cache internals</a>.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Client ID</td>
+
+        <td>client_id</td>
+
+        <td>
+          <p>The consumer key (API key) of the developer app making the API calls, whether passed
+          in the request as API keys or included in OAuth tokens.</p>
+
+          <p>In order to get this dimension, proxies receiving calls must be configured to check
+          for a valid API key or OAuth token. Developer apps get API keys, which can be used to
+          generate OAuth tokens, when the apps are registered in Edge. For more information, see
+          <a href=
+          "/api-platform/analytics/analytics-services-overview.html#ax_firstthingsfirst">First
+          things first: How to generate complete analytics data</a>.</p>
+
+          <p>If the above criteria aren't met, you'll see the value "(not set)". See also <a href=
+          "/api-platform/analytics/why-am-i-seeing-analytics-entity-named-not-set.html">mean?</a>.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Developer App</td>
+
+        <td>developer_app</td>
+
+        <td>
+          <p>The Edge-registered developer app making API calls.</p>
+
+          <p>In order to get this dimension, apps must be associated with one or more API products
+          that contain the API proxies being called, and the proxies must check for an API key or
+          OAuth token sent with the API call. The key or token identifies the developer app. For
+          more information, see <a href=
+          "/api-platform/analytics/analytics-services-overview.html#ax_firstthingsfirst">First
+          things first: How to generate complete analytics data</a>.</p>
+
+          <p>If the above criteria aren't met, you'll see the value "(not set)". See also <a href=
+          "/api-platform/analytics/why-am-i-seeing-analytics-entity-named-not-set.html">mean?</a>.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Developer Email</td>
+
+        <td>developer_email</td>
+
+        <td>
+          <p>The email of the Edge-registered developers whose app made the API calls.</p>
+
+          <p>In order to get this dimension, developers must have apps associated with one or more
+          API products that contain the API proxies being called, and the proxies must check for an
+          API key or OAuth token sent with the API call. The key or token identifies the developer
+          app. For more information, see <a href=
+          "/api-platform/analytics/analytics-services-overview.html#ax_firstthingsfirst">First
+          things first: How to generate complete analytics data</a>.</p>
+
+          <p>If the above criteria aren't met, you'll see the value "(not set)". See also <a href=
+          "/api-platform/analytics/why-am-i-seeing-analytics-entity-named-not-set.html">mean?</a>.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Developer ID</td>
+
+        <td>developer</td>
+
+        <td>
+          <p>The unique Edge-generated developer ID in the form of
+          <em>org_name</em>@@@<em>unique_id</em>.</p>
+
+          <p>In order to get this dimension, developers must have apps associated with one or more
+          API products containing the API proxies being called, and the proxies must check for an
+          API key or OAuth token sent with the API calls. The key or token identifies the
+          developer. For more information, see <a href=
+          "/api-platform/analytics/analytics-services-overview.html#ax_firstthingsfirst">First
+          things first: How to generate complete analytics data</a>.</p>
+
+          <p>If the above criteria aren't met, you'll see the value "(not set)". See also <a href=
+          "/api-platform/analytics/why-am-i-seeing-analytics-entity-named-not-set.html">mean?</a>.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Environment</td>
+
+        <td>environment</td>
+
+        <td>The Edge environment in which the API proxies are deployed. For example, "test" or
+        "prod".</td>
+      </tr>
+
+      <tr>
+        <td>Flow Name on Error</td>
+
+        <td>ax_execution_fault_flow_name</td>
+
+        <td>
+          <p>The named <a href="/api-platform/fundamentals/what-are-flows.html" target=
+          "_blank">flow</a> in an API proxy that raised an error. For example, "PreFlow,"
+          "PostFlow," or the name of a conditional flow you created.</p>
+
+          <p>Where no errors occurred, you'll see the value "(not set)".</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Flow Resource</td>
+
+        <td>flow_resource</td>
+
+        <td>Apigee use only. See <a href=
+        "https://community.apigee.com/questions/24769/how-to-use-resource-flow-dimension-in-analytics.html#answer-24835"
+        target="_blank">this Community post</a> if you're curious.</td>
+      </tr>
+
+      <tr>
+        <td>Flow State on Error</td>
+
+        <td>ax_execution_fault_flow_state</td>
+
+        <td>The name of the API proxy flow states that raised errors, such as "PROXY_REQ_FLOW" or
+        "TARGET_RESP_FLOW."</td>
+      </tr>
+
+      <tr>
+        <td>Gateway Flow ID</td>
+
+        <td>gateway_flow_id</td>
+
+        <td>As API calls move through Edge, each call gets its own gateway flow ID. Example:
+        rrt329ea-12575-114653952-1. Gateway Flow ID is useful for distinguishing metrics in
+        high-TPS situations where other dimensions such as organization, environment, and timestamp
+        are identical across calls.</td>
+      </tr>
+
+      <tr>
+        <td>Organization</td>
+
+        <td>organization</td>
+
+        <td>The Edge organization in which the API proxies are deployed.</td>
+      </tr>
+
+      <tr>
+        <td>Policy Name on Error</td>
+
+        <td>ax_execution_fault_policy_name</td>
+
+        <td>
+          <p>The name of the policy that threw an error and caused the API call to fail.</p>
+
+          <p>If a policy throws an error but the policy root attribute <code>continueOnError</code>
+          is set to <code>true</code>, the API proxy flow continues without failure, and the policy
+          failure isn't counted in this dimension.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Proxy</td>
+
+        <td>apiproxy</td>
+
+        <td>The machine name (not the Display Name) of an API proxy.</td>
+      </tr>
+
+      <tr>
+        <td>Proxy Base Path</td>
+
+        <td>proxy_basepath</td>
+
+        <td>
+          <p>The BasePath configured on the API proxy ProxyEndpoint. Base path does not include the
+          domain and port portion of the API proxy URL. For example, if an API proxy's base URL is
+          https://apigeedocs-test.apigee.net/releasenotes/, the base path is /releasenotes.</p>
+
+          <p>The value is also stored in the <code>proxy.basepath</code> <a href=
+          "/api-platform/reference/variables-reference.html" target="_blank">flow variable</a>.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Proxy Path Suffix</td>
+
+        <td>proxy_pathsuffix</td>
+
+        <td>
+          <p>The resource path added to the API proxy base path. For example, if an API proxy's
+          base URL is <code>https://apigeedocs-test.apigee.net/hello/</code>, and a call is made to
+          <code>https://apigeedocs-test.apigee.net/hello/json</code>, the pathsuffix is
+          <code><strong>/json</strong></code>.</p>
+
+          <p>If no pathsuffix is used, the value is empty.</p>
+
+          <p>The value is also stored in the <code>proxy.pathsuffix</code> <a href=
+          "/api-platform/reference/variables-reference.html" target="_blank">flow variable</a>.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Proxy Revision</td>
+
+        <td>apiproxy_revision</td>
+
+        <td>The revision number of the API proxy that handled API calls. This doesn't necessarily
+        mean the latest revision of an API proxy. If an API proxy has 10 revisions, the 8th
+        revision may currently be deployed. Also, an API may have multiple revisions deployed as
+        long as the revisions have different Base Paths, as described in <a href=
+        "/api-platform/deploy/deploying-proxies-ui.html">Deploying proxies in the UI</a>.</td>
+      </tr>
+
+      <tr>
+        <td id="response_status_code">Response Status Code</td>
+
+        <td>response_status_code</td>
+
+        <td>The HTTP response status code forwarded from Apigee to the client, such as 200, 404,
+        503, and so on. In Edge, the response status code from the target can be overwritten with
+        policies such as <a href="/api-platform/reference/policies/assign-message-policy.html"
+        target="_blank">Assign Message</a> and <a href=
+        "/api-platform/reference/policies/raise-fault-policy.html" target="_blank">Raise Fault</a>,
+        which is why this dimension can differ from <a href="#target_response_code">Target Response
+        Code (target_response_code)</a>.</td>
+      </tr>
+
+      <tr>
+        <td>Virtual Host</td>
+
+        <td>virtual_host</td>
+
+        <td>The name of the <a href="/api-platform/fundamentals/virtual-hosts.html" target=
+        "_blank">virtual host</a> the API call was made to. For example, organizations have two
+        virtual hosts by default: <code>default</code> (http) and <code>secure</code> (https).</td>
+      </tr>
+
+      <tr>
+        <td colspan="3"><strong>Inbound/Client</strong></td>
+      </tr>
+
+      <tr>
+        <td>Client IP Address</td>
+
+        <td>client_ip</td>
+
+        <td>IP address of the system that hits the router, such as the original client
+        (proxy_client_ip) or a load balancer. When there are multiple IPs in the
+        <code>X-Forwarded-For</code> header, this is the last IP listed.</td>
+      </tr>
+
+      <tr>
+        <td>Device Category</td>
+
+        <td>ax_ua_device_category</td>
+
+        <td>The type of device from which the API call was made, such as "Tablet" or
+        "Smartphone".</td>
+      </tr>
+
+      <tr>
+        <td>OS Family</td>
+
+        <td>ax_ua_os_family</td>
+
+        <td>The operating system family of the device making the call, such as "Android" or
+        "iOS".</td>
+      </tr>
+
+      <tr>
+        <td>OS Version</td>
+
+        <td>ax_ua_os_version</td>
+
+        <td>
+          <p>The operating system version of the device making the call.</p>
+
+          <p>It's useful to use this as a second "drill-down" dimension with OS Family
+          (ax_ua_os_family) to see the versions of the operating systems.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Proxy Client IP</td>
+
+        <td>proxy_client_ip</td>
+
+        <td>
+          <p>The IP address of the calling client, stored in the <code>proxy.client.ip</code>
+          <a href="/api-platform/reference/variables-reference.html" target="_blank">flow
+          variable</a>. This is often the <code>X-Forwarded-For</code> address of the inbound call,
+          which is the IP address Edge received from the last external TCP handshake. This could
+          be the calling client or a load balancer. When there are multiple IPs in the
+          <code>X-Forwarded-For</code> header, this is the last IP listed. </p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Referred Client IP</td>
+
+        <td>ax_true_client_ip</td>
+
+        <td>When using routing products such as Akamai to capture the true IP addresses of clients,
+        the client IPs are passed to Edge in the HTTP header <code>True-Client-IP</code>. This
+        dimension captures those true client IPs from that header.</td>
+      </tr>
+
+      <tr>
+        <td>Request Path</td>
+
+        <td>request_path</td>
+
+        <td>
+          <p>The resource path (not including the domain) to the target service, excluding query
+          parameters.</p>
+
+          <p>For example, the Apigee sample target <code>http://mocktarget.apigee.net</code>
+          includes several resources, including <code>/user</code>, which returns a greeting.
+          Regardless of how your API proxy calls <code>http://mocktarget.apigee.net/user</code>,
+          the request_path is <code><strong>/user</strong></code>.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Request URI</td>
+
+        <td>request_uri</td>
+
+        <td>
+          <p>The resource path (not including the domain) to the target service, including query
+          parameters.</p>
+
+          <p>For example, the Apigee sample target <code>http://mocktarget.apigee.net</code>
+          includes several resources, including <code>/user?user={name}</code> resource and query
+          parameter to return a custom greeting to the name provided. Regardless of how your API
+          proxy calls <code>http://mocktarget.apigee.net/user?user=Dude</code>, the request_uri is
+          <code><strong>/user?user=Dude</strong></code>.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Request Verb</td>
+
+        <td>request_verb</td>
+
+        <td>The HTTP request verb in the API requests, such as GET, POST, PUT, DELETE.</td>
+      </tr>
+
+      <tr>
+        <td>User Agent</td>
+
+        <td>useragent</td>
+
+        <td>
+          <p>The name of the user agent, or software agent, used to make the API call.
+          Examples:</p>
+
+          <ul>
+            <li>A Pixel XL making a call through Chrome: <code>Mozilla/5.0 (Linux; Android 7.1.2;
+            Pixel XL Build/NHG47N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.92
+            Mobile Safari/537.36</code></li>
+
+            <li>An iPad making a call through Chrome: <code>Mozilla/5.0 (iPad; CPU OS 10_2 like Mac
+            OS X) AppleWebKit/602.1.50 (KHTML, like Gecko) CriOS/54.0.2840.91 Mobile/14C92
+            Safari/602.1</code></li>
+
+            <li>cURL from a terminal: <code>curl/7.51.0</code></li>
+          </ul>
+        </td>
+      </tr>
+
+      <tr>
+        <td>User Agent Family</td>
+
+        <td>ax_ua_agent_family</td>
+
+        <td>The family of the useragent, such as "Chrome Mobile" or "cURL".</td>
+      </tr>
+
+      <tr>
+        <td>User Agent Type</td>
+
+        <td>ax_ua_agent_type</td>
+
+        <td>The useragent type, such as "Browser," "Mobile Browser," "Library," and so on.</td>
+      </tr>
+
+      <tr>
+        <td>User Agent Version</td>
+
+        <td>ax_ua_agent_version</td>
+
+        <td>
+          <p>The version of the useragent.</p>
+
+          <p>It's useful to use this as a second "drill-down" dimension with User Agent Family
+          (ax_ua_agent_family) to get the version of the agent family.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td colspan="3"><strong>Outbound/Target</strong></td>
+      </tr>
+
+      <tr>
+        <td>Target Base Path</td>
+
+        <td>target_basepath</td>
+
+        <td>
+          <p>The resource path (not including the domain) to the target service, excluding query
+          parameters, that is defined in the proxy's <a href=
+          "/api-platform/reference/policies/api-proxy-configuration-reference.html#targetendpoint"
+          target="_blank">TargetEndpoint</a>.</p>
+
+          <p>For example, say an API proxy calls the following target:</p>
+          <pre class="prettyprint">
+&lt;TargetEndpoint name="default"&gt;
+...
+    &lt;HTTPTargetConnection&gt;
+        &lt;URL&gt;http://mocktarget.apigee.net/user?user=Dude&lt;/URL&gt;
+    &lt;/HTTPTargetConnection&gt;
+  
+</pre>
+
+          <p>In this example, the target_basepath is <strong><code>/user</code></strong>.</p>
+
+          <p>If the target were this:</p>
+          <pre class="prettyprint">
+&lt;TargetEndpoint name="default"&gt;
+...
+    &lt;HTTPTargetConnection&gt;
+        &lt;URL&gt;http://mocktarget.apigee.net&lt;/URL&gt;
+    &lt;/HTTPTargetConnection&gt;
+  
+</pre>
+
+          <p>the target_basepath would be null.</p>
+
+          <p>In the <a href="/api-platform/debug/using-trace-tool-0.html" target="_blank">Trace
+          tool</a>, when you select the AX icon at the end of the flow diagram, the
+          <code>target.basepath</code> <a href="/api-platform/reference/variables-reference.html"
+          target="_blank">flow variable</a> maps to the target_basepath dimension.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Target Host</td>
+
+        <td>target_host</td>
+
+        <td>The host of the target service. For example, if an API proxy calls
+        <code>http://mocktarget.apigee.net/help</code>, the target_host is
+        <code><strong>mocktarget.apigee.net</strong></code>.</td>
+      </tr>
+
+      <tr>
+        <td>Target IP Address</td>
+
+        <td>target_ip</td>
+
+        <td>The IP address of the target service returning the response to the API proxy.</td>
+      </tr>
+
+      <tr>
+        <td id="target_response_code">Target Response Code</td>
+
+        <td>target_response_code</td>
+
+        <td>
+          <p>The HTTP response status code returned by the target service to the API proxy, such as
+          200, 404, 503, and so on.</p>
+
+          <p>A value of "null" means the request never reached the target service. This occurs when
+          the response is served by the Response Cache policy or when there's a failure in request
+          processing.</p>
+
+          <p>This is different than the <a href="#response_status_code">Response Status Code
+          (response_status_code)</a> dimension.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Target URL</td>
+
+        <td>target_url</td>
+
+        <td>
+          <p>The full URL of the target service defined in an API proxy's TargetEndpoint.</p>
+          <pre class="prettyprint">
+&lt;TargetEndpoint name="default"&gt;
+...
+    &lt;HTTPTargetConnection&gt;
+        &lt;URL&gt;http://mocktarget.apigee.net/user?user=Dude&lt;/URL&gt;
+    &lt;/HTTPTargetConnection&gt;
+  
+</pre>
+
+          <p>In this example, the target_url is
+          <code><strong>http://mocktarget.apigee.net/user?user=Dude</strong></code>.</p>
+
+          <p>Note that the URL can also be overridden during API proxy processing with the
+          <code>target.url</code> <a href="/api-platform/reference/variables-reference.html"
+          target="_blank">flow variable</a>.</p>
+
+          <p>In <a href="/api-platform/fundamentals/connecting-proxies-other-proxies.html" target=
+          "_blank">proxy chaining</a> and when using <a href=
+          "/api-platform/nodejs/getting-started-nodejs-apigee-edge.html" target="_blank">script
+          targets (Node.js)</a>, the target_url in the calling proxy is null.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>X Forwarded For</td>
+
+        <td>x_forwarded_for_ip</td>
+
+        <td>The first IP address in the <code>X-Forwarded-For</code> header. Note that this IP
+        can be spoofed with a fake IP address sent in the header. To get a valid client IP
+        (or the load balancer IP when using a load balancer), use <code>client_ip</code>
+        or <code>proxy_client_ip</code>.</td>
+      </tr>
+
+      <tr>
+        <td colspan="3"><strong>Time</strong></td>
+      </tr>
+
+      <tr>
+        <td>Day of week</td>
+
+        <td>ax_day_of_week</td>
+
+        <td>The three-letter day of the week abbreviation on which the API calls were made. For
+        example, Mon, Tue, Wed.</td>
+      </tr>
+
+      <tr>
+        <td>Month</td>
+
+        <td>ax_month_of_year</td>
+
+        <td>The numeric month in which the API calls were made. For example, "03" for March.</td>
+      </tr>
+
+      <tr>
+        <td>Time of Day</td>
+
+        <td>ax_hour_of_day</td>
+
+        <td>
+          <p>Based on a 24-hour clock, the 2-digit hour in which API calls were made. For example,
+          API calls made in the hour between 10pm and 11pm, the ax_hour_of_day would be 22.</p>
+
+          <p>The time value is in UTC.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Time Zone</td>
+
+        <td>ax_geo_timezone</td>
+
+        <td>The common names of the time zones the API calls were made from, such as
+        America/New_York and Europe/Dublin.</td>
+      </tr>
+
+      <tr>
+        <td>Week of Month</td>
+
+        <td>ax_week_of_month</td>
+
+        <td>The numeric week of the month. For example, for API calls made in the 3rd week of a
+        month, the ax_week_of_month is 3.</td>
+      </tr>
+
+      <tr>
+        <td colspan="3"><strong>Location</strong></td>
+      </tr>
+
+      <tr>
+        <td>City</td>
+
+        <td>ax_geo_city</td>
+
+        <td>The city from which the API calls were made.</td>
+      </tr>
+
+      <tr>
+        <td>Continent</td>
+
+        <td>ax_geo_continent</td>
+
+        <td>The two-letter code of the continent from which the API calls were made. For example,
+        NA for North America.</td>
+      </tr>
+
+      <tr>
+        <td>Country</td>
+
+        <td>ax_geo_country</td>
+
+        <td>The two-letter code of the country from which the API calls were made. For example, US
+        for United States.</td>
+      </tr>
+
+      <tr>
+        <td>Geographical Region</td>
+
+        <td>ax_geo_region</td>
+
+        <td>The hyphenated code for the geographic region, such as STATE-COUNTRY. For example,
+        WA-US for Washington-United States.</td>
+      </tr>
+
+      <tr>
+        <td>Region</td>
+
+        <td>ax_dn_region</td>
+
+        <td>The name of the Apigee data center where API proxies are deployed, such as
+        us-east-1.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="filters">Filters</h2>
+
+  <p>Filters let you limit results to metrics with specific characteristics. Following are some
+  sample filters. Use metric and dimension API-style names when defining filters.</p>
+
+  <p>Returns metrics for API proxies with the name books or music:</p>
+  <pre class="prettyprint">
+filter=(apiproxy in 'books','music')
+</pre>
+
+  <p>Returns metrics for API proxies with names that start with "m":</p>
+  <pre class="prettyprint">
+filter=(apiproxy like 'm%')
+</pre>
+
+  <p>Returns metrics for API proxies with names that do not start with "m":</p>
+  <pre class="prettyprint">
+filter=(apiproxy not like 'm%')
+</pre>
+
+  <p>Returns metrics for API calls with response status codes between 400 and 599:</p>
+  <pre class="prettyprint">
+filter=(response_status_code ge 400 and response_status_code le 599)
+</pre>
+
+  <p>Returns metrics for API calls with response status code of 200 and a target response code of
+  404:</p>
+  <pre class="prettyprint">
+filter=(response_status_code eq 200 and target_response_code eq 404)
+</pre>
+
+  <p>Returns metrics for API calls with a response status code of 500:</p>
+  <pre class="prettyprint">
+filter=(response_status_code eq 500)
+</pre>
+
+  <p>Returns metrics for API calls that didn't result in errors:</p>
+  <pre class="prettyprint">
+filter=(is_error eq 0)
+</pre>
+
+  <p>Following are operators you can use to build report filters.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Operator</th>
+
+        <th>Description</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td><code>in</code></td>
+
+        <td>Include in list</td>
+      </tr>
+
+      <tr>
+        <td><code>notin</code></td>
+
+        <td>Exclude from list</td>
+      </tr>
+
+      <tr>
+        <td><code>eq</code></td>
+
+        <td>Equals, <code>==</code></td>
+      </tr>
+
+      <tr>
+        <td><code>ne</code></td>
+
+        <td>Not equal to, <code>!=</code></td>
+      </tr>
+
+      <tr>
+        <td><code>gt</code></td>
+
+        <td>Greater than, <code>&gt;</code></td>
+      </tr>
+
+      <tr>
+        <td><code>lt</code></td>
+
+        <td>Less than, <code>&lt;</code></td>
+      </tr>
+
+      <tr>
+        <td><code>ge</code></td>
+
+        <td>Greater than or equal to, <code>&gt;=</code></td>
+      </tr>
+
+      <tr>
+        <td><code>le</code></td>
+
+        <td>Less than or equal to, <code>&lt;=</code></td>
+      </tr>
+
+      <tr>
+        <td><code>like</code></td>
+
+        <td>Returns true if the string pattern matches the supplied pattern.</td>
+      </tr>
+
+      <tr>
+        <td><code>not like</code></td>
+
+        <td>Returns false if the string pattern matches the supplied pattern.</td>
+      </tr>
+
+      <tr>
+        <td><code>similar to</code></td>
+
+        <td>Returns true or false depending on whether its pattern matches the given string. It is
+        similar to <code>like</code> except that it interprets the pattern using the SQL standard's
+        definition of a regular expression.</td>
+      </tr>
+
+      <tr>
+        <td><code>not similar to</code></td>
+
+        <td>Returns false or true depending on whether its pattern matches the given string. It is
+        similar to <code>not like</code>, except that it interprets the pattern using the SQL
+        standard's definition of a regular expression.</td>
+      </tr>
+
+      <tr>
+        <td><code>and</code></td>
+
+        <td>Lets you use 'and' logic to include more than one filter expression. The filter
+        includes data that meets all the conditions.</td>
+      </tr>
+
+      <tr>
+        <td><code>or</code></td>
+
+        <td>Lets you use 'or' logic to evaluate different possible filter expressions. The filter
+        includes data that meets at least one of the conditions.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  {% endblock %}

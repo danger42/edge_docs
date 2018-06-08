@@ -1,0 +1,305 @@
+  {% extends "_base.html" %} {% block title %}Update a TLS certificate for the Cloud{% endblock %}
+  {% block body %}
+
+  <p>The method that you use to specify the name of the keystore and truststore in the virtual host
+  or target endpoint/target server determines how you perform the cert update. You can specify the
+  name of the keystore and truststore by using:</p>
+
+  <ul>
+    <li>References - <strong>preferred</strong></li>
+    <li>Direct names</li>
+    <li>Flow variables</li>
+  </ul>
+
+  <p>Each of these methods has different repercussions on the cert update process, as described in
+  the following table.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th><strong>Config type</strong></th>
+
+        <th><strong>How to update/replace a cert</strong></th>
+
+        <th><strong>How to update the virtual host, target endpoint/target server</strong></th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td>Reference (recommended)</td>
+
+        <td>
+          For a keystore, create new keystore with a <strong>new name</strong> and an alias with
+          <strong>same name</strong> as the old alias.
+
+          <p>For a truststore, create a truststore with a <strong>new name</strong>.</p>
+        </td>
+
+        <td>
+          Update the reference to the keystore or truststore.
+
+          <p>No need to contact <a href=
+          "https://community.apigee.com/content/apigee-customer-support">Apigee support</a>.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Flow vars (target endpoint only)</td>
+
+        <td>
+          For a keystore, create new keystore with a <strong>new name</strong> and an alias with
+          the same name or with a new name.
+
+          <p>For a truststore, create a truststore with a <strong>new name</strong>.</p>
+        </td>
+
+        <td>
+          Pass updated flow var on each request with the name of the new keystore, alias, or
+          truststore.
+
+          <p>No need to contact <a href=
+          "https://community.apigee.com/content/apigee-customer-support">Apigee support</a>.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Direct</td>
+
+        <td>Create a new keystore, alias, truststore.</td>
+
+        <td>
+          For virtual hosts, <strong>contact <a href=
+          "https://community.apigee.com/content/apigee-customer-support">Apigee
+          support</a></strong> restart the Routers.
+
+          <p>If the truststore is used by a target endpoint/target server, redeploy the proxy.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Direct</td>
+
+        <td>Delete the keystore or truststore and recreate it with same name.</td>
+
+        <td>
+          No virtual host update required. However, API requests fail until the new keystore and
+          alias are set.
+
+          <p>If the keystore is used for two-way TLS between Edge and the backend service,
+          <strong>contact <a href=
+          "https://community.apigee.com/content/apigee-customer-support">Apigee
+          support</a></strong> to restart the Message Processors.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Direct</td>
+
+        <td>For truststore only, upload a new cert to the truststore.</td>
+
+        <td>
+          For virtual hosts, <strong>contact <a href=
+          "https://community.apigee.com/content/apigee-customer-support">Apigee
+          support</a></strong> to restart the Edge Routers.
+
+          <p>If the truststore is used by a target endpoint/target server, <strong>contact <a href=
+          "https://community.apigee.com/content/apigee-customer-support">Apigee
+          support</a></strong> to restart the Message Processors.</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="testing-the-cert-before-and-after-the-update">Testing the cert before and after the
+  update</h2>
+
+  <p>Use the following <code>openssl</code> commands to test the current cert before you update
+  it:</p>
+
+<pre class="devsite-terminal">echo | openssl s_client -servername <em><strong>ORG-ENV</strong></em>.apigee.net -connect <em><strong>ORG-ENV</strong></em>.apigee.net:443 2&gt;/dev/null | openssl x509 -noout -dates -subject
+</pre>
+
+  <p>where <strong><code><em>ORG</em>-<em>ENV</em></code></strong> is the organization and
+  environment. For example:</p>
+
+<pre class="devsite-terminal">echo | openssl s_client -servername <em><strong>myOrg-prod.apigee.net</strong></em> -connect <em><strong>myOrg-prod.apigee.net:443</strong></em> 2&gt;/dev/null | openssl x509 -noout -dates -subject
+</pre>
+
+  <p>You should see output in the form:</p>
+
+  <pre class="prettyprint">
+notBefore=Dec 30 22:11:38 2015 GMT
+notAfter=Dec 30 22:11:38 2016 GMT
+subject= /OU=Domain Control Validated/CN=*.apigee.net
+</pre>
+
+  <p>Use the same command after you update the cert to test it.</p>
+
+  <h2 id=
+  "determine-how-you-virtual-host-or-target-endpoint-target-server-references-the-keystore-and-truststore">
+  Determine how you virtual host or target endpoint/target server references the keystore and
+  truststore</h2>
+
+  <ol>
+    <li>Login to the Edge management UI at <a href=
+    "https://enterprise.apigee.com/">https://enterprise.apigee.com</a>.</li>
+
+    <li>In the Edge management UI menu, select the name of your organization.</li>
+
+    <li>
+      <strong>For a virtual host</strong>, determine how the virtual host specifies the keystore
+      and truststore.
+
+      <ol style="list-style: lower-alpha outside">
+        <li>Depending on your version of the Edge UI:
+
+          <ol>
+            <li>If you are using the <strong>Classic Edge UI</strong>: Select <strong>APIs &gt;
+            Environment Configuration</strong>.</li>
+
+            <li>If you are using the <strong>New Edge UI</strong>: Select <strong>Admin &gt;
+            Environments</strong>.</li>
+          </ol>
+        </li>
+
+        <li>Select the <strong>Virtual Hosts</strong> tab.</li>
+
+        <li>For the specific virtual host that you are updating, select the <strong>Show</strong>
+        button to display its properties. The display includes the following properties:
+
+          <ol>
+            <li><strong>Key Store</strong>: The name of the current keystore, typically specified
+            as a reference in the from <code>ref://<em>mykeystoreref</em></code>.<br>
+            <br>
+            Alternatively, it might be specified by a direct reference, in the form
+            <code>myKeystoreName</code>, or it might be specified by a flow variable, in the form
+            <code>{ssl.keystore}</code>.</li>
+
+            <li><strong>Key Alias.</strong> The value of this property is the alias name in the
+            keystore. <strong>Your new keystore must create an alias with the same
+            name.</strong></li>
+
+            <li><strong>Trust Store</strong>: The name of the current truststore, if any, typically
+            specified as a reference in the from <code>ref://<em>mytruststoreref</em></code>.<br>
+            <br>
+            Alternatively, it might be specified by a direct reference, in the form
+            <code>myTruststoreName</code>, or it might be specified by a flow variable, in the form
+            <code>{ssl.truststorestore}</code>.</li>
+          </ol>
+        </li>
+      </ol>
+    </li>
+
+    <li>
+      <strong>For a target endpoint/target server</strong>, determine how the target endpoint
+      specifies the keystore and truststore:
+
+      <ol style="list-style: lower-alpha outside">
+        <li>In the Edge management UI menu, select <strong>APIs</strong>.</li>
+
+        <li>Select the name of the API proxy.</li>
+
+        <li>Select the <strong>Development</strong> tab.</li>
+
+        <li>Under <strong>Target Endpoints</strong>, select <strong>default</strong>.</li>
+
+        <li>In the code area, the TargetEndpoint definition appears. Examine the
+        <code>&lt;SSLInfo&gt;</code> element to see how the keystore/truststore is defined.<br>
+          <br>
+          <strong>Note</strong>: If the target endpoint uses a target server, then the XML
+          definition of the target endpoint appears as below, where the
+          <code>&lt;LoadBalancer&gt;</code> tag specifies the target servers used by the API
+          proxy.
+
+<pre class="prettyprint">&lt;TargetEndpoint name="default"&gt;
+  &#8230;
+  &lt;HTTPTargetConnection&gt;
+    &lt;LoadBalancer&gt;
+      &lt;Server name="target1" /&gt;
+      &lt;Server name="target2" /&gt;
+    &lt;/LoadBalancer&gt;
+    &lt;Path&gt;/test&lt;/Path&gt;
+  &lt;/HTTPTargetConnection&gt;
+    &#8230;
+&lt;/TargetEndpoint&gt;</pre>
+
+          Examine the <code>&lt;SSLInfo&gt;</code> element in the target server definition to determine how
+          the keystore/truststore is defined.
+        </li>
+      </ol>
+    </li>
+  </ol>
+
+  <h2 id="update-a-tls-certificate-in-a-keystore">Update a TLS certificate in a keystore</h2>
+
+  <p>When a cert in a keystore expires, you cannot upload a new cert to the keystore. Instead, you
+  create a new keystore and upload the cert, then update your virtual hosts or target server/target
+  endpoint to use the new keystore.</p>
+
+  <p>Typically, you create a new keystore before the current certificate expires, and then update
+  your virtual hosts or target endpoints to use the new keystore so that you can continue to
+  service requests without interruption due to an expired certificate. You can then delete the old
+  keystore after ensuring that the new keystore is working correctly.</p>
+
+  <p>For a Cloud-based deployment of Edge:</p>
+
+  <ol>
+    <li>Create a new keystore and upload a cert and key as described in <a href=
+    "creating-keystores-and-truststore-cloud-using-edge-ui">
+    Creating keystores and truststore using the Edge UI</a>.<br>
+    <br>
+    In the new keystore, <strong>ensure that you use the same same for the key alias as was used in
+    the existing key store.</strong></li>
+
+    <li>
+      <strong><strong>For a virtual host</strong> used by an inbound connection, meaning an API
+      request into Edge:</strong>
+
+      <ol style="list-style: lower-alpha outside">
+        <li>If your virtual host uses a reference to the keystore, update the reference.</li>
+
+        <li>If your virtual host uses a direct reference to the keystore, contact <a href=
+        "https://community.apigee.com/content/apigee-customer-support">Apigee Customer
+        Support</a>.</li>
+      </ol>
+    </li>
+
+    <li>
+      <strong>For a target endpoint/target server</strong> used by an outbound connection, meaning
+      from Apigee to a backend server:
+
+      <ol style="list-style: lower-alpha outside">
+        <li>If the target endpoint/target server uses a references to the keystore, update the
+        reference. No proxy redeployment is necessary.</li>
+
+        <li>If the target endpoint/target server uses a flow variable, update the flow variable. No
+        proxy redeployment is necessary.</li>
+
+        <li>If the target endpoint/target server uses a direct reference to the keystore, update
+        the target endpoint/target server configuration for any API proxies that referenced the old
+        keystore and key alias to reference the new keystore and key alias.<br>
+        <br>
+        You must then redeploy the proxy.</li>
+      </ol>
+    </li>
+
+    <li>After you have confirmed that your new keystore is working correctly, delete the old
+    keystore with the expired cert and key.</li>
+  </ol>
+
+  <h2 id="update-a-tls-certificate-in-a-truststore">Update a TLS certificate in a truststore</h2>
+
+  <p>For a cloud-based deployment of Edge, the process of updating a cert in a truststore is the
+  same as for a keystore as shown above.</p>
+
+  <p>The only differences are:</p>
+
+  <ul>
+    <li>When you upload the new cert to the new truststore the alias name does not matter for
+    truststores.</li>
+
+    <li>If a cert is part of a chain, then you must either create a single file containing all the
+    certs and upload that file to a single alias, or upload all certs in the chain separately to
+    the truststore using a different alias for each cert.</li>
+  </ul>{% endblock %}

@@ -1,0 +1,368 @@
+  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}Multiple Data Center
+  Installation for API BaaS{% endblock %} {% block body %}
+
+  <p>You can install API BaaS across multiple data centers using an active/active
+  configuration. This document describes how to add a BaaS data center to an existing BaaS data
+  center. </p>
+
+  <h2 id="addingadatacenterwhenthecassandraclusterissharedwithedge">Adding a data center when the
+  Cassandra cluster is shared with Edge</h2>
+
+  <p>All data centers must to have the same number of Cassandra nodes. An API BaaS installation can
+  use its own Cassandra cluster, or it can share a Cassandra cluster with Edge. </p>
+
+  <p>If the BaaS installation shares a Cassandra cluster with Edge, you have to update the
+  Management Server in the original data center to configure it to recognize the Cassandra nodes in
+  the new data center.</p>
+
+  <h2 id="updatingtheexistingdatacenter">Updating the existing data center</h2>
+
+  <p>Adding a new BaaS data center (data center 2) requires you to perform the steps to install and
+  configure the new data center, but it also requires you to update the original BaaS data center
+  (data center 1) . These modifications are necessary because:</p>
+
+  <ul>
+    <li>You are adding new Cassandra nodes in the new data center that have to be accessible by the
+    existing data center.</li>
+
+    <li>You have to configure the replication information used by the BaaS Stack nodes in data
+    center 1 to include information from data center 2. You cannot perform that configuration until
+    data center 2 is installed. </li>
+  </ul>
+
+  <p>To perform these updates on data center 1, you update the original configuration file used to
+  install data center 1, and then rerun <span style=
+  "font-family:courier new,courier,monospace;">apigee-setup</span> on the Cassandra nodes of data
+  center 1. If the Cassandra cluster for data center 1 is shared with an Edge installation, then
+  you also have to update the Management Server as well.  </p>
+
+  <h2 id="creatingtheconfigurationfiles">Creating the configuration files</h2>
+
+  <p>For installing data center 1, use the configuration shown at <a href=
+  "7-host-and-10-host-api-baas-installation.html">API BaaS Installation</a>. The configuration file
+  does not need to include any information about data center 2 at the time you install data center
+  1.You add information to the configuration file after installing data center 2.</p>
+
+  <aside class="note"><b>Note:</b> API BaaS 4.17.09 added a new required parameter to the
+  configuration file used when you enable an SMTP server. You must now set <span style=
+  "font-family:courier new,courier,monospace;">SMTPMAILFROM</span> in the configuration file
+  when enabling the SMTP server. See the examples below.</aside>
+
+  <p>Shown below is the configuration files for data center 2. This configuration file assumes you
+  are installing dc-2 on 10 nodes, as described at <a href=
+  "installation-topologies.html">Installation Topologies</a>. Modify this file accordingly if you
+  are installing on 7 nodes.</p>
+
+  <p>Notice that the config file for data center 2 (dc-2) contains information about data center 1
+  (dc-1):</p>
+  <pre class="prettyprint">
+# Specify IP address or DNS name of node for dc-2.
+IP1=192.168.1.1   # ElasticSearch
+IP2=192.168.1.2   # ElasticSearch
+IP3=192.168.1.3   # ElasticSearch
+IP4=192.168.1.4   # API BaaS Stack
+IP5=192.168.1.5   # API BaaS Stack
+IP6=192.168.1.6   # API BaaS Stack
+IP7=192.168.1.7   # API BaaS Portal
+IP8=192.168.1.8   # Cassandra dc-2 (shared with Edge or standalone)
+IP9=192.168.1.9   # Cassandra dc-2 (shared with Edge or standalone)
+IP10=192.168.1.10  # Cassandra dc-2 (shared with Edge or standalone)
+
+# Specify node information for dc-1
+IP11=192.168.1.11   # Cassandra dc-1 (shared with Edge or standalone)
+IP12=192.168.1.12   # Cassandra dc-1 (shared with Edge or standalone)
+IP13=192.168.1.13   # Cassandra dc-1 (shared with Edge or standalone)
+IP14=192.168.1.14   # API BaaS Stack
+IP15=192.168.1.15   # API BaaS Stack
+
+# Must resolve to IP address or DNS name of host - not to 127.0.0.1 or localhost.
+HOSTIP=$(hostname -i)
+
+# Define the API BaaS administrator account.  
+AS_ADMIN="superuser"    # User name - default is "superuser".
+AS_ADMIN_EMAIL=stackAdmin@email.com
+AS_PASSWD=stackAdminPWord
+
+# Specify Cassandra data center and rack suffix.
+# List dc-2 nodes first, then dc-1.
+# Must use IP addresses for CASS_HOSTS, not DNS names.
+# CASS_HOSTS="$IP8:2,1 $IP9:2,1 $IP10:2,1 $IP11:1,1 $IP12:1,1 $IP13:1,1"
+
+# Specify the Cassandra region.
+REGION=dc-2
+
+# Cassandra uname/pword.
+# Even if Cassandra authentication is disabled,
+# you must still pass values for these properties.
+CASS_USERNAME=cassandra    # Default value
+CASS_PASSWORD=cassandra    # Default value
+
+# Specify BaaS Cassandra connection information.
+# Specify the data center name as dc-2.
+BAAS_CASS_LOCALDC=dc-2    
+
+# Specify both data centers.
+BAAS_CASS_DC_LIST=dc-1,dc-2
+
+# Replication is in the form "dataCenterName:#CassandraNodes". 
+# Specify both data centers.
+BAAS_CASS_REPLICATION=dc-1:3,dc-2:3
+
+# Defines the initial contact points for members of the BaaS cluster. 
+# Specify the IP address of no more than two Stack nodes per data center.
+# Specify both data centers. 
+BAAS_CLUSTER_SEEDS="dc-1:$IP14,dc-1:$IP15,dc-2:$IP4,dc-2:$IP5"
+
+# ElasticSearch IPs or DNS names, separated by spaces, for dc-2.
+ES_HOSTS="$IP1 $IP2 $IP3"
+
+# API BaaS Stack information.
+# Default cluster name is "apigee_baas"
+BAAS_USERGRID_CLUSTERNAME="apigee_baas" 
+
+# URL and port of the load balancer for the API BaaS Stack nodes, 
+# or IP/DNS and port 8080 of a single Stack node with no load balancer.
+BAAS_USERGRID_URL=http://myloadbalancer:8443
+
+# API BaaS Portal information.
+# URL and port number of load balancer, if there is one in front of the Portal,
+# or the URL and port of the Portal node.  
+BAAS_PORTAL_URL="http://$IP7:9000"
+
+# Portal port. Default value is 9000.
+BAAS_PORTAL_LISTEN_PORT=9000 
+
+# SMTP information. BaaS requires an SMTP server.
+SMTPHOST=smtp.gmail.com
+SMTPPORT=465
+SMTPUSER=your@email.com
+SMTPPASSWORD=yourEmailPassword
+SMTPSSL=y
+SMTPMAILFROM="My Company &lt;myco@company.com&gt;"
+</pre>
+
+  <h2 id="addabaasdatacenter">Add a BaaS data center  </h2>
+
+  <ol>
+    <li>Install the first data center as described at <a href=
+    "7-host-and-10-host-api-baas-installation.html">API BaaS Installation</a>. That document
+    includes the configuration file that you use to install data center 1.</li>
+
+    <li>Create the config file for dc-2 as described above.</li>
+
+    <li>Install Cassandra, either as part of an existing Edge installation or as a standalone
+    cluster for BaaS:
+
+      <ol style="list-style: lower-alpha outside">
+        <li>Install the Edge <span style=
+        "font-family:courier new,courier,monospace;">apigee-setup</span> utility on the first
+        Cassandra node of dc-2, machine 8, using the internet or non-internet procedure. See
+        <a href="install-edge-apigee-setup-utility.html">Install the Edge apigee-setup
+        utility</a> for more. </li>
+
+        <li>At the command prompt, run the setup script to install Cassandra on the first node:<br>
+        <span style="font-family:courier new,courier,monospace;">&gt;
+        /opt/apigee/apigee-setup/bin/setup.sh -p c -f <strong>configFile</strong></span><br>
+        <br>
+        The &#8220;-p c&#8221; option specifies to install Cassandra.<br>
+        <br>
+        The configuration file must be accessible or readable by the "apigee" user. </li>
+
+        <li>Repeat steps 3 and 4 for the remaining Cassandra nodes, machines 9 and 10, in
+        dc-2.</li>
+      </ol>
+    </li>
+
+    <li>On the Cassandra nodes of dc-1, edit the configuration file to add the Cassandra nodes from
+    data center 2 based on how you installed Cassandra:<br>
+    <br>
+    <span style="font-family:courier new,courier,monospace;"># List dc-1 nodes first, then dc-2,
+     <br>
+    # including Cassandra data center and rack suffix<br>
+    CASS_HOSTS="$IP11:1,1 $IP12:1,1 $IP13:1,1 $IP8:2,1 $IP9:2,1 $IP10:2,1"</span></li>
+
+    <li>On the first Cassandra node of dc-1, run setup.sh with the new dc-1 config file that
+    includes the Cassandra nodes from dc-2: <br>
+    <span style="font-family:courier new,courier,monospace;">&gt;
+    /opt/apigee/apigee-setup/bin/setup.sh -p c -f <strong>configFile</strong></span></li>
+
+    <li>Repeat step 6 and 7 for the remaining Cassandra nodes in dc-1.</li>
+
+    <li><strong>If you are connecting to a Cassandra cluster for dc-1 shared with Edge</strong>,
+    add the dc-2 Cassandra nodes to the config file for the Management Server node of dc-1 and run
+    <span style="font-family:courier new,courier,monospace;">setup.sh</span>:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt;
+     /opt/apigee/apigee-setup/bin/setup.sh -p ms -f
+    <em><strong>configFile</strong></em></span></li>
+
+    <li>Update Cassandra keyspaces with correct replication factor for the two data centers. You
+    only have to run this step once on any Cassandra server in either data center:<br>
+      <br>
+      <strong>Note</strong>: The commands below all set the replication factor to "3", indicating
+      three Cassandra nodes in the cluster. Modify this value as necessary for your installation.
+
+      <ol style="list-style: lower-alpha outside">
+        <li>Start the Cassandra cqlsh utility:<br>
+        <span style="font-family:courier new,courier,monospace;">&gt;
+        /opt/apigee/apigee-cassandra/bin/cqlsh <strong>cassandraIP</strong></span></li>
+
+        <li>Execute the following CQL commands at the "cqlsh&gt;" prompt to set the replication
+        levels for Cassandra keyspaces:
+
+          <ol>
+            <li>cqlsh&gt;  <span style="font-family:courier new,courier,monospace;">ALTER
+            KEYSPACE "Apigee_Baas_dc_1" WITH replication = { 'class': 'NetworkTopologyStrategy',
+            'dc-1': '3','dc-2': '3' };</span></li>
+
+            <li> cqlsh&gt; <span style="font-family:courier new,courier,monospace;">ALTER
+            KEYSPACE "Apigee_Baas" WITH replication = { 'class': 'NetworkTopologyStrategy', 'dc-1':
+            '3','dc-2': '3' };</span></li>
+
+            <li> cqlsh&gt; <span style="font-family:courier new,courier,monospace;">ALTER
+            KEYSPACE "Apigee_Baas_Locks" WITH replication = { 'class': 'NetworkTopologyStrategy',
+            'dc-1': '3','dc-2': '3' };</span></li>
+
+            <li>cqlsh&gt; <span style="font-family:courier new,courier,monospace;">ALTER KEYSPACE
+            "system_traces" WITH replication = { 'class': 'NetworkTopologyStrategy', 'dc-1':
+            '3','dc-2': '3' };</span></li>
+
+            <li>cqlsh&gt; <span style="font-family:courier new,courier,monospace;">ALTER
+            KEYSPACE "system_auth" WITH replication = { 'class': 'NetworkTopologyStrategy', 'dc-1':
+            '3','dc-2': '3' };</span></li>
+
+            <li>View the keyspaces by using the command:<br>
+            cqlsh&gt; <span style="font-family:courier new,courier,monospace;">select * from
+            system.schema_keyspaces;</span></li>
+
+            <li>Exit cqlsh:<br>
+            cqlsh&gt; <span style="font-family:courier new,courier,monospace;">exit</span></li>
+          </ol>
+        </li>
+      </ol>
+    </li>
+
+    <li>On all Cassandra nodes in dc-2, run the rebuild command, specifying the region name of
+    dc-1:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt;
+    /opt/apigee/apigee-cassandra/bin/nodetool -h <em><strong>cassandraIP</strong></em> rebuild
+    dc-1</span></li>
+
+    <li>Run "nodetool status" on every Cassandra node and verify that all the Cassandra nodes have
+    &#8216;100%&#8217; for the &#8216;Owns&#8217; value:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt;
+    /opt/apigee/apigee-cassandra/bin/nodetool status</span></li>
+
+    <li>Install BaaS in dc-2:
+
+      <ol style="list-style: lower-alpha outside">
+        <li>Edit the config file to list only the Cassandra nodes in dc-2:<br>
+        <span style="font-family:courier new,courier,monospace;"># List dc-2 Cassandra nodes,
+         <br>
+        # omitting Cassandra data center and rack suffix<br>
+        CASS_HOSTS="$IP8 $IP9 $IP10"</span></li>
+
+        <li>Install ElasticSearch on nodes 4, 5, and 6 of dc-2:<br>
+        <span style="font-family:courier new,courier,monospace;">&gt;
+        /opt/apigee/apigee-setup/bin/setup.sh -p e -f
+        <em><strong>configFile</strong></em></span></li>
+
+        <li>Install the BaaS Stack on nodes 4, 5, and 6 of dc-2<strong>:</strong><br>
+        <span style="font-family:courier new,courier,monospace;">&gt;
+        /opt/apigee/apigee-setup/bin/setup.sh -p b -f
+        <em><strong>configFile</strong></em></span>  </li>
+
+        <li>Install the BaaS Portal on machine 7:<br>
+        <span style="font-family:courier new,courier,monospace;">&gt;
+        /opt/apigee/apigee-setup/bin/setup.sh -p p -f
+        <em><strong>configFile</strong></em></span></li>
+      </ol>
+    </li>
+
+    <li>Update BaaS Stack nodes in data center 1:
+
+      <ol style="list-style: lower-alpha outside">
+        <li>On the first BaaS Stack node in data center 1, edit <span style=
+        "font-family:courier new,courier,monospace;">/opt/apigee/customer/application/usergrid.properties</span>
+        in an editor. If the file does not exist, create it.</li>
+
+        <li>Add the following properties to <span style=
+        "font-family:courier new,courier,monospace;">usergrid.properties</span>:<br>
+        <span style="font-family:courier new,courier,monospace;"># Same value as BAAS_CLUSTER_SEEDS
+        in the dc-2 config file,<br>
+        # without double quotes.<br>
+        usergrid-deployment_usergrid.cluster.seeds=dc-1:dc1StackIP1,dc-1:dc1StackIP2,dc-2:dc2StackIP1,dc-2:dc2StackIP2<br>
+
+        <br>
+        # Same value as BAAS_CASS_DC_LIST in the dc-2 config file.<br>
+        usergrid-deployment_usergrid.cluster.region.list=dc-1,dc-2</span></li>
+
+        <li>Repeat steps a and b on the remaining BaaS Stack nodes.</li>
+
+        <li>Restart all BaaS Stack nodes. <br>
+        <br>
+        <strong>Note</strong>: When restarting BaaS Stack nodes, <strong>restart them in the same
+        order that they are listed in <span style=
+        "font-family:courier new,courier,monospace;">BAAS_CLUSTER_SEEDS</span></strong>.
+        <span style="font-family:courier new,courier,monospace;">BAAS_CLUSTER_SEEDS</span> lists at
+        most two of the Stack nodes. After restarting those two nodes in order, you can restart the
+        remaining nodes in any order.  <br>
+        <br>
+        <span style="font-family:courier new,courier,monospace;">&gt;
+        /opt/apigee/apigee-service/bin/apigee-service baas-usergrid restart</span></li>
+      </ol>
+    </li>
+
+    <li>Update BaaS keyspace values. These keyspace have to be set for replication at install time,
+    but do not have to be at run time. Removing replication also saves Cassandra memory. <br>
+
+      <br>
+      ?You only have to run this step once on any Cassandra server in either data center:
+
+      <ol style="list-style: lower-alpha outside">
+        <li>Start the Cassandra cqlsh utility:<br>
+        <span style="font-family:courier new,courier,monospace;">&gt;
+        /opt/apigee/apigee-cassandra/bin/cqlsh <em><strong>cassandraIP</strong></em></span></li>
+
+        <li>Execute the following CQL commands to set the replication levels for Cassandra
+        keyspaces:
+
+          <ol>
+            <li>cqlsh&gt; <span style="font-family:courier new,courier,monospace;">ALTER KEYSPACE
+            "Apigee_Baas_dc_1" WITH replication = { 'class': 'NetworkTopologyStrategy', 'dc-1': '3'
+            };</span></li>
+
+            <li>cqlsh&gt; <span style="font-family:courier new,courier,monospace;">ALTER KEYSPACE
+            "Apigee_Baas_dc_2" WITH replication = { 'class': 'NetworkTopologyStrategy', 'dc-2': '3'
+            };</span></li>
+
+            <li>View the keyspaces by using the command:<br>
+            <span style="font-family:courier new,courier,monospace;">cqlsh&gt; select * from
+            system.schema_keyspaces;</span></li>
+
+            <li>Exit cqlsh:<br>
+            <span style="font-family:courier new,courier,monospace;">cqlsh&gt; exit</span></li>
+          </ol>
+        </li>
+      </ol>
+    </li>
+  </ol>
+
+  <p>This installation of the second data center is now complete.</p>
+
+  <p>After you complete the installation and configuration of the two data centers, you can
+  validate the installation by using the following procedure:</p>
+
+  <ol>
+    <li>On all BaaS Stack nodes, check the status:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt; curl 0:8080/status</span></li>
+
+    <li>Check token API call is working:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt; curl -X POST
+    "http://localhost:8080/management/token" -d '{"grant_type":"password",
+    "username":"<em><strong>adminEmail</strong></em>","password":"<em><strong>pWord</strong></em>"}'</span></li>
+
+    <li>Try logging in to the BaaS Portal for dc-2. Verify, all the data is replicated in dc-2,
+    such as collections created on dc-1.</li>
+  </ol>
+
+  {% endblock %}

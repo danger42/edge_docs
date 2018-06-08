@@ -1,0 +1,152 @@
+  {% extends "_base.html" %} {% block title %}Attaching and configuring policies in the management
+  UI{% endblock %} {% block body %}
+
+  <p>Adding policy-based capabilities to an API proxy is a two-step process:</p>
+
+  <ol>
+    <li>Configure an instance of a policy type.</li>
+
+    <li>Attach the policy instance to a Flow.</li>
+  </ol>
+
+  <p>The diagram below shows the relationship between policies and Flows. As you can see, a policy
+  is attached to a Flow as a processing "Step". To configure the desired behavior for your API, you
+  need to understand a little bit about Flows. (This topic was covered earlier in <a href=
+  "/api-platform/fundamentals/flow-configurations.html">Configuring flows</a>.)</p>
+
+  <p><img alt="" src="/api-platform/images/ProxyToBackendWithPolicies_v2.png"></p>
+
+  <p>One type of policy that is commonly used is SpikeArrest. SpikeArrest prevents sudden increases
+  in message traffic that might swamp your backend services.</p>
+
+  <h3>Attaching a policy to a flow</h3>
+
+  <p>To attach a policy to a Flow:</p>
+
+  <ol>
+    <li>Select an API proxy and navigate to the <strong>Develop</strong> view.</li>
+
+    <li>In the API Proxy Editor, select the flow to which you want to attach a policy in the
+    Navigator pane.<br>
+    For example, the PreFlow flow is selected for the default API proxy endpoint in the following
+    figure:<br>
+    <img alt="" src="/api-platform/images/select-flow2.png"></li>
+
+    <li>In the Design view, click <strong>+Step</strong> associated with the request or response
+    flow to attach a policy. For example:<br>
+    <img alt="" src="/api-platform/images/add-policy-step.png"><br>
+    The Add Step dialog opens displaying a categorized list of policies.<br>
+    <img alt="" src="/api-platform/images/add-step.png"></li>
+
+    <li>Scroll and select the policy type that you want to attach to the selected flow.</li>
+
+    <li>Modify the following fields.
+
+      <ul>
+        <li>
+          <p><strong>Display Name:</strong> Unique display name for the policy. The UI will
+          generate a default name, but it is advisable to create a descriptive name for the policy.
+          This will ensure that other developers in your organization have an easy time
+          understanding what the policy is intended to do. </p>
+        </li>
+
+        <li>
+          <p><strong>Name</strong>: Unique name for the policy. The policy name matches the display
+          name with the following exceptions:</p>
+
+          <ul>
+            <li>
+              <p>Spaces are replaced by dashes.</p>
+            </li>
+
+            <li>
+              <p>Consecutive dashes are replaced by a single dash.</p>
+            </li>
+
+            <li>
+              <p>Except for dashes, underscores, and spaces (which are replaced, as noted above),
+              characters that are not alphanumeric, such as pound signs, percent signs, ampersands,
+              and so on, are removed.</p>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+
+    <li>Click <strong>Add.</strong>
+
+      <p>The policy is attached to the selected flow.</p>
+    </li>
+  </ol>
+
+  <p>After the policy is attached, you&#8217;ll see the policy displayed in the
+  <strong>Designer</strong> view for the flow, in this example the PreFlow of the default proxy
+  endpoint, and in the <strong>Policies</strong> list in the Navigation pane. The
+  <strong>Code</strong> view, which displays the XML for the newly attached policy, displays below
+  the <strong>Designer</strong> view. Edge generates an instance of the policy that contains a set
+  of reasonable default values.</p>
+
+  <p><img alt="" src="/api-platform/images/attached-policy-view.png"></p>
+
+  <h3>Adding a policy without attaching it to a flow</h3>
+
+  <p>To add a policy without attaching it to a flow, which is useful for <a href=
+  "/api-platform/fundamentals/fault-handling.html">Handling faults</a>, click <strong>+</strong> in
+  the <strong>Policies</strong> bar in the <strong>Navigator</strong> view to open the <strong>Add
+  Policy</strong> dialog and add the policy (as described in steps 4 through 6 in the previous
+  section). </p>
+
+  <p><img src="/api-platform/images/policy_create_standalone.png"></p>
+
+  <p>A policy that is not attached to any flow is flagged with the "detached" icon in the
+  <strong>Policies</strong> list, as shown adjacent to the API key message policy shown in the
+  previous figure.</p>
+
+  <p>After you create the policy, you can attach it to a flow by dragging and dropping it from the
+  <strong>Policies</strong> list to the desired flow in the <strong>Designer</strong> view.</p>
+
+  <h3>Detaching policies from a flow</h3>
+
+  <p>To detach a policy from a Flow, select the Flow. Mouse over the icon for the policy in the
+  <strong>Designer</strong> view of the Flow. Click the <strong>X</strong> in the circle that
+  appears in the icon. </p>
+
+  <h3>Deleting a policy instance</h3>
+
+  <p>To delete a policy instance, mouse over the entry for the policy in the
+  <strong>Navigator</strong> view. Click the <strong>X</strong> in the circle that appears to the
+  right of the entry.</p>
+
+  <h2 id="configuringpoliciesinthemanagementui">Configuring policies in the management UI</h2>
+
+  <p>When the UI generates a policy instance, it applies reasonable default values for common
+  settings. You may need to modify these settings to meet your requirements.</p>For example:
+  <pre class="prettyprint">
+&lt;?xml version="1.0" encoding="UTF-8" standalone="yes"?&gt;
+&lt;SpikeArrest async="false" continueOnError="false" enabled="true" name="spikearrest-1"&gt;
+  &lt;DisplayName&gt;SpikeArrest-1&lt;/DisplayName&gt;
+  &lt;FaultRules/&gt;
+  &lt;Properties/&gt;
+  &lt;Identifier ref="request.header.some-header-name"/&gt;
+  &lt;MessageWeight ref="request.header.weight"/&gt;
+  &lt;Rate&gt;30ps&lt;/Rate&gt;
+&lt;/SpikeArrest&gt;
+</pre>
+
+  <p>You can configure a policy by directly editing its XML configuration in the
+  <strong>Code</strong> view. For example, the peak message rate for the Spike Arrest policy is
+  initially set to 30 messages per second. You can change the peak rate by changing the
+  &lt;<code>Rate</code>&gt; element value in the XML for the policy. For further details about
+  configuring policies, see the <a href=
+  "/api-platform/reference/policies/reference-overview-policy.html">Policy Reference</a>.</p>
+
+  <p>You can also cut-and-paste policies into the <strong>Code</strong> view. This is a great way
+  to re-use policies from the samples available on GitHub.</p>
+
+  <p>When you make changes to a policy definition in the <strong>Code</strong> view, the changes
+  are reflected in the <strong>Property Inspector</strong>. The reverse is also true &#8212; make
+  changes in the <strong>Property Inspector</strong> and they appear in the XML in the
+  <strong>Code</strong> view.</p>
+
+  <p>For documentation specific to the Quota policy used in this topic, see <a href=
+  "/api-platform/reference/policies/quota-policy.html">Quota policy</a>.</p>{% endblock %}

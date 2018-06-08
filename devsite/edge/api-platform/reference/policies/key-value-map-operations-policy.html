@@ -1,0 +1,1188 @@
+  {% extends "_base.html" %} {% block title %}Key Value Map Operations policy{% endblock %} {% block body %} <img src="/api-platform/images/icon_policy_key-value-map-operations.jpg">
+
+  <h3>What</h3>
+
+  <p>Provides policy-based access to a key/value map (KVM) store available in Apigee Edge.
+  Key/value pairs can be stored, retrieved, and deleted from named existing maps by configuring
+  KeyValueMapOperations policies that specify PUT, GET, or DELETE operations. (At least one of
+  these operations must be performed by the policy.)</p>
+
+  <h2 id="videos">Videos</h2>
+
+  <p>Watch the following videos to learn more about KVMs.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Video</th>
+
+        <th>Description</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td><a href="https://www.youtube.com/watch?v=l1OqKOlSqo8" target="_blank">Why Key Value
+        Maps?</a></td>
+
+        <td>Learn why you need KVMs and how they work.</td>
+      </tr>
+
+      <tr>
+        <td><a href="https://www.youtube.com/watch?v=KeAbj4BYaa4" target="_blank">Create KVM using
+        UI and retrieve KVM at runtime</a></td>
+
+        <td>Create a KVM, retrieve its value using a KVM policy, and inject the value into the API
+        request using flow variables.</td>
+      </tr>
+
+      <tr>
+        <td><a href="https://www.youtube.com/watch?v=e_bybNuU5mY" target="_blank">Create and update
+        a KVM at API runtime</a></td>
+
+        <td>Create a KVM at API runtime using a KVM policy.</td>
+      </tr>
+
+      <tr>
+        <td><a href="https://www.youtube.com/watch?v=dFzxvsBPjs0" target="_blank">Cache KVM to
+        increase performance</a></td>
+
+        <td>Improve performance of KVM Policy by caching the data.</td>
+      </tr>
+
+      <tr>
+        <td><a href="https://www.youtube.com/watch?v=DvZ9QlJX43o" target="_blank">Store encrypted
+        KVM</a></td>
+
+        <td>Store sensitive information in KVM in an encrypted format and retrieve the value at
+        runtime using KVM policy and private variables.</td>
+      </tr>
+
+      <tr>
+        <td><a href="https://www.youtube.com/watch?v=WLtHTaU85ZU" target="_blank">Manage access
+        using KVM scope</a></td>
+
+        <td>Restrict KVM to organization, environment, API proxy, or API proxy revision using KVM
+        policy scope attribute.</td>
+      </tr>
+
+      <tr>
+        <td><a href="https://www.youtube.com/watch?v=X9rQLQfXAQU" target="_blank">Delete KVM
+        entries at API runtime</a></td>
+
+        <td>Delete KVM entries at API runtime using the KVM policy DELETE operation.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="samples">Samples</h2><!-- Begin tab list -->
+  <!-- End tab list --><!-- Begin tabbed region -->
+
+  <div class="ds-selector-tabs">
+    <section>
+      <h3 class="two-line-tab">PUT KVM with a literal</h3>
+
+      <p>When the following policy runs, it creates a Key Value Map named <code>FooKVM</code>, then
+      creates a key named <code>FooKey_1</code> with two values set with literal strings (not set
+      with values extracted from variables): <code>foo,bar</code>. (When you GET the key in
+      the next example, you specify an index number to retrieve the value you want.)</p>
+      <pre class="prettyprint">
+&lt;KeyValueMapOperations async="false" continueOnError="false" enabled="true" name="CreateFooKVM" mapIdentifier="FooKVM"&gt;
+  &lt;DisplayName&gt;CreateFooKVM&lt;/DisplayName&gt;
+  &lt;ExpiryTimeInSecs&gt;86400&lt;/ExpiryTimeInSecs&gt;
+  &lt;Scope&gt;environment&lt;/Scope&gt;
+  &lt;Put&gt;
+    &lt;Key&gt;
+      &lt;Parameter&gt;FooKey_1&lt;/Parameter&gt;
+    &lt;/Key&gt;
+    &lt;Value&gt;foo&lt;/Value&gt;
+    &lt;Value&gt;bar&lt;/Value&gt;
+  &lt;/Put&gt;
+&lt;/KeyValueMapOperations&gt;
+</pre>
+
+      <p>Notice that the scope is "environment". That means you can see the KVM in the management
+      UI under <strong>APIs &gt; Environment Configuration &gt; Key Value Maps</strong>. The KVMs
+      shown on that page are all scoped to the selected environment.</p>
+    </section>
+
+    <section>
+      <h3 class="two-line-tab">GET KVM from a literal</h3>
+
+      <p>This policy looks at the <code>FooKVM</code> map from the previous example, gets the
+      second value (index="2") from the <code>FooKey_1</code> key, and stores it in a variable
+      called <code>foo_variable</code>.</p>
+      <pre class="prettyprint">
+&lt;KeyValueMapOperations mapIdentifier="FooKVM" async="false" continueOnError="false" enabled="true" name="GetKVM"&gt;
+  &lt;DisplayName&gt;GetKVM&lt;/DisplayName&gt;
+  &lt;ExpiryTimeInSecs&gt;86400&lt;/ExpiryTimeInSecs&gt;
+  &lt;Scope&gt;environment&lt;/Scope&gt;
+  &lt;Get assignTo="foo_variable" index="2"&gt;
+    &lt;Key&gt;
+      &lt;Parameter&gt;FooKey_1&lt;/Parameter&gt;
+    &lt;/Key&gt;
+  &lt;/Get&gt;
+&lt;/KeyValueMapOperations&gt;
+</pre>
+    </section>
+
+    <section>
+      <h3 class="two-line-tab">PUT KVM with a variable</h3>
+      <pre class="prettyprint">
+&lt;KeyValueMapOperations name="putUrl" mapIdentifier="urlMapper"&gt;
+   &lt;Scope&gt;apiproxy&lt;/Scope&gt;
+   &lt;Put override="true"&gt;
+      &lt;Key&gt;
+         &lt;Parameter ref="urlencoding.requesturl.hashed"/&gt;
+      &lt;/Key&gt;
+      &lt;Value ref="urlencoding.longurl.encoded"/&gt;
+      &lt;Value ref="request.queryparam.url"/&gt;
+   &lt;/Put&gt;
+&lt;/KeyValueMapOperations&gt;
+</pre>
+
+      <p>A simple example of a useful KeyValueMap is a URL shortening service. The KeyValueMap
+      could be configured to store shortened URLs along with corresponding full URLs.</p>
+
+      <p>This policy sample creates a KeyValueMap. The policy PUTs a key with two associated values
+      into a key/value map named "urlMapper".</p>
+
+      <p>The key in this example, <code>urlencoding.requesturl.hashed</code>, is an example of a
+      custom variable. The hashed request URL would be generated by code (JavaScript or Java, for
+      example) and then stored in this variable, where the KeyValueMapOperations policy can access
+      it.</p>
+
+      <p>For each key, <code>requesturl.hashed</code>, two values are stored:</p>
+
+      <ul>
+        <li>The contents of the custom variable named <code>urlencoding.longurl.encoded</code></li>
+
+        <li>The contents of the predefined variable <code>request.queryparam.url</code></li>
+      </ul>
+
+      <p>For example, when the policy executes at runtime, the values of the variables may be as
+      follows:</p>
+
+      <ul>
+        <li><code>urlencoding.requesturl.hashed:
+        ed24e12820f2f900ae383b7cc4f2b31c402db1be</code></li>
+
+        <li><code>urlencoding.longurl.encoded: http://tinyurl.com/38lwmlr</code></li>
+
+        <li><code>request.queryparam.url: http://apigee.com</code></li>
+      </ul>
+
+      <p>The following key/value map and entry would be generated in Edge's key/value store and
+      scoped to the API proxy to which the policy is attached:</p>
+      <pre class="prettyprint">
+{
+    "entry" :[ 
+        {
+            "name" : "ed24e12820f2f900ae383b7cc4f2b31c402db1be",
+            "value" : "http://tinyurl.com/38lwmlr,http://apigee.com"
+        }
+    ],
+    "name" : "urlMapper"
+}
+</pre>
+
+      <p>The entry will persist until it is deleted. Key/value store entries are distributed across
+      instances of Edge that are running the cloud.</p>
+    </section>
+
+    <section>
+      <h3 class="two-line-tab">GET KVM from a variable</h3>
+      <pre class="prettyprint">
+&lt;KeyValueMapOperations name="getUrl" mapIdentifier="urlMapper"&gt;
+   &lt;Scope&gt;apiproxy&lt;/Scope&gt;
+   &lt;Get assignTo="urlencoding.shorturl" index='1'&gt;
+      &lt;Key&gt;
+         &lt;Parameter ref="urlencoding.requesturl.hashed"/&gt; 
+      &lt;/Key&gt;
+   &lt;/Get&gt;
+&lt;/KeyValueMapOperations&gt;
+</pre>
+
+      <p>A simple example of a useful KeyValueMap is a URL 'shortening' service. The KeyValueMap
+      could be configured to store shortened URLs along with corresponding full URLs.</p>
+
+      <p>To retrieve the value of key/value map entry, such as the one covered on the
+      KeyValueMapOperations PUT tab, configure a policy to GET the KeyValueMap, as shown above.</p>
+
+      <p>When this policy is executed, if the value of the
+      <code>urlencoding.requesturl.hashed</code> variable is
+      <code>ed24e12820f2f900ae383b7cc4f2b31c402db1be</code>, then the custom variable named
+      <code>urlencoding.shorturl</code> will be set with the value
+      <code>http://tinyurl.com/38lwmlr</code>.</p>
+
+      <p>Now that the data has been retrieved, other policies and code can access it by extracting
+      the value from those variables.</p>
+    </section>
+
+    <section>
+      <h3 class="two-line-tab">GET encrypted value from KVM</h3>
+      <pre class="prettyprint">
+&lt;KeyValueMapOperations name="getEncrypted" mapIdentifier="encrypted_map"&gt;
+   &lt;Scope&gt;apiproxy&lt;/Scope&gt;
+   &lt;Get assignTo="<strong>private.</strong>encryptedVar" index='1'&gt;
+      &lt;Key&gt;
+         &lt;Parameter&gt;foo&lt;/Parameter&gt; 
+      &lt;/Key&gt;
+   &lt;/Get&gt;
+&lt;/KeyValueMapOperations&gt;
+</pre>
+
+      <p>If a key value map is encrypted, retrieve values by using the "<code>private.</code>"
+      prefix in the <code>assignTo</code> attribute value. In the example above, the variable
+      <code>private.encryptedVar</code> holds the decrypted value of the key value map's
+      <code>foo</code> key. For information on creating encrypted key value maps, see the "create"
+      topics of the <a href="/api-reference/content/keyvalue-maps-management-api">Key/Value Maps
+      management API</a>.</p>
+
+      <p>Now that the data has been retrieved, other policies and code can access it by extracting
+      the value from that variable.</p>
+    </section>
+  </div><!-- End tabbed region. -->
+  <hr>
+
+  <h2 id="elementreference">Element reference</h2>
+
+  <p>The element reference describes the elements and attributes of the KeyValueMapOperations
+  policy.</p>
+  <pre class="prettyprint">
+&lt;KeyValueMapOperations async="false" continueOnError="false" 
+    enabled="true" name="Key-Value-Map-Operations-1" 
+    mapIdentifier="urlMapper" &gt;
+   &lt;DisplayName&gt;Key Value Map Operations 1&lt;/DisplayName&gt;
+   &lt;Scope&gt;environment&lt;/Scope&gt;
+   &lt;ExpiryTimeInSecs&gt;300&lt;/ExpiryTimeInSecs&gt;
+   &lt;InitialEntries&gt;
+      &lt;Entry&gt;
+         &lt;Key&gt;
+            &lt;Parameter&gt;key_name_literal&lt;/Parameter&gt;
+         &lt;/Key&gt;
+         &lt;Value&gt;value_literal&lt;/Value&gt;
+      &lt;/Entry&gt;
+      &lt;Entry&gt;
+         &lt;Key&gt;
+            &lt;Parameter&gt;variable_name&lt;/Parameter&gt;
+         &lt;/Key&gt;
+         &lt;Value&gt;value_1_literal&lt;/Value&gt;
+         &lt;Value&gt;value_2_literal&lt;/Value&gt;
+      &lt;/Entry&gt;
+   &lt;/InitialEntries&gt;
+   &lt;Put override="false"&gt;
+      &lt;Key&gt;
+         &lt;Parameter&gt;key_name_literal&lt;/Parameter&gt;
+      &lt;/Key&gt;
+      &lt;Value ref="variable_name"/&gt;
+   &lt;/Put&gt;
+   &lt;Get assignTo="myvar" index="1"&gt;
+      &lt;Key&gt;
+         &lt;Parameter ref="variable_name"/&gt;
+      &lt;/Key&gt;
+   &lt;/Get&gt;
+   &lt;Delete&gt;
+      &lt;Key&gt;
+         &lt;Parameter&gt;key_name_literal&lt;/Parameter&gt;
+      &lt;/Key&gt;
+   &lt;/Delete&gt;
+&lt;/KeyValueMapOperations&gt;
+</pre>
+
+  <h2 id="keyvaluemapoperations_attributes">&lt;KeyValueMapOperations&gt; attributes</h2>
+  <pre class="prettyprint">
+&lt;KeyValueMapOperations async="false" continueOnError="false" enabled="true" name="Key-Value-Map-Operations-1" mapIdentifier="map_name"&gt;
+</pre>
+
+  <aside class="note">
+    <b>Note:</b> This attribute specifies the name of the KVM you want to interact with.
+
+    <table width="650">
+      <tbody>
+        <tr>
+          <th scope="col">Attribute</th>
+
+          <th scope="col">Description</th>
+
+          <th scope="col">Default</th>
+
+          <th scope="col">Presence</th>
+        </tr>
+
+        <tr>
+          <td>mapIdentifier</td>
+
+          <td>
+            <p>Specifies an identifier to be used when accessing a map created by this
+              policy or <a href="/api-platform/cache/key-value-maps#managing">in the management UI</a>.</p>
+
+            <p>The KVM name is <strong>case sensitive</strong> in organizations with
+              <a href="https://apidocs.apigee.com/api-reference/content/api-reference-getting-started#cps" target="_blank">Core Persistence Services (CPS)</a> enabled.
+              For example, <code>foobar</code> is different than <code>FooBar</code>.</p>
+
+            <p>If you exclude this attribute, a KVM named <code>kvmap</code> is used.</p>
+
+            <p>Within a scope of organization/environment/apiproxy, you can use the
+            <code>mapIdentifier</code> attribute to specify your own map name.</p>
+          </td>
+
+          <td>N/A</td>
+
+          <td style="width: 50px;">Optional</td>
+        </tr>
+      </tbody>
+    </table>
+  </aside>{% dynamic include /includes/___policies-parent-element-attributes %}
+
+  <h2 id="DeleteElement">&lt;Delete&gt; element</h2>
+
+  <p>Deletes the specified key/value pair. (At least one of <code>&lt;Get&gt;</code>,
+  <code>&lt;Put&gt;</code>, or <code>&lt;Delete&gt;</code> must be used.)</p>
+
+  <p>Be sure to specify the name of the KVM with the <code>mapIdentifier</code> attribute
+  on the parent element.</p>
+  <pre class="prettyprint">
+&lt;Delete&gt;         
+   &lt;Key&gt;             
+      &lt;Parameter&gt;key_name_literal&lt;/Parameter&gt;         
+   &lt;/Key&gt;     
+&lt;/Delete&gt; 
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Required if <code>&lt;Get&gt;</code> or <code>&lt;Put&gt;</code> are not present.</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>N/A</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="InitialEntries_EntryElement">&lt;Entry&gt; element</h2>
+
+  <p>Seed values for KeyValueMaps, which are populated in the KeyValueMap when it is
+  initialized.</p>
+
+  <p>In organizations with <a href=
+  "/api-platform/reference/apis/api-reference-getting-started.html#cps" target="_blank">Core
+  Persistence Services (CPS)</a> enabled, key size is limited to 2 KB.</p>
+  <pre class="prettyprint">
+&lt;InitialEntries&gt;         
+   &lt;Entry&gt;             
+      &lt;Key&gt;
+         &lt;Parameter&gt;key_name_literal&lt;/Parameter&gt;
+      &lt;/Key&gt;
+      &lt;Value&gt;v1&lt;/Value&gt;
+   &lt;/Entry&gt;
+   &lt;Entry&gt;
+      &lt;Key&gt;
+         &lt;Parameter&gt;key_name_variable&lt;/Parameter&gt;
+      &lt;/Key&gt;
+      &lt;Value&gt;v3&lt;/Value&gt;
+      &lt;Value&gt;v4&lt;/Value&gt;
+   &lt;/Entry&gt;
+&lt;/InitialEntries&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>N/A</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="exclusivecacheelement">&lt;ExclusiveCache&gt; element</h2>
+
+  <p>Deprecated. Use the <code>&lt;Scope&gt;</code> element instead.</p>
+
+  <h2 id="ExclusiveCache_ExpiryTimeInSecsElement">&lt;ExpiryTimeInSecs&gt; element</h2>
+
+  <p>Specifies the duration in seconds after which Edge refreshes its cached value from the
+  specified KVM. </p>
+
+  <p>A value of 0 or -1, or excluding this element, means the default value of 300 seconds is
+  used. </p>
+  <pre class="prettyprint">
+&lt;ExpiryTimeInSecs&gt;600&lt;/ExpiryTimeInSecs&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td><code>300</code> (5 minutes)</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>Integer</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>A KVM is a long-term persistence mechanism that stores keys and values in a NoSQL database.
+  Because of this, reading from a KVM at runtime can potentially slow proxy performance. To improve
+  performance, Edge has a built-in mechanism for caching KVM keys/values in memory during runtime.
+  This KVM Operations policy always reads from cache for GET operations.</p>
+
+  <p>The <code>&lt;ExpiryTimeInSecs&gt;</code> element lets you control how long the keys/values
+  used in the policy are stored in cache before they're refreshed again from the KVM. However,
+  there are some differences between how GET and PUT operations affect cache expiration.</p>
+
+  <p><strong>GET</strong> - The very first time a KVM GET operation executes, the requested
+  keys/values from the KVM (whose name is specified in the policy's root <code>mapIdentifier</code>
+  attribute) are loaded into cache, where they remain for subsequent GET operations until one of
+  the following occurs:</p>
+
+  <ul>
+    <li>The number of seconds specified in <code>&lt;ExpiryTimeInSecs&gt;</code> expires.<br>
+    or</li>
+
+    <li>A PUT operation in a KVM policy overwrites the existing values (explained next).</li>
+  </ul>
+
+  <p><strong>PUT</strong> - A PUT operation writes keys/values to the specified KVM. If the PUT
+  writes to a key that already exists in cache, that cache is immediately refreshed and now holds
+  the new value for the number of seconds specified in the policy's
+  <code>&lt;ExpiryTimeInSecs&gt;</code> element.</p>
+
+  <h3 id="expirytimeinsecselement-exampleakvmnamedmykvmhasakeyvalueofrating10">Example - A KVM
+  named "MyKVM" has a key : value of "rating" : "10"</h3>
+
+  <ol>
+    <li>A GET operation retrieves the value of "rating," which adds the value "10" to cache. The
+    <code>&lt;ExpiryTimeInSecs&gt;</code> on the policy is 60.</li>
+
+    <li>30 seconds later, the GET policy executes again and retrieves "10" from the cache.</li>
+
+    <li>5 seconds later, a PUT policy updates the value of "rating" to "8", and the
+    <code>&lt;ExpiryTimeInSecs&gt;</code> on the PUT policy is 20. The cache is immediately
+    refreshed with the new value, which is now set to remain in cache for 20 seconds. (If the PUT
+    hadn't happened, the cache originally populated by the first GET would still exist for another
+    30 seconds, left over from the original 60 seconds.)</li>
+
+    <li>15 seconds later, another GET executes and retrieves a value of "8".</li>
+  </ol>
+
+  <aside class="note">
+    <b>Note:</b> <strong>Notes</strong>
+
+    <ul>
+      <li>For best performance, balance cache expiry time with the amount of API traffic you
+      expect. With heavy traffic, for example, you may want to set longer expiry times to avoid
+      frequent cache-population reads from the NoSQL database.</li>
+
+      <li>There is no way to manually reset the KVM cache. However, you can create a temporary
+      policy that executes a one-time PUT operation with a short
+      <code>&lt;ExpiryTimeInSecs&gt;</code>. This will reset the cache, which contains the value
+      you PUT, for the number of seconds you specify.</li>
+
+      <li>Updating a KVM with the management UI or API does not reset the KVM cache.</li>
+
+      <li>Don't add the PUT and GET operations in the same policy, because the PUT automatically
+      resets the cache expiration, which doesn't allow the GET operation to read from a cache with
+      a desired expiry time.</li>
+    </ul>
+  </aside>
+
+  <h2 id="GetElement">&lt;Get&gt; element</h2>
+
+  <p>Retrieves the value for the key specified. (At least one of <code>&lt;Get&gt;</code>,
+  <code>&lt;Put&gt;</code>, or <code>&lt;Delete&gt;</code> must be used.)</p>
+
+  <p>Be sure to specify the name of the KVM with the <code>mapIdentifier</code> attribute on the
+  parent element.</p>
+
+  <aside class="note"><b>Note:</b> Don't add PUT and GET operations in the same policy, because the
+  PUT automatically resets the cache expiration, which doesn't allow the GET operation to read from
+  a cache with a desired expiry time. See the <a href=
+  "#ExclusiveCache_ExpiryTimeInSecsElement"><code>ExpiryTimeInSecs</code></a> element for more
+  information.</aside>
+  <pre class="prettyprint">
+&lt;Get assignTo="myvar" index="1"&gt;         
+   &lt;Key&gt;             
+      &lt;Parameter&gt;key_name_literal&lt;/Parameter&gt;         
+   &lt;/Key&gt;     
+&lt;/Get&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Required if <code>&lt;Put&gt;</code> or <code>&lt;Delete&gt;</code> are not
+        present.</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>N/A</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="getelement-attributes">Attributes</h3>
+
+  <table width="650">
+    <tbody>
+      <tr>
+        <th scope="col">Attribute</th>
+
+        <th scope="col">Description</th>
+
+        <th scope="col">Default</th>
+
+        <th scope="col">Presence</th>
+      </tr>
+
+      <tr>
+        <td>assignTo</td>
+
+        <td>
+          <p>The variable to which the retrieved value should be assigned.</p>
+
+          <p>If the key value map is encrypted, begin the assignTo name with
+          "<code>private.</code>". For example:</p>
+          <pre class="prettyprint">
+&lt;Get assignTo="private.myvar"&gt;
+</pre>
+
+          <p>The policy throws an error if you try to retrieve an encrypted key value map without
+          using the prefix. The prefix, which is required for basic security purposes during
+          debugging, hides the encrypted values from API proxy Trace and debug sessions.</p>
+
+          <p>For information on creating encrypted key value maps, see the "create" topics of the
+          <a href="/api-reference/content/keyvalue-maps-management-api">Key/Value Maps management
+          API</a> and <a href=
+          "/api-platform/cache/creating-and-editing-environment-keyvalue-maps.html">Creating and
+          editing environment key value maps</a>.</p>
+        </td>
+
+        <td>N/A</td>
+
+        <td style="width: 50px;">Required</td>
+      </tr>
+
+      <tr>
+        <td>index</td>
+
+        <td>
+          <p>The index number (in a 1-based index) of the item to fetch from a multi-valued key.
+          For example, specifying <code>index=1</code> will return the first value and assign it to
+          the <code>assignTo</code> variable. If no index value is specified, all the values of
+          that entry are assigned to the variable as a <code>java.util.List</code>.</p>
+
+          <p>For an example, see the KeyValueMapOperations GET tab in <a href=
+          "#samples">Samples</a>.</p>
+        </td>
+
+        <td>N/A</td>
+
+        <td style="width: 50px;">Optional</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="InitialEntriesElement">&lt;InitialEntries&gt; element</h2>
+
+  <p>Seed values for KeyValueMaps, which are populated in the KeyValueMap when it is initialized.
+  Be sure to specify the name of the KVM with the <code>mapIdentifier</code> attribute on
+  the parent element.</p>
+
+  <p>When using this element, when you save the policy in the management UI on a deployed version
+  of the proxy, or deploy the API proxy bundle containing the policy with this element, the key(s)
+  are automatically created in the KVM (as unencrypted). If the values in the policy are different
+  than the values in the KVM, the values in the KVM are overwritten when the proxy is deployed. Any
+  new keys/values are added to the existing KVM alongside the existing keys/values.</p>
+
+  <p>Keys and values populated by this element must be literals. For example, <code>&lt;Parameter
+  ref="request.queryparam.key"&gt;</code> isn't supported within this element.</p>
+
+  <p>In organizations with <a href=
+  "/api-platform/reference/apis/api-reference-getting-started.html#cps" target="_blank">Core
+  Persistence Services (CPS)</a> enabled, key size is limited to 2 KB.</p>
+
+  <p>To create an encrypted key value map, use the <a href=
+  "/api-reference/content/keyvalue-maps-management-api">management API</a>.</p>
+  <pre class="prettyprint">
+&lt;InitialEntries&gt;         
+   &lt;Entry&gt;             
+      &lt;Key&gt;
+         &lt;Parameter&gt;key_name_literal&lt;/Parameter&gt;
+      &lt;/Key&gt;
+      &lt;Value&gt;v1&lt;/Value&gt;
+   &lt;/Entry&gt;
+   &lt;Entry&gt;
+      &lt;Key&gt;
+         &lt;Parameter&gt;key_name_variable&lt;/Parameter&gt;
+      &lt;/Key&gt;
+      &lt;Value&gt;v3&lt;/Value&gt;
+      &lt;Value&gt;v4&lt;/Value&gt;
+   &lt;/Entry&gt;
+&lt;/InitialEntries&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>N/A</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="InitialEntries_Entry_KeyElement">&lt;Key&gt; element</h2>
+
+  <p>Specifies the key in a key/value map entry. A key can be composite, which means that more than
+  one parameter can be appended to create the key. For example, <code>userID</code> and
+  <code>role</code> might be combined to create a <code>key</code>.</p>
+
+  <p>Be sure to see <a href="#ParameterElement">&lt;Parameter&gt;</a> for specifics about how to
+  set the key name.</p>
+
+  <p>In organizations with <a href=
+  "/api-platform/reference/apis/api-reference-getting-started.html#cps" target="_blank">Core
+  Persistence Services (CPS)</a> enabled, key size is limited to 2 KB.</p>
+
+  <aside class="note"><b>Note:</b> The name <code>ratelimit</code> is reserved. For more
+  information, see <a href=
+  "https://community.apigee.com/questions/8860/quota-policy-throws-nullpointerexception.html">this
+  Apigee Community post</a>.</aside>
+  <pre class="prettyprint">
+&lt;Key&gt;
+    &lt;Parameter&gt;key_name_literal&lt;/Parameter&gt;
+&lt;/Key&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>N/A</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="ParameterElement">&lt;Parameter&gt; element</h2>
+
+  <p>Specifies the key in a key/value pair. This element specifies the name when creating, putting,
+  retrieving, or deleting the key/value pair.</p>
+
+  <p>You can specify the name via:</p>
+
+  <ul>
+    <li>
+      <p>a literal string</p>
+      <pre class="prettyprint">
+&lt;Key&gt;
+  &lt;Parameter&gt;literal&lt;/Parameter&gt;
+&lt;/Key&gt;
+</pre>
+    </li>
+
+    <li>
+      <p>a variable to be retrieved at run time, using the <code>ref</code> attribute</p>
+      <pre class="prettyprint">
+&lt;Key&gt;
+  &lt;Parameter ref="variable_name"/&gt;
+&lt;/Key&gt;
+</pre>
+    </li>
+
+    <li>
+      <p>a combination of literals and variable references</p>
+      <pre class="prettyprint">
+&lt;Key&gt;
+  &lt;Parameter&gt;targeturl&lt;/Parameter&gt;
+  &lt;Parameter ref="apiproxy.name"/&gt;
+  &lt;Parameter&gt;weight&lt;/Parameter&gt;
+&lt;/Key&gt;
+</pre>
+    </li>
+  </ul>
+
+  <p>When the Key element includes multiple Parameter elements, the effective key string is the
+  concatenation of the values of each parameter, joined with a double underscore. For example, in
+  the above example, if the <code>apiproxy.name</code> variable has the value "abc1", then the
+  effective key will be <code>targeturl__abc1__weight</code>.</p>
+
+  <p>Whether you're getting, updating, or deleting a key/value entry, the key name must match the
+  name of the key in the key value map. See <a href="#specifying_key_names">Specifying and
+  retrieving key names</a> for guidelines.</p>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Required</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>String</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="parameterelement-attributes">Attributes</h3>
+
+  <table width="650">
+    <tbody>
+      <tr>
+        <th scope="col">Attribute</th>
+
+        <th scope="col">Description</th>
+
+        <th scope="col">Default</th>
+
+        <th scope="col">Presence</th>
+      </tr>
+
+      <tr>
+        <td>ref</td>
+
+        <td>Specifies the name of a variable whose value contains the exact name of the key you
+        want to create, get, or delete.</td>
+
+        <td>N/A</td>
+
+        <td style="width: 150px;">Required if no literal value is given between the opening and
+        closing tags. Prohibited if a literal value is given.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="PutElement">&lt;Put&gt; element</h2>
+
+  <p>Writes a key/value pair to a key value map, whether the key value map is encrypted or
+  unencrypted. If the key value map specified in the <code>mapIdentifier</code> attribute on the
+  parent element doesn't exist, the map is automatically created (as unencrypted). If the key value
+  map already exists, the key/value are added to it. To create an encrypted key value map, use
+  the <a href="/api-reference/content/keyvalue-maps-management-api">management
+  API</a>; or use the <a href=
+  "/api-platform/cache/creating-and-editing-environment-keyvalue-maps.html" target=
+  "_blank">management UI</a> to create encrypted environment-scoped KVMs.</p>
+
+  <aside class="note">
+    <b>Note:</b> Don't add PUT and GET operations in the same policy, because the PUT automatically
+    resets the cache expiration, which doesn't allow the GET operation to read from a cache with a
+    desired expiry time. See the <a href=
+    "#ExclusiveCache_ExpiryTimeInSecsElement"><code>ExpiryTimeInSecs</code></a> element for more
+    information.
+
+    <p>In organizations with <a href=
+    "/api-platform/reference/apis/api-reference-getting-started.html#cps" target="_blank">Core
+    Persistence Services (CPS)</a> enabled, key size is limited to 2 KB.</p>
+  </aside>
+  <pre class="prettyprint">
+&lt;Put override="false"&gt;         
+   &lt;Key&gt;             
+      &lt;Parameter ref="mykeyvar"/&gt;         
+   &lt;/Key&gt;         
+   &lt;Value ref="myvalvar1"/&gt;     
+&lt;/Put&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Required if <code>&lt;Get&gt;</code> or <code>&lt;Delete&gt;</code> are not
+        present.</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>N/A</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <aside class="warning">
+    <b>Warning:</b> If the policy PUTs a key/value in a KVM using a null key, the following key is
+    auto-created: <code>__$$_EDGE_KVM_EMPTY_KEY_$$__</code>
+
+    <p>This situation would happen, for example, if you're populating a key using a variable
+    reference and the referenced variable is null. As new PUTs with null keys are attempted, only
+    that key is used, so existing values for that key are potentially overwritten each time the
+    policy is executed.</p>
+  </aside>
+
+  <h3 id="putelement-attributes">Attributes</h3>
+
+  <table width="650">
+    <tbody>
+      <tr>
+        <th scope="col">Attribute</th>
+
+        <th scope="col">Description</th>
+
+        <th scope="col">Default</th>
+
+        <th scope="col">Presence</th>
+      </tr>
+
+      <tr>
+        <td>override</td>
+
+        <td>
+          <p>If set to <code>true</code>, it overrides the value for a key.</p>
+        </td>
+
+        <td><code>false</code></td>
+
+        <td style="width: 50px;">Optional</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="ScopeElement">&lt;Scope&gt; element</h2>
+
+  <p>Defines the boundary of accessibility for KeyValueMaps. The default scope is
+  <code>environment</code>, meaning that, by default, maps entries are shared by all API proxies
+  running in an environment (for example, test or prod). If you set the scope to
+  <code>apiproxy</code>, then entries in the KeyValueMap are accessible only by the API proxy that
+  writes the values to the map.</p>
+
+  <p>Note that when accessing a map or map entry, you must specify the same scope value you used
+  when the map was created. For example, if the map was created with a scope of
+  <code>apiproxy</code>, you must use the <code>apiproxy</code> scope when retrieving its values,
+  putting changes, or deleting entries.</p>
+  <pre class="prettyprint">
+&lt;Scope&gt;environment&lt;/Scope&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td><code>environment</code></td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>String</td>
+      </tr>
+
+      <tr>
+        <td><b>Valid values:</b></td>
+
+        <td>
+          <ul>
+            <li><code>organization</code></li>
+
+            <li><code>environment</code></li>
+
+            <li><code>apiproxy</code></li>
+
+            <li><code>policy</code> (API proxy revision)</li>
+          </ul>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="InitialEntries_Entry_ValueElement">&lt;Value&gt; element</h2>
+
+  <p>Specifies the value of a key. You can specify the value as either a literal string or, using
+  the <code>ref</code> attribute, as a variable to be retrieved at run time.</p>
+  <pre class="prettyprint">
+&lt;!-- Specify a literal value --&gt;
+&lt;Value&gt;literal&lt;Value&gt;
+</pre>
+
+  <p><b>OR</b></p>
+  <pre class="prettyprint">
+&lt;!-- Specify the name of variable value to be populated at run time. --&gt;
+&lt;Value ref="variable_name"/&gt;
+</pre>
+
+  <p>You can also include multiple <code>&lt;Value&gt;</code> elements to specify a multi-part
+  value. Values are combined at run time.</p>
+
+  <p>In the following example, two keys are added to the KVM:</p>
+
+  <ul>
+    <li>Key <code>k1</code> with values <code>v1,v2</code></li>
+
+    <li>Key <code>k2</code> with values <code>v3,v4</code></li>
+  </ul>
+  <pre class="prettyprint">
+&lt;InitialEntries&gt;         
+   &lt;Entry&gt;             
+      &lt;Key&gt;
+         &lt;Parameter&gt;k1&lt;/Parameter&gt;
+      &lt;/Key&gt;
+      &lt;Value&gt;v1&lt;/Value&gt;
+      &lt;Value&gt;v2&lt;/Value&gt;     
+   &lt;/Entry&gt;
+   &lt;Entry&gt;
+      &lt;Key&gt;
+         &lt;Parameter&gt;k2&lt;/Parameter&gt;
+      &lt;/Key&gt;
+      &lt;Value&gt;v3&lt;/Value&gt;
+      &lt;Value&gt;v4&lt;/Value&gt;
+   &lt;/Entry&gt;
+&lt;/InitialEntries&gt;
+</pre>
+
+  <p>In the following example, one key is created with two values. Let's assume the organization
+  name is <code>foo_org</code>, the API proxy name is <code>bar</code>, and the environment is
+  <code>test</code>:</p>
+
+  <ul>
+    <li>Key <code>foo_org</code> with values <code>bar,test</code></li>
+  </ul>
+  <pre class="prettyprint">
+&lt;Put&gt;
+    &lt;Key&gt;
+        &lt;Parameter ref="organization.name"/&gt;
+    &lt;/Key&gt;
+    &lt;Value ref="apiproxy.name"/&gt;
+    &lt;Value ref="environment.name"/&gt;
+&lt;/Put&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Required</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>String</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="valueelement-attributes">Attributes</h3>
+
+  <table width="650">
+    <tbody>
+      <tr>
+        <th scope="col">Attribute</th>
+
+        <th scope="col">Description</th>
+
+        <th scope="col">Default</th>
+
+        <th scope="col">Presence</th>
+      </tr>
+
+      <tr>
+        <td>ref</td>
+
+        <td>Specifies the name of a variable whose value contains the key value(s) you want to
+        set.</td>
+
+        <td>N/A</td>
+
+        <td style="width: 50px;">Required if no literal value is given between the opening and
+        closing tags. Prohibited if a literal value is given.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="errorcodes">Error codes</h2>
+
+  <p>Errors returned from Edge policies follow a consistent format as described in the <a href=
+  "/api-platform/reference/policies/error-code-reference.html">Error code reference</a>.</p>
+
+  <p>{% dynamic include /includes/___key-value-map-policy-error-codes %}</p>
+
+  <h2 id="schemas">Schemas</h2>
+
+  <aside class="note"><b>Sample:</b> See our <a href=
+  "https://github.com/apigee/api-platform-samples/tree/master/schemas/policy">GitHub
+  repository</a> samples for the most recent schemas.</aside>
+
+  <h2 id="usagenotes">Usage notes</h2>
+
+  <p>For an overview of key value maps, see <a href=
+  "/api-platform/cache/key-value-maps.html">Working with key value maps</a>.</p>
+
+  <p>A key value map store provides a lightweight persistence mechanism for data formatted as
+  key/value pairs. You can access these at runtime through policies or code. A map contains any
+  arbitrary data in the format <code>key=value</code>.</p>
+
+  <aside class="warning"><b>Warning:</b> In organizations with <a href=
+  "/api-platform/reference/apis/api-reference-getting-started.html#cps" target="_blank">Core
+  Persistence Services (CPS)</a> enabled, key size is limited to 2 KB. In non-CPS
+  organizations, a key value map has a 15 MB limit. Writing to the map may fail close to or
+  beyond these limits.</aside>
+
+  <p>For example <code>localhost=127.0.0.1</code>, <code>zip_code=94110</code>, or
+  <code>first_name=felix</code>. In the first example, <code>localhost</code> is a <i>key</i>, and
+  <code>127.0.0.1</code> is a <i>value</i>. Each key/value pair is stored as an entry in a key
+  value map. A key value map can store many entries.</p>
+
+  <p>For example, say you need to store a list of IP addresses associated with various backend
+  environments. You could create a key value map called <code>ipAddresses</code> that contains a
+  list of key/value pairs as entries. For example, this JSON can represent such a map:</p>
+  <pre class="prettyprint">
+{
+  "entry" : [ {
+    "name" : "Development",
+    "value" : "65.87.18.18"
+  }, {
+    "name" : "Staging",
+    "value" : "65.87.18.22"
+  } ],
+  "name" : "ipAddresses"
+}
+</pre>
+
+  <p>You could use this structure to create a store of IP addresses that could be used by policies
+  at runtime to enforce IP whitelisting or blacklisting, to dynamically select a backend target
+  address, and so on. Typically, the KeyValueMapOperations policy is used to store or retrieve
+  long-lived information that needs to be reused over multiple request/response transactions.</p>
+
+  <p>Key/value maps can be manipulated via the KeyValueMapOperations policy, or directly via the
+  Apigee Edge management API. Refer to the management API reference for details on the <a href=
+  "/api/keyvalue-maps">Organization key/value maps API</a> API. You can use the API to, for
+  example, upload large data sets to the key/value store, or creating scripts to manage key/value
+  map entries. You will need to create a key/value map with the API before accessing it with the
+  KeyValueMapOperations policy.</p>
+
+  <h3 id="specifying_key_names">Specifying and retrieving key names</h3>
+
+  <p>With the <code>&lt;Parameter&gt;</code> and <code>&lt;Value&gt;</code> elements, you can
+  specify either a literal value (where the value is between the opening and closing tags) or use
+  the <code>ref</code> attribute to specify the name of a variable whose value should be used at
+  runtime.</p>
+
+  <p>The Parameter element deserves special mention, because it determines the name of the key that
+  gets created, as well as the key name you want to retrieve or delete. Following are two examples.
+  The first specifies a key name literally, and the second specifies a key name using a variable.
+  Let's assume the following are used to create keys in a KVM:</p>
+  <pre class="prettyprint">
+&lt;Parameter&gt;key_name_literal&lt;/Parameter&gt;
+&lt;Parameter ref="key.name.variable"/&gt;
+</pre>
+
+  <p>In the first instance, the literal value of "key_name_literal" is stored in the KVM as the key
+  name. In the second instance, whatever value is in the <code>key.name.variable</code> becomes the
+  name of the key in the KVM. For example, if the <code>key.name.variable</code> contained the
+  value <code>foo</code>, the key would be named "foo".</p>
+
+  <p>When you want to retrieve the key and a key value with a GET operation (or delete with a
+  DELETE operation), the &lt;Parameter&gt; setting needs to match the key name in the KVM. For
+  example, if the key name in the KVM is "foo", you can either specify the literal value with
+  <code>&lt;Parameter&gt;foo&lt;/Parameter&gt;</code> or specify a variable that contains the exact
+  value "foo", like this: <code>&lt;Parameter ref="variable.containing.foo"/&gt;</code>.</p>
+
+  <aside class="note"><b>Note:</b> The name <code>ratelimit</code> is reserved. For more
+  information, see <a href=
+  "https://community.apigee.com/questions/8860/quota-policy-throws-nullpointerexception.html">this
+  Apigee Community post</a>.</aside>
+
+  <h2 id="relatedtopics">Related topics</h2>
+
+  <p><a href="/api/keyvalue-maps">Organization key/value maps API</a></p>
+
+  {% endblock %}

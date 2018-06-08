@@ -1,0 +1,341 @@
+  {% extends "_base.html" %} {% block title %}Exposing a SOAP service as an API proxy{% endblock %}
+  {% block body %}
+
+  <p>This topic explains how to create API proxies for SOAP-based web services. You can create two
+  kinds of SOAP proxies in Edge. One generates a <strong>RESTful interface</strong> to the backend
+  SOAP service and the other performs a <strong>"pass through"</strong> of the SOAP message to the
+  backend. Both techniques are described in this topic.</p>
+
+  <div class="video">
+    <p>This video provides and end-to-end demo of turning a SOAP service into a REST service with
+    Apigee Edge using the API proxy wizard. However, if you want more control over the SOAP-to-REST
+    transformation, you can build a proxy using policies. For more information, see <a href=
+    "https://community.apigee.com/content/kbentry/24743/manual-construction-of-a-soap-to-rest-api-proxy-in.html">
+    this Community post</a>.</p>
+
+    <p><iframe allowfullscreen="" frameborder="0" height="450" scrolling="no" src=
+    "https://www.youtube.com/embed/4bQQUpb7Sx4" width="600"></iframe></p>
+  </div>
+
+  <h2 id="creatingarestfulapiproxytoasoapbasedservice">Creating a RESTful API proxy to a SOAP-based
+  service</h2>
+
+  <p>This section explains how to create a RESTful SOAP API proxy with the <strong>REST to SOAP to
+  REST</strong> option in the Build a Proxy wizard.</p>
+
+  <h3 id="creatingarestfulapiproxytoasoapbasedservice-overview">Overview</h3>
+
+  <p>The <strong>REST to SOAP to REST</strong> option processes the WSDL to generate a RESTful
+  API proxy. Edge determines from the WSDL the service's supported operations, input parameters,
+  and so on. Edge "guesses" which HTTP method to use for each operation. Typically, Edge translates
+  operations into GET requests, which have the advantage of being cacheable. Edge also sets up the
+  backend target endpoint, which can vary per SOAP operation. </p>
+
+  <p>For this type of proxy, Edge auto-generates an <a href="https://openapis.org/" target=
+  "_blank">OpenAPI Specification</a>, which you can use to create API documentation.</p>
+
+  <h3 id="creatingarestfulapiproxytoasoapbasedservice-basicsteps">Basic steps</h3>
+
+  <ol>
+    <li>From the Dashboard, click <strong>+ API Proxy</strong>. </li>
+
+    <li>In the Build a Proxy wizard, select SOAP service.</li>
+
+    <li>Click <strong>Next</strong>.</li>
+
+    <li>In the Details page, make these selections. You must click <strong>Validate</strong> after
+    selecting a WSDL.<br>
+
+      <table>
+        <thead>
+          <tr>
+            <th width="111">In this field</th>
+
+            <th width="1182">do this</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr>
+            <td><strong>WSDL</strong></td>
+
+            <td>
+              <p>Select the source of the WSDL.</p>
+
+              <ul>
+                <li><strong>URL</strong> - Enter the URL of the WSDL you wish to
+                use. </li>
+
+                <li><strong>File</strong> - Choose a WSDL file on your file system. In cases
+                where there are additional dependent files, you can select all of them. </li>
+
+                <li><strong>Example URL</strong> - Select from a list of WSDLs for publicly
+                available web services. These are handy for trying out the SOAP/API proxy features
+                of Edge.</li>
+              </ul>
+            </td>
+          </tr>
+
+          <tr>
+            <td><strong>Proxy Name</strong></td>
+
+            <td>
+              <p>This is name for the proxy you're creating.</p>
+            </td>
+          </tr>
+
+          <tr>
+            <td><strong>Proxy Base Path</strong></td>
+
+            <td>
+              <p>The Proxy Base Path is a URI fragment that uniquely identifies the API that is
+              exposed by this API proxy. API Services uses the Base Path URI to match and route
+              incoming request messages to the proper API proxy. (The Base Path is appended to the
+              domain of the API, which is automatically generated based on
+              your <i>organization</i> name and the <i>environment</i> where
+              the API proxy is deployed.) It's a best practice to include a version number in the
+              project name, for example, <code>/v1/delayedstockquote</code>. This will
+              determine how your API is invoked by consumer apps.</p>
+
+              <p><strong>Note</strong>: The Proxy Base Path defaults to the value specified for
+              Proxy Name converted to all lower case unless you explicitly edit the content in the
+              Proxy Base Path field.</p>
+            </td>
+          </tr>
+
+          <tr>
+            <td><strong>Description</strong></td>
+
+            <td>A brief description of the proxy.</td>
+          </tr>
+        </tbody>
+      </table>
+    </li>
+
+    <li>Click <strong>Next</strong>. </li>
+
+    <li>In the WSDL page, select the API proxy type <strong>REST to SOAP to
+    REST</strong>.</li>
+  </ol>
+
+  <p style="margin-left: 40px;"><strong>Note:</strong> A table appears listing the operations
+  that Edge "discovered" in the WSDL file. You can select and configure which operations you wish
+  to incorporate into your API proxy. The table is shown in the following figure. <br>
+  <br>
+  <img alt="" src="/api-platform/images/delayedstockquote.png"><br>
+   </p>
+
+  <ol start="7">
+    <li>Select from the Port Type column which set of operations you wish to use. In WSDL, port
+    type elements define the operations that you can call on a web service. </li>
+
+    <li>Optionally change the HTTP Method associated with the operation.<br>
+    <br>
+    <strong>Note:</strong> Edge makes a "best guess" in determining the HTTP method to use for
+    each operation. GET is generally preferred because GET requests can be cached.<br>
+     </li>
+
+    <li>Optionally change the REST API path for an operation. The path will be used as the resource
+    name in the API proxy URL.</li>
+
+    <li>Click through the rest of the wizard to add security, select virtual hosts, and deployment
+    environment.</li>
+
+    <li>In the Build page, click <strong>Build and Deploy</strong>. Edge generates and deploys the
+    new API proxy based on the WSDL.</li>
+
+    <li>Go to the summary page for the new API proxy. Note that a set of resources have been
+    constructed based on the operations discovered in the WSDL file.<br>
+    <br>
+    On the proxy's Overview page, the <strong>Resources</strong> list provides a detailed
+    description of the new API, its operations, and parameters. You can think of this
+    representation as the API's reference documentation. Edge generates this view of the API model
+    automatically for you. Simply expand a resource to see its description and path
+    information.</li>
+  </ol>
+
+  <h3 id="creatingarestfulapiproxytoasoapbasedservice-aboutthefinalproxy">About the final
+  proxy</h3>
+
+  <p>When Edge generates an API proxy based on a WSDL, the resulting proxy is actually a complex
+  flow that includes policies for transforming data, extracting and setting variables, manipulating
+  messages, and more. After you generate a proxy based on a WSDL, take a look at the resulting flow
+  in the Develop view of the API management UI. There, you can see exactly which policies have been
+  added.</p>
+
+  <p>For example, on the request side, an AssignMessage policy is used to set the target URL. On
+  the response side, policies execute to transform the response from XML to JSON, extract the SOAP
+  body part of the response into a variable, and set the response message. These policies (and
+  others) are added automatically when you create the proxy.</p>
+
+  <p><strong>OpenAPI Spec</strong>: To view the auto-generated OpenAPI Spec for this proxy,
+  visit <code>http(s)://[proxy_domain]/[proxy_base_path]/openapi.json</code>. However,
+  the conversion is not always accurate, since not all the rules of an XML schema can be
+  represented in an OpenAPI Spec.</p>
+
+  <h2 id="creatingapassthroughproxytoasoapbasedservice">Creating a pass-through proxy to a
+  SOAP-based service</h2>
+
+  <p>This section explains how to create a pass-through proxy with the <strong>Pass-Through
+  Proxy</strong> option in the Create New Proxy dialog.</p>
+
+  <h3 id="creatingapassthroughproxytoasoapbasedservice-overview">Overview</h3>
+
+  <p>The Pass-Through Proxy option lets you to create a proxy that passes the SOAP message in a
+  request to the backend service "untouched", making it very easy to create a proxy for a
+  SOAP-based web service. Behind the scenes, Edge handles any transformations and other flow
+  activities for you automatically. For example, if the request happens to be in JSON format, Edge
+  takes steps to convert it to a valid XML SOAP message with correct namespaces before POSTing it
+  to the service. Similarly, when the service returns an XML-based SOAP response, Edge translates
+  it back to JSON before returning it to the client. In addition, Edge sets up the backend target
+  endpoint, which can vary per SOAP operation. </p>
+
+  <aside class="key-point"><b>Tip:</b> You might wish to choose Pass-Through if the WSDL operations
+  support a lot of unbounded parameters. It's easier for Edge to translate a WSDL containing
+  bounded parameters to a proxy, because they are finite and therefore can be represented by a
+  finite set of query parameters or form variables.</aside>
+
+  <p>For this type of proxy, Edge hosts the WSDL and creates a flow in the proxy to let you
+  access it. The address to this Edge-hosted WSDL,
+  <code>http(s)://[proxy_domain]/[proxy_base_path]?wsdl</code>, becomes the new service endpoint
+  URL for clients calling the SOAP service through the proxy.</p>
+
+  <h3 id="creatingapassthroughproxytoasoapbasedservice-basicsteps">Basic steps</h3>
+
+  <ol>
+    <li>From the Dashboard, click <strong>+ API Proxy</strong>. </li>
+
+    <li>In the Build a Proxy wizard, select SOAP service.</li>
+
+    <li>Click <strong>Next</strong>.</li>
+
+    <li>In the Details page, make these selections. You must click <strong>Validate</strong> after
+    selecting a WSDL.</li>
+  </ol>
+
+  <table>
+    <thead>
+      <tr>
+        <th width="111">In this field</th>
+
+        <th width="1182">do this</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td><strong>WSDL</strong></td>
+
+        <td>
+          <p>Select the source of the WSDL.</p>
+
+          <ul>
+            <li><strong>URL</strong> - Enter the URL of the WSDL you wish to use. </li>
+
+            <li><strong>File</strong> - Choose a WSDL file on your file system. In cases where
+            there are additional dependent files, you can select all of them. </li>
+
+            <li><strong>Example URL</strong> - Select from a list of WSDLs for publicly
+            available web services. These are handy for trying out the SOAP/API proxy features of
+            Edge.</li>
+          </ul>
+        </td>
+      </tr>
+
+      <tr>
+        <td><strong>Proxy Name</strong></td>
+
+        <td>
+          <p>This is name for the proxy you're creating.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td><strong>Proxy Base Path</strong></td>
+
+        <td>
+          The Proxy Base Path is a URI fragment that uniquely identifies the API that is exposed by
+          this API proxy. API Services uses the Base Path URI to match and route incoming request
+          messages to the proper API proxy. (The Base Path is appended to the domain of the API,
+          which is automatically generated based on your <i>organization</i> name and the
+          <i>environment</i> where the API proxy is deployed.) It's a best practice to include a
+          version number in the project name, for example, <code>/v1/delayedstockquote</code>. This
+          will determine how your API is invoked by consumer apps.
+
+          <p><strong>Note</strong>: The Proxy Base Path defaults to the value specified for Proxy
+          Name converted to all lower case unless you explicitly edit the content in the Proxy Base
+          Path field.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td><strong>Description</strong></td>
+
+        <td>A brief description of the proxy.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <ol start="5">
+    <li style="list-style: none"><br></li>
+
+    <li>Click <strong>Next</strong>.</li>
+
+    <li>In the WSDL page, select the API proxy type <strong>Pass-Through SOAP</strong>.<br>
+    <br>
+    <strong>Note:</strong> A table appears listing each WSDL operation and its corresponding
+    SOAP payload. This is the payload that is "passed through" to the backend SOAP
+    service. <br>
+    <br>
+    <img alt="" src="/api-platform/images/delayedstockquote-2.png"><br>
+     </li>
+
+    <li>Select from the Port Type column which set of operations you wish to use. In WSDL, port
+    type elements define the operations that you can call on a web service. </li>
+
+    <li>Click through the rest of the wizard to add security, select virtual hosts, and deployment
+    environment.</li>
+
+    <li>In the Build page, click <strong>Build and Deploy</strong>. Edge generates and deploys the
+    new API proxy based on the WSDL.</li>
+  </ol>
+
+  <p>In the proxy's Overview page, the <strong>Resources</strong> list provides a detailed
+  description of the new "pass-through" API proxy. You can think of this representation as the
+  API's reference documentation. Edge generates this view of the API model automatically for you.
+  Simply expand a resource to see its description. Note that the method used for Pass-Through
+  proxies is POST. This is the only method supported by the SOAP protocol. </p>
+
+  <h3 id="creatingapassthroughproxytoasoapbasedservice-aboutthefinalproxy">About the final
+  proxy</h3>
+
+  <p>When Edge generates a pass-through proxy, the resulting proxy is actually a complex flow that
+  includes policies for transforming data, extracting and setting variables, manipulating messages,
+  and more. After you generate the pass-through proxy, take a look at the resulting flow in the
+  Develop view of the API management UI. There, you can see exactly which policies have been
+  added.</p>
+
+  <p>For example, the following figure shows the Target Endpoint Preflow part of a pass-through
+  proxy. On the request side, an AssignMessage policy is used to set the target URL. On the
+  response side, policies execute to transform the response from XML to JSON, extract the SOAP body
+  part of the response into a variable, and set the response message. These policies (and others)
+  are added automatically when you create the proxy.</p>
+
+  <p><img alt="" src="/api-platform/images/delayedstockquote-3.png"></p>
+
+  <p><strong>Edge-hosted WSDL</strong>: To see the Edge-hosted WSDL generated for this type of
+  proxy, go to <code>http(s)://[proxy_domain]/[proxy_base_path]<strong>?wsdl</strong></code>.</p>
+
+  <h2 id="advancedsoaptorestproxydevelopment">Advanced SOAP-to-REST proxy development</h2>
+
+  <p>The previous sections covered the creation of a SOAP-to-REST API proxy using the API proxy
+  wizard in Edge. However, if you want more fine-grained control over the SOAP-to-REST
+  transformation, you can bypass the automation provided by the wizard and build a proxy by
+  manually adding and configuring policies to get the behavior you want. For more information,
+  see <a href=
+  "https://community.apigee.com/content/kbentry/24743/manual-construction-of-a-soap-to-rest-api-proxy-in.html">this
+  Community post</a>.</p>
+
+  <div>
+     
+  </div>{% endblock %}

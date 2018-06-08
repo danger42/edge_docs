@@ -1,0 +1,130 @@
+  {% extends "_base.html" %} {% block title %}API keys{% endblock %} {% block body %}
+
+  <p>An <em>API key</em> (known in Apigee Edge as a <em>consumer key</em>) is a string value passed
+  by a client app to your API proxies. The key uniquely identifies the client app.</p>
+
+  <p>API key validation is the simplest form of app-based security that you can configure for an
+  API. A client app simply presents an API key with its request, then Apigee Edge checks to see
+  that the API key is in an approved state for the resource being requested. Internally, your
+  proxies use policies to verify API key authenticity.</p>
+
+  <p>To support this simplicity, you'll need to do a bit of setup. To support API keys, you'll need
+  to:</p>
+
+  <ul>
+    <li><strong>Create an Apigee Edge API product</strong> that bundles the API proxies you want to
+    protect using the API key.</li>
+
+    <li>
+      <strong>Create an Apigee Edge developer app</strong> that represents the client app developer
+      whose app you'll be authenticating.
+
+      <p>In creating the developer app, you specify API products the developer's app will have
+      access to -- and for which it will need to provide an API key.</p>
+    </li>
+
+    <li>To your proxies (the ones you included in your API product), <strong>add policies</strong>
+    to verify that an incoming API key is valid.</li>
+  </ul>
+
+  <p>The <a href=
+  "/api-platform/tutorials/secure-calls-your-api-through-api-key-validation.html">Secure an API by
+  requiring API keys</a> tutorial is a quick way to learn how to control access to an API proxy
+  with an API key.</p>
+
+  <aside class="note"><b>Note:</b> The security associated with API keys is limited. Because API
+  keys can easily be extracted from app code and used to access an API, they work better as unique
+  app identifiers, rather than security tokens. If you're looking for a way to implement security,
+  be sure to see <a href="/api-platform/security/oauth/oauth-home.html">OAuth home</a>.</aside>
+
+  <aside class="note"><b>Note:</b> API keys go by many names. In the Apigee Edge management
+  console, they're referred to as consumer keys. But you may see them referred to as "app keys".
+  All of these names are synonymous.</aside>
+
+  <aside class="note"><b>Sample:</b> A working sample API proxy that enforces API key validation is
+  available in the <a href="https://github.com/apigee/api-platform-samples">API Platform
+  Samples</a> available on Github. You can use the sample API proxy to secure your own API. Locate
+  the API proxy found under <code>/sample-proxies/apikey</code>. Modify the TargetEndpoint
+  configuration to point to your URL. Then deploy.</aside>
+
+  <h2 id="howapikeyswork">How API keys work</h2>
+
+  <p>In Apigee Edge, an API key is referred to as a consumer key. When you register developer apps,
+  Apigee Edge generates a consumer key and secret. Apigee Edge stores the consumer key for future
+  validation. Each consumer key is unique in the organization. The app developer embeds the
+  consumer key in the client app. The client app must present the consumer key for each request.
+  API Services verifies the consumer key before permitting the app's request.</p>
+
+  <h3 id="howapikeyswork-highlevelsteps">High-level steps</h3>
+
+  <p>The following steps describe how API keys are used by Apigee Edge. These steps include the
+  possible presence of OAuth security as well, since it is often used in conjunction with API
+  keys.</p>
+
+  <ol>
+    <li><strong>Create an API product</strong> that includes API proxies that should be protected
+    with the API key.</li>
+
+    <li>You <strong>register a developer app</strong> in your organization. When you do Apigee Edge
+    generates a consumer key and a consumer secret.</li>
+
+    <li><strong>Associate the developer app with at least one API product</strong>. It is the
+    product that associates resource paths and API proxies with key approval.</li>
+
+    <li>At run time, when the client app makes a request to your API, the <strong>client app sends
+    the consumer key when making the request</strong>. In practice, the consumer key might be
+    either passed explicitly or it might be implicitly referred to via an OAuth token:
+
+      <ul>
+        <li>When the API uses API key verification -- such as by implementing a VerifyAPIKey policy
+        -- the client app must pass the consumer key explicitly.</li>
+
+        <li>When the API uses OAuth token verification -- such as by implementing an OAuthV2 policy
+        -- the client app must pass a token that has been <em>derived from</em> the consumer
+        key.</li>
+      </ul>
+    </li>
+
+    <li>The <strong>API Proxy validates the request</strong> credentials through either a
+    VerifyAPIKey policy or an OAuthV2 policy with a VerifyAccessToken operation. If you do not
+    include a credential enforcement policy in your API Proxy, any caller can successfully invoke
+    your APIs. For more information, see <a href=
+    "/api-platform/reference/policies/verify-api-key-policy.html">Verify API Key policy</a>.</li>
+  </ol>
+
+  <h3 id="howapikeyswork-verifyingrequestcredentials">Verifying request credentials</h3>
+
+  <p>This is an overview. Be sure to see <a href=
+  "/api-platform/security/setting-api-key-validation.html">Setting up API key validation</a> for
+  details and code examples.</p>
+
+  <ol>
+    <li>If you're using OAuth token verification -- you've implemented an OAuth policy to verify
+    and the client app has passed an OAuth token:
+
+      <ul>
+        <li>Apigee Edge verifies that the token is not expired, and then looks up the consumer key
+        that was used to generate the token.</li>
+      </ul>
+    </li>
+
+    <li>If you're using an API key -- you've implemented a VerifyAPIKey policy and the client app
+    has passed its consumer key:
+
+      <ol>
+        <li>Apigee Edge checks the list of API Products with which the consumer key has been
+        associated.</li>
+
+        <li>Edge checks each API Product to see if the current API Proxy is included in the API
+        Product, and if the current resource path (url path) is enabled on the API Product.</li>
+
+        <li>Edge also verifies that the consumer key is not expired or revoked, checks that the app
+        is not revoked, and checks that the developer is not inactive.</li>
+
+        <li>If all of those things are true -- the token is not expired (if applicable), the
+        consumer key is valid and approved, the app is approved, the developer is active, the proxy
+        is available in the product, and the resource is available on the product -- the credential
+        verification succeeds.</li>
+      </ol>
+    </li>
+  </ol>{% endblock %}

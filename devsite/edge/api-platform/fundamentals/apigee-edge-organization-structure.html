@@ -1,0 +1,270 @@
+{% extends "_base.html" %}
+{% block title %}Understanding organizations{% endblock %}
+{% block body %}
+
+  <p>An organization is the top-level container in Apigee Edge. It contains all your API proxies
+  and related resources. While the rest of this topic goes into more depth about organizations,
+  here are a few practical points:</p>
+
+  <ul>
+    <li>By default, your organization name is in the URL used to call your API proxies, as
+      described in <a href="/api-platform/fundamentals/virtual-hosts">About virtual hosts (Beta)</a>.
+      For example:
+      <pre>http(s)://<var>your_org_name</var>-<var>environment</var>.apigee.net/proxy_base_path/...</pre>
+    </li>
+    <li>Your organization name is in the URL of the Edge management UI. For example, for an
+      organization called 'apigeedocs', the management UI URL is this:
+      <p><img alt="" src="/api-platform/images/org_in_ui_url.png"></p>
+    </li>
+    <li>While you may have created only one organization, you can belong to other organizations as
+      a user or administrator with specific permissions. In the Edge management UI, if you belong to
+      more than one organization, you can switch between them in the Organization drop-down.
+      <p><img alt="" src="/api-platform/images/org_picker_in_ui.png"></p>
+    </li>
+    <li>When you make calls with the management API as a user in the Organization Administrator
+      role, the organization is a required part of the path in most calls. For example, the following
+      management API cURL request returns a list of all API proxies in an organization:
+      <pre class="devsite-terminal">curl https://api.enterprise.apigee.com/v1/organizations/<var>your_org_name</var>/apis -u <var>org_admin_email_address</var></pre>
+    </li>
+  </ul>
+
+  <div class="video">
+    <p><strong>Video:</strong> Watch a short video to learn how organizations support a
+    multi-tenancy architecture for API management.</p>
+
+    <div style="text-align: left; margin:15px">
+      <iframe allowfullscreen="" frameborder="0" height="480" src=
+      "https://www.youtube.com/embed/1jj37a4zi5U" width="560"></iframe>
+    </div>
+  </div>
+
+  <h2 id="organizationcomponents">Organization components</h2>
+
+  <p>When you create an Edge account, Edge automatically creates an organization for you. Once
+  created, you can add users to your organization, create API proxies and API products, and
+  register developers and apps.</p>
+
+  <p>The following image shows the major components of the Edge organizational model. This
+  model defines how your APIs, API products, apps, and app developers are all related within
+  Edge.</p>
+
+  <p><img alt="" src="/api-platform/images/org_v26.png"></p>
+
+  <p>This model does not show all of the features of Apigee Edge. If you use monetization or API
+  BaaS, then the model would have additional components. For more information, see
+  <a href="/api-platform/monetization/basics-monetization">Understand monetization</a> and
+  <a href="/api-baas">API BaaS</a>.</p>
+
+  <aside class="note">
+    <strong>Note:</strong> For Cloud customers, you must contact {{support}} to add
+    additional organizations to your account, or to delete an organization.
+
+    <p>For Edge for Private Cloud customers, the system administrator can add or delete an
+    organization. See the Edge <em>Operations Guide</em>, available on the Apigee ftp site:
+    {{ftp}}, for more information.</p>
+  </aside>
+
+  <h3 id="organizationcomponents-organizationnames">Organization names</h3>
+
+  <p>The name of the organization is your Edge username. Once created, you cannot rename an
+  organization.</p>
+
+  <p>The organization name becomes part of the URL to your API proxies and part of the URL when
+  making a request to the Edge management API. For example, a typical URL used to access an API
+  proxy has the form:</p>
+
+  <pre>http://<var>org-name</var>-<var>env</var>.apigee.net/v1/weather/forecastrss</pre>
+
+  <p>where:</p>
+
+  <ul>
+    <li><var>org-name</var> is the name of your organization.</li>
+    <li><var>env</var> is the deployment environment of the API proxy, which is either test or
+    prod.</li>
+  </ul>
+
+  <p>For example:</p>
+  <pre class="prettyprint">
+http://myorg-test.apigee.net/v1/weather/forecastrss
+</pre>
+
+  <h3 id="organizationcomponents-organizationcomponents">Organization components</h3>
+
+  <p>The following table describes the components of the organizational model in more detail:</p>
+
+  <table width="650">
+    <thead>
+      <tr>
+        <th>Component</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>
+          <p>Organization</p>
+        </td>
+        <td>
+          <p>Every Apigee account maps to one or more organizations on Apigee Edge. The
+          organization contains a representation of all components including API proxies, API
+          products, API packages, apps, and developers.</p>
+          <p>Account holders are not limited to a single organization. Some account holders might
+          define or be a member of multiple organizations that support different app developer
+          communities.</p>
+          <aside class="note"><strong>Note:</strong> Free Edge accounts are limited to
+          <em>creating</em> only a single organization&#8212;though a free account holder can be a
+          member of multiple existing organizations.</aside>
+        </td>
+      </tr>
+      <tr>
+        <td>Environment</td>
+        <td>A runtime execution context for the API proxies in an organization. See the section
+        below for more on environments.</td>
+      </tr>
+      <tr>
+        <td>
+          <p>User</p>
+        </td>
+        <td>
+          <p>Within an organization, where the person creating the account is automatically an
+          administrator, you can create more users. Users make up the organization's API team,
+          which can include people such as administrators, API proxy and API product creators,
+          users monitoring analytics and other statistics, and any others.</p>
+          <p>Different users can have different roles and access privileges. For example, define
+          some users as Organization Administrators and Operations Administrators with privileges
+          to modify the organization and its components. Define other users with permissions to
+          create API proxies and API products, but without the privileges to modify other
+          users.</p>
+          <p>Users can be members of multiple organizations. For example, your company might define
+          multiple organizations on Apigee Edge to support different developer communities.
+          Internally though, the same people build all of the API proxies and API products and are
+          therefore members of all of your organizations.</p>
+          <p>You don't have to create an Apigee account&#8212;that is, create an Apigee
+          organization&#8212;to be a user. An administrator can add you to an existing
+          organization.</p>
+          <p>All users log in to Apigee Edge here:
+          <a href="https://enterprise.apigee.com" class="external">https://enterprise.apigee.com</a>.</p>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <p>API proxy</p>
+        </td>
+        <td>
+          <p>The users in an organization create one or more API proxies. An API proxy defines a
+          mapping of a publicly available HTTP endpoint to a backend service. API proxies can also
+          be configured to include security (such as OAuth), perform message transformation (such
+          as XML to JSON), limit traffic to backend services, and perform other valuable operations
+          on the request, the response, and with service callouts.</p>
+          <p>Edge collects data for analytics on API proxies.</p>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <p>API product</p>
+        </td>
+        <td>
+          <p>The users in an organization create one or more API products, where an API product is
+          a bundle of API proxies combined with a service plan. That service plan can set access
+          limits on API proxies, provide security, allow monitoring and analytics, and provide
+          additional features.</p>
+          <p>Edge collects data for analytics on API products.</p>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <p>Developer</p>
+        </td>
+        <td>
+          <p>An organization contains one or more developers who build the apps that consume the
+          APIs (assembled into API products) defined by your organization. Developers consume APIs
+          but cannot create APIs or perform any other actions in the organization.</p>
+          <p>Developers can be internal to your company, they can be partners, or they can be
+          external developers who pay for access to your APIs.</p>
+          <p>Developers must be registered in your organization before they can register an app and
+          receive an API key to access your APIs. As an API provider, it is up to you to determine
+          how to add, update, or remove developers in your organization. You can manually add them
+          through the Edge management UI, create a developer portal to register them through a
+          website, or define your own registration mechanism by using the Edge management
+          API.</p>
+          <p>A developer is not required to have an account on Edge, and most developers will not
+          need to know anything about Edge. If the developer does have an account on Edge, it is
+          typically as a user in a different organization, or to use the Edge API Services.</p>
+          <p>In addition to your APIs, app developers also have access to Edge Advanced API
+          Services, which provides a flexible NoSQL data store and features such as social graphs,
+          geolocation, user management, push notifications, performance monitoring, and more.</p>
+          <p>Because your API developers are registered in your organization, you can use Edge to
+          monitor and collect analytic information on developers and their use of your APIs.</p>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <p>App</p>
+        </td>
+        <td>
+          <p>Developers create one or more client apps that consume your APIs.</p>
+          <p>Developers must register their apps with your organization. An App in Edge is a
+          representation of a developer's actual app that provides the developer with an API key to
+          pass in with every request to your APIs.</p>
+          <p>Because all apps are registered in your organization, you can use Edge to monitor and
+          collect analytic information on the app and on its use of your APIs.</p>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <p>API key/OAuth token</p>
+        </td>
+        <td>
+          <p>Depending on the authorization mechanism you define for your APIs, the app passes an
+          API key along with every request to your APIs. If that key is valid, the request is
+          allowed. Edge supports different types of authentication, such as a simple API key,
+          two-legged OAuth, three-legged OAuth, and others.</p>
+          <p>As an API provider, you must define a way for developers to register their apps. It is
+          by registering their app that you return to the developer the key required to access your
+          APIs.</p>
+          <p>At the time of app registration, the developer can choose to access a single API
+          product or multiple API products. The developer's actual app uses the same key to access
+          all API products associated with the app (the registered representation of the
+          developer's app in Edge).</p>
+          <p>At any time, you can revoke the key so that the developer's app no longer has access
+          to your APIs (even though the registered representation of the developer's app still
+          exists in your organization). Or, you can define a time limit on a key so that the
+          developer must refresh the key after a specific time.</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="aboutenvironments">About environments</h2>
+
+  <p>An <em>environment</em> is a runtime execution context for the API proxies in an organization.
+  You must deploy an API proxy to an environment before it can be accessed. You can deploy an API
+  proxy to a single environment or to multiple environments.</p>
+
+  <p>An organization can contain multiple environments. For example, you might define a "dev",
+  "test", and "prod" environment in an organization.</p>
+
+  <aside class="note">
+    <strong>Note:</strong> When you first create your organization in a Cloud-based deployment of Edge,
+    Apigee automatically creates two environments in your organization: "prod" and "test". To
+    create additional environments, contact {{support}}.
+
+    <p>For an Edge for Private Cloud installation, no organization or environments are created by
+    default. You have to create them as part of the installation process. See the Edge
+    <em>Installation Guide</em> for more, which is available from your private FTP account or on
+    the <a href="https://apigee.com/about/support/portal" class="external">Apigee Support
+    Portal</a> under <strong>Libraries</strong>.</p>
+  </aside>
+
+  <p>Organization provides scope for some Apigee capabilities. For example, key-value-map (KVM)
+  data can be made available at the organization level, meaning that API Proxies deployed to any
+  environment would get the same data from KVM. Some capabilities, such as caching, can be scoped
+  to the organization, or to a specific environment within the organization.
+  Apigee analytics data is partitioned by a combination of organization and environment.</p>
+
+  <p>Shown below are the major entities you manage within an organization, including those defined
+  globally in the organization, and those defined specifically to an environment:</p>
+
+  <p><img alt="" src="/private-cloud/images/org_components.png"></p>
+
+{% endblock %}

@@ -1,0 +1,531 @@
+  {% extends "_base.html" %} {% block title %}OAuth HTTP error response reference{% endblock %} {% block body %}
+
+  <aside class="note">
+    <b>Note:</b> <strong>This topic is deprecated.</strong> The error names and HTTP response codes
+    associated with the OAuthV2 policies are described in each policy's reference documentation:
+
+    <ul>
+      <li><a href="/api-platform/reference/policies/oauthv2-policy.html">OAuthV2 policy</a></li>
+
+      <li><a href="/api-platform/reference/policies/get-oauth-v2-info-policy.html">Get OAuth V2
+      Info policy</a></li>
+
+      <li><a href="/api-platform/reference/policies/set-oauth-v2-info-policy.html">Set OAuth V2
+      Info policy</a></li>
+
+      <li><a href="/api-platform/reference/policies/delete-oauth-v2-info.html">Delete OAuthV2 Info
+      policy</a></li>
+    </ul>
+  </aside>
+
+  <p>This topic provides HTTP status codes and their related reason phrases you may encounter when
+  an OAuth policy throws errors in Apigee Edge. </p>
+
+  <p>For guidance on handling errors, see <a href=
+  "/api-platform/fundamentals/fault-handling.html">Handling faults</a>.</p>
+
+  <p>For policy-specific error codes, see:</p>
+
+  <ul>
+    <li><a href="/api-platform/reference/policies/oauthv2-policy.html">OAuthV2 policy</a></li>
+
+    <li><a href="/api-platform/reference/policies/oauth-10-policy.html">OAuth v1.0a policy</a></li>
+  </ul>
+
+  <h2 id="authorizationcode">Authorization Code</h2>
+
+  <h3 id="authorizationcode-invalidredirecturi">Invalid Redirect URI</h3>
+
+  <div id="well">
+    <pre class="prettyprint">
+HTTP/1.1 400 Bad Request
+{"ErrorCode" : "invalid_request", "Error" :"Invalid redirection uri http://www.invalid_example.com"}
+</pre>
+  </div>
+
+  <h3 id="authorizationcode-noredirecturi">No Redirect URI</h3>
+
+  <div id="well">
+    <pre class="prettyprint">
+HTTP/1.1 400 Bad Request {"ErrorCode" : "invalid_request", "Error" :"Redirection URI is required"}
+</pre>
+  </div>
+
+  <h3 id="authorizationcode-invalidkey">Invalid Key</h3>
+
+  <div id="well">
+    <pre class="prettyprint">
+HTTP/1.1 401 Unauthorized {"ErrorCode" : "invalid_request", "Error" :"Invalid client id : AVD7ztXReEYyjpLFkkPiZpLEjeF2aYAz. ClientId is Invalid"}
+</pre>
+  </div>
+
+  <h3 id="authorizationcode-missingkey">Missing Key</h3>
+
+  <div id="well">
+    <pre class="prettyprint">
+HTTP/1.1 400 Bad Request
+{"ErrorCode" : "invalid_request", "Error" :"The request is missing a required parameter : client_id"}
+</pre>
+  </div>
+
+  <h3 id="authorizationcode-invalidresponsetype">Invalid Response Type</h3>
+
+  <div id="well">
+    <pre class="prettyprint">
+HTTP/1.1 400 Bad Request
+{"ErrorCode" : "invalid_request", "Error" :"Response type must be code"}
+</pre>
+  </div>
+
+  <h3 id="authorizationcode-missingresponsetype">Missing Response Type</h3>
+
+  <div id="well">
+    <pre class="prettyprint">
+HTTP/1.1 400 Bad Request
+{"ErrorCode" : "invalid_request", "Error" :"The request is missing a required parameter : response_type"}
+</pre>
+  </div>
+
+  <h2 id="generateaccesstoken">Generate AccessToken</h2>
+
+  <h3 id="generateaccesstoken-invalidauthcode">Invalid Auth Code</h3>
+
+  <div id="well">
+    <pre class="prettyprint">
+HTTP status: 400 Bad Request
+{"ErrorCode" : "invalid_request", "Error" :"Invalid Authorization Code"}
+</pre>
+  </div>
+
+  <h3 id="generateaccesstoken-noredirecturi">No Redirect URI</h3>
+
+  <div id="well">
+    <pre class="prettyprint">
+HTTP/1.1 400 Bad Request
+{"ErrorCode" : "invalid_request", "Error" :"Required param : redirect_uri"}
+</pre>
+  </div>
+
+  <h3 id="generateaccesstoken-invalidredirecturi">Invalid Redirect URI</h3>
+
+  <div id="well">
+    <pre class="prettyprint">
+HTTP/1.1 400 Bad Request
+{"ErrorCode" : "invalid_request", "Error" :"Invalid redirect_uri : oob"}
+</pre>
+  </div>
+
+  <h3 id="generateaccesstoken-invalidclientidwhengenerateresponseisfalse">Invalid Client ID when
+  GenerateResponse is false</h3>
+
+  <p>This error is returned when the <code>&lt;GenerateResponse&gt;</code> property is set to
+  <strong>false</strong> and the client credentials are invalid.</p>
+
+  <div id="well">
+    <pre class="prettyprint">
+{
+    "fault": {
+        "faultstring": "Invalid client identifier {0}",
+        "detail": {
+            "errorcode": "oauth.v2.InvalidClientIdentifier"
+        }
+    }
+}
+</pre>
+  </div>
+
+  <aside class="warning"><b>Warning:</b> In Edge Cloud Release 16.09.21, the error code
+  "<code>invalid_client</code>" was changed to "<code>InvalidClientIdentifier</code>" for certain
+  policy configurations. This change could affect fault rules that trap the old code. For details
+  on this change, see the description of <a href=
+  "/release/notes/160921-apigee-edge-public-cloud-release-notes.html">bug fix APIRT-3390</a> in
+  <a href="/release/notes/160921-apigee-edge-public-cloud-release-notes.html">16.09.21 - Apigee
+  Edge for Public Cloud release notes</a>.</aside>
+
+  <h3 id="generateaccesstoken-invalidclientidwhengenerateresponseistrue">Invalid Client ID when
+  GenerateResponse is true</h3>
+
+  <p>This error is returned when the <code>&lt;GenerateResponse&gt;</code> property is set to
+  <strong>true</strong> and the client credentials are invalid.</p>
+
+  <div id="well2">
+    <pre class="prettyprint">
+{"ErrorCode" : "invalid_client", "Error" :"ClientId is Invalid"}
+</pre>
+  </div>
+
+  <aside class="warning"><b>Warning:</b> In Edge Cloud Release 16.09.21, the error code
+  "<code>invalid_client</code>" was changed to "<code>InvalidClientIdentifier</code>" for certain
+  policy configurations. This change could affect fault rules that trap the old code. For details
+  on this change, see the description of <a href=
+  "/release/notes/160921-apigee-edge-public-cloud-release-notes.html">bug fix APIRT-3390</a> in
+  <a href="/release/notes/160921-apigee-edge-public-cloud-release-notes.html">16.09.21 - Apigee
+  Edge for Public Cloud release notes</a>.</aside>
+
+  <h3 id="generateaccesstoken-invalidgranttype">Invalid GrantType</h3>
+
+  <div id="well">
+    <pre class="prettyprint">
+HTTP/1.1 400 Bad Request
+{"ErrorCode" : "invalid_request", "Error" :"Unsupported grant type : client_credentials_invalid"}
+</pre>
+  </div>
+
+  <h3 id="generateaccesstoken-nousername">No Username</h3>
+
+  <div id="well">
+    <pre class="prettyprint">
+HTTP/1.1 400 Bad Request
+{"ErrorCode" : "invalid_request", "Error" :"Required param : username"}
+</pre>
+  </div>
+
+  <h3 id="generateaccesstoken-nopassword">No Password</h3>
+
+  <div id="well">
+    <pre class="prettyprint">
+HTTP/1.1 400 Bad Request
+{"ErrorCode" : "invalid_request", "Error" :"Required param : password"}
+</pre>
+  </div>
+
+  <h3 id="generateaccesstoken-nogranttypecustompolicy">No GrantType (Custom Policy)</h3>
+
+  <div id="well">
+    <pre class="prettyprint">
+HTTP/1.1 400 Bad Request
+{"ErrorCode" : "invalid_request", "Error" :"Required param : grant_type"}
+</pre>
+  </div>
+
+  <h3 id="generateaccesstoken-noauthcode">No AuthCode</h3>
+
+  <div id="well">
+    <pre class="prettyprint">
+HTTP/1.1 400 Bad Request
+{"ErrorCode" : "invalid_request", "Error" :"Required param : code"} 
+</pre>
+  </div>
+
+  <h2 id="implicit">Implicit</h2>
+
+  <h3 id="implicit-invalidclientid">Invalid Client ID</h3>
+
+  <div id="well">
+    <pre class="prettyprint">
+HTTP/1.1 401 Unauthorized
+{"ErrorCode" : "invalid_request", "Error" :"Invalid client id : AVD7ztXReEYyjpLFkkPiZpLEjeF2aYAz. ClientId is Invalid"}
+</pre>
+  </div>
+
+  <h3 id="implicit-noclientid">No Client ID</h3>
+
+  <div id="well">
+    <pre class="prettyprint">
+HTTP/1.1 400 Bad Request
+{"ErrorCode" : "invalid_request", "Error" :"The request is missing a required parameter : client_id"}
+</pre>
+  </div>
+
+  <h3 id="implicit-invalidresponsetype">Invalid Response Type</h3>
+
+  <div id="well">
+    <pre class="prettyprint">
+HTTP/1.1 400 Bad Request
+{"ErrorCode" : "invalid_request", "Error" :"Response type must be token"}
+</pre>
+  </div>
+
+  <h3 id="implicit-noresponsetype">No Response Type</h3>
+
+  <div id="well">
+    <pre class="prettyprint">
+HTTP/1.1 400 Bad Request
+{"ErrorCode" : "invalid_request", "Error" :"The request is missing a required parameter : response_type"}
+</pre>
+  </div>
+
+  <h3 id="implicit-invalidredirecturi">Invalid Redirect URI</h3>
+
+  <div id="well">
+    <pre class="prettyprint">
+HTTP/1.1 400 Bad Request
+{"ErrorCode" : "invalid_request", "Error" :"Invalid redirection uri http://www.invalid_example.com"}
+</pre>
+  </div>
+
+  <h3 id="implicit-noredirecturi">No Redirect URI</h3>
+
+  <div id="well">
+    <pre class="prettyprint">
+HTTP/1.1 400 Bad Request
+{"ErrorCode" : "invalid_request", "Error" :"Redirection URI is required"}
+</pre>
+  </div>
+
+  <h2 id="refreshtoken">Refresh Token</h2>
+
+  <h3 id="refreshtoken-invalidrefreshtoken">Invalid RefreshToken</h3>
+
+  <div id="well">
+    <pre class="prettyprint">
+HTTP/1.1 400 Bad Request
+{"ErrorCode" : "invalid_request", "Error" :"Invalid Refresh Token"}
+</pre>
+
+    <h3>Expired RefreshToken</h3>
+
+    <div id="well" style="font-size: 12px;">
+      <pre class="prettyprint">
+HTTP/1.1 400 Bad Request
+{"ErrorCode" : "invalid_request", "Error" :"Refresh Token expired"}
+</pre>
+    </div>
+  </div>
+
+  <h3 id="refreshtoken-invalidscope">Invalid Scope</h3>
+
+  <div id="well">
+    <pre class="prettyprint">
+HTTP/1.1 400 Bad Request
+{"ErrorCode" : "invalid_request", "Error" :"Invalid Scope"}
+</pre>
+  </div>
+
+  <h3 id="refreshtoken-invalidclientidwhengenerateresponseisfalse">Invalid Client ID when
+  GenerateResponse is false</h3>
+
+  <p>This error is returned when the GenerateResponse property is set to <strong>false</strong> and
+  the client credentials are invalid.</p>
+
+  <div id="well3">
+    <pre class="prettyprint">
+{
+    "fault": {
+        "faultstring": "Invalid client identifier {0}",
+        "detail": {
+            "errorcode": "oauth.v2.InvalidClientIdentifier"
+        }
+    }
+}
+</pre>
+  </div>
+
+  <aside class="warning"><b>Warning:</b> In Edge Cloud Release 16.09.21, the error code
+  "<code>invalid_client</code>" was changed to "<code>InvalidClientIdentifier</code>" for certain
+  policy configurations (when GenerateResponse is false). This change could affect fault rules that
+  trap the old code. For details on this change, see the description of <a href=
+  "/release/notes/160921-apigee-edge-public-cloud-release-notes.html">bug fix APIRT-3390</a> in
+  <a href="/release/notes/160921-apigee-edge-public-cloud-release-notes.html">16.09.21 - Apigee
+  Edge for Public Cloud release notes</a>.</aside>
+
+  <h3 id="refreshtoken-invalidclientidwhengenerateresponseistrue">Invalid Client ID when
+  GenerateResponse is true</h3>
+
+  <p>This error is returned when the GenerateResponse property is set to <strong>true</strong> and
+  the client credentials are invalid.</p>
+
+  <div id="well4">
+    <pre class="prettyprint">
+{"ErrorCode" : "invalid_client", "Error" :"ClientId is Invalid"}
+</pre>
+  </div>
+
+  <aside class="warning"><b>Warning:</b> In Edge Cloud Release 16.09.21, the error code
+  "<code>invalid_client</code>" was changed to "<code>InvalidClientIdentifier</code>" for certain
+  policy configurations (when GenerateResponse is false). This change could affect fault rules that
+  trap the old code. For details on this change, see the description of <a href=
+  "/release/notes/160921-apigee-edge-public-cloud-release-notes.html">bug fix APIRT-3390</a> in
+  <a href="/release/notes/160921-apigee-edge-public-cloud-release-notes.html">16.09.21 - Apigee
+  Edge for Public Cloud release notes</a>.</aside>
+
+  <h2 id="verifyaccesstoken">Verify AccessToken</h2>
+
+  <h3 id="verifyaccesstoken-invalidaccesstoken">Invalid AccessToken</h3>
+
+  <div id="well">
+    <pre class="prettyprint">
+HTTP/1.1 401 Unauthorized
+{"fault":{"faultstring":"Invalid Access Token","detail":{"errorcode":"keymanagement.service.invalid_access_token"}}}
+</pre>
+  </div>
+
+  <h3 id="verifyaccesstoken-invalidresource">Invalid Resource</h3>
+
+  <div id="well">
+    <pre class="prettyprint">
+HTTP/1.1 401 Unauthorized
+{"fault":{"faultstring":"APIResource \/facebook\/acer does not exist","detail":{"errorcode":"keymanagement.service.apiresource_doesnot_exist"}}}
+</pre>
+  </div>
+
+  <h3 id="verifyaccesstoken-invalidscope">Invalid Scope</h3>
+
+  <div id="well">
+    <pre class="prettyprint">
+HTTP/1.1 403 Forbidden
+{"fault":{"faultstring":"Required scope(s) : VerifyAccessToken.scopeSet","detail":{"errorcode":"steps.oauth.v2.InsufficientScope"}}}
+</pre>
+  </div>
+
+  <h3 id="verifyaccesstoken-noauthheader">No Auth Header</h3>
+
+  <div id="well">
+    <pre class="prettyprint">
+HTTP/1.1 401 Unauthorized
+{"fault":{"faultstring":"Invalid access token","detail":{"errorcode":"oauth.v2.InvalidAccessToken"}}}
+</pre>
+  </div>
+
+  <h3 id="verifyaccesstoken-nomatchforapiproductwithenvproxyconfigured">No match for ApiProduct
+  (With Env &amp; Proxy Configured)</h3>
+
+  <div id="well">
+    <pre class="prettyprint">
+HTTP/1.1 401 Unauthorized
+{"fault":{"faultstring":"Invalid API call as no apiproduct match found","detail":{"errorcode":"keymanagement.service.InvalidAPICallAsNoApiProductMatchFound"}}}
+</pre>
+  </div>
+
+  <h3 id="verifyaccesstoken-accesstokenexpired">Access token expired</h3>
+  <pre class="prettyprint">
+HTTP/1.1 401 Unauthorized
+{"fault":{"faultstring":"Access Token expired","detail":{"errorcode":"keymanagement.service.access_token_expired"}}} 
+</pre>
+
+  <h3 id="verifyaccesstoken-accesstokenrevoked">Access token revoked</h3>
+  <pre class="prettyprint">
+HTTP/1.1 401 Unauthorized
+{"fault":{"faultstring":"Access Token not approved","detail":{"errorcode":"keymanagement.service.access_token_not_approved"}}}
+</pre>
+
+  <h2 id="getoauthv2info">Get OAuth V2 Info</h2>
+
+  <h3 id="getoauthv2info-invalidrefreshtoken">Invalid Refresh Token</h3>
+  <pre class="prettyprint">
+HTTP/1.1 404 Not Found
+{"fault::{"detail":{"errorcode":"keymanagement.service.invalid_refresh_token"},"faultstring":"Invalid Refresh Token"}}
+
+</pre>
+
+  <h3 id="getoauthv2info-invalidaccesstoken">Invalid Access Token</h3>
+  <pre class="prettyprint">
+HTTP/1.1 404 Not Found
+{
+  "fault": {
+    "faultstring": "Invalid Access Token",
+    "detail": {
+      "errorcode": "keymanagement.service.invalid_access_token"
+    }
+  }
+}
+</pre>
+
+  <h3 id="getoauthv2info-expiredaccesstoken">Expired Access Token</h3>
+  <pre class="prettyprint">
+HTTP/1.1 500 Not Found
+{
+  "fault": {
+    "faultstring": "Access Token expired",
+    "detail": {
+      "errorcode": "keymanagement.service.access_token_expired"
+    }
+  }
+}
+
+</pre>
+
+  <h3 id="getoauthv2info-expiredrefreshtoken">Expired Refresh Token</h3>
+  <pre class="prettyprint">
+HTTP/1.1 500 Not Found
+{
+  "fault": {
+    "faultstring": "Refresh Token expired",
+    "detail": {
+      "errorcode": "keymanagement.service.refresh_token_expired"
+    }
+  }
+}
+</pre>
+
+  <h3 id="getoauthv2info-invalidclientid">Invalid Client ID</h3>
+  <pre class="prettyprint">
+HTTP/1.1 404 Not Found
+{
+  "fault": {
+    "faultstring": "Invalid Client Id",
+    "detail": {
+      "errorcode": "keymanagement.service.invalid_client-invalid_client_id"
+    }
+  }
+}
+</pre>
+
+  <h3 id="getoauthv2info-invalidauthorizationcode">Invalid Authorization Code</h3>
+  <pre class="prettyprint">
+HTTP/1.1 404 Not Found
+{
+  "fault": {
+    "faultstring": "Invalid Authorization Code",
+    "detail": {
+      "errorcode": "keymanagement.service.invalid_request-authorization_code_invalid"
+    }
+  }
+}
+</pre>
+
+  <h3 id="getoauthv2info-expiredauthorizationcode">Expired Authorization Code</h3>
+  <pre class="prettyprint">
+HTTP/1.1 500 Not Found
+{
+  "fault": {
+    "faultstring": "Authorization Code expired",
+    "detail": {
+      "errorcode": "keymanagement.service.authorization_code_expired"
+    }
+  }
+}
+</pre>
+
+  <h2 id="setoauthv2info">Set OAuth V2 Info</h2>
+
+  <h3 id="setoauthv2info-invalidaccesstoken">Invalid Access Token</h3>
+  <pre class="prettyprint">
+HTTP/1.1 404 Not Found
+{
+  "fault": {
+    "faultstring": "Invalid Access Token",
+    "detail": {
+      "errorcode": "keymanagement.service.invalid_access_token"
+    }
+  }
+}
+</pre>
+
+  <h3 id="setoauthv2info-expiredaccesstoken">Expired Access Token</h3>
+  <pre class="prettyprint">
+HTTP/1.1 500 Not Found
+{
+  "fault": {
+    "faultstring": "Access Token expired",
+    "detail": {
+      "errorcode": "keymanagement.service.access_token_expired"
+    }
+  }
+}
+</pre>
+
+  <h2 id="deleteoauthv2info">Delete OAuth V2 Info</h2>
+
+  <p>On success, the policy returns a 200 status.</p>
+
+  <p>On failure, the policy returns 404 and output similar to the following (depending on whether
+  you are deleting an access token or an auth code):</p>
+  <pre class="prettyprint">
+HTTP/1.1 404 Not Found
+Content-Type: application/json
+Content-Length: 144
+Connection: keep-alive
+
+{"fault":{"faultstring":"Invalid Authorization Code","detail":{"errorcode":"keymanagement.service.invalid_request-authorization_code_invalid"}}}
+</pre>{% endblock %}

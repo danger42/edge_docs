@@ -1,0 +1,139 @@
+  {% extends "_base.html" %} {% block title %}Approving and revoking access tokens{% endblock %} {% block body %}
+
+  <h2 id="revokingaccessandrefreshtokens">Revoking access and refresh tokens</h2>
+
+  <p>In some cases, apps are required to explicitly revoke or invalidate tokens, for example, when
+  a user logs out of an OAuth-enabled app. If you revoke a token, it can be re-approved anytime
+  before it expires.</p>
+
+  <aside class="note"><b>Note:</b> You can also revoke/approve client IDs associated with products
+  and developer apps. See <a href=
+  "/api-platform/security/oauth/revoking-and-approving-consumer-ids.html">Revoking and approving
+  developer app keys</a>.</aside>
+
+  <p>The procedure for token revocation is defined by the <a href=
+  "https://tools.ietf.org/html/rfc7009">OAuth 2.0 Token Revocation specification</a>.</p>
+
+  <p>Apigee Edge provides an InvalidateToken operation that enables you to configure a dedicated
+  token revocation endpoint. By publishing the URI of this endpoint, you enable app developers to
+  invalidate tokens issued by Edge.</p>
+
+  <aside class="note"><b>Note:</b> Token expiration is independent of the state of the token
+  (approved or revoked). If a refresh token has expired, you cannot use it to refresh an access
+  token.</aside>
+
+  <p>Here's an example configuration for the OAuthV2 policy and the InvalidateToken operation. In
+  this case, both the access token and its associated refresh token are revoked. Technically, they
+  are both revoked because the cascade flag is set to true. For more information about how the
+  cascade flag works, see the Token element's attributes section below. </p>
+  <pre class="prettyprint">
+&lt;OAuthV2 name="InvalidateToken"&gt;
+  &lt;Operation&gt;InvalidateToken&lt;/Operation&gt;
+  &lt;Tokens&gt;
+    &lt;Token type="accesstoken" cascade="true"&gt;flow.variable&lt;/Token&gt;
+  &lt;/Tokens&gt;
+&lt;/OAuthV2&gt;
+</pre>
+
+  <h3 id="revokingaccessandrefreshtokens-tokenstokenelement">&lt;Tokens&gt;/&lt;Token&gt;
+  element</h3>
+
+  <p>Identifies the flow variable that specifies the token to be revoked. If developers are
+  expected to submit a revocation request using a query parameter
+  named <code>access_token</code>, for example, the correct flow variable will
+  be: <code>request.queryparam.access_token</code>. To require the token in an HTTP header,
+  for example, set this value to <code>request.header.access_token</code>.</p>
+
+  <h3 id="revokingaccessandrefreshtokens-attributes">Attributes</h3>
+
+  <ul>
+    <li>
+      <code>type</code> (required, string): The token type identified by the variable
+      specified. Supported values
+      are <code>accesstoken</code> and <code>refreshtoken:</code>
+
+      <ul>
+        <li>To revoke an access token, specify type accesstoken.</li>
+
+        <li>To revoke both the access and refresh tokens, specify type refreshtoken. When it sees
+        type refreshtoken, Edge assumes the token is a refresh token. If that refresh token is
+        found, then it is revoked.  If that refresh token is not found, then Edge checks to
+        see if it is an access token. If the access token exists, then it is revoked. <br>
+        <br>
+        <strong>Note:</strong> If you pass an already invalidated token to an InvalidateToken
+        policy, the policy doesn't return an error, although you might expect it to. Such an
+        operation has no effect. </li>
+      </ul>
+    </li>
+
+    <li>
+      <code>cascade</code> (optional, boolean, default: true) The primary use of this
+      attribute is to revoke a refresh token without revoking its associated access token. Consider
+      these cases:
+
+      <ul>
+        <li>Revoke a refresh token only and do not revoke its associated access token. To do this,
+        set the &lt;Token&gt; type to <code>refreshtoken</code> and set cascade to
+        <code>false</code>.</li>
+
+        <li>Revoke both the access token and the refresh token. To do this, set the &lt;Token&gt;
+        type to <code>accesstoken</code>. The value of cascade can be either <code>true</code> (the
+        default) or <code>false</code>. If you set it to <code>true</code>, then both the access
+        token and the refresh token are revoked. If you set it to <code>false</code>, the access
+        token is revoked, and the refresh token is unusable. See the Note below for more
+        explanation. </li>
+
+        <li>Revoke an access token and do not revoke its associated refresh token. Not
+        supported. See the Note below for more explanation. </li>
+      </ul>
+    </li>
+  </ul>
+
+  <p style="margin-left: 40px;"><strong>Note:</strong> For security reasons, if you revoke an
+  access token, the associated refresh token will be revoked also. Therefore, you cannot use
+  the cascade attribute to revoke only an access token. For example, if you set the &lt;Token&gt;
+  type to <code>accesstoken</code>, and set <code>cascade=false</code>, the access token is revoked
+  (as expected); however, the associated refresh token is unusable. It cannot be used to refresh
+  the revoked access token. The primary use case for the cascade attribute is when you want to only
+  revoke a refresh token. In that case, set the &lt;Token&gt; type to <code>refreshtoken</code>,
+  and set <code>cascade=false</code>. The refresh token will be revoked, but its associated access
+  token will remain valid (until it expires or is revoked). For more information, see this <a href=
+  "https://community.apigee.com/questions/5813/need-help-interpreting-cascade-on-invalidatetoken.html#comment-6763">
+  Community forum discussion</a>. </p>
+
+  <h2 id="approvingaccessandrefreshtokens">Approving access and refresh tokens</h2>
+
+  <p>Use the ValidateToken operation to "re-approve" a revoked token. That is, when you apply this
+  operation, the status of the targeted access or refresh token is changed from 'revoked' to
+  'approved'. You can validate any revoked token that has not already expired.</p>
+  <pre class="prettyprint">
+&lt;OAuthV2 name="ValidateToken"&gt;
+  &lt;Operation&gt;ValidateToken&lt;/Operation&gt;
+  &lt;Tokens&gt;
+    &lt;Token type="refreshtoken" cascade="true"&gt;flow.variable&lt;/Token&gt;
+  &lt;/Tokens&gt;
+&lt;/OAuthV2&gt;
+</pre>
+
+  <h3 id="approvingaccessandrefreshtokens-tokenstokenelement">&lt;Tokens&gt;/&lt;Token&gt;
+  element</h3>
+
+  <p>Identifies the flow variable that specifies the token to be validated. If developers are
+  expected to submit a validation request using a query parameter
+  named <code>access_token</code>, for example, the correct flow variable will
+  be: <code>request.queryparam.access_token</code>. To require the token in an HTTP header,
+  for example, set this value to <code>request.header.access_token</code>.</p>
+
+  <h3 id="approvingaccessandrefreshtokens-attributes">Attributes</h3>
+
+  <ul>
+    <li><code>type</code> (required, string) The token type identified by the variable
+    specified. Supported values
+    are <code>accesstoken</code> and <code>refreshtoken</code>.</li>
+
+    <li><code>cascade</code> (optional, boolean): By default, this option is set to
+    <code>true</code>, and causes the validation to propagate to associated tokens. So, if applied
+    to a refresh token, its associated access token is also validated. If applied to an access
+    token, its associated refresh token is also validated. If you set this to <code>false</code>,
+    then only the specified access or refresh token is validated.</li>
+  </ul>{% endblock %}

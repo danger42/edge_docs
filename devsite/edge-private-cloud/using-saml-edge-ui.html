@@ -1,0 +1,38 @@
+  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}Using SAML with the Edge UI{% endblock %} {% block body %}
+
+  <p>The SAML specification defines three entities:</p>
+  <ul>
+    <li>Principal (Edge UI user)</li>
+    <li>Service provider (Edge SSO)</li>
+    <li>Identity provider (returns SAML assertion)</li>
+  </ul>
+
+  <p>When SAML is enabled, the principal (an Edge UI user) requests access to the service provider
+  (Edge SSO). Edge SSO (in it's role as a SAML service provider) then requests and obtains an
+  identity assertion from the SAML identity provider and uses that assertion to create the OAuth2
+  token required to access the Edge UI. The user is then redirected to the Edge UI.</p>
+
+  <p>This process is shown below:</p>
+
+  <p><img alt="" src="/private-cloud/images/saml_v3.png"></p>
+
+  <p>In this diagram:</p>
+  <ol>
+    <li>User attempts to access the Edge UI by making a request to the login URL for the Edge
+      UI. For example: <code>https://<var>edge_ui_IP_DNS</var>:9000</code>
+    </li>
+    <li>Unauthenticated requests to are redirected to the SAML identity provider. For example,
+      "https://idp.customer.com".</li>
+    <li>If customer is not logged in to the identity provider, the customer is prompted to log
+      in.</li>
+    <li>The user is authenticated by the SAML identity provider. The SAML identity provider
+      generates and returns a SAML 2.0 assertion to the Edge SSO.</li>
+    <li>Edge SSO validates the assertion, extracts the user identity from the assertion, generates
+      the OAuth 2 authentication token for the Edge UI, and redirects the user to the main Edge UI
+      page at:
+      <pre>https://<var>edge_ui_IP_DNS:9000</var>/platform/<var>orgName</var></pre>
+      <p>where <var>orgName</var> is the name of an Edge organization.</p>
+    </li>
+  </ol>
+
+  {% endblock %}

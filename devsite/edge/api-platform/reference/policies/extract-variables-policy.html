@@ -1,0 +1,1926 @@
+{% extends "_base.html" %}
+{% block title %}Extract Variables policy{% endblock %}
+{% block body %}
+
+<img src="/api-platform/images/icon_policy_extract-variable.jpg">
+
+  <h3>What</h3>
+
+  <p>Extracts content from a request or response and sets the value of a variable to that content.
+  You can extract any part of the message, including headers, URI paths, JSON/XML payloads, form
+  parameters, and query parameters. The policy works by applying a text pattern to the message
+  content and, upon finding a match, sets a variable with the specified message content.</p>
+
+  <p>While you often use this policy to extract information from a request or response message, you
+  can also use it to extract information from other sources, including entities created by the
+  <a href="/api-platform/reference/policies/access-entity-policy">Access Entity policy</a>,
+  XML objects, or JSON objects.</p>
+
+  <p>After extracting the specified message content, you can reference the variable in other
+  policies as part of processing a request and response. </p>
+
+  <aside class="note"><strong>Note about Service Callouts</strong>: You aren't
+  required to use this policy to extract variables from Service Callouts. The <a href=
+  "/api-platform/reference/policies/service-callout-policy">Service Callout policy</a> has its
+  own request and response variables that you can use directly, for example in an Assign Message
+  policy.</aside>
+
+  <h2 id="videos">Videos</h2>
+
+  <p>Watch the following videos to learn more about the Extract Variables policy.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Video</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><a href="https://www.youtube.com/watch?v=rlZWcsSH0bw" target="_blank">Extract variables
+          from XML payload</a></td>
+        <td>Extract variables from an XML payload using the Extract Variable policy.</td>
+      </tr>
+      <tr>
+        <td><a href="https://www.youtube.com/watch?v=j719pLh76vg" target="_blank">Extract variables
+          from JSON payload</a></td>
+        <td>Extract variables from a JSON payload using the Extract Variable policy.</td>
+      </tr>
+      <tr>
+        <td><a href="https://www.youtube.com/watch?v=kpXhNrZCwR4" target="_blank">Extract variables
+          from parameters</a></td>
+        <td>Extract variables from parameters, such as query, header, form, or URI parameters.</td>
+      </tr>
+      <tr>
+        <td><a href="https://www.youtube.com/watch?v=T6kXJPan6Ag" target="_blank">Extract variables
+          from multi-value parameters</a></td>
+        <td>Extract variables from multi-value parameters.</td>
+      </tr>
+      <tr>
+        <td><a href="https://www.youtube.com/watch?v=arVPRaL4qQk" target="_blank">Extract variables
+          from query parameter (Classic Edge)</a></td>
+        <td>Extract variables from a query parameter using Classic Edge UI.</td>
+      </tr>
+      <tr>
+        <td><a href="https://www.youtube.com/watch?v=G0XnHRELeBA" target="_blank">Extract variables
+          from XML or JSON payload (Classic Edge)</a></td>
+        <td>Extract variables from an XML or JSON payload using Classic Edge UI.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="samples">Samples</h2>
+
+  <p>These policy code samples illustrate how to extract variables from the following types of
+  artifacts:</p><!--
+<div class="tab-content active">
+<div class="tab-pane active" id="tab_a"><iframe allowfullscreen="" frameborder="0" height="390" src="https://www.youtube.com/embed/arVPRaL4qQk" width="640"></iframe><br />
+        <iframe allowfullscreen="" frameborder="0" height="390" src="https://www.youtube.com/embed/G0XnHRELeBA" width="640"></iframe></div>
+--><!--This is the URL tab-->
+
+  <div class="ds-selector-tabs">
+    <section>
+      <h3 class="two-line-tab">GitHub</h3>
+
+      <aside class="note">
+        <b>Sample:</b> <strong>Learn by doing!</strong><br>
+        Check out these Learn Edge examples that show you how to extract data from a JSON and XML
+        response payloads. Just follow the instructions in the READMEs.
+
+        <ul>
+          <li><a href=
+          "https://github.com/apigee/api-platform-samples/tree/master/learn-edge/extract-json-payload">
+          Extract data from a JSON payload</a></li>
+
+          <li><a href=
+          "https://github.com/apigee/api-platform-samples/tree/master/learn-edge/extract-json-payload-2">
+          Query for data in a JSON payload</a></li>
+
+          <li><a href=
+          "https://github.com/apigee/api-platform-samples/tree/master/learn-edge/extract-xml-payload">
+          Extract data from an XML payload</a></li>
+        </ul>
+      </aside>
+
+      <p>These links point to working API proxy samples that you can deploy and run on Edge. They
+      use ExtractVariables and are located in Apigee's <a href=
+      "https://github.com/apigee/api-platform-samples">api-platform-samples repository</a> on
+      GitHub. The READMEs explain how ExtractVariables is used in each case, and how to deploy and
+      run each sample. </p>
+
+      <ul>
+        <li><a href=
+        "https://github.com/apigee/api-platform-samples/tree/master/sample-proxies/variables">Extract
+        and assign variables sample</a> (extract data from JSON and XML messages)</li>
+
+        <li><a href=
+        "https://github.com/apigee/api-platform-samples/tree/master/sample-proxies/access-entity">Access
+        entity  sample</a></li>
+
+        <li><a href=
+        "https://github.com/apigee/api-platform-samples/tree/master/sample-proxies/pagination">Pagination
+        and caching sample</a></li>
+
+        <li><a href=
+        "https://github.com/apigee/api-platform-samples/tree/master/sample-proxies/target-reroute">Reroute
+        a target URL sample</a></li>
+
+        <li><a href=
+        "https://github.com/apigee/api-platform-samples/tree/master/doc-samples/policy-mashup-cookbook">
+        Policy composition mashup sample</a></li>
+
+        <li><a href="https://github.com/apigee/streetcarts">Streetcarts sample</a></li>
+      </ul>
+    </section>
+
+    <section>
+      <h3 class="two-line-tab">URIs</h3>
+      <pre class="prettyprint">
+&lt;ExtractVariables name="ExtractVariables-1"&gt;
+   &lt;DisplayName&gt;Extract a portion of the url path&lt;/DisplayName&gt;
+   &lt;Source&gt;request&lt;/Source&gt;
+   &lt;URIPath&gt;
+      &lt;Pattern ignoreCase="true"&gt;/accounts/{id}&lt;/Pattern&gt;
+   &lt;/URIPath&gt;
+   &lt;VariablePrefix&gt;urirequest&lt;/VariablePrefix&gt;
+   &lt;IgnoreUnresolvedVariables&gt;true&lt;/IgnoreUnresolvedVariables&gt;
+&lt;/ExtractVariables&gt;
+</pre>
+
+      <p>Consider the sample policy code above. The <code>&lt;URIPath&gt;</code> element tells the
+      Extract Variables policy to extract information from the URI path. The
+      <code>&lt;Pattern&gt;</code> element specifies the pattern to apply to the URI path. The
+      pattern is treated as a simple template, with the curly braces denoting the varying portion
+      of the URI path.</p>
+
+      <p>The name of the variable to be set is determined by the value specified in the
+      <code>&lt;VariablePrefix&gt;</code> element, as well as the value enclosed in curly braces {}
+      in the <code>&lt;Pattern&gt;</code> element. The two values are joined by an intervening dot,
+      resulting in a variable name of <code>urirequest.id</code> for example. If there is no
+      <code>&lt;VariablePrefix&gt;</code> element, then the variable name is just the value
+      enclosed in curly braces.</p>
+
+      <p>Consider the sample policy code above working with the following incoming request:</p>
+
+      <p><code>GET http://org1-test.apigee.net/svc1/accounts/12797282</code></p>
+
+      <p>Suppose the basepath for the API Proxy is <code>/svc1</code>. When Apigee Edge applies the
+      ExtractVariables policy code above to this incoming request, it sets the variable
+      <code>urirequest.id</code> to <code>12797282</code>. After Apigee Edge executes the policy,
+      subsequent policies or code in the processing flow can refer to the variable named
+      <code>urirequest.id</code> to get the string value <code>12797282</code>.</p>
+
+      <p>For example, the following AssignMessage policy embeds the value of that variable into the
+      payload of a new request message:</p>
+      <pre class="prettyprint">
+&lt;AssignMessage async="false" continueOnError="false" enabled="true" name="AssignPayload"&gt;
+ &lt;DisplayName&gt;AssignPayload&lt;/DisplayName&gt;
+  &lt;Set&gt;
+   &lt;Payload contentType="text/xml"&gt;
+    &lt;IdExtractedFromURI&gt;{urirequest.id}&lt;/IdExtractedFromURI&gt;
+   &lt;/Payload&gt;
+  &lt;/Set&gt;
+  &lt;IgnoreUnresolvedVariables&gt;true&lt;/IgnoreUnresolvedVariables&gt;
+  &lt;AssignTo createNew="true" transport="http" type="request"&gt;newRequest&lt;/AssignTo&gt;
+&lt;/AssignMessage&gt;
+</pre>
+    </section>
+
+    <section>
+      <h3 class="two-line-tab">Query params</h3>
+      <pre class="prettyprint">
+&lt;ExtractVariables name="ExtractVariables-2"&gt;
+   &lt;DisplayName&gt;Extract a value from a query parameter&lt;/DisplayName&gt;
+   &lt;Source&gt;request&lt;/Source&gt;
+   &lt;QueryParam name="code"&gt;
+      &lt;Pattern ignoreCase="true"&gt;DBN{dbncode}&lt;/Pattern&gt;
+   &lt;/QueryParam&gt;
+   &lt;VariablePrefix&gt;queryinfo&lt;/VariablePrefix&gt;
+   &lt;IgnoreUnresolvedVariables&gt;true&lt;/IgnoreUnresolvedVariables&gt;
+&lt;/ExtractVariables&gt;
+</pre><code>code</code><code>code</code><code>DBN<em>XXXXX</em></code><code>DBN</code><code><em>XXXXX</em></code>
+
+      <p>Consider the sample policy code above working with the following incoming request:</p>
+
+      <p><code>GET http://org1-test.apigee.net/accounts/12797282?code=DBN88271</code></p>
+
+      <p>When Apigee Edge applies the Extract Variables policy code above to this incoming request,
+      it sets the variable <code>queryinfo.dbncode</code> to <code>88271</code>. After Apigee Edge
+      executes the policy, subsequent policies or code in the processing flow can refer to the
+      variable named <code>queryinfo.dbncode</code> to get the string value <code>88271</code>.</p>
+
+      <p>You can now access the variable <code>queryinfo.dbncode</code> in your proxy.
+      For example, the following AssignMessage policy copies it to the payload of the request:</p>
+      <pre class="prettyprint">
+&lt;AssignMessage async="false" continueOnError="false" enabled="true" name="GetURIPath"&gt;
+ &lt;DisplayName&gt;GetQP&lt;/DisplayName&gt;
+  &lt;Set&gt;
+   &lt;Payload contentType="text/xml"&gt;
+    &lt;ExtractQP&gt;{queryinfo.dbncode}&lt;/ExtractQP&gt;
+   &lt;/Payload&gt;
+  &lt;/Set&gt;
+  &lt;IgnoreUnresolvedVariables&gt;true&lt;/IgnoreUnresolvedVariables&gt;
+  &lt;AssignTo createNew="false" transport="http" type="request"/&gt;
+&lt;/AssignMessage&gt;
+</pre>
+    </section>
+
+    <section>
+      <h3 class="two-line-tab">Multiple params</h3>
+      <pre class="prettyprint">
+&lt;ExtractVariables name="ExtractVariables-2"&gt;
+   &lt;DisplayName&gt;Extract a value from a query parameter&lt;/DisplayName&gt;
+   &lt;Source&gt;request&lt;/Source&gt;
+   &lt;QueryParam name="w"&gt;
+      &lt;Pattern ignoreCase="true"&gt;{firstWeather}&lt;/Pattern&gt;
+   &lt;/QueryParam&gt;
+   &lt;QueryParam name="w.2"&gt;
+     &lt;Pattern ignoreCase="true"&gt;{secondWeather}&lt;/Pattern&gt;
+   &lt;/QueryParam&gt;
+   &lt;VariablePrefix&gt;queryinfo&lt;/VariablePrefix&gt;
+ &lt;IgnoreUnresolvedVariables&gt;true&lt;/IgnoreUnresolvedVariables&gt;
+&lt;/ExtractVariables&gt;
+</pre>
+
+      <p>Suppose your API design allows you to specify multiple query parameters with the same
+      name. You can use this policy to extract the value of multiple instances of the query
+      parameter "w".  To reference these query parameters in the Extract Variables policy, you
+      use indexes, where the first instance of the query parameter has no index, the second is at
+      index 2, the third at index 3, etc.</p>
+
+      <p>Consider the sample policy code above working with the following incoming request:</p>
+
+      <p><code>GET http://org1-test.apigee.net/weather?w=Boston&amp;w=Chicago</code></p>
+
+      <p>When Apigee Edge applies the Extract Variables policy code above to this incoming request,
+      it sets the variable <code>queryinfo.firstWeather</code> to <code>Boston</code> and the
+      variable <code>queryInfo.secondWeather</code> to <code>Chicago</code>. </p>
+
+      <p>You can now access the variable <code>queryinfo.firstWeather</code> and
+      <span style="font-family:courier new,courier,monospace;">queryinfo.secondWeather</span> in
+      your proxy. For example, the following AssignMessage policy copies it to the payload of the
+      request:</p>
+      <pre class="prettyprint">
+&lt;AssignMessage async="false" continueOnError="false" enabled="true" name="GetURIPath"&gt;
+ &lt;DisplayName&gt;GetQP&lt;/DisplayName&gt;
+  &lt;Set&gt;
+   &lt;Payload contentType="text/xml"&gt;
+    &lt;ExtractQP1&gt;{queryinfo.firstWeather}&lt;/ExtractQP1&gt;
+    &lt;ExtractQP2&gt;{queryinfo.secondWeather}&lt;/ExtractQP2&gt;
+   &lt;/Payload&gt;
+  &lt;/Set&gt;
+  &lt;IgnoreUnresolvedVariables&gt;true&lt;/IgnoreUnresolvedVariables&gt;
+  &lt;AssignTo createNew="false" transport="http" type="request"/&gt;
+&lt;/AssignMessage&gt;
+</pre>
+    </section>
+
+    <section>
+      <h3 class="two-line-tab">Headers</h3>
+      <pre class="prettyprint">
+&lt;ExtractVariables name='ExtractVariable-OauthToken'&gt;
+  &lt;Source&gt;request&lt;/Source&gt;
+  &lt;Header name="Authorization"&gt;
+    &lt;Pattern ignoreCase="false"&gt;Bearer {oauthtoken}&lt;/Pattern&gt;
+  &lt;/Header&gt;
+  &lt;VariablePrefix&gt;clientrequest&lt;/VariablePrefix&gt;
+  &lt;IgnoreUnresolvedVariables&gt;true&lt;/IgnoreUnresolvedVariables&gt;
+&lt;/ExtractVariables&gt;
+</pre>
+
+      <p>Suppose that your API uses OAuth v2.0 bearer tokens. Consider the sample policy code above
+      working with a request carrying an OAuth v2.0 token that includes a header like this:
+      <code>Authorization: Bearer TU08xptfFfeM7aS0xHqlxTgEAdAM.</code></p>
+
+      <p>As the API designer, suppose that you want to use the token value (but not the entire
+      header) as a key in a cache lookup. You could use the Extract Variables policy code above to
+      extract the token.</p>
+
+      <p>When Apigee Edge applies the Extract Variables policy code above to this header, it will
+      set the variable <code>clientrequest.oauthtoken</code> to
+      <code>TU08xptfFfeM7aS0xHqlxTgEAdAM</code>.</p>
+
+      <p>You can now access the variable <code>clientrequest.oauthtoken</code> in your
+      proxy. For example, the following AssignMessage policy copies it to the payload of the
+      request:</p>
+      <pre class="prettyprint">
+&lt;AssignMessage async="false" continueOnError="false" enabled="true" name="GetURIPath"&gt;
+ &lt;DisplayName&gt;GetHeader&lt;/DisplayName&gt;
+  &lt;Set&gt;
+   &lt;Payload contentType="text/xml"&gt;
+    &lt;ExtractHeader&gt;{clientrequest.oauthtoken}&lt;/ExtractHeader&gt;
+   &lt;/Payload&gt;
+  &lt;/Set&gt;
+  &lt;IgnoreUnresolvedVariables&gt;true&lt;/IgnoreUnresolvedVariables&gt;
+  &lt;AssignTo createNew="false" transport="http" type="request"/&gt;
+&lt;/AssignMessage&gt;
+</pre>
+    </section>
+
+    <section>
+      <h3 class="two-line-tab">JSON</h3>
+      <pre class="prettyprint">
+&lt;ExtractVariables name="ExtractVariables-3"&gt;
+   &lt;Source&gt;response&lt;/Source&gt;
+   &lt;JSONPayload&gt;
+      &lt;Variable name="latitude" type="float"&gt;
+         &lt;JSONPath&gt;$.results[0].geometry.location.lat&lt;/JSONPath&gt;
+      &lt;/Variable&gt;
+      &lt;Variable name="longitude" type="float"&gt;
+         &lt;JSONPath&gt;$.results[0].geometry.location.lng&lt;/JSONPath&gt;
+      &lt;/Variable&gt;
+   &lt;/JSONPayload&gt;
+   &lt;VariablePrefix&gt;geocoderesponse&lt;/VariablePrefix&gt;
+&lt;/ExtractVariables&gt;
+</pre><code>&lt;JSONPayload&gt;</code><code>$</code>
+
+      <p>Consider the following JSON response payload:</p>
+      <pre class="prettyprint">
+{
+  "results": [{
+    "geometry": {
+      "location": {
+        "lat": 37.42291810,
+        "lng": -122.08542120
+      },
+      "location_type": "ROOFTOP",
+      "viewport": {
+        "northeast": {
+          "lat": 37.42426708029149,
+          "lng": -122.0840722197085
+        },
+        "southwest": {
+          "lat": 37.42156911970850,
+          "lng": -122.0867701802915
+        }
+      }
+    }
+  }]
+}
+</pre>
+
+      <p>When Apigee Edge applies the Extract Variables policy code above to this JSON message, it
+      sets two variables: <code>geocoderesponse.latitude</code> and
+      <code>geocoderesponse.longitude</code>. Both variables use the same variable prefix of
+      <code>geocoderesponse</code>. The suffix for these variables is specified explicitly by the
+      <code>&lt;Variable&gt;</code> element's <code>name</code> attribute.</p>
+
+      <p>The variable <code>geocoderesponse.latitude</code> gets the value
+      <code>37.42291810</code>. The variable <code>geocoderesponse.longitude</code> gets the value
+      <code>-122.08542120</code>.</p>
+
+      <p>You can now access the variable <code>geocoderesponse.latitude</code> in your
+      proxy. For example, the following AssignMessage policy copies it to a header named "latitude"
+      in the response:</p>
+      <pre class="prettyprint">
+&lt;AssignMessage async="false" continueOnError="false" enabled="true" name="GetURIPath"&gt;
+  &lt;DisplayName&gt;GetJSONVar&lt;/DisplayName&gt;
+  &lt;Add&gt;
+    &lt;Headers&gt;
+      &lt;Header name="latitude"&gt;{geocoderesponse.latitude}&lt;/Header&gt;
+    &lt;/Headers&gt;
+  &lt;/Add&gt; 
+  &lt;IgnoreUnresolvedVariables&gt;true&lt;/IgnoreUnresolvedVariables&gt;
+  &lt;AssignTo createNew="false" transport="http" type="response"/&gt; 
+&lt;/AssignMessage&gt;
+</pre>
+    </section>
+
+    <section>
+      <h3 class="two-line-tab">XML</h3>
+      <pre class="prettyprint">
+&lt;ExtractVariables name="ExtractVariables-4"&gt;
+   &lt;Source&gt;response&lt;/Source&gt;
+   &lt;XMLPayload&gt;
+      &lt;Namespaces&gt;
+         &lt;Namespace prefix="dir"&gt;urn:43BFF88D-D204-4427-B6BA-140AF393142F&lt;/Namespace&gt;
+      &lt;/Namespaces&gt;
+      &lt;Variable name="travelmode" type="string"&gt;
+         &lt;XPath&gt;/dir:Directions/dir:route/dir:leg/dir:step/@mode&lt;/XPath&gt;
+      &lt;/Variable&gt;
+      &lt;Variable name="duration" type="string"&gt;
+         &lt;XPath&gt;/dir:Directions/dir:route/dir:leg/dir:step/dir:duration/dir:value&lt;/XPath&gt;
+      &lt;/Variable&gt;
+      &lt;Variable name="timeunit" type="string"&gt;
+         &lt;XPath&gt;/dir:Directions/dir:route/dir:leg/dir:step/dir:duration/dir:text&lt;/XPath&gt;
+      &lt;/Variable&gt;
+   &lt;/XMLPayload&gt;
+   &lt;VariablePrefix&gt;directionsresponse&lt;/VariablePrefix&gt;
+&lt;/ExtractVariables&gt;
+</pre><code>&lt;XMLPayload&gt;</code>
+
+      <p>Consider the following XML response payload:</p>
+      <pre class="prettyprint">
+&lt;Directions xmlns="urn:43BFF88D-D204-4427-B6BA-140AF393142F"&gt;
+   &lt;status&gt;OK&lt;/status&gt;
+   &lt;route&gt;
+      &lt;summary&gt;I-40 W&lt;/summary&gt;
+      &lt;leg&gt;
+         &lt;step mode="DRIVING"&gt;
+            &lt;start_location&gt;
+               &lt;lat&gt;41.8507300&lt;/lat&gt;
+               &lt;lng&gt;-87.6512600&lt;/lng&gt;
+            &lt;/start_location&gt;
+            &lt;end_location&gt;
+               &lt;lat&gt;41.8525800&lt;/lat&gt;
+               &lt;lng&gt;-87.6514100&lt;/lng&gt;
+            &lt;/end_location&gt;
+            &lt;duration&gt;
+                &lt;value&gt;19&lt;/value&gt;
+                &lt;text&gt;minutes&lt;/text&gt;
+            &lt;/duration&gt;
+         &lt;/step&gt;
+      &lt;/leg&gt;
+   &lt;/route&gt;
+&lt;/DirectionsResponse&gt;
+</pre>
+
+      <p>When Apigee Edge applies the Extract Variables policy code above to this XML message, it
+      sets three variables: <code>directionsresponse.travelmode,</code>
+      <code>directionsresponse.duration</code>, and <code>directionsresponse.timeunit</code>. All
+      variables use the same variable prefix of <code>directionsresponse</code>. The suffix for
+      these variables is specified explicitly by the <code>&lt;Variable&gt;</code> element's
+      <code>name</code> attribute.</p>
+
+      <p>The variable <code>directionsresponse.travelmode</code> gets the value
+      <code>DRIVING</code>. The variable <code>directionsresponse.duration</code> gets the value
+      <code>19</code>. The variable <code>directionsresponse.timeunit</code> gets the value
+      <code>minutes</code>.</p>
+
+      <p>You can now access the variable <code>directionresponse.travelmode</code> in
+      your proxy. For example, the following AssignMessage policy copies it to a header named
+      "tmode" in the response:</p>
+      <pre class="prettyprint">
+&lt;AssignMessage async="false" continueOnError="false" enabled="true" name="GetURIPath"&gt;
+  &lt;DisplayName&gt;GetXMLVar&lt;/DisplayName&gt;
+  &lt;Add&gt;
+    &lt;Headers&gt;
+      &lt;Header name="tmode"&gt;{directionsresponse.travelmode}&lt;/Header&gt;
+    &lt;/Headers&gt;
+  &lt;/Add&gt;
+  &lt;IgnoreUnresolvedVariables&gt;true&lt;/IgnoreUnresolvedVariables&gt;
+  &lt;AssignTo createNew="false" transport="http" type="request"/&gt;
+&lt;/AssignMessage&gt;
+</pre>
+
+      <aside class="note"><b>Note:</b> <strong>Setting Content-Type</strong>: When extracting
+      variables from XML messages (including SOAP), the variable extraction works only when
+      Content-Type is set in the message header (or SOAP header); for
+      example, <code>application/xml</code>.</aside>
+    </section>
+  </div>
+
+  <h2 id="usagenotes">About the Extract Variables policy</h2>
+
+  <p>API developers build API proxies that behave differently based on the content of messages,
+  including headers, URI paths, payloads, and query parameters. Often, the proxy extracts some
+  portion of this content for use in a condition statement. Use the Extract Variables policy to do
+  this.</p>
+
+  <p>When defining the Extract Variables policy, you can choose:</p>
+    <ul>
+      <li>Names of the variables to be set</li>
+      <li>Source of the variables</li>
+      <li>How many variables to extract and set</li>
+    </ul>
+
+  <p>When executed, the policy applies a text pattern to the content and, upon finding a match, sets
+  the value of the designated variable with the content. Other policies and code can then consume
+  those variables to enable dynamic behavior or to send business data to Analytics Services.</p>
+
+  <p>To see how Extract Variables can be used to build content-driven Analytics reports, see
+  <a href="/api-platform/analytics/analyze-api-message-content-using-custom-analytics.html">Analyze
+  API message content using custom analytics</a>.</p>
+
+  <aside class="warning"><b>Warning:</b> Apigee Edge sets numerous variables automatically during
+  request processing. See <a href="/api-platform/reference/variables-reference">Variables
+  reference</a>. Use the Extract Variables policy to set additional variables.</aside>
+
+  <h3>Scope</h3>
+  <p>Variables set with the Extract Variables policy have <em>global</em> scope. That is, after the
+  Extract Variables policy defines a new variable, you can access that variable from any policy or
+  code in any stage of the flow (that executes <em>after</em> the Extract Variables policy). This
+  includes:</p>
+
+  <ul>
+    <li><strong>PreFlow:</strong> ProxyEndpoint and TargetEndpoint (Request and Response)</li>
+    <li><strong>PostFlow:</strong> ProxyEndpoint and TargetEndpoint (Request and Response)</li>
+    <li><strong>PostClientFlow:</strong> ProxyEndpoint (Response only, using the
+      <a href="message-logging-policy">Message Logging policy</a>)</li>
+    <li><strong>Error Flows</strong></li>
+  </ul>
+
+  <aside class="key-point"><b>Tip:</b> If you do not see the newly extracted variable show up in
+  the Trace tool, try removing the &lt;VariablePrefix&gt; element if you added it. For more
+  information, refer to this <a href=
+  "https://community.apigee.com/questions/164/extractvariables-not-shown-in-trace.html">Apigee
+  Community topic</a>.</aside>
+
+  <h2 id="about-matching-variable-creation">About matching and variable creation</h2>
+
+  <p>The Extract Variables policy extracts information from a request or response and writes that
+  information to a variable. For each type of information that you can extract, such as URI path or
+  XML data, you specify the pattern to match and the name of the variable used to hold the
+  extracted information. </p>
+
+  <p>However, the way pattern matching works depends on the source of the extraction. The following
+  sections describe the two basic categories of information that you can extract.</p>
+
+  <h3 id=
+  "aboutmatchingandvariablecreation-matchinguripathsqueryparametersheadersformparametersandvariables" class="hide-from-toc">
+  Matching URI paths, query parameters, headers, form parameters, and variables</h3>
+
+  <p>When extracting information from a URI path, query parameters, headers, form parameters, and
+  variables you use the <span style=
+  "font-family:courier new,courier,monospace;">&lt;Pattern&gt;</span> tag to specify one or more
+  patterns to match. For example, the following policy example shows a single matching pattern for
+  the URI path:</p>
+  <pre class="prettyprint">
+&lt;ExtractVariables name="ExtractVariables-1"&gt;
+   &lt;Source&gt;request&lt;/Source&gt;
+   &lt;URIPath&gt;
+     <strong> &lt;Pattern ignoreCase="true"&gt;/a/{pathSeg}&lt;/Pattern&gt;</strong>
+   &lt;/URIPath&gt;
+   &lt;VariablePrefix&gt;urirequest&lt;/VariablePrefix&gt;
+   &lt;IgnoreUnresolvedVariables&gt;true&lt;/IgnoreUnresolvedVariables&gt;
+&lt;/ExtractVariables&gt;
+</pre>
+
+  <p>In this example, the <span style=
+  "font-family: 'courier new', courier, monospace;">urirequest.pathSeg</span> variable is set
+  to whatever appears in the proxy.pathsuffix after "/a/". For example, suppose the base path for
+  your API Proxy is <span style=
+  "font-family: 'courier new', courier, monospace;">/basepath/v1</span> . With an inbound request
+  to <span style=
+  "font-family: 'courier new', courier, monospace;">http://myCo.com/basepath/v1/a/b</span> the
+  variable is set to "b".</p>
+
+  <h4>Specifying multiple patterns</h4>
+
+  <p>You can specify multiple patters to match, corresponding to <span style=
+  "font-family: 'courier new', courier, monospace;">&lt;Pattern&gt;</span> tags, where:</p>
+
+  <ul>
+    <li>All patterns are tested for match.</li>
+
+    <li>If none of the patterns match, the policy does nothing and the variable(s) is not
+    created.</li>
+
+    <li>If more than one pattern matches, the pattern with longest path segments is used for
+    extraction.</li>
+
+    <li>If two matched patterns has same longest path segments, then the pattern specified first in
+    the policy is used for extraction.</li>
+  </ul>
+
+  <p>In the next example, you create a policy that contains three matching patterns for the URI
+  path:</p>
+  <pre class="prettyprint">
+&lt;ExtractVariables name="ExtractVariables-1"&gt;
+   &lt;Source&gt;request&lt;/Source&gt;
+   &lt;URIPath&gt;
+      <strong>&lt;Pattern ignoreCase="true"&gt;/a/{pathSeg}&lt;/Pattern&gt;
+      &lt;Pattern ignoreCase="true"&gt;/a/b/{pathSeg}&lt;/Pattern&gt;
+      &lt;Pattern ignoreCase="true"&gt;/a/b/c/{pathSeg}&lt;/Pattern&gt;</strong>
+   &lt;/URIPath&gt;
+   &lt;VariablePrefix&gt;urirequest&lt;/VariablePrefix&gt;
+   &lt;IgnoreUnresolvedVariables&gt;true&lt;/IgnoreUnresolvedVariables&gt;
+&lt;/ExtractVariables&gt;
+</pre>
+
+  <p>Suppose, for an API Proxy with a basepath of <span style=
+  "font-family: 'courier new', courier, monospace;">/basepath/v1</span> , the inbound request URL
+  to the API proxy is of this form:</p>
+  <pre class="prettyprint">
+http://myCo.com/basepath/v1/a/b
+</pre>
+
+  <p>In this example, the first pattern matches the URI and the <span style=
+  "font-family: 'courier new', courier, monospace;">urirequest.pathSeg</span> variable is
+  set to "b".</p>
+
+  <p>If the request URL is:</p>
+  <pre class="prettyprint">
+http://myCo.com/basepath/v1/a/b/c/d
+</pre>
+
+  <p>...then the third pattern matches and the <span style=
+  "font-family: 'courier new', courier, monospace;">urirequest.pathSeg</span> variable is
+  set to "d".</p>
+
+  <h4>Specifying patterns with multiple variables</h4>
+
+  <p>You can specify multiple variables in the matching pattern. For example, you specify a
+  matching pattern with two variables:</p>
+  <pre class="prettyprint">
+&lt;ExtractVariables name="ExtractVariables-1"&gt;
+   &lt;Source&gt;request&lt;/Source&gt;
+   &lt;URIPath&gt;
+      &lt;Pattern ignoreCase="true"&gt;/a/{pathSeg}&lt;/Pattern&gt;
+      &lt;Pattern ignoreCase="true"&gt;/a/b/{pathSeg}&lt;/Pattern&gt;
+      <strong>&lt;Pattern ignoreCase="true"&gt;/a/{pathSeg1}/c/{pathSeg2}&lt;/Pattern&gt;</strong>
+   &lt;/URIPath&gt;
+   &lt;VariablePrefix&gt;urirequest&lt;/VariablePrefix&gt;
+   &lt;IgnoreUnresolvedVariables&gt;true&lt;/IgnoreUnresolvedVariables&gt;
+&lt;/ExtractVariables&gt;
+</pre>
+
+  <p>Again supposing an API Proxy with a base path of <span style=
+  "font-family: 'courier new', courier, monospace;">/basepath/v1</span> , for the inbound request
+  URL:</p>
+  <pre class="prettyprint">
+http://myCo.com/basepath/v1/a/b/c/d
+</pre>
+
+  <p>...the <span style=
+  "font-family: 'courier new', courier, monospace;">urirequest.pathSeg1</span> variable is
+  set to "b" and the <span style=
+  "font-family: 'courier new', courier, monospace;">urirequest.pathSeg2</span> variable is
+  set to "d".</p>
+
+  <h4>Matching multiple instances in the pattern</h4>
+
+  <p>You can also match patterns when there are multiple instances of an item with the same name.
+  For example, you can make a request that contains multiple query parameters or multiple headers
+  with the same name. The following request contains two query parameters named "w":</p>
+  <pre class="prettyprint">
+http://myCo.com/basepath/v1/a/b/c/d?w=1&amp;w=2
+</pre>
+
+  <p>To reference these query parameters in the Extract Variables policy, you use indexes, where
+  the first instance of the query parameter has no index, the second is at index 2, the third at
+  index 3, etc. For example, the following policy extracts the value of the second query parameter
+  named "w" in the request:</p>
+  <pre class="prettyprint">
+&lt;ExtractVariables name="ExtractVariables-1"&gt;
+   &lt;Source&gt;request&lt;/Source&gt;
+   <strong>&lt;QueryParam name="w.2"&gt;</strong>
+      &lt;Pattern ignoreCase="true"&gt;{secondW}&lt;/Pattern&gt;
+   &lt;/QueryParam&gt;
+   &lt;VariablePrefix&gt;urirequest&lt;/VariablePrefix&gt;
+   &lt;IgnoreUnresolvedVariables&gt;true&lt;/IgnoreUnresolvedVariables&gt;
+&lt;/ExtractVariables&gt;
+</pre>
+
+  <p>The <span style=
+  "font-family: 'courier new', courier, monospace;">urirequest.secondW</span> variable is
+  set to "2". If the second query parameter is omitted from the request, then the <span style=
+  "font-family: 'courier new', courier, monospace;">urirequest.secondW</span> variable is
+  empty. Use indexing any time there are multiple items with the same name in the request.</p>
+
+  <h4>Using special characters in the pattern</h4>
+
+  <p>When matching URI paths, you can use the "*" and "**" wildcard characters in the pattern,
+  where:</p>
+
+  <ul>
+    <li>"*" matches any one segments of the path</li>
+
+    <li>"**" matches multiple segments of the path</li>
+  </ul>
+
+  <p>For example, you specify patterns to the <span style=
+  "font-family:courier new,courier,monospace;">&lt;URIPath&gt;</span> element as shown
+  below:</p>
+  <pre class="prettyprint">
+&lt;URIPath&gt;
+  &lt;Pattern ignoreCase="true"&gt;/a/*/{id}&lt;/Pattern&gt;
+  &lt;Pattern ignoreCase="true"&gt;/a/**/{id}&lt;/Pattern&gt;
+&lt;/URIPath&gt;
+</pre>
+
+  <p>The first pattern matches requests with pathsuffixes (the portion of the URI path following
+  the basepath) such as "/a/b/c", "/a/foo/bar", etc. The second pattern matches any number of path
+  segments after "/a/", such as "/a/foo/bar/baz/c", as well as "/a/b/c" and "/a/foo/bar".</p>
+
+  <p>When specifying patterns to query parameters, headers, and form parameters, the "*"character
+  specifies to match any number of characters. For example, when matching a header, specify the
+  pattern as:</p>
+
+  <p><span style="font-family:courier new,courier,monospace;">*;charset={encoding} </span></p>
+
+  <p>This pattern matches the values "text/xml;charset=UTF-16" and
+  "application/xml;charset=ASCII".</p>
+
+  <p>If the value passed to the Extract Variables policy contains a special character, such as
+  "{", use the "%" character to escape it. The following example escapes the "{" and "}" characters
+  in the pattern because they are used as literal characters in the value of the query
+  parameter:</p>
+  <pre class="prettyprint">
+&lt;QueryParam&gt;
+  &lt;Pattern ignoreCase="true"&gt;%{user%} {name}&lt;/Pattern&gt;
+&lt;/QueryParam&gt;
+</pre>
+
+  <p>In this example, the pattern matches the value "{user} Steve" but not the value "user
+  Steve". </p>
+
+  <h3 id="aboutmatchingandvariablecreation-matchingjsonandxml" class="hide-from-toc">Matching JSON and XML</h3>
+
+  <p>When extracting data from JSON and XML, you specify one or more <span style=
+  "font-family:courier new,courier,monospace;">&lt;Variable&gt;</span> tags in the policy.
+  The <span style=
+  "font-family: 'courier new', courier, monospace;">&lt;Variable&gt;</span> tag specifies the
+  name of the destination variable where the extracted information is stored, and the JsonPath
+  (JSON) or XPATH (XML) to the extracted information.  </p>
+
+  <p>All <span style=
+  "font-family: 'courier new', courier, monospace;">&lt;Variable&gt;</span> tags in the policy
+  are evaluated, so that you can populate multiple variables from a single policy. If
+  the <span style=
+  "font-family: 'courier new', courier, monospace;">&lt;Variable&gt;</span> tag does not
+  evaluate to a valid field in the JSON or XML, then the corresponding variable is not
+  created. </p>
+
+  <p>The following example shows an Extract Variables policy that populates two variables from the
+  JSON body of a response:</p>
+  <pre class="prettyprint">
+&lt;ExtractVariables name="ExtractVariables-3"&gt;
+   &lt;Source&gt;response&lt;/Source&gt;
+   &lt;JSONPayload&gt;
+      &lt;Variable name="latitude" type="float"&gt;
+         &lt;JSONPath&gt;$.results[0].geometry.location.lat&lt;/JSONPath&gt;
+      &lt;/Variable&gt;
+      &lt;Variable name="longitude" type="float"&gt;
+         &lt;JSONPath&gt;$.results[0].geometry.location.lng&lt;/JSONPath&gt;
+      &lt;/Variable&gt;
+   &lt;/JSONPayload&gt;
+   &lt;VariablePrefix&gt;geocoderesponse&lt;/VariablePrefix&gt;
+&lt;/ExtractVariables&gt;
+</pre>
+
+  <h3 id="aboutmatchingandvariablecreation-writingtothesamevariableinmultipleplaces" class="hide-from-toc">Writing to the
+  same variable in multiple places</h3>
+
+  <p>Take care when choosing the names of variables to set. The policy executes sequentially from
+  the first extraction pattern to the last. If the policy writes a value to the same variable from
+  multiple places, the last write in the policy determines the value of the variable. (This may be
+  what you want.)</p>
+
+  <p>For example, you want to extract a token value that can be passed either in a query parameter
+  or in a header, as shown below:</p>
+  <pre class="prettyprint">
+&lt;!-- If token only in query param, the query param determines the value. 
+     If token is found in both the query param and header, header sets value. --&gt;
+&lt;QueryParam name="token"&gt;
+  &lt;Pattern ignoreCase="true"&gt;{tokenValue}&lt;/Pattern&gt;
+&lt;/QueryParam&gt;
+ 
+&lt;!-- Overwrite tokenValue even if it was found in query parameter. --&gt;
+&lt;Header name="Token"&gt;
+  &lt;Pattern ignoreCase="true"&gt;{tokenValue}&lt;/Pattern&gt;
+&lt;/Header&gt;
+</pre>
+
+  <h3 id="elementreference" class="hide-from-toc">Controlling what happens when no match occurs</h3>
+
+  <p>If the pattern does not match, then the corresponding variable is not created. Therefore, if
+  another policy references the variable, it can cause an error.</p>
+
+  <p>One option is to set <span style=
+  "font-family: 'courier new', courier, monospace;">&lt;IgnoreUnresolvedVariables&gt;</span> to
+  true in a policy that references the variable to configure the policy to treat
+  any unresolvable variable as an empty string (null):</p>
+  <pre class="prettyprint">
+&lt;IgnoreUnresolvedVariables&gt;true&lt;/IgnoreUnresolvedVariables&gt;
+</pre>
+
+  <h2 id="elementreference">Element reference</h2>
+
+  <p>The element reference describes the elements and attributes of the Extract Variables
+  policy.</p>
+  <pre class="prettyprint">
+&lt;ExtractVariables async="false" continueOnError="false" enabled="true" name="Extract-Variables-1"&gt;
+   &lt;DisplayName&gt;Extract Variables 1&lt;/DisplayName&gt;
+   &lt;Source clearPayload="true|false"&gt;request&lt;/Source&gt;
+   &lt;VariablePrefix&gt;myprefix&lt;/VariablePrefix&gt;
+   &lt;IgnoreUnresolvedVariables&gt;true|false&lt;/IgnoreUnresolvedVariables&gt;
+   &lt;URIPath&gt;
+      &lt;Pattern ignoreCase="false"&gt;/accounts/{id}&lt;/Pattern&gt;
+   &lt;/URIPath&gt;
+   &lt;QueryParam name="code"&gt;
+      &lt;Pattern ignoreCase="true"&gt;DBN{dbncode}&lt;/Pattern&gt;
+   &lt;/QueryParam&gt;
+   &lt;Header name="Authorization"&gt;
+      &lt;Pattern ignoreCase="false"&gt;Bearer {oauthtoken}&lt;/Pattern&gt;
+   &lt;/Header&gt;
+   &lt;FormParam name="greeting"&gt;
+      &lt;Pattern&gt;hello {user}&lt;/Pattern&gt;
+   &lt;/FormParam&gt;
+   &lt;Variable name="request.content"&gt;
+       &lt;Pattern&gt;hello {user}&lt;/Pattern&gt;
+   &lt;/Variable&gt;
+   &lt;JSONPayload&gt;
+      &lt;Variable name="name"&gt;
+         &lt;JSONPath&gt;{example}&lt;/JSONPath&gt;
+      &lt;/Variable&gt;
+   &lt;/JSONPayload&gt;
+   &lt;XMLPayload stopPayloadProcessing="false"&gt;
+      &lt;Namespaces/&gt;
+      &lt;Variable name="name" type="boolean"&gt;
+         &lt;XPath&gt;/test/example&lt;/XPath&gt;
+      &lt;/Variable&gt;
+   &lt;/XMLPayload&gt;
+&lt;/ExtractVariables&gt;
+</pre>
+
+  <h2 id="extractvariablesattributes">&lt;ExtractVariables&gt; attributes</h2>
+  <pre class="prettyprint">
+&lt;ExtractVariables async="false" continueOnError="false" enabled="true" name="Extract-Variables-1"&gt;
+</pre>{% dynamic include /includes/___policies-parent-element-attributes %}
+
+  <h2 id="sourceelement">&lt;Source&gt; element</h2>
+
+  <p>(Optional) Specifies the variable to be parsed. The value of
+  <code>&lt;Source&gt;</code> defaults to <code>message</code>. The <code>message</code> value
+  is context-sensitive. In a request flow, <code>message</code> resolves to the request message. In
+  a response flow, <code>message</code> resolves to the response message.</p>
+
+  <p>While you often use this policy to extract information from a request or response message, you
+  can use it to extract information from any variable. For example, you can use it to extract
+  information from an entity created by the <a href=
+  "/api-platform/reference/policies/access-entity-policy.html">Access Entity policy</a>, from data
+  returned by the <a href="/api-platform/reference/policies/service-callout-policy.html">Service
+  Callout policy</a>, or extract information from an XML or JSON object.<br>
+  <br>
+  If <code>&lt;Source&gt;</code> cannot be resolved, or resolves to a non-message type,
+  the policy will fail to respond.</p>
+  <pre class="prettyprint">
+&lt;Source clearPayload="true|false"&gt;request&lt;/Source&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>message</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>String</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="sourceelement-attributes" class="hide-from-toc">Attributes</h3>
+
+  <table>
+    <tbody>
+      <tr>
+        <th scope="col">Attribute</th>
+
+        <th scope="col">Description</th>
+
+        <th scope="col">Default</th>
+
+        <th scope="col">Presence</th>
+
+        <th scope="col">Type</th>
+      </tr>
+
+      <tr>
+        <td>clearPayload</td>
+
+        <td>
+          <p>Set to <strong>true</strong> if you want to clear the payload specified in
+          &lt;Source&gt; after extracting data from it.<br>
+          <br>
+          Use the <code>&lt;clearPayload&gt;</code> option only if the soruce message is not
+          required after ExtractVariables is executed. Setting to <strong>true</strong> frees
+          up the memory used by the message.</p>
+        </td>
+
+        <td>
+          <p>false</p>
+        </td>
+
+        <td>Optional</td>
+
+        <td>Boolean</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="variableprefixelement">&lt;VariablePrefix&gt; element</h2>
+
+  <p>(Optional) The complete variable name is created by joining the
+  <code>&lt;VariablePrefix&gt;</code>, a dot, and the name you define in {curly braces} in the
+  <code>&lt;Pattern&gt;</code> element or <span style=
+  "font-family:courier new,courier,monospace;">&lt;Variable&gt;</span> element. For example:
+  <code>myprefix.id</code>, <code>myprefix.dbncode</code>, or <code>myprefix.oauthtoken.</code></p>
+  <pre class="prettyprint">
+&lt;VariablePrefix&gt;myprefix&lt;/VariablePrefix&gt;
+</pre>
+
+  <p> For example, suppose the value of name is "user".</p>
+
+  <ul>
+    <li>If <code>&lt;VariablePrefix&gt;</code> is not specified, the extracted values are
+    assigned to a variable named <code>user</code>.</li>
+
+    <li>If <code>&lt;VariablePrefix&gt;</code> is specified as myprefix, the extracted
+    values are assigned to a variable named <code>myprefix.user</code>.</li>
+  </ul>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>String</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="ignoreunresolvedvariableselement">&lt;IgnoreUnresolvedVariables&gt; element</h2>
+
+  <p>(Optional) Set to <code>true</code> to treat any unresolvable variable as an empty string
+  (null). Set to <code>false</code> if you want the policy to throw an error when any referenced
+  variable is unresolvable.</p>
+  <pre class="prettyprint">
+&lt;IgnoreUnresolvedVariables&gt;true&lt;/IgnoreUnresolvedVariables&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>False</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>Boolean</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="uripathelement">&lt;URIPath&gt; element</h2>
+
+  <p>(Optional, but see the Presence row in the table below for more information.) Extracts a value
+  from the proxy.pathsuffix of a <span style=
+  "font-family:courier new,courier,monospace;">request</span> source message. The path applied to
+  the pattern is the proxy.pathsuffix, which does not include the basepath for the API Proxy. If
+  the source message resolves to a message type of <span style=
+  "font-family:courier new,courier,monospace;">response</span>, then this element does nothing.</p>
+  <pre class="prettyprint">
+&lt;URIPath&gt;
+   &lt;Pattern ignoreCase="false"&gt;/accounts/{id}&lt;/Pattern&gt;
+&lt;/URIPath&gt;
+</pre>
+
+  <p>It is possible to use multiple <span style=
+  "font-family:courier new,courier,monospace;">&lt;Pattern&gt;</span> elements:</p>
+  <pre class="prettyprint">
+&lt;URIPath&gt;
+   &lt;Pattern ignoreCase="false"&gt;/accounts/{id}&lt;/Pattern&gt;
+   &lt;Pattern ignoreCase="false"&gt;/accounts/{id}/transactions/{index}&lt;/Pattern&gt;
+&lt;/URIPath&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Optional. However, you must include at least one of the following:
+        <code>&lt;URIPath&gt;</code>, <code>&lt;QueryParam&gt;</code>, <code>&lt;Header&gt;</code>,
+        <code>&lt;FormParam&gt;</code>, <code>&lt;JSONPayload&gt;</code>, or
+        <code>&lt;XMLPayload&gt;.</code></td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>N/A</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="uripathelement-attributes" class="hide-from-toc">Attributes</h3>
+
+  <table>
+    <tbody>
+      <tr>
+        <th scope="col">Attribute</th>
+
+        <th scope="col">Description</th>
+
+        <th scope="col">Default</th>
+
+        <th scope="col">Presence</th>
+
+        <th scope="col">Type</th>
+      </tr>
+
+      <tr>
+        <td>ignoreCase</td>
+
+        <td>Specifies to ignore case when matching the patern.</td>
+
+        <td>
+          <p>false</p>
+        </td>
+
+        <td>Optional</td>
+
+        <td>Boolean</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="queryparamelement">&lt;QueryParam&gt; element</h2>
+
+  <p>(Optional, but see the Presence row in the table below for more information.) Extracts a value
+  from the specified query parameter of a <span style=
+  "font-family: 'courier new', courier, monospace;">request</span> source message. If the
+  source message resolves to a message type of <span style=
+  "font-family: 'courier new', courier, monospace;">response</span>, then this element does
+  nothing.</p>
+  <pre class="prettyprint">
+&lt;QueryParam name="code"&gt;
+   &lt;Pattern ignoreCase="true"&gt;DBN{dbncode}&lt;/Pattern&gt;
+&lt;/QueryParam&gt;
+</pre>
+
+  <p>If multiple query parameters have the same name, use indexes to reference the parameters:</p>
+  <pre class="prettyprint">
+&lt;QueryParam name="w.2"&gt;
+   &lt;Pattern ignoreCase="true"&gt;{secondW}&lt;/Pattern&gt;
+&lt;/QueryParam&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Optional. However, you must include at least one of the following:
+        <code>&lt;URIPath&gt;</code>, <code>&lt;QueryParam&gt;</code>, <code>&lt;Header&gt;</code>,
+        <code>&lt;FormParam&gt;</code>, <code>&lt;JSONPayload&gt;</code>, or
+        <code>&lt;XMLPayload&gt;.</code></td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>N/A</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="queryparamelement-attributes" class="hide-from-toc">Attributes</h3>
+
+  <table>
+    <tbody>
+      <tr>
+        <th scope="col">Attribute</th>
+
+        <th scope="col">Description</th>
+
+        <th scope="col">Default</th>
+
+        <th scope="col">Presence</th>
+
+        <th scope="col">Type</th>
+      </tr>
+
+      <tr>
+        <td>name</td>
+
+        <td>Specifies the name of the query parameter. If multiple query parameters have the
+        same name, use indexed referencing, where the first instance of the query parameter
+        has no index, the second is at index 2, the third at index 3, etc. </td>
+
+        <td>
+          <p>N/A</p>
+        </td>
+
+        <td>Required</td>
+
+        <td>String</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="headerelement">&lt;Header&gt; element</h2>
+
+  <p>(Optional, but see the Presence row in the table below for more information.) Extracts a value
+  from the specified HTTP header of the specified <span style=
+  "font-family:courier new,courier,monospace;">request</span> or <span style=
+  "font-family:courier new,courier,monospace;">response</span> message. If multiple headers have
+  the same name, their values are stored in an array.</p>
+  <pre class="prettyprint">
+&lt;!-- The name is the actual header name. --&gt;
+&lt;Header name="Authorization"&gt;
+&lt;!-- Provide a name for your new custom variable here. --&gt;
+   &lt;Pattern ignoreCase="false"&gt;Bearer {oauthtoken}&lt;/Pattern&gt;
+&lt;/Header&gt;
+</pre>
+
+  <p>If multiple headers have the same name, use indexes to reference individual headers in the
+  array:</p>
+  <pre class="prettyprint">
+&lt;Header name="myHeader.2"&gt;
+   &lt;Pattern ignoreCase="true"&gt;{secondHeader}&lt;/Pattern&gt;
+&lt;/Header&gt;
+</pre>
+
+  <p>Or the following to list all the headers in the array:</p>
+  <pre class="prettyprint">
+&lt;Header name="myHeader.values"&gt;
+   &lt;Pattern ignoreCase="true"&gt;{myHeaders}&lt;/Pattern&gt;
+&lt;/Header&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Optional. However, you must include at least one of the following:
+        <code>&lt;URIPath&gt;</code>, <code>&lt;QueryParam&gt;</code>, <code>&lt;Header&gt;</code>,
+        <code>&lt;FormParam&gt;</code>, <code>&lt;JSONPayload&gt;</code>, or
+        <code>&lt;XMLPayload&gt;.</code></td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>N/A</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="headerelement-attributes" class="hide-from-toc">Attributes</h3>
+
+  <table>
+    <tbody>
+      <tr>
+        <th scope="col">Attribute</th>
+
+        <th scope="col">Description</th>
+
+        <th scope="col">Default</th>
+
+        <th scope="col">Presence</th>
+
+        <th scope="col">Type</th>
+      </tr>
+
+      <tr>
+        <td>name</td>
+
+        <td>Specifies the name of the header from which you extract the value. If multiple
+        headers have the same name, use indexed referencing, where the first instance of the
+        header has no index, the second is at index 2, the third at index 3, etc. Use
+        <code>.values</code> to get all headers in the array.</td>
+
+        <td>
+          <p>N/A</p>
+        </td>
+
+        <td>Required</td>
+
+        <td>String</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="formparamelement">&lt;FormParam&gt; element</h2>
+
+  <p>(Optional, but see the Presence row in the table below for more information.) Extracts a value
+  from the specified form parameter of the specified <span style=
+  "font-family: 'courier new', courier, monospace;">request</span> or <span style=
+  "font-family: 'courier new', courier, monospace;">response</span> message. Form parameters
+  can be extracted only when the <code>Content-Type</code> header of the specified message is
+  <code>application/x-www-form-urlencoded</code>.</p>
+  <pre class="prettyprint">
+&lt;FormParam name="greeting"&gt;
+    &lt;Pattern&gt;hello {user}&lt;/Pattern&gt;
+&lt;/FormParam&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Optional. However, you must include at least one of the following:
+        <code>&lt;URIPath&gt;</code>, <code>&lt;QueryParam&gt;</code>, <code>&lt;Header&gt;</code>,
+        <code>&lt;FormParam&gt;</code>, <code>&lt;JSONPayload&gt;</code>, or
+        <code>&lt;XMLPayload&gt;.</code></td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>N/A</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="formparamelement-attributes" class="hide-from-toc">Attributes</h3>
+
+  <table>
+    <tbody>
+      <tr>
+        <th scope="col">Attribute</th>
+
+        <th scope="col">Description</th>
+
+        <th scope="col">Default</th>
+
+        <th scope="col">Presence</th>
+
+        <th scope="col">Type</th>
+      </tr>
+
+      <tr>
+        <td>name</td>
+
+        <td>The name of the form parameter from which you extract the value.</td>
+
+        <td>
+          <p>N/A</p>
+        </td>
+
+        <td>Required</td>
+
+        <td>String</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="variableelement">&lt;Variable&gt; element</h2>
+
+  <p>(Optional, but see the Presence row in the table below for more information.) Specifies the
+  name of a variable from which to extract a value. </p>
+  <pre class="prettyprint">
+&lt;Variable name="myVar"&gt;
+    &lt;Pattern&gt;hello {user}&lt;/Pattern&gt;
+&lt;/Variable&gt;
+</pre>
+
+  <p>To extract two values from the variable:</p>
+  <pre class="prettyprint">
+&lt;Variable name="myVar"&gt;
+   &lt;Pattern&gt;hello {firstName} {lastName}&lt;/Pattern&gt;
+&lt;/Variable&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Optional. However, you must include at least one of the following:
+        <code>&lt;URIPath&gt;</code>, <code>&lt;QueryParam&gt;</code>, <code>&lt;Header&gt;</code>,
+        <code>&lt;FormParam&gt;</code>, <code>&lt;JSONPayload&gt;</code>, or
+        <code>&lt;XMLPayload&gt;.</code></td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>N/A</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="variableelement-attributes" class="hide-from-toc">Attributes</h3>
+
+  <table>
+    <tbody>
+      <tr>
+        <th scope="col">Attribute</th>
+
+        <th scope="col">Description</th>
+
+        <th scope="col">Default</th>
+
+        <th scope="col">Presence</th>
+
+        <th scope="col">Type</th>
+      </tr>
+
+      <tr>
+        <td>name</td>
+
+        <td>The name of the variable from which to extract the value.</td>
+
+        <td>
+          <p>N/A</p>
+        </td>
+
+        <td>Required</td>
+
+        <td>String</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="jsonpayloadelement">&lt;JSONPayload&gt; element</h2>
+
+  <p>(Optional, but see the Presence row in the table below for more information.) Specifies the
+  JSON-formatted message from which the value of the variable will be extracted. JSON
+  extraction is performed only when message's <span style=
+  "font-family:courier new,courier,monospace;">Content-Type</span> header is <span style=
+  "font-family:courier new,courier,monospace;">application/json</span>.</p>
+
+  <aside class="note">
+    <b>Sample:</b> <strong>Learn by doing!</strong><br>
+    Check out these Learn Edge examples that show you how to extract data from a JSON response
+    payload. Just follow the instructions in the READMEs.
+
+    <ul>
+      <li><a href=
+      "https://github.com/apigee/api-platform-samples/tree/master/learn-edge/extract-json-payload">Extract
+      data from a JSON payload</a></li>
+
+      <li><a href=
+      "https://github.com/apigee/api-platform-samples/tree/master/learn-edge/extract-json-payload-2">
+      Query for data in a JSON payload</a></li>
+    </ul>
+  </aside>
+  <pre class="prettyprint">
+&lt;JSONPayload&gt;
+   &lt;Variable name="name" type="string"&gt;
+      &lt;JSONPath&gt;{example}&lt;/JSONPath&gt;
+   &lt;/Variable&gt;
+&lt;/JSONPayload&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Optional. However, you must include at least one of the following:
+        <code>&lt;URIPath&gt;</code>, <code>&lt;QueryParam&gt;</code>, <code>&lt;Header&gt;</code>,
+        <code>&lt;FormParam&gt;</code>, <code>&lt;JSONPayload&gt;</code>, or
+        <code>&lt;XMLPayload&gt;.</code></td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>N/A</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="jsonpayloadelement-jsonpayloadvariableelement">&lt;JSONPayload&gt;/&lt;Variable&gt;
+  element</h3>
+
+  <p>(Required within the JSONPayload element.) Specifies the variable where the extracted value is
+  assigned. You can include multiple <span style=
+  "font-family:courier new,courier,monospace;">&lt;Variable&gt;</span> tags in the <span style=
+  "font-family:courier new,courier,monospace;">&lt;JSONPayload&gt;</span> element to populate
+  multiple variables.  </p>
+
+  <pre class="prettyprint">
+&lt;Variable name="name" type="string"&gt;
+   &lt;JSONPath&gt;{example}&lt;/JSONPath&gt;
+&lt;/Variable&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Required within the JSONPayload element. </td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>N/A</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h4>Attributes</h4>
+
+  <table>
+    <tbody>
+      <tr>
+        <th scope="col">Attribute</th>
+
+        <th scope="col">Description</th>
+
+        <th scope="col">Default</th>
+
+        <th scope="col">Presence</th>
+
+        <th scope="col">Type</th>
+      </tr>
+
+      <tr>
+        <td>name</td>
+
+        <td>
+          <p>Specifies the name of the variable to which the extracted value will be
+          assigned. </p>
+        </td>
+
+        <td>
+          <p>name</p>
+        </td>
+
+        <td>Required</td>
+
+        <td>String</td>
+      </tr>
+
+      <tr>
+        <td>type</td>
+
+        <td>Specifies the data type of the variable value.</td>
+
+        <td>N/A</td>
+
+        <td>Optional</td>
+
+        <td>
+          <p>String. Select from:</p>
+
+          <ul>
+            <li>string</li>
+
+            <li>boolean</li>
+
+            <li>integer</li>
+
+            <li>long</li>
+
+            <li>float</li>
+
+            <li>double</li>
+
+            <li>nodeset (returns JSON fragment)</li>
+          </ul>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="jsonpayloadelement-jsonpayloadvariablejsonpathelement">
+  &lt;JSONPayload&gt;/&lt;Variable&gt;/&lt;JSONPath&gt; element</h3>
+
+  <p>(Required within the JSONPayload:Variable element.) Specifies the JSON path used to extract a
+  value from a JSON-formatted message. </p>
+<aside class="note">The <code>&lt;JSONPath&gt;</code> element supports the dynamic string substitution feature called
+  <a href="/api-platform/reference/message-template-intro.html">message templating</a>.</aside>
+  <pre class="prettyprint">
+&lt;Variable name="name"&gt;
+   &lt;JSONPath&gt;$.rss.channel.title&lt;/JSONPath&gt;
+&lt;/Variable&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Required</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>String</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="xmlpayloadelement">&lt;XMLPayload&gt; element</h2>
+
+  <p>(Optional, but see the Presence row in the table below for more information.) Specifies the
+  XML-formatted message from which the value of the variable will be extracted.  XML payloads
+  are extracted only when the <code>Content-Type</code> header of the message
+  is <code>text/xml</code>, <code>application/xml</code>,
+  or <code>application/*+xml</code>.</p>
+
+  <aside class="note">
+    <b>Sample:</b> <strong>Learn by doing!</strong>
+
+    <p>Check out <a href=
+    "https://github.com/apigee/api-platform-samples/tree/master/learn-edge/extract-xml-payload">this
+    Learn Edge example</a> that show you how to extract data from an XML response payload. Just
+    follow the instructions in the README.</p>
+  </aside>
+  <pre class="prettyprint">
+&lt;XMLPayload stopPayloadProcessing="false"&gt;
+  &lt;Namespaces&gt;
+     &lt;Namespace prefix="apigee"&gt;http://www.apigee.com&lt;/Namespace&gt;
+     &lt;Namespace prefix="gmail"&gt;http://mail.google.com&lt;/Namespace&gt;
+  &lt;/Namespaces&gt;
+  &lt;Variable name="name" type="boolean"&gt;
+     &lt;XPath&gt;/apigee:test/apigee:example&lt;/XPath&gt;
+  &lt;/Variable&gt;
+&lt;/XMLPayload&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Optional. However, you must include at least one of the following:
+        <code>&lt;URIPath&gt;</code>, <code>&lt;QueryParam&gt;</code>, <code>&lt;Header&gt;</code>,
+        <code>&lt;FormParam&gt;</code>, <code>&lt;JSONPayload&gt;</code>, or
+        <code>&lt;XMLPayload&gt;.</code></td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>N/A</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="xmlpayloadelement-attributes" class="hide-from-toc">Attributes</h3>
+
+  <table>
+    <tbody>
+      <tr>
+        <th scope="col">Attribute</th>
+
+        <th scope="col">Description</th>
+
+        <th scope="col">Default</th>
+
+        <th scope="col">Presence</th>
+
+        <th scope="col">Type</th>
+      </tr>
+
+      <tr>
+        <td><code>stopPayloadProcessing</code></td>
+
+        <td>
+          <p>Set to <code>true</code> to stop XPath evaluation after one variable is populated.
+          This means only a single variable is populated by the policy.</p>
+        </td>
+
+        <td>
+          <p>false</p>
+        </td>
+
+        <td>Optional</td>
+
+        <td>Boolean</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="xmlpayloadelement-xmlpayloadnamespaceselement">&lt;XMLPayload&gt;/&lt;Namespaces&gt;
+  element</h3>
+
+  <p>(Optional) Specifies the namespace to be used in the XPath evaluation. If you're using
+  namespaces in your XPath expressions, you must declare the namespaces here, as shown in the
+  following example.</p>
+  <pre class="prettyprint">
+&lt;XMLPayload stopPayloadProcessing="false"&gt;
+  &lt;Namespaces&gt;
+     &lt;Namespace prefix="apigee"&gt;http://www.apigee.com&lt;/Namespace&gt;
+     &lt;Namespace prefix="gmail"&gt;http://mail.google.com&lt;/Namespace&gt;
+  &lt;/Namespaces&gt;
+  &lt;Variable name="legName" type="string"&gt;
+    &lt;XPath&gt;/apigee:Directions/apigee:route/apigee:leg/apigee:name&lt;/XPath&gt;
+  &lt;/Variable&gt;
+&lt;/XMLPayload&gt;
+</pre>
+
+  <p>Omit the namespace definition of there is none:</p>
+  <pre class="prettyprint">
+&lt;XMLPayload stopPayloadProcessing="false"&gt;
+  &lt;Namespaces/&gt;
+  &lt;Variable name="legName" type="string"&gt;
+    &lt;XPath&gt;/Directions/route/leg/name&lt;/XPath&gt;
+  &lt;/Variable&gt;
+&lt;/XMLPayload&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>String</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h4>Attributes</h4>
+
+  <table>
+    <tbody>
+      <tr>
+        <th scope="col">Attribute</th>
+
+        <th scope="col">Description</th>
+
+        <th scope="col">Default</th>
+
+        <th scope="col">Presence</th>
+
+        <th scope="col">Type</th>
+      </tr>
+
+      <tr>
+        <td><code>prefix</code></td>
+
+        <td>
+          <p>The namespace prefix.</p>
+        </td>
+
+        <td>
+          <p>N/A</p>
+        </td>
+
+        <td>Optional</td>
+
+        <td>String</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="xmlpayloadelement-xmlpayloadvariableelement">&lt;XMLPayload&gt;/&lt;Variable&gt;
+  element</h3>
+
+  <p>(Optional) Specifies variable to which the extracted value will be assigned.</p>
+  <pre class="prettyprint">
+&lt;Variable name="name" type="boolean"&gt;
+   &lt;XPath&gt;/test/example&lt;/XPath&gt;
+&lt;/Variable&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Optional</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>N/A</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h4>Attributes</h4>
+
+  <table>
+    <tbody>
+      <tr>
+        <th scope="col">Attribute</th>
+
+        <th scope="col">Description</th>
+
+        <th scope="col">Default</th>
+
+        <th scope="col">Presence</th>
+
+        <th scope="col">Type</th>
+      </tr>
+
+      <tr>
+        <td>name</td>
+
+        <td>
+          <p>Specifies the name of the variable to which the extracted value will be
+          assigned. </p>
+        </td>
+
+        <td>
+          <p>name</p>
+        </td>
+
+        <td>Required</td>
+
+        <td>String</td>
+      </tr>
+
+      <tr>
+        <td>type</td>
+
+        <td>Specifies the data type of the variable value.</td>
+
+        <td>Boolean</td>
+
+        <td>Optional</td>
+
+        <td>
+          <p>String. Select from:</p>
+
+          <ul>
+            <li>string</li>
+
+            <li>boolean</li>
+
+            <li>integer</li>
+
+            <li>long</li>
+
+            <li>float</li>
+
+            <li>double</li>
+
+            <li>nodeset (returns an XML fragment)</li>
+          </ul>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="xmlpayloadelement-xmlpayloadvariablexpathelement">
+  &lt;XMLPayload&gt;/&lt;Variable&gt;/&lt;XPath&gt; element</h3>
+
+  <p>(Required within the XMLPayload:Variable element.) Specifies the XPath defined for the
+  variable. Only XPath 1.0 expressions are supported.</p>
+<aside class="note">The <code>&lt;XPath&gt;</code> element does not support
+  <a href="/api-platform/reference/message-template-intro.html">message templating</a>.</aside>
+  <pre class="prettyprint">
+&lt;Variable name="name" type="boolean"&gt;
+   &lt;XPath&gt;/test/example&lt;/XPath&gt;
+&lt;/Variable&gt;
+</pre>
+
+  <p>Example with a namespace. If you use namespaces in your XPath expressions, you must declare
+  the namespaces in the <a href=
+  "#xmlpayloadelement-xmlpayloadnamespaceselement"><code>&lt;XMLPayload&gt;&lt;Namespaces&gt;</code></a> section
+  of the policy.</p>
+  <pre class="prettyprint">
+&lt;Variable name="name" type="boolean"&gt;
+   &lt;XPath&gt;/foo:test/foo:example&lt;/XPath&gt;
+&lt;/Variable&gt;
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default:</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence:</b></td>
+
+        <td>Required</td>
+      </tr>
+
+      <tr>
+        <td><b>Type:</b></td>
+
+        <td>String</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <aside class="note">
+    <b>Note:</b> Using <code>parent</code>, <code>ancestor</code>, <code>following</code>, and
+    <code>preceding</code> in XPath expressions is not supported in Edge. To get the same matching
+    results, try explicit node name matching or indexing. For example:
+
+    <ul>
+      <li>
+      <code>&lt;XPath&gt;/Attributes/Attribute[@Name=&#8217;foo_attribute']/Value&lt;/XPath&gt;</code><br>
+
+      gets the value of <code>foo_attribute</code>.</li>
+
+      <li><code>&lt;XPath&gt;/Attributes/Attribute[4]/Value&lt;/XPath&gt;</code><br>
+      gets the value of the 4th attribute.</li>
+    </ul>
+  </aside>
+
+  <h2 id="errorcodes">Error reference</h2>
+
+  <p>{% dynamic include /includes/___extract-variables-policy-error-codes %}</p>
+
+  <h2 id="schemas">Schemas</h2>
+
+  <aside class="note"><b>Sample:</b> See our <a href=
+  "https://github.com/apigee/api-platform-samples/tree/master/schemas/policy">GitHub
+  repository</a> samples for the most recent schemas.</aside>
+
+  <h2 id="relatedtopics">Related topics</h2>
+
+  <p><a href=
+  "/api-platform/analytics/analyze-api-message-content-using-custom-analytics.html">Analyze API
+  message content using custom analytics</a></p>
+
+  <p><a href="/api-platform/reference/variables-reference.html">Variables reference</a></p>
+
+  
+
+  {% endblock %}

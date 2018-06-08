@@ -1,0 +1,1235 @@
+{% extends "private-cloud/v4.18.01/_base.html" %}
+{% block title %}Installation Requirements{% endblock %}
+{% block body %}
+
+  <h2 id="hardwarerequirements">Hardware Requirements</h2>
+
+  <p>You must meet the following minimum hardware requirements for a highly available
+  infrastructure in a production grade environment. For all installation scenarios described in
+  <a href="installation-topologies">Installation Topologies</a>, the following tables list the
+  minimum hardware requirements for the installation components.</p>
+
+  <aside class="note"><strong>Note:</strong> The Edge installation configuration file supports the
+    following property:
+    <pre class="prettyprint">ENABLE_SYSTEM_CHECK=y</pre>
+    <p>If you set this property to "y", the installer check that the system meets the CPU and
+    memory requirements for the component being installed. The default value is "n" to disable
+    check.</p>
+  </aside>
+
+  <p>In these tables the hard disk requirements are in addition to the hard disk space required by
+  the operating system. Depending on your applications and network traffic, your installation might
+  require more or fewer resources than listed below.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Installation Component</th>
+        <th>RAM</th>
+        <th>CPU</th>
+        <th>Minimum hard disk</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Cassandra</td>
+        <td>16GB</td>
+        <td>8-core</td>
+        <td>250GB local storage with SSD or fast HDD supporting 2000 IOPS</td>
+      </tr>
+      <tr>
+        <td>Message Processor/Router on same machine</td>
+        <td>16GB</td>
+        <td>8-core</td>
+        <td>100GB</td>
+      </tr>
+      <tr>
+        <td>Analytics - Postgres/Qpid on same server (not recommended for production)</td>
+        <td>16GB<sup>*</sup></td>
+        <td>8&#8209;core<sup>*</sup></td>
+        <td>500GB - 1TB<sup>**</sup> network storage<sup>***</sup>, preferably with SSD backend,
+          supporting 1000 IOPS or higher<sup>*</sup></td>
+      </tr>
+      <tr>
+        <td>Analytics - Postgres standalone</td>
+        <td>16GB<sup>*</sup></td>
+        <td>8-core<sup>*</sup></td>
+        <td>500GB - 1TB<sup>**</sup> network storage<sup>***</sup>, preferably with SSD backend,
+          supporting 1000 IOPS or higher<sup>*</sup></td>
+      </tr>
+      <tr>
+        <td>Analytics - Qpid standalone</td>
+        <td>8GB</td>
+        <td>4-core</td>
+        <td>30GB - 50GB local storage with SSD or fast HDD</p>
+          <p>For installations greater than 250 TPS, HDD with local storage supporting 1000 IOPS is
+          recommended.</p>
+          <p>The default Qpid queue size is 20 GB. If you need to add more capacity, add additional
+          Qpid nodes.</p>
+        </td>
+      </tr>
+      <tr>
+        <td>Other (OpenLDAP, UI, Management Server)</td>
+        <td>4GB</td>
+        <td>2-core</td>
+        <td>60GB</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <sup><p>* Adjust Postgres system requirements based on throughput:</p>
+  <ul>
+    <li>Less than 250 TPS: 8GB, 4-core can be considered with managed network
+      storage<sup>***</sup> supporting 1000 IOPS or higher</li>
+    <li>Greater than 250 TPS: 16GB, 8-core, managed network storage<sup>***</sup>
+      supporting 1000 IOPS or higher</li>
+    <li>Greater than 1000 TPS: 16GB, 8-core, managed network storage<sup>***</sup>
+      supporting 2000 IOPS or higher</li>
+    <li>Greater than 2000 TPS: 32GB, 16-core, managed network storage<sup>***</sup>
+      supporting 2000 IOPS or higher </li>
+    <li>Greater than 4000 TPS: 64GB, 32-core, managed network storage<sup>***</sup>
+      supporting 4000 IOPS or higher</li>
+  </ul></sup>
+
+  <sup><p>** The Postgres hard disk value is based on the out of the box analytics captured by Edge.
+    If you add custom values to the analytics data, then these values should be increased
+    accordingly. Use the following formula to estimate the required storage:</p>
+    <p><code><strong>bytes of storage needed =</strong><br/><br/>
+&nbsp;&nbsp;(# bytes of analytics data/request) *<br/><br/>
+&nbsp;&nbsp;(requests/second) *<br/><br/>
+&nbsp;&nbsp;(seconds/hour) *<br/><br/>
+&nbsp;&nbsp;(hours of peak usage/day) *<br/><br/>
+&nbsp;&nbsp;(days/month) *<br/><br/>
+&nbsp;&nbsp;(months of data retention)</code></p>
+
+    <p>For example:</p>
+    <p><code>(2K bytes) * (100 req/sec) * (3600 secs/hr) * (18 peak hours/day) * (30 days/month) * (3 months retention)<br/><br/>
+<strong>= 1,194,393,600,000 bytes or 1194.4 GB</strong></code></p>
+  </sup>
+
+  <sup><p>*** Network Storage is recommended for Postgresql database because:</p>
+    <ul>
+      <li>It gives the ability to dynamically scale up the storage size if and when
+        required.</li>
+      <li>Network IOPS can be adjusted on the fly in most of today's
+        environment/Storage/Network subsystems.</li>
+      <li>Storage level snapshots can be enabled as part of backup and recovery
+        solutions.</li>
+    </ul>
+  </sup>
+
+  <hr/>
+
+  <p>In addition, the following lists the hardware requirements if you wish to install the
+  Monetization Services:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Component&nbsp;with&nbsp;Monetization</th>
+        <th>RAM</th>
+        <th>CPU</th>
+        <th>Hard disk</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Management Server (with Monetization Services)</td>
+        <td>8GB</td>
+        <td>4&#8209;core</td>
+        <td>60GB</td>
+      </tr>
+      <tr>
+        <td>Analytics - Postgres/Qpid on same server</td>
+        <td>16GB</td>
+        <td>8-core</td>
+        <td>500GB - 1TB network storage, preferably with SSD backend, supporting 1000 IOPS or
+          higher, or use the rule from the table above.</td>
+      </tr>
+      <tr>
+        <td>Analytics - Postgres standalone</td>
+        <td>16GB</td>
+        <td>8-core</td>
+        <td>500GB - 1TB network storage, preferably with SSD backend, supporting 1000 IOPS or
+          higher, or use the rule from the table above.</td>
+      </tr>
+      <tr>
+        <td>Analytics - Qpid standalone</td>
+        <td>8GB</td>
+        <td>4-core</td>
+        <td>40GB - 500GB local storage with SSD or fast HDD
+          <p>For installations greater than 250 TPS, HDD with local storage supporting 1000 IOPS is
+          recommended.</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>The following lists the hardware requirements if you wish to install API BaaS:</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <th><strong>API BaaS Component</strong></th>
+        <th><strong>RAM</strong></th>
+        <th>CPU</th>
+        <th>Hard disk</th>
+      </tr>
+      <tr>
+        <td>ElasticSearch<sup>*</sup></td>
+        <td>8GB</td>
+        <td>4&#8209;core</td>
+        <td>60-80GB</td>
+      </tr>
+      <tr>
+        <td>API BaaS Stack<sup>*</sup></td>
+        <td>8GB</td>
+        <td>4-core</td>
+        <td>60-80GB</td>
+      </tr>
+      <tr>
+        <td>API BaaS Portal</td>
+        <td>1GB</td>
+        <td>2-core</td>
+        <td>20GB</td>
+      </tr>
+      <tr>
+        <td>Cassandra<sup>**</sup></td>
+        <td>16GB</td>
+        <td>8-core</td>
+        <td>250GB local storage with SSD or fast HDD supporting 2000 IOPS</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <sup><p>* You can install ElasticSearch and API BaaS Stack on the same node. If you do,
+  configure ElasticSearch to use 4GB of memory (default). If ElasticSearch is installed on
+  its own node, then configure it to use 6GB of memory.</p></sup>
+
+  <sup><p>** Optional; typically you use the same Cassandra cluster for both Edge and API BaaS
+  Services.</p></sup>
+
+  <aside><strong>Note</strong>:
+    <ul>
+      <li>If the root file system is not large enough for the installation, it is recommended to
+        place the data onto a larger disk.</li>
+      <li>If an older version of Apigee Edge for Private Cloud was installed on the machine, ensure
+        that you delete the folder <code>/tmp/java</code> before a new installation.</li>
+      <li>The system wide temporary folder <code>/tmp</code> needs execute permissions in order to
+        start Cassandra.</li>
+      <li>If user 'apigee' was created prior to the installation, ensure that
+      <code>/home/apigee</code> exists as home directory and is owned by
+      <code>apigee:apigee</code>.</li>
+    </ul>
+  </aside>
+
+  <h2 id="operatingsystemandthirdpartysoftwarerequirements">Operating System and third-party
+  software requirements</h2>
+
+  <p>These installation instructions and the supplied installation files have been tested on the
+  operating systems and third-party software listed in
+  <a href="/release/supported-software">Supported software and supported versions</a>.</p>
+
+  <h2 id="creatingtheapigeeuser">Creating the apigee user</h2>
+
+  <p>The installation procedure creates a Unix system user named 'apigee'. Edge directories and
+  files are owned by 'apigee', as are Edge processes. That means Edge components run as the
+  'apigee' user. if necessary, you can run components as a different user.</p>
+
+  <h2 id="installationdirectory">Installation directory</h2>
+
+  <p>By default, the installer writes all files to the <code>/opt/apigee</code> directory. You
+  cannot change this directory location. While you cannot change this directory, you can create a
+  symlink to map <code>/opt/apigee</code> to another location, as described below.</p>
+
+  <p>In the instructions in this guide, the installation directory is noted as
+  <code>/opt/apigee</code>.</p>
+
+  <h3 id="installationdirectory-creatingasymlinkfromoptapigee">Creating a symlink from /opt/apigee</h3>
+
+  <p>Before you create the symlink, you must first create a user and group named "apigee". This is
+  the same group and user created by the Edge installer.</p>
+
+  <p>To create the symlink, perform these steps before downloading the bootstrap_4.18.01.sh file.
+  You must perform all of these steps as root:</p>
+
+  <ol>
+    <li>Create the "apigee" user and group:
+      <pre class="devsite-terminal">groupadd -r apigee &gt; useradd -r -g apigee -d /opt/apigee -s /sbin/nologin -c "Apigee platform user" apigee</pre>
+    </li>
+    <li>Create a symlink from <code>/opt/apigee</code> to your desired install root:
+      <pre class="devsite-terminal">ln -Ts <var>/srv/myInstallDir</var> /opt/apigee</pre>
+      <p>where <var>/srv/myInstallDir</var> is the desired location of the Edge files.</p>
+    </li>
+    <li>Change ownership of the install root and symlink to the "apigee" user:
+      <pre class="devsite-terminal">chown -h apigee:apigee <var>/srv/myInstallDir</var> /opt/apigee</pre>
+    </li>
+  </ol>
+
+  <h2 id="java">Java</h2>
+
+  <p>You need a supported version of Java 1.8 installed on each machine prior to the installation.
+  Supported JDKs are listed in
+  <a href="/release/supported-software">Supported software and supported versions</a>.</p>
+
+  <p>Ensure that <code>JAVA_HOME</code> points to the root of the JDK for the user performing the
+  installation.</p>
+
+  <h2 id="selinux">SELinux</h2>
+
+  <p>Depending on your settings for SELinux, Edge can encounter issues with installing and starting
+  Edge components. If necessary, you can disable SELinux or set it to permissive mode during
+  installation, and then re-enabling it after installation. See <a href=
+  "install-edge-apigee-setup-utility">Install the Edge apigee-setup utility</a> for more.</p>
+
+  <h2 id="networksetting">Network Setting</h2>
+
+  <p>It is recommended to check the network setting prior to the installation. The installer
+  expects that all machines have fixed IP addresses. Use the following commands to validate the
+  setting:</p>
+
+  <ul>
+    <li><code>hostname</code> returns the name of the machine</li>
+    <li><code>hostname -i</code> returns the IP address for the hostname that can be addressed from
+    other machines.</li>
+  </ul>
+
+  <p>Depending on your operating system type and version, you might have to edit
+  <code>/etc/hosts</code> and <code>/etc/sysconfig/network</code> if the hostname is not
+  set correctly. See the documentation for your specific operating system for more information.</p>
+
+  <p>If a server has multiple interface cards, the "hostname -i" command returns a space-separated
+  list of IP addresses's. By default, the Edge installer uses the first IP address returned, which
+  might not be correct in all situations. As an alternative, you can set the following property in
+  the installation configuration file:</p>
+
+  <pre class="prettyprint">ENABLE_DYNAMIC_HOSTIP=y</pre>
+
+  <p>With that property set to "y", the installer prompts you to select the IP address to use as
+  part of the install. The default value is "n". See
+  <a href="edge-configuration-file-reference">Edge Configuration File Reference</a> for more.</p>
+
+  <aside class="warning"><strong>Warning:</strong> If you set <code>ENABLE_DYNAMIC_HOSTIP=y</code>,
+  ensure that your property file does not set <code>HOSTIP</code>.</aside>
+
+  <h3 id="networksetting-tcpwrappers">TCP Wrappers</h3>
+
+  <p>TCP Wrappers can block communication of some ports and can affect OpenLDAP, Postgres, and
+  Cassandra installation. On those nodes, check <code>/etc/hosts.allow</code> and
+  <code>/etc/hosts.deny</code> to ensure that there are no port restrictions on the required
+  OpenLDAP, Postgres, and Cassandra ports.</p>
+
+  <h3 id="networksetting-iptables">iptables</h3>
+
+  <p>Validate that there are no iptables policies preventing connectivity between nodes on the
+  required Edge ports. If necessary, you can stop iptables during installation using the
+  command:</p>
+  <pre class="devsite-terminal">sudo/etc/init.d/iptables stop</pre>
+
+  <p>On CentOS 7.x:</p>
+  <pre class="devsite-terminal">systemctl stop firewalld</pre>
+
+  <h2 id="ensureedgeroutercanaccessetcrcdinitdfunctions">Ensure Edge Router can
+  access /etc/rc.d/init.d/functions</h2>
+
+  <p>The Edge Router and BaaS Portal nodes use the Nginx router and require read access
+  to <code>/etc/rc.d/init.d/functions</code>.</p>
+
+  <p>If your security process requires you to set permissions on
+  <code>/etc/rc.d/init.d/functions</code>, do not set them to 700 or else the router will fail to
+  start. Permissions can be set to 744 to allow read access to
+  <code>/etc/rc.d/init.d/functions</code>.</p>
+
+  <h2 id="cassandra">Cassandra </h2>
+
+  <p>All Cassandra nodes have to be connected to a ring. Cassandra stores data replicas on
+  multiple nodes to ensure reliability and fault tolerance. The replication strategy for each
+  Edge keyspace determines the Cassandra nodes where replicas are placed. For more,see
+  <a href="about-cassandra-replication-factor-and-consistency-level">About Cassandra
+  Replication Factor and Consistency Level</a>.</p>
+
+  <p>Cassandra automatically adjusts its Java heap size based on the available memory. For more, see
+  <a href="https://docs.datastax.com/en/cassandra/2.0/cassandra/operations/ops_tune_jvm_c.html" class="external">Tuning
+  Java resources</a>. In the event of a performance degradation or high memory consumption.</p>
+
+  <p>After installing the Edge for Private Cloud, you can check that Cassandra is configured
+  correctly by examining the <code>/opt/apigee/apigee-cassandra/conf/cassandra.yaml</code>
+  file. For example, ensure that the Edge for Private Cloud installation script set the following
+  properties:</p>
+
+  <ul>
+    <li><code>cluster_name</code></li>
+    <li><code>initial_token</code></li>
+    <li><code>partitioner</code></li>
+    <li><code>seeds</code></li>
+    <li><code>listen_address</code></li>
+    <li><code>rpc_address</code></li>
+    <li><code>snitch</code></li>
+  </ul>
+
+  <aside class="warning"><strong>Warning</strong>: Do not edit the cassandra.yaml file.</aside>
+
+  <h2 id="postgresqldatabase">PostgreSQL database</h2>
+
+  <p>After you install Edge, you can adjust the following PostgreSQL database settings based on the
+  amount of RAM available on your system:</p>
+  <pre class="prettyprint">conf_postgresql_shared_buffers = 35% of RAM      # min 128kB
+conf_postgresql_effective_cache_size = 45% of RAM
+conf_postgresql_work_mem = 512MB       # min 64kB</pre>
+
+  <aside class="note"><strong>Note:</strong> These settings assume that the PostgreSQL database is only used
+  for Edge analytics, and not for any other purpose.</aside>
+
+  <p>To set these values:</p>
+
+  <ol>
+    <li>Edit the postgresql.properties file:
+      <pre class="devsite-terminal">vi /opt/apigee/customer/application/postgresql.properties</pre>
+      <p>If the file does not exist, create it.</p>
+    </li>
+    <li>Set the properties listed above.</li>
+    <li>Save your edits.</li>
+    <li>Restart the PostgreSQL database:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-postgresql restart</pre>
+    </li>
+  </ol>
+
+  <h2 id="systemlimits">System limits</h2>
+
+  <p>Ensure that you have set the following system limits on Cassandra and Message Processor
+  nodes:</p>
+
+  <ul>
+    <li>On Cassandra nodes, set soft and hard memlock, nofile, and address space (as) limits for
+    installation user (default is &#8220;apigee") in <code>/etc/security/limits.d/90-apigee-edge-limits.conf</code>
+    as shown below:
+    <pre class="prettyprint">apigee soft memlock unlimited
+apigee hard memlock unlimited
+apigee soft nofile 32768
+apigee hard nofile 65536
+apigee soft as unlimited
+apigee hard as unlimited</pre>
+    </li>
+    <li>On Message Processor nodes, set the maximum number of open file descriptors to 64K
+      in <code>/etc/security/limits.d/90-apigee-edge-limits.conf</code> as
+      shown below:
+      <pre>apigee soft nofile 32768
+apigee hard nofile 65536</pre>
+      <p>If necessary, you can raise that limit. For example, if you have a large number of temporary
+      files open at any one time.</p>
+    </li>
+  </ul>
+
+  <h2 id="jsvc">jsvc</h2>
+
+  <p>"jsvc" is a prerequisite for using API BaaS. Version 1.0.15-dev is installed when you install
+  the API BaaS.</p>
+
+  <h2 id="networksecurityservicesnss">Network Security Services (NSS)</h2>
+
+  <p>Network Security Services (NSS) is a set of libraries that supports development of
+  security-enabled client and server applications. You should ensure that you have installed NSS
+  v3.19, or later. </p>
+
+  <p>To check your current version:</p>
+  <pre class="devsite-terminal">yum info nss</pre>
+
+  <p>To update NSS:</p>
+  <pre class="devsite-terminal">yum update nss</pre>
+
+  <p>See <a href="https://rhn.redhat.com/errata/RHSA-2015-1981.html" class="external">this article</a>
+  from RedHat for more information.</p>
+
+  <h2 id="disablednslookuponipv6whenusingnscdnameservicecachedaemon">Disable DNS lookup on IPv6
+  when using NSCD (Name Service Cache Daemon) </h2>
+
+  <p>If you have installed and enabled NSCD (Name Service Cache Daemon) the Message Processors
+  makes two DNS lookups: one for IPv4 and one for IPv6. You should disable DNS lookup on
+  IPv6 when using NSCD.</p>
+
+  <p>To disable the DNS lookup on IPv6:</p>
+
+  <ol>
+    <li>On every Message Processor node, edit <code>/etc/nscd.conf</code></li>
+    <li>Set the following property:
+      <pre class="prettyprint">enable-cache hosts no</pre>
+    </li>
+  </ol>
+
+  <h2 id="disableipv6ongooglecloudplatformforredhatcentos7">Disable IPv6 on Google Cloud
+  Platform for RedHat/CentOS 7</h2>
+
+  <p>If you are installing Edge on RedHat 7 or CentOS 7 on Google Cloud Platform, then you
+  must disable IPv6 on all Qpid nodes.</p>
+
+  <p>See the RedHat or CentOS documentation for your specific OS version for instructions on
+  disabling IPv6. For example, you can:</p>
+
+  <ol>
+    <li>Open <code>/etc/hosts</code> in an editor.</li>
+    <li>Insert a "#" character in column one of the following line to comment it out:
+      <pre>#::1 localhost localhost.localdomain localhost6 localhost6.localdomain6</pre>
+    </li>
+    <li>Save the file.</li>
+  </ol>
+
+  <h2 id="awsami">AWS AMI</h2>
+
+  <p>If you are installing Edge on an AWS Amazon Machine Image (AMI) for Red Hat Enterprise Linux
+  7.x, you must first run the following command:</p>
+  <pre class="devsite-terminal">yum-config-manager --enable rhui-REGION-rhel-server-extras rhui-REGION-rhel-server-optional</pre>
+
+  <h2 id="tools">Tools</h2>
+
+  <p>The installer uses the following UNIX tools in the standard version as provided by EL5 or
+  EL6.</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <td>
+          <p>awk</p>
+        </td>
+        <td>
+          <p>expr</p>
+        </td>
+        <td>
+          <p>lua-socket</p>
+        </td>
+        <td>
+          <p>rpm</p>
+        </td>
+        <td>
+          <p>unzip</p>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <p>basename</p>
+        </td>
+        <td>
+          <p>grep</p>
+        </td>
+        <td>
+          <p>ls</p>
+        </td>
+        <td>
+          <p>rpm2cpio</p>
+        </td>
+        <td>
+          <p>useradd</p>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <p>bash</p>
+        </td>
+        <td>hostname</td>
+        <td>
+          <p>net-tools</p>
+        </td>
+        <td>
+          <p>sed</p>
+        </td>
+        <td>
+          <p>wc</p>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <p>bc</p>
+        </td>
+        <td>
+          <p>id</p>
+        </td>
+        <td>
+          <p>perl (from procps)</p>
+        </td>
+        <td>
+          <p>sudo</p>
+        </td>
+        <td>
+          <p>wget</p>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <p>curl</p>
+        </td>
+        <td>
+          <p>libaio</p>
+        </td>
+        <td>
+          <p>pgrep (from procps)</p>
+        </td>
+        <td>
+          <p>tar</p>
+        </td>
+        <td>
+          <p>xerces-c</p>
+        </td>
+      </tr>
+      <tr>
+        <td>cyrus-sasl
+        </td>
+        <td>libdb-cxx</td>
+        <td>ps</td>
+        <td>tr</td>
+        <td>yum</td>
+      </tr>
+      <tr>
+        <td>
+          <p>date</p>
+        </td>
+        <td>libibverbs</td>
+        <td>
+          <p>pwd</p>
+        </td>
+        <td>
+          <p>uuid</p>
+        </td>
+        <td>
+          <p>chkconfig</p>
+        </td>
+      </tr>
+      <tr>
+        <td>dirname</td>
+        <td>librdmacm</td>
+        <td>python</td>
+        <td>uname</td>
+        <td> </td>
+      </tr>
+      <tr>
+        <td>echo</td>
+        <td>libxslt</td>
+        <td> </td>
+        <td> </td>
+        <td> </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <aside class="note"><strong>Note:</strong>
+  <ul>
+    <li>The executable for the tool <code>useradd</code> is located in
+    <code>/usr/sbin</code> and for chkconfig in <code>/sbin</code>.</li>
+    <li>With sudo access you can gain access over the environment of the calling user, for example,
+    usually you would call <code>sudo <var>command</var></code> or
+    <code>sudo PATH=$PATH:/usr/sbin:/sbin <var>command</var></code>.</li>
+    <li>Ensure that you have <code>patch</code> installed prior to a service pack (patch)
+    installation.</li>
+  </ul>
+  </aside>
+
+  <h3>ntpdate</h3>
+  <p>It is recommended to have the servers' times synchronized. If not already configured,
+  <code>ntpdate</code> utility could serve this purpose, which verifies
+  whether servers are time synchronized. You can use <code>yum install ntp</code> to install the
+  utility. This is particularly useful for replicating OpenLDAP setups. Note that you set up server
+  time zone in UTC.</p>
+
+  <h3>openldap 2.4</h3>
+  <p>The on-premises installation requires OpenLDAP 2.4. If
+  your server has an Internet connection, then the Edge install script downloads and installs
+  OpenLDAP. If your server does not have an Internet connection, you must ensure that OpenLDAP is
+  already installed before running the Edge install script. On RHEL/CentOS, you can run
+  <code>yum install openldap-clients openldap-servers</code> to install the OpenLDAP.</p>
+
+  <p>For 13-host installations, and 12-host installations with two Data Centers, you require
+  OpenLDAP replication because there are multiple nodes hosting OpenLDAP.</p>
+
+  <h2 id="firewallsandvirtualhosts">Firewalls and Virtual Hosts</h2>
+
+  <p>The term <code>virtual</code> commonly gets overloaded in the IT arena, and so it is with an
+  Apigee Edge for Private Cloud deployment and virtual hosts. To clarify, there are two primary
+  uses of the term <code>virtual</code>:</p>
+
+  <ul>
+    <li><strong>Virtual machines (VM)</strong>: Not required, but some deployment use VM technology
+    to create isolated servers for their Apigee components. VM hosts, like physical hosts, can have
+    network interfaces and firewalls.</li>
+    <li><strong>Virtual hosts</strong>: Web endpoints, analogous to an Apache virtual host.</li>
+  </ul>
+
+  <p>A router in a VM can expose multiple virtual hosts (as long as they differ from one another in
+  their host alias or in their interface port).</p>
+
+  <p>Just as a naming example, a single physical server <code>A</code> might be running two VMs,
+  named "VM1" and "VM2". Let's assume "VM1" exposes a virtual Ethernet interface, which gets named
+  "eth0" inside the VM, and which is assigned IP address <code>111.111.111.111</code> by
+  the virtualization machinery or a network DHCP server; and then assume VM2 exposes a virtual
+  Ethernet interface also named "eth0" and it gets assigned an IP address
+  <code>111.111.111.222</code>.</p>
+
+  <p>We might have an Apigee router running in each of the two VMs. The routers expose virtual host
+  endpoints as in this hypothetical example:</p>
+
+  <p>The Apigee router in VM1 exposes three virtual hosts on its eth0 interface (which has some
+  specific IP address), <code>api.mycompany.com:80</code>, <code>api.mycompany.com:443</code>, and
+  <code>test.mycompany.com:80</code>.</p>
+
+  <p>The router in VM2 exposes <code>api.mycompany.com:80</code> (same name and port as
+  exposed by VM1).</p>
+
+  <p>The physical host's operating system might have a network firewall; if so, that firewall
+  must be configured to pass TCP traffic bound for the ports being exposed on the virtualized
+  interfaces (<code>111.111.111.111:{80, 443}</code> and <code>111.111.111.222:80</code>). In addition, each
+  VM's operating system may provide its own firewall on its eth0 interface and these too must
+  allow ports 80 and 443 traffic to connect.</p>
+
+  <p>The basepath is the third component involved in routing API calls to different API proxies
+  that you may have deployed. API proxy bundles can share an endpoint if they have different
+  basepaths. For example, one basepath can be defined as <code>http://api.mycompany.com:80/</code>
+  and another defined as <code>http://api.mycompany.com:80/salesdemo</code>.</p>
+
+  <p>In this case, you need a load balancer or traffic director of some kind splitting the
+  http://api.mycompany.com:80/ traffic between the two IP addresses
+  (<code>111.111.111.111</code> on VM1 and <code>111.111.111.222</code> on VM2). This function is
+  specific to your particular installation, and is configured by your local networking group.</p>
+
+  <p>The basepath is set when you deploy an API. From the above example, you can deploy two APIs,
+  <code>mycompany</code> and <code>testmycompany</code>, for the organization
+  <code>mycompany-org</code> with the virtual host that has the host alias of
+  <code>api.mycompany.com</code> and the port set to <code>80</code>. If you do not declare a
+  basepath in the deployment, then the router does not know which API to send incoming requests
+  to.</p>
+
+  <p>However, if you deploy the API <code>testmycompany</code> with the base URL of
+  <code>/salesdemo</code>, then users access that API using
+  <code>http://api.mycompany.com:80/salesdemo</code>. If you deploy your API mycompany with the
+  base URL of <code>/</code> then your users access the API by the URL
+  <code>http://api.mycompany.com:80/</code>.</p>
+
+  <h3 id="firewallsandvirtualhosts-edgeportrequirements">Edge port requirements</h3>
+
+  <p>The need to manage the firewall goes beyond just the virtual hosts; both VM and physical host
+  firewalls must allow traffic for the ports required by the components to communicate with each
+  other.</p>
+
+  <p>The following image shows the ports requirements for each Edge component:</p>
+
+  <p><img alt="" src="/private-cloud/images/arch_ports_v11.png"></p>
+
+  <p><strong>Notes on this diagram:</strong></p>
+
+  <ul>
+    <li>* Port 8082 on the Message Processor only has to be open for access by the Router when you
+      configure TLS/SSL between the Router and Message Processor. If you do not configure TLS/SSL
+      between the Router and Message Processor, the default configuration, port 8082 still must
+      be open on the Message Processor to manage the component, but the Router does not require
+      access to it.</li>
+    <li>The ports prefixed by "M" are ports used to manage the component and must be open on the
+      component and must be open on the component for access by the Management Server.</li>
+    <li>The following components require access to port 8080 on the Management Server: Router,
+      Message Processor, UI, Postgres, and Qpid.</li>
+    <li>A Message Processor must open port 4528 as its management port. If you have multiple
+      Message Processors, they must all be able to access each other over port 4528 (indicated by the
+      loop arrow in the diagram above for port 4528 on the Message Processor). If you have multiple
+      Data Centers, the port must be accessible from all Message Processors in all Data Centers.</li>
+    <li>While it is not required, you can open port 4527 on the Router for access by any Message
+      Processor. Otherwise, you might see error messages in the Message Processor log files.</li>
+    <li>A Router must open port 4527 as its management port. If you have multiple Routers, they
+      must all be able to access each other over port 4527 (indicated by the loop arrow in the
+      diagram above for port 4527 on the Router).</li>
+    <li>The Edge UI requires access to the Router, on the ports exposed by API proxies, to support
+      the <strong>Send</strong> button in the trace tool.</li>
+    <li>The Management Server requires access to the JMX port on the Cassandra
+      nodes.</li>
+    <li>Access to JMX ports can be configured to require a username/password. See
+      <a href="how-monitor">How to Monitor</a> for more information.</li>
+    <li>You can optionally configure TLS/SSL access for certain connections, which can use
+      different ports. See <a href="/api-platform/system-administration/ssl">TLS/SSL</a> for
+      more.</li>
+    <li>If configuring two Postgres nodes to use master-standby replication, you must open port 22
+      on each node for ssh access. You can optionally open ports on individual nodes to allow
+      ssh access.</li>
+    <li>You can configure the Management Server and Edge UI to send emails through an external SMTP
+      server. If you do, you must ensure that the Management Server and UI can access the necessary
+      port on the SMTP server. For non-TLS SMTP, the port number is typically 25. For TLS-enabled
+      SMTP, it is often 465, but check with your SMTP provider.</li>
+  </ul>
+
+  <p>The table below shows the ports need to be opened in firewalls, by Edge component:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Component</th>
+        <th>Port</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Standard&nbsp;HTTP&nbsp;ports</td>
+        <td>80, 443</td>
+        <td>HTTP plus any other ports you use for virtual hosts</td>
+      </tr>
+      <tr>
+        <td rowspan="3">Management Server</td>
+        <td>8080</td>
+        <td>Port for Edge management API calls. These components require access to port 8080 on
+          the Management Server: Router, Message Processor, UI, Postgres, and Qpid.</td>
+      </tr>
+      <tr>
+        <td>1099</td>
+        <td>JMX port</td>
+      </tr>
+      <tr>
+        <td>4526</td>
+        <td>For distributed cache and management calls</td>
+      </tr>
+      <tr>
+        <td>Management UI</td>
+        <td>9000</td>
+        <td>Port for browser access to management UI</td>
+      </tr>
+      <tr>
+        <td rowspan="4">Message Processor</td>
+        <td>8998</td>
+        <td>Message Processor port for communications from Router</td>
+      </tr>
+      <tr>
+        <td>8082</td>
+        <td>
+          <p>Default management port for Message Processor and must be open on the component for
+          access by the Management Server.</p>
+          <p>If you configure TLS/SSL between the Router and Message Processor, used by the Router
+          to make health checks on the Message Processor.</p>
+        </td>
+      </tr>
+      <tr>
+        <td>1101</td>
+        <td>JMX port</td>
+      </tr>
+      <tr>
+        <td>4528</td>
+        <td>For distributed cache and management calls between Message Processors, and for
+          communication from the Router and Management Server</td>
+      </tr>
+      <tr>
+        <td rowspan="4">Router</td>
+        <td>8081</td>
+        <td>Default management port for Router and must be open on the component for access
+          by the Management Server.</td>
+      </tr>
+      <tr>
+        <td>4527</td>
+        <td>For distributed cache and management calls</td>
+      </tr>
+      <tr>
+        <td>15999</td>
+        <td>
+          <p>Health check port. A load balancer uses this port to determine if the Router is
+          available.</p>
+          <p>To get the status of a Router, the load balancer makes a request to port 15999 on the
+          Router:</p>
+          <pre class="devsite-terminal">curl -v http://<var>routerIP</var>:15999/v1/servers/self/reachable</pre>
+          <p>If the Router is reachable, the request returns HTTP 200.</p>
+        </td>
+      </tr>
+      <tr>
+        <td>59001</td>
+        <td>Port used for testing the Edge installation by the <code>apigee-validate</code> utility.
+          This utility requires access to port 59001 on the Router. See
+          <a href= "test-install">Test the install</a> for more on port 59001.</td>
+      </tr>
+      <tr>
+        <td rowspan="2">ZooKeeper</td>
+        <td>2181</td>
+        <td>Used by other components like Management Server, Router, Message Processor and so on</td>
+      </tr>
+      <tr>
+        <td>2888, 3888</td>
+        <td>Used internally by ZooKeeper for ZooKeeper cluster (known as ZooKeeper ensemble)
+          communication</td>
+      </tr>
+      <tr>
+        <td rowspan="2">Cassandra</td>
+        <td>7000,&nbsp;9042,&nbsp;9160</td>
+        <td>Apache Cassandra ports for communication between Cassandra nodes and for access by
+          other Edge components.</td>
+      </tr>
+      <tr>
+        <td>7199</td>
+        <td>JMX port. Must be open for access by the Management Server.</td>
+      </tr>
+      <tr>
+        <td rowspan="4">Qpid</td>
+        <td>5672</td>
+        <td>Used for communications from the Router and Message Processor to Qpid server</td>
+      </tr>
+      <tr>
+        <td>8083</td>
+        <td>Default management port on Qpid server and must be open on the component for
+          access by the Management Server.</td>
+      </tr>
+      <tr>
+        <td>1102</td>
+        <td>JMX port</td>
+      </tr>
+      <tr>
+        <td>4529</td>
+        <td>For distributed cache and management calls</td>
+      </tr>
+      <tr>
+        <td rowspan="5">Postgres</td>
+        <td>5432</td>
+        <td>Used for communication from Qpid/Management Server to Postgres</td>
+      </tr>
+      <tr>
+        <td>8084</td>
+        <td>Default management port on Postgres serverand must be open on the component for access
+          by the Management Server.</td>
+      </tr>
+      <tr>
+        <td>1103</td>
+        <td>JMX port</td>
+      </tr>
+      <tr>
+        <td>4530</td>
+        <td>For distributed cache and management calls</td>
+      </tr>
+      <tr>
+        <td>22</td>
+        <td>If configuring two Postgres nodes to use master-standby replication, you must open
+          port 22 on each node for ssh access.</td>
+      </tr>
+      <tr>
+        <td>LDAP</td>
+        <td>10389</td>
+        <td>OpenLDAP</td>
+      </tr>
+      <tr>
+        <td>SmartDocs</td>
+        <td>59002</td>
+        <td>The port on the Edge router where SmartDocs page requests are sent.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>The next table shows the same ports, listed numerically, with the source and destination
+  components:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Port Number</th>
+        <th>Purpose</th>
+        <th>Source&nbsp;Component</th>
+        <th>Destination&nbsp;Component</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><var>virtual_host_port</var></td>
+        <td>HTTP plus any other ports you use for virtual host API call traffic. Ports 80 and 443
+          are most commonly used; the Message Router can terminate TLS/SSL connections.</td>
+        <td>External&nbsp;client&nbsp;(or&nbsp;load&nbsp;balancer)</td>
+        <td>Listener on Message Router</td>
+      </tr>
+      <tr>
+        <td>1099&nbsp;through&nbsp;1103</td>
+        <td>JMX Management</td>
+        <td>JMX Client</td>
+        <td>Management&nbsp;Server&nbsp;(1099)<br/>
+          Message Processor (1101)<br/>
+          Qpid Server (1102)<br/>
+          Postgres Server (1103)
+        </td>
+      </tr>
+      <tr>
+        <td>2181</td>
+        <td>Zookeeper client communication</td>
+        <td>Management Server<br/>
+          Router<br/>
+          Message Processor<br/>
+          Qpid Server<br/>
+          Postgres Server
+        </td>
+        <td>Zookeeper</td>
+      </tr>
+      <tr>
+        <td>2888 and 3888</td>
+        <td>Zookeeper internode management</td>
+        <td>Zookeeper</td>
+        <td>Zookeeper</td>
+      </tr>
+      <tr>
+        <td>4526</td>
+        <td>RPC Management port</td>
+        <td>Management Server</td>
+        <td>Management Server</td>
+      </tr>
+      <tr>
+        <td>4527</td>
+        <td>RPC Management port for distributed cache and management calls, and for communications
+        between Routers</td>
+        <td>Management Server<br/>Router</td>
+        <td>Router</td>
+      </tr>
+      <tr>
+        <td>4528</td>
+        <td>For distributed cache calls between Message Processors, and for communication
+          from the Router</td>
+        <td>Management Server<br/>
+          Router<br/>
+          Message Processor
+        </td>
+        <td>Message Processor</td>
+      </tr>
+      <tr>
+        <td>4529</td>
+        <td>RPC Management port for distributed cache and management calls</td>
+        <td>Management Server</td>
+        <td>Qpid Server</td>
+      </tr>
+      <tr>
+        <td>4530</td>
+        <td>RPC Management port for distributed cache and management calls</td>
+        <td>Management Server</td>
+        <td>Postgres Server</td>
+      </tr>
+      <tr>
+        <td>5432</td>
+        <td>Postgres client</td>
+        <td>Qpid Server</td>
+        <td>Postgres
+        </td>
+      </tr>
+      <tr>
+        <td>5672</td>
+        <td>
+          <p>Used for sending analytics from Router and Message Processor to Qpid</p>
+        </td>
+        <td>Router<br/>
+          Message Processor
+        </td>
+        <td>Qpid Server</td>
+      </tr>
+      <tr>
+        <td>7000</td>
+        <td>Cassandra inter-node communications</td>
+        <td>Cassandra</td>
+        <td>Other Cassandra node</td>
+      </tr>
+      <tr>
+        <td>7199</td>
+        <td>JMX management. Must be open for access on the Cassandra node by the Management
+          Server.
+        </td>
+        <td>JMX client</td>
+        <td>Cassandra</td>
+      </tr>
+      <tr>
+        <td>8080</td>
+        <td>Management API port</td>
+        <td>Management API clients</td>
+        <td>Management Server</td>
+      </tr>
+      <tr>
+        <td>8081 through 8084</td>
+        <td>
+          <p>Component API ports, used for issuing API requests directly to individual components.
+          Each component opens a different port; the exact port used depends on the configuration
+          but must be open on the component for access by the Management Server</p>
+        </td>
+        <td>Management API clients</td>
+        <td>Router (8081)<br/>
+          Message Processor (8082)<br/>
+          Qpid Server (8083)<br/>
+          Postgres Server (8084)
+        </td>
+      </tr>
+      <tr>
+        <td>8998</td>
+        <td>Communication between Router and Message Processor</td>
+        <td>Router</td>
+        <td>Message Processor</td>
+      </tr>
+      <tr>
+        <td>9000</td>
+        <td>Default Edge management UI port</td>
+        <td>Browser</td>
+        <td>Management UI Server</td>
+      </tr>
+      <tr>
+        <td>9042</td>
+        <td>CQL native transport</td>
+        <td>Router<br/>
+          Message Processor<br/>
+          Management Server
+        </td>
+        <td>Cassandra</td>
+      </tr>
+      <tr>
+        <td>9160</td>
+        <td>Cassandra thrift client</td>
+        <td>Router<br/>
+          Message Processor<br/>
+          Management Server
+        </td>
+        <td>Cassandra</td>
+      </tr>
+      <tr>
+        <td>10389</td>
+        <td>LDAP port</td>
+        <td>Management Server</td>
+        <td>OpenLDAP</td>
+      </tr>
+      <tr>
+        <td>15999</td>
+        <td>Health check port. A load balancer uses this port to determine if the Router is
+          available.</td>
+        <td>Load balancer</td>
+        <td>Router</td>
+      </tr>
+      <tr>
+        <td>59001</td>
+        <td>Port used by the <code>apigee-validate</code> utility to test the Edge installation</td>
+        <td>apigee-validate</td>
+        <td>Router</td>
+      </tr>
+      <tr>
+        <td>59002</td>
+        <td>The router port where SmartDocs page requests are sent</td>
+        <td>SmartDocs</td>
+        <td>Router</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>A message processor keeps a dedicated connection pool open to Cassandra, which is configured
+  to never timeout. When a firewall is between a message processor and Cassandra server, the
+  firewall can time out the connection. However, the message processor is not designed to
+  reestablish connections to Cassandra.</p>
+
+  <p>To prevent this situation, Apigee recommends that the Cassandra server, message processor, and
+  routers be in the same subnet so that a firewall is not involved in the deployment of these
+  components.</p>
+
+  <p>If a firewall is between the router and message processors, and has an idle tcp timeout set,
+  our recommendations is to:</p>
+
+  <ol>
+    <li>Set <code>net.ipv4.tcp_keepalive_time = 1800</code> in sysctl settings on Linux OS, where
+      1800 should be lower than the firewall idle tcp timeout. This setting should keep the
+      connection in an established state so that the firewall does not disconnect the connection.</li>
+    <li>On all Message Processors, edit
+      <code>/opt/apigee/customer/application/message-processor.properties</code>
+      to add the following property. If the file does not exist, create it.
+      <pre>conf_system_cassandra.maxconnecttimeinmillis=-1</pre>
+    </li>
+    <li>Restart the Message Processor:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-message-processor restart</pre>
+    </li>
+    <li>On all Routers, edit <code>/opt/apigee/customer/application/router.properties</code>
+      to add the following property. If the file does not exist, create it.
+      <pre>conf_system_cassandra.maxconnecttimeinmillis=-1</pre>
+    </li>
+    <li>Restart the Router:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-router restart</pre>
+    </li>
+  </ol>
+
+  <p>If you install the 12 host clustered configuration with two Data Centers, ensure that the
+  nodes in the two Data Centers can communicate over the ports shown below:</p>
+
+  <p><img alt="" src="/private-cloud/images/arch_ports_multi_dc_V7.png"></p>
+
+  <aside class="note"><strong>Note:</strong>
+    <ul>
+      <li>All Management Servers must be able to access all Cassandra nodes in all other Data
+        Centers.</li>
+      <li>All Message Processors in all Data Centers must all be able to access each other over
+        port 4528.</li>
+      <li>The Management Server must be able to access all Message Processors over port 8082.</li>
+      <li>All Management Servers and all Qpid nodes must be able to access Postgres in all other
+        Data Centers.</li>
+      <li><strong>For security reasons</strong>, other than the ports shown above and any others
+        required by your own network requirements, no other ports should be open between data
+        centers.</li>
+    </ul>
+  </aside>
+
+  <h3 id="firewallsandvirtualhosts-apibaasportrequirements">API BaaS port requirements</h3>
+
+  <p>If you opt to install the API BaaS, you add the API BaaS Stack and API BaaS Portal components.
+  These components use the ports shown in the figure below:</p>
+
+  <p><img alt="" src="/private-cloud/images/arch_ports_baas_16_01_large_v6.png"></p>
+
+  <p><strong>Notes on this diagram:</strong></p>
+
+  <ul>
+    <li>The API BaaS Portal never makes requests directly to an BaaS Stack node. When a developer
+      logs into the Portal, the Portal app is downloaded to the browser. The Portal app running in
+      the browser then makes requests to the BaaS Stack nodes.</li>
+    <li>A production installation of API BaaS uses a load balancer between the API BaaS Portal node
+      and API BaaS Stack nodes. When configuring the Portal, and when making BaaS API calls, you
+      specify the IP address or DNS name of the load balancer, not of the Stack nodes. </li>
+    <li>All Stack nodes must open port 2551 for access from all other Stack nodes (indicated by the
+      loop arrow in the diagram above for port 2551 on the Stack nodes). If you have multiple Data
+      Centers, the port must be accessible from all Stack nodes in all Data Centers.</li>
+    <li>You must configure all Baas Stack nodes to send emails through an external SMTP server. For
+      non-TLS SMTP, the port number is typically 25. For TLS-enabled SMTP, it is often 465, but check
+      with your SMTP provider. </li>
+    <li>The Cassandra nodes can be dedicated to API BaaS, or can be shared with Edge.</li>
+  </ul>
+
+  <p>The table below shows the default ports that need to be opened in firewalls, by component:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Component</th>
+        <th>Port</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>API&nbsp;BaaS&nbsp;Portal</td>
+        <td>9000</td>
+        <td>Port for the API BaaS UI</td>
+      </tr>
+      <tr>
+        <td>API BaaS Stack</td>
+        <td>8080</td>
+        <td>Port where API request are received</td>
+      </tr>
+      <tr>
+        <td> </td>
+        <td>2551</td>
+        <td>
+          <p>Port for communication among all Stack nodes. Must be accessible by all other Stack
+          nodes in the data canter.</p>
+          <p>If you have multiple data centers, the port must be accessible from all Stack nodes in
+          all Data Centers.</p>
+        </td>
+      </tr>
+      <tr>
+        <td>ElasticSearch</td>
+        <td>9200&nbsp;to&nbsp;9400</td>
+        <td>For communicating with API BaaS Stack and for communicating between ElasticSearch
+          nodes</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="licensing">Licensing</h2>
+
+  <p>Each installation of Edge requires a unique license file that you obtain from Apigee. You will
+  need to provide the path to the license file when installing the management server, for example
+  /tmp/license.txt.</p>
+
+  <p>The installer copies the license file to
+  <code>/opt/apigee/customer/conf/license.txt</code>.</p>
+
+  <p>If license file is valid, the management server validates the expiry and allowed Message
+  Processor (MP) count. If any of the license settings is expired, you can find the logs in the
+  following location: <code>/opt/apigee/var/log/edge-management-server/logs</code>.
+  In this case you can contact {{support}} for migration details.</p>
+
+  <p>If you do not yet have a license, contact {{sales}}.</p>
+{% endblock %}

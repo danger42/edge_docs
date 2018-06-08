@@ -1,0 +1,143 @@
+  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}Test the install{% endblock %}
+  {% block body %}
+
+  <p>Apigee provides test scripts that you can use to validate your installation. </p>
+
+  <h2 id="runthevalidationtests">Run the validation tests</h2>
+
+  <p>Each step of the validation testing process returns an HTTP 20X response code for a successful
+  test.</p>
+
+  <p>To run the test scripts:</p>
+
+  <ol>
+    <li>Install <span style="font-family:courier new,courier,monospace;">apigee-validate</span> on
+    a Management Server node:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt;
+    /opt/apigee/apigee-service/bin/apigee-service apigee-validate install</span></li>
+
+    <li>Run the setup command on a Management Server node to invoke the test scripts:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt;
+    /opt/apigee/apigee-service/bin/apigee-service apigee-validate setup -f
+    <em><strong>configFile</strong></em></span><br>
+    <br>
+    The <em><strong>configFile</strong></em> file must contain the following property:<br>
+    <span style=
+    "font-family:courier new,courier,monospace;">APIGEE_ADMINPW=sysAdminPword</span><br>
+    <br>
+    If omitted, you will be prompted for the password.<br>
+    <br>
+    By default, the <span style="font-family:courier new,courier,monospace;">apigee-validate</span>
+    utility creates a virtual host on the Router that uses port 59001. If that port is not open on
+    the Router, you can optionally include the <span style=
+    "font-family:courier new,courier,monospace;">VHOST_PORT</span> property in the config file to
+    set the port. For example:<br>
+    <span style="font-family: 'courier new', courier, monospace;">VHOST_PORT=9000
+     </span></li>
+
+    <li>The script then does the following:
+
+      <ul>
+        <li>Creates an organization and associates it with the pod.</li>
+
+        <li>Creates an environment and associates the Message Processor with the environment.</li>
+
+        <li>Creates a virtual host.</li>
+
+        <li>Imports a simple health check proxy and deploys the application to the
+        &#8220;test&#8221; environment.</li>
+
+        <li>Import the SmartDocs proxy.</li>
+
+        <li>Executes the test to make sure everything is working as expected.</li>
+      </ul>
+    </li>
+  </ol>
+
+  <p>A successful test returns the 20X HTTP response.</p>
+
+  <p>To remove the organization, environment and other artifacts created by the test scripts:</p>
+
+  <aside class="note">
+    <p><b>Note:</b> Do not remove the test artifacts if you intend to use SmartDocs.
+      See <a href="install-smartdocs.html">Install SmartDocs</a> for more.</p>
+    </aside>
+
+  <ol>
+    <li>Run the following command:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt;
+    /opt/apigee/apigee-service/bin/apigee-service apigee-validate clean -f
+    <em><strong>configFile</strong></em></span><br>
+    <br>
+    where <em><strong>configFile</strong></em> is the same file you used to run the tests.<br>
+    <br>
+    <strong>Note</strong>: If you get errors from the testing and the troubleshooting methodology,
+    contact <a href="https://apigee.com/about/support/portal">Apigee Support</a> and provide the
+    error log.</li>
+  </ol>
+
+  <h2 id="verifypodinstallation">Verify pod installation</h2>
+
+  <p>Now that you have installed the Apigee Analytics, it is recommended that you perform following
+  basic but important validation:</p>
+
+  <ol>
+    <li>Verify that the Management Server is in the central POD. On Management Server, run the
+    following CURL command:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt; curl -u
+    <em><strong>sysAdminEmail:password</strong></em>
+    http://localhost:8080/v1/servers?pod=<strong>central</strong></span><br>
+    <br>
+    You should see output in the form:<br>
+    <span style="font-family:courier new,courier,monospace;">[ {<br>
+     "internalIP" : "192.168.1.11",<br>
+     "isUp" : true,<br>
+     "pod" : "central",<br>
+     "reachable" : true,<br>
+     "region" : "dc-1",<br>
+     "tags" : {<br>
+       "property" : [ ]<br>
+     },<br>
+     "type" : [ "application-datastore", "scheduler-datastore", "management-server",
+    "auth-datastore", "apimodel-datastore", "user-settings<br>
+    datastore", "audit-datastore" ],<br>
+     "uUID" : "d4bc87c6-2baf-4575-98aa-88c37b260469"<br>
+    }, {<br>
+     "externalHostName" : "localhost",<br>
+     "externalIP" : "192.168.1.11",<br>
+     "internalHostName" : "localhost",<br>
+     "internalIP" : "192.168.1.11",<br>
+     "isUp" : true,<br>
+     "pod" : "central",<br>
+     "reachable" : true,<br>
+     "region" : "dc-1",<br>
+     "tags" : {<br>
+       "property" : [ {<br>
+         "name" : "started.at",<br>
+         "value" : "1454691312854"<br>
+       }, ... ]<br>
+     },<br>
+     "type" : [ "qpid-server" ],<br>
+     "uUID" : "9681202c-8c6e-4da1-b59b-23e3ef092f34"<br>
+    } ]</span></li>
+
+    <li>Verify that the Router and Message Processor are in gateway POD. On Management Server, run
+    the following CURL command:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt; curl -u
+    <em><strong>sysAdminEmail:password</strong></em>
+    http://localhost:8080/v1/servers?pod=<strong>gateway</strong></span><br>
+    <br>
+    You see output similar to the central pod but for the Router and Message Processor. </li>
+
+    <li>Verify that Postgres is in the analytics POD. On Management Server, run the following CURL
+    command:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt; curl -u
+    <em><strong>sysAdminEmail:password</strong></em>
+    http://localhost:8080/v1/servers?pod=<strong>analytics</strong></span><br>
+    <br>
+    You see output similar to the central pod but for Postgres. </li>
+  </ol>
+
+  <div>
+     
+  </div>{% endblock %}

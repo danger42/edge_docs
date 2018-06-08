@@ -1,0 +1,308 @@
+  {% extends "_base.html" %} {% block title %}Reusable shared flows{% endblock %} {% block body %}
+
+  <p>You can combine policies and resources into a <i>shared flow</i> that you can consume from
+  multiple API proxies, and even from other shared flows. Although it's like a proxy, a shared flow
+  has no endpoint. It can be used only from an API proxy or shared flow that's in the same
+  organization as the shared flow itself.</p>
+
+  <p>By capturing in one place functionality that's useful in multiple places, a shared flow helps
+  you ensure consistency, shorten development time, and more easily manage code.</p>
+
+  <p>The following 5-minute video demonstrates how to create and trace a shared flow in the Classic
+  Edge UI.</p>
+
+  <p><iframe allowfullscreen="" frameborder="0" height="315" src=
+  "https://www.youtube.com/embed/aHLoYxQEfv4" width="560"></iframe></p>
+
+  <p>The following video demonstrates how to create and trace a shared flow in the New Edge
+  experience.</p>
+
+  <p><iframe allowfullscreen="" frameborder="0" height="315" src=
+  "https://www.youtube.com/embed/-7xx34uD8Kk" width="560"></iframe></p>
+
+  <p>You can call a shared flow using the Flow Callout policy. Also, by attaching a shared flow to
+  a <i>flow hook</i>, you can have the shared flow execute before a proxy or target request, or
+  after a proxy or target response.</p>
+
+  <p>For reference on the Flow Callout policy, see <a href=
+  "/api-platform/reference/policies/flow-callout-policy.html">Flow Callout policy</a>. For more on
+  flow hooks, see <a href="/api-platform/fundamentals/flow-hooks.html">Attaching a shared flow
+  using a flow hook</a>.</p>
+
+  <p>For example, imagine you have areas of functionality that are either used in multiple places
+  or must be standardized across APIs in your organization. You could have a shared flow for each
+  category, including:</p>
+
+  <ul>
+    <li><b>security</b>, with authorization code using OAuth and API key verification, as well as
+    threat protection code.</li>
+
+    <li><b>logging</b>, for generating standard error messages.</li>
+
+    <li><b>mediation</b>, for transforming between XML and JSON message formats.</li>
+  </ul>
+
+  <p>In the following illustration, two API proxies call out (with a FlowCallout policy) to a
+  shared flow to authenticate incoming user requests. The AuthSharedFlow has been deployed
+  separately to the org before the proxies so that it is available to support requests from the
+  proxies. A shared flow can be developed and managed by a team responsible for broad company
+  policies, then consumed in proxies by line-of-business teams building more specialized apps.</p>
+
+  <p><img src="/api-platform/images/shared-flow.png"></p>
+
+  <h3>Developing a shared flow</h3>
+
+  <p>When developing a shared flow, you must always test it with calls sent to an API proxy. In
+  other words, you can't send requests directly to a shared flow as you would an API proxy.
+  Instead, you send requests to an API proxy which is, in turn, calling out to the shared flow.</p>
+
+  <p>Here are the high-level steps for developing a shared flow:</p>
+
+  <ol>
+    <li>Figure out what the <b>shared set of features</b> should be.
+
+      <p>For example, you might want to combine traffic management features, including suppressing
+      traffic spikes. That way, you can manage their configuration outside the workflow of those
+      implementing line-of-business logic.</p>
+    </li>
+
+    <li>
+      <b>Develop a shared flow</b> by implementing policies and supporting resources, just as you
+      would when developing an API proxy.
+
+      <p>A shared flow is a sequence of conditional steps. So developing one is like developing an
+      API proxy. You can include policies and resources you might include in a proxy.</p>
+
+      <p>For example, as part of your traffic management support, you might implement a Spike
+      Arrest policy to allow only 30 requests per second, as in the following example:</p>
+      <pre class="prettyprint">
+&lt;SpikeArrest async="false" continueOnError="false" enabled="true" name="Spike-Arrest"&gt;
+    &lt;DisplayName&gt;Spike Arrest&lt;/DisplayName&gt;
+    &lt;Properties/&gt;
+    &lt;Identifier ref="request.header.some-header-name"/&gt;
+    &lt;MessageWeight ref="request.header.weight"/&gt;
+    &lt;Rate&gt;30ps&lt;/Rate&gt;
+&lt;/SpikeArrest&gt;
+</pre>
+
+      <p>Then, to a shared flow for traffic management, you could attach the Spike Arrest policy as
+      a step. The policy would execute for any API proxy that calls the shared flow.</p>
+      <pre class="prettyprint">
+&lt;SharedFlow name="default"&gt;
+    &lt;Step&gt;
+        &lt;Name&gt;Spike-Arrest&lt;/Name&gt;
+    &lt;/Step&gt;
+&lt;/SharedFlow&gt;
+</pre>
+
+      <p>For information on how to get a shared flow started in the management console, see
+      <a href="#creating-a-shared-flow">Creating a shared flow with the Apigee Edge management
+      console</a>.</p>
+
+      <p>As with API proxies, you can import a zip file containing your shared flow source
+      artifacts (see <a href="/management/apis/post/organizations/{org_name}/apis-0">Import a new
+      API Proxy</a> for more about importing proxies). The following illustrates how to import a
+      shared flow with the management API:</p>
+      <pre class="prettyprint">
+curl -X POST -F "file=@/path/to/zip/file.zip" \ 'https://api.enterprise.apigee.com/v1/o/{org_name}/sharedflows?action=import&amp;name=shared-flow-name' \
+-u email:password
+</pre>
+    </li>
+
+    <li>
+      <b>Deploy the shared flow</b> to the environment before deploying proxies or shared flows
+      that will consume it. You deploy a shared flow in the same way you deploy an API proxy. (For
+      more, see <a href="/api-platform/deploy/understanding-deployment.html">Understanding
+      deployment</a>.)
+
+      <p>A shared flow must be in the same org and deployed to the same environment as the API
+      proxies and other shared flows that consume it. Deploying the shared flow before the proxies
+      makes it possible to resolve the proxy's dependency on the shared flow at deploy time.</p>
+
+      <p>You can deploy a shared flow with a management API call such as the following:</p>
+      <pre class="prettyprint">
+curl -X POST --header "Content-Type: application/octet-stream" \
+https://api.enterprise.apigee.com/v1/o/{org_name}/e/{env_name}/sharedflows/{shared_flow_name}/revisions/{revision_number}/deployments \
+-u email:password
+</pre>
+
+      <p>You can also replace a currently deployed shared flow with no downtime. (This is very like
+      API proxies. See <a href=
+      "/api-platform/deploy/deploy-api-proxies-using-management-api.html">Deploy API proxies using
+      the management API</a> for more). Here's the request form using the management API:</p>
+      <pre class="prettyprint">
+curl -X POST --header "Content-Type:application/x-www-form-urlencoded" \
+https://api.enterprise.apigee.com/v1/o/{org_name}/e/{env_name}/sharedflows/{shared_flow_name}/revisions/{revision_number}/deployments?"override=true" \
+-u email:password
+</pre>
+    </li>
+
+    <li>
+      <b>Develop the consuming API proxy</b> so that it can call the shared flow as part of its own
+      flow.
+
+      <p>From an API proxy, you call to a shared flow with a <a href=
+      "/api-platform/reference/policies/flow-callout-policy.html">Flow Callout policy</a>. (You can
+      also attach the shared flow to the proxy using a flow hook, as described in <a href=
+      "/api-platform/fundamentals/flow-hooks.html">Attaching a shared flow using a flow hook</a>.)
+      For an introductory tutorial on creating an API proxy, see {{gs_tutorial}}.</p>
+
+      <aside class="note"><b>Note:</b> To consume a shared flow, an API proxy must be deployed
+      after the shared flow and to the same environment as the shared flow. The shared flow has to
+      be in place when you want to test a call to it using the Flow Callout policy.</aside>
+
+      <p>To consume a shared flow, you add a Flow Callout policy to the proxy or shared flow that
+      will consume it. Like a Service Callout policy, with which you call out to another service, a
+      Flow Callout calls out to the shared flow.</p>
+
+      <p>In the following code, a Flow Callout policy calls out to a shared flow called
+      <code>traffic-management-shared</code>.</p>
+      <pre class="prettyprint">
+&lt;FlowCallout async="false" continueOnError="false" enabled="true" name="Traffic-Management-Flow-Callout"&gt;
+    &lt;DisplayName&gt;Traffic Management Flow Callout&lt;/DisplayName&gt;
+    &lt;Properties/&gt;
+    &lt;SharedFlowBundle&gt;traffic-management-shared&lt;/SharedFlowBundle&gt;
+&lt;/FlowCallout&gt;
+</pre>
+
+      <p>For more, see <a href="#calling-a-shared-flow">Calling a shared flow from an API proxy or
+      shared flow</a></p>
+    </li>
+
+    <li><b>Deploy the consuming API proxy</b> to begin using the shared flow. (For more, see
+    <a href="/api-platform/deploy/understanding-deployment.html">Understanding
+    deployment</a>.)</li>
+
+    <li>
+      <b>Develop iteratively by tracing, as you would with an API proxy.</b>
+
+      <p>As with an API proxy, you develop a shared flow by iteratively invoking and tracing until
+      you have the logic the way you want it. In this case, because the shared flow doesn't run on
+      its own, you invoke a proxy endpoint and trace the proxy.</p>
+
+      <p>Here are the steps:</p>
+
+      <ol>
+        <li>Make sure that both the shared flow and the API proxy calling it with a Flow Callout
+        policy are in the same organization and deployed to the same environment.</li>
+
+        <li>On the API proxy's <b>Trace</b> tab, begin tracing the API proxy.</li>
+
+        <li>Send a request to a proxy endpoint in the API proxy. The flow from the endpoint must
+        include the Flow Callout policy that calls out to the shared flow.</li>
+
+        <li>On the <b>Trace</b> tab, examine the flow from the API proxy to the shared flow.
+
+          <p>Notice that in tracing, the shared flow is represented as a set of steps or policies
+          enclosed in a grey box. Icons representing Flow Callout policies precede shared flows.
+          (For more on tracing, see <a href="/api-platform/debug/using-trace-tool-0.html">Using the
+          Trace tool</a>.)</p>
+        </li>
+      </ol>
+
+      <p><img src="/api-platform/images/shared-flow-trace.png"></p>
+    </li>
+  </ol>
+
+  <h3 id="creating-a-shared-flow">Creating a shared flow with the Apigee Edge management
+  console</h3>
+
+  <p>When you use the Apigee Edge UI to create a shared flow, you can either create one from
+  scratch or by importing existing flow sources as a flow bundle .zip file.</p>
+
+  <ol>
+    <li>In the management console, select the organization within which you want to create the
+    shared flow.
+
+      <p>The shared flow will be available to any API proxies and shared flows deployed to an
+      environment from this organization. It won't be available from outside this organization.</p>
+    </li>
+
+    <li>Click the <b>APIs &gt; Shared Flows</b> menu.
+
+      <p>On the <b>Shared Flows</b> page, you can view a list of shared flows in the organization.
+      You can edit or delete flows in the list.</p>
+    </li>
+
+    <li>Click the <b>+ Shared Flow</b> button to begin adding a new shared flow.</li>
+
+    <li>On the <b>Build a Shared Flow</b> page, choose how you want to created the new flow:
+
+      <ul>
+        <li>Create a new flow from scratch. You'll be able to configure policies and resources as
+        steps in the flow.
+
+          <ol>
+            <li>Select <b>Empty Shared Flow</b>.</li>
+
+            <li>Enter a name value. This will be the name that API proxies and other shared flows
+            use to reference this shared flow. The name should be descriptive to developers
+            consuming the flow.</li>
+
+            <li>Enter a description to provide more information about what the flow does.</li>
+
+            <li>Click <b>Next</b>.</li>
+
+            <li>Optionally, select the environments to which you want the new flow deployed.
+
+              <p>For example, if you'll be testing the shared flow from API proxies deployed to the
+              test environment, then deploy the shared flow to <b>test</b>.</p>
+            </li>
+
+            <li>
+              <p>Click <b>Build and Deploy</b> to have the new shared flow created and deployed to
+              the environment(s) you selected. If you selected no environment, the shared flow will
+              be created, but not deployed.</p>
+            </li>
+          </ol>
+        </li>
+
+        <li>Create a shared flow from existing sources by uploading a flow bundle.
+
+          <ol>
+            <li>Select <b>Shared Flow Bundle</b> to specify a .zip file containing the artifacts
+            you want in the new flow.
+
+              <p>A shared flow bundle contains the source artifacts of a shared flow. For example,
+              if you were to download a shared flow from the management console, you'd have a .zip
+              file with the flow bundle.</p>
+            </li>
+
+            <li>Click <b>Next</b>.</li>
+
+            <li>Click <b>Choose File</b> to browse for the .zip file containing the shared flow
+            sources you want to import.</li>
+
+            <li>In the <b>Shared Flow Name</b> box, enter a name for the imported flow. This will
+            be the name that API proxies and other shared flows use to reference this shared flow.
+            The name should be descriptive to developers consuming the flow.</li>
+
+            <li>Click <b>Next</b>.</li>
+
+            <li>Click <b>Build</b> to build the new flow from the sources you're importing.</li>
+          </ol>
+        </li>
+      </ul>
+    </li>
+  </ol>
+
+  <h3 id="calling-a-shared-flow">Calling a shared flow from an API proxy or shared flow</h3>
+
+  <p>You can call a shared flow from a proxy or from another shared flow by using the <a href=
+  "/api-platform/reference/policies/flow-callout-policy.html">Flow Callout policy</a>.</p>
+
+  <ol>
+    <li>In the Apigee Edge management console, locate the proxy or shared flow from which you want
+    to call another shared flow.</li>
+
+    <li>In the <b>Navigator</b>, next to <b>Policies</b>, click the <b>+</b> button.</li>
+
+    <li>In the list of policies, under <b>Extension</b>, click <b>Flow Callout</b>.</li>
+
+    <li>Enter the display name and name (unique identifier), then select the shared flow that this
+    policy will call.</li>
+
+    <li>Click <b>Add</b>.</li>
+
+    <li>Add the new Flow Callout policy to the proxy where you want the call to be made.</li>
+  </ol>{% endblock %}

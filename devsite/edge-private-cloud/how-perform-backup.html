@@ -1,0 +1,100 @@
+  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}How to Perform a Backup{% endblock %} {% block body %}
+
+  <aside class="note"><b>Note:</b> When backing up a complete Edge installation, you must back up
+  all components. See "What to Backup" at <a href="backup-and-restore.html">Backup and Restore</a>
+  for more.  </aside>
+
+  <p>Use the following command to perform a backup:</p>
+  <pre class="prettyprint">
+&gt; /opt/apigee/apigee-service/bin/apigee-service <em><strong>comp</strong></em> backup
+</pre>
+
+  <p>where <em><strong>comp</strong></em> is the name of the component. For example:</p>
+  <pre class="prettyprint">
+&gt; /opt/apigee/apigee-service/bin/apigee-service apigee-cassandra backup
+</pre>
+
+  <aside class="warning"><b>Warning:</b> The backup utility writes the generated backup file to
+  <span style=
+  "font-family:courier new,courier,monospace;">/opt/apigee/backup/<em><strong>comp</strong></em></span>
+  where <em><strong>comp</strong></em> is the name of the component. Because you can generate many
+  backup files, and because these files can get large, you can mount a separate disk at
+  <span style="font-family:courier new,courier,monospace;">/opt/apigee/backup</span> just for
+  backup files.</aside>
+
+  <aside class="note"><b>Note:</b> For components not associated with a data store, such as the
+  Router or Message Processor, the backup command still creates a backup file containing
+  configuration and other information.</aside>
+
+  <aside class="note"><b>Note:</b> For PostgreSQL only, you can optionally create a network storage
+  snapshot as an alternative to using the Apigee backup command. This snapshot cab be useful
+  because the Apigee backup command takes time to run and PostgreSQL data generated while the
+  backup runs could be omitted from the resulting <span style=
+  "font-family:courier new,courier,monospace;">.dump</span> file. </aside>
+
+  <p>The backup command: </p>
+
+  <ol>
+    <li>Stops the component (except for PostgreSQL and Cassandra which must be running to
+    backup).</li>
+
+    <li>Creates a tar file of the following directories and files, where
+    <em><strong>comp</strong></em> is the name of the component:
+
+      <ol style="list-style: lower-alpha outside">
+        <li>Directories
+
+          <ul>
+            <li><span style=
+            "font-family:courier new,courier,monospace;">/opt/apigee/data/<em><strong>comp</strong></em></span></li>
+
+            <li><span style=
+            "font-family:courier new,courier,monospace;">/opt/apigee/etc/<em><strong>comp</strong></em>.d</span></li>
+          </ul>
+        </li>
+
+        <li>Files if they exists
+
+          <ul>
+            <li><span style=
+            "font-family:courier new,courier,monospace;">/opt/apigee/token/application/<em><strong>comp</strong></em>.properties</span></li>
+
+            <li><span style=
+            "font-family:courier new,courier,monospace;">/opt/apigee/customer/application/<em><strong>comp</strong></em>.properties</span></li>
+
+            <li><span style=
+            "font-family:courier new,courier,monospace;">/opt/apigee/customer/defaults.sh</span></li>
+
+            <li><span style=
+            "font-family:courier new,courier,monospace;">/opt/apigee/customer/conf/license.txt</span></li>
+          </ul>
+        </li>
+      </ol>
+    </li>
+
+    <li>For all components except PostgreSQL, writes the tar file to <span style=
+    "font-family:courier new,courier,monospace;">/opt/apigee/backup/<em><strong>comp</strong></em></span>.
+    The name is in the form:<br>
+    <span style=
+    "font-family:courier new,courier,monospace;">backup-(year).(month).(day),(hour).(min).(seconds).tar.gz </span><br>
+
+    <br>
+    For example:<br>
+    <span style=
+    "font-family:courier new,courier,monospace;">backup-2016.03.17,14.40.41.tar.gz </span><br>
+    <br>
+    For PostgreSQL, the file is named:<br>
+    <span style=
+    "font-family:courier new,courier,monospace;">(year).(month).(day),(hour).(min).(seconds).dump</span></li>
+
+    <li>Restarts the component (except for PostgreSQL, Cassandra, ZooKeeper, and OpenLDAP which are
+    not restarted).</li>
+  </ol>
+
+  <p>If you have multiple Edge components installed on the same node, you can back up them all with
+  a single command:</p>
+  <pre class="prettyprint">
+&gt; /opt/apigee/apigee-service/bin/apigee-all backup
+</pre>
+
+  <p>This command creates a backup file for each component on the node.</p>{% endblock %}

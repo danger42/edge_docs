@@ -1,0 +1,235 @@
+  {% extends "_base.html" %} {% block title %}Accessing flow variables in Node.js{% endblock %} {% block body %}
+
+  <h2 id="introduction">Introduction</h2>
+
+  <p>Use the <code>apigee-access</code> module to access Apigee Edge <strong>flow
+  variables</strong> in a Node.js application. The module has methods for <a href=
+  "#getVariable">getting</a>, <a href="#setVariable">setting</a>, and <a href=
+  "#deleteVariable">deleting</a> variables. It also has a convenience method for <a href=
+  "#setIntVariable">setting an integer variable</a>. </p>
+
+  <p>Flow variables exist within the context of an API proxy flow. Some variables are "built-in" to
+  Edge. Others are created when policies execute, and you can create your own variables. Flow
+  variables are typically used to pass data from one policy to another and for setting conditions
+  in conditional flows. For information about flow variables, see <a href=
+  "/api-platform/fundamentals/flow-variables-and-conditions.html">Flow variables and
+  conditions</a>.</p>
+
+  <p>For an introduction to the <code>apigee-access</code> module and its other features, see
+  <a href="/api-platform/nodejs/using-apigee-access.html">Using the apigee-access module</a>.</p>
+
+  <h2 id="workingexample">Working example</h2>
+
+  <p>Imagine that an Edge policy running on the request flow path sets a variable called
+  <code>AuthenticatedUserId</code>. The following code accesses that variable and prints it to a
+  log. In addition, this code sets a variable. You can then access that variable from a policy,
+  which we illustrate below.</p>
+  <pre class="prettyprint">
+var http = require('http');
+var apigee = require('apigee-access');
+
+http.createServer(function (request, response) {
+  // The request parameter must be a request object that came from the http module
+  var userId = apigee.getVariable(request, 'AuthenticatedUserId');
+  apigee.setVariable(request, "custom.foo", "Bar");
+  console.log('Authenticated Apigee User ID is %s', userId);
+  response.writeHead(200, {'Content-Type': 'text/plain'});
+  response.end('Hello World\n');
+}).listen(8124);
+
+console.log('Server running at http://127.0.0.1:8124/');
+
+</pre>
+
+  <p>You can copy this code into a JavaScript file, deploy it to Edge, and try it out. Call the
+  file <code>server.js</code>. To deploy it use:</p>
+  <pre class="terminal">
+apigeetool deploynodeapp -u username -p password -o myorg -e test -n access -d . -m server.js -b /access
+</pre>
+
+  <aside class="note"><b>Note:</b> For information about using <code>apigeetool</code> to deploy
+  standalone Node.js applications like this one, see <a href=
+  "/api-platform/nodejs/deploying-standalone-nodejs-app.html">Deploying a standalone Node.js
+  app</a>.</aside>
+
+  <p>After you deploy the application to Edge, add an AssignMessage policy with the following
+  configuration to the ProxyEndpoint request flow:</p>
+  <pre class="prettyprint">
+&lt;?xml version="1.0" encoding="UTF-8" standalone="yes"?&gt;
+&lt;AssignMessage async="false" continueOnError="false" enabled="true" name="AddUserId"&gt;
+    &lt;DisplayName&gt;AddUserId&lt;/DisplayName&gt;
+    &lt;FaultRules/&gt;
+    &lt;Properties/&gt;  
+    &lt;AssignVariable&gt;
+        &lt;Name&gt;AuthenticatedUserId&lt;/Name&gt;
+        &lt;Value&gt;ntesla&lt;/Value&gt;
+        &lt;Ref/&gt;
+    &lt;/AssignVariable&gt;
+    &lt;IgnoreUnresolvedVariables&gt;true&lt;/IgnoreUnresolvedVariables&gt;
+    &lt;AssignTo createNew="false" transport="http" type="request"/&gt;
+&lt;/AssignMessage&gt;
+</pre>
+
+  <p>Next, attach another AssignMessage policy to the TargetEndpoint response preflow:</p>
+  <pre class="prettyprint">
+&lt;?xml version="1.0" encoding="UTF-8" standalone="yes"?&gt;
+&lt;AssignMessage async="false" continueOnError="false" enabled="true" name="SetHeader"&gt;
+    &lt;DisplayName&gt;SetHeader&lt;/DisplayName&gt;
+    &lt;FaultRules/&gt;
+    &lt;Properties/&gt;
+    &lt;Set&gt;
+        &lt;Headers&gt;
+            &lt;Header name="MySpecialHeader"&gt;{custom.foo}&lt;/Header&gt;
+        &lt;/Headers&gt;
+    &lt;/Set&gt;
+    &lt;IgnoreUnresolvedVariables&gt;true&lt;/IgnoreUnresolvedVariables&gt;
+    &lt;AssignTo createNew="false" transport="http" type="request"/&gt;
+&lt;/AssignMessage&gt;
+</pre>
+
+  <p>You can call the proxy like this:</p>
+  <pre class="terminal">
+curl -i http://myorg-test.apigee.net/access
+</pre>
+
+  <p>Now, go to the access proxy's page in the management UI and bring up the
+  <strong>Develop</strong> view. Click <strong>Node.js Logs</strong> to view the log output from
+  the proxy. If the proxy is configured properly, you will see that the userId variable was set.
+  You will also see the that the header was set in the cURL output in your terminal window:</p>
+  <pre class="prettyprint">
+HTTP/1.1 200 OK
+
+Content-Type: text/plain
+Date: Tue, 27 05 2014 23:20:52 GMT
+MySpecialHeader: Bar
+Content-Length: 12
+Connection: keep-alive
+</pre>
+
+  <h2 id="methods">Methods</h2>
+
+  <ul>
+    <li><a href="#getVariable">getVariable</a></li>
+
+    <li><a href="#setVariable">setVariable</a></li>
+
+    <li><a href="#setIntVariable">setIntVariable</a></li>
+
+    <li><a href="#deleteVariable">deleteVariable</a></li>
+  </ul>
+  <hr>
+
+  <h3 id="methods-getvariable"><a id="getVariable" name="getVariable"></a>getVariable</h3>
+
+  <p><code>var result = getVariable(httpRequest, name);</code></p>
+
+  <p>Gets a named variable.</p>
+
+  <p><strong>Parameters:</strong></p>
+
+  <ul>
+    <li><code>httpRequest</code>: The request object that comes from the http module.</li>
+
+    <li><code>name</code>: (String) The name of the variable to retrieve.</li>
+  </ul>
+
+  <p><strong>Returns:</strong></p>
+
+  <p>A string or a number, depending on the type that was set using setVariable(), when it was
+  created by you elsewhere, or when a policy created it. If you are accessing one of the
+  out-of-the-box Edge variables, you can find a list of types in the <a href=
+  "/api-platform/reference/variables-reference.html">Variables Reference</a>. For variable types
+  created by policies, refer to the specific policy reference topic.</p>
+
+  <p><strong>Examples:</strong></p>
+  <pre class="prettyprint">
+var apigee = require('apigee-access');
+    // "httpRequest" must be a request object that came from the http module
+    var val1 = apigee.getVariable(request, 'TestVariable');
+    var val2 = apigee.getVariable(request, 'request.client.ip');
+</pre>
+  <hr>
+
+  <h3 id="methods-setvariable">setVariable<a id="setVariable" name="setVariable"></a></h3>
+
+  <p><code>setVariable(httpRequest, name, value);</code></p>
+
+  <p>Sets a variable. Some variables are read-only, and the setVariable() method throws an
+  exception if you try to set one of them. To determine which variables are read-only, see
+  the <a href="/api-platform/reference/variables-reference.html">Variables
+  Reference</a>. </p>
+
+  <p><strong>Parameters:</strong></p>
+
+  <ul>
+    <li><code>httpRequest</code>: The request object that comes from the http module.</li>
+
+    <li><code>name</code>: (String) The name of the variable to retrieve.</li>
+
+    <li><code>value</code>: Can be a number, String, boolean, null, or undefined.</li>
+  </ul>
+
+  <p><strong>Example:</strong></p>
+  <pre class="prettyprint">
+var apigee = require('apigee-access');
+    apigee.setVariable(request, 'TestVariable', 'bar');
+    // This will throw an exception because client.ip is read-only.
+    apigee.setVariable(request, 'client.ip');
+    
+</pre>
+  <hr>
+
+  <h3 id="methods-setintvariable"><a id="setIntVariable" name=
+  "setIntVariable"></a>setIntVariable</h3>
+
+  <p><span style="font-family: monospace;">setIntVariable(httpRequest, name, value);</span></p>
+
+  <p>The setIntVariable() method is a convenience method that first coerces the value parameter to
+  an integer, and then sets it. </p>
+
+  <p><strong>Parameters:</strong></p>
+
+  <ul>
+    <li><code>httpRequest</code>: The request object that comes from the http module.</li>
+
+    <li><code>name</code>: (String) The name of the variable to set.</li>
+
+    <li><code>value</code>: The value parameter must be a string or number.</li>
+  </ul>
+
+  <p><strong>Example:</strong></p>
+  <pre class="prettyprint">
+var apigee = require('apigee-access');
+// Convert "123" to an integer and set it
+apigee.setIntVariable(request, 'TestVariable', '123');
+// Use something that's already a number
+apigee.setIntVariable(request, 'TestVariable2', 42);
+</pre>
+
+  
+  <hr>
+
+  <h3 id="methods-deletevariable"><a id="deleteVariable" name=
+  "deleteVariable"></a>deleteVariable</h3>
+
+  <p>Deletes a named variable. It is an error to delete a read-only variable. For a complete
+  list of read-only variables, see the <a href=
+  "/api-platform/reference/variables-reference.html">Variables Reference</a>.</p>
+
+  <p><code>deleteVariable(httpRequest, name);</code></p>
+
+  <p><strong>Parameters:</strong></p>
+
+  <ul>
+    <li><code>httpRequest</code>: The request object that comes from the http module.</li>
+
+    <li><code>name</code>: (String) The name of the variable to delete.</li>
+  </ul>
+
+  <p><strong>Example:</strong></p>
+  <pre class="prettyprint">
+  apigee.deleteVariable(request, 'TestVariable');
+    // This will throw an exception because client.ip is a read-only variable.
+    apigee.deleteVariable(request, 'client.ip');
+    
+</pre>{% endblock %}

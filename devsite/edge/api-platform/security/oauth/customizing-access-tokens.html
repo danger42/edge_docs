@@ -1,0 +1,139 @@
+  {% extends "_base.html" %} {% block title %}Customizing Tokens and Authorization Codes{% endblock %} {% block body %}
+
+  <h2 id="abouttokenmetadata">About Token Metadata</h2>
+
+  <p>Apigee Edge generates OAuth access tokens, refresh tokens, and authorization codes, and
+  dispenses them to authenticated apps. At generation time, Edge stores those tokens and codes.
+  Later, when Edge receives inbound API requests bearing these tokens or codes, Edge uses the
+  stored information to authorize the requests.</p>
+
+  <p>When Edge generates these OAuth artifacts, it also attaches metadata to the token or code. For
+  example, an access token is associated to name/value pairs that define expiration time, the
+  associated app and developer, and other information.</p>
+
+  <p>The JSON representation of an Edge access token looks like the following:</p>
+  <pre class="prettyprint">
+{
+  "issued_at" : "1372170159093",
+  "application_name" : "ccd1803b-b557-4520-bd62-ddd3abf8e501",
+  "scope" : "READ",
+  "status" : "approved",
+  "api_product_list" : "[Product1,Product2]",
+  "api_product_list_json" : ["Product1", "Product2"],
+  "expires_in" : "3599", //--in seconds
+  "developer.email" : "joe@weathersample.com",
+  "organization_id" : "0",
+  "refresh_token" : "82XMXgDyHTpFyXOaApj8C2AGIPnN2IZe",
+  "client_id" : "deAVedE0W9Z9U35PAMaAJYphBJCGdrND",
+  "access_token" : "shTUmeI1geSKin0TODcGLXBNe9vp",
+  "organization_name" : "apifactory",
+  "refresh_count" : "0"
+}
+</pre>
+
+  <h2 id="addingcustomattributestooauthtokens">Adding Custom Attributes to OAuth Tokens</h2>
+
+  <p>Sometimes its useful to attach custom metadata to an access token. For example, you might wish
+  to add a user name, group memberships or roles for a user, a customer ID, a session identifier,
+  or other arbitrary information to a token. In Apigee Edge, these data are called "custom
+  attributes." Subsequently, when the token is verified within the scope of an API request, that
+  data is made available to the API proxy via context variables. An API Proxy could make
+  fine-grained authorization or routing decisions based on the custom data that is attached to the
+  token.</p>
+
+  <p>To attach arbitrary data to a token, use the <code>&lt;Attributes&gt;</code> element in
+  <a href="/api-platform/reference/policies/oauthv2-policy.html">the OAuthV2 policy</a>. You can
+  specify the name of the custom attribute, and the value it should take. For example, here is a
+  policy configuration that generates a token, and attaches a custom attribute called "tenant_list"
+  to the token:</p>
+  <pre class="prettyprint">
+&lt;OAuthV2 name="GenerateAccessToken"&gt;
+  &lt;Operation&gt;GenerateAccessToken&lt;/Operation&gt;
+  &lt;ExpiresIn&gt;600000&lt;/ExpiresIn&gt;
+  &lt;GenerateResponse /&gt;
+  &lt;SupportedGrantTypes&gt;
+    &lt;GrantType&gt;client_credentials&lt;/GrantType&gt;
+  &lt;/SupportedGrantTypes&gt;
+  &lt;GrantType&gt;request.queryparam.grant_type&lt;/GrantType&gt;
+  &lt;Attributes&gt; 
+    &lt;Attribute name="tenant_list" ref="tenant_list_retrieved_from_external_service" display="false"/&gt;
+  &lt;/Attributes&gt;
+&lt;/OAuthV2&gt;
+</pre>
+
+  <p>You can specify multiple custom attributes, and you can attach them implicitly to either an
+  authorization code (<code>&lt;Operation&gt;GenerateAuthorizationCode&lt;/Operation&gt;</code>) or
+  a token (<code>&lt;Operation&gt;GenerateAccessToken&lt;/Operation&gt;</code>) at the time of
+  generation.</p>
+
+  <p>When <code>display</code> is set to <code>true</code> (the default), custom attributes are
+  returned in the response, where they may be viewable by the app, or passed on to the end user.
+  When <code>display</code> is set to <code>false</code>, custom attributes are stored in the data
+  store, but are not returned in the response message. In either case, the custom data is available
+  to the policies within the API Proxy, after the token has been verified.</p>
+
+  <p>For more information about the <code>display</code> option <a href=
+  "/api-platform/reference/policies/oauthv2-policy.html#attributesattribute-displayingorhidingcustomattributesintheresponse">
+  Displaying or hiding custom attributes in the response</a>.</p>
+
+  <h2 id="gettingcustomattributesatruntime">Getting Custom Attributes at Runtime</h2>
+
+  <p>When there is a call to <a href=
+  "/api-platform/reference/policies/oauthv2-policy.html"><code>OAuthV2/VerifyAccessToken</code></a>,
+  Apigee Edge verifies the token by looking it up in the token store. Apigee Edge then populates a
+  set of context variables containing information about the token. These include:</p>
+
+  <ul>
+    <li>organization_name</li>
+
+    <li>developer.id</li>
+
+    <li>developer.app.name</li>
+
+    <li>client_id</li>
+
+    <li>grant_type</li>
+
+    <li>token_type</li>
+
+    <li>access_token</li>
+
+    <li>issued_at</li>
+
+    <li>expires_in //--in seconds</li>
+
+    <li>status</li>
+
+    <li>scope</li>
+
+    <li>apiproduct.name*</li>
+  </ul>
+
+  <p>If there are any custom attributes on the token, those custom attributes are made available in
+  a context variable with the name <code>accesstoken.{custom_attribute}</code>. For example,
+  suppose a token is issued from the policy shown above. After verifying such a token, there would
+  be an additional context variable named <code>accesstoken.tenant_list</code>, containing the
+  value that was stored at the time the token was generated.</p>
+
+  <p>Policies or conditions can then refer to these variables and modify behavior based on the
+  values stored within.</p>
+
+  <h2 id="settingandupdatingcustomattributesatruntime">Setting and Updating Custom Attributes at
+  Runtime</h2>
+
+  <p>In some situations, you will want your API Proxy to update the metadata associated to an
+  access token at runtime while an API call is being processed on Apigee Edge. To help with this,
+  Apigee provides policies for getting and setting token attributes. For more information, see
+  <a href="/api-platform/reference/policies/get-oauth-v2-info-policy.html">Get OAuth V2 Info
+  policy</a> and <a href="/api-platform/reference/policies/set-oauth-v2-info-policy.html">Set OAuth
+  V2 Info policy</a>.</p>
+
+  <div>
+    In each of these policies, the <code>AccessToken</code> element should refer to a variable that
+    contains the access token.
+  </div>
+
+  <p>You can also use Edge APIs to update the custom attributes attached to a token. See the API
+  documentation for the <a href=
+  "/management/apis/post/organizations/{org_name}/oauth2/accesstokens/{access_token}-0">Update
+  OAuth 2.0 Access Token</a> method.</p>{% endblock %}

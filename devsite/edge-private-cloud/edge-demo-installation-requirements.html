@@ -1,0 +1,486 @@
+  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}Edge Demo Installation
+  Requirements{% endblock %} {% block body %}
+
+  <p>You can install Edge for the Private Cloud on a single host machine as part of a demo or proof
+  of concept installation. This type of installation is referred to as an Edge "all-in-one"
+  installation. The host machine can be a standalone machine or a VM that meets the system
+  prerequisites listed below.</p>
+
+  <aside class="note"><b>Note:</b> A single machine install is meant for a getting started and
+  prototyping environments, not for production.   A full production installation of Edge
+  requires multiple machines. See <a href="installation-topologies.html">Installation
+  Topologies</a> for examples of production installations.</aside>
+
+  <p>After you install Edge for the Private Cloud on the host machine, you can optionally
+  install:</p>
+
+  <ul>
+    <li>Developer Services portal on its own host machine</li>
+
+    <li>API BaaS on its own host machine</li>
+  </ul>
+
+  <h2 id="licensing">Licensing</h2>
+
+  <p>Each installation of Edge requires a unique license file that you obtain from Apigee. If you
+  do not yet have a license, contact Sales <a href=
+  "https://pages.apigee.com/contact-sales-reg.html">here</a>.</p>
+
+  <h2 id="systemrequirementsforedge">System requirements for Edge</h2>
+
+  <p>The following table lists the system requirements for installing Edge on a single host
+  machine:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>
+          <p><strong>Requirement</strong></p>
+        </th>
+
+        <th>
+          <p><strong>Description</strong></p>
+        </th>
+
+        <th>
+          <p><strong>Test</strong></p>
+        </th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td>
+          <p><strong>Access to Apigee RPM repo</strong></p>
+        </td>
+
+        <td>
+          <p>Ensure access to <a href=
+          "https://software.apigee.com">https://software.apigee.com</a></p>
+
+          <p>Ensure you received a username/password from Apigee for the repo:</p>
+
+          <ul>
+            <li>If you are a prospect evaluating Apigee, please contact Apigee Sales <a href=
+            "https://pages.apigee.com/contact-sales-reg.html">here</a>. </li>
+
+            <li>If you are an existing Apigee customer, please contact your Apigee
+            representative.</li>
+          </ul>
+        </td>
+
+        <td>
+          <p><span style="font-family:courier new,courier,monospace;">curl -v <a href=
+          "https://software.apigee.com">https://software.apigee.com</a></span> returns HTTP 200</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Access to your backend services</strong></p>
+        </td>
+
+        <td>
+          <p>Ensure access to your backend services</p>
+        </td>
+
+        <td>
+          <p><span style="font-family:courier new,courier,monospace;">curl -v
+          http://<em><strong>backend</strong></em></span> to check access to your backend
+          services</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>License key</strong></p>
+        </td>
+
+        <td>
+          <p>Check for an email from Apigee with license key attached</p>
+        </td>
+
+        <td>
+          <p>Ensure license key deployed to host machine</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>OS Version</strong></p>
+        </td>
+
+        <td>
+          <p>Supported OS version as listed at <a href="/release/supported-software.html">Supported
+          software and supported versions</a>.</p>
+        </td>
+
+        <td>
+          <p><span style="font-family:courier new,courier,monospace;">cat
+          /etc/redhat-release</span> returns the OS version</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Java version</strong></p>
+        </td>
+
+        <td>
+          <p>Supported Java versions:</p>
+
+          <ul>
+            <li>Oracle JDK 1.8</li>
+
+            <li>OpenJDK 1.8</li>
+          </ul>
+        </td>
+
+        <td>
+          <p><span style="font-family:courier new,courier,monospace;">java -version</span> returns
+          the installed Java version</p>
+
+          <p>If required Java version not found, Edge installer downloads and installs it.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>CPU cores</strong></p>
+        </td>
+
+        <td>
+          <p>8 minimum</p>
+        </td>
+
+        <td>
+          <p><span style="font-family:courier new,courier,monospace;">lscpu</span> returns number
+          of CPUs</p>
+
+          <p><span style="font-family:courier new,courier,monospace;">cat /proc/cpuinfo</span>
+          returns CPU Information</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>RAM</strong></p>
+        </td>
+
+        <td>
+          <p>16 GB minimum</p>
+        </td>
+
+        <td>
+          <p><span style="font-family:courier new,courier,monospace;">cat /proc/meminfo</span>
+          returns memory information</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Diskspace</strong></p>
+        </td>
+
+        <td>
+          <p>100 GB minimum</p>
+        </td>
+
+        <td>
+          <p><span style="font-family:courier new,courier,monospace;">df -h</span> returns the disk
+          space.</p>
+
+          <p><span style="font-family:courier new,courier,monospace;">df -h /opt</span> returns the
+          disk space for /opt, the Edge install directory</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Hostname</strong></p>
+        </td>
+
+        <td>
+          <p>Hostname set to IP address of host</p>
+        </td>
+
+        <td>
+          <p><span style="font-family:courier new,courier,monospace;">hostname -i</span> returns
+          the IP address of host</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Network</strong></p>
+        </td>
+
+        <td>
+          <p>External Internet access required.</p>
+
+          <p>For RedHat OS, access to RHEL yum repository.</p>
+        </td>
+
+        <td>
+          <p><span style="font-family:courier new,courier,monospace;">yum repolist</span> returns
+          available repos.</p>
+
+          <p>For RedHat, check the availability of repos from <span style=
+          "font-family:courier new,courier,monospace;">/etc/yum.repos.d/redhat-rhui.repo</span></p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>ports, iptables, firewalld</strong></p>
+        </td>
+
+        <td>
+          <p>Ensure that ports 8080, 9000, 9001, and 9002 can accept incoming packets.</p>
+        </td>
+
+        <td>
+          <p>This requirement is dependent on your OS and OS configuration. There are several
+          commands you can use to view the current settings:</p>
+
+          <p><span style="font-family:courier new,courier,monospace;">iptables -nvL</span></p>
+
+          <p><strong>Linux 6.x</strong>: <span style=
+          "font-family:courier new,courier,monospace;">service iptables status</span></p>
+
+          <p><strong>Linux 7.x</strong>: <span style=
+          "font-family:courier new,courier,monospace;">sysctl firewalld status</span></p>
+
+          <p>If necessary, you can stop iptables or firewalld</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>SELinux</strong></p>
+        </td>
+
+        <td>
+          <p>Disable SELinux, or set it to permissive mode, during install. Re-enable after install
+          if necessary</p>
+        </td>
+
+        <td>
+          <p>Temporarily set SELinux to permissive mode:</p>
+
+          <p><strong>On a Linux 6.x operating system:</strong></p>
+
+          <p><span style="font-family:courier new,courier,monospace;">echo 0 &gt;
+          /selinux/enforce</span></p>
+
+          <p>To re-enable after installing Edge:</p>
+
+          <p><span style="font-family:courier new,courier,monospace;">echo 1 &gt;
+          /selinux/enforce</span></p>
+
+          <p><strong>On a Linux 7.x operating system:</strong></p>
+
+          <p><span style="font-family:courier new,courier,monospace;">setenforce 0</span></p>
+
+          <p>To re-enable after installing Edge:</p>
+
+          <p><span style="font-family:courier new,courier,monospace;">setenforce 1</span></p>
+
+          <p>To permanently disable SELinux, see <a href=
+          "install-edge-apigee-setup-utility.html">Install the Edge apigee-setup utility</a>.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>System user access</strong></p>
+        </td>
+
+        <td>
+          <p>User performing install requires:</p>
+
+          <ul>
+            <li>sudo access or root access</li>
+
+            <li>ability to add users on host machine</li>
+          </ul>
+        </td>
+
+        <td>
+          <p><span style="font-family:courier new,courier,monospace;">sudo whoami</span>
+           should return root</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>SMTP Server</strong></p>
+        </td>
+
+        <td>
+          <p>Access to SMTP server to send emails to new Edge users.</p>
+        </td>
+
+        <td> </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="systemrequirementsfordeveloperservicesportal">System requirements for Developer Services
+  portal</h2>
+
+  <p>You can install the Edge Developer Services portal on a machine different than the one you
+  used to install Edge. Make sure you have satisfied the following requirements before you install
+  the portal:    </p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>
+          <p><strong>Requirements</strong></p>
+        </th>
+
+        <th>
+          <p><strong>Description</strong></p>
+        </th>
+
+        <th>
+          <p><strong>Test</strong></p>
+        </th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td>
+          <p><strong>Access to Apigee RPM repo</strong></p>
+        </td>
+
+        <td>
+          <p>Ensure access to <a href=
+          "https://software.apigee.com">https://software.apigee.com</a></p>
+
+          <p>Ensure you received a username/password from Apigee for the repo.</p>
+        </td>
+
+        <td>
+          <p><span style="font-family:courier new,courier,monospace;">curl -v <a href=
+          "https://software.apigee.com">https://software.apigee.com</a></span> returns HTTP 200</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Edge installed on the host</strong></p>
+        </td>
+
+        <td>
+          <p>Ensure that you have already installed Edge on the host machine</p>
+        </td>
+
+        <td>
+          <p>See <em>System requirements for Edge</em> above.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>Port</strong></p>
+        </td>
+
+        <td>
+          <p>Ensure port 8079 is available and accessible</p>
+        </td>
+
+        <td>
+          <p><span style="font-family:courier new,courier,monospace;">netstat -nlptu | grep
+          8079</span></p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="systemrequirementsforapibaas">System requirements for API BaaS</h2>
+
+  <p>You can install API BaaS on the single host machine, different than the one you used to
+  install Edge. Make sure you have satisfied the following requirements before you install API BaaS
+  on the host:    </p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>
+          <p><strong>Requirements</strong></p>
+        </th>
+
+        <th>
+          <p><strong>Description</strong></p>
+        </th>
+
+        <th>
+          <p><strong>Test</strong></p>
+        </th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td>
+          <p><strong>Access to Apigee RPM repo</strong></p>
+        </td>
+
+        <td>
+          <p>Ensure access to <a href=
+          "https://software.apigee.com">https://software.apigee.com</a></p>
+
+          <p>Ensure you received a username/password from Apigee for the repo.</p>
+        </td>
+
+        <td>
+          <p><span style="font-family:courier new,courier,monospace;">curl -v <a href=
+          "https://software.apigee.com">https://software.apigee.com</a></span> returns HTTP 200</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>All Edge requirements</strong></p>
+        </td>
+
+        <td>
+          <p>Ensure that the host machine meets all the requirements listed above for Edge</p>
+        </td>
+
+        <td>
+          <p>See <em>System requirements for Edge</em> above.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><strong>ports, iptables, firewalld</strong></p>
+        </td>
+
+        <td>
+          <p>Ensure that ports 2551, 8080, 9000, 9200-9400 can accept incoming packets.</p>
+        </td>
+
+        <td>
+          <p>This step is dependent on your OS and OS configuration. There are several commands you
+          can use to view the current settings:</p>
+
+          <p><span style="font-family:courier new,courier,monospace;">iptables -nvL</span></p>
+
+          <p><strong>Linux 6.x</strong>: <span style=
+          "font-family:courier new,courier,monospace;">service iptables status</span></p>
+
+          <p><strong>Linux 7.x</strong>: <span style=
+          "font-family:courier new,courier,monospace;">sysctl firewalld status</span></p>
+
+          <p>If necessary, you can stop iptables or firewalld</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  {% endblock %}

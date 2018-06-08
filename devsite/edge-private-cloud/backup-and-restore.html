@@ -1,0 +1,83 @@
+{% extends "private-cloud/v4.18.01/_base.html" %}
+{% block title %}Backup and Restore{% endblock %}
+{% block body %}
+
+  <p>This section describes the backup and restore tasks in an on-premises installation of Apigee
+  Edge. It is recommended that you should always create a backup of Apigee Edge components, i.e.
+  configuration and data, at regular intervals and ensure that recovery is performed in an event of
+  a system failure. Backup and restore procedures enable you to restore the state of an entire
+  system (including all components), without affecting other parts of the system.</p>
+
+  <h2 id="whattobackup">What to Backup</h2>
+
+  <p>In an on-premises deployment of Apigee Edge, you must backup the following Edge
+  components:</p>
+
+  <ul>
+    <li>Apache ZooKeeper (apigee-zookeeper)</li>
+    <li>Apache Cassandra (apigee-cassandra)</li>
+    <li>Postgres Server (edge-postgres-server)</li>
+    <li>PostgreSQL database (apigee-postgresql)
+      <aside class="note"><strong>Note</strong>: In a Postgres Master/Standby configuration, you only
+      backup the Master. You do not have to backup the slave.</aside>
+    </li>
+    <li>Qpid Server (edge-qpid-server)</li>
+    <li>Qpidd (apigee-qpidd)</li>
+    <li>OpenLDAP (apigee-openldap)</li>
+    <li>Management Server (edge-management-server)</li>
+    <li>Message Processor (edge-message-processor)</li>
+    <li>Router (edge-router)</li>
+    <li>Edge UI (edge-ui)</li>
+  </ul>
+
+  <h2 id="recoverytimeobjectivertovsrecoverypointobjectiverpo">Recovery time objective (RTO) vs.
+  Recovery point objective (RPO)</h2>
+
+  <p>The RTO is the duration of time and a service level within which a business process must be
+  restored after a disaster (or disruption) in order to avoid unacceptable consequences associated
+  with a break in business continuity.</p>
+
+  <p>A RPO is the maximum tolerable period in which data might be lost from an IT service due to a
+  major incident. Both objectives must be taken into consideration before you implement a backup
+  plan for your recovery strategy.</p>
+
+  <h2 id="beforeyoustartusefulfacts">Before You Start: Useful Facts</h2>
+
+  <p>You may observe that installation data is distributed across several systems, for example
+  organizations are in LDAP, ZooKeeper and Cassandra. Make sure that you take care of the following
+  notes about backup and restore:</p>
+
+  <ul>
+    <li>If you have multiple Cassandra nodes, back them up one at a time. </li>
+
+    <li>If you have multiple ZooKeeper nodes, back them up one at a time. The backup process
+    temporarily shuts down ZooKeeper.</li>
+
+    <li>If you have multiple Postgres nodes, back them up one at a time. </li>
+
+    <li>You can back up all other Edge components at the same time on all nodes by using tools such
+    as Ansible or Chef.</li>
+
+    <li>When you restore one of ZooKeeper, Cassandra or LDAP nodes it is recommended to restore all
+    three nodes in order to achieve consistency (especially when organizations/environments have
+    been created since backup was created).<br>
+    <strong>Note</strong>: The above does not affect restoration of one Cassandra or ZooKeeper node
+    in a datastore cluster, since no backup is used.</li>
+
+    <li>If LDAP or global administrator passwords are lost/corrupted, a complete backup is required
+    in order to get the same credentials for the last backup and running system.</li>
+
+    <li>The backup utility writes the generated backup file to
+    <code>/opt/apigee/backup/<var>comp</var></code> where <var>comp</var> is
+    the name of the component. Because you can generate many backup files, and because these files
+    can get large, you can mount a separate disk at <code>/opt/apigee/backup</code> just
+    for backup files.</li>
+
+    <li>All backup files, except for PostreSQL, are named in the form:
+      <pre>backup-(<var>year</var>).(<var>month</var>).(<var>day</var>),(<var>hour</var>).(<var>min</var>).(<var>seconds</var>).tar.gz </pre>
+      <p>PostreSQL backup files are named:
+      <pre>(<var>year</var>).(<var>month</var>).(<var>day</var>),(<var>hour</var>).(<var>min</var>).(<var>seconds</var>).dump</pre>
+     </li>
+  </ul>
+
+{% endblock %}

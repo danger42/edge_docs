@@ -1,0 +1,172 @@
+  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}Configure Forward Proxying
+  from Edge to a Backend Server{% endblock %} {% block body %}
+
+  <p>If you want to use an HTTP forward proxy between Edge and the backend target servers, then you
+  have to configure the outbound proxy settings properties on the Edge Message Processor nodes.
+  These properties configure the Message Processors to route target requests from Edge to the HTTP
+  forward proxy. </p>
+
+  <p>To configure the Message Processor, edit the <span style=
+  "font-family:courier new,courier,monospace;">/opt/apigee/customer/application/message-processor.properties</span>,
+  and then restart the Message Processor. If the <span style=
+  "font-family: 'courier new', courier, monospace;">message-processor.properties</span> file
+  does not exist, create it.</p>
+
+  <p>Set the following properties to configure the Message Processor:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>
+          <p><strong>Property</strong></p>
+        </th>
+
+        <th>
+          <p><strong>Description</strong></p>
+        </th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td>
+          <p><span style=
+          "font-family:courier new,courier,monospace;">conf_http_HTTPClient.use.proxy</span></p>
+        </td>
+
+        <td>
+          <p>Specifies that all API proxies use the forward proxy be default, <span style=
+          "font-family:courier new,courier,monospace;">true</span>, or do not use it by default,
+          <span style="font-family:courier new,courier,monospace;">false</span>.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><span style=
+          "font-family:courier new,courier,monospace;">conf_http_HTTPClient.use.tunneling</span></p>
+        </td>
+
+        <td>
+          <p>By default Edge uses tunneling for all traffic. To disable tunneling by default,
+          set this property to <span style=
+          "font-family:courier new,courier,monospace;">false</span>.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><span style=
+          "font-family:courier new,courier,monospace;">conf/http.properties+HTTPClient.proxy.type</span></p>
+        </td>
+
+        <td>
+          <p>Specifies the type of the HTTP proxy as <span style=
+          "font-family:courier new,courier,monospace;">HTTP</span> or <span style=
+          "font-family:courier new,courier,monospace;">HTTPS</span>. By default, it uses
+          <span style="font-family:courier new,courier,monospace;">HTTP</span>.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><span style=
+          "font-family:courier new,courier,monospace;">conf/http.properties+HTTPClient.proxy.host</span></p>
+        </td>
+
+        <td>
+          <p>Specifies the host name or IP address where HTTP proxy is running.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><span style=
+          "font-family:courier new,courier,monospace;">conf/http.properties+HTTPClient.proxy.port</span></p>
+        </td>
+
+        <td>
+          <p>Specifies the port on which HTTP proxy is running. if this property is omitted, by
+          default it uses port 80 for HTTP and port 443 for HTTPS.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><span style=
+          "font-family:courier new,courier,monospace;">conf/http.properties+HTTPClient.proxy.user<br>
+
+          conf/http.properties+HTTPClient.proxy.password</span></p>
+        </td>
+
+        <td>
+          <p>If the HTTP proxy requires basic-authentication, then use these properties to provide
+          authorization details.</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>For example:</p>
+  <pre class="prettyprint">
+conf_http_HTTPClient.use.proxy=true
+conf_http_HTTPClient.use.tunneling=false
+conf/http.properties+HTTPClient.proxy.type=HTTP
+conf/http.properties+HTTPClient.proxy.host=my.host.com
+conf/http.properties+HTTPClient.proxy.port=3128
+conf/http.properties+HTTPClient.proxy.user=uName
+conf/http.properties+HTTPClient.proxy.password=pWord
+</pre>
+
+  <p>Remember to restart the Message Processor after setting these properties:</p>
+  <pre class="prettyprint">
+/opt/apigee/apigee-service/bin/apigee-service edge-message-processor restart
+</pre>
+
+  <p>If forward proxying is configured for the Message Processor, then all traffic going from API
+  proxies to backend targets goes through the specified HTTP forward proxy. If the traffic for a
+  specific target of an API proxy should go directly to the backend target, bypassing the forward
+  proxy, then set the following property in the Target Endpoint to override the HTTP forward
+  proxy:</p>
+  <pre class="prettyprint">
+&lt;Property name="use.proxy"&gt;false&lt;/Property&gt; 
+</pre>
+
+  <p>See <a href="/api-platform/reference/policies/endpoint-properties-reference.html">Endpoint
+  properties reference</a> for more information on setting properties on the Target Endpoint.</p>
+
+  <p>If you don't want any targets to use the HTTP forward proxy by default, you can specify it
+  http.properties as below:</p>
+  <pre class="prettyprint">
+conf_http_HTTPClient.use.proxy=false
+</pre>
+
+  <p>Then set <span style="font-family:courier new,courier,monospace;">use.proxy</span> to true for
+  any Target Endpoint that you want to go through an HTTP forward proxy:</p>
+  <pre class="prettyprint">
+&lt;Property name="use.proxy"&gt;true&lt;/Property&gt;
+</pre>
+
+  <p>By default Edge uses tunneling for the traffic to the proxy. To disable tunneling by default,
+  set the following property in the <span style=
+  "font-family: 'courier new', courier, monospace;">message-processor.properties</span> file:</p>
+  <pre class="prettyprint">
+conf_http_HTTPClient.use.tunneling=false 
+</pre>
+
+  <p>If for a specific target, if you want to disable tunneling, then set the <span style=
+  "font-family:courier new,courier,monospace;">use.proxy.tunneling</span> property in the Target
+  Endpoint. If the target uses TLS/SSL, then this property is ignored, and the message is always
+  sent via a tunnel:</p>
+  <pre class="prettyprint">
+&lt;Property name="use.proxy.tunneling"&gt;false&lt;/Property&gt;
+</pre>
+
+  <p>For Edge itself to act as the forward proxy - receiving request from the backend services and
+  routing them to the internet outside of the enterprise - first set up an API proxy on Edge . The
+  backend service can then make a request to the API proxy, which can then connect to external
+  services.</p>
+
+  <div>
+     
+  </div>{% endblock %}

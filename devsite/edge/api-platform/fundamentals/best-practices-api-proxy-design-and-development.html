@@ -1,0 +1,537 @@
+  {% extends "_base.html" %} {% block title %}Best practices for API proxy design and development{% endblock %} {% block body %}
+
+  <p>The purpose of this document is to provide a set of standards and best practices for
+  developing with Apigee Edge. The topics that are covered here include design, coding, policy use,
+  monitoring, and debugging. The information has been gathered by the experience of developers
+  working with Apigee to implement successful API programs. This is a living document and will be
+  updated from time to time.</p>
+
+  <p>In addition to the guidelines here, you might also find the <a href=
+  "https://community.apigee.com/articles/44662/the-book-of-apigee-edge-antipatterns.html" target=
+  "_blank">Apigee Edge Antipatterns</a> Community post useful.</p>
+
+  <h2 id="developmentstandards">Development standards</h2>
+
+  <h3 id="developmentstandards-commentsanddocumentation">Comments and Documentation</h3>
+
+  <ul>
+    <li>Provide inline comments in the ProxyEndpoint and TargetEndpoint configurations. Comments
+    enhance readability for a Flow, especially where policy file names are not sufficiently
+    descriptive to express the underlying functionality of the Flow.</li>
+
+    <li>Make comments useful. Avoid obvious comments.</li>
+
+    <li>Use consistent indentation, spacing, vertical alignment, etc.</li>
+  </ul>
+
+  <h3 id="developmentstandards-frameworkstylecoding">Framework-style coding</h3>
+
+  <p>Framework-style coding involves storing API proxy resources in your own version control system
+  for reuse across local development environments. For example, to reuse a policy, store it in
+  source control so that developers can sync to it and use it in their own proxy development
+  environments.</p>
+
+  <ul>
+    <li>To enable DRY ("don't repeat yourself"), where possible, policy configurations and scripts
+    should implement specialized, reusable functions. For example, a dedicated policy to extract
+    query parameters from request messages could be called
+    <code>ExtractVariables.ExtractRequestParameters</code>. A dedicated policy to inject CORS
+    headers could be called <code>AssignMessage.SetCORSHeaders</code>. Those policies could then be
+    stored in your source control system and added to each API proxy that needs to extract
+    parameters or set CORS headers, without requiring you to create redundant (and hence less
+    manageable) configurations.</li>
+
+    <li>Clean up unused policies and resources (JavaScript, Java, XSLT, etc.) from API proxies,
+    especially large resources that have the potential to slow down import and deploy
+    procedures.</li>
+  </ul>
+
+  <h3 id="developmentstandards-namingconventions">Naming Conventions</h3>
+
+  <ul>
+    <li>The Policy <code>name</code> attribute and the XML policy file name must be identical.</li>
+
+    <li>The Script and ServiceCallout policy <code>name</code> attribute and the name of the
+    resource file should be identical.</li>
+
+    <li><code>DisplayName</code> should accurately describe the policy&#8217;s function to someone
+    who has never worked with that API proxy before..</li>
+
+    <li>Name policies according to their function, for example <code>AssignTargetAuthHeader</code>
+    or <code>AssignMessage.TargetAuthHeader</code>, <code>RaiseFault.InvalidUser</code>.</li>
+
+    <li>Use proper extensions for resource files, <code>.js</code> for JavaScript, <code>.py</code>
+    for python, and <code>.jar</code> for Java JAR files.</li>
+
+    <li>Variable names should be consistent. If you choose a style, such as camelCase or
+    under_score, use it throughout the API proxy.</li>
+
+    <li>Use variable prefixes, where possible, to organize variables based on their purpose, for
+    example, <code>Consumer.username</code> and <code>Consumer.password</code>.</li>
+  </ul>
+
+  <h2 id="apiproxydevelopment">API proxy development</h2>
+
+  <h3 id="apiproxydevelopment-initialdesignconsiderations">Initial Design Considerations</h3>
+
+  <aside class="warning">
+    <b>Warning:</b> Do not call the <a href=
+    "/api-platform/reference/apis/api-reference-getting-started.html">Edge management API</a> from
+    inside API proxies. The management API is used for administrative management purposes, not API
+    flow logic. Due to longer-lived cache entries on the management API servers, you may not see
+    updated data immediately in your proxy flows, particularly if you are doing quick writes and
+    then reads. Coding workarounds for this behavior can impact your proxies' performance.
+
+    <p>Use <a href="/api-platform/reference/policies/reference-overview-policy.html" target=
+    "_blank">policies</a> or <a href="/api-platform/nodejs/using-apigee-access.html" target=
+    "_blank">Node.js</a> in API proxies instead.</p>
+  </aside>
+
+  <ul>
+    <li>Leverage Apigee Edge policies and functionality wherever possible to build API proxies.
+    Avoid coding all proxy logic in JavaScript, Java, or Python resources.</li>
+
+    <li>Construct Flows in an organized manner. Multiple Flows, each with a single condition, are
+    preferable to multiple conditional attachments to the same PreFlow and Postflow.</li>
+
+    <li>As a 'failsafe', create a default API proxy with a ProxyEndpoint BasePath of
+    <code>/</code>. This can be used to redirect base API requests to a developer site, to return a
+    custom response, or perform another action more useful than returning the default
+    <code>CLASSIFICATION_ERROR</code>.</li>
+  </ul>
+
+  <ul>
+    <li>Use TargetServer resources to decouple TargetEndpoint configurations from concrete URLs,
+    supporting promotion across environments.<br>
+    See <a href="/api-platform/deploy/load-balancing-across-backend-servers.html">Load balancing
+    across backend servers</a>.</li>
+
+    <li>If you have multiple RouteRules, create one as the 'default', that is, as a RouteRule with
+    no condition. Ensure that the default RouteRule is defined last in the list of conditional
+    Routes. RouteRules are evaluated top-down in ProxyEndpoint.<br>
+    See <a href="/api-platform/reference/policies/api-proxy-configuration-reference.html">API proxy
+    configuration reference</a></li>
+
+    <li>API proxy bundle size: API proxy bundles cannot be larger than 15MB. In Apigee Edge for
+    Private Cloud, you can change the size limitation by modifying the
+    <code>thrift_framed_transport_size_in_mb</code> property in the following locations:
+    cassandra.yaml (in Cassandra) and conf/apigee/management-server/repository.properties.</li>
+
+    <li>API versioning: For Apigee's thoughts and recommendations on API versioning,
+    see <a href=
+    "https://docs-apis.apigee.io/files/Web-design-the-missing-link-ebook-2016-11.pdf#page=45"
+    target="_blank">Versioning</a> in the <em>Web API Design: The Missing
+    Link</em> e-book.</li>
+  </ul>
+
+  <h3 id="apiproxydevelopment-enablingcors">Enabling CORS</h3>
+
+  <p>Before publishing your APIs, you'll need to enable CORS on your API proxies to support
+  client-side cross-origin requests.</p>
+
+  <p>CORS (Cross-origin resource sharing) is a standard mechanism that allows JavaScript
+  XMLHttpRequest (XHR) calls executed in a web page to interact with resources from non-origin
+  domains. CORS is a commonly implemented solution to the <a href=
+  "https://en.wikipedia.org/wiki/Same-origin_policy" target="_blank">same-origin policy</a> that is
+  enforced by all browsers. For example, if you make an XHR call to the Twitter API from JavaScript
+  code executing in your browser, the call will fail. This is because the domain serving the page
+  to your browser is not the same as the domain serving the Twitter API. CORS provides a solution
+  to this problem by allowing servers to "opt-in" if they wish to provide cross-origin resource
+  sharing.</p>
+
+  <p>For information about enabling CORS on your API proxies before publishing the APIs, see
+  <a href="/api-platform/develop/adding-cors-support-api-proxy.html" target="_blank">Adding CORS
+  support to an API proxy</a>.</p>
+
+  <aside class="note">
+    <b>Note:</b> Most modern browsers support CORS. You can find a comprehensive list of supported
+    browsers <a href="https://caniuse.com/cors">here</a>. For an in-depth description of
+    CORS, see the <a href="https://www.w3.org/TR/cors/">Cross-Origin Resource Sharing W3C
+    Recommendation</a>.
+
+    <p>If you are using a <a href="/api-platform/cache/persistence-tools.html">cache
+    policy</a> on your API proxy, you must ensure that the response of the CORS policy is not
+    cached.</p>
+  </aside>
+
+  <h2 id="size">Message payload size</h2>
+
+  <p>To prevent memory issues in Edge, message payload size is restricted to 10MB. Exceeding those
+  sizes results in a <code>protocol.http.TooBigBody</code> error.</p>
+
+  <p>This issue is also discussed in <a href=
+  "https://community.apigee.com/articles/1475/error-while-requestingreturning-large-payload-with.html">
+  this Apigee Community post</a>.</p>
+
+  <p>Following are the recommended strategies for handling large message sizes in Edge:</p>
+
+  <ul>
+    <li>Stream requests and responses. Note that when you stream, policies no longer have access to
+    the message content. See <a href="/api-platform/develop/enabling-streaming.html">Streaming
+    requests and responses</a>. </li>
+
+    <li>In Edge for Private Cloud version 4.15.07 and earlier, edit the message processor
+    <code>http.properties</code> file to increase the limit in the
+    <code>HTTPResponse.body.buffer.limit</code> parameter. Be sure to test before deploying the
+    change to production.</li>
+
+    <li>
+      <div>
+        In Edge for Private Cloud version 4.16.01 and later, requests with a payload must include
+        the Content-Length header, or in case of streaming the "Transfer-Encoding: chunked" header.
+        For a POST to an API proxy with an empty payload, you must pass a Content-Length of 0.
+      </div>
+    </li>
+
+    <li>In Edge for Private Cloud version 4.16.01 and later, set the following properties in
+    /opt/apigee/router.properties or message-processor.properties to change the limits. See
+      <a href="/private-cloud/latest/set-message-size-limit-router-or-message-processor.html">Set
+      the message size limit on the Router or Message Processor</a> for more.<br>
+      <br>
+      Both properties have a default value of "10m" corresponding to 10MB:
+
+      <ul>
+        <li>
+          <div>
+            <span style=
+            "font-family:courier new,courier,monospace;">conf_http_HTTPRequest.body.buffer.limit</span>
+          </div>
+        </li>
+
+        <li>
+          <div>
+            <span style=
+            "font-family:courier new,courier,monospace;">conf_http_HTTPResponse.body.buffer.limit</span>
+          </div>
+        </li>
+      </ul>
+    </li>
+  </ul>
+
+  <h2 id="faulthandling">Fault Handling</h2>
+
+  <ul>
+    <li>Leverage FaultRules to handle all fault handling. (RaiseFault policies are used to stop
+    message Flow and send processing to the FaultRules Flow.)</li>
+
+    <li>Within the FaultRules Flow, use AssignMessage policies to build the fault response, not
+    RaiseFault policies. Conditionally execute AssignMessage policies based on the fault type that
+    occurs.</li>
+
+    <li>Always includes a default 'catch-all' fault handler so that system-generated faults can be
+    mapped to customer-defined fault response formats.</li>
+
+    <li>If possible, always make fault responses match any standard formats available in your
+    company or project.</li>
+
+    <li>Use meaningful, human-readable error messages that suggest a solution to the error
+    condition.</li>
+  </ul>
+
+  <p>See <a href="/api-platform/fundamentals/fault-handling.html">Handling faults</a>.</p>
+
+  <p>For industry best practices, see <a href=
+  "https://blog.apigee.com/detail/restful_api_design_what_about_errors">RESTful error response
+  design</a>.</p>
+
+  <h2 id="persistence">Persistence</h2>
+
+  <h3 id="persistence-keyvaluemaps">Key/Value Maps</h3>
+
+  <ul>
+    <li>Use key/value maps only for limited data sets. They are not designed to be a long-term data
+    store.</li>
+
+    <li>Consider performance when using key/value maps as this information is stored in the
+    Cassandra database.</li>
+  </ul>
+
+  <p>See <a href="/api-platform/reference/policies/key-value-map-operations-policy.html">Key Value
+  Map Operations policy</a>.</p>
+
+  <h3 id="persistence-responsecaching">Response Caching</h3>
+
+  <ul>
+    <li>Do not populate the response cache if the response is not successful or if the request is
+    not a GET. Creates, updates, and deletes should not be cached.
+    &lt;SkipCachePopulation&gt;response.status.code != 200 or request.verb !=
+    &#8220;GET&#8221;&lt;/SkipCachePopulation&gt;</li>
+
+    <li>Populate cache with a single consistent content type (for example, XML or JSON). After
+    retrieving a responseCache entry, then convert to the needed content type with JSONtoXML or
+    XMLToJSON. This will prevent storing double, triple, or more data.</li>
+
+    <li>Ensure that the cache key is sufficient to the caching requirement. In many cases, the
+    <code>request.querystring</code> can be used as the unique identifier.</li>
+
+    <li>Do not include the API key (<code>client_id</code>) in the cache key, unless explicitly
+    required. Most often, APIs secured only by a key will return the same data to all clients for a
+    given request. It is inefficient to store the same value for a number of entries based on the
+    API key.</li>
+
+    <li>Set appropriate cache expiration intervals to avoid dirty reads.</li>
+
+    <li>Whenever possible, try to have the response cache policy that populates the cache execute
+    at the ProxyEndpoint response PostFlow as late as possible. In other words, have it execute
+    after translation and mediation steps, including JavaScript-based mediation and conversion
+    between JSON and XML. By caching mediated data, you avoid the performance cost of executing the
+    mediation step each time you retrieve cached data.
+
+      <p>Note that you might want to instead cache unmediated data if mediation results in a
+      different response from request to request.</p>
+    </li>
+
+    <li>The response cache policy to lookup the cache entry should occur in the ProxyEndpoint
+    request PreFlow. Avoid implementing too much logic, other than cache key generation, before
+    returning a cache entry. Otherwise, the benefits of caching are minimized.</li>
+
+    <li>In general, you should always keep the response cache lookup as close to the client request
+    as possible. Conversely, you should keep the response cache population as close to the client
+    response as possible.</li>
+
+    <li>When using multiple, different response cache policies in a proxy, follow these guidelines
+    to ensure discrete behavior for each:
+
+      <ul>
+        <li>Execute each policy based on mutually exclusive conditions. This will help ensure that
+        only one of multiple response cache policies executes.</li>
+
+        <li>Define different cache resources for each response cache policy. You specify the cache
+        resource in the policy's &lt;CacheResource&gt; element.</li>
+      </ul>
+    </li>
+  </ul>
+
+  <p>See <a href="/api-platform/reference/policies/response-cache-policy.html">Response Cache
+  policy</a>.</p>
+
+  <h2 id="policyandcustomcode">Policy and custom code</h2>
+
+  <h3 id="policyandcustomcode-policyorcustomcode">Policy or custom code?</h3>
+
+  <ul>
+    <li>Use built-in policies first and foremost (when possible). Apigee policies are hardened,
+    optimized, and supported. For example, use the standard AssignMessage and ExtractVariables
+    policies instead of JavaScript (when possible) to create payloads, extract information from
+    payloads (XPath, JSONPath), etc.</li>
+
+    <li>JavaScript is preferred over Python and Java. However, if performance is the primary
+    requirement, Java should be used over JavaScript.</li>
+  </ul>
+
+  <h3 id="policyandcustomcode-javascript">JavaScript</h3>
+
+  <ul>
+    <li>Use JavaScript if it&#8217;s more intuitive than Apigee policies (for example, when setting
+    <code>target.url</code> for many different URI combinations).</li>
+
+    <li>Complex payload parsing such as iterating through a JSON object and Base64
+    encoding/decoding.</li>
+
+    <li>JavaScript policy has a time limit, so infinite loops are blocked.</li>
+
+    <li>Always use JavaScript Steps and put files in <code>jsc</code> resources folder.
+    JavaScript Policy type pre-compiles the code at deployment time.</li>
+  </ul>
+
+  <p>See <a href=
+  "/api-platform/samples/cookbook/programming-api-proxies-javascript.html">Programming API proxies
+  with JavaScript</a>.</p>
+
+  <h3 id="policyandcustomcode-java">Java</h3>
+
+  <aside class="warning"><b>Warning:</b> For Java Callouts, reliance on Java libraries that are
+  included with Apigee Edge is not supported. Those libraries are for Edge product functionality
+  only, and there's no guarantee that a library will be available from release to release.</aside>
+
+  <ul>
+    <li>Use Java if performance is the highest priority, or if the logic cannot be implemented in
+    JavaScript.</li>
+
+    <li>Include Java source files in source code tracking.</li>
+  </ul>
+
+  <p>See <a href="/api-platform/samples/cookbook/use-java-customize-api.html">Convert the response
+  to uppercase with a Java callout</a> and <a href=
+  "/api-platform/reference/policies/java-callout-policy.html">Java Callout policy</a> for
+  information on using Java in API proxies.</p>
+
+  <h3 id="policyandcustomcode-python">Python</h3>
+
+  <ul>
+    <li>Do not use Python unless absolutely required. Python scripts can introduce performance
+    bottlenecks for simple executions, as it is interpreted at runtime.</li>
+  </ul>
+
+  <h2 id="scriptcalloutsjavajavascriptpython">Script Callouts (Java, JavaScript, Python)</h2>
+
+  <ul>
+    <li>Use a global try/catch, or equivalent.</li>
+
+    <li>Throw meaningful exceptions and catch these properly for use in fault responses.</li>
+
+    <li>Throw and catch exceptions early. Do not use the global try/catch to handle all
+    exceptions.</li>
+
+    <li>Perform null and undefined checks, when necessary. An example of when to do this is when
+    retrieving optional flow variables.</li>
+
+    <li>Avoid making HTTP/S requests inside of a script callout. Instead, use the Apigee
+    ServiceCallout policy as the policy handles connections gracefully.</li>
+  </ul>
+
+  <h3 id="scriptcalloutsjavajavascriptpython-javascript">JavaScript</h3>
+
+  <ul>
+    <li>JavaScript on the API Platform supports XML via <a href=
+    "https://wso2.com/project/mashup/0.2/docs/e4xquickstart.html">E4X</a>.</li>
+  </ul>
+
+  <p>See <a href="/api-platform/reference/javascript-object-model.html">JavaScript object
+  model</a>.</p>
+
+  <h3 id="scriptcalloutsjavajavascriptpython-java">Java</h3>
+
+  <aside class="warning"><b>Warning:</b> For Java Callouts, reliance on Java libraries that are
+  included with Apigee Edge is not supported. Those libraries are for Edge product functionality
+  only, and there's no guarantee that a library will be available from release to release.</aside>
+
+  <ul>
+    <li>When accessing message payloads, try to use <code>context.getMessage()</code> vs.
+    <code>context.getResponseMessage</code> or <code>context.getRequestMessage</code>. This ensures
+    that the code can retrieve the payload, in both request and response flows.</li>
+
+    <li>Import libraries to the Apigee Edge organization or environment and do not include these in
+    the JAR file. This reduces the bundle size and will let other JAR files access the same library
+    repository.</li>
+
+    <li>Import JAR files using the Apigee resources API rather than including them inside the API
+    proxy resources folder. This will reduce deployment times and allow the same JAR files to be
+    referenced by multiple API proxies. Another benefit is class loader isolation.</li>
+
+    <li>Do not use Java for resource handling (for example, creating and managing thread
+    pools).</li>
+  </ul>
+
+  <p>See <a href="/api-platform/samples/cookbook/use-java-customize-api.html">Convert the response
+  to uppercase with a Java callout</a>.</p>
+
+  <h3 id="scriptcalloutsjavajavascriptpython-python">Python</h3>
+
+  <ul>
+    <li>Throw meaningful exceptions and catch these properly for use in Apigee fault responses</li>
+  </ul>
+
+  <p>See <a href="/api-platform/reference/policies/python-script-policy.html">Python Script
+  policy</a>.</p>
+
+  <h2 id="servicecallouts">ServiceCallouts</h2>
+
+  <ul>
+    <li>There are many valid use cases for using proxy chaining, where you use a service callout in
+    one API proxy to call another API proxy. If you use proxy chaining, be sure to avoid "infinite
+    loop" recursive callouts back into the same API proxy.
+
+      <p>If you're connecting between proxies that are in the same organization and environment, be
+      sure to see <a href=
+      "/api-platform/fundamentals/connecting-proxies-other-proxies.html">Chaining API proxies
+      together</a> for more on implementing a local connection that avoids unnecessary network
+      overhead.</p>
+    </li>
+
+    <li>Build a ServiceCallout request message using the AssignMessage policy, and populate the
+    request object in a message variable. (This includes setting the request payload, path, and
+    method.)</li>
+
+    <li>The URL that is configured within the policy requires the protocol specification, meaning
+    the protocol portion of the URL, <code>https://</code> for example, cannot be specified by a
+    variable. Also, you must use separate variables for the domain portion of the URL and for the
+    rest of the URL. For example: <code>https://{domain}/{path}</code></li>
+
+    <li>Store the response object for a ServiceCallout in a separate message variable. You can then
+    parse the message variable and keeps the original message payload intact for use by other
+    policies.</li>
+  </ul>
+
+  <p>See <a href="/api-platform/reference/policies/service-callout-policy.html">Service Callout
+  policy</a>.</p>
+
+  <h2 id="accessingentities">Accessing entities</h2>
+
+  <h3 id="accessingentities-accessentitypolicy">AccessEntity Policy</h3>
+
+  <ul>
+    <li>For better performance, look up apps by <code>uuid</code> instead of app name.</li>
+  </ul>
+
+  <p>See <a href="/api-platform/reference/policies/access-entity-policy.html">Access Entity
+  policy</a>.</p>
+
+  <h3 id="accessingentities-logging">Logging</h3>
+
+  <ul>
+    <li>Use a common syslog policy across bundles and within the same bundle. This will keep a
+    consistent logging format.</li>
+  </ul>
+
+  <p>See <a href="/api-platform/reference/policies/message-logging-policy.html">Message Logging
+  policy</a>.</p>
+
+  <h2 id="monitoring">Monitoring</h2>
+
+  <p>Cloud customers are not required to check individual components of  Apigee Edge (Routers,
+  Message Processors, etc.). Apigee&#8217;s Global Operations team is thoroughly monitoring all of
+  the components, along with API health checks, given health check requests by the customer.</p>
+
+  <h3 id="monitoring-apigeeanalytics">Apigee Analytics</h3>
+
+  <p>Analytics can provide non-critical API monitoring as error percentages are measured.</p>
+
+  <p>See <a href="/api-platform/analytics/analytics-dashboards.html">Analytics dashboards</a>.</p>
+
+  <h3 id="monitoring-trace">Trace</h3>
+
+  <p>The trace tool in the <a href="https://enterprise.apigee.com">API Edge management UI</a> is
+  useful for debugging runtime API issues, during development or production operation of an
+  API.</p>
+
+  <p>See <a href="/api-platform/debug/using-trace-tool-0.html">Using the Trace tool</a>.</p>
+
+  <h2 id="security">Security</h2>
+
+  <ul>
+    <li>Use IP address restriction policies to limit access to your test environment. Whitelist the
+    IP addresses of your development machines or environments. <a href=
+    "/api-platform/reference/policies/access-control-policy.html">Access Control policy</a>.</li>
+
+    <li>Always apply content protection policies (JSON and or XML) to API proxies that are deployed
+    to production. <a href=
+    "/api-platform/reference/policies/json-threat-protection-policy.html">JSON Threat Protection
+    policy</a>.</li>
+
+    <li>See the following topics for more security best practices:
+
+      <ul>
+        <li>
+          <div>
+            <a href="/api-platform/reference/policies/xml-threat-protection-policy.html">XML Threat
+            Protection policy</a>
+          </div>
+        </li>
+
+        <li>
+          <div>
+            <a href="/api-platform/reference/policies/regular-expression-protection.html">Regular
+            Expression Protection policy</a>
+          </div>
+        </li>
+
+        <li>
+          <div>
+            <a href="/api-platform/reference/policies/message-validation-policy.html">Message
+            Validation policy</a>
+          </div>
+        </li>
+      </ul>
+    </li>
+  </ul>{% endblock %}

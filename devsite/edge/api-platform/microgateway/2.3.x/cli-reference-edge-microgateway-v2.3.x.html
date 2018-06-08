@@ -1,0 +1,795 @@
+{% extends "_base.html" %}
+{% block title %} CLI reference for Edge Microgateway {% endblock %}
+{% block body %}
+
+<em style="text-align: right;">Edge Microgateway v. 2.3.x</em>
+<h2>Overview</h2>
+<p>The Edge Microgateway CLI lets you control and manage all aspects of an Edge Microgateway instance.</p>
+<aside class="note"><b>Note:</b> 
+	<p>The <a href="/api-platform/microgateway/2.3.x/setting-and-configuring-edge-microgateway-v2.3.x.html">Setting up and configuring Edge Microgateway</a> provides a good overview of the most commonly used commands.</p>
+</aside>
+<h2>Managing certificates</h2>
+<p>The&#xA0;<code>cert</code>&#xA0;commands let you install and manage the public/private key pair that is used to sign bearer tokens used by clients to make secure calls through Edge Microgateway. The keys are stored on Apigee Edge in a secure vault. Edge Microgateway uses the public key to validate signed bearer tokens. These keys are generated when you run the edgemicro configure command, as explained in <a href="/api-platform/microgateway/2.3.x/setting-and-configuring-edge-microgateway-v2.3.x.html">Setting up and configuring Edge Microgateway</a>. You can use the&#xA0;<strong>cert</strong>&#xA0;commands described here to regenerate and manage these keys if needed.&#xA0;</p>
+<h3>Install a certificate</h3>
+<p>Installs the keys in a vault using the Apigee Edge secure store service&#xA0;and returns the public key as output. Key pairs are scoped to a specified organization.</p>
+<p><strong>Usage</strong></p>
+<pre class="prettyprint">edgemicro cert install -o [organization] -e [environment] -u [username] -p [password] --force</pre>
+<p><strong>Parameters</strong></p>
+<table class="">
+	<tbody>
+		<tr>
+			<th scope="col" width="152">Parameters</th>
+			<th scope="col" width="453">Description</th>
+		</tr>
+		<tr>
+			<td><code>-o, --org</code></td>
+			<td>The Apigee organization for which you configured Edge Microgateway.</td>
+		</tr>
+		<tr>
+			<td><code>-e, --env</code></td>
+			<td>An environment for which you configured Edge Microgateway.</td>
+		</tr>
+		<tr>
+			<td><code>-u, --username</code></td>
+			<td>Your Apigee username. You must be an org administrator for the specified organization.</td>
+		</tr>
+		<tr>
+			<td><code>-p, --password</code></td>
+			<td>(Optional) Your password. You will be prompted if you do not provide this parameter on the command line.</td>
+		</tr>
+		<tr>
+			<td><code>-f, --force</code></td>
+			<td>(Optional) If a key is already stored in the vault, force its replacement.</td>
+		</tr>
+		<tr>
+			<td><code>-h, --help</code></td>
+			<td>Output usage information.</td>
+		</tr>
+	</tbody>
+</table>
+<p><strong>Example</strong></p>
+<pre class="prettyprint">edgemicro cert install -o docs -e test -u jdoe@example.com -f
+</pre>
+<p><strong>Output</strong></p>
+<pre class="prettyprint">current nodejs version is v6.1.0
+current edgemicro version is 2.2.4-beta
+password:
+deleting vault
+creating vault
+adding private_key
+adding public_key
+installed cert
+</pre>
+<h3>Delete a certificate</h3>
+<p>Deletes the key pair for an organization.</p>
+<p><strong>Usage</strong></p>
+<pre class="prettyprint">edgemicro cert delete -o [organization] -e [environment] -u [username] -p [password]</pre>
+<p><strong>Parameters</strong></p>
+<table class="">
+	<tbody>
+		<tr>
+			<th scope="col" width="152">Parameters</th>
+			<th scope="col" width="453">Description</th>
+		</tr>
+		<tr>
+			<td><code>-o, --org</code></td>
+			<td>The Apigee organization for which you configured Edge Microgateway.</td>
+		</tr>
+		<tr>
+			<td><code>-e, --env</code></td>
+			<td>An environment for which you configured Edge Microgateway.</td>
+		</tr>
+		<tr>
+			<td><code>-u, --username</code></td>
+			<td>Your Apigee username. You must be an org administrator for the specified organization.</td>
+		</tr>
+		<tr>
+			<td><code>-p, --password</code></td>
+			<td>(Optional) Your password. You will be prompted if you do not provide this parameter on the command line.</td>
+		</tr>
+		<tr>
+			<td><code>-h, --help</code></td>
+			<td>Output usage information.</td>
+		</tr>
+	</tbody>
+</table>
+<p><strong>Example</strong></p>
+<pre class="prettyprint">edgemicro cert delete -o docs -e test -u jdoe@example.com </pre>
+<p><strong>Output</strong></p>
+<pre class="prettyprint">deleting vault
+Vault deleted!</pre>
+<h3>Check a certificate</h3>
+<p>Checks that your organization has a certificate installed.</p>
+<p><strong>Usage</strong></p>
+<pre class="prettyprint">edgemicro cert check -o [organization] -e [environment] -u [username] -p [password]</pre>
+<p><strong>Parameters</strong></p>
+<table class="">
+	<tbody>
+		<tr>
+			<th scope="col" width="152">Parameters</th>
+			<th scope="col" width="453">Description</th>
+		</tr>
+		<tr>
+			<td><code>-o, --org</code></td>
+			<td>The Apigee organization for which you configured Edge Microgateway.</td>
+		</tr>
+		<tr>
+			<td><code>-e, --env</code></td>
+			<td>An environment for which you configured Edge Microgateway.</td>
+		</tr>
+		<tr>
+			<td><code>-u, --username</code></td>
+			<td>Your Apigee username. You must be an org administrator for the specified organization.</td>
+		</tr>
+		<tr>
+			<td><code>-p, --password</code></td>
+			<td>(Optional) Your password. You will be prompted if you do not provide this parameter on the command line.</td>
+		</tr>
+		<tr>
+			<td><code>-h, --help</code></td>
+			<td>Output usage information.</td>
+		</tr>
+	</tbody>
+</table>
+<p><strong>Example</strong></p>
+<pre class="prettyprint">edgemicro cert check -o docs -e test -u jdoe@example.com</pre>
+<p><strong>Output</strong>&#xA0;<strong>(Success)</strong></p>
+<pre class="prettyprint">checked cert successfully
+</pre>
+<p><strong>Output</strong>&#xA0;<strong>(Failure)</strong></p>
+<p>If the certificate does not exist, an error is returned.</p>
+<h3>Get the public key</h3>
+<p>Returns the public key for the specified organization. Does not require authentication.</p>
+<p><strong>Usage</strong></p>
+<pre class="prettyprint">edgemicro cert public-key -o [organization] -e [environment]</pre>
+<p><strong>Parameters</strong></p>
+<table class="">
+	<tbody>
+		<tr>
+			<th scope="col" width="152">Parameters</th>
+			<th scope="col" width="453">Description</th>
+		</tr>
+		<tr>
+			<td><code>-o, --org</code></td>
+			<td>The Apigee organization for which you configured Edge Microgateway.</td>
+		</tr>
+		<tr>
+			<td><code>-e, --env</code></td>
+			<td>An environment for which you configured Edge Microgateway.</td>
+		</tr>
+		<tr>
+			<td><code>-h, --help</code></td>
+			<td>Output usage information.</td>
+		</tr>
+	</tbody>
+</table>
+<p><strong>Example</strong></p>
+<pre class="prettyprint">edgemicro cert public-key -o docs -e test</pre>
+<p><strong>Output</strong>&#xA0;<strong>(Sample)</strong></p>
+<pre class="prettyprint">-----BEGIN CERTIFICATE----- 
+
+MIICpDCCAYwCCQCKpXWGum9uTjANBgkq9w0BAQsFADAUMRIwEAYDVQQDEwls
+b2NhbGhvc3cNMTYxMTAyMjAxNTA2WhcNMTYxMTAzMjAxNTA2WjAUMRIwEAYD
+VQQDEwlsb2Nvc3QwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDD
+ETr/ne/gP47+9LgjLvBJjpbFVdaeUabZZ3wbA7sSIVnnNXWt3yPklrWSfIh+
+L2+dq4k+YunsQE2+dwPdXA2x8DPGvqGcCdWPxnpZ7ix5Akbs8i/J+Ue0pXT4
+jkpWbaDDftGL2tcxwP45yI+slpDYvmWRps07TFXkAPjGEHYPvCT9/v/35GkL
+0h4v0S+XfpcjS5c47o7CIWlkgEM5GBosQUb17kuVR48392vGFPsnCP34iNe7
+zguhiCXYg2zkOcj/N3AE4xKIhCz0QcewULy08GltWMmyjJ/30zs8P41JqoA4
+RwfeEZ8RenN3rJQim1ppAAEwDQYJKoZIhvcNAQELBQADggEBAHcORIfc+ySe
+2FMmqicNe6Wt5V/5zOaBMLsGQdqGOHB5cQc79sMBrk680KVhrwHXZ2nBIkVe
+UEL+2qLY1VLfswBNAvcNwV9U4TwHq4eIANiD751oJK1tHmM/ujThQkwNf96o
+6I7Ws+wfpGO3ppJCttRbtnATIxrwsCHN4i5lbW/tJSL7t/Zf6T1B+YSJU9AF
+xuvLq22cCqyYJQdmKq2vVS55WRZdllm+mRtJrv7MLM9gfDPRxVlwrBz/eQHy
+Fv+dwzxcvQjkz03RNhZUodzuD34DPJoYeK++rItsddwQ26KTahH80yYTAFzY
+x9gfPf1/+qo=? 
+
+-----END CERTIFICATE-----</pre>
+<p>&#xA0;</p>
+<h2>Configuring Edge Microgateway for Apigee Edge Cloud</h2>
+<p>Enables Edge Microgateway to operate with an Apigee Edge Cloud instance. It wraps and performs a sequence of commands to deploy a required authentication proxy to Edge, generate authentication tokens, and update config files. For a complete working example, see the&#xA0;<a href="/api-platform/microgateway/2.3.x/setting-and-configuring-edge-microgateway-v2.3.x.html">Setting up and configuring Edge Microgateway</a>.</p>
+<aside class="note"><b>Note:</b> 
+	<p>Apigee recommends that you use the configure command to configure Edge Microgateway. This command is the only command needed to configure Edge Microgateway. It automates commands such as genkeys, deploy, update config, verify config, and so on.</p>
+</aside>
+<p><strong>Usage</strong></p>
+<pre class="prettyprint">edgemicro configure -o [organization] -e [environment] -u [username] -p [password]</pre>
+<p><strong>Parameters</strong></p>
+<table class="">
+	<tbody>
+		<tr>
+			<th scope="col" width="152">Parameters</th>
+			<th scope="col" width="453">Description</th>
+		</tr>
+		<tr>
+			<td><code>-o, --org</code></td>
+			<td>The Apigee organization for which you configured Edge Microgateway.</td>
+		</tr>
+		<tr>
+			<td><code>-e, --env</code></td>
+			<td>An environment for which you configured Edge Microgateway.</td>
+		</tr>
+		<tr>
+			<td><code>-u, --username</code></td>
+			<td>Your Apigee username. You must be an org administrator for the specified organization.</td>
+		</tr>
+		<tr>
+			<td><code>-p, --password</code></td>
+			<td>(Optional) Your password. You will be prompted if you do not provide this parameter on the command line.</td>
+		</tr>
+		<tr>
+			<td><code>-r, --url</code></td>
+			<td>(Optional) Specifies the virtual host alias for your organization:environment. See the Edge documentation to learn about virtual hosts. Default:&#xA0;<code>org-env.apigee.net</code></td>
+		</tr>
+		<tr>
+			<td><code>-v, --virtualHosts</code></td>
+			<td>(Optional) Overrides the default virtual hosts, which are &quot;<code>default,secure</code>&quot;. Use this option if you have virtual hosts specified for your Edge organization:environment other than these defaults. See the Edge documentation to learn about virtual hosts.</td>
+		</tr>
+		<tr>
+			<td><code>-d, --debug</code></td>
+			<td>(Optional) Provides debug information.</td>
+		</tr>
+		<tr>
+			<td><code>-h, --help</code></td>
+			<td>Output usage information.</td>
+		</tr>
+	</tbody>
+</table>
+<p><strong>Usage notes</strong></p>
+<p>This command stores configuration information in ~<code>/.edgemicro/org-env-config.yaml</code>.</p>
+<p><strong>Example</strong></p>
+<pre class="prettyprint">edgemicro configure -o docs -e test -u jdoe@example.com</pre>
+<p><strong>Output</strong></p>
+<p>Upon success, the command returns a set of keys that you need to use when you start Edge Microgateway.</p>
+<pre class="prettyprint">...
+
+The following credentials are required to start edge micro
+  key: d2f0a246ad52b5d2a8b04ba65b43c76348aba586691cf6185cd7bb9fb78fe9f
+  secret: 59813bc1db4a7ada182705ae40893c28a6fae680c3deb42aefbf1a4db42e372
+
+edgemicro configuration complete!</pre>
+<p>&#xA0;</p>
+<h2>Generating keys</h2>
+<p>The&#xA0;<code>genkeys</code>&#xA0;command generates a key and secret pair used by Edge Microgateway to authenticate itself when asynchronously posting analytics data to Apigee Edge.</p>
+<p><strong>Usage</strong></p>
+<pre class="prettyprint">edgemicro genkeys -o [organization] -e [environment] -u [username] -p [password]</pre>
+<p><strong>Parameters</strong></p>
+<table class="">
+	<tbody>
+		<tr>
+			<th scope="col" width="152">Parameters</th>
+			<th scope="col" width="453">Description</th>
+		</tr>
+		<tr>
+			<td><code>-o, --org</code></td>
+			<td>The Apigee organization for which you configured Edge Microgateway.</td>
+		</tr>
+		<tr>
+			<td><code>-e, --env</code></td>
+			<td>An environment for which you configured Edge Microgateway.</td>
+		</tr>
+		<tr>
+			<td><code>-u, --username</code></td>
+			<td>Your Apigee username. You must be an org administrator for the specified organization.</td>
+		</tr>
+		<tr>
+			<td><code>-p, --password</code></td>
+			<td>(Optional) Your password. You will be prompted if you do not provide this parameter on the command line.</td>
+		</tr>
+		<tr>
+			<td><code>-h, --help</code></td>
+			<td>Output usage information.</td>
+		</tr>
+	</tbody>
+</table>
+<p><strong>Usage notes</strong></p>
+<p>Upon success, the command returns three items. The first is a URL that you need to place in the configuration file. The other two are a key pair that are required when you start an Edge Microgateway instance.</p>
+<ul>
+	<li><strong>bootstrap URL</strong>: This URL points to an Apigee Edge service that enables an Edge Microgateway instance to send analytics data to Apigee Edge. You need to copy that URL into the Edge Microgateway config file: ~<code>/.edgemicro/org-env-config.yaml</code>.</li>
+	<li><strong>key</strong>: The key. This key, and the secret, are required as input to the CLI command used to start an instance of Edge Microgateway.</li>
+	<li><strong>secret</strong>: The secret.</li>
+</ul>
+<p><strong>Example</strong></p>
+<pre class="prettyprint">edgemicro genkeys -o docs -e test -u jdoe@example.com</pre>
+<p><strong>Output</strong>&#xA0;<strong>(Sample)</strong></p>
+<p>Upon success, the command returns a set of keys that you need to use when you start Edge Microgateway.</p>
+<pre class="prettyprint">configuring host edgemicroservices-us-east-1.apigee.net for region us-east-1
+Please copy the following property to the edge micro agent config
+  bootstrap: https://edgemicroservices-us-east-1.apigee.net/edgemicro/bootstrap/organization/jdoe/environment/test
+
+The following credentials are required to start edge micro
+  key: db39324077989c75eac34c13d285772ea8e3b982b957b3f52916f3048511443f
+  secret: 5bf8da39de0056f88fdd5f25a8602d22f312c1c8c870580a5fef55ac6637b7ae
+
+finished</pre>
+<p>&#xA0;</p>
+<h2>Configuring Edge Microgateway for Apigee Edge Private Cloud</h2>
+<p>Configures Edge Microgateway to work with an Apigee Edge Private Cloud installation.</p>
+<p><strong>Usage</strong></p>
+<pre class="prettyprint">edgemicro private configure -o [organization] -e [environment] -u [username] -p [password]</pre>
+<p><strong>Parameters</strong></p>
+<table class="">
+	<tbody>
+		<tr>
+			<th scope="col" width="152">Parameters</th>
+			<th scope="col" width="453">Description</th>
+		</tr>
+		<tr>
+			<td><code>-o, --org</code></td>
+			<td>The Apigee organization for which you configured Edge Microgateway.</td>
+		</tr>
+		<tr>
+			<td><code>-e, --env</code></td>
+			<td>An environment for which you configured Edge Microgateway.</td>
+		</tr>
+		<tr>
+			<td><code>-u, --username</code></td>
+			<td>Your Apigee username. You must be an org administrator for the specified organization.</td>
+		</tr>
+		<tr>
+			<td><code>-p, --password</code></td>
+			<td>(Optional) Your password. You will be prompted if you do not provide this parameter on the command line.</td>
+		</tr>
+		<tr>
+			<td><code>-r, --runtime-url</code></td>
+			<td>Specifies the runtime URL for your private cloud instance.</td>
+		</tr>
+		<tr>
+			<td><code>-m, --mgmt-url</code></td>
+			<td>The URL of the management server for your private cloud instance.</td>
+		</tr>
+		<tr>
+			<td><code>-v, --virtualHosts</code></td>
+			<td>Comma-separated list of virtual hosts for your organization:environment. Default &quot;<code>default,secure</code>&quot;.</td>
+		</tr>
+		<tr>
+			<td><code>-d, --debug</code></td>
+			<td>(Optional) Provides debug information.</td>
+		</tr>
+		<tr>
+			<td><code>-h, --help</code></td>
+			<td>Output usage information.</td>
+		</tr>
+	</tbody>
+</table>
+<p><strong>Usage notes</strong></p>
+<p>This command stores configuration information in ~<code>/.edgemicro/org-env-config.yaml</code>.</p>
+<aside class="note"><b>Note:</b> 
+	<p>By default, the&#xA0;<strong>edgemicro-auth</strong>&#xA0;proxy expects to connect through a virtual host called&#xA0;<strong>secure</strong>. If your Private Cloud installation does not have this virtual host defined, you will receive a configuration error. Be sure to specify on the command line a&#xA0;<strong>virtual_host</strong>&#xA0;that exists. It is generally safe to specify a virtual host called&#xA0;<strong>default</strong>.&#xA0;</p>
+</aside>
+<p><strong>Example</strong></p>
+<pre class="prettyprint">edgemicro private configure -o docs -e test -u jdoe@example.com -r http://192.162.55.100:9002 -m http://192.162.55.100:8080</pre>
+<p><strong>Output</strong></p>
+<p>Upon success, the command returns a set of keys that you need to use when you start Edge Microgateway.</p>
+<pre class="prettyprint">...
+
+The following credentials are required to start edge micro
+  key: d2f0a246ad52b5d2a8b04ba65b43c76348aba586691cf6185cd7bb9fb78fe9f
+  secret: 59813bc1db4a7ada182705ae40893c28a6fae680c3deb42aefbf1a4db42e372
+
+edgemicro configuration complete!
+</pre>
+<p>&#xA0;</p>
+<h2>Starting Edge Microgateway</h2>
+<p>Before starting Edge Microgateway, you must first run the&#xA0;<strong>edgemicro configure</strong>&#xA0;(Public Cloud) or&#xA0;<strong>edgemicro private configure</strong>&#xA0;(Private Cloud). The configure command returns the key and secret values that are required to start Edge Microgateway.</p>
+<p><strong>Usage</strong></p>
+<pre class="prettyprint">edgemicro start -o [organization] -e [environment] -k [public-key] -s [secret-key]</pre>
+<p><strong>Parameters</strong></p>
+<table class="">
+	<tbody>
+		<tr>
+			<th scope="col" width="152">Parameters</th>
+			<th scope="col" width="453">Description</th>
+		</tr>
+		<tr>
+			<td><code>-o, --org</code></td>
+			<td>The Apigee organization for which you configured Edge Microgateway.</td>
+		</tr>
+		<tr>
+			<td><code>-e, --env</code></td>
+			<td>An environment for which you configured Edge Microgateway.</td>
+		</tr>
+		<tr>
+			<td><code>-k, --key</code></td>
+			<td>The key value returned that is returned when you run the &quot;<code>edgemicro configure</code>&quot; command.</td>
+		</tr>
+		<tr>
+			<td><code>-s, --secret</code></td>
+			<td>The secret value returned that is returned when you run the &quot;<code>edgemicro configure</code>&quot; command.</td>
+		</tr>
+		<tr>
+			<td><code>-p, --processes</code></td>
+			<td>(Optional) The number of processes to start. Default: The number of cores on your system.</td>
+		</tr>
+		<tr>
+			<td><code>-d, --pluginDir</code></td>
+			<td>(Optional) Absolute path to the plugin directory.</td>
+		</tr>
+		<tr>
+			<td><code>-r, --port</code></td>
+			<td>(Optional) Overrides the port number specified in the ~<code>/.edgemicro/org-env-config.yaml</code>&#xA0;file. Default: 8000</td>
+		</tr>
+		<tr>
+			<td><code>-c, --cluster</code></td>
+			<td>
+				<p>(Optional) Starts Edge Microgateway in cluster mode.</p>
+				<p><strong>Note:</strong>&#xA0;<strong>As of v2.3.1, this option has been removed. In v2.3.1 and later versions, Edge Micro always starts in cluster mode.</strong></p>
+			</td>
+		</tr>
+		<tr>
+			<td><code>-c --config</code></td>
+			<td>(Optional) Specifies the location of the&#xA0;<code>default config.yaml</code>&#xA0;file. By default, this file is in&#xA0;<code>./config/config.yaml</code>.</td>
+		</tr>
+		<tr>
+			<td><code>-d, --debug</code></td>
+			<td>(Optional) Provides debug information.</td>
+		</tr>
+		<tr>
+			<td><code>-h, --help</code></td>
+			<td>Output usage information.</td>
+		</tr>
+	</tbody>
+</table>
+<p><strong>Setting the port</strong></p>
+<p>The&#xA0;<code>start</code>&#xA0;command lets you specify a port number to override the port specified in the configuration file. You can also specify a port number using the&#xA0;<code>PORT</code>&#xA0;environment variable. For example:</p>
+<pre class="prettyprint">edgemicro start -o docs -e test -k abc123 -s xyz456 -p 2 --port 8002</pre>
+<p>or</p>
+<pre class="prettyprint">export PORT=8002 
+edgemicro start -o org -e test -k key -s secret -p 2</pre>
+<p>If the port is in use, Edge Microgateway returns an error.</p>
+<p><strong>About clustering</strong></p>
+<p>Edge Microgateway employs the&#xA0;<a href="https://nodejs.org/api/cluster.html">Node.js cluster module</a>&#xA0;to enable clustering. Clustering allows Edge Microgateway to take advantage of multi-core systems. For details, see this&#xA0;<a href="https://nodejs.org/api/cluster.html">Node.js documentation</a>.&#xA0;</p>
+<aside class="note"><b>Note:</b> 
+	<p>In v2.2.4-beta and later versions, Edge Microgateway always starts in cluster mode. If you are using an older version, you can start the microgateway in cluster mode with the&#xA0;<code>--cluster&#xA0;</code>option. For example:</p>
+	<pre class="prettyprint">edgemicro start -o docs -e test -k abc123 -s xyz456 --cluster</pre>
+</aside>
+<p><strong>Example</strong></p>
+<pre class="prettyprint">edgemicro start -o docs -e test -k abc123 -s xyz456</pre>
+<h4>Sample output:</h4>
+<pre class="prettyprint">...
+
+PROCESS PID : 54709
+installed plugin from analytics
+installed plugin from analytics
+installed plugin from oauth
+installed plugin from oauth
+installed plugin from analytics
+installed plugin from oauth
+5a86b570-a142-11e6-aa1f-6730e9065d6c edge micro listening on port 8000
+5a86dc80-a142-11e6-962c-43d9cc723190 edge micro listening on port 8000
+5a8751b0-a142-11e6-8241-cf1c517c91eb edge micro listening on port 8000
+installed plugin from analytics
+installed plugin from oauth
+5a924e30-a142-11e6-8740-2944162ce275 edge micro listening on port 8000
+</pre>
+<p>&#xA0;</p>
+<h2>Managing tokens</h2>
+<p>The&#xA0;<code>token</code>&#xA0;commands let you obtain, decode, and verify signed OAuth2 access tokens. See also&#xA0;<a href="https://docs.apigee.com/microgateway/v2.3.x/setting-and-configuring-edge-microgateway-v2.3.x#Oauthtoken">Secure API calls with an OAuth2 access token</a>.&#xA0;</p>
+<h3>Decode a token</h3>
+<p>Decodes a signed, encoded bearer token into its plain-text JSON JWT (Java Web Token) representation. A token conveys information about the Apigee Edge developer app that provided the keys used to create the token, including application name, client_id, product list, and more.</p>
+<p><strong>Usage</strong></p>
+<pre class="prettyprint">edgemicro token decode -f [filename]</pre>
+<p><strong>Parameters</strong></p>
+<table class="">
+	<tbody>
+		<tr>
+			<th scope="col" width="152">Parameters</th>
+			<th scope="col" width="453">Description</th>
+		</tr>
+		<tr>
+			<td><code>-f, --file</code></td>
+			<td>The name of a file containing the JWT token to decode.</td>
+		</tr>
+		<tr>
+			<td><code>-h, --help</code></td>
+			<td>Output usage information.</td>
+		</tr>
+	</tbody>
+</table>
+<p><strong>Example</strong></p>
+<pre class="prettyprint">edgemicro token decode -f token.jwt</pre>
+<p><strong>Output (Sample)</strong></p>
+<pre class="prettyprint">{ header: { typ: &apos;JWT&apos;, alg: &apos;RS256&apos; },
+
+&#xA0; payload:
+&#xA0; &#xA0;{ application_name: &apos;b43342ef-86f6-4666-a121-b9ac2025d217&apos;,
+&#xA0; &#xA0; &#xA0;client_id: &apos;O9ZQRZKnn1rdgcKQgsABSMdOsKS&apos;,
+&#xA0; &#xA0; &#xA0;scopes: [],
+&#xA0; &#xA0; &#xA0;api_product_list: [ &apos;MicroTest&apos; ],
+&#xA0; &#xA0; &#xA0;iat: 1436280566,
+&#xA0; &#xA0; &#xA0;exp: 1436282365 },
+&#xA0; signature: &apos;<long and="" letters="" numbers="" of="" string="">&apos; }</long></pre>
+<h3>Generate a token</h3>
+<p>Generates a signed bearer token. The token allows client apps to make authenticated API calls to Edge Microgateway. The token is an OAuth 2.0-compliant JSON Web Token (JWT). It requires as input the Consumer Key (client id) and Consumer Secret (client secret) values from a registered developer app on Apigee Edge. See also&#xA0;<a href="https://docs.apigee.com/microgateway/v2.3.x/setting-and-configuring-edge-microgateway-v2.3.x#Oauthtoken">Secure API calls with an OAuth2 access token</a>.</p>
+<p><strong>Usage</strong></p>
+<pre class="prettyprint">edgemicro token get -o [org] -e [env] -i [client_id] -s [client_secret]</pre>
+<p><strong>Parameters</strong></p>
+<table class="">
+	<tbody>
+		<tr>
+			<th scope="col" width="152">Parameters</th>
+			<th scope="col" width="453">Description</th>
+		</tr>
+		<tr>
+			<td><code>-o, --org</code></td>
+			<td>The Apigee organization for which you configured Edge Microgateway.</td>
+		</tr>
+		<tr>
+			<td><code>-e, --env</code></td>
+			<td>An environment for which you configured Edge Microgateway.</td>
+		</tr>
+		<tr>
+			<td><code>-1, --key</code></td>
+			<td>The Client ID from the Developer App associated with your Microgateway-aware proxy.</td>
+		</tr>
+		<tr>
+			<td><code>-s, --secret</code></td>
+			<td>The Client Secret from the Developer app associated with your Microgateway-aware proxy.</td>
+		</tr>
+		<tr>
+			<td><code>-h, --help</code></td>
+			<td>Output usage information.</td>
+		</tr>
+	</tbody>
+</table>
+<p><strong>Example</strong></p>
+<pre class="prettyprint">edgemicro token get -o docs -e test -i 5UzOwAXGoOeo60aew94PPG5MAZE3aJp -s 6vahKFGS9a3qMLwz</pre>
+<p><strong>Output (Sample)</strong></p>
+<pre class="prettyprint">{ token: &apos;eyJ0eXAiOiJKV1JhbGciOiJSUzI1NiJ9Glvbl9uYW1lIjoiNWNiMGY0NTV6TV3
+EtOWMzOC00YmJjLWIzNzEtZGMxZTQzOGMxIiwiY2xpZW50X2lkIjoiNVV6T3dBWEdvSU9lbz
+YwYWV3OTRQN0c1TUFaRTNhSnAiLCJzY2MiOltdLCJhcGlfcHJvZHVjdF9saXN0IjpbIkVkZ2
+VNaWNyb1Rlc3RQcm9kdWN0Il0sImlhdCI3ODEyMzQ2MSwiZXhwIjoxNDc4MTI1MjYwfQ.Dx5
+f5U7PXm8koNGmFX4N6VrxKMJnpndKgoJ5zWSJvBZ6Ccvhlpd85ipIIA5S2A5nx4obYWp_rpY
+RJpIGYwyxP6Oq2j0rxnVjdCC4qyYMgthZjhKgEBVBe3s1ndP72GP2vV6PsSA9RQ2-yzsy9r0
+TzhAZ3NJTxT1tS0XKqKngE-OhR3fJHVLAzdMDT0AmS9H0Z2NAJtQOuK6RTpCjG9B6Bc48AEM
+sj7QSM-1LWiQ8LdY8k_BoC06qsTI7bCQGWwTuqL-ismbcx2bxovUxSemZIaoROfuF-dCZHG3
+2aTP75WxBvvNgBBvPvQtPzbeSOtEaww&apos; }
+
+</pre>
+<p><strong>Making an HTTP request to get a token</strong></p>
+<p>You can also make a raw HTTP request to get the token. Here&apos;s a curl example. Just substitute your org and environment names in the URL, and substitute the Consumer Id and Consumer Secret values for the client_id&#xA0;and client_secret&#xA0;params:</p>
+<pre class="prettyprint">curl -i -X POST &quot;http://&lt;org&gt;-&lt;test&gt;.apigee.net/edgemicro-auth/token&quot; -d &apos;{&quot;grant_type&quot;: &quot;client_credentials&quot;, &quot;client_id&quot;: &quot;4t8X137pOUUtMR7wag3M1yZTcRxeK&quot;, &quot;client_secret&quot;: &quot;RAcOFVOvO0jns&quot;}&apos; -H &quot;Content-Type: application/json&quot;</pre>
+<h3>Verify a token</h3>
+<p>Verifies a signed bearer token against the public key stored on Apigee Edge for the specified organization and environment.</p>
+<p><strong>Usage</strong></p>
+<pre class="prettyprint">edgemicro token verify -o [org] -e [env] -f [filename]</pre>
+<p><strong>Parameters</strong></p>
+<table class="">
+	<tbody>
+		<tr>
+			<th scope="col" width="152">Parameters</th>
+			<th scope="col" width="453">Description</th>
+		</tr>
+		<tr>
+			<td><code>-o, --org</code></td>
+			<td>The Apigee organization for which you configured Edge Microgateway.</td>
+		</tr>
+		<tr>
+			<td><code>-e, --env</code></td>
+			<td>An environment for which you configured Edge Microgateway.</td>
+		</tr>
+		<tr>
+			<td><code>-f, --file</code></td>
+			<td>The name of a file containing the JWT to verify.</td>
+		</tr>
+		<tr>
+			<td><code>-h, --help</code></td>
+			<td>Output usage information.</td>
+		</tr>
+	</tbody>
+</table>
+<p><strong>Example</strong></p>
+<pre class="prettyprint">edgemicro token get -o docs -e test -f token.jwt</pre>
+<p><strong>Sample output for valid token</strong></p>
+<pre class="prettyprint">{ application_name: &apos;b43342ef-86f6-4666-a121-b9ac2025d217&apos;,
+
+&#xA0; client_id: &apos;O9ZQRZKnn1rdgcKQsAZUBkQSMdOsKS&apos;,
+
+&#xA0; scopes: [],
+
+&#xA0; api_product_list: [ &apos;MicroTest&apos; ],
+
+&#xA0; iat: 1436396155,
+
+&#xA0; exp: 1436397954 }</pre>
+<p><strong>Sample output for invalid token</strong></p>
+<pre class="prettyprint">{ [JsonWebTokenError: invalid token] name: &apos;JsonWebTokenError&apos;, message: &apos;invalid token&apos; }
+</pre>
+<p><strong>Sample output for expired token</strong></p>
+<pre class="prettyprint">{ [TokenExpiredError: jwt expired]
+
+&#xA0; name: &apos;TokenExpiredError&apos;,
+
+&#xA0; message: &apos;jwt expired&apos;,
+
+&#xA0; expiredAt: Tue Jul 07 2015 09:19:25 GMT-0600 (MDT) }</pre>
+<h3><a id="Obtaining bearer tokens directly" name="Obtaining bearer tokens directly"></a>Obtaining bearer tokens directly</h3>
+<p>You may prefer to obtain bearer tokens directly, by making an HTTP request to the token endpoint on Apigee Edge. The actual token endpoint is implemented in the proxy that is deployed with the deploy-edge-service&#xA0;CLI command.</p>
+<p>Here&apos;s a curl example. Just substitute your org and environment names in the URL, and substitute the Consumer Id and Consumer Secret values obtained from a developer app on Apigee Edge for the&#xA0;<strong>client_id</strong>&#xA0;and&#xA0;<strong>client_secret</strong>&#xA0;params:</p>
+<pre class="prettyprint">curl -i -X POST &quot;http://&lt;org&gt;-&lt;test&gt;.apigee.net/edgemicro-auth/token&quot; -d &apos;{&quot;grant_type&quot;: &quot;client_credentials&quot;, &quot;client_id&quot;: &quot;4t8X137pOUUtMR7wag3M1yZTcRxeK&quot;, &quot;client_secret&quot;: &quot;RAcOFVOvO0jns&quot;}&apos; -H &quot;Content-Type: application/json&quot;</pre>
+<h4>Sample output:</h4>
+<pre class="prettyprint">HTTP/1.1 200 OK
+
+X-Powered-By: Express
+
+Cache-Control: no-store
+
+Pragma: no-cache
+
+Content-Type: application/json; charset=utf-8
+
+Content-Length: 640
+
+ETag: W/&quot;280-ze/g/k+c9taqp110vjYQ&quot;
+
+Date: Fri, 17 07 2015 15:49:24 GMT
+
+Connection: keep-alive
+
+&quot;&lt;long string of numbers and letters&gt;&quot;</pre>
+<h2>Initializing a new Edge Microgateway configuration</h2>
+<p>Run this command once after you first install Edge Microgateway. Creates a new default configuration file: ~<code>/.edgemicro/default.yaml</code>.</p>
+<p><strong>Usage</strong></p>
+<pre class="prettyprint">edgemicro init </pre>
+<p><strong>Parameters</strong></p>
+<table class="">
+	<tbody>
+		<tr>
+			<th scope="col" width="152">Parameters</th>
+			<th scope="col" width="453">Description</th>
+		</tr>
+		<tr>
+			<td><code>-h, --help</code></td>
+			<td>Output usage information.</td>
+		</tr>
+	</tbody>
+</table>
+<p><strong>Example</strong></p>
+<pre class="prettyprint">edgemicro init</pre>
+<p><strong>Output</strong>&#xA0;<strong>(Success)</strong></p>
+<pre class="prettyprint">config initialized to /MyHome/.edgemicro/default.yaml</pre>
+<h2>Verifying Edge Microgateway configuration</h2>
+<p>Verifies that Edge Microgateway is properly configured.</p>
+<p><strong>Usage</strong></p>
+<pre class="prettyprint">edgemicro verify -o [organization] -e [environment] -k [public-key] -s [secret-key]</pre>
+<p><strong>Parameters</strong></p>
+<table class="">
+	<tbody>
+		<tr>
+			<th scope="col" width="152">Parameters</th>
+			<th scope="col" width="453">Description</th>
+		</tr>
+		<tr>
+			<td><code>-o, --org</code></td>
+			<td>The Apigee organization for which you configured Edge Microgateway.</td>
+		</tr>
+		<tr>
+			<td><code>-e, --env</code></td>
+			<td>An environment for which you configured Edge Microgateway.</td>
+		</tr>
+		<tr>
+			<td><code>-k, --key</code></td>
+			<td>The key value returned that is returned when you run the &quot;<code>edgemicro configure</code>&quot; command.</td>
+		</tr>
+		<tr>
+			<td><code>-s, --secret</code></td>
+			<td>The secret value returned that is returned when you run the &quot;<code>edgemicro configure</code>&quot; command.</td>
+		</tr>
+		<tr>
+			<td><code>-h, --help</code></td>
+			<td>Output usage information.</td>
+		</tr>
+	</tbody>
+</table>
+<p><strong>Example</strong></p>
+<pre class="prettyprint">edgemicro verify -o docs -e test -k abc123 -s xyz456</pre>
+<p><strong>Output</strong>&#xA0;<strong>(Success)</strong></p>
+<pre class="prettyprint">logging to /var/tmp/edgemicro-My-Machine.local-a0c48610-a148-11e6-8466-93f081b05988
+installed plugin from analytics
+installed plugin from oauth
+a0c48610-a148-11e6-8466-93f081b05988 edge micro listening on port 8000
+verifying analytics negative case: OK
+verifying bootstrap url availability:OK
+verifying jwt_public_key availability: OK
+verifying products availability: OK
+verifying quota with configured products: OK
+verifying analytics with payload: OK
+verification complete</pre>
+<h2>Check the microgateway cluster status</h2>
+<p><strong>Added: v2.2.4-beta</strong></p>
+<p>By default, Edge Microgateway starts in cluster mode. You can use this command to check the status of the cluster.</p>
+<aside class="note"><b>Note:</b> 
+	<p>You must run this command from the same directory where you started Edge Microgateway. This command requires the presence of an&#xA0;<code>edgemicro.sock</code>&#xA0;file. You can check for the presence of this file by running:&#xA0;<code>ls -rtl</code>.</p>
+</aside>
+<p><strong>Usage</strong></p>
+<pre class="prettyprint">edgemicro status</pre>
+<p><strong>Parameters</strong></p>
+<table class="">
+	<tbody>
+		<tr>
+			<th scope="col" width="152">Parameters</th>
+			<th scope="col" width="453">Description</th>
+		</tr>
+		<tr>
+			<td><code>-h, --help</code></td>
+			<td>Output usage information.</td>
+		</tr>
+	</tbody>
+</table>
+<p><strong>Example</strong></p>
+<pre class="prettyprint">edgemicro status</pre>
+<p><strong>Output</strong>&#xA0;<strong>(Success)</strong></p>
+<pre class="prettyprint">current nodejs version is v6.1.0
+current edgemicro version is 2.2.4-beta
+edgemicro is running with 4 workers</pre>
+<h2>Stopping the microgateway cluster</h2>
+<p><strong>Added: v2.2.4-beta</strong></p>
+<p>Stops the Edge Microgateway cluster.</p>
+<aside class="note"><b>Note:</b> 
+	<p>You must run this command from the same directory where you started Edge Microgateway. This command requires the presence of an edgemicro.sock file. You can check for the presence of this file by running:&#xA0;<code>ls -rtl</code>.</p>
+</aside>
+<p><strong>Usage</strong></p>
+<pre class="prettyprint">edgemicro stop</pre>
+<p><strong>Parameters</strong></p>
+<table class="">
+	<tbody>
+		<tr>
+			<th scope="col" width="152">Parameters</th>
+			<th scope="col" width="453">Description</th>
+		</tr>
+		<tr>
+			<td><code>-h, --help</code></td>
+			<td>Output usage information.</td>
+		</tr>
+	</tbody>
+</table>
+<p><strong>Example</strong></p>
+<pre class="prettyprint">edgemicro stop</pre>
+<p><strong>Output</strong>&#xA0;<strong>(Success)</strong></p>
+<pre class="prettyprint">current nodejs version is v6.1.0
+current edgemicro version is 2.2.4-beta
+Stop Completed Successfully</pre>
+<h2>Reloading the microgateway cluster</h2>
+<p><strong>Added: v2.2.4-beta</strong></p>
+<p>Provides zero-downtime restart after a configuration change. Reloads the Edge Microgateway by pulling in a new configuration.</p>
+<aside class="note"><b>Note:</b> 
+	<p>You must run this command from the same directory where you started Edge Microgateway. This command requires the presence of an edgemicro.sock file. You can check for the presence of this file by running:&#xA0;<code>ls -rtl</code>.</p>
+</aside>
+<p><strong>Usage</strong></p>
+<pre class="prettyprint">edgemicro reload -o [organization] -e [environment] -k [public-key] -s [secret-key]</pre>
+<p><strong>Parameters</strong></p>
+&gt;
+<table class="">
+	<tbody>
+		<tr>
+			<th scope="col" width="152">Parameters</th>
+			<th scope="col" width="453">Description</th>
+		</tr>
+		<tr>
+			<td><code>-o, --org</code></td>
+			<td>The Apigee organization for which you configured Edge Microgateway.</td>
+		</tr>
+		<tr>
+			<td><code>-e, --env</code></td>
+			<td>An environment for which you configured Edge Microgateway.</td>
+		</tr>
+		<tr>
+			<td><code>-k, --key</code></td>
+			<td>The key value returned that is returned when you run the &quot;<code>edgemicro configure</code>&quot; command.</td>
+		</tr>
+		<tr>
+			<td><code>-s, --secret</code></td>
+			<td>The secret value returned that is returned when you run the &quot;<code>edgemicro configure</code>&quot; command.</td>
+		</tr>
+		<tr>
+			<td><code>-h, --help</code></td>
+			<td>Output usage information.</td>
+		</tr>
+	</tbody>
+</table>
+<p><strong>Example</strong></p>
+<pre class="prettyprint">edgemicro reload -o docs -e test -k abc123 -s xyz456</pre>
+<p><strong>Output</strong>&#xA0;<strong>(Success)</strong></p>
+<pre class="prettyprint">...
+
+Reload Completed Successfully</pre>
+{% endblock %}

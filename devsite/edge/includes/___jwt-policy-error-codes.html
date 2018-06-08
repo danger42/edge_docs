@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html devsite>
+  <head>
+    <title>JWT Policy Error Codes</title>
+  </head>
+  <body>
+
+  <h2 id="flow-variables">Flow variables</h2>
+
+  <p>Upon success, the <strong>Verify JWT</strong> and <strong>Decode JWT</strong> policies set
+  context variables according to this pattern:</p>
+  <pre class="prettyprint">
+jwt.{policy_name}.{variable_name}
+</pre>
+
+  <p>For example, if the policy name is <code>jwt-parse-token</code> , then the policy will store
+  the subject specified in the JWT to this context variable:
+  <code>jwt.jwt-parse-token.subject</code></p>
+
+  <table>
+    <tbody>
+      <tr>
+        <td><strong>Variable name</strong></td>
+
+        <td><strong>Description</strong></td>
+      </tr>
+
+      <tr>
+        <td><code>header.algorithm</code></td>
+
+        <td>The signing algorithm used on the JWT. For example, RS256, HS384, and so on.</td>
+      </tr>
+
+      <tr>
+        <td><code>claim.subject</code></td>
+
+        <td>The JWT subject claim.</td>
+      </tr>
+
+      <tr>
+        <td><code>claim.issuer</code></td>
+
+        <td>The JWT issuer claim.</td>
+      </tr>
+
+      <tr>
+        <td><code>claim.audience</code></td>
+
+        <td>The JWT audience claim. This value may be a string, or an array of strings.</td>
+      </tr>
+
+      <tr>
+        <td><code>claim.expiry</code></td>
+
+        <td>The expiration date/time, expressed in seconds since epoch.</td>
+      </tr>
+
+      <tr>
+        <td><code>expiry_formatted</code></td>
+
+        <td>The expiration date/time, formatted as a human-readable string. Example:
+        2017-09-28T21:30:45.000+0000</td>
+      </tr>
+
+      <tr>
+        <td><code>seconds_remaining</code></td>
+
+        <td>The number of seconds before the token will expire. If the token is expired, this
+        number will be negative.</td>
+      </tr>
+
+      <tr>
+        <td><code>time_remaining_formatted</code></td>
+
+        <td>The time remaining before the token will expire, formatted as a human-readable string.
+        Example: 00:59:59.926</td>
+      </tr>
+
+      <tr>
+        <td><code>is_expired</code></td>
+
+        <td>true or false</td>
+      </tr>
+
+      <tr>
+        <td><code>claim.issuedat</code></td>
+
+        <td>The Date the token was issued, expressed in seconds since epoch.</td>
+      </tr>
+
+      <tr>
+        <td><code>claim.notbefore</code></td>
+
+        <td>If the JWT includes a nbf claim, this variable will contain the value. This is
+        expressed in seconds since epoch.</td>
+      </tr>
+
+      <tr>
+        <td><code>valid</code></td>
+
+        <td>
+          In the case of VerifyJWT, this variable will be true when the signature is verified, and
+          the current time is before the token expiry, and after the token notBefore value, if they
+          are present. Otherwise false.
+
+          <p>In the case of DecodeJWT, this variable is not set.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td><code>claim.<em>name</em></code></td>
+
+        <td>The value of the named claim (standard or additional). One of these will be set for
+        every claim in the token.</td>
+      </tr>
+
+      <tr>
+        <td><code>header.<em>name</em></code></td>
+
+        <td>The value of the named header (standard or additional). One of these will be set for
+        every additional header in the token.</td>
+      </tr>
+
+      <tr>
+        <td><code>header.kid</code></td>
+
+        <td>The Key ID, if added when the JWT was generated. See also "Using a JSON Web Key Set
+        (JWKS)" at <a href="/api-platform/reference/policies/jwt-policies-overview.html">JWT
+        policies overview</a> to verify a JWT.</td>
+      </tr>
+
+      <tr>
+        <td><code>header.type</code></td>
+
+        <td>Will be set to <code>JWT</code>.</td>
+      </tr>
+
+      <tr>
+        <td><code>payload-claim-names</code></td>
+
+        <td>An array of claims supported by the JWT.</td>
+      </tr>
+
+      <tr>
+        <td><code>payload-json</code></td>
+
+        <td>
+          <div>
+            Contains the payload in JSON format.
+          </div>
+        </td>
+      </tr>
+
+      <tr>
+        <td><code>header-json</code></td>
+
+        <td>Contains the header in JSON format.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="errorreference">Error reference</h2>
+
+  <p>This section describes the error messages and flow variables that are set when this policy
+  triggers an error. This information is important to know if you are developing fault rules for a
+  proxy. To learn more, see <a href=
+  "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html">What you need to know
+  about policy errors</a> and <a href="/api-platform/fundamentals/fault-handling.html">Handling
+  faults</a>.</p>
+
+  <h3 id="error-code-prefix">Error code prefix</h3>
+
+  <p><code>policies.jwt</code> (<a href=
+  "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html#aboutthedefaultpolicyerrorresponse">What's
+  this?</a>)</p>
+
+  <h2 id="runtime-errors">Runtime errors</h2>
+
+  <p>These errors can occur when the policy executes.</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <td><strong>Error name</strong></td>
+
+        <td><strong>HTTP status</strong></td>
+
+        <td><strong>Occurs when</strong></td>
+      </tr>
+
+      <tr>
+        <td><code>TokenExpired</code></td>
+
+        <td>401</td>
+
+        <td>The policy attempts to verify an expired token.</td>
+      </tr>
+
+      <tr>
+        <td><code>InvalidJwt</code></td>
+
+        <td>401</td>
+
+        <td>This error occurs when the JWT signature verification fails.</td>
+      </tr>
+
+      <tr>
+        <td><code>JwtIssuerMismatch</code></td>
+
+        <td>401</td>
+
+        <td>The issuer claim failed on token verification.</td>
+      </tr>
+
+      <tr>
+        <td><code>JwtAudienceMismatch</code></td>
+
+        <td>401</td>
+
+        <td>The audience claim failed on token verification.</td>
+      </tr>
+
+      <tr>
+        <td><code>JwtSubjectMismatch</code></td>
+
+        <td>401</td>
+
+        <td>The subject claim failed on token verification.</td>
+      </tr>
+
+      <tr>
+        <td><code>JwtClaimNotPresent</code></td>
+
+        <td>401</td>
+
+        <td>The JWT did not contain a claim on token verification.</td>
+      </tr>
+
+      <tr>
+        <td><code>FailedToDecode</code></td>
+
+        <td>401</td>
+
+        <td>The policy was unable to decode the JWT. The JWT is possibly corrupted.</td>
+      </tr>
+
+      <tr>
+        <td><code>AlgorithmMismatch</code></td>
+
+        <td>401</td>
+
+        <td>The algorithm specified in the Generate policy did not match the one expected in the
+        Verify policy. The algorithms specified must match.</td>
+      </tr>
+
+      <tr>
+        <td><code>InvalidClaim</code></td>
+
+        <td>401</td>
+
+        <td> </td>
+      </tr>
+
+      <tr>
+        <td><code>ClaimTypeMismatch</code></td>
+
+        <td>401</td>
+
+        <td> </td>
+      </tr>
+
+      <tr>
+        <td><code>KeyIdMissing</code></td>
+
+        <td> </td>
+
+        <td> </td>
+      </tr>
+
+      <tr>
+        <td><code>NoMatchingPublicKey</code></td>
+
+        <td> </td>
+
+        <td>From JWKS.</td>
+      </tr>
+
+      <tr>
+        <td><code>KeyParsingFailed</code></td>
+
+        <td> </td>
+
+        <td> </td>
+      </tr>
+
+      <tr>
+        <td><code>NoAlgorithmFoundInToken</code></td>
+
+        <td> </td>
+
+        <td>Occurs when the verification policy has multiple algorithms.</td>
+      </tr>
+
+      <tr>
+        <td><code>AlgorithmInTokenNotPresentInConfiguration</code></td>
+
+        <td> </td>
+
+        <td>Occurs when the verification policy has multiple algorithms</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="deployment-errors">Deployment errors</h3>
+
+  <p>These errors can occur when you deploy a proxy containing this policy.</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <td><strong>Error name</strong></td>
+
+        <td><strong>Occurs when</strong></td>
+      </tr>
+
+      <tr>
+        <td><code>InvalidJwtAlgorithm</code></td>
+
+        <td>The only valid values are: RS256, RS384, RS512, HS256, HS384, and HS512.</td>
+      </tr>
+
+      <tr>
+        <td>
+          <code>InvalidNameForAdditionalClaim</code>
+
+          <p><code>InvalidTypeForAdditionalClaim</code></p>
+
+          <p><code>InvalidTypeForAdditionalHeader</code></p>
+
+          <p><code>MissingNameForAdditionalClaim</code></p>
+
+          <p><code>InvalidNameForAdditionalHeader</code></p>
+
+          <p><code>MissingNameForAdditionalHeader</code></p>
+
+          <p><code>InvalidAlgorithm</code></p>
+
+          <p><code>InvalidConfigurationForVerify</code></p>
+
+          <p><code>InvalidValueOfArrayAttribute</code></p>
+
+          <p><code>InvalidConfigurationForActionAndAlgorithmFamily</code></p>
+
+          <p><code>InvalidEmptyElement</code></p>
+
+          <p><code>InvalidValueForElement</code></p>
+
+          <p><code>InvalidFamiliesForAlgorithm</code></p>
+
+          <p><code>MissingConfigurationElement</code></p>
+
+          <p><code>InvalidKeyConfiguration</code></p>
+
+          <p><code>MissingElementForKeyConfiguration</code></p>
+
+          <p><code>EmptyElementForKeyConfiguration</code></p>
+
+          <p><code>InvalidPublicKeyValue</code></p>
+
+          <p><code>InvalidVariableNameForSecret</code></p>
+
+          <p><code>InvalidSecretInConfig</code></p>
+
+          <p><code>FailedToResolveVariable</code></p>
+
+          <p><code>InvalidTimeFormat</code></p>
+
+          <p><code>InvalidPublicKeyId</code></p>
+        </td>
+
+        <td>Other possible deployment errors.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="fault-variables">Fault variables</h2>
+
+  <p>These variables are set when a runtime error occurs. For more information, see <a href=
+  "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html">What you need to know
+  about policy errors</a>.</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <td><strong>Variables set <code>(<a href=
+        "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html">Learn
+        more</a>)</code></strong></td>
+
+        <td><strong>Where</strong></td>
+
+        <td><strong>Example</strong></td>
+      </tr>
+
+      <tr>
+        <td><code>[prefix].[policy_name].failed</code></td>
+
+        <td>The fault variable <code>[prefix]</code> is <strong><code>jwt.</code></strong> The
+        <code>[policy_name]</code> is the name of the policy that threw the error.</td>
+
+        <td><code>jwt.JWT-Policy.failed = true</code></td>
+      </tr>
+
+      <tr>
+        <td><code>fault.[error_name]</code></td>
+
+        <td><code>[error_name]</code> = The specific error name to check for as listed in the table
+        above.</td>
+
+        <td><code>fault.name Matches "TokenExpired"</code></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="example-error-response">Example error response</h3>
+
+  <p>For error handling, the best practice is to trap the <code>errorcode</code> part of the error
+  response. Do not rely on the text in the <code>faultstring</code>, because it could change.</p>
+
+  <h3 id="example-fault-rule">Example fault rule</h3>
+  <pre class="prettyprint">
+&lt;FaultRules&gt;
+    &lt;FaultRule name="JWT Policy Errors"&gt;
+        &lt;Step&gt;
+            &lt;Name&gt;JavaScript-1&lt;/Name&gt;
+            &lt;Condition&gt;(fault.name Matches "TokenExpired")&lt;/Condition&gt;
+        &lt;/Step&gt;
+        &lt;Condition&gt;jwt.JWT-1.failed=true&lt;/Condition&gt;
+    &lt;/FaultRule&gt;
+&lt;/FaultRules&gt;
+</pre>
+  </body>
+</html>

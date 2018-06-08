@@ -1,0 +1,197 @@
+  {% extends "_base.html" %} {% block title %}Comparing Quota, Spike Arrest, and Concurrent Rate
+  Limit Policies{% endblock %} {% block body %}
+
+  <p>Quota, Spike Arrest, and Concurrent Rate Limit policies &#8212; wondering which one to use to
+  best meet your rate limiting needs? See the comparison chart below.</p>
+
+  <table width="100%">
+    <tbody>
+      <tr>
+        <th scope="col"> </th>
+
+        <th scope="col" width="30%">Quota</th>
+
+        <th scope="col" width="30%">Spike Arrest</th>
+
+        <th scope="col" width="30%">Concurrent Rate Limit</th>
+      </tr>
+
+      <tr>
+        <td>Use it to:</td>
+
+        <td>Limit the number of connections apps can make to your API proxy's target backend over a
+        specific period of time.</td>
+
+        <td>Protect your API proxy's target backend against severe traffic spikes and denial of
+        service attacks.</td>
+
+        <td>Limit the number of concurrent connections apps can make to your API proxy's target
+        backend.</td>
+      </tr>
+
+      <tr>
+        <td>Don't use it to:</td>
+
+        <td>
+          <p>Don't use it to protect your API proxy's target backend against traffic spikes.</p>
+
+          <p>For that, use the Spike Arrest policy or Concurrent Rate Limit policy.</p>
+        </td>
+
+        <td>
+          <p>Don't use it to count and limit the number of connections apps can make to your API
+          proxy's target backend over a specific period of time.</p>
+
+          <p>For that, use the Quota policy.</p>
+        </td>
+
+        <td>
+          <p>Don't use it to limit the number of connections apps can make to your API proxy's
+          target backend over a specific period of time.</p>
+
+          <p>For that, use the Quota policy.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Stores a count?</td>
+
+        <td>Yes</td>
+
+        <td>No</td>
+
+        <td>Yes</td>
+      </tr>
+
+      <tr>
+        <td>Best practices for attaching the policy:</td>
+
+        <td>
+          <p>Attach it to the <strong>ProxyEndpoint Request PreFlow</strong>, generally after the
+          authentication of the user.</p>
+
+          <p>This enables the policy to check the quota counter at the entry point of your API
+          proxy.</p>
+        </td>
+
+        <td>
+          <p>Attach it to the <strong>ProxyEndpoint Request PreFlow</strong>, generally at the very
+          beginning of the flow.</p>
+
+          <p>This provides spike protection at the entry point of your API proxy.</p>
+        </td>
+
+        <td>
+          <p>This policy must be attached in these three locations:</p>
+
+          <ul>
+            <li><strong>TargetEndpoint Request PreFlow</strong></li>
+
+            <li><strong>TargetEndpoint Response PreFlow</strong></li>
+
+            <li><strong>TargetEndpoint DefaultFaultRule</strong></li>
+          </ul>
+        </td>
+      </tr>
+
+      <tr>
+        <td>HTTP status code when limit has been reached:</td>
+
+        <td>
+          <p><span style="color:#ff0000;">500 (Internal Server Error) *</span></p>
+        </td>
+
+        <td>
+          <p><span style="color:#ff0000;">500 (Internal Server Error) *</span></p>
+        </td>
+
+        <td>503 (Service Unavailable)</td>
+      </tr>
+
+      <tr>
+        <td>Good to know:</td>
+
+        <td>
+          <ul>
+            <li>Quota counter is stored in Cassandra.</li>
+
+            <li>Configure the policy to synchronize the counter asynchronously to save
+            resources.</li>
+
+            <li>Asynchronous counter synchronization may cause a delay in the rate limiting
+            response, which may allow calls slightly in excess of the limit you've set.</li>
+          </ul>
+        </td>
+
+        <td>
+          <ul>
+            <li>Performs throttling based on the time at which the last traffic was received. This
+            time is stored per message processor.</li>
+
+            <li>If you specify a rate limit of 100 calls per second, only 1 call every 1/100 second
+            (10 ms) will be allowed on the message processor. A second call within 10 ms will be
+            rejected.</li>
+
+            <li>Even with a high rate limit per second, nearly simultaneous requests may result in
+            rejections.</li>
+          </ul>
+        </td>
+
+        <td>
+          <ul>
+            <li>Keeps a count of concurrent connections per message processor.</li>
+
+            <li>While an individual API proxy may be handling just a few connections, collectively,
+            the connections to a set of replicated API proxies pointing to the same backend service
+            may swamp the capacity of the service. Use this policy to limit this traffic to a
+            manageable number of connections.</li>
+            <li>{# b/67179002 #}This policy is known to slow performance in API proxies that handle
+            a high number of transactions per second (TPS). For high-TPS API proxies, if
+            Concurrent Rate Limit slows performance to unacceptable levels, try using
+            Spike Arrest instead.</li>
+          </ul>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Get more details:</td>
+
+        <td><a href="/api-platform/reference/policies/quota-policy.html">Quota policy</a></td>
+
+        <td><a href="/api-platform/reference/policies/spike-arrest-policy.html">Spike Arrest
+        policy</a></td>
+
+        <td><a href="/api-platform/reference/policies/concurrent-rate-limit-policy.html">Concurrent
+        Rate Limit policy</a></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p><span style="color:#ff0000;">* The default HTTP status code for exceeding the rate limit is
+  500. If you want the status code to be 429 for all three policy types used in an organization
+  (Quota, Spike Arrest, and Concurrent Rate Limit), a property needs to be set on your organization
+  (<code>features.isHTTPStatusTooManyRequestEnabled</code>). If you're a Cloud customer,
+  contact </span><a href="https://community.apigee.com/content/apigee-customer-support"
+  target="_blank"><span style="color:#ff0000;">Apigee Support</span></a> <span style=
+  "color:#ff0000;">to have the property enabled.</span></p>
+
+  <aside class="note">
+    <b>Private Cloud:</b> If you're an Edge for Private Cloud customer, set this property with the
+    following API call:
+
+    <p><b>Note</b>: When updating properties, you must pass all existing properties to the API,
+    even if they are not being changed. If you omit properties in the payload, the properties are
+    removed.</p>
+    <pre class="prettyprint">
+curl -u email:password -X POST -H "Content-type:application/xml" http://host:8080/v1/o/myorg -d \
+"&lt;Organization type="trial" name="MyOrganization"&gt;
+    &lt;DisplayName&gt;MyOrganization&lt;/DisplayName&gt;
+    &lt;Environments/&gt;
+    &lt;Properties&gt;
+        &lt;Property name="features.isHTTPStatusTooManyRequestEnabled"&gt;true&lt;/Property&gt;
+    &lt;/Properties&gt;
+&lt;/Organization&gt;"
+</pre>
+  </aside>
+
+  {% endblock %}

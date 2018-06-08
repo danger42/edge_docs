@@ -1,0 +1,177 @@
+  {% extends "_base.html" %} {% block title %}Flow Callout policy{% endblock %} {% block body %}
+  <img src="/api-platform/images/icon_policy_flow-callout.png">
+
+  <h3>What</h3>
+
+  <p>Use the Flow Callout policy to call out to a shared flow from either an API proxy or another
+  shared flow.</p>
+
+  <p>In a shared flow, you create a sequence of steps that you can reuse at run time from multiple
+  places. These steps are implemented as policies, as with an API proxy. The Flow Callout policy
+  gives you a way to call to the shared flow from API proxies and other shared flows.</p>
+
+  <ul>
+    <li>For example, imagine that you've implemented a shared flow with security features such as
+    API key verification and OAuth token validation. Using the Flow Callout policies, you can route
+    requests through that flow from multiple API proxies. In this way, you can enforce standard
+    security in one place, then use it from multiple others.</li>
+
+    <li>You can call one shared flow from another by implementing a Flow Callout policy in a shared
+    flow. For example, the security shared flow could use a Flow Callout policy to call to another
+    shared flow that performs a transformation on the incoming request message.</li>
+  </ul>
+
+  <aside class="note"><b>Note:</b> For more on shared flows, see <a href=
+  "/api-platform/fundamentals/shared-flows.html">Reusable shared flows</a>. You can also call a
+  shared flow from outside API proxy code to do request pre-processing or response post-processing.
+  For more, see <a href="/api-platform/fundamentals/flow-hooks.html">Attaching a shared flow using
+  a flow hook</a>.</aside>
+
+  <h3 id="samples"><a id="Samples" name="Samples"></a>Samples</h3><!-- Begin tab list -->
+  <!-- End tab list --><!-- Begin tabbed region -->
+
+  <div class="ds-selector-tabs">
+    <section>
+      <h3 class="two-line-tab">Call a shared flow from an API proxy</h3>
+
+      <p>This example creates a callout to a local API proxy (that is, one in the same organization
+      and environment) called <code>data-manager</code>, specifying its proxy endpoint whose name
+      is <code>default</code>.</p>
+      <pre class="prettyprint">
+&lt;LocalTargetConnection&gt;
+    &lt;APIProxy&gt;data-manager&lt;/APIProxy&gt;
+    &lt;ProxyEndpoint&gt;default&lt;/ProxyEndpoint&gt;
+&lt;/LocalTargetConnection&gt;
+</pre>
+    </section>
+  </div><!-- End tabbed region. -->
+  <hr>
+
+  <h2 id="elements">Element reference</h2>
+
+  <p>Following are elements and attributes you can configure on this policy:</p>
+  <pre class="prettyprint">
+&lt;FlowCallout async="false" continueOnError="false" enabled="true" name="Flow-Callout-1"&gt;
+    &lt;DisplayName&gt;Custom label used in UI&lt;/DisplayName&gt;
+    &lt;SharedFlowBundle&gt;thereferencedsharedflowbundle&lt;/SharedFlowBundle&gt;
+&lt;/FlowCallout&gt;
+</pre>
+
+  <h2 id="flowcalloutattributes">&lt;FlowCallout&gt; attributes</h2>
+  <pre class="prettyprint">
+&lt;FlowCallout async="false" continueOnError="false" enabled="true" name="Service-Callout-1"&gt;
+</pre>{% dynamic include /includes/__policies-parent-element-attributes %}
+
+  <h2 id="request">&lt;SharedFlowBundle&gt; element</h2>
+
+  <p>Specifies the name of the shared flow to call. This element's value should be the same as the
+  value of the target SharedFlowBundle element's name attribute.</p>
+  <pre class="prettyprint">
+&lt;SharedFlowBundle/&gt;
+</pre>
+
+  <p>In the simplest example, you give the name of the shared flow being called as a value for this
+  element. That is, this element's value must be the same as the shared flow's <code>name</code>
+  attribute value.</p>
+  <pre class="prettyprint">
+&lt;SharedFlowBundle&gt;Shared-Flow-Name&lt;/SharedFlowBundle&gt;
+ 
+</pre>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence</b></td>
+
+        <td>
+          <p>Required.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td><b>Type</b></td>
+
+        <td>N/A</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="sharedflowbundleelement-attributes">Attributes</h3>
+
+  <p>None.</p>
+
+  <h2 id="schemas">Schemas</h2>
+
+  <aside class="note"><b>Sample:</b> See our <a href=
+  "https://github.com/apigee/api-platform-samples/tree/master/schemas/policy">Github repository</a>
+  samples for the most recent schemas.</aside>
+
+  <h2 id="flowvariables">Flow variables</h2>
+
+  <p>Flow variables enable dynamic behavior of policies and flows at runtime, based on HTTP
+  headers, message content, or flow context. For more information about Flow variables, see
+  <a href="/api-platform/reference/variables-reference.html">Variables reference</a>.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="text-align: left;">Variable</th>
+
+        <th style="text-align: left;">Description</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td>
+          <p><code>apigee.edge.sharedflow.name</code></p>
+        </td>
+
+        <td>
+          <p><strong>Scope</strong>: During the shared flow execution<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The value of the shared flow's name attribute.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p><code>apigee.edge.flowhook.name</code></p>
+        </td>
+
+        <td>
+          <p><strong>Scope</strong>: During execution of the shared flow attached to the flow
+          hook.<br>
+          <strong>Type</strong>: String<br>
+          <strong>Permission</strong>: Read</p>
+
+          <p>The name of the flow hook.</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="errors">Error codes</h2>
+
+  <p>None.</p>
+
+  <h2 id="relatedtopics">Related topics</h2>
+
+  <aside class="note"><b>Sample:</b> For working samples of API proxies, see the <a href=
+  "/api-platform/samples/samples-reference.html">Samples list</a>.</aside>
+
+  <ul>
+    <li>Creating shared flows: <a href="/api-platform/fundamentals/shared-flows.html">Reusable
+    shared flows</a></li>
+
+    <li>Executing shared flows across multiple proxies: <a href=
+    "/api-platform/fundamentals/flow-hooks.html">Attaching a shared flow using a flow hook</a></li>
+  </ul>{% endblock %}

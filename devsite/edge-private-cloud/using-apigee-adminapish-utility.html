@@ -1,0 +1,250 @@
+  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}Using the apigee-adminapi.sh
+  utility{% endblock %} {% block body %}
+
+  <p>Use the <span style="font-family:courier new,courier,monospace;">apigee-adminapi.sh</span>
+  utility to perform the same Edge configuration tasks that you perform by making calls to the Edge
+  management API. The advantage to the <span style=
+  "font-family: 'courier new', courier, monospace;">apigee-adminapi.sh</span> utility is that
+  it:</p>
+
+  <ul>
+    <li>Use a simple command-line interface </li>
+
+    <li>Implements tab-based command completion</li>
+
+    <li>Provides help and usage information</li>
+
+    <li>Can display the corresponding API call if you decide to try the API</li>
+  </ul>
+
+  <p>The <span style=
+  "font-family: 'courier new', courier, monospace;">apigee-adminapi.sh</span> utility is not a
+  replacement for the <span style=
+  "font-family:courier new,courier,monospace;">apigee-provision</span> utility. The <span style=
+  "font-family:courier new,courier,monospace;">apigee-provision</span> utility actually uses the
+  <span style="font-family:courier new,courier,monospace;">apigee-adminapi.sh</span> utility to
+  perform its tasks. </p>
+
+  <p>The main differences between the two are:</p>
+
+  <ul>
+    <li>The <span style=
+    "font-family: 'courier new', courier, monospace;">apigee-adminapi.sh</span> utility
+    performs atomic functions that replace individual Edge API calls. For example, to create an
+    organization, environment, and virtual host requires three separate <span style=
+    "font-family: 'courier new', courier, monospace;">apigee-adminapi.sh</span> commands
+    corresponding to three API calls.</li>
+
+    <li>The <span style="font-family:courier new,courier,monospace;">apigee-provision</span>
+    utility is designed to perform a complete high-level operation in a single command. For
+    example, you can create an organization, environment, and virtual host with a single
+    <span style="font-family:courier new,courier,monospace;">apigee-provision</span> command by
+    passing a config file with all necessary information.</li>
+  </ul>
+
+  <p>The Edge documentation uses both utilities where appropriate.</p>
+
+  <h2 id="installingapigeeadminapish">Installing apigee-adminapi.sh</h2>
+
+  <p>The <span style=
+  "font-family: 'courier new', courier, monospace;">apigee-adminapi.sh</span> utility is
+  automatically installed when you install the <span style=
+  "font-family:courier new,courier,monospace;">apigee-provision</span> or the <span style=
+  "font-family:courier new,courier,monospace;">apigee-validate</span> utility.</p>
+
+  <p>The utility is installed in the following location:</p>
+  <pre class="prettyprint">
+/opt/apigee/apigee-adminapi/bin/apigee-adminapi.sh
+</pre>
+
+  <h2 id="apigeeadminapishsyntax">apigee-adminapi.sh syntax</h2>
+
+  <p>The <span style="font-family:courier new,courier,monospace;">apigee-adminapi.sh</span> utility
+  uses a simple command line syntax. At any time, use the tab key to display a prompt that lists
+  the available command options.</p>
+
+  <p>To see all possible commands, invoke the utility with no options:</p>
+  <pre class="prettyprint">
+&gt; apigee-adminapi.sh 
+</pre>
+
+  <p>If you press the tab key after typing apigee-adminapi.sh, you will see the list of possible
+  options: </p>
+  <pre class="prettyprint">
+analytics  classification  logsessions  regions  securityprofile  userroles
+buildinfo  GET             orgs         runtime  servers          users
+</pre>
+
+  <p>The tab key displays options based on the context of the command. If you enter the tab key
+  after typing:</p>
+  <pre class="prettyprint">
+&gt; apigee-adminapi.sh orgs
+</pre>
+
+  <p>You will see the possible options for completing the <span style=
+  "font-family:courier new,courier,monospace;">orgs</span> command:</p>
+  <pre class="prettyprint">
+add  apis  apps  delete  envs  list  pods  userroles
+</pre>
+
+  <p>Use the <span style="font-family:courier new,courier,monospace;">-h</span> option to display
+  help for any command. For example, if you use the <span style=
+  "font-family:courier new,courier,monospace;">-h</span> option as shown below:</p>
+  <pre class="prettyprint">
+&gt; apigee-adminapi.sh orgs -h
+</pre>
+
+  <p>The utility displays complete help information for all possible options to the <span style=
+  "font-family:courier new,courier,monospace;">orgs</span> command. The first item in the output
+  shows the help for the <span style="font-family:courier new,courier,monospace;">"orgs add"</span>
+  command: </p>
+  <pre class="prettyprint">
++++++++++++++++++++++++++++++++++++++++++++
+orgs add
+  Required:
+    -o ORG Organization name
+  Optional:
+    -H HEADER add http header in request
+    --admin ADMIN_EMAIL admin email address
+    --pwd ADMIN_PASSWORD admin password
+    --host EDGE_SERVER edge server to make request to
+    --port EDGE_PORT port to use for the http request
+    --ssl set EDGE_PROTO to https, defaults to http
+    --debug ( set in debug mode, turns on verbose in curl )
+    -h      Displays Help
+</pre>
+
+  <h2 id="settingparametersusingcommandlineswitchesandenvironmentvariables">Setting parameters
+  using command-line switches and environment variables</h2>
+
+  <p>You must enter all parameters to a command by using either command-line switches, or by using
+  environment variables. Prefix the command line switches with a single dash (-) or double dash
+  (--) as required. </p>
+
+  <aside class="note"><b>Note:</b> If you omit the sys admin password when entering a command, the
+  <span style="font-family:courier new,courier,monospace;">apigee-adminapi.sh</span> utility will
+  promt you for it. It will not prompt you for any other parameters.</aside>
+
+  <p>For example, from the help show above for the the "orgs add" command, you can specify the
+  organization name by either:</p>
+
+  <ul>
+    <li>Using the <span style="font-family:courier new,courier,monospace;">-o</span> command line
+    switch:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt; apigee-adminapi.sh orgs -o
+    testOrg</span></li>
+
+    <li>Setting an environment variable named <span style=
+    "font-family:courier new,courier,monospace;">ORG</span>:<br>
+    <span style="font-family:courier new,courier,monospace;">&gt; export ORG=testOrg<br>
+    &gt; apigee-adminapi.sh orgs</span></li>
+  </ul>
+
+  <aside class="note"><b>Note:</b> You typically use environment variables to set <span style=
+  "font-family:courier new,courier,monospace;">ADMIN_EMAIL</span> and <span style=
+  "font-family:courier new,courier,monospace;">EDGE_SERVER</span>, and optionally <span style=
+  "font-family:courier new,courier,monospace;">ADMIN_PASSWORD</span>. These parameters are used by
+  most commands. The concern with setting other params, such as <span style=
+  "font-family:courier new,courier,monospace;">ORG</span>, by using environment variables is that
+  the setting might be correct for one command but could be incorrect for a subsequent command. For
+  example, if you forget to reset the environment variable, you might inadvertently pass the wrong
+  value to the next command.  </aside>
+
+  <p>If you omit any required parameters to the command, the utility displays an error message
+  describing the missing parameters. For example, if you omit the <span style=
+  "font-family:courier new,courier,monospace;">--host</span> or <span style=
+  "font-family:courier new,courier,monospace;">EDGE_SERVER</span> environment variable specifying
+  the Edge Management Server when creating an org, you see the following error message:</p>
+  <pre class="prettyprint">
+Error with required variable or parameter
+ADMIN_PASSWORD....OK
+ADMIN_EMAIL....OK
+<strong>EDGE_SERVER....null</strong>
+</pre>
+
+  <p>Two common parameters that you often set as environment variables are the sys admin email
+  address and IP address of the Management Server: </p>
+  <pre class="prettyprint">
+&gt; export ADMIN_EMAIL=foo@bar.com
+&gt; export EDGE_SERVER=192.168.56.101
+</pre>
+
+  <h2 id="passingafiletotheapigeeadminapishutility">Passing a file to the apigee-adminapi.sh
+  utility</h2>
+
+  <p>Some <span style=
+  "font-family: 'courier new', courier, monospace;">apigee-adminapi.sh</span> utility commands
+  correspond to PUT and POST API calls that take a request body. For example, creating a virtual
+  host corresponds to a POST API call that requires information about the virtual host in the
+  request body.</p>
+
+  <p>When using the <span style=
+  "font-family: 'courier new', courier, monospace;">apigee-adminapi.sh</span> utility to
+  create a virtual host, or any command that takes a request body, you can pass all of the
+  necessary information on the command line as shown below:</p>
+  <pre class="prettyprint">
+&gt; apigee-adminapi.sh orgs envs virtual_hosts add -e prod -o testOrg --host localhost --admin foo@bar.com -v myVHostUtil -p 9005 -a 192.168.56.101:9005
+</pre>
+
+  <p>Or, you can pass a file containing the same information as would be contained in the request
+  body of the POST. For example, the following command takes a file defining the virtual host:</p>
+  <pre class="prettyprint">
+&gt; apigee-adminapi.sh orgs envs virtual_hosts add -e prod -o testOrg --host localhost --admin foo@bar.com -f vhostcreate
+</pre>
+
+  <p>where the file <span style="font-family:courier new,courier,monospace;">vhostcreate</span>
+  contains the POST body of the call. In this example, it is a XML-formatted request body:</p>
+  <pre class="prettyprint">
+&lt;VirtualHost name="myVHostUtil"&gt;
+   &lt;HostAliases&gt;
+     &lt;HostAlias&gt;192.168.56.101:9005&lt;/HostAlias&gt;
+   &lt;/HostAliases&gt;
+   &lt;Interfaces/&gt;
+   &lt;Port&gt;9005&lt;/Port&gt;
+&lt;/VirtualHost&gt;
+</pre>
+
+  <h2 id="displayingdebugandapiinformation">Displaying debug and API information</h2>
+
+  <p>Use the <span style="font-family:courier new,courier,monospace;">--debug</span> option to
+  the <span style=
+  "font-family: 'courier new', courier, monospace;">apigee-adminapi.sh</span> utility to
+  display detailed information about the command. This infomration includes the cURL command
+  generated by the <span style=
+  "font-family: 'courier new', courier, monospace;">apigee-adminapi.sh</span> utility to
+  perform the operation.</p>
+
+  <p>For example, this command uses the <span style=
+  "font-family:courier new,courier,monospace;">--debug</span> option:</p>
+  <pre class="prettyprint">
+&gt; apigee-adminapi.sh orgs add -o testOrg2 --admin foo@bar.com --host localhost --debug
+</pre>
+
+  <p>And displays the following output, including the generated cURL command:</p>
+  <pre class="prettyprint">
+<strong>curl -H Content-Type: application/xml -v -X POST     -s -k -w \n==&gt; %{http_code} 
+-u ***oo@bar.com:*****     http://localhost:8080/v1/o -d &lt;Organization name="testOrg2" 
+type="paid"/&gt;
+</strong>* About to connect() to localhost port 8080 (#0)
+*   Trying ::1... connected
+* Connected to localhost (::1) port 8080 (#0)
+* Server auth using Basic with user 'foo@bar.com'
+&gt; POST /v1/o HTTP/1.1
+&gt; Authorization: Basic c2dp234234NvbkBhcGlnZ2342342342342341Q5
+&gt; User-Agent: curl/7.19.7 (x86_64-redhat-linux-gnu) libcurl/7.19.7 NSS/3.19.1
+Basic ECC zlib/1.2.3 libidn/1.18 libssh2/1.4.2
+&gt; Host: localhost:8080
+&gt; Accept: */*
+&gt; Content-Type: application/xml
+&gt; Content-Length: 43
+&gt;
+} [data not shown]
+&lt; HTTP/1.1 201 Created
+&lt; Content-Type: application/json
+&lt; Date: Tue, 03 May 2016 02:08:32 GMT
+&lt; Content-Length: 291
+&lt;
+{ [data not shown]
+* Connection #0 to host localhost left intact
+* Closing connection #0
+</pre>{% endblock %}
