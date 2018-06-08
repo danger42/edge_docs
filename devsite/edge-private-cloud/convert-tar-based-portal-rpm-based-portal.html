@@ -1,11 +1,12 @@
-  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}Convert a tar-based portal to
-  an RPM-based portal{% endblock %} {% block body %}
+{% extends "private-cloud/v4.18.05/_base.html" %}
+{% block title %}Convert a tar-based portal to an RPM-based portal{% endblock %}
+{% block body %}
 
-  <p>The 4.18.01 release of the Developer Services portal does not let you update a previous
+  <p>The 4.18.05 release of {{portal_1st_use}} does not let you update a previous
   tar-based version of the portal. You can only directly update an RPM-based version of the portal
-  to 4.18.01.</p>
+  to 4.18.05.</p>
 
-  <p>However, you can convert a tar-based version of the portal to an 4.18.01 RPM-based instance of
+  <p>However, you can convert a tar-based version of the portal to an 4.18.05 RPM-based instance of
   the portal. As part of this process, you migrate the MySQL/MariaDB of the existing portal to a
   Postgres database. Once converted, your portal remains as an RPM-based portal.</p>
 
@@ -19,22 +20,18 @@
   are:</p>
 
   <ul>
-    <li>Install the <strong>RPM-based 4.18.01</strong> version of the Developer Service portal on a
-    new node.</li>
-
+    <li>Install the <strong>RPM-based 4.18.05</strong> version of the portal on a
+      new node.</li>
     <li>Create a new Postgres database <strong>on the RPM-based portal</strong>.</li>
-
     <li>Migrate the portal database <strong>from the tar-based portal</strong>.</li>
-
     <li>Copy all accessory file <strong>from the tar-based portal</strong> to the RPM-based
     portal.</li>
-
-    <li>Update DNS entries to point to the <strong>new RPM-based portal</strong>.<br>
-    <br>
-    Note that the RPM-based version of the portal uses port 8079 by default, while the tar-based
-    version uses port 80. Make sure you use the correct port number in your DNS entry. See <a href=
-    "set-http-port-used-portal.html">Set the HTTP port used by the portal</a> for information
-    on using a different port.</li>
+    <li>Update DNS entries to point to the <strong>new RPM-based portal</strong>.
+      <p>Note that the RPM-based version of the portal uses port 8079 by default, while the tar-based
+      version uses port 80. Make sure you use the correct port number in your DNS entry. See
+      <a href="set-http-port-used-portal">Set the HTTP port used by the portal</a> for information
+      on using a different port.</p>
+    </li>
   </ul>
 
   <h2 id="newdefaultinstallationdirectoryafterconversion">New default installation directory after
@@ -42,326 +39,237 @@
 
   <p>After updating an installation that now uses Nginx/Postgres, the root directory changed
   from:</p>
-  <pre class="prettyprint">
-/opt/apigee/apigee-drupal
-</pre>
-
+  <pre class="prettyprint">/opt/apigee/apigee-drupal</pre>
   <p>to:</p>
-  <pre class="prettyprint">
-/opt/apigee/apigee-drupal/wwwroot
-</pre>
+  <pre class="prettyprint">/opt/apigee/apigee-drupal/wwwroot</pre>
 
-  <h2 id="portalconversionprocedure">Portal conversion procedure </h2>
+
+  <h2 id="portalconversionprocedure">Portal conversion procedure</h2>
 
   <p>To convert the portal to an RPM-based installation:</p>
 
   <ol>
-    <li>Install the RPM-based 4.18.01 version of the Developer Service portal on a different node
-    from your tar-based portal.</li>
-
-    <li>
-      <strong>On the RPM-based portal</strong>, create a new Postgres database. Later, you migrate
+    <li>Install the RPM-based 4.18.05 version of the portal on a different node from your tar-based
+    portal.</li>
+    <li><strong>On the RPM-based portal</strong>, create a new Postgres database. Later, you migrate
       the database from the tar-based portal to this new database:
-
-      <ol style="list-style: lower-alpha outside">
-        <li>Log in to psql:<br>
-        <span style="font-family:courier new,courier,monospace;">&gt;psql -h localhost -p 5432 -U
-        apigee</span><br>
-        <br>
-        Enter your Postgres password as defined by the PG_PWD property in the portal config
-        file.</li>
-
-        <li>Create a new Postgred database:<br>
-        <span style="font-family:courier new,courier,monospace;"># CREATE DATABASE
-        newportaldb;</span></li>
-
-        <li>Exit psql:<br>
-        <span style="font-family:courier new,courier,monospace;"># \q</span></li>
+      <ol>
+        <li>Log in to psql:
+          <pre class="devsite-terminal">psql -h localhost -p 5432 -U apigee</pre>
+          <p>Enter your Postgres password as defined by the PG_PWD property in the portal config
+          file.</li>
+        <li>Create a new Postgred database:
+          <pre class="devsite-terminal" data-terminal-prefix="# ">CREATE DATABASE newportaldb;</pre>
+        </li>
+        <li>Exit psql:
+          <pre class="devsite-terminal" data-terminal-prefix="# ">\q</pre>
+        </li>
       </ol>
     </li>
-
     <li>
-      <p><strong>On the tar-based portal</strong>, remove old modules that are no longer used:<br>
-      <span style="font-family:courier new,courier,monospace;">&gt; cd /var/www/html<br>
-      &gt; drush sql-query --db-prefix "DELETE from {system} where name = 'apigee_account' AND
-      type = 'module';"<br>
-      &gt; drush sql-query --db-prefix "DELETE from {system} where name = 'apigee_checklist'
-      AND type = 'module';"<br>
-      &gt; drush sql-query --db-prefix "DELETE from {system} where name = 'apigee_sso_ui' AND
-      type = 'module';"</span></p>
+      <p><strong>On the tar-based portal</strong>, remove old modules that are no longer used:
+      <pre class="devsite-terminal">cd /var/www/html
+<code class="devsite-terminal">drush sql-query --db-prefix "DELETE from {system} where name = 'apigee_account' AND type = 'module';"</code>
+<code class="devsite-terminal">drush sql-query --db-prefix "DELETE from {system} where name = 'apigee_checklist' AND type = 'module';"</code>
+<code class="devsite-terminal">drush sql-query --db-prefix "DELETE from {system} where name = 'apigee_sso_ui' AND type = 'module';"</code></pre>
     </li>
-
-    <li>
-      <p><strong>On the tar-based portal</strong>, Install and configure the Migrator Drupal
-      module:</p>
-
-      <ol style="list-style: lower-alpha outside">
-        <li><span style="font-family:courier new,courier,monospace;">cd /tmp </span></li>
-
-        <li><span style="font-family:courier new,courier,monospace;">wget
-        https://ftp.drupal.org/files/projects/dbtng_migrator-7.x-1.4.tar.gz </span></li>
-
-        <li><span style="font-family:courier new,courier,monospace;">gunzip
-        /tmp/dbtng_migrator-7.x-1.4.tar.gz </span></li>
-
-        <li><span style="font-family:courier new,courier,monospace;">tar -xvf
-        /tmp/dbtng_migrator-7.x-1.4.tar --directory
-        /var/www/html/sites/all/modules </span></li>
-
-        <li>Login to the portal as an admin.</li>
-
+    <li><strong>On the tar-based portal</strong>, Install and configure the Migrator Drupal module:
+      <ol>
+        <li>
+          <pre class="devsite-terminal">cd /tmp </pre>
+        </li>
+        <li>
+          <pre class="devsite-terminal">wget https://ftp.drupal.org/files/projects/dbtng_migrator-7.x-1.4.tar.gz </pre>
+        </li>
+        <li>
+          <pre class="devsite-terminal">gunzip /tmp/dbtng_migrator-7.x-1.4.tar.gz </pre>
+        </li>
+        <li>
+          <pre class="devsite-terminal">tar -xvf /tmp/dbtng_migrator-7.x-1.4.tar --directory /var/www/html/sites/all/modules </pre>
+        </li>
+        <li>Log in to the portal as an admin.</li>
         <li>Select <strong>Modules</strong> in the Drupal menu.</li>
-
         <li>Enable the <strong>DBTNG Migrator</strong> module.</li>
-
         <li>Save the configuration.</li>
       </ol>
     </li>
-
-    <li><strong>On the tar-based portal</strong>, edit <span style=
-    "font-family:courier new,courier,monospace;">/var/www/html/sites/default/settings.php</span> to
-    add a second database configuration pointing to the newly created database on the RPM-based
-    portal. The current database configuration is named default. Name your new configuration
-    custom:<br>
-
+    <li><strong>On the tar-based portal</strong>, edit <code>/var/www/html/sites/default/settings.php</code>
+    to add a second database configuration pointing to the newly created database on the RPM-based
+    portal. The current database configuration is named "default". Name your new configuration
+    "custom", as the following example shows:
     <pre>$databases = array (
-      'default' =&gt;
-      array (
-        'default' =&gt;
-        array (
-          'database' =&gt; 'devportal',
-          'username' =&gt; 'devportal',
-          'password' =&gt; 'devportal',
-          'host' =&gt; 'localhost',
-          'port' =&gt; '',
-          'driver' =&gt; 'mysql',
-          'prefix' =&gt; '',
-        ),
-      ),
-    <strong>  'custom' =&gt;
-      array (
-        'default' =&gt;
-        array (
-          'database' =&gt; 'newportaldb',
-          'username' =&gt; 'apigee',
-          'password' =&gt; 'postgres',
-          'host' =&gt; '192.168.168.100',
-          'port' =&gt; '5432',
-          'driver' =&gt; 'pgsql',
-          'prefix' =&gt; '',
-        )
-      )
-    );</strong></pre>
-    <br>
-    where <strong>host</strong> and <strong>port</strong> specify the IP address and port of the
+  'default' =&gt;
+  array (
+    'default' =&gt;
+    array (
+      'database' =&gt; 'devportal',
+      'username' =&gt; 'devportal',
+      'password' =&gt; 'devportal',
+      'host' =&gt; 'localhost',
+      'port' =&gt; '',
+      'driver' =&gt; 'mysql',
+      'prefix' =&gt; '',
+    ),
+  ),
+<strong>  'custom' =&gt;
+  array (
+    'default' =&gt;
+    array (
+      'database' =&gt; 'newportaldb',
+      'username' =&gt; 'apigee',
+      'password' =&gt; 'postgres',
+      'host' =&gt; '192.168.168.100',
+      'port' =&gt; '5432',
+      'driver' =&gt; 'pgsql',
+      'prefix' =&gt; '',
+    )
+  )
+);</strong></pre>
+    <p>Where <code>host</code> and <code>port</code> specify the IP address and port of the
     Postgres server. Postgres uses port 5432 for connections.</li>
-
     <li>
       <strong>On the tar-based portal</strong>, install the Postgres driver:
-
-      <ol style="list-style: lower-alpha outside">
-        <li>Use Yum to install the driver:<br>
-        <span style="font-family:courier new,courier,monospace;">&gt; yum install
-        php-pdo_pgsql</span></li>
-
-        <li>Edit <span style="font-family:courier new,courier,monospace;">/etc/php.ini</span> to
-        add the following line anywhere in the file:<br>
-        <span style="font-family:courier new,courier,monospace;">extension=pgsql.so</span></li>
-
-        <li>Restart Apache:<br>
-        <span style="font-family:courier new,courier,monospace;">&gt; service httpd
-        restart</span></li>
+      <ol>
+        <li>Use Yum to install the driver:
+          <pre class="devsite-terminal">yum install php-pdo_pgsql</pre>
+        </li>
+        <li>Edit <code>/etc/php.ini</code> to add the following line anywhere in the file:
+          <pre>extension=pgsql.so</pre>
+        </li>
+        <li>Restart Apache:
+          <pre class="devsite-terminal">service httpd restart</pre>
+        </li>
       </ol>
     </li>
-
-    <li>
-      <strong>On the tar-based portal</strong>, migrate the portal database to the RPM-based
+    <li><strong>On the tar-based portal</strong>, migrate the portal database to the RPM-based
       portal:
-
-      <ol style="list-style: lower-alpha outside">
+      <ol>
         <li>Log in to the portal as an admin.</li>
-
         <li>Select <strong>Structure-&gt;Migrator</strong> in the Drupal menu.</li>
-
-        <li>Choose your origin database on the tar-based portal, <span style=
-        "font-family:courier new,courier,monospace;">default</span>, and the destination database,
-        <span style="font-family:courier new,courier,monospace;">custom</span>, based on
-        <span style="font-family:courier new,courier,monospace;">settings.php</span> file shown
-        above.</li>
-
+        <li>Choose your origin database on the tar-based portal, <code>default</code>, and the
+          destination database, <code>custom</code>, based on <code>settings.php</code> file shown
+          above.</li>
         <li>Click <strong>Migrate</strong>. The tar-based database is migrated to the RPM-based
-        database.</li>
+          database.</li>
       </ol>
     </li>
-
-    <li>Copy the <span style="font-family:courier new,courier,monospace;">sites</span> directory
-    from tar-based server to the RPM-based server.<br>
-      The paths shown in the following steps are based on default paths. Modify them as necessary
-      for your installation.
-
-      <ol style="list-style: lower-alpha outside">
-        <li>On the tar-based portal, bundle the <span style=
-        "font-family: &quot;courier new&quot;, courier, monospace;">/var/www/html/sites</span> directory:<br>
-
-        <span style="font-family:courier new,courier,monospace;">&gt; cd
-        /var/www/html/sites<br>
-        &gt; tar -cvzf /tmp/sites.tar.gz .</span></li>
-
-        <li>Copy <span style="font-family:courier new,courier,monospace;">/tmp/sites.tar.gz</span>
-        to <span style=
-        "font-family:courier new,courier,monospace;">/opt/apigee/apigee-drupal/wwwroot/sites</span>
-        on the RPM-based server.</li>
-
+    <li>Copy the <code>sites</code> directory from the tar-based server to the RPM-based server. The
+      paths shown in the following steps are based on default paths. Modify them as necessary for
+      your installation.
+      <ol>
+        <li>On the tar-based portal, bundle the <code>/var/www/html/sites</code> directory:
+          <pre class="devsite-terminal">cd /var/www/html/sites
+<code class="devsite-terminal">tar -cvzf /tmp/sites.tar.gz .</code></pre>
+        </li>
+        <li>Copy <code>/tmp/sites.tar.gz</code> to
+        <code>/opt/apigee/apigee-drupal/wwwroot/sites</code> on the RPM-based server.</li>
         <li>Unbundle sites directory, but do not overwrite important files.
-
           <ol>
-            <li>Backup the <span style=
-            "font-family:courier new,courier,monospace;">settings.php</span> file:<br>
-            <span style="font-family:courier new,courier,monospace;">&gt; sudo cp
-            /opt/apigee/apigee-drupal/wwwroot/sites/default/settings.php
-            /opt/apigee/apigee-drupal/wwwroot/sites/default/settings.bak.php</span></li>
-
-            <li>Backup existing <span style=
-            "font-family:courier new,courier,monospace;">files</span> directory:<br>
-            <span style="font-family:courier new,courier,monospace;">&gt; sudo mv
-            /opt/apigee/apigee-drupal/wwwroot/sites/default/files
-            /opt/apigee/apigee-drupal/wwwroot/sites/default/files_old</span></li>
-
-            <li>Backup the existing <span style=
-            "font-family:courier new,courier,monospace;">sites</span> directory:<br>
-            <span style="font-family:courier new,courier,monospace;">&gt; tar -cvzf
-            /tmp/sites_old.tar.gz /opt/apigee/apigee-drupal/wwwroot/sites</span></li>
-
-            <li>Unzip and untar the <span style=
-            "font-family:courier new,courier,monospace;">sites</span> directory from the tar-based
-            server:<br>
-            <span style="font-family:courier new,courier,monospace;">&gt; gunzip
-            /opt/apigee/apigee-drupal/wwwroot/sites/sites.tar.gz<br>
-            <br>
-            &gt; tar -xvf /opt/apigee/apigee-drupal/wwwroot/sites/sites.tar</span></li>
-
-            <li>Make sure copied files have proper ownership:<br>
-            <span style="font-family:courier new,courier,monospace;">&gt; chown -R apigee:apigee
-            /opt/apigee/apigee-drupal/wwwroot/sites/</span></li>
-
-            <li>Restore <span style=
-            "font-family:courier new,courier,monospace;">settings.php</span> file:<br>
-            <span style="font-family:courier new,courier,monospace;">&gt; sudo cp
-            /opt/apigee/apigee-drupal/wwwroot/sites/default/settings.bak.php
-            /opt/apigee/apigee-drupal/wwwroot/sites/default/settings.php</span></li>
-
-            <li>Move private files to new location:<br>
-            &gt; <span style="font-family:courier new,courier,monospace;">cp -r
-            /opt/apigee/apigee-drupal/wwwroot/sites/default/files/private/*
-            /opt/apigee/data/apigee-drupal-devportal/private<br>
-            <br>
-            &gt; rm -rf /opt/apigee/apigee-drupal/wwwroot/sites/default/files/private<br>
-            <br>
-            &gt; chown -R apigee:apigee
-            /opt/apigee/data/apigee-sap-drupal-devportal/private</span></li>
+            <li>Backup the <code>settings.php</code> file:
+              <pre class="devsite-terminal">sudo cp /opt/apigee/apigee-drupal/wwwroot/sites/default/settings.php
+  /opt/apigee/apigee-drupal/wwwroot/sites/default/settings.bak.php</pre>
+            </li>
+            <li>Backup the existing <code>files</code> directory:
+              <pre class="devsite-terminal">sudo mv /opt/apigee/apigee-drupal/wwwroot/sites/default/files
+  /opt/apigee/apigee-drupal/wwwroot/sites/default/files_old</pre>
+            </li>
+            <li>Backup the existing <code>sites</code> directory:
+              <pre class="devsite-terminal">tar -cvzf /tmp/sites_old.tar.gz /opt/apigee/apigee-drupal/wwwroot/sites</pre>
+            </li>
+            <li>Unzip and untar the <code>sites</code> directory from the tar-based server:
+              <pre class="devsite-terminal">gunzip /opt/apigee/apigee-drupal/wwwroot/sites/sites.tar.gz
+<code class="devsite-terminal">tar -xvf /opt/apigee/apigee-drupal/wwwroot/sites/sites.tar</code></pre>
+            </li>
+            <li>Make sure that the copied files have proper ownership:
+              <pre class="devsite-terminal">chown -R apigee:apigee /opt/apigee/apigee-drupal/wwwroot/sites/</pre>
+            </li>
+            <li>Restore the <code>settings.php</code> file:
+              <pre class="devsite-terminal">sudo cp /opt/apigee/apigee-drupal/wwwroot/sites/default/settings.bak.php
+  /opt/apigee/apigee-drupal/wwwroot/sites/default/settings.php</pre>
+            </li>
+            <li>Move private files to new location:
+              <pre class="devsite-terminal">cp -r /opt/apigee/apigee-drupal/wwwroot/sites/default/files/private/* /opt/apigee/data/apigee-drupal-devportal/private
+<code class="devsite-terminal">rm -rf /opt/apigee/apigee-drupal/wwwroot/sites/default/files/private</code>
+<code class="devsite-terminal">chown -R apigee:apigee /opt/apigee/data/apigee-sap-drupal-devportal/private</code></pre>
+            </li>
           </ol>
         </li>
       </ol>
     </li>
-
     <li><strong>On the tar-based portal</strong>, only if you changed the path to the web root
-    directory on the tar-based portal from the default path of /var/www/html: run <span style=
-    "font-family:courier new,courier,monospace;">drush status</span> and look at <span style=
-    "font-family:courier new,courier,monospace;">files</span> path and <span style=
-    "font-family:courier new,courier,monospace;">private files</span> path:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt; cd /var/www/html<br>
-    &gt; drush status</span><br>
-    <br>
-    If files/private files are not under the <span style=
-    "font-family:courier new,courier,monospace;">sites</span> directory, copy them to the RPM-based
-    server as shown above.</li>
-
-    <li><strong>On the RPM-based portal</strong>, update <span style=
-    "font-family:courier new,courier,monospace;">/opt/apigee/apigee-drupal/wwwroot/sites/default/settings.php</span>
-    to set the properties of the default database:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt; vi
-    /opt/apigee/apigee-drupal/wwwroot/sites/default/settings.php</span><br>
-    <br>
-    Set the default database description in settings.php:<br>
-    <pre>$databases = array (
-      'default' =&gt;
-      array (
-        'default' =&gt;
-        array (
-    <strong>      'database' =&gt; 'newportaldb',
-          'username' =&gt; 'apigee',
-          'password' =&gt; 'postgres',
-          'host' =&gt; 'localhost', 'port' =&gt; '5432',
-          'driver' =&gt; 'pgsql',
-          'prefix' =&gt; '',</strong>
-        )
-      )
-    );</pre>
-    <br>
-    where <strong>database</strong> specifies the new database you created,
-    <strong>username</strong> and <strong>password</strong> are as defined for the custom database
-    on the tar-based portal, and <strong>prefix</strong> is empty.</li>
-
-    <li>
-      <strong>On the RPM-based portal</strong>, the RPM-based version of the portal contains fewer
+      directory on the tar-based portal from the default path of /var/www/html: run
+      <code>drush status</code> and look at <code>files</code> path and <code>private files</code> path:
+      <pre class="devsite-terminal">cd /var/www/html
+<code class="devsite-terminal">drush status</code></pre>
+      <p>If files/private files are not under the <code>sites</code> directory, copy them to the
+      RPM-based server as shown above.</p>
+    </li>
+    <li><strong>On the RPM-based portal</strong>, update
+      <code>/opt/apigee/apigee-drupal/wwwroot/sites/default/settings.php</code> to set the properties
+      of the default database:
+      <pre class="devsite-terminal">vi /opt/apigee/apigee-drupal/wwwroot/sites/default/settings.php</pre>
+      <p>Set the default database description in settings.php:
+      <pre>$databases = array (
+  'default' =&gt;
+  array (
+    'default' =&gt;
+    array (
+<strong>      'database' =&gt; 'newportaldb',
+      'username' =&gt; 'apigee',
+      'password' =&gt; 'postgres',
+      'host' =&gt; 'localhost', 'port' =&gt; '5432',
+      'driver' =&gt; 'pgsql',
+      'prefix' =&gt; '',</strong>
+    )
+  )
+);</pre>
+      <p>Where <code>database</code> specifies the new database you created,
+      <code>username</code> and <code>password</code> are as defined for the custom database
+      on the tar-based portal, and <code>prefix</code> is empty.</p>
+    </li>
+    <li><strong>On the RPM-based portal</strong>, the RPM-based version of the portal contains fewer
       Drupal modules than the tar-based version. After you migrate to the RPM-based portal, you
       must check for any missing modules and install them as necessary.
-
-      <ol style="list-style: lower-alpha outside">
-        <li>Install the Drupal <span style=
-        "font-family:courier new,courier,monospace;">missing_module</span> used to detect missing
-        modules:  <br>
-        <span style="font-family:courier new,courier,monospace;">&gt; cd
-        /opt/apigee/apigee-drupal/wwwroot<br>
-        &gt; drush dl missing_module<br>
-        &gt; drush en missing_module</span></li>
-
-        <li>Login to the RPM-based portal as an admin.</li>
-
+      <ol>
+        <li>Install the Drupal <code>missing_module</code> used to detect missing modules:
+          <pre class="devsite-terminal">cd /opt/apigee/apigee-drupal/wwwroot
+<code class="devsite-terminal">drush dl missing_module</code>
+<code class="devsite-terminal">drush en missing_module</code></pre>
+        </li>
+        <li>Log in to the RPM-based portal as an admin.</li>
         <li>Select <strong>Reports &gt; Status reports</strong> in the Drupal menu and check for
         any missing modules.</li>
-
-        <li>Use that report to install any missing modules, or use the following commands:<br>
-        <span style="font-family:courier new,courier,monospace;">&gt; cd
-        /opt/apigee/apigee-drupal/wwwroot<br>
-        &gt; drush dl &lt;moduleA&gt; &lt;moduleB&gt; ...<br>
-        &gt; drush en &lt;moduleA&gt; &lt;moduleB&gt; ...</span></li>
-
-        <li>After you enable all the modules, make sure the files are owned by the apigee
-        user: <br>
-        <span style="font-family:courier new,courier,monospace;">&gt; chown -LR apigee:apigee
-        /opt/apigee/apigee-drupal/wwwroot</span><br>
-        <br>
-        For more on file permissions, see <a href=
-        "https://www.drupal.org/node/244924">https://www.drupal.org/node/244924</a>.</li>
+        <li>Use that report to install any missing modules, or use the following commands:
+          <pre class="devsite-terminal">cd /opt/apigee/apigee-drupal/wwwroot
+<code class="devsite-terminal">drush dl &lt;moduleA&gt; &lt;moduleB&gt; ...</code>
+<code class="devsite-terminal">drush en &lt;moduleA&gt; &lt;moduleB&gt; ...</code></pre>
+        </li>
+        <li>After you enable all the modules, make sure the files are owned by the apigee user:
+          <pre class="devsite-terminal">chown -LR apigee:apigee /opt/apigee/apigee-drupal/wwwroot</pre>
+          <p>For more on file permissions, see
+          <a href="https://www.drupal.org/node/244924" class="external">https://www.drupal.org/node/244924</a>.</p>
+        </li>
       </ol>
     </li>
-
-    <li>
-      <strong>On the RPM-based portal</strong>, run update.php in a browser to remove any errors on
-      missing modules:
-
-      <ol style="list-style: lower-alpha outside">
-        <li>Login to the RPM-based portal as an admin.</li>
-
-        <li>In the browser, navigate to the following URL:<br>
-        <span style=
-        "font-family:courier new,courier,monospace;">http://{<strong><em>portal_IP_or_DNS</em></strong>}:8079/update.php</span><br>
-
-        <br>
-        where <strong><em>portal_IP_or_DNS</em></strong> is the IP address or domain name of the
-        RPM-based portal.</li>
-
+    <li><strong>On the RPM-based portal</strong>, run update.php in a browser to remove any errors
+      on missing modules:
+      <ol>
+        <li>Log in to the RPM-based portal as an admin.</li>
+        <li>In the browser, navigate to the following URL:
+          <pre>http://<var>portal_IP_or_DNS</var>:8079/update.php</pre>
+          <p>Where <var>portal_IP_or_DNS</var> is the IP address or domain name of the RPM-based
+          portal.</li>
         <li>Follow the screen prompts.</li>
       </ol>
     </li>
-
     <li>Update DNS entries to point to your new RPM-based portal.<br>
-    <br>
-    Note that the RPM-based version of the portal uses port 8079 by default, while the tar-based
-    version uses port 80. Make sure you use the correct port number in your DNS entry. See <a href=
-    "set-http-port-used-portal.html">Set the HTTP port used by the portal</a> for information on
-    using a different port.</li>
+      <p>Note that the RPM-based version of the portal uses port 8079 by default, while the tar-based
+      version uses port 80. Make sure you use the correct port number in your DNS entry. See
+      <a href="set-http-port-used-portal">Set the HTTP port used by the portal</a> for information on
+      using a different port.</p>
+    </li>
   </ol>
 
-  <p>The conversion is complete.</p>{% endblock %}
+  <p>The conversion is complete.</p>
+
+{% endblock %}

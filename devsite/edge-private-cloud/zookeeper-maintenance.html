@@ -1,8 +1,10 @@
-  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}About ZooKeeper Maintenance{% endblock %} {% block body %}
+{% extends "private-cloud/v4.18.05/_base.html" %}
+{% block title %}About ZooKeeper maintenance{% endblock %}
+{% block body %}
 
   <p>ZooKeeper ensembles are designed to remain functional, with no data loss, despite the loss of
   one or more ZooKeeper nodes. This resilience can be used effectively to perform maintenance on
-  ZooKeeper nodes with no system downtime. </p>
+  ZooKeeper nodes with no system downtime.</p>
 
   <h2 id="aboutzookeeperandedge">About ZooKeeper and Edge</h2>
 
@@ -11,46 +13,38 @@
   supported Edge topologies for a production system specify to use at least three ZooKeeper
   nodes.</p>
 
-  <aside class="note"><b>Note:</b> Using three ZooKeeper nodes is not a requirement, but it it the
+  <aside class="note"><strong>Note:</strong> Using three ZooKeeper nodes is not a requirement, but it it the
   minimum number of ZooKeeper nodes required. You can add additional ZooKeeper nodes as necessary
-  based on your system requirements. </aside>
+  based on your system requirements.</aside>
 
-  <p>Use the <span style="font-family:courier new,courier,monospace;">ZK_HOSTS</span> and
-  <span style="font-family:courier new,courier,monospace;">ZK_CLIENT_HOSTS</span> properties in the
+  <p>Use the <code>ZK_HOSTS</code> and <code>ZK_CLIENT_HOSTS</code> properties in the
   Edge config file to specify the ZooKeeper nodes. For exam</p>
-  <pre class="prettyprint">
-ZK_HOSTS="$IP1 $IP2 $IP3" 
-ZK_CLIENT_HOSTS="$IP1 $IP2 $IP3" 
-</pre>
+  <pre class="prettyprint">ZK_HOSTS="$IP1 $IP2 $IP3"
+ZK_CLIENT_HOSTS="$IP1 $IP2 $IP3"</pre>
 
-  <p>where:</p>
+  <p>Where:</p>
 
   <ul>
-    <li><span style=
-    "font-family: &quot;courier new&quot;, courier, monospace;">ZK_HOSTS</span> - Specifies
-    the IP addresses of the ZooKeeper nodes. The IP addresses must be listed in the same order on
-    all ZooKeeper nodes. <br>
-    <br>
-    In a multi-Data Center environment, list all ZooKeeper nodes from all Data Centers.</li>
-
-    <li><span style=
-    "font-family: &quot;courier new&quot;, courier, monospace;">ZK_CLIENT_HOSTS</span> -
-    Specifies the IP addresses of the ZooKeeper nodes used by this Data Center only. The IP
-    addresses must be listed in the same order on all ZooKeeper nodes in the Data Center.<br>
-    <br>
-    In a single Data Center installation, these are the same nodes as specified by ZK_HOSTS. In a
-    multi-Data Center environment, the Edge config file for each Data Center should list only the
-    ZooKeeper nodes for that Data Center</li>
+    <li><code>ZK_HOSTS</code> specifies the IP addresses of the ZooKeeper nodes. The IP addresses
+      must be listed in the same order on all ZooKeeper nodes.
+      <p>In a multi-Data Center environment, list all ZooKeeper nodes from all Data Centers.</p>
+    </li>
+    <li><code>ZK_CLIENT_HOSTS</code> specifies the IP addresses of the ZooKeeper nodes used by this
+      Data Center only. The IP addresses must be listed in the same order on all ZooKeeper nodes in
+      the Data Center.
+      <p>In a single Data Center installation, these are the same nodes as specified by ZK_HOSTS. In a
+      multi-Data Center environment, the Edge config file for each Data Center should list only the
+      ZooKeeper nodes for that Data Center.</p>
+    </li>
   </ul>
 
   <p>By default, all ZooKeeper nodes are designated as <em>voter</em> nodes. That means the nodes
   all participate in electing the ZooKeeper <em>leader</em>. You can include the
-  &#8220;:observer&#8221; modifier with <span style=
-  "font-family: &quot;courier new&quot;, courier, monospace;">ZK_HOSTS</span> to signify that
+  <code>:observer</code> modifier with <code>ZK_HOSTS</code> to signify that
   the note is an <em>observer</em> node, and not a voter. An observer node does not participate in
   the election of the leader.</p>
 
-  <p>You typically specify the &#8220;:observer&#8221; modifier when creating multiple Edge Data
+  <p>You typically specify the <code>:observer</code> modifier when creating multiple Edge Data
   Centers, or when a single Data Center has a large number of ZooKeeper nodes. For example, in a
   12-host Edge installation with two Data Centers, ZooKeeper on node 9 in Data Center 2 is the
   observer:</p>
@@ -58,16 +52,12 @@ ZK_CLIENT_HOSTS="$IP1 $IP2 $IP3"
   <p><img alt="" src="/private-cloud/images/zookeperDC.png"></p>
 
   <p>You then use the following settings in your config file for Data Center 1:</p>
-  <pre class="prettyprint">
-ZK_HOSTS="$IP1 $IP2 $IP3 $IP7 $IP8 $IP9:observer"
-ZK_CLIENT_HOSTS="$IP1 $IP2 $IP3"
-</pre>
+  <pre class="prettyprint">ZK_HOSTS="$IP1 $IP2 $IP3 $IP7 $IP8 $IP9:observer"
+ZK_CLIENT_HOSTS="$IP1 $IP2 $IP3"</pre>
 
   <p>And for Data Center </p>
-  <pre class="prettyprint">
-ZK_HOSTS="$IP1 $IP2 $IP3 $IP7 $IP8 $IP9:observer"
-ZK_CLIENT_HOSTS="$IP7 $IP8 $IP9"
-</pre>
+  <pre class="prettyprint">ZK_HOSTS="$IP1 $IP2 $IP3 $IP7 $IP8 $IP9:observer"
+ZK_CLIENT_HOSTS="$IP7 $IP8 $IP9"</pre>
 
   <h3 id="aboutzookeeperandedge-aboutleadersfollowersvotersandobservers">About leaders, followers,
   voters, and observers</h3>
@@ -82,48 +72,40 @@ ZK_CLIENT_HOSTS="$IP7 $IP8 $IP9"
   leader is then elected by all voter ZooKeeper nodes. The one requirement for the election of a
   leader is that there must be a <em>quorum</em> of functioning ZooKeeper voter nodes available. A
   quorum means more than half of all voter ZooKeeper nodes, across all Data Centers, are
-  functional. </p>
+  functional.</p>
 
   <p>If there is not a quorum of voter nodes available, no leader can be elected. In this scenario,
   Zookeeper cannot serve requests. That means you cannot make a request to the Edge Management
   Server, process API requests, or log in to the to Edge UI until the quorum is restored. </p>
 
-  <aside class="note"><b>Note:</b> ZooKeeper observer nodes do not participate in the voting and
-  are not counted when determining a quorum.</aside>
+  <aside class="note"><strong>Note:</strong> ZooKeeper observer nodes do not participate in the
+  voting and are not counted when determining a quorum.</aside>
 
   <p>For example, in a single Data Center installation:</p>
 
   <ul>
     <li>You installed three ZooKeeper nodes</li>
-
     <li>All ZooKeeper nodes are voters</li>
-
     <li><strong>The quorum is two functioning voter nodes</strong></li>
-
     <li>If only one voter node is available then the ZooKeeper ensemble cannot function</li>
   </ul>
 
   <p>In an installation with two Data Centers:</p>
-
   <ul>
     <li>You installed three ZooKeeper nodes per Data Center, for a total of six nodes</li>
-
     <li>Data Center 1 has three voter nodes</li>
-
     <li>Data Center 2 has two voter nodes and one observer node</li>
-
     <li><strong>The quorum is based on the five voters across both Data Centers, and is therefore
-    three functioning voter nodes</strong></li>
-
+      three functioning voter nodes</strong></li>
     <li>If only two or fewer voter nodes are available then the ZooKeeper ensemble cannot
-    function</li>
+      function</li>
   </ul>
 
   <h3 id="aboutzookeeperandedge-addingnodesasvotersorobservers">Adding nodes as voters or
   observers</h3>
 
   <p>Your system requirements might require that you add additional ZooKeeper nodes to your Edge
-  installation. The <a href="adding-zookeeper-nodes.html">Adding ZooKeeper nodes</a> documentation
+  installation. The <a href="adding-zookeeper-nodes">Adding ZooKeeper nodes</a> documentation
   describes how to add additional ZooKeeper nodes to Edge. When adding ZooKeeper nodes, you must
   take into consideration the type of nodes to add: voter or observer. </p>
 
@@ -149,15 +131,15 @@ ZK_CLIENT_HOSTS="$IP7 $IP8 $IP9"
   than nine voters (five in one Data Center and four in the other). You can then then add as many
   observer nodes as necessary for your system requirements.</p>
 
-  <h2 id="maintenanceconsiderations">Maintenance Considerations </h2>
+  <h2 id="maintenanceconsiderations">Maintenance considerations</h2>
 
   <p>ZooKeeper maintenance can be performed on a fully functioning ensemble with no downtime if it
   is performed on a single node at a time. By making sure that only one ZooKeeper node is down at
   any one time, you can ensure that there is always a quorum of voter nodes available to elect a
-  leader.  </p>
+  leader.</p>
 
   <h3 id="maintenanceconsiderations-maintenanceacrossmultipledatacenters">Maintenance across
-  Multiple Data Centers</h3>
+  multiple data centers</h3>
 
   <p>When working with multiple Data Centers, remember that the ZooKeeper ensemble does not
   distinguish between Data Centers. ZooKeeper assemblies view all of the ZooKeeper nodes across all
@@ -167,7 +149,7 @@ ZK_CLIENT_HOSTS="$IP7 $IP8 $IP9"
   quorum calculations. Individual nodes can go down across Data Centers, but as long as a quorum is
   preserved across the entire ensemble then ZooKeeper remains functional. </p>
 
-  <h3 id="maintenanceconsiderations-maintenanceimplications">Maintenance Implications</h3>
+  <h3 id="maintenanceconsiderations-maintenanceimplications">Maintenance implications</h3>
 
   <p>At various times, you will have to take a ZooKeeper node down for maintenance, either a voter
   node or an observer node. For example, you might have to upgrade the version of Edge on the node,
@@ -178,13 +160,13 @@ ZK_CLIENT_HOSTS="$IP7 $IP8 $IP9"
   the performance of the ZooKeeper ensemble until the node is restored. If the node is a voter
   node, it can impact the viability of the ZooKeeper ensemble due to the loss of a node that
   participates in the leader election process. Regardless of the reason for the voter node going
-  down, it is important to maintain a quorum of available voter nodes. </p>
+  down, it is important to maintain a quorum of available voter nodes.</p>
 
-  <h3 id="maintenanceconsiderations-maintenanceprocedure">Maintenance Procedure</h3>
+  <h3 id="maintenanceconsiderations-maintenanceprocedure">Maintenance procedure</h3>
 
   <p>You should consider performing any maintenance procedure only after ensuring that a ZooKeeper
   ensemble is functional. This assumes that observer nodes are functional and that there are enough
-  voter nodes available during maintenance to retain a quorum. </p>
+  voter nodes available during maintenance to retain a quorum.</p>
 
   <p>When these conditions are met, then a ZooKeeper ensemble of arbitrary size can tolerate the
   loss of a single node at any point with no loss of data or meaningful impact to performance. This
@@ -192,40 +174,32 @@ ZK_CLIENT_HOSTS="$IP7 $IP8 $IP9"
   node at a time. </p>
 
   <p>As part of performing maintenance, use the following procedure to determine the type of a
-  ZooKeeper node (leader, voter, or observer): </p>
+  ZooKeeper node (leader, voter, or observer):</p>
 
   <ol>
-    <li>If it is not installed on the ZooKeeper node, install nc:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt; sudo yum install nc</span></li>
-
-    <li>Run the following nc command on the node:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt; echo stat | nc localhost
-    2181</span><br>
-    <br>
-    Where 2181 is the ZooKeeper port. You should see output on the form:<br>
-    <span style="font-family:courier new,courier,monospace;">Zookeeper version: 3.4.5-1392090,
-    built on 09/30/2012 17:52 GMT<br>
-    Clients: /a.b.c.d:xxxx[0](queued=0,recved=1,sent=0)<br>
-    Latency min/avg/max: 0/0/0<br>
-    Received: 1<br>
-    Sent: 0<br>
-    Connections: 1<br>
-    Outstanding: 0<br>
-    Zxid: 0xc00000044<br>
-    <strong>Mode: follower</strong><br>
-    Node count: 653</span><br>
-    <br>
-    In the <span style="font-family:courier new,courier,monospace;">Mode</span> line of the output
-    for the nodes, you should see <span style=
-    "font-family:courier new,courier,monospace;">observer</span>, <span style=
-    "font-family:courier new,courier,monospace;">leader</span>, or <span style=
-    "font-family:courier new,courier,monospace;">follower</span> (meaning a voter that is not the
-    leader) depending on the node configuration.<br>
-    <br>
-    <strong>Note</strong>: In a standalone installation of Edge with a single ZooKeeper node, the
-    <span style="font-family:courier new,courier,monospace;">Mode</span> is set to <span style=
-    "font-family:courier new,courier,monospace;">standalone</span>.</li>
-
+    <li>If it is not installed on the ZooKeeper node, install nc:
+      <pre class="devsite-terminal">sudo yum install nc</pre>
+    </li>
+    <li>Run the following nc command on the node:
+      <pre class="devsite-terminal">echo stat | nc localhost 2181</pre>
+      <p>Where 2181 is the ZooKeeper port. You should see output on the form:
+      <pre>Zookeeper version: 3.4.5-1392090,
+built on 09/30/2012 17:52 GMT
+Clients: /a.b.c.d:xxxx[0](queued=0,recved=1,sent=0)
+Latency min/avg/max: 0/0/0
+Received: 1
+Sent: 0
+Connections: 1
+Outstanding: 0
+Zxid: 0xc00000044
+<strong>Mode: follower</strong>
+Node count: 653</pre>
+      <p>In the <code>Mode</code> line of the output for the nodes, you should see <code>observer</code>,
+      <code>leader</code>, or <code>follower</code> (meaning a voter that is not the leader)
+      depending on the node configuration.
+      <aside class="note"><strong>Note</strong>: In a standalone installation of Edge with a single
+      ZooKeeper node, the <code>Mode</code> is set to <code>standalone</code>.</aside>
+    </li>
     <li>Repeat steps 1 and 2 on each ZooKeeper node.</li>
   </ol>
 
@@ -233,21 +207,13 @@ ZK_CLIENT_HOSTS="$IP7 $IP8 $IP9"
 
   <p>The best way to perform maintenance on a ZooKeeper ensemble is to perform it one node at a
   time. Remember:</p>
-
   <ul>
     <li>You must maintain a quorum of voter nodes during maintenance to ensure the ZooKeeper
-    ensemble stays functional</li>
-
-    <li>Taking down an observer node does not affect the quorum or the ability to elect a leader
-     </li>
-
+      ensemble stays functional</li>
+    <li>Taking down an observer node does not affect the quorum or the ability to elect a leader</li>
     <li>The quorum is calculated across all ZooKeeper nodes in all Data Centers</li>
-
     <li>Proceed with maintenance to the next server after the prior server is operational</li>
-
-    <li>Use the nc command to inspect the ZooKeeper node</li>
+    <li>Use the <code>nc</code> command to inspect the ZooKeeper node</li>
   </ul>
 
-  <div>
-     
-  </div>{% endblock %}
+{% endblock %}

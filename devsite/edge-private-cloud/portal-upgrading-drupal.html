@@ -1,0 +1,108 @@
+{% extends "private-cloud/v4.18.05/_base.html" %}
+{% block title %}Upgrade Drupal{% endblock %}
+{% block body %}
+
+  <aside class="note"><strong>Note:</strong> This upgrade is for your Private Cloud installation of
+  Drupal only. For customers using a cloud deployment of the portal, Apigee will automatically apply
+  all Drupal security updates.</aside>
+
+  <p>In an Edge for Private Cloud installation of {{portal_1st_use}}, you might get a
+  notification that a new version of Drupal is available. A new version can mean a Drupal feature
+  release, patch, security update, or other type of Drupal update. In the case of a security
+  update, you want to upgrade your installation of Drupal as soon as possible to ensure that your
+  site remains secure.</p>
+
+  <p>The procedure below describes how to update a Private Cloud installation of Drupal 7.x.y to
+  another minor version (for example Drupal 7.54 to 7.56).</p>
+
+  <p>Please note the following:</p>
+
+  <ul>
+    <li>
+      <p>This procedure only updates your installation of Drupal. It does not update the Apigee
+      software that ships as part of the portal. For information on upgrading the Apigee portal
+      software, see <a href="portal-upgrading">Upgrade the portal</a>.</p>
+    </li>
+    <li>You have to run Drush commands from the root directory of the portal site. By default, the
+    portal is installed at:
+      <ul>
+        <li><code>/opt/apigee/apigee-drupal/wwwroot</code> (Nginx)</li>
+        <li><code>/var/www/html</code> (Apache)</li>
+      </ul>The procedure below assumes an Nginx server installation at the default location above.
+    </li>
+  </ul>
+
+  <h2 id="determiningyourcurrentdrupalversion">Determining your current Drupal version</h2>
+
+  <p>Before you start the Drupal update, you can determine your current Drupal version by running
+  the following command from the Drupal installation folder. By default, Drupal is installed in
+  <code>/opt/apigee/apigee-drupal/wwwroot</code>:</p>
+
+  <pre class="devsite-terminal">cd /opt/apigee/apigee-drupal/wwwroot</pre>
+  <pre class="devsite-terminal">drush status | grep 'Drupal version'</pre>
+
+  <p>You should see output in the form:</p>
+  <pre class="prettyprint">
+Drupal version          :  7.54
+</pre>
+
+  <p>If you installed Drupal in a directory other than <code>/opt/apigee/apigee-drupal/wwwroot</code>,
+  make sure to change to that directory before running the <code>drush</code> command.</p>
+
+  <h2 id="updatingthedrupalversion">Updating the Drupal version</h2>
+
+  <p>This section describes how to use <a href="https://www.drush.org" class="external">Drush</a>
+  (Drupal Shell) from a command line to update your Drupal version. See also,
+  <a href="https://www.drupal.org/node/2550801" class="external">Updating Drupal Using Drush</a> in the Drupal documentation.</p>
+
+  <aside class="note"><b>Note:</b> If your portal is on a server with no external internet
+  connection, then download the drupal installation to a server with internet access, copy the
+  drupal-x.y directory to your portal server, and follow the steps described in the
+  <a href="https://www.drupal.org/docs/7/upgrade-to-drupal-7/read-upgradetxt" class="external">README.txt</a>
+  file in the Drupal documentation.</aside>
+
+  <p>To update your Drupal installation:</p>
+
+  <ol>
+    <li>Change to the <code>/opt/apigee/apigee-drupal/wwwroot</code>
+      directory, or the directory where you installed the portal.</li>
+    <li>Make a full backup of all files, directories, and databases. Save the backup in a location
+      outside of the Drupal installation. For complete instructions, see
+      <a href="/private-cloud/latest/backup-portal">Back up the portal</a>.
+      <p>If you made modifications to files such as <code>.htaccess</code>,
+      <code>robots.txt</code>, or <code>defaults.settings.php</code> (in the <code>sites</code>
+      directory), you will have to reapply the changes after the update. You will also need to
+      reapply any customizations made in the <code>sites/all</code> directory.</p>
+    </li>
+
+    <li>Put your site into maintenance mode:
+      <pre class="devsite-terminal">drush vset --exact maintenance_mode 1</pre>
+      <pre class="devsite-terminal">drush cache-clear all</pre>
+    </li>
+
+    <li>Install the desired version of Drupal by using the following command:
+      <pre class="devsite-terminal">drush pm-update drupal-7.56</pre>
+      <aside class="note"><strong>Note:</strong> Replace 7.56 with the desired version.</aside>
+      <p>Alternatively, you can run <code>drush pm-update drupal</code> to update to the latest Drupal
+      core version. You can run <code>drush pm-updatestatus</code> to list available
+      minor updates to Drupal core and contrib projects.</p>
+    </li>
+    <li>Reapply any changes made to <code>.htaccess</code>, <code>robots.txt</code>,
+      or <code>defaults.settings.php</code> (in
+      the <code>sites</code> directory).</li>
+    <li>Reapply any changes made to the <code>sites/all </code>directory.</li>
+
+    <li>Take your site out of maintenance mode: <br>
+      <pre class="devsite-terminal">drush vset --exact maintenance_mode 0</pre>
+      <pre class="devsite-terminal">drush cache-clear all</pre>
+    </li>
+  </ol>
+
+  <h2 id="whatifiencounteranissueduringtheupdate">What if I encounter an issue during the
+  update?</h2>
+
+  <p>Restore your site to its previous state using the backup files that you created. Contact your
+  Apigee support representative and provide any error messages that were reported during the
+  update.</p>
+
+{% endblock %}

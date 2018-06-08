@@ -1,0 +1,520 @@
+{% extends "private-cloud/v4.18.05/_base.html" %}
+{% block title %}Install the portal{% endblock %}
+{% block body %}
+
+  <aside class="note"><strong>Note:</strong> Do not install the portal on the same servers as Apigee
+  Edge.</aside>
+
+  <p>Before you install {{portal_1st_use}}, ensure that:</p>
+  <ul>
+    <li>You install Postgres before installing the portal. You can either install Postgres as part
+    of installing Edge, or install Postgres standalone for use by the portal.
+      <ul>
+        <li>If you install Postgres standalone, it can be on the same node as the portal.</li>
+        <li>If you are connecting to Postgres installed as part of Edge, and Postgres is configured
+          in master/standby mode, specify the IP address of the master Postgres server. </li>
+      </ul>
+    </li>
+    <li>You are performing the install on the 64-bit version of a supported version of Red Hat
+    Enterprise Linux, CentOS, or Oracle. See the list of supported versions at
+    <a href="/release/supported-software">Supported software and supported versions</a>. </li>
+    <li>Yum is installed.</li>
+  </ul>
+
+  <h2 id="installationoverview">Installation overview</h2>
+
+  <aside class="note"><strong>Note:</strong> Do not install the portal on the same servers as Apigee
+  Edge.</aside>
+
+  <p>After you install the <code>apigee-setup</code> utility on a node, use that utility to install
+  the portal on the node. The <code>apigee-setup</code> utility has the form:</p>
+
+  <pre class="devsite-terminal">sudo /opt/apigee/apigee-setup/bin/setup.sh -p <var>component</var> -f <var>configFile</var></pre>
+
+  <p>Pass a configuration file to the <code>apigee-setup</code> utility that contains the
+  information about the installation. If the configuration file is missing any required
+  information, the <code>apigee-setup</code> utility prompts you to enter it on the command
+  line.</p>
+
+  <p>The only requirement is that the configuration file must be accessible or readable by the
+  "apigee" user.</p>
+
+  <p>For example, use the following command to install the portal:</p>
+  <pre class="devsite-terminal">sudo /opt/apigee/apigee-setup/bin/setup.sh -p dp -f <var>myConfig</var></pre>
+
+  <p>See <a href="install-edge-apigee-setup-utility">Install the Edge apigee-setup utility</a>
+  for more.</p>
+
+  <h2 id="deprecationofthesmtpsslproperty">Deprecation of the SMTPSSL property</h2>
+
+  <p>In previous releases, you used the <code>SMTPSSL</code> property to
+  set the protocol used by the SMTP server connected to the portal. That property has been
+  deprecated.</p>
+
+  <p>You now use the <code>SMTP_PROTOCOL</code> property,
+  instead of the <code>SMTPSSL</code> property, to set the
+  protocol used by the SMTP server connected to the portal. The valid values are: "standard",
+  "ssl", or "tls".</p>
+
+  <h2 id="creatingaconfigurationfile">Create a portal configuration file</h2>
+
+  <p>Shown below is an example silent configuration file for a portal installation. Edit this file
+  as necessary for your configuration. Use the -f option to <code>setup.sh</code> to include this
+  file.</p>
+
+  <aside class="note"><strong>Note:</strong> Do not set the <code>DEVPORTAL_ADMIN_USERNAME=admin</code>. The
+  <code>admin</code> user account is created by default. If specified, an error message is returned
+  prompting you to configure a different username.</aside>
+
+  <pre class="prettyprint">
+IP1=IPorDNSnameOfNode
+
+# Must resolve to IP address or DNS name of host - not to 127.0.0.1 or localhost.
+HOSTIP=$(hostname -i)
+
+# Specify the name of the portal database in Postgres.
+PG_NAME=devportal
+
+# Specify the Postgres admin credentials.
+# The portal connects to Postgres by using the 'apigee' user.
+# If you changed the Postgres password from the default of 'postgres'
+# then set PG_PWD accordingly.
+# If connecting to a Postgres node installed with Edge,
+# contact the Edge sys admin to get these credentials.
+PG_USER=apigee
+PG_PWD=postgres
+
+# The IP address of the Postgres server.
+# If it is installed on the same node as the portal, specify that IP.
+# If connecting to a remote Postgres server,specify its IP address.
+PG_HOST=$IP1
+
+# The Postgres user credentials used by the portal
+# to access the Postgres database,
+# This account is created if it does not already exist.
+DRUPAL_PG_USER=drupaladmin
+DRUPAL_PG_PASS=portalSecret
+
+# Specify 'postgres' as the database.
+DEFAULT_DB=postgres
+
+# Specify the Drupal admin account details.
+# DO NOT set DEVPORTAL_ADMIN_USERNAME=admin.
+# The installer creates this user on the portal.
+DEVPORTAL_ADMIN_FIRSTNAME=firstName
+DEVPORTAL_ADMIN_LASTNAME=lastName
+DEVPORTAL_ADMIN_USERNAME=userName
+DEVPORTAL_ADMIN_PWD=<var>PORTAL_ADMIN_PASSWORD</var>
+DEVPORTAL_ADMIN_EMAIL=foo@bar.com
+
+# Edge connection details.
+# If omitted, you can set them in the portal UI.
+# Specify the Edge organization associated with the portal.
+EDGE_ORG=edgeOrgName
+
+# Specify the URL of the Edge management API.
+# For a Cloud based installation of Edge, the URL is:
+# https://api.enterprise.apigee.com/v1
+# For a Private Cloud installation, it is in the form:
+# http://<var>ms_IP_or_DNS</var>:8080/v1 or
+# https://<var>ms_IP_or_DNS</var>:TLSport/v1
+MGMT_URL=https://api.enterprise.apigee.com/v1
+
+# The org admin credentials for the Edge organization in the form
+# of Edge emailAddress:pword.
+# The portal uses this information to connect to Edge.
+DEVADMIN_USER=orgAdmin@myCorp.com
+DEVADMIN_PWD=<var>ORG_ADMIN_PASSWORD</var>
+
+# The PHP port.
+# If omitted, it defaults to 8888.
+PHP_FPM_PORT=8888
+
+# Optionally configure the SMTP server used by the portal.
+# If you do, the properties SMTPHOST and SMTPPORT are required.
+# The others are optional with a default value as notated below.
+# SMTP hostname. For example, for the Gmail server, use smtp.gmail.com.
+SMTPHOST=smtp.gmail.com
+
+# Set the SMTP protocol as "standard", "ssl", or "tls",
+# where "standard" corresponds to HTTP.
+# Note that in previous releases, this setting was controlled by the
+# SMTPSSL property. That property has been deprecated.
+SMTP_PROTOCOL="standard"
+
+# SMTP port (usually 25).
+# The value can be different based on the selected encryption protocol.
+# For example, for Gmail, the port is 465 when using SSL and 587 for TLS.
+SMTPPORT=25
+
+# Username used for SMTP authentication, defaults is blank.
+SMTPUSER=your@email.com
+
+# Password used for SMTP authentication, default is blank.
+SMTPPASSWORD=<var>YOUR_EMAIL_PASSWORD</var></pre>
+
+  <h2 id="1testyourconnectiontoapigeeedge">1. Test your connection to Apigee Edge</h2>
+
+  <p>Test your connection between the server you're going to install the portal on and the Edge
+  management server by executing the following <code>curl</code> command on the portal server:</p>
+  <pre class="devsite-terminal">curl -u <var>EMAIL</var>:<var>PASSWORD</var> http://<var>ms_IP_or_DNS</var>:8080/v1/organizations/<var>ORGNAME</var></pre>
+
+  <p>or:</p>
+  <pre class="devsite-terminal">curl -u <var>EMAIL</var>:<var>PASSWORD</var> https://<var>ms_IP_or_DNS</var>:<var>TLSPort</var>/v1/organizations/<var>ORGNAME</var></pre>
+
+  <p>Where <var>EMAIL</var> and <var>PASSWORD</var> are the email address and password of the
+  administrator for <var>ORGNAME</var>.</p>
+
+  <p>Be sure to specify the hostname and port number specific to your installation of Edge. Port
+  8080 is the default port used by Edge. If you are connecting to an organization in the cloud,
+  then the request URL is: <code>https://api.enterprise.apigee.com/v1/organizations/<var>ORGNAME</var></code>.</p>
+
+  <p>If successful, <code>curl</code> returns a response similar to the following:</p>
+
+  <pre class="prettyprint">{
+  "createdAt" : 1348689232699,
+  "createdBy" : "USERNAME",
+  "displayName" : "cg",
+  "environments" : [ "test", "prod" ],
+  "lastModifiedAt" : 1348689232699,
+  "lastModifiedBy" : "foo@bar.com",
+  "name" : "cg",
+  "properties" : {
+    "property" : [ ]
+  },
+  "type" : "trial"
+}</pre>
+
+  <h2 id="2removepre70versionsofphp">2. Remove pre-7.0 versions of PHP</h2>
+
+  <p>The install script checks for pre-7.0 versions of PHP on the system before starting the
+  installation. If pre-7.0 versions of PHP exist, the following warning message displays:</p>
+
+  <pre class="prettyprint">The following packages present on your system conflict with software we are
+about to install. You will need to manually remove each one, then re-run this install script.
+
+php
+php-cli
+php-common
+php-gd
+php-mbstring
+php-mysql
+php-pdo
+php-pear
+php-pecl-apc
+php-process
+php-xml</pre>
+
+  <p>Remove the PHP packages using the following command:</p>
+  <pre class="devsite-terminal">yum remove <var>package_name</var></pre>
+
+  <aside class="note"><strong>Note:</strong> To remove PHP on CentOS 6.6, you might also have to
+  remove Ganglia, if it is installed.</aside>
+
+  <p>If you are not sure if PHP is installed on your server, use the following command:</p>
+  <pre class="devsite-terminal">rpm -qa | grep -i php</pre>
+
+  <h2 id="3installpostgres">3. Install Postgres</h2>
+
+  <aside class="note"><strong>Note:</strong> Do not install the portal on the same servers as Apigee
+  Edge.</aside>
+
+  <p>The portal requires Postgres to be installed before you can install the portal. You can either
+  install Postgres as part of installing Edge, or install Postgres standalone for use by the
+  portal.</p>
+
+  <ul>
+    <li>If you are connecting to Postgres installed as part of Edge, and Postgres is configured in
+      master/standby mode, specify the IP address of the master Postgres server.</li>
+    <li>If you install Postgres standalone, it can be on the same node as the portal.</li>
+  </ul>
+
+  <p>For information on installing Postgres as part of installing Edge, see
+  <a href="install-edge-components-node">Install Edge components on a node</a>.</p>
+
+  <p>To install Postgres standalone:</p>
+  <ol>
+    <li>Install the Edge <code>apigee-setup</code> utility on the node using the
+      internet or non-internet procedure. See
+    <a href="install-edge-apigee-setup-utility">Install the Edge apigee-setup utility</a> for more.</li>
+    <li>Create a Postgres configuration file, as the following example shows:
+      <pre class="prettyprint"># Must resolve to IP address or DNS name of host - not to 127.0.0.1 or localhost
+HOSTIP=$(hostname -i)
+
+# The pod and region of Postgres. Use the default values shown below.
+MP_POD=gateway
+REGION=dc-1
+
+# Set the Postgres password. The default value is 'postgres'.
+PG_PWD=postgres</pre>
+    </li>
+    <li>At the command prompt, run the setup script to install Postgres:
+      <pre  class="devsite-terminal">/opt/apigee/apigee-setup/bin/setup.sh -p pdb -f <var>postgres_config_file</var></pre>
+      <p>The <code>-p pdb</code> option specifies to install Postgre. The configuration file must
+      be accessible or readable by the "apigee" user.</p>
+    </li>
+  </ol>
+
+  <h2 id="4installtheportal">4. Install the portal</h2>
+
+  <p>Before you can install the portal, be sure that you have done the following as described in
+  <a href="#3installpostgres">3. Install Postgres</a>:</p>
+  <ol>
+    <li>Install the Edge <code>apigee-setup</code> utility on portal's node</li>
+    <li>Install Postgres, either Postgres standalone or as part of installing Edge</li>
+  </ol>
+
+  <p>To install the portal:</p>
+  <ol>
+    <li>At the command prompt, run the <code>setup</code> script:
+      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/setup.sh -p dp -f <var>configFile</var></pre>
+      <p>Where:</p>
+      <ul>
+        <li><var>configFile</var> is the portal configuration file as described in
+          <a href="#creatingaconfigurationfile">Create a portal configuration file</a>.
+          <aside class="note">The configuration file must be accessible or readable by the "apigee"
+          user.</aside>
+        </li>
+        <li><code>-p dp</code> instructs the <code>setup</code> script to install the portal.</li>
+      </ul>
+    </li>
+  </ol>
+
+  <p>To verify that the portal installation was successful:</p>
+    <ol>
+      <li>Navigate to the portal home page at <code>http://localhost:8079</code> or to the DNS name
+        of your portal.</li>
+      <li>Log in to the portal using the administrator credentials that you set in the portal
+        configuration file.</li>
+      <li>Select <strong>Reports &gt; Status Report</strong> in the Drupal menu to ensure that you
+        can see the current status of the portal.</li>
+      <li>Be sure that the Management Server connection was successful. If it was not:
+        <ol>
+          <li>Navigate to the portal Connection Configuration page (for example,
+            <code>http://<var>portal_IP</var>:8079/admin/config/devconnect</code>).</li>
+          <li>Click the <strong>Test Connection</strong> button. If the connection is successful,
+            you are done. If the connection fails, continue.</li>
+          <li>Check the endpoint and authentication settings:
+            <ul>
+              <li><strong>Management API endpoint URL:</strong> Check that the protocol (HTTP or
+                HTTPS), IP or DNS name, and port number are correct; for example:
+                <pre>http://10.10.10.10:8080/v1</pre>
+              </li>
+              <li><strong>Endpoint authenticated user:</strong> The organization admin's
+                username.</li>
+              <li><strong>Authenticated user's password</strong>: The organization admin's
+                password.</li>
+            </ul>
+            <p>The default values reflect the settings in your portal configuration file that you
+            created during the installation process.</p>
+            <p>These values should match the <var>ms_IP_or_DNS</var>, <var>email</var>, and
+            <var>password</var> values you used in step
+            <a href="#1testyourconnectiontoapigeeedge">1: Test your connection to Apigee Edge</a>.
+            The username and password should also match the values of the <code>USER_NAME</code>
+            and <code>USER_PWD</code> properties in the
+            <a href="onboard-organization#config">onboarding configuration file</a>, or the
+            credentials of any user whose role is Organization Administrator.</p>
+          </li>
+          <li>After you successfully connect to the Management Server, click the <strong>Save
+            configuration</strong> button at the bottom of the page to save your changes.</li>
+        </ol>
+      </li>
+  </ol>
+
+  <h2 id="5ensurethattheupdatemanagermoduleisenabled">5. Ensure that the Update manager module is
+  enabled</h2>
+
+  <p>To receive notifications of Drupal updates, ensure that the Drupal Update manager module is
+  enabled. From the Drupal menu, select <strong>Modules</strong> and scroll down to the
+  <strong>Update manager</strong> module. If it is not enabled, enable it. </p>
+
+  <p>Once enabled, you can see the available updates by using the <strong>Reports &gt; Available
+  Updates</strong> menu item. You can also use the following Drush command:</p>
+
+  <pre class="devsite-terminal">drush pm-info update</pre>
+
+  <p>You have to run this command from the root directory of the site. By default, the
+  portal is installed at <code>/opt/apigee/apigee-drupal/wwwroot</code>. Therefore,
+  you should first change directory to <code>/opt/apigee/apigee-drupal/wwwroot</code> before
+  running the command. If you did not install the portal in the default directory, change to your
+  installation directory.</p>
+
+  <p>Use the <strong>Reports &gt; Available Updates &gt; Settings</strong> menu item to configure
+  the module to email you when updates are available and to set the frequency for checking for
+  updates.</p>
+
+  <h2 id="6configuretheapachesolrsearchengineoptional">6. Configure the Apache Solr search engine
+  (Optional)</h2>
+
+  <p>By default, the Drupal modules that connect to the Apache Solr search engine are disabled when
+  you install the portal. Most portals use the internal Drupal search engine, and therefore do not
+  require the Drupal Solr modules.</p>
+
+  <p>If you decide to use Solr as your search engine, you must install Solr locally on your server
+  and then enable and configure the Drupal Solr modules on the portal.</p>
+
+  <p>To enable the Drupal Solr modules:</p>
+  <ol>
+    <li>Log in to your portal as a user with admin or content creation privileges.</li>
+    <li>Select <strong>Modules</strong> in the Drupal menu.</li>
+    <li>Enable the <strong>Apache Solr Framework</strong> module and the <strong>Apache Solr
+      Search</strong> module.</li>
+    <li>Save your changes.</li>
+    <li>Configure Solr as described at <a href="https://www.drupal.org/node/1999280" class="external">https://drupal.org/node/1999280</a>.</li>
+  </ol>
+
+  <h2 id="7installsmartdocsoptional">7. Install SmartDocs (Optional)</h2>
+
+  <p>SmartDocs lets you document your APIs on the portal in a way that makes the
+  API documentation fully interactive. However, to use SmartDocs with the portal, you must first
+  install SmartDocs on Edge.</p>
+
+  <ul>
+    <li>If you are connecting the portal to an Edge Cloud installation, SmartDocs is already
+      installed and no further configuration is necessary.</li>
+    <li>If you are connecting the portal to an Edge for Private Cloud installation, you must ensure
+      that SmartDocs is installed on Edge. For more on installing Edge and SmartDocs, see
+      <a href="install-smartdocs">Install SmartDocs</a>.</li>
+  </ul>
+
+  <p>You must also enable SmartDocs on the portal. For more information on SmartDocs, see
+  <a href="/api-platform/publish/drupal/using-smartdocs-document-apis">Using SmartDocs to document
+  APIs</a>.</p>
+
+  <h2 id="8configurethejqueryupdatemodulefornoninternetinstallationsoptional">8. Configure the
+  JQuery Update module for non-internet installations (Optional)</h2>
+
+  <p>If you install and use the JQuery Update module in a non-internet installation, you need to
+  configure the module to use the local version of JQuery. If you configure the module to use a CDN
+  for a non-internet installation, it will attempt to access the CDN and cause delays with page
+  loading. For more information about the JQuery Update module see
+  <a href="https://www.drupal.org/project/jquery_update" class="external">https://www.drupal.org/project/jquery_update</a>.</p>
+
+  <p>To configure the JQuery Update module to use the local version of JQuery:</p>
+
+  <ol>
+    <li>Log in to your portal as a user with admin or content creation privileges.</li>
+    <li>Select <strong>Configuration &gt; Development &gt; JQuery Update</strong> in the Drupal menu.</li>
+    <li>Click <strong>Performance</strong> in the left navigation.</li>
+    <li>In the JQuery and JQuery UI CDN drop-down select <strong>None</strong>.</li>
+    <li>Click <strong>Save configuration</strong>.</li>
+  </ol>
+
+  <h2 id="9whatnext">9. Next steps</h2>
+
+  <p>The following table lists some of the most common tasks that you perform after installation,
+  and includes links to the Apigee documentation where you can find more information:</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <th>Task</th>
+        <th>Description</th>
+      </tr>
+      <tr>
+        <td>
+          <p><a href="/api-platform/publish/drupal/customizing-theme">Customizing the theme</a></p>
+        </td>
+        <td>
+          <p>The theme defines the appearance of the portal, including colors, styling, and other
+          visual aspects.</p>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <p><a href="/api-platform/publish/drupal/customize-appearance">Customize the appearance</a></p>
+        </td>
+        <td>
+          <p>The home page includes the main menu, welcome message, header, footer, and title.</p>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <p><a href="/api-platform/publish/drupal/add-and-manage-user-accounts">Add and
+          manage user accounts</a></p>
+        </td>
+        <td>
+          <p>The registration process controls how new developers register an account on the
+          portal. For example, do new developers get immediate access to the portal, or do they
+          have to be verified by an administrator. This process also controls how a portal
+          administrator is notified when a new account is created.</p>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <p><a href="/api-platform/publish/drupal/configuring-email">Configuring email</a></p>
+        </td>
+        <td>
+          <p>The portal sends emails in response to certain events. For example, when a new
+          developer registers on the portal and when a developer loses their password.</p>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <p><a href="/api-platform/publish/drupal/add-and-manage-user-accounts">Add and
+          manage user accounts</a></p>
+        </td>
+        <td>
+          <p>Add a Terms &amp; Conditions page that developers must accept before being allowed to
+          access the portal.</p>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <p><a href="/api-platform/publish/drupal/add-and-manage-user-accounts">Add and
+          manage user accounts</a></p>
+        </td>
+        <td>
+          <p>The portal implements a role-based authorization model. Before allowing developers to
+          register, define the permissions and roles used by the portal.</p>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <p><a href="/api-platform/publish/drupal/add-blog-and-forum-posts">Add blog and forum posts</a></p>
+        </td>
+        <td>
+          <p>The portal has built-in support for blogs and threaded forums. Define the permissions
+          required to view, add, edit, and delete blog and forum posts.</p>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <p>Ensure you are doing database backups</p>
+        </td>
+        <td>
+          <p>Ensure that you are backing up the Drupal database. Note that because every
+          installation is different, it is up to you to determine how best to back up the
+          database.</p>
+          <aside class="note"><strong>Note</strong>: The Backup and Migrate module is not compatible
+          with Postgres databases.</aside>
+          <p>See also <a href="how-perform-backup">How to Perform a Backup</a>.</p>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <p>Set up a hostname</p>
+        </td>
+        <td>
+          <p>If you do not set up a hostname in your DNS server, you can always access the site via
+          the server's IP address. If you want to use a hostname, you can configure DNS for
+          the server, which should work correctly without any other configuration on a basic
+          setup.</p>
+          <p>If you set up a load balancer or are getting incorrect URLs on your site for some
+          other reason, you can set $base_url in the Dev Portal <strong>settings.php</strong> file,
+          which by default is located in the
+          <strong>/opt/apigee/apigee-drupal/wwwroot/sites/default</strong> directory.</p>
+        </td>
+      </tr>
+      <tr>
+        <td>Custom development</td>
+        <td>You may also want to extend your portal's capabilities with custom code outside of your
+          theme. To do this, create your own Drupal module as described in Drupal's
+          <a href="https://www.drupal.org/module-development" class="external">module
+          development</a> topics, and put the module in the <code>/sites/all/modules</code>
+          directory.</td>
+      </tr>
+    </tbody>
+  </table>
+
+{% endblock %}

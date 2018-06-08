@@ -1,63 +1,68 @@
-  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}Onboard an organization{% endblock %} {% block body %}
+{% extends "private-cloud/v4.18.05/_base.html" %}
+{% block title %}Onboard an organization{% endblock %}
+{% block body %}
 
-  <p>Use the <span style="font-family:courier new,courier,monospace;">setup-org</span> command to
-  perform the onboarding process. You must run the command on the Management Server node.</p>
+  <p>Use the <code>setup-org</code> script to perform the onboarding process. You must run the
+  script on the Management Server node.</p>
 
-  <p>As part of the onboarding process, the script:</p>
-
-  <ul>
-    <li>Creates the organization.</li>
-
-    <li>Sets the specified user as the organization admin.
-
-      <ul>
-        <li>This user must be different from the sys admin user. That is, do not use the sys admin
-        user as an org admin user.</li>
-
-        <li>You can specify an existing user for the organization admin, or configure the script to
-        create a new user.  </li>
-      </ul>
+  <p><strong>To onboard an organization:</strong></p>
+  <ol>
+    <li>Install <code>apigee-provision</code> on the Management Server node:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-provision install</pre>
     </li>
+    <li>Run the <code>setup-org</code> script on the Management Server node:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-provision setup-org -f <var>configFile</var></pre>
+      <p>The configuration file must be readable by the "apigee" user. For an example configuration
+      file, see <a href="#config">Onboarding configuration file</a>.</p>
+    </li>
+    <li>Verify that you have successfully onboarded an organization. One way to do this is to log
+      into the UI by requesting the following URL in a browser:
+      <pre>http://<var>IP_address</var>:9000/login</pre>
+      <p>Where <var>IP_address</var> is the IP address of the server on which you installed the Edge
+      UI.</p>
+      <p>For additional verification steps, see <a href="#verify">Verify the onboarding</a>.</p>
+    </li>
+    <li><a href="#proxy">Create your first proxy!</a></li>
+  </ol>
 
-    <li>Associates the organization with a pod, by default is associates it with the "gateway"
-    pod.</li>
+  <h2 id="config">Onboarding configuration file</h2>
 
-    <li>Create an environment.</li>
+  <p>To perform a silent configuration with the <code>setup-org</code> script, pass a configuration
+  file with the <code>-f</code> option, as the following example shows:</p>
+  <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-provision setup-org -f <var>configFile</var></pre>
 
-    <li>Create a virtual host for the environment.</li>
+  <aside class="note">The configuration file must be readable by the "apigee" user.</aside>
 
-    <li>Associate the environment with all Message Processor(s).</li>
+  <p>This section includes a sample configuration file for onboarding an organzation with
+  <code>setup-org</code>.</p>
 
-    <li>Enables analytics.</li>
-  </ul>
+  <p>When onboarding an organization, the <code>setup-org</code> script does the following:</p>
+      <ul>
+        <li>Creates a new organization.</li>
+        <li>Creates an environment.</li>
+        <li>Creates a virtual host for the environment.</li>
+        <li>Sets the specified user as the organization admin. Note that:
+          <ul>
+            <li>You can use an existing user or create a new one for the organization admin.</li>
+            <li>The organization admin <strong>must not be</strong> the same as the sys admin.</li>
+          </ul>
+        </li>
+        <li>Associates the organization with the "gateway" pod. (This is the default and cannot be
+          changed.)</li>
+        <li>Associates the environment with all Message Processor(s).</li>
+        <li>Enables analytics.</li>
+      </ul>
 
-  <aside class="note"><b>Note:</b> You cannot create two organizations with the same name. In that
-  case, the second create will fail </aside>
+  <p>Copy the following example and edit as necessary to onboard your organization:</p>
 
-  <h2 id="configurationfileforonboarding">Configuration file for onboarding</h2>
-
-  <p>Pass a configuration file to the <span style=
-  "font-family:courier new,courier,monospace;">setup-org</span> command. Invoke the <span style=
-  "font-family:courier new,courier,monospace;">setup-org</span> command and specify the -f option,
-  including the path to the silent configuration file:</p>
-  <pre class="prettyprint">
-&gt; /opt/apigee/apigee-service/bin/apigee-service apigee-provision setup-org -f <em><strong>configFile</strong></em>
-</pre>
-
-  <p>The only requirement on silent installations is that the configuration file must be accessible
-  or readable by the "apigee" user.  </p>
-
-  <p>Shown below is an example silent configuration file. Edit it as necessary for your
-  requirements:</p>
-  <pre class="prettyprint">
-IP1=192.168.1.1
+  <pre class="prettyprint">IP1=192.168.1.1
 
 # Specify the IP or DNS name of the Management Server.
 MSIP="$IP1"
 
 # Specify the Edge sys admin credentials.
 ADMIN_EMAIL="admin@email.com"
-APIGEE_ADMINPW=adminPassword     # If omitted, you are prompted for it.
+APIGEE_ADMINPW=<var>adminPassword</var>     # If omitted, you are prompted for it.
 
 # Specify organization name.
 ORG_NAME=myorg  # lowercase only, no spaces, underscores, or periods.
@@ -67,13 +72,15 @@ ORG_NAME=myorg  # lowercase only, no spaces, underscores, or periods.
 # necessary to create a new user.
 # Do not use the sys admin as the organization administrator.
 #
-# Create a new user for the organization administrator. 
+# Create a new user for the organization administrator.
 NEW_USER="y"
 # New user information if NEW_USER="y".
 USER_NAME=new@user.com
 FIRST_NAME=new
 LAST_NAME=user
-USER_PWD="newUserPword"
+# Org admin password must be at least 8 characters long and contain one uppercase
+# letter, one lowercase letter, and one digit or special character
+USER_PWD="<var>newUserPword</var>"
 ORG_ADMIN=new@user.com
 #
 # Or, specify an existing user as the organization admin,
@@ -81,7 +88,7 @@ ORG_ADMIN=new@user.com
 # NEW_USER="n"
 # ORG_ADMIN=existing@user.com
 
-# Specify environment name. 
+# Specify environment name.
 ENV_NAME=prod
 
 # Specify virtual host information.
@@ -91,134 +98,105 @@ VHOST_NAME=default
 # If you have a DNS entry for the virtual host.
 VHOST_ALIAS=myorg-test.apigee.net
 
-# If you do not have a DNS entry for the virtual host, 
+# If you do not have a DNS entry for the virtual host,
 # specify the IP and port of each router as a space-separated list:
-# VHOST_ALIAS="firstRouterIP:9001 secondRouterIP:9001" 
+# VHOST_ALIAS="firstRouterIP:9001 secondRouterIP:9001"
 
 # Optionally configure TLS/SSL for virtual host.
 # VHOST_SSL=y     # Set to "y" to enable TLS/SSL on the virtual host.
 # KEYSTORE_JAR=   # JAR file containing the cert and private key.
-# KEYSTORE_NAME=  # Name of the keystore. 
+# KEYSTORE_NAME=  # Name of the keystore.
 # KEYSTORE_ALIAS= # The key alias.
-# KEY_PASSWORD=   # The key password, if it has one. 
+# KEY_PASSWORD=   # The key password, if it has one.
 
-# Specify the analytics group. 
+# Specify the analytics group.
 # AXGROUP=axgroup-001 # Default name is axgroup-001.
 </pre>
 
   <p><strong>Notes</strong>:</p>
-
   <ul>
-    <li>For <span style="font-family:courier new,courier,monospace;">VHOST_ALIAS</span>, if you
-    already have a DNS record that you will use to access to the virtual host, specify the host
-    alias and optionally the port, for example, &#8220;myapi.example.com&#8221;. If you do not
-    yet have a DNS record, you can use the IP address of the Router.<br>
-    <br>
-    For more on how to configure the virtual host, see <a href="setting-virtual-host.html">Setting
-    up a virtual host</a>.</li>
-
-    <li>For TLS/SSL configuration, see <a href=
-    "/api-platform/system-administration/keystores-and-truststores.html">Keystores and
-    Truststores</a> and <a href=
-    "/api-platform/system-administration/creating-virtual-host.html">Configuring TLS access to an
-    API for the Private Cloud</a> for more information on creating the JAR file, and other aspects
-    of configuring TLS/SSL.</li>
-
-    <li>For more on configuring virtual hosts, see <a href=
-    "/api-platform/system-administration/creating-virtual-host.html">Configuring TLS access to an
-    API for the Private Cloud</a>.</li>
+    <li>For <code>VHOST_ALIAS</code>, if you
+      already have a DNS record that you will use to access to the virtual host, specify the host
+      alias and optionally the port, for example, "myapi.example.com". If you do not yet have a DNS
+      record, you can use the IP address of the Router.<br>
+      <p>For more on how to configure the virtual host, see <a href="setting-virtual-host">Setting
+      up a virtual host</a>.</p>
+    </li>
+    <li>For TLS/SSL configuration, see <a href="/api-platform/system-administration/keystores-and-truststores">Keystores and
+      Truststores</a> and <a href="/api-platform/system-administration/creating-virtual-host">Configuring
+      TLS access to an API for the Private Cloud</a> for more information on creating the JAR file,
+      and other aspects of configuring TLS/SSL.</li>
+    <li>For more information on configuring virtual hosts, see <a href=
+      "/api-platform/system-administration/creating-virtual-host">Configuring TLS access to an
+      API for the Private Cloud</a>.</li>
+    <li>You cannot create two organizations with the same name. In that case, the second create will
+      fail.</li>
   </ul>
 
-  <h2 id="onboardingprocedure">Onboarding procedure</h2>
+  <p>For more information on using the management API to onboard an organization, see
+  <a href="creating-organization-environment-and-virtual-host">Creating an organization, environment,
+  and virtual host</a>.</p>
 
-  <ol>
-    <li>Install <span style="font-family:courier new,courier,monospace;">apigee-provision</span> on
-    the Management Server node:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    /opt/apigee/apigee-service/bin/apigee-service apigee-provision install</span></li>
-
-    <li>Run the command on the Management Server node:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    /opt/apigee/apigee-service/bin/apigee-service apigee-provision setup-org -f
-    <em><strong>configFile</strong></em><br>
-    <br>
-    <span style="font-family:arial,helvetica,sans-serif;">The configuration file must be accessible
-    or readable by the "apigee" user. </span></span></li>
-  </ol>
-
-  <h2 id="onboardingverification">Onboarding verification </h2>
+  <h2 id="verify">Verify the onboarding</h2>
 
   <p>On completion of onboarding, verify the status of the system by issuing the following CURL
-  commands on the  Management Server node.  </p>
+  commands on the Management Server node:</p>
 
   <ol>
-    <li>Check for user and organization status on the Management Server by issuing the following
-    CURL commands:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt; curl -u
-    &lt;adminEmail&gt;:&lt;admin passwd&gt; http://localhost:8080/v1/users<br>
-    &gt; curl -u &lt;adminEmail&gt;:&lt;admin passwd&gt; http://localhost:8080/v1/organizations<br>
-    &gt; curl -u &lt;adminEmail&gt;:&lt;admin passwd&gt;
-    http://localhost:8080/v1/organizations/&lt;orgname&gt;/deployments</span></li>
-
-    <li>If you enabled analytics, then use this command:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt; curl -u
-    &lt;adminEmail&gt;:&lt;admin passwd&gt;
-    http://localhost:8080/v1/organizations/&lt;orgname&gt;/environments/&lt;envname&gt;/provisioning/axstatus</span></li>
-
-    <li>You can also check the PostgreSQL database status by running the following command on
-    Machine 2 to start psql:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt; psql -h
-    /opt/apigee/var/run/apigee-postgresql -U apigee apigee</span><br>
-    <br>
-    At the command prompt, enter the following command to view the analytics table for your
-    organization:<br>
-    <span style="font-family:courier new,courier,monospace;">apigee=# : \d
-    analytics."&lt;orgname&gt;.prod.fact"</span><br>
-    <br>
-    Use the following command to exit psql:<br>
-    <span style="font-family:courier new,courier,monospace;">apigee=# \q</span></li>
-
-    <li>Access the Apigee Edge user interface using a web browser. Remember that you already noted
-    the management console URL at the end of the installation.
-
-      <ol style="list-style: lower-alpha outside">
+    <li>Check for user and organization status on the Management Server by executing the following
+      commands:
+      <pre class="devsite-terminal">curl -u <var>adminEmail:admin_passwd</var> http://localhost:8080/v1/users
+<code class="devsite-terminal">curl -u <var>adminEmail:admin_passwd</var> http://localhost:8080/v1/organizations</code>
+<code class="devsite-terminal">curl -u <var>adminEmail:admin_passwd</var> http://localhost:8080/v1/organizations/<var>orgname</var>/deployments</code></pre>
+    </li>
+    <li>Check analytics by executing the following command:
+      <pre class="devsite-terminal">curl -u <var>adminEmail:admin_password</var> http://localhost:8080/v1/organizations/<var>orgname</var>/environments/<var>envname</var>/provisioning/axstatus</pre>
+    </li>
+    <li>Check the PostgreSQL database status by executing the following commands on Machine 2:
+      <pre class="devsite-terminal">psql -h /opt/apigee/var/run/apigee-postgresql -U apigee apigee</pre>
+      <p>At the command prompt, enter the following command to view the analytics table for your
+      organization:</p>
+      <pre class="devsite-terminal" data-terminal-prefix="apigee=# ">\d analytics."<var>orgname</var>.prod.fact"</pre>
+      <p>Use the following command to exit psql:</p>
+      <pre class="devsite-terminal" data-terminal-prefix="apigee=# ">\q</pre>
+    </li>
+    <li>Access the Apigee Edge UI using a web browser. Remember that you already noted the
+      management console URL at the end of the installation.
+      <ol>
         <li>Launch your preferred browser and enter the URL of the Edge UI. It looks similar to the
-        following, where the IP address is for Machine 1, or for whichever machine you installed
-        the UI on for alternative configurations: <br>
-        <span style=
-        "font-family:courier new,courier,monospace;">http://192.168.56.111:9000/login</span><br>
-        <br>
-        9000 is the port number used by the UI. If you are starting the browser directly on the
-        server hosting the Edge UI, then you can use a URL in the form:<br>
-        <span style=
-        "font-family:courier new,courier,monospace;">http://localhost:9000/login</span><br>
-        <br>
-        <strong>Note</strong>: Ensure that port 9000 is open.</li>
-
-        <li>On the console login page, specify the Apigee system admin username/password.<br>
-        <strong>Note</strong>: This is the global system administrator password that you have set
-        during the installation. Alternately, you can:</li>
+          following, where the IP address is for Machine 1, or whichever machine on which you
+          installed the UI for alternative configurations:
+          <pre>http://192.168.56.111:9000/login</pre>
+          <p>9000 is the port number used by the UI.</p>
+          <p>If you are starting the browser directly on the server hosting the Edge UI, then you
+          can use a URL in the form:
+          <pre>http://localhost:9000/login</pre>
+          <aside class="note"><strong>Note</strong>: Ensure that port 9000 is open. If you are
+          using a service such as Google Cloud Engine, you may need to modify the firewall rules so
+          that you can access the Apigee services via a browser.</aside>
+        </li>
+        <li>On the console login page, specify the Apigee system admin username/password.
+          <aside class="note"><strong>Note</strong>: This is the global system administrator
+          password that you set during the installation.</aside></li>
       </ol>
     </li>
-
-    <li>Sign up for a new Apigee user account and use the new user credential to login.
-
-      <ol style="list-style: lower-alpha outside">
-        <li>Click Sign In, the browser redirects to:<br>
-        <span style=
-        "font-family:courier new,courier,monospace;">http://192.168.56.111:9000/platform/#/&lt;orgname&gt;/ </span><br>
-
-        <br>
-        and opens a dashboard which allows you to configure the organization created before (if
-        logged in using Apigee admin credentials).</li>
-
-        <li>If you are new to Edge, you can now create your first API proxy. For more information,
-        see {{gs_tutorial}}.<br>
-        <br>
-        Also see the sections on samples, including <a href=
-        "/api-platform/samples/samples-reference.html">Samples list</a>, and the mock target
-        RESTful APIs that you can use in your own API-building experiments at <a href=
-        "/api-platform/samples/mock-target-api.html">Mock Target API</a>.</li>
-      </ol>
+    <li>Sign up for a new Apigee user account and use the new user credential to login. On the
+      console sign in page, click the <strong>Sign In</strong> button.</p>
+      <p>The browser redirects to <code>http://192.168.56.111:9000/platform/#/<var>orgname</var>/</code>
+      and opens a dashboard that lets you configure the organization that you created (if you logged
+      in using Apigee admin credentials).</p>
     </li>
-  </ol>{% endblock %}
+  </ol>
+
+  <h2 id="proxy">Create your first proxy</h2>
+  <p>After you have onboarded a new organization and verified that the onboarding process was
+  successful, you can now create your first proxy. For more information, see {{gs_tutorial}}.</p>
+
+  <p>Other resources your might find helpful include:</p>
+  <ul>
+    <li><a href="/api-platform/samples/samples-reference">Samples list</a>
+    <li><a href="/api-platform/samples/mock-target-api">Mock target RESTful APIs that you can use
+      in your own API-building experiments</a>
+  </ul>
+
+{% endblock %}

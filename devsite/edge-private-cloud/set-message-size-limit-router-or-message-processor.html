@@ -1,5 +1,6 @@
-  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}Set the message size limit on
-  the Router or Message Processor{% endblock %} {% block body %}
+{% extends "private-cloud/v4.18.05/_base.html" %}
+{% block title %}Set the message size limit on the Router or Message Processor{% endblock %}
+{% block body %}
 
   <p>To prevent memory issues in Edge, message payload size on the Router and Message Processor is
   restricted to 10MB. Exceeding those sizes results in
@@ -9,47 +10,35 @@
   Both properties have a default value of "10m" corresponding to 10MB:</p>
 
   <ul>
-    <li><span style=
-    "font-family: &quot;courier new&quot;, courier, monospace;">conf_http_HTTPRequest.body.buffer.limit</span></li>
-
-    <li><span style=
-    "font-family: &quot;courier new&quot;, courier, monospace;">conf_http_HTTPResponse.body.buffer.limit</span></li>
+    <li><code>conf_http_HTTPRequest.body.buffer.limit</code></li>
+    <li><code>conf_http_HTTPResponse.body.buffer.limit</code></li>
   </ul>
 
   <p>To set these properties:</p>
 
   <ol>
-    <li>Open the <span style=
-    "font-family: &quot;courier new&quot;, courier, monospace;">router.properties</span> file
-    or <span style="font-family:courier new,courier,monospace;">message-processor.properties</span>
-    file in an editor. If the file does not exist, create it::<br>
-    <span style="font-family: &quot;courier new&quot;, courier, monospace;">&gt; vi
-    /opt/apigee/customer/application/router.properties</span><br>
-    <br>
-    or:<br>
-    <span style="font-family: &quot;courier new&quot;, courier, monospace;">&gt; vi
-    /opt/apigee/customer/application/message-processor.properties</span></li>
-
-    <li>Set the properties as desired:<br>
-    <span style=
-    "font-family: &quot;courier new&quot;, courier, monospace;">conf_http_HTTPRequest.body.buffer.limit=15m<br>
-
-    conf_http_HTTPResponse.body.buffer.limit=15m</span></li>
-
+    <li>Open the <code>router.properties</code> file
+      or <code>message-processor.properties</code>
+      file in an editor. If the file does not exist, create it:
+      <pre class="devsite-terminal">vi /opt/apigee/customer/application/router.properties</pre>
+      <p>or:</p>
+      <pre class="devsite-terminal">vi /opt/apigee/customer/application/message-processor.properties</pre>
+    </li>
+    <li>Set the properties as desired:
+      <pre>conf_http_HTTPRequest.body.buffer.limit=15m
+conf_http_HTTPResponse.body.buffer.limit=15m</pre>
+    </li>
     <li>Save your changes.</li>
+    <li>Make sure the properties file is owned by the "apigee" user:<br>
+      <pre class="devsite-terminal">chown apigee:apigee /opt/apigee/customer/application/router.properties</pre>
+      <p>or:</p>
+      <pre class="devsite-terminal">chown apigee:apigee /opt/apigee/customer/application/message-processor.properties</pre>
+    </li>
+    <li>Restart the Edge component:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-router restart</pre>
+      <p>or:</p>
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-message-processor restart</pre>
+    </li>
+  </ol>
 
-    <li>Make sure the properties file is owned by the 'apigee' user:<br>
-    <span style="font-family: &quot;courier new&quot;, courier, monospace;">&gt;
-    chown apigee:apigee /opt/apigee/customer/application/router.properties</span><br>
-    or:<br>
-    <span style="font-family: &quot;courier new&quot;, courier, monospace;">&gt;
-    chown apigee:apigee /opt/apigee/customer/application/message-processor.properties</span></li>
-
-    <li>Restart the Edge component:<br>
-    <span style="font-family: &quot;courier new&quot;, courier, monospace;">&gt;
-    /opt/apigee/apigee-service/bin/apigee-service edge-router restart</span><br>
-    <br>
-    or:<br>
-    <span style="font-family: &quot;courier new&quot;, courier, monospace;">&gt;
-    /opt/apigee/apigee-service/bin/apigee-service edge-message-processor restart</span></li>
-  </ol>{% endblock %}
+{% endblock %}

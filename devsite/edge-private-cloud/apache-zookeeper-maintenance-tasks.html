@@ -1,83 +1,66 @@
-  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}Apache Zookeeper Maintenance
-  Tasks{% endblock %} {% block body %}
+{% extends "private-cloud/v4.18.05/_base.html" %}
+{% block title %}Apache Zookeeper maintenance tasks{% endblock %}
+{% block body %}
 
-  <h2 id="fourlettercommands">Four-Letter Commands</h2>
+  <h2 id="fourlettercommands">Four-letter commands</h2>
 
   <p>Apache ZooKeeper has a number of "four-letter commands" that can be helpful in determining the
   current status of ZooKeeper voter and observer nodes.  These commands can be invoked using
-  "<span style="font-family:courier new,courier,monospace;">nc</span>", "<span style=
-  "font-family:courier new,courier,monospace;">telnet</span>" or another utility that has the
-  ability to send commands to a specific port.  Details on the four-letter commands can be
-  found at:</p>
+  <code>nc</code>, <code>telnet</code> or another utility that has the ability to send commands to a
+  specific port.  Details on the four-letter commands can be found in the
+  <a href="https://zookeeper.apache.org/doc/r3.1.2/zookeeperAdmin.html#sc_zkCommands" class="external">Apache ZooKeeper commands reference</a>.</p>
 
-  <p><a href=
-  "https://zookeeper.apache.org/doc/r3.1.2/zookeeperAdmin.html#sc_zkCommands.">http://zookeeper.apache.org/doc/r3.1.2/zookeeperAdmin.html#sc_zkCommands.</a></p>
-
-  <h2 id="removingoldsnapshotfiles">Removing Old Snapshot Files</h2>
+  <h2 id="removingoldsnapshotfiles">Removing old snapshot files</h2>
 
   <p>Apache ZooKeeper automatically performs periodic maintenance to remove old snapshot files
-  which accumulate as updates to the system are made. The following settings in <span style=
-  "font-family:courier new,courier,monospace;">/opt/apigee/apigee-zookeeper/conf/zoo.cfg</span>
-  control this process: </p>
-  <pre class="prettyprint">
-## The number of snapshots to retain in dataDir:
+  which accumulate as updates to the system are made. The following settings in
+  <code>/opt/apigee/apigee-zookeeper/conf/zoo.cfg</code> control this process:</p>
+  <pre class="prettyprint">## The number of snapshots to retain in dataDir:
 autopurge.snapRetainCount=5
 
 # Purge task interval in hours.
 # Set to "0" to disable auto purge feature.
-autopurge.purgeInterval=120
-</pre>
+autopurge.purgeInterval=120</pre>
 
   <p>To set these properties to different values:</p>
-
   <ol>
-    <li>Edit <span style=
-    "font-family:courier new,courier,monospace;">/opt/apigee/customer/application/zookeeper.properties</span>
-    to set the following properties. If that file does not exist, create it.</li>
+    <li>Edit <code>/opt/apigee/customer/application/zookeeper.properties</code>
+      to set the following properties. If that file does not exist, create it.</li>
+    <li>Set the following properties in <code>zookeeper.properties</code>:
+      <pre class="prettyprint"># Set the snapshot count. In this example set it to 10:
+  conf_zoo_autopurge.snapretaincount=10
 
-    <li>Set the following properties in <span style=
-    "font-family:courier new,courier,monospace;">zookeeper.properties</span>:<br>
-    <span style="font-family:courier new,courier,monospace;"># Set the snapshot count. In this
-    example set it to 10:<br>
-    conf_zoo_autopurge.snapretaincount=10  <br>
-    <br>
-    # Set the purge interval. In this example, set is to 240 hours:<br>
-    conf_zoo_autopurge.purgeinterval=240 </span></li>
-
-    <li>Make sure the file is owned by the "apigee" user:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt; chown
-    apigee:apigee /opt/apigee/customer/application/zookeeper.properties</span></li>
-
-    <li>Restart ZooKeeper by using the command:<br>
-    <span style="font-family:courier new,courier,monospace;">$
-    /opt/apigee/apigee-service/bin/apigee-service apigee-zookeeper restart</span></li>
+  # Set the purge interval. In this example, set is to 240 hours:
+  conf_zoo_autopurge.purgeinterval=240</pre>
+    </li>
+    <li>Make sure the file is owned by the "apigee" user:
+      <pre class="devsite-terminal">chown apigee:apigee /opt/apigee/customer/application/zookeeper.properties</pre>
+    </li>
+    <li>Restart ZooKeeper by using the command:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-zookeeper restart</pre>
+    </li>
   </ol>
 
-  <h2 id="logfilemaintenance">Log File Maintenance</h2>
+  <h2 id="logfilemaintenance">Log file maintenance</h2>
 
-  <p>Apache Zookeeper log files are kept in <span style=
-  "font-family:courier new,courier,monospace;">/opt/apigee/var/log/zookeeper</span>. Normally, log
+  <p>Apache Zookeeper log files are kept in <code>/opt/apigee/var/log/zookeeper</code>. Normally, log
   file maintenance should not be required, but if you find that there are an excessive number of
-  ZooKeeper logs or that the logs are very large you can modify ZooKeeper&#8217;s log4j properties
-  to set the maximum file size and file count.  </p>
+  ZooKeeper logs or that the logs are very large you can modify ZooKeeper's log4j properties
+  to set the maximum file size and file count.</p>
 
   <ol>
-    <li>Edit <span style=
-    "font-family:courier new,courier,monospace;">/opt/apigee/customer/application/zookeeper.properties</span>
-    to set the following properties. If that file does not exist, create it.</li>
-
-    <li>Set the following properties in <span style=
-    "font-family: &quot;courier new&quot;, courier, monospace;">zookeeper.properties</span>:<br>
-    <span style=
-    "font-family:courier new,courier,monospace;">conf_log4j_log4j.appender.rollingfile.maxfilesize=10MB
-     # max file size<br>
-    conf_log4j_log4j.appender.rollingfile.maxbackupindex=50 # max open files</span></li>
-
-    <li>Make sure the file is owned by the "apigee" user:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt; chown
-    apigee:apigee /opt/apigee/customer/application/zookeeper.properties</span></li>
-
-    <li>Restart ZooKeeper by using the command:<br>
-    <span style="font-family:courier new,courier,monospace;">$
-    /opt/apigee/apigee-service/bin/apigee-service apigee-zookeeper restart</span></li>
-  </ol>{% endblock %}
+    <li>Edit <code>/opt/apigee/customer/application/zookeeper.properties</code> to set the
+      following properties. If that file does not exist, create it.</li>
+    <li>Set the following properties in <code>zookeeper.properties</code>:
+      <pre class="prettyprint">conf_log4j_log4j.appender.rollingfile.maxfilesize=10MB
+# max file size
+conf_log4j_log4j.appender.rollingfile.maxbackupindex=50 # max open files</pre>
+    </li>
+    <li>Make sure the file is owned by the "apigee" user:
+      <pre class="devsite-terminal">chown apigee:apigee /opt/apigee/customer/application/zookeeper.properties</pre>
+    </li>
+    <li>Restart ZooKeeper by using the command:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-zookeeper restart</pre>
+    </li>
+  </ol>
+{% endblock %}

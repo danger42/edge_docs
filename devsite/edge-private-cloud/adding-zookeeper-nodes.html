@@ -1,4 +1,6 @@
-  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}Adding ZooKeeper nodes{% endblock %} {% block body %}
+{% extends "private-cloud/v4.18.05/_base.html" %}
+{% block title %}Adding ZooKeeper nodes{% endblock %}
+{% block body %}
 
   <p>This document describes how to add three new ZooKeeper nodes to an existing Edge for Private
   Cloud installation.</p>
@@ -9,49 +11,45 @@
   <h2 id="existingedgeconfiguration">Existing Edge configuration</h2>
 
   <p>All the supported Edge topologies for a production system specify to use three ZooKeeper
-  nodes. The three nodes are specified to the <span style=
-  "font-family:courier new,courier,monospace;"><strong>ZK_HOSTS</strong></span> and
-  <strong><span style="font-family:courier new,courier,monospace;">ZK_CLIENT_HOSTS</span></strong>
-  properties in the config file as shown below:</p>
-  <pre class="prettyprint">
-<strong>IP1=10.10.0.1
+  nodes. The three nodes are specified to the <code>ZK_HOSTS</code> and
+  <code>ZK_CLIENT_HOSTS</code> properties in the config file as shown below:</p>
+
+  <pre class="prettyprint"><strong>IP1=10.10.0.1
 IP2=10.10.0.2
 IP3=10.10.0.3
 </strong>HOSTIP=$(hostname -i)
-ADMIN_EMAIL=opdk@google.com 
+ADMIN_EMAIL=opdk@google.com
 APIGEE_ADMINPW=Secret123
-LICENSE_FILE=/tmp/license.txt 
+LICENSE_FILE=/tmp/license.txt
 MSIP=$IP1 
-USE_LDAP_REMOTE_HOST=n 
+USE_LDAP_REMOTE_HOST=n
 LDAP_TYPE=1
-APIGEE_LDAPPW=secret 
+APIGEE_LDAPPW=secret
 MP_POD=gateway
-REGION=dc-1 
-<strong>ZK_HOSTS="$IP1 $IP2 $IP3" 
-ZK_CLIENT_HOSTS="$IP1 $IP2 $IP3" 
-</strong>CASS_HOSTS="$IP1:1,1 $IP2:1,1 $IP3:1,1" 
+REGION=dc-1
+<strong>ZK_HOSTS="$IP1 $IP2 $IP3"
+ZK_CLIENT_HOSTS="$IP1 $IP2 $IP3"
+</strong>CASS_HOSTS="$IP1:1,1 $IP2:1,1 $IP3:1,1"
 SKIP_SMTP=n
-SMTPHOST=smtp.example.com 
-SMTPUSER=smtp@example.com  
-SMTPPASSWORD=smtppwd       
+SMTPHOST=smtp.example.com
+SMTPUSER=smtp@example.com
+SMTPPASSWORD=smtppwd
 </pre>
 
-  <p>where:</p>
+  <p>Where:</p>
 
   <ul>
-    <li><strong><span style="font-family:courier new,courier,monospace;">ZK_HOSTS</span></strong>
-    specifies the IP addresses or DNS names of the ZooKeeper nodes. The IP addresses or DNS names
-    must be listed in the same order on all ZooKeeper nodes. In a multi-data center environment,
-    list all ZooKeeper nodes from both data centers.</li>
-
-    <li><span style=
-    "font-family:courier new,courier,monospace;"><strong>ZK_CLIENT_HOSTS</strong></span> specifies
-    the IP addresses or DNS names of the ZooKeeper nodes used by this data center. The IP addresses
-    or DNS names must be listed in the same order on all ZooKeeper nodes. <br>
-    <br>
-    In a single data center installation, these are the same nodes as specified by <span style=
-    "font-family:courier new,courier,monospace;"><strong>ZK_HOSTS</strong></span>. In a multi-data
-    center environment, list only the ZooKeeper nodes in this data center. </li>
+    <li><code>ZK_HOSTS</code>
+      specifies the IP addresses or DNS names of the ZooKeeper nodes. The IP addresses or DNS names
+      must be listed in the same order on all ZooKeeper nodes. In a multi-data center environment,
+      list all ZooKeeper nodes from both data centers.</li>
+    <li><code>ZK_CLIENT_HOSTS</code> specifies
+      the IP addresses or DNS names of the ZooKeeper nodes used by this data center. The IP addresses
+      or DNS names must be listed in the same order on all ZooKeeper nodes.
+      <p>In a single data center installation, these are the same nodes as specified by
+      <code>ZK_HOSTS</code>. In a multi-data center environment, list only the ZooKeeper nodes in this
+      data center.</p>
+    </li>
   </ul>
 
   <h2 id="modifyingtheconfigfiletoaddthethreenewzookeepernodes">Modifying the config file to add
@@ -61,15 +59,12 @@ SMTPPASSWORD=smtppwd
 
   <ul>
     <li>10.10.0.14</li>
-
     <li>10.10.0.15</li>
-
     <li>10.10.0.16</li>
   </ul>
 
   <p>You must first update Edge configuration file to add the new nodes:</p>
-  <pre class="prettyprint">
-IP1=10.10.0.1
+  <pre class="prettyprint">IP1=10.10.0.1
 IP2=10.10.0.2
 IP3=10.10.0.3
 <strong># Add the new node IP addresses.
@@ -77,28 +72,24 @@ IP14=10.10.0.14
 IP15=10.10.0.15
 IP16=10.10.0.16
 </strong>HOSTIP=$(hostname -i)
-ADMIN_EMAIL=opdk@google.com 
+ADMIN_EMAIL=opdk@google.com
 ...
-<strong># Update ZK_HOSTS to add each new node after an existing nodes. 
-ZK_HOSTS</strong>="$IP1 $IP2 $IP3 <strong>$IP14 $IP15 $IP16:observer</strong>" 
-<strong># Update ZK_Client_HOSTS to add each new node after an existing nodes. 
-ZK_CLIENT_HOSTS</strong>="$IP1 $IP2 $IP3 <strong>$IP14 $IP15 $IP16</strong>" 
-</pre>
+<strong># Update ZK_HOSTS to add each new node after an existing nodes.
+ZK_HOSTS</strong>="$IP1 $IP2 $IP3 <strong>$IP14 $IP15 $IP16:observer</strong>"
+<strong># Update ZK_Client_HOSTS to add each new node after an existing nodes.
+ZK_CLIENT_HOSTS</strong>="$IP1 $IP2 $IP3 <strong>$IP14 $IP15 $IP16</strong>"</pre>
 
-  <p>Mark the last node in <span style=
-  "font-family:courier new,courier,monospace;"><strong>ZK_HOSTS</strong></span> with the with
-  &#8220;:observer&#8221; modifier. Nodes without the &#8220;:observer&#8221; modifier are called
+  <p>Mark the last node in <code>ZK_HOSTS</code> with the with
+  <code>:observer</code> modifier. Nodes without the <code>:observer</code> modifier are called
   "voters". You must have an odd number of "voters" in your configuration. Therefore, in this
   configuration, you have 5 ZooKeeper voters and one observer.</p>
 
-  <aside class="note"><b>Note:</b> While you can configure three observers and three voters, Apigee
-  recommends that you use five voters.</aside>
+  <aside class="note"><strong>Note:</strong> While you can configure three observers and three
+  voters, Apigee recommends that you use five voters.</aside>
 
-  <p>Make sure to add the nodes to both <span style=
-  "font-family:courier new,courier,monospace;"><strong>ZK_HOSTS</strong></span> and <span style=
-  "font-family:courier new,courier,monospace;"><strong>ZK_CLIENT_HOSTS</strong></span> in the same
-  order.  However, omit the &#8220;:observer&#8221; modifier when setting <strong><span style=
-  "font-family:courier new,courier,monospace;">ZK_CLIENT_HOSTS</span></strong>. </p>
+  <p>Make sure to add the nodes to both <code>ZK_HOSTS</code> and
+  <code>ZK_CLIENT_HOSTS</code> in the same order. However, omit the <code>:observer</code> modifier
+  when setting <code>ZK_CLIENT_HOSTS</code>.</p>
 
   <h2 id="configureedge">Configure Edge</h2>
 
@@ -107,16 +98,12 @@ ZK_CLIENT_HOSTS</strong>="$IP1 $IP2 $IP3 <strong>$IP14 $IP15 $IP16</strong>"
   <h3 id="configureedge-installzookeeperonthenewnodes">Install ZooKeeper on the new nodes</h3>
 
   <ol>
-    <li>Install <span style="font-family:courier new,courier,monospace;">apigee-setup</span> on the
-    first node as described in <a href="install-edge-apigee-setup-utility.html">Install the Edge
-    apigee-setup utility</a>.</li>
-
-    <li>Install ZooKeeper on the first node by using the following commands:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    /opt/apigee/apigee-service/bin/apigee-service apigee-zookeeper install<br>
-    &gt; /opt/apigee/apigee-service/bin/apigee-service apigee-zookeeper setup -f
-    <em><strong>updatedConfigFile</strong></em></span></li>
-
+    <li>Install <code>apigee-setup</code> on the first node as described in
+      <a href="install-edge-apigee-setup-utility">Install the Edge apigee-setup utility</a>.</li>
+    <li>Install ZooKeeper on the first node by using the following commands:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-zookeeper install
+<code class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-zookeeper setup -f <var>updatedConfigFile</var></code></pre>
+    </li>
     <li>Repeat steps 1 and 2 for the remaining new ZooKeeper nodes.</li>
   </ol>
 
@@ -126,10 +113,9 @@ ZK_CLIENT_HOSTS</strong>="$IP1 $IP2 $IP3 <strong>$IP14 $IP15 $IP16</strong>"
   <p>On the existing ZooKeeper nodes:</p>
 
   <ol>
-    <li>Rerun the setup.sh with the "-p c" profile and the new config file:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    /opt/apigee/apigee-service/bin/apigee-service apigee-zookeeper setup -f
-    <em><strong>updatedConfigFile</strong></em> </span></li>
+    <li>Rerun the setup.sh with the "-p c" profile and the new config file:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-zookeeper setup -f <var>updatedConfigFile</var></pre>
+    </li>
   </ol>
 
   <h3 id="configureedge-restartallzookeepernodes">Restart all Zookeeper nodes</h3>
@@ -137,11 +123,10 @@ ZK_CLIENT_HOSTS</strong>="$IP1 $IP2 $IP3 <strong>$IP14 $IP15 $IP16</strong>"
   <p>On all ZooKeeper nodes:</p>
 
   <ol>
-    <li>Restart the node:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    /opt/apigee/apigee-service/bin/apigee-service apigee-zookeeper restart</span><br>
-    <br>
-    You must restart all ZooKeeper nodes, but order of restart does not matter.</li>
+    <li>Restart the node:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-zookeeper restart</pre>
+      <p>You must restart all ZooKeeper nodes, but order of restart does not matter.</p>
+    </li>
   </ol>
 
   <h3 id="configureedge-reconfigurethemanagementservernode">Reconfigure the Management Server
@@ -150,14 +135,12 @@ ZK_CLIENT_HOSTS</strong>="$IP1 $IP2 $IP3 <strong>$IP14 $IP15 $IP16</strong>"
   <p>On the Management Server node:</p>
 
   <ol>
-    <li>Run the setup command:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    /opt/apigee/apigee-service/bin/apigee-service edge-management-server setup -f
-    <em><strong>updatedConfigFile</strong></em></span></li>
-
-    <li>Restart the Management Server:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    /opt/apigee/apigee-service/bin/apigee-service edge-management-server restart</span></li>
+    <li>Run the setup command:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-management-server setup -f <var>updatedConfigFile</var></pre>
+    </li>
+    <li>Restart the Management Server:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-management-server restart</pre>
+    </li>
   </ol>
 
   <h3 id="configureedge-reconfigurealltherouters">Reconfigure all the Routers</h3>
@@ -165,14 +148,12 @@ ZK_CLIENT_HOSTS</strong>="$IP1 $IP2 $IP3 <strong>$IP14 $IP15 $IP16</strong>"
   <p>On all Router nodes:</p>
 
   <ol>
-    <li>Run the setup command:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    /opt/apigee/apigee-service/bin/apigee-service edge-router setup -f
-    <em><strong>updatedConfigFile</strong></em></span></li>
-
-    <li>Restart the Router:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    /opt/apigee/apigee-service/bin/apigee-service edge-router restart</span></li>
+    <li>Run the setup command:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-router setup -f <var>updatedConfigFile</var></pre>
+    </li>
+    <li>Restart the Router:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-router restart</pre>
+    </li>
   </ol>
 
   <h3 id="configureedge-reconfigureallthemessageprocessors">Reconfigure all the Message
@@ -181,14 +162,12 @@ ZK_CLIENT_HOSTS</strong>="$IP1 $IP2 $IP3 <strong>$IP14 $IP15 $IP16</strong>"
   <p>On all Message Processor nodes:</p>
 
   <ol>
-    <li>Run the setup command:<br>
-    <span style=
-    "font-family:courier new,courier,monospace;">/opt/apigee/apigee-service/bin/apigee-service
-    edge-message-processor setup -f <em><strong>updatedConfigFile</strong></em></span></li>
-
-    <li>Restart the Message Processor:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    /opt/apigee/apigee-service/bin/apigee-service edge-message-processor restart</span></li>
+    <li>Run the setup command:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-message-processor setup -f <var>updatedConfigFile</var></pre>
+    </li>
+    <li>Restart the Message Processor:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-message-processor restart</pre>
+    </li>
   </ol>
 
   <h3 id="configureedge-reconfigureallqpidnodes">Reconfigure all Qpid nodes </h3>
@@ -196,14 +175,12 @@ ZK_CLIENT_HOSTS</strong>="$IP1 $IP2 $IP3 <strong>$IP14 $IP15 $IP16</strong>"
   <p>On all Qpid nodes:</p>
 
   <ol>
-    <li>Run the setup command:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    /opt/apigee/apigee-service/bin/apigee-service edge-qpid-server setup -f
-    <em><strong>updatedConfigFile</strong></em></span></li>
-
-    <li>Restart Qpid:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    /opt/apigee/apigee-service/bin/apigee-service edge-qpid-server restart</span></li>
+    <li>Run the setup command:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-qpid-server setup -f <var>updatedConfigFile</var></pre>
+    </li>
+    <li>Restart Qpid:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-qpid-server restart</pre>
+    </li>
   </ol>
 
   <h3 id="configureedge-reconfigureallpostgresnodes">Reconfigure all Postgres nodes </h3>
@@ -211,37 +188,32 @@ ZK_CLIENT_HOSTS</strong>="$IP1 $IP2 $IP3 <strong>$IP14 $IP15 $IP16</strong>"
   <p>On all Postgres nodes:</p>
 
   <ol>
-    <li>Run the setup command:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    /opt/apigee/apigee-service/bin/apigee-service edge-postgres-server setup -f
-    <em><strong>updatedConfigFile</strong></em></span></li>
-
-    <li>Restart Postgres:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    /opt/apigee/apigee-service/bin/apigee-service edge-postgres-server restart</span></li>
+    <li>Run the setup command:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-postgres-server setup -f <var>updatedConfigFile</var></pre>
+    </li>
+    <li>Restart Postgres:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-postgres-server restart</pre>
+    </li>
   </ol>
 
   <h2 id="validatetheinstallation">Validate the installation</h2>
 
   <p>You can validate the installation of the new ZooKeeper nodes by sending commands to port 2181
   using netcat (nc) or telnet. For more info on ZooKeeper commands, see: <a href=
-  "https://zookeeper.apache.org/doc/r3.1.2/zookeeperAdmin.html#sc_zkCommands">http://zookeeper.apache.org/doc/r3.1.2/zookeeperAdmin.html#sc_zkCommands</a>.</p>
+  "https://zookeeper.apache.org/doc/r3.1.2/zookeeperAdmin.html#sc_zkCommands" class="external">http://zookeeper.apache.org/doc/r3.1.2/zookeeperAdmin.html#sc_zkCommands</a>.</p>
 
-  <p>To validate: </p>
+  <p>To validate:</p>
 
   <ol>
-    <li>If it is not installed on the ZooKeeper node, install nc:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt; sudo yum install nc</span></li>
-
-    <li>Run the following nc command:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt; echo stat | nc localhost
-    2181</span></li>
-
-    <li>Repeat steps 1 and 2 on each ZooKeeper node.<br>
-    In the <strong>Mode</strong> line of the output for the nodes, one node should be designated as
-    observer, one node as leader, and the rest as followers.</li>
+    <li>If it is not installed on the ZooKeeper node, install nc:
+      <pre class="devsite-terminal">sudo yum install nc</pre>
+    </li>
+    <li>Run the following nc command:
+      <pre class="devsite-terminal">echo stat | nc localhost 2181</pre>
+    </li>
+    <li>Repeat steps 1 and 2 on each ZooKeeper node. In the <code>Mode</code> line of the output for
+      the nodes, one node should be designated as observer, one node as leader, and the rest as
+      followers.</li>
   </ol>
 
-  <div>
-     
-  </div>{% endblock %}
+{% endblock %}

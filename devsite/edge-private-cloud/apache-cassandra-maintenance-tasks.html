@@ -1,5 +1,6 @@
-  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}Apache Cassandra Maintenance
-  Tasks{% endblock %} {% block body %}
+{% extends "private-cloud/v4.18.05/_base.html" %}
+{% block title %}Apache Cassandra maintenance tasks{% endblock %}
+{% block body %}
 
   <h2 id="antientropymaintenance">Anti-Entropy Maintenance</h2>
 
@@ -8,59 +9,50 @@
   "font-family:courier new,courier,monospace;">nodetool -h localhost repair</span>" command.</p>
 
   <aside class="note">
-    <b>Note:</b> This maintenance must be run on every Cassandra node at least every seven days in
-    order to eliminate problems related to Cassandra "forgotten deletes". Running "<span style=
-    "font-family:courier new,courier,monospace;">nodetool -h localhost repair</span> " imposes a
-    significant load on the system, so Apigee recommends that this process only be run during
-    periods of relatively low workload.
-
-    
-
+    <strong>Note:</strong> This maintenance must be run on every Cassandra node at least every seven days in
+    order to eliminate problems related to Cassandra "forgotten deletes". Running
+    <code>nodetool -h localhost repair</code> imposes a significant load on the system, so Apigee
+    recommends that this process only be run during periods of relatively low workload.
     <p>You should also run the command on one Cassandra node at a time. You can run it on different
     nodes on different days, or schedule it so that there are several hours between running it on
     each node.</p>
   </aside>
 
-  <p>In a single-region or single-data-center Apigee installation, use the command "<span style=
-  "font-family:courier new,courier,monospace;">nodetool -h localhost repair</span> " on one
-  Cassandra node to ensure consistency across all nodes in the ring. In a multi-region or
-  multi-data-center Apigee installation, use "<span style=
-  "font-family:courier new,courier,monospace;">nodetool -h localhost repair -pr</span>" on every
-  node in the ring (across all regions or data centers).</p>
+  <p>In a single-region or single-data-center Apigee installation, use the command
+  <code>nodetool -h localhost repair</code> on one Cassandra node to ensure consistency across all
+  nodes in the ring. In a multi-region or multi-data-center Apigee installation, use
+  <code>nodetool -h localhost repair -pr</code> on every node in the ring (across all regions or
+  data centers).</p>
 
   <p>For more information on "forgotten deletes" and Cassandra consistency, and for instructions on
-  how to use "<span style="font-family:courier new,courier,monospace;">nodetool</span>", see:</p>
+  how to use <code>nodetool</code>, see:</p>
 
-  <p><a href=
-  "https://wiki.apache.org/cassandra/Operations#Consistency">http://wiki.apache.org/cassandra/Operations
-  - Consistency</a></p>
+  <p><a href="https://wiki.apache.org/cassandra/Operations#Consistency" class="external">http://wiki.apache.org/cassandra/Operations-Consistency</a></p>
 
-  <p><strong>Important Note</strong>: Apigee does not recommend adding, moving or removing
+  <aside class="note"><strong>Note:</strong> Apigee does not recommend adding, moving or removing
   Cassandra nodes without contacting Apigee Customer Success. The Apigee system tracks Cassandra
   nodes using their IP address, and performing ring maintenance without performing corresponding
-  updates on the Apigee environment metadata will cause undesirable results.</p>
+  updates on the Apigee environment metadata will cause undesirable results.</aside>
 
   <h2 id="logfilemaintenance">Log File Maintenance</h2>
 
-  <p>Cassandra logs are stored in the <span style=
-  "font-family:courier new,courier,monospace;">/opt/apigee/var/log/cassandra</span> directory on
+  <p>Cassandra logs are stored in the <code>/opt/apigee/var/log/cassandra</code> directory on
   each node. By default, a maximum of 50 log files, each with a maximum size of 20 MB, can be
-  created; once this limit is reached older logs are deleted when newer logs are created.
-   </p>
+  created; once this limit is reached older logs are deleted when newer logs are created.</p>
 
   <p>If you should find that Cassandra log files are taking up excessive space, you can modify the
   amount of space allocated for log files by editing the log4j settings.</p>
 
   <ol>
-    <li>Edit <span style=
-    "font-family:courier new,courier,monospace;">/opt/apigee/customer/application/cassandra.properties</span>
-    to set the following properties. If that file does not exist, create it:<br>
-    <span style=
-    "font-family:courier new,courier,monospace;">conf_log4j-server_log4j.appender.r.maxfilesize=20MB
-     # max file size<br>
-    conf_log4j-server_log4j.appender.r.maxbackupindex=50 # max open files</span></li>
+    <li>Edit <code>/opt/apigee/customer/application/cassandra.properties</code>
+      to set the following properties. If that file does not exist, create it:
+      <pre>conf_log4j-server_log4j.appender.r.maxfilesize=20MB
+# max file size
+conf_log4j-server_log4j.appender.r.maxbackupindex=50 # max open files</pre>
+    </li>
+    <li>Restart Cassandra by using the following command:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-cassandra restart</pre>
+    </li>
+  </ol>
 
-    <li>Restart Cassandra by using the commands:<br>
-    <span style="font-family:courier new,courier,monospace;">$
-    /opt/apigee/apigee-service/bin/apigee-service apigee-cassandra restart</span></li>
-  </ol>{% endblock %}
+{% endblock %}

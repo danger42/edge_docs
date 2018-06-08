@@ -1,0 +1,307 @@
+{% extends "private-cloud/v4.18.05/_base.html" %}
+{% block title %}Upgrade the portal{% endblock %}
+{% block body %}
+
+  <p>This procedure describes how to upgrade an existing {{portal_1st_use}} on-premise
+  installation.</p>
+
+  <aside class="note"><strong>Note:</strong> All new installations of the portal from version
+    4.17.01 onward used Postgres as
+    the database and Nginx as the web server. However, previous releases of the portal use
+    MySQL/MariaDB as the database and Apache web server. That means your current portal can
+    use any one of the following configurations:
+
+    <ul>
+      <li>Nginx/Postgres for all new 4.17.0x and 4.18.0x installations</li>
+      <li>Apache/MySQL 5.0.15 or later for all 6.x operating systems previous to 4.17.01</li>
+      <li>Apache/MariaDB 5.1.38 or later for all 7.x operating systems previous to 4.17.01</li>
+    </ul>
+
+    <p>Before you start the update process, you must determine your current configuration and then
+    perform the correct update procedure.</p>
+  </aside>
+
+  <aside class="warning"><strong>Warning:</strong> You cannot update a portal using MySQL/MariaDB and
+  Apache. You must instead convert the installation to use Postgres as the database and Nginx as
+  the web server. As part of this conversion, you also update your portal to {{cur_version}}. See
+  <a href="convert-tar-based-portal-rpm-based-portal">Convert a tar-based
+  portal to an RPM-based portal</a> for more.</aside>
+
+  <aside class="note"><strong>Note:</strong> This procedure performs a complete upgrade of Drupal and of the
+  Apigee software that ships with the portal. You might want to upgrade just Drupal itself,
+  possibly because a new version of Drupal is available. A new Drupal version can mean a Drupal
+  feature release, patch, security update, or other type of Drupal update. If you only want to
+  perform an upgrade of Drupal, see <a href="pgrading-drupal-version-private-cloud-installation">Upgrading the
+  Drupal version of a Private Cloud installation</a>.</aside>
+
+  <aside class="note"><strong>Note:</strong> If you share the Postgres server with Edge for the Private
+  Cloud, then you update the Postgres server as part of updating Edge. See
+  <a href="update-apigee-edge-4170x-41805">Update Apigee Edge 4.17.0x to {{cur_version}}</a>
+  for more.</aside>
+
+  <h2 id="determiningthecorrectupdateprocedure">Determining the correct update procedure</h2>
+
+  <p>The procedure that you use to update the portal is based on your current installation:</p>
+
+  <ul>
+    <li><strong>If your installation uses Nginx/Postgres</strong>, then use
+      <a href="#upgradingaportalusingrpms">Upgrading a portal using RPMs</a> below.</li>
+    <li><strong>If your installation uses Apache/MySQL or Apache/MariaDB</strong>, then see
+      <a href="convert-tar-based-portal-rpm-based-portal">Convert a
+      tar-based portal to an RPM-based portal</a>.</li>
+  </ul>
+
+  <h3 id="determiningthecorrectupdateprocedure-determiningyourcurrentinstallationtype">Determining
+  your current installation type</h3>
+
+  <p>If you are unsure about your current installation type, use the following command to determine
+  it:</p>
+
+  <ul>
+    <li><pre class="devsite-terminal">ls /opt</pre>
+      <p>If you are using Nginx/Postgres, you will see the following directories:
+      <code>/opt/apigee</code> and <code>/opt/nginx</code>.</p>
+      <p>If you are using Apache/MySQL or Apache/MariaDB, then these directories should not be
+      present.</p>
+    </li>
+    <li><pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-all status</pre>
+      <p>If you are using Nginx/Postgres, you will see the following output:</p>
+      <pre>+ apigee-service
+apigee-drupal-devportal status
+OK: apigee-drupal-devportal is up and running
++ apigee-service apigee-lb status
+apigee-service: apigee-lb: OK
++ apigee-service apigee-postgresql status
+apigee-service: apigee-postgresql: OK</pre>
+    </li>
+
+    <li><pre class="devsite-terminal">apachectl -S</pre>
+      <p>If you are using Apache/MySQL or Apache/MariaDB, then this command should return the web
+      root directory of the portal, in the form:</p>
+      <pre>*:80
+192.168.56.102 (/etc/httpd/conf/vhosts/devportal.conf:1)</pre>
+    </li>
+  </ul>
+
+  <h2 id="defaultinstallationdirectory">Default installation directory</h2>
+
+  <p>The upgrade process assumes that the portal was installed at:</p>
+
+  <ul>
+    <li>4.17.05 and later: <code>/opt/apigee/apigee-drupal/wwwroot</code></li>
+    <li>Prior to 4.17.05: <code>/opt/apigee/apigee-drupal</code> (Nginx) or
+      <code>/var/www/html</code> (Apache)</li>
+  </ul>
+
+  <p>If you did not install the portal in the default directory, modify the paths in the procedure
+  below to use your installation directory.</p>
+
+  <h2 id="supportedupgradeversions">Supported upgrade versions</h2>
+
+  <p>This upgrade procedure is supported for the following versions of the portal:</p>
+
+  <ul>
+    <li>OPDK-17-01.x</li>
+    <li>OPDK-17-05.x</li>
+    <li>OPDK-17-09.x</li>
+    <li>OPDK-18-01.x</li>
+  </ul>
+
+  <p>To determine your portal version, open the following URL in a browser:</p>
+
+  <p><code>http://<var>yourportal.com</var>/buildInfo</code></p>
+
+  <aside class="note"><strong>Note:</strong> In 4.17.05 this link was removed. To determine the version, open
+  the <strong>Reports &gt; Status report</strong> menu entry in Drupal. The portal version
+  appears in the table in the row named <strong>Install profile</strong>.</aside>
+
+  <aside class="note"><strong>Note:</strong> If nothing is displayed or a version other than one listed above
+  is displayed, then you cannot use this upgrade process. For information on upgrading from any
+  other portal version, contact {{support}}.</aside>
+
+  <aside class="note"> <strong>Note:</strong> If for some reason you removed the
+    <code>buildInfo</code> file, then you can determine the
+    version from the <code>profiles/apigee/apigee.info</code> file. The
+    default install location is <code>/var/www/html/profiles/apigee/apigee.info</code>,
+    but you might have changed it at install time if you installed the portal in a directory other
+    than <code>/var/www/html</code>. The <code>apigee.info</code> file contains a
+    line in the form below containing the version:
+
+    <pre class="prettyprint">
+version = "OPDK-4.17.05"
+</pre>
+  </aside>
+
+  <h2 id="beforeyouupdate">Before you update</h2>
+
+  <p>For existing installations, if you have modified any code in Drupal core or in any non-custom
+  modules, your modifications will be overwritten. This includes, among other things, any changes
+  you may have made to <code>.htaccess</code>.
+  You should assume that anything outside the <code>/sites</code> directory is owned by Drupal. An
+  exception to this rule is <code>robots.txt</code>; if this file exists in the web root, it will be
+  preserved for you.</p>
+
+  <p>Before proceeding with the installation, make a backup of your entire Drupal web root
+  directory. After performing the installation steps described below, you can restore your
+  customizations from the backup.</p>
+
+  <h2 id="upgradingaportalusingrpms">Upgrading a portal using RPMs</h2>
+
+  <p>To update the portal RPM on a node:</p>
+
+  <ol>
+    <li>Change to the Drupal directory, <code>/opt/apigee/apigee-drupal</code> by
+      default:
+      <pre class="devsite-terminal">cd /opt/apigee/apigee-drupal</pre>
+    </li>
+
+    <li>Backup your Drupal database instance. The <code>pg_dump</code> command creates a copy of the
+    database:
+      <pre class="devsite-terminal">pg_dump --dbname=<var>devportal</var> --host=<var>host_IP_address</var> --username=<var>drupaladmin</var>
+  --password --format=c &gt; /tmp/portal.dmp</pre>
+      <p>where:</p>
+      <ul>
+        <li><var>devportal</var> is the database name as specified by the
+          <code>PG_NAME</code> property in the portal installation configuration file.</li>
+        <li><var>host_IP_address</var> is the IP address of the portal node.</li>
+        <li><var>drupaladmin</var> is the Postgres username used by the portal to access the
+          database as specified by the <code>DRUPAL_PG_USER</code> property in the portal installation
+          configuration file.</li>
+        <li>You are prompted for the Postgres user password as defined by the
+          <code>DRUPAL_PG_PASS</code> property in the portal installation configuration file.</li>
+      </ul>
+      <p>If you later have to restore from the backup, use the command:</p>
+      <pre class="devsite-terminal">pg_restore --clean --dbname=devportal --host=localhost  --username=apigee &lt; /tmp/portal.dmp</pre>
+    </li>
+
+    <li>Make a backup of your entire Drupal web root directory. The default install location
+    is <code>/opt/apigee/apigee-drupal</code>, but you might have changed it.
+    <p>If you are unsure of the location of this directory, use the <code>drush status</code> command or the
+    <strong>Configuration &gt; Media &gt; File</strong> entry in the Drupal menu to determine
+    the location of the public file system and private file system path (for the next
+    step).</li>
+
+    <li>Make a backup of the files in <code>/opt/apigee/data/apigee-drupal-devportal/private</code>.</li>
+
+    <li>Set Drupal to maintenance mode:
+      <ol>
+        <li>Select <strong>Configuration</strong> in the Drupal menu.</li>
+        <li>On the <strong>Configuration</strong> page, select <strong>Maintenance mode</strong>
+          under <strong>Development</strong>.</li>
+        <li>Select the <strong>Put site into maintenance mode</strong> box.</li>
+        <li>Enter a message users see during maintenance.</li>
+        <li>Select <strong>Save configuration</strong>.</li>
+      </ol>
+    </li>
+
+    <li>Disable SELinux as described in
+    <a href="install-edge-apigee-setup-utility">Install the Edge apigee-setup utility</a>.</li>
+
+    <li>Change to the <code>/opt</code> directory:
+      <pre class="devsite-terminal">cd /opt</pre>
+    </li>
+    <li><strong>For an upgrade on a server with an Internet connection:</strong>
+      <ol>
+        <li>Download the Edge {{cur_version}} <code>bootstrap_{{cur_version}}.sh</code> file to
+          <code>/tmp/bootstrap_{{cur_version}}.sh</code>:
+          <pre class="devsite-terminal">curl https://software.apigee.com/bootstrap_{{cur_version}}.sh -o /tmp/bootstrap_{{cur_version}}.sh</pre>
+        </li>
+        <li>Install the Edge {{cur_version}} <code>apigee-service</code> utility and dependencies:
+          <pre class="devsite-terminal">sudo bash /tmp/bootstrap_{{cur_version}}.sh apigeeuser=<var>uName</var> apigeepassword=<var>pWord</var></pre>
+          <p>Where <var>uName</var> and <var>pWord</var> are the username and password you received
+          from Apigee. If you omit <var>pWord</var>, you will be prompted to enter it.</p>
+          <p>By default, the installer checks to see that you have Java 1.8 installed. You can use the
+          "C" option to continue without installing Java.</p>
+        </li>
+      </ol>
+    </li>
+    <li><strong>For an upgrade on a server with no Internet connection:</strong>
+      <ol>
+        <li>Create a local {{cur_version}} repo as described in
+          <a href="install-edge-apigee-setup-utility#createalocalapigeerepository">Create a local Apigee repository</a>.
+          <aside class="note"><strong>Note</strong>: If you already have an existing 4.18.01 repo,
+          you can add the {{cur_version}} repo to it as described in "Update a local Apigee repository" at
+          <a href="install-edge-apigee-setup-utility">Install the Edge apigee-setup utility</a>.</aside>
+        </li>
+        <li><strong>To install apigee-service from a .tar file</strong>:
+          <ol>
+            <li>On the node with the local repo, use the following command to package the local
+              repo into a single .tar file named
+              <code>/opt/apigee/data/apigee-mirror/apigee-{{cur_version}}.tar.gz</code>:
+              <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-mirror package</pre>
+            </li>
+            <li>Copy the .tar file to the node where you want to update Edge. For example, copy it
+              to the <code>/tmp</code> directory on the new node.</li>
+            <li>On the new node, untar the file to the /tmp directory:
+              <pre class="devsite-terminal">tar -xzf apigee-{{cur_version}}.tar.gz</pre>
+              <p>This command creates a new directory, named repos, in the directory containing the .tar
+              file. For example /tmp/repos.</p>
+            </li>
+            <li>Install the Edge <code>apigee-service</code> utility and dependencies from
+              <code>/tmp/repos</code>:
+              <pre class="devsite-terminal">sudo bash /tmp/repos/bootstrap_{{cur_version}}.sh apigeeprotocol="file://" apigeerepobasepath=/tmp/repos</pre>
+              <p>Notice that you include the path to the repos directory in this command.</p>
+            </li>
+          </ol>
+        </li>
+        <li><strong>To install apigee-service using the Nginx webserver:</strong>
+          <ol>
+            <li>Configure the Nginx web server as described in "Install from the repo using the
+              Nginx webserver" at <a href="install-edge-apigee-setup-utility">Install the Edge
+              apigee-setup utility</a>.</li>
+            <li>On the remote node, download the Edge <code>bootstrap_{{cur_version}}.sh</code> file to
+              <code>/tmp/bootstrap_{{cur_version}}.sh</code>:
+              <pre class="devsite-terminal">/usr/bin/curl http://<var>uName:pWord</var>@<var>remoteRepo</var>:3939/bootstrap_{{cur_version}}.sh
+  -o /tmp/bootstrap_{{cur_version}}.sh</pre>
+              <p>Where <var>uName</var> and <var>pWord</var> are the username and password you set
+              above for the repo, and <var>remoteRepo</var> is the IP address or DNS name of the
+              repo node.</p>
+            </li>
+            <li>On the remote node, install the Edge <code>apigee-service</code> utility and
+              dependencies:
+              <pre class="devsite-terminal">sudo bash /tmp/bootstrap_{{cur_version}}.sh apigeerepohost=<var>remoteRepo</var>:3939
+  apigeeuser=<var>uName</var> apigeepassword=<var>pWord</var> apigeeprotocol=http://</pre>
+              <p>Where <var>uName</var> and <var>pWord</var> are the repo username and password.</p>
+            </li>
+          </ol>
+        </li>
+      </ol>
+    </li>
+    <li>Use <code>apigee-service</code> to update the <code>apigee-setup</code> utility:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-setup update</pre>
+    </li>
+    <li>Run the update utility on your Postgre node:
+      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/update.sh -c ps -f <var>configFile</var></pre>
+      <p>Where <var>configFile</var> is the configuration file that you used to install
+      the Postgres database. The only requirement on the config file is that the configuration
+      file must be accessible or readable by the "apigee" user.</p>
+    </li>
+    <li>Update the Postgres database:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-postgresql db_upgrade</pre>
+    </li>
+    <li>Run the update utility on your node to update the portal:
+      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/update.sh -c dp -f <var>configFile</var></pre>
+      <p>Where <var>configFile</var> is the configuration file that you used to install
+      the portal. The only requirement on the config file is that the configuration file
+      must be accessible or readable by the "apigee" user.</p>
+    </li>
+    <li>Run Drupal's <code>update.php</code> script by opening the following URL in a browser window:
+      <pre>http://<var>portal_IP_DNS</var>:8079/update.php</pre>
+    </li>
+    <li>Disable Drupal to maintenance mode:
+      <ol>
+        <li>Select <strong>Configuration</strong> in the Drupal menu.</li>
+        <li>On the <strong>Configuration</strong> page, select <strong>Maintenance mode</strong>
+          under <strong>Development</strong>.</li>
+        <li>Deselect the <strong>Put site into maintenance mode</strong> box.</li>
+        <li>Select <strong>Save configuration</strong>.</li>
+      </ol>
+    </li>
+  </ol>
+
+  <p>Note that the root directory  after the update is:</p>
+  <pre class="prettyprint">/opt/apigee/apigee-drupal/wwwroot</pre>
+
+  <p>The upgrade is now complete.</p>
+
+{% endblock %}

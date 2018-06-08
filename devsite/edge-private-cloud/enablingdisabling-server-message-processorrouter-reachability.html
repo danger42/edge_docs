@@ -1,5 +1,6 @@
-  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}Enabling/Disabling Server
-  (Message Processor/Router) Reachability{% endblock %} {% block body %}
+{% extends "private-cloud/v4.18.05/_base.html" %}
+{% block title %}Enabling/disabling Message Processor/Router reachability{% endblock %}
+{% block body %}
 
   <p>It is a good practice to disable reachability on a server during maintenance, such
   as for a server restart or upgrade. When reachability is disabled, no traffic is directed to the
@@ -10,9 +11,7 @@
 
   <ol>
     <li>Disable reachability on the Message Processor.</li>
-
     <li>Upgrade the Message Processor.</li>
-
     <li>Enable reachability on the Message Processor.</li>
   </ol>
 
@@ -26,24 +25,18 @@
 
   <p>To disable reachability on Message Processor, you can just stop the
   Message Processor:</p>
-  <pre class="prettyprint">
-&gt; /opt/apigee/apigee-service/bin/apigee-service edge-message-processor stop
-</pre>
+  <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-message-processor stop</pre>
 
   <p>The Message Processor first processes any pending messages before it shuts down. Any new
   requests are routed to other available Message Processors.</p>
 
   <p>To restart the Message Processor, use the following commands:</p>
-  <pre class="prettyprint">
-&gt; /opt/apigee/apigee-service/bin/apigee-service edge-message-processor start
-?&gt; /opt/apigee/apigee-service/bin/apigee-service edge-message-processor wait_for_ready
-</pre>
+  <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-message-processor start
+<code class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-message-processor wait_for_ready</code></pre>
 
-  <p>The <span style="font-family:courier new,courier,monospace;">wait_for_ready</span> command
-  returns the following message when the Message Processor is ready to process messages:</p>
-  <pre class="prettyprint">
-Checking if message-processor is up: message-processor is up.
-</pre>
+  <p>The <code>wait_for_ready</code> command returns the following message when the Message
+  Processor is ready to process messages:</p>
+  <pre class="prettyprint">Checking if message-processor is up: message-processor is up.</pre>
 
   <h2 id="disablingenablingreachabilityonarouter">Disabling/enabling reachability on a
   Router</h2>
@@ -53,54 +46,45 @@ Checking if message-processor is up: message-processor is up.
 
   <p>Configure the load balancer to perform an HTTP or TCP health check on the Router using the
   following URL:</p>
-  <pre class="prettyprint">
-http://<em><strong>router_IP</strong></em>:15999/?v1/servers/self/reachable
-</pre>
+  <pre class="prettyprint">http://<var>router_IP</var>:15999/v1/servers/self/reachable</pre>
 
-  <p>This URL returns an HTTP 200 response code if the Router is reachable. </p>
+  <p>This URL returns an HTTP 200 response code if the Router is reachable.</p>
 
   <p>To make a Router unreachable, you can block port 15999 on the Router. If the load balancer is
   unable to access the Router on port 15999 it no longer forwards requests to the Router. For
   example, you can block the port by using the following iptables command on the Router node:</p>
-  <pre class="prettyprint">
-&gt; ?sudo iptables -A INPUT -i eth0 -p tcp --dport 15999 -j REJECT
-</pre>
+
+  <pre class="devsite-terminal">sudo iptables -A INPUT -i eth0 -p tcp --dport 15999 -j REJECT</pre>
 
   <p>To later make the Router available, flush iptables:</p>
-  <pre class="prettyprint">
-&gt; sudo iptables -F
-</pre>
+
+  <pre class="devsite-terminal">sudo iptables -F</pre>
 
   <p>You might be using iptables to manage other ports on the node so you have to take that into
   consideration when you flush iptables or use iptables to block port 15999. If you are using
   iptables for other rules, you can use the -D option to reverse the specific change:</p>
-  <pre class="prettyprint">
-&gt; sudo iptables -D INPUT -i eth0 -p tcp --dport 15999 -j REJECT
-</pre>
+
+  <pre class="devsite-terminal">sudo iptables -D INPUT -i eth0 -p tcp --dport 15999 -j REJECT</pre>
 
   <aside class="note">
-    <b>Note:</b> As an alternative to checking reachability on the Router on port 15999, you can
+    <strong>Note:</strong> As an alternative to checking reachability on the Router on port 15999, you can
     check the port on individual virtual hosts. For example, if you have a virtual host on port
     9001, make a TCP check on that port. To make that port unreachable, you can use the following
-    iptables command: 
-    <pre class="prettyprint">
-sudo iptables -A INPUT -i eth0 -p tcp --syn --dport 9001 -j REJECT 
-</pre>
+    iptables command:
+    <pre class="devsite-terminal">sudo iptables -A INPUT -i eth0 -p tcp --syn --dport 9001 -j REJECT</pre>
   </aside>
 
   <h2 id="checkingthestatusofrouterormessageprocessor">Checking the status of Router or Message
   Processor</h2>
 
   <p>To get the status of a Router, make a request to port 8081 on the Router:</p>
-  <pre class="prettyprint">
-&gt; curl -v http://&lt;routerIP&gt;:8081/v1/servers/self/up
-</pre>
+  <pre class="devsite-terminal">curl -v http://<var>router_IP</var>:8081/v1/servers/self/up</pre>
 
   <p>If the Router is up, the request returns "true" in the response and HTTP 200. Note that this
   call only checks if the Router is up and running. Control of the Router's reachability from a
   load balancer is determinedby port 15999</p>
 
   <p>To get the status of a Message Processor:</p>
-  <pre class="prettyprint">
-&gt; curl http://&lt;mpIP&gt;:8082/v1/servers/self/up
-</pre>{% endblock %}
+  <pre class="devsite-terminal">curl http://<var>Message_Processor_IP</var>:8082/v1/servers/self/up</pre>
+
+{% endblock %}

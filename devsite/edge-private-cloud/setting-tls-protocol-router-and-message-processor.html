@@ -1,96 +1,84 @@
-  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}Setting TLS protocol for
-  Router and Message Processor{% endblock %} {% block body %}
+{% extends "private-cloud/v4.18.05/_base.html" %}
+{% block title %}Setting TLS protocol for Router and Message Processor{% endblock %}
+{% block body %}
 
   <p>By default, the Router and Message Processor support TLS versions 1.0, 1.1, 1.2 However, you
   might want to limit the protocols supported by the Router and Message Processor. This document
   describes how to set the protocol globally on the Router and Message Processor. </p>
 
   <p>For the Router, you can also set the protocol for individual virtual hosts. See <a href=
-  "/api-platform/system-administration/creating-virtual-host.html">Configuring TLS access to an API
+  "/api-platform/system-administration/creating-virtual-host">Configuring TLS access to an API
   for the Private Cloud</a> for more.</p>
 
   <p>For the Message Processor, you can set the protocol for an individual TargetEndpoint.
   See <a href=
-  "/api-platform/system-administration/configuring-ssl-edge-backend-service.html">Configuring TLS
+  "/api-platform/system-administration/configuring-ssl-edge-backend-service">Configuring TLS
   from Edge to the backend (Cloud and Private Cloud)</a> for more.</p>
 
   <h2 id="setthetlsprotocolontherouter">Set the TLS protocol on the Router</h2>
 
-  <p>To set the TLS protocol on the Router, set properties in the <span style=
-  "font-family: &quot;courier new&quot;, courier, monospace;">router.properties</span> file: </p>
-
+  <p>To set the TLS protocol on the Router, set properties in the <code>router.properties</code>
+  file:</p>
   <ol>
-    <li>Open the <span style=
-    "font-family: &quot;courier new&quot;, courier, monospace;">router.properties</span> file in
-    an editor. If the file does not exist, create it::<br>
-    <span style="font-family: &quot;courier new&quot;, courier, monospace;">&gt; vi
-    /opt/apigee/customer/application/router.properties</span></li>
-
-    <li>Set the properties as desired:<br>
-    <span style="font-family: &quot;courier new&quot;, courier, monospace;"># Possible values are
-    space-delimited list of: TLSv1 TLSv1.1 TLSv1.2 <br>
-    conf_load_balancing_load.balancing.driver.server.ssl.protocols=TLSv1.2</span></li>
-
+    <li>Open the <code>router.properties</code> file in
+      an editor. If the file does not exist, create it:
+      <pre class="devsite-terminal">vi /opt/apigee/customer/application/router.properties</pre>
+    </li>
+    <li>Set the properties as desired:
+      <pre class="prettyprint"># Possible values are space-delimited list of: TLSv1 TLSv1.1 TLSv1.2
+conf_load_balancing_load.balancing.driver.server.ssl.protocols=TLSv1.2</pre>
+    </li>
     <li>Save your changes.</li>
-
-    <li>Make sure the properties file is owned by the 'apigee' user:<br>
-    <span style="font-family: &quot;courier new&quot;, courier, monospace;">&gt;
-    chown apigee:apigee /opt/apigee/customer/application/router.properties</span></li>
-
-    <li>Restart the Router:<br>
-    <span style="font-family: &quot;courier new&quot;, courier, monospace;">&gt;
-    /opt/apigee/apigee-service/bin/apigee-service edge-router restart</span></li>
-
-    <li>Verify that the protocol is updated correctly by examining the Nginx file <span style=
-    "font-family:courier new,courier,monospace;">/opt/nginx/conf.d/0-default.conf</span>:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt; cat
-    /opt/nginx/conf.d/0-default.conf</span><br>
-    <br>
-    Ensure that the value for <span style=
-    "font-family:courier new,courier,monospace;">ssl_protocols</span> is TLSv1.2.</li>
-
+    <li>Make sure the properties file is owned by the "apigee" user:
+      <pre class="devsite-terminal"> chown apigee:apigee /opt/apigee/customer/application/router.properties</pre>
+    </li>
+    <li>Restart the Router:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-router restart</pre>
+    </li>
+    <li>Verify that the protocol is updated correctly by examining the Nginx file
+      <code>/opt/nginx/conf.d/0-default.conf</code>:
+      <pre class="devsite-terminal">cat /opt/nginx/conf.d/0-default.conf</pre>
+      <p>Ensure that the value for <code>ssl_protocols</code> is TLSv1.2.</p>
+    </li>
     <li>If you re using two-way TLS with a virtual host, you must also set the TLS protocol in the
-    virtual host as described in <a href=
-    "/api-platform/system-administration/creating-virtual-host.html">Configuring TLS access to an
-    API for the Private Cloud</a>.</li>
+      virtual host as described in <a href=
+      "/api-platform/system-administration/creating-virtual-host">Configuring TLS access to an
+      API for the Private Cloud</a>.</li>
   </ol>
 
   <h2 id="setthetlsprotocolonthemessageprocessor">Set the TLS protocol on the Message
   Processor</h2>
 
-  <p>To set the TLS protocol on the Message Processor, set properties in the <span style=
-  "font-family: &quot;courier new&quot;, courier, monospace;">message-processor.properties</span> file: </p>
+  <p>To set the TLS protocol on the Message Processor, set properties in the
+  <code>message-processor.properties</code> file:</p>
 
   <ol>
-    <li>Open the <span style=
-    "font-family:courier new,courier,monospace;">message-processor.properties</span> file in an
-    editor. If the file does not exist, create it:<br>
-    <span style="font-family: &quot;courier new&quot;, courier, monospace;">&gt; vi
-    /opt/apigee/customer/application/message-processor.properties</span></li>
+    <li>Open the <code>message-processor.properties</code> file in an
+      editor. If the file does not exist, create it:
+      <pre class="devsite-terminal">vi /opt/apigee/customer/application/message-processor.properties</pre>
+    </li>
+    <li>Set the properties as desired:
+    <pre class="prettyprint"># Possible values are a comma-delimited list of TLSv1, TLSv1.1, TLSv1.2
+conf/system.properties+https.protocols=TLSv1.2
+# Possible values are a comma-delimited list of SSLv3, TLSv1, TLSv1.1, TLSv1.2
+# Ensure that you include SSLv3
+conf/jvmsecurity.properties+jdk.tls.disabledAlgorithms=SSLv3, TLSv1, TLSv1.1
 
-    <li>Set the properties as desired:<br>
-    <span style="font-family: &quot;courier new&quot;, courier, monospace;"># Possible values are a
-    comma-delimited list of TLSv1, TLSv1.1, TLSv1.2<br>
-    conf/system.properties+https.protocols=TLSv1.2<br>
-    # Possible values are a comma-delimited list of SSLv3, TLSv1, TLSv1.1, TLSv1.2<br>
-    # Ensure that you include SSLv3.<br>
-    conf/jvmsecurity.properties+jdk.tls.disabledAlgorithms=SSLv3, TLSv1, TLSv1.1<br>
-    <br>
-    #Configure the ciphers that need to be supported by the Message Processor:
-    communication_local.http.ssl.ciphers=TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDH_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDH_RSA_WITH_AES_256_GCM_SHA384,TLS_DHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384</span></li>
-
+#Configure the ciphers that need to be supported by the Message Processor:
+communication_local.http.ssl.ciphers=TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDH_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDH_RSA_WITH_AES_256_GCM_SHA384,TLS_DHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384</pre>
+    </li>
     <li>Save your changes.</li>
-
-    <li>Make sure the properties file is owned by the 'apigee' user:<br>
-    <span style="font-family: &quot;courier new&quot;, courier, monospace;">&gt;
-    chown apigee:apigee /opt/apigee/customer/application/message-processor.properties</span></li>
-
-    <li>Restart the Message Processor:<br>
-    <span style="font-family: &quot;courier new&quot;, courier, monospace;">&gt;
-    /opt/apigee/apigee-service/bin/apigee-service edge-message-processor restart</span></li>
-
+    <li>Make sure the properties file is owned by the "apigee" user:
+      <pre class="devsite-terminal">chown apigee:apigee /opt/apigee/customer/application/message-processor.properties</pre>
+    </li>
+    <li>Restart the Message Processor:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-message-processor restart</pre>
+    </li>
     <li>If you re using two-way TLS with the backend, set the TLS protocol in the virtual host as
-    described in <a href=
-    "/api-platform/system-administration/configuring-ssl-edge-backend-service.html">Configuring TLS
-    from Edge to the backend (Cloud and Private Cloud)</a>.</li>
-  </ol>{% endblock %}
+      described in <a href=
+      "/api-platform/system-administration/configuring-ssl-edge-backend-service">Configuring TLS
+      from Edge to the backend (Cloud and Private Cloud)</a>.
+    </li>
+  </ol>
+
+{% endblock %}

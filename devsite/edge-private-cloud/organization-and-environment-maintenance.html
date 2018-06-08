@@ -1,39 +1,36 @@
-  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}Organization and Environment
-  Maintenance{% endblock %} {% block body %}
+{% extends "private-cloud/v4.18.05/_base.html" %}
+{% block title %}Organization and environment maintenance{% endblock %}
+{% block body %}
 
   <p>This section covers various administrative operations, for example, creation, management and
   removal of Apigee organizations, environments and virtual hosts in an Apigee Edge for Private
   Cloud installation.</p>
 
   <p>For an introduction to organizations, environments, and virtual hosts, see <a href=
-  "about-planets-regions-pods-organizations-environments-and-virtual-hosts.html">About Planets,
-  Regions, Pods, Organizations, Environments and Virtual Hosts</a>.</p>
+  "about-planets-regions-pods-organizations-environments-and-virtual-hosts">About planets,
+  regions, pods, organizations, environments and virtual hosts</a>.</p>
 
   <h2 id="checkingstatusofusersorganizationandenvironment">Checking Status of Users, Organization
   and Environment </h2>
 
   <p>Management Server plays a vital role in holding all other components together in an
   on-premises installation of Edge Private Cloud. You can check for user, organization and
-  deployment status on the Management Server by issuing the following CURL commands:</p>
-  <pre class="prettyprint">
-curl -u &lt;adminEmail&gt;:&lt;admin passwd&gt; http://localhost:8080/v1/users
-curl -u &lt;adminEmail&gt;:&lt;admin passwd&gt; http://localhost:8080/v1/organizations
-curl -u &lt;adminEmail&gt;:&lt;admin passwd&gt; http://localhost:8080/v1/organizations/&lt;orgname&gt;/deployments
-</pre>
+  deployment status on the Management Server by issuing the following <code>curl</code>
+  commands:</p>
+  <pre class="devsite-terminal">curl -u <var>adminEmail:admin_passwd</var> http://localhost:8080/v1/users
+<code class="devsite-terminal">curl -u <var>adminEmail:admin_passwd</var> http://localhost:8080/v1/organizations</code>
+<code class="devsite-terminal">curl -u <var>adminEmail;:admin_passwd</var> http://localhost:8080/v1/organizations/<var>orgname</var>/deployments</code></pre>
 
   <p>The system should display 200 HTTP status for all calls. If these fail, do the following:</p>
 
   <ol>
-    <li>Check the Management Server logs at <span style=
-    "font-family:courier new,courier,monospace;">/opt/apigee/var/log/apigee/management-server</span> for
-    any errors.</li>
-
+    <li>Check the Management Server logs at <code>/opt/apigee/var/log/apigee/management-server</code>
+      for any errors.</li>
     <li>Make a call against Management Server to check whether it is functioning
-    properly. </li>
-
-    <li>Remove the server from the ELB and then restart the Management Server:<br>
-    <span style="font-family:courier new,courier,monospace;">/opt/apigee/bin/apigee-service
-    management-server restart</span></li>
+     properly.</li>
+    <li>Remove the server from the ELB and then restart the Management Server:
+      <pre class="devsite-terminal">/opt/apigee/bin/apigee-service management-server restart</pre>
+    </li>
   </ol>
 
   <h2 id="aboutusingconfigfiles">About using config files </h2>
@@ -43,7 +40,7 @@ curl -u &lt;adminEmail&gt;:&lt;admin passwd&gt; http://localhost:8080/v1/organiz
   and virtual host.</p>
 
   <p>For a complete config file, and information on the properties that you can set in the config
-  file, see <a href="onboard-organization.html">Onboard an organization</a>.</p>
+  file, see <a href="onboard-organization">Onboard an organization</a>.</p>
 
   <h2 id="aboutsettingupavirtualhost">About setting up a virtual host</h2>
 
@@ -57,79 +54,68 @@ curl -u &lt;adminEmail&gt;:&lt;admin passwd&gt; http://localhost:8080/v1/organiz
 
   <ul>
     <li><strong>The name</strong> of the virtual host that you use to reference it in your API
-    proxies.</li>
-
+      proxies.</li>
     <li><strong>The port</strong> on the Router for the virtual host. Typically these ports start
-    at 9001 and increment by one for every new virtual host.</li>
-
+      at 9001 and increment by one for every new virtual host.</li>
     <li><strong>The host alias</strong> of the virtual host. Typically the DNS name of the virtual
-    host.<br>
-    <br>
-    The Edge Router compares the Host header of the incoming request to the list of host aliases as
-    part of determining the API proxy that handles the request. When making a request through a
-    virtual host, either specify a domain name that matches the host alias of a virtual host, or
-    specify the IP address of the Router and the Host header containing the host alias.</li>
+      host.
+      <p>The Edge Router compares the Host header of the incoming request to the list of host aliases as
+      part of determining the API proxy that handles the request. When making a request through a
+      virtual host, either specify a domain name that matches the host alias of a virtual host, or
+      specify the IP address of the Router and the Host header containing the host alias.</p>
+    </li>
   </ul>
 
   <p>For example, if you created a virtual host with a host alias of
-  <strong>myapis.apigee.net</strong> on port <strong>9001</strong>, then a cURL request to an API
-  through that virtual host could use one of the following forms:</p>
+  <strong>myapis.apigee.net</strong> on port <strong>9001</strong>, then execute a
+  <code>curl</code> request to an API through that virtual host could use one of the following
+  forms:</p>
 
   <ul>
-    <li>If you have a DNS entry for <strong>myapis.apigee.net</strong>:<br>
-    <span style="font-family:courier new,courier,monospace;">curl
-    http://<strong>myapis.apigee.net:9001</strong>/{proxy-base-path}/{resource-path}</span></li>
-
-    <li>If you do not have a DNS entry for <strong>myapis.apigee.net</strong>:<br>
-    <span style="font-family:courier new,courier,monospace;">curl
-    http://<strong>&lt;routerIP&gt;:9001</strong>/{proxy-base-path}/{resource-path} -H 'Host:
-    myapis.apigee.net'</span><br>
-    <br>
-    In the second form, you specify the IP address of the Router, and pass the host alias in the
-    Host header. <br>
-    <br>
-    <strong>Note</strong>: The curl command, most browsers, and many other utilities automatically
-    append the Host header with the domain as part of the request, so you can actually use a curl
-    command in the form:<br>
-    <span style="font-family:courier new,courier,monospace;">curl
-    http://&lt;routerIP&gt;:9001/{proxy-base-path}/{resource-path} </span></li>
+    <li>If you have a DNS entry for <strong>myapis.apigee.net</strong>:
+      <pre class="devsite-terminal">curl http://<strong>myapis.apigee.net:9001</strong>/<var>proxy-base-path</var>/<var>resource-path</var></pre>
+    </li>
+    <li>If you do not have a DNS entry for <strong>myapis.apigee.net</strong>:
+      <pre class="devsite-terminal">curl http://<var>routerIP</var>:9001/<var>proxy-base-path</var>/<var>resource-path</var> -H 'Host: myapis.apigee.net'</pre>
+      <p>In the second form, you specify the IP address of the Router, and pass the host alias in the
+      Host header.</p>
+      <aside class="note"> <strong>Note</strong>: The <code>curl</code> command, most browsers, and
+      many other utilities automatically append the <code>Host</code> header with the domain as part
+      of the request, so you can actually use a <code>curl</code> command in the form:
+      <pre class="devsite-terminal">curl http://<var>routerIP</var>:9001/<var>proxy-base-path</var>/<var>resource-path</var></pre>
+    </aside>
+    </li>
   </ul>
 
   <h3 id="aboutsettingupavirtualhost-optionswhenyoudonothaveadnsentryforthevirtualhost">Options
   when you do not have a DNS entry for the virtual host</h3>
 
   <p>One option when you do not have a DNS entry is to set the host alias to the IP address of the
-  Router and port of the virtual host, as <span style=
-  "font-family:courier new,courier,monospace;">&lt;routerIP&gt;:port</span>. For example:</p>
-  <pre class="prettyprint">
-192.168.1.31:9001
-</pre>
+  Router and port of the virtual host, as <var>routerIP:port</var>. For example:</p>
 
-  <p>When you make a curl command in the form below:</p>
-  <pre class="prettyprint">
-curl http://&lt;routerIP&gt;:9001/{proxy-base-path}/{resource-path} 
-</pre>
+  <pre class="prettyprint">192.168.1.31:9001</pre>
+
+  <p>Then you make a <code>curl</code> command in the form below:</p>
+
+  <pre class="devsite-terminal">curl http://<var>routerIP</var>:9001/<var>proxy-base-path</var>/<var>resource-path</var></pre>
 
   <p>This option is preferred because it works well with the Edge UI. </p>
 
   <p>If you have multiple Routers, add a host alias for each Router, specifying the IP address of
   each Router and port of the virtual host. </p>
 
-  <p>Alternatively, you can set the host alias to a value, such as
-  <strong>temp.hostalias.com</strong>. Then, you have to pass the <span style=
-  "font-family:courier new,courier,monospace;">host</span> header on every request:</p>
-  <pre class="prettyprint">
-curl -v http://&lt;routerIP&gt;:9001/{proxy-base-path}/{resource-path} <strong>-H 'Host: temp.hostalias.com'</strong>
-</pre>
+  <p>Alternatively, you can set the host alias to a value, such as <strong>temp.hostalias.com</strong>.
+  Then, you have to pass the <code>Host</code> header on every request:</p>
 
-  <p>Or, add the host alias to your <span style=
-  "font-family:courier new,courier,monospace;">/etc/hosts</span> file. For example, add this line
-  to <span style="font-family:courier new,courier,monospace;">/etc/hosts</span>:</p>
-  <pre class="prettyprint">
-192.168.1.31   temp.hostalias.com
-</pre>
+  <pre class="devsite-terminal">curl -v http://<var>routerIP</var>:9001/<var>proxy-base-path</var>/<var>resource-path</var> <strong>-H 'Host: temp.hostalias.com'</strong></pre>
+
+  <p>Or, add the host alias to your <code>/etc/hosts</code> file. For example, add this line to
+  <code>/etc/hosts</code>:</p>
+
+  <pre class="prettyprint">192.168.1.31   temp.hostalias.com</pre>
 
   <p>Then you can make a request as if you had a DNS entry:</p>
-  <pre class="prettyprint">
-curl -v http://myapis.apigee.net:9001/{proxy-base-path}/{resource-path} 
-</pre>{% endblock %}
+
+  <pre class="devsite-terminal">curl -v http://myapis.apigee.net:9001/<var>proxy-base-path</var>/<var>resource-path</var></pre>
+
+{% endblock %}

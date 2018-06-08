@@ -1,12 +1,13 @@
-  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}Modifying Java Memory
-  Settings{% endblock %} {% block body %}
+{% extends "private-cloud/v4.18.05/_base.html" %}
+{% block title %}Modifying Java memory settings{% endblock %}
+{% block body %}
 
   <p>Depending on your traffic and processing requirements you may need to increase the heap size
   or class metadata size for one or more Apigee components.</p>
 
   <aside class="note"><b>Note:</b> In Java 1.8 class metadata memory allocation replaced permanent
   generation (permgem). Some Edge properties still refer to permgen as described
-  below. </aside>
+  below.</aside>
 
   <p>To change these settings, edit the properties file for the component. If the component is
   installed on multiple machines, such as the Edge Message Processor, then edit the properties file
@@ -14,78 +15,61 @@
 
   <p>To set these values, set the following properties:</p>
 
-  <ul>
-    <li><span style="font-family:courier new,courier,monospace;">bin_setenv_min_mem</span> - set
-    the minimum heap size. The default is 256 MB. This setting corresponds to
-    the Java <span style=
-    "font-family: &quot;courier new&quot;, courier, monospace;">-Xms</span> option.</li>
+  <table>
+    <thead>
+      <tr>
+        <th>Property</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tr>
+      <td><code>bin_setenv_min_mem</code></td>
+      <td>Sets the minimum heap size. The default is 256 MB. This setting corresponds to the Java
+        <code>-Xms</code> option.</td>
+    </tr>
+    <tr>
+      <td><code>bin_setenv_max_mem</code></td>
+      <td>Sets the maximum heap size. The default is 512 MB. This setting corresponds to the Java
+        <code>-Xmx</code> option.</td>
+    </tr>
+    <tr>
+      <td><code>bin_setenv_meta_space_size</code></td>
+      <td>Sets the default class metadata size. The default value is set to the value of
+        <code>bin_setenv_max_permsize</code>, which defaults to 128 MB. On the Message Processor,
+        Apigee recommends that you set this value to 256 MB or 512 MB, depending on your traffic.
+        This setting corresponds to the Java <code>-XX:MetaspaceSize</code> option.</td>
+    </tr>
+  </table>
 
-    <li><span style="font-family:courier new,courier,monospace;">bin_setenv_max_mem</span> - set
-    the maximum heap size. The default is 512 MB. This setting corresponds to the
-    Java <span style="font-family:courier new,courier,monospace;">-Xmx</span> option.</li>
-
-    <li><span style=
-    "font-family:courier new,courier,monospace;">bin_setenv_meta_space_size</span> - set the
-    default class metadata size. The default value is set to the value of <span style=
-    "font-family:courier new,courier,monospace;">bin_setenv_max_permsize</span>,
-    which defaults to 128 MB. On the Message Processor, Apigee recommends that you set this
-    value to 256 MB or 512 MB, depending on your traffic.  This setting corresponds to
-    the Java -<span style=
-    "font-family:courier new,courier,monospace;">XX:MetaspaceSize</span> option.</li>
-  </ul>
-
-  <p>Set these properties for each component on the machine, using "m" suffix to indicate megabyte.
-  For example, for the Message Processor, set them in the <span style=
-  "font-family: 'courier new', courier, monospace;">/opt/apigee/</span><span style=
-  "font-family: 'courier new', courier, monospace;">customer/application/message-processor.properties</span>
-  file as:</p>
-  <pre class="prettyprint">
-bin_setenv_min_mem=512m
+  <p>Set these properties for each component on the machine, using the "m" suffix to indicate megabyte.
+  For example, for the Message Processor, set them in the
+  <code>/opt/apigee/customer/application/message-processor.properties</code> file as:</p>
+  <pre class="prettyprint">bin_setenv_min_mem=512m
 bin_setenv_max_mem=1024m
-bin_setenv_meta_space_size=1024m
-</pre>
+bin_setenv_meta_space_size=1024m</pre>
 
-  <p>If the <span style=
-  "font-family: &quot;courier new&quot;, courier, monospace;">message-processor.properties</span> file
-  does not exist, or if the corresponding <span style=
-  "font-family:courier new,courier,monospace;">.properties</span> file for any Edge component does
+  <p>If the <code>message-processor.properties</code> file
+  does not exist, or if the corresponding <code>.properties</code> file for any Edge component does
   not exist, create it and then change ownership of the file to the "apigee" user:</p>
-  <pre class="prettyprint">
-&gt; chown apigee:apigee /opt/apigee/customer/application/message-processor.properties
-</pre>
+  <pre class="devsite-terminal">chown apigee:apigee /opt/apigee/customer/application/message-processor.properties</pre>
 
-  <p>After setting the values in the <span style=
-  "font-family: &quot;courier new&quot;, courier, monospace;">.properties</span> file, restart
-  the component:</p>
-  <pre class="prettyprint">
-&gt; /opt/apigee/apigee-service/bin/apigee-service <em><strong>component</strong></em> restart
-</pre>
+  <p>After setting the values in the <code>.properties</code> file, restart the component:</p>
+  <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service <var>component</var> restart</pre>
 
   <p>For example:</p>
-  <pre class="prettyprint">
-&gt; /opt/apigee/apigee-service/bin/apigee-service edge-message-processor restart
-</pre>
+  <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-message-processor restart</pre>
 
   <p>For Java settings not controlled by the properties listed above, you can also set the
-  following in the corresponding <span style=
-  "font-family: &quot;courier new&quot;, courier, monospace;">.properties</span> file for any
-  Edge component:</p>
+  following in the corresponding <code>.properties</code> file for any Edge component:</p>
 
   <ul>
-    <li><span style=
-    "font-family:courier new,courier,monospace;">bin_setenv_ext_jvm_opts</span> - set any Java
-    property not specified by other properties. For example:<br>
-    <br>
-    <span style=
-    "font-family:courier new,courier,monospace;">bin_setenv_ext_jvm_opts=-XX:MaxGCPauseMillis=500</span><br>
-
-    <br>
-    However, do not use <span style=
-    "font-family: &quot;courier new&quot;, courier, monospace;">bin_setenv_ext_jvm_opts</span> to
-    set <span style="font-family:courier new,courier,monospace;">-Xms</span>, <span style=
-    "font-family:courier new,courier,monospace;">-Xmx</span>, or <span style=
-    "font-family:courier new,courier,monospace;">-XX:MetaspaceSize</span> as these values are
-    controlled by the properties listed above. </li>
+    <li><code>bin_setenv_ext_jvm_opts</code>: Set any Java
+      property not specified by other properties. For example:
+      <pre>bin_setenv_ext_jvm_opts=-XX:MaxGCPauseMillis=500</pre>
+      <p>However, do not use <code>bin_setenv_ext_jvm_opts</code> to
+      set <code>-Xms</code>, <code>-Xmx</code>, or <code>-XX:MetaspaceSize</code> as these values are
+      controlled by the properties listed above.</p>
+    </li>
   </ul>
 
   <p>For additional tips on configuring memory, see <a href=

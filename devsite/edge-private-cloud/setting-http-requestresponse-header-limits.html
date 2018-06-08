@@ -1,16 +1,16 @@
-  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}Setting HTTP request/response
-  header limits{% endblock %} {% block body %}
+{% extends "private-cloud/v4.18.05/_base.html" %}
+{% block title %}Setting HTTP request/response header limits{% endblock %}
+{% block body %}
 
   <p>The Edge Router and Message Processor have predefined limits to the size of request/response
   headers and to the line size. </p>
 
-  <h2>Configuring limits for the Router</h2>
+  <h2>Configure limits for the Router</h2>
 
   <p>For the Router, edit the following properties
   in <code>/opt/apigee/customer/application/router.properties</code>
   to change the default values:</p>
-  <pre class="prettyprint">
-  # Request buffers
+  <pre class="prettyprint"># Request buffers
   # default:
   # conf_load_balancing_load.balancing.driver.large.header.buffers=8 16k
   # new value:
@@ -20,49 +20,44 @@
   # default:
   # conf_load_balancing_load.balancing.driver.proxy.buffer.size=64k
   # new value:
-  conf_load_balancing_load.balancing.driver.proxy.buffer.size=128k
-</pre>
+  conf_load_balancing_load.balancing.driver.proxy.buffer.size=128k</pre>
 
   <p>If that file does not exist, create it.</p>
 
-  <p>For <code>conf_load_balancing_load.balancing.driver.large.header.buffers</code>, the first parameter
-   specifies the number of buffers, and the second the size of each buffer.
-   The buffers are allocated dynamically and released after usage.
-   These settings are only used if the request header is more than 1 KB.
-   For requests that have header request URI less than 1 KB, the large buffers won't even be used.</p>
+  <p>For <code>conf_load_balancing_load.balancing.driver.large.header.buffers</code>, the first
+  parameter specifies the number of buffers, and the second the size of each buffer. The buffers are
+  allocated dynamically and released after usage. These settings are only used if the request header
+  is more than 1 KB. For requests that have header request URI less than 1 KB, the large buffers
+  won't even be used.</p>
 
-  <p>For <code>conf_load_balancing_load.balancing.driver.proxy.buffer.size</code>, specify the size of the response buffer. </p>
+  <p>For <code>conf_load_balancing_load.balancing.driver.proxy.buffer.size</code>, specify the size
+  of the response buffer.</p>
 
   <p>The Edge Router is implemented using Nginx. For more on these properties, see:</p>
   <ul>
-    <li><a href="http://nginx.org/en/docs/http/ngx_http_core_module.html#large_client_header_buffers">conf_load_balancing_load.balancing.driver.large.header.buffers</a></li>
-    <li><a href="http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_buffer_size">conf_load_balancing_load.balancing.driver.proxy.buffer.size</a></li>
+    <li><a href="http://nginx.org/en/docs/http/ngx_http_core_module.html#large_client_header_buffers" class="external">conf_load_balancing_load.balancing.driver.large.header.buffers</a></li>
+    <li><a href="http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_buffer_size" class="external">conf_load_balancing_load.balancing.driver.proxy.buffer.size</a></li>
   </ul>
 
   <p>You must restart the Router after changing these properties:</p>
-  <pre class="prettyprint">
-&gt; /opt/apigee/apigee-service/bin/apigee-service edge-router restart
-</pre>
+  <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-router restart</pre>
 
   <h2>Configuring limits for the Message Processor</h2>
 
   <p>For the Message Processor, which handles outgoing requests to your backend services, edit the
-  following properties in <span style=
-  "font-family:courier new,courier,monospace;">/opt/apigee/customer/application/message-processor.properties</span>
+  following properties in <code>/opt/apigee/customer/application/message-processor.properties</code>
   to change these default values:</p>
-  <pre class="prettyprint">
-conf/http.properties+HTTPRequest.line.limit=7k
-conf/http.properties+HTTPRequest.headers.limit=25k 
-conf/http.properties+HTTPResponse.line.limit=2k 
-conf/http.properties+HTTPResponse.headers.limit=25k
-</pre>
+  <pre class="prettyprint">conf/http.properties+HTTPRequest.line.limit=7k
+conf/http.properties+HTTPRequest.headers.limit=25k
+conf/http.properties+HTTPResponse.line.limit=2k
+conf/http.properties+HTTPResponse.headers.limit=25k</pre>
 
-  <aside class="note"><b>Note:</b> The property syntax is different for the Message Processor
-  because the properties are commented out by default. </aside>
+  <aside class="note"><strong>Note:</strong> The property syntax is different for the Message
+  Processor because the properties are commented out by default.</aside>
 
   <p>If that file does not exist, create it.</p>
 
   <p>You must restart the Message Processor after changing these properties:</p>
-  <pre class="prettyprint">
-&gt; /opt/apigee/apigee-service/bin/apigee-service edge-message-processor restart
-</pre>{% endblock %}
+  <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-message-processor restart</pre>
+
+{% endblock %}

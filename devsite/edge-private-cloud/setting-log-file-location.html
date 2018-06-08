@@ -1,29 +1,33 @@
-  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}Setting log file location{% endblock %} {% block body %}
+{% extends "private-cloud/v4.18.05/_base.html" %}
+{% block title %}Setting log file location{% endblock %}
+{% block body %}
 
-  <p>By default, the log files for an Edge component are written to the <span style=
-  "font-family:courier new,courier,monospace;">/opt/apigee/var/log/<em><strong>compName</strong></em></span>
-  directory. Use the following procedure to change the default location for all Edge components
+  <p>By default, the log files for an Edge component are written to the
+  <code>/opt/apigee/var/log/<var>component_name</var></code> directory, where
+  <var>component_name</var> can be one of the following:
+
+  {% dynamic include "/includes/___opdk-component-list" %}
+
+  <p>In addition to this list, Edge also logs the setup process in the
+  <code>/opt/apigee/var/log/apigee-setup</code> directory.</p>
+
+  <p>Use the following procedure to change the default log file location for all Edge components
   except the Edge UI:</p>
 
   <ol>
-    <li>Create the following file:<br>
-    <span style=
-    "font-family:courier new,courier,monospace;">/opt/apigee/etc/<em><strong>compName</strong></em>.d/APIGEE_APP_LOGDIR.sh</span></li>
+    <li>Create the following file:
+      <pre class="devsite-terminal">/opt/apigee/etc/<var>component_name</var>.d/APIGEE_APP_LOGDIR.sh</pre>
+    </li>
+    <li>Add the following property to the file:
+      <pre>APIGEE_APP_LOGDIR=<var>/directory/path</var></pre>
+      <p>Where <var>/directory/path</var> specifies the directory for the log files.</p>
+    </li>
+    <li>Make sure the directory is accessible by the "apigee" user:
+      <pre class="devsite-terminal">chown apigee:apigee <var>/directory/path</var></pre>
+    </li>
+    <li>Restart the component:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service <var>component_name</var> restart</pre>
+    </li>
+  </ol>
 
-    <li>Add the following property to the file:<br>
-    <span style=
-    "font-family:courier new,courier,monospace;">APIGEE_APP_LOGDIR=<em><strong>/foo/bar</strong></em></span><br>
-
-    where <em><strong><span style=
-    "font-family:courier new,courier,monospace;">/foo/bar</span></strong></em> specifies the
-    directory for the log files. </li>
-
-    <li>Make sure the directory is accessible by the "apigee" user<br>
-    <span style="font-family:courier new,courier,monospace;">&gt; chown
-    apigee:apigee <em><strong>/foo/bar</strong></em></span></li>
-
-    <li>Restart the component:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    /opt/apigee/apigee-service/bin/apigee-service <em><strong>compName</strong></em>
-    restart</span></li>
-  </ol>{% endblock %}
+{% endblock %}

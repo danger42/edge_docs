@@ -1,5 +1,6 @@
-  {% extends "private-cloud/v4.18.01/_base.html" %} {% block title %}Enable Cassandra
-  authentication{% endblock %} {% block body %}
+{% extends "private-cloud/v4.18.05/_base.html" %}
+{% block title %}Enable Cassandra authentication{% endblock %}
+{% block body %}
 
   <p>By default, Cassandra installs without authentication enabled. That means anyone can access
   Cassandra. You can enable authentication after installing Edge, or as part of the installation
@@ -7,19 +8,17 @@
 
   <p>If you decide to enable authentication on Cassandra, it uses the following default
   credentials:</p>
-
   <ul>
     <li>username = 'cassandra' </li>
-
     <li>password = 'cassandra' </li>
   </ul>
 
   <p>You can use this account, set a different password for this account, or create a new Cassandra
   user. Add, remove, and modify users by using the Cassandra CREATE/ALTER/DROP USER
-  statements. </p>
+  statements.</p>
 
   <p>For more information, see <a href=
-  "https://www.datastax.com/documentation/cql/3.0/cql/cql_reference/cqlCommandsTOC.html">http://www.datastax.com/documentation/cql/3.0/cql/cql_reference/cqlCommandsTOC.html</a>.</p>
+  "https://www.datastax.com/documentation/cql/3.0/cql/cql_reference/cqlCommandsTOC.html" class="external">http://www.datastax.com/documentation/cql/3.0/cql/cql_reference/cqlCommandsTOC.html</a>.</p>
 
   <h2 id="enablecassandraauthenticationduringinstallation">Enable Cassandra authentication during
   installation</h2>
@@ -28,88 +27,65 @@
   authentication when you install Cassandra, you cannot change the default username and password.
   You have to perform that step manually after installation of Cassandra completes.</p>
 
-  <p><strong>Note</strong>: Use this procedure when installing Cassandra by using the "-p c", "-p
-  ds", "-p sa", "-p aio", "-p asa", and "-p ebp" options.</p>
+  <aside class="note"><strong>Note</strong>: Use this procedure when installing Cassandra by using
+  the "-p c", "-p ds", "-p sa", "-p aio", "-p asa", and "-p ebp" options.</aside>
 
-  <p>To enable Cassandra authentication at install time, include the <span style=
-  "font-family:courier new,courier,monospace;">CASS_AUTH</span> property in the configuration file
-  for all Cassandra nodes:</p>
-  <pre class="prettyprint">
-CASS_AUTH=y # The default value is n.
-</pre>
+  <p>To enable Cassandra authentication at install time, include the <code>CASS_AUTH</code>
+  property in the configuration file for all Cassandra nodes:</p>
+
+  <pre class="prettyprint">CASS_AUTH=y # The default value is n.</pre>
 
   <p>The following Edge components access Cassandra:</p>
 
   <ul>
     <li>Management Server</li>
-
     <li>Message Processors </li>
-
     <li>Routers</li>
-
     <li>Qpid servers</li>
-
     <li>Postgres servers</li>
-
-    <li>BaaS Stack</li>
   </ul>
 
   <p>Therefore, when you install these components, you must set the following properties in the
   configuration file to specify the Cassandra credentials:</p>
-  <pre class="prettyprint">
-CASS_USERNAME=cassandra 
-CASS_PASSWORD=cassandra
-</pre>
+
+  <pre class="prettyprint">CASS_USERNAME=cassandra
+CASS_PASSWORD=cassandra</pre>
 
   <p>You can change the Cassandra credentials after installing Cassandra. However, if you have
-  already installed the Management Server, Message Processors, Routers, Qpid servers, Postgres
-  servers, or BaaS Stack, you must also update those components to use the new
-  credentials. </p>
+  already installed the Management Server, Message Processors, Routers, Qpid servers, or Postgres
+  servers, you must also update those components to use the new credentials.</p>
 
   <p>To change the Cassandra credentials after installing Cassandra:</p>
 
   <ol>
-    <li>Log into any one Cassandra node using the <span style=
-    "font-family:courier new,courier,monospace;">cqlsh</span> tool and the default credentials. You
-    only have to change the password on one node and it will be broadcast to all Cassandra nodes in
-    the ring: <br>
-      <span style="font-family:courier new,courier,monospace;">&gt;
-      /opt/apigee/apigee-cassandra/bin/cqlsh <em><strong>cassIP</strong></em>
-      <em><strong>9042</strong></em> -u cassandra -p cassandra</span><br>
-      ?Where:
-
-      <ol style="list-style: lower-alpha outside">
-        <li><em><strong>cassIP</strong></em> is the IP address of the Cassandra node.</li>
-
-        <li><em><strong>9042</strong></em> is the default Cassandra port. </li>
-
-        <li>The default user is <span style=
-        "font-family:courier new,courier,monospace;">cassandra</span>. </li>
-
-        <li>The default password is <span style=
-        "font-family:courier new,courier,monospace;">cassandra</span>. If you changed the password
-        previously, use the current password.</li>
+    <li>Log into any one Cassandra node using the <code>cqlsh</code> tool and the default
+      credentials. You only have to change the password on one node and it will be broadcast to all
+      Cassandra nodes in the ring:
+      <pre class="devsite-terminal">/opt/apigee/apigee-cassandra/bin/cqlsh <var>cassIP</var> <var>9042</var> -u cassandra -p cassandra</pre>
+      <p>Where:</p>
+      <ol>
+        <li><var>cassIP</var> is the IP address of the Cassandra node.</li>
+        <li><var>9042</var> is the default Cassandra port.</li>
+        <li>The default user is <code>cassandra</code>.</li>
+        <li>The default password is <code>cassandra</code>. If you changed the password
+          previously, use the current password.</li>
       </ol>
     </li>
-
-    <li>Run the following command as the <span style=
-    "font-family:courier new,courier,monospace;">cqlsh&gt;</span> prompt to update the
-    password: <br>
-    <span style="font-family:courier new,courier,monospace;">cqlsh&gt; ALTER USER cassandra WITH
-    PASSWORD '<em><strong>NEW_PASSWORD</strong></em>';</span></li>
-
-    <li>Exit the cqlsh tool:<br>
-    <span style="font-family:courier new,courier,monospace;">cqlsh&gt; exit</span></li>
-
+    <li>Run the following command at the <code>cqlsh&gt;</code> prompt to update the password:
+      <pre class="devsite-terminal" data-terminal-prefix="cqlsh&gt; ">ALTER USER cassandra WITH PASSWORD '<var>NEW_PASSWORD</var>';</pre>
+    </li>
+    <li>Exit the cqlsh tool:
+      <pre class="devsite-terminal" data-terminal-prefix="cqlsh&gt; ">exit</pre>
+    </li>
     <li><strong>If you have not yet</strong> installed the Management Server, Message Processors,
-    Routers, Qpid servers, Postgres servers, or BaaS Stack, set the following properties in the
-    config file and then install those components:<br>
-    <span style="font-family:courier new,courier,monospace;">CASS_USERNAME=cassandra <br>
-    CASS_PASSWORD=<em><strong>NEW_PASSWORD</strong></em></span></li>
-
+      Routers, Qpid servers, or Postgres servers, set the following properties in the
+      config file and then install those components:
+      <pre>CASS_USERNAME=cassandra
+CASS_PASSWORD=<var>NEW_PASSWORD</var></pre>
+    </li>
     <li><strong>If you have already installed</strong> the Management Server, Message
-    Processors, Routers, Qpid servers, Postgres servers, or BaaS Stack, then see <a href=
-    "resetting-passwords.html">Resetting Edge Passwords</a> for the procedure to update those
+    Processors, Routers, Qpid servers, or Postgres servers, then see <a href=
+    "resetting-passwords">Resetting Edge Passwords</a> for the procedure to update those
     components to use the new password.</li>
   </ol>
 
@@ -117,16 +93,13 @@ CASS_PASSWORD=cassandra
   installation</h2>
 
   <p>To enable authentication:</p>
-
   <ul>
     <li>Update all Edge components that connect to Cassandra with the Cassandra username and
-    password.</li>
-
+      password.</li>
     <li>On all Cassandra nodes, enable authentication.</li>
-
     <li>Set the Cassandra username and password on any one node. You only have to change the
-    credentials on one Cassandra node and they will be broadcast to all Cassandra nodes in the
-    ring.</li>
+      credentials on one Cassandra node and they will be broadcast to all Cassandra nodes in the
+      ring.</li>
   </ul>
 
   <p>Use the following procedure to update all Edge components that communicate with Cassandra
@@ -134,92 +107,28 @@ CASS_PASSWORD=cassandra
   credentials:</p>
 
   <ol>
-    <li>On the Management Server node, run the following command:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt;
-    /opt/apigee/apigee-service/bin/apigee-service edge-management-server
-    store_cassandra_credentials -u CASS_USERNAME -p CASS_PASSWORD</span> <br>
-    <br>
-    Optionally, you can pass a file to the command containing the new username and password:<br>
-    <span style="font-family:courier new,courier,monospace;">&gt; apigee-service
-    edge-management-server store_cassandra_credentials  -f
-    <em><strong>configFile</strong></em> </span><br>
-    <br>
-    Where the <strong><em>configFile</em></strong> contains the following:<br>
-    <span style="font-family:courier new,courier,monospace;">CASS_USERNAME=cassandra<br>
-    CASS_PASSWORD=<em><strong>CASS_PASSWROD</strong></em></span><br>
-    <br>
-    This command automatically restarts the Management Server.</li>
-
+    <li>On the Management Server node, run the following command:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-management-server
+  store_cassandra_credentials -u CASS_USERNAME -p CASS_PASSWORD</pre>
+      <p>Optionally, you can pass a file to the command containing the new username and password:</p>
+      <pre class="devsite-terminal">apigee-service edge-management-server store_cassandra_credentials  -f <var>configFile</var></pre>
+      <p>Where the <var>configFile</var> contains the following:</p>
+      <pre>CASS_USERNAME=cassandra
+CASS_PASSWORD=<var>CASS_PASSWROD</var></pre>
+      <p>This command automatically restarts the Management Server.</p>
+    </li>
     <li>Repeat step 1 on:
-
       <ul>
         <li>All Message Processors </li>
-
         <li>All Routers</li>
-
         <li>All Qpid servers (edge-qpid-server)</li>
-
-        <li>Postgres servers  (edge-postgres-server)</li>
+        <li>Postgres servers (edge-postgres-server)</li>
       </ul>
-    </li>
-
-    <li>On the BaaS Stack node for version 4.16.05.04 and later:
-
-      <ol style="list-style: lower-alpha outside">
-        <li>Run the following command to generate an encrypted password:<br>
-        <span style="font-family:courier new,courier,monospace;">&gt;
-        /opt/apigee/apigee-service/bin/apigee-service baas-usergrid</span> <span style=
-        "font-family:courier new,courier,monospace;">secure_password</span><br>
-        <br>
-        This command prompts you for the plain text password and returns the encrypted password in
-        the form:<br>
-        <span style=
-        "font-family:courier new,courier,monospace;">SECURE:ae1b6dedbf6b26aaab8bee815a910737c1c15b55f3505c239e43bc09f8050</span></li>
-
-        <li>Set the following tokens in <span style=
-        "font-family:courier new,courier,monospace;">/opt/apigee/customer/application/usergrid.properties</span>.
-        If that file does not exist, create it:<br>
-        <span style=
-        "font-family:courier new,courier,monospace;">usergrid-deployment_cassandra.username=cassandra<br>
-
-        usergrid-deployment_cassandra.password=SECURE:ae1b6dedbf6b26aaab8bee815a910737c1c15b55f3505c239e43bc09f8050</span><br>
-
-        <br>
-        This example uses the default username for Cassandra. If you changed the username, set the
-        value of <span style=
-        "font-family: &quot;courier new&quot;, courier, monospace;">usergrid-deployment_cassandra.username</span> accordingly.<br>
-
-        <br>
-        Ensure that you include the "<span style=
-        "font-family:courier new,courier,monospace;">SECURE:</span>" prefix on the password.
-        Otherwise, the BaaS Stack interprets the value as unencrypted.<br>
-        <br>
-        <strong>Note</strong>: Each BaaS Stack node has its own unique key used to encrypt the
-        password. Therefore, you must generate the encrypted value on each BaaS Stack node
-        separetly.</li>
-
-        <li>Change ownership of the <span style=
-        "font-family:courier new,courier,monospace;">usergrid.properties</span> file to the
-        'apigee' user:<br>
-        <span style="font-family:courier new,courier,monospace;">&gt; chown
-        apigee:apigee /opt/apigee/customer/application/usergrid.properties</span></li>
-
-        <li>Configure the Stack node:<br>
-        <span style="font-family:courier new,courier,monospace;">&gt;
-        /opt/apigee/apigee-service/bin/apigee-service baas-usergrid configure</span></li>
-
-        <li>Restart the BaaS Stack:<br>
-        <span style="font-family:courier new,courier,monospace;">&gt;
-        /opt/apigee/apigee-service/bin/apigee-service baas-usergrid restart</span></li>
-
-        <li>Repeat these steps for all BaaS Stack nods. </li>
-      </ol>
     </li>
   </ol>
 
   <p>Use the following procedure to enable Cassandra authentication and set the username and
   password:</p>
-
   <ol>
     <li>Log in to the first Cassandra node.</li>
     <li>Run the following command:
@@ -270,4 +179,4 @@ CASS_PASSWORD=cassandra
     </li>
 </ol>
 
- {% endblock %}
+{% endblock %}
