@@ -1,50 +1,150 @@
-  {% extends "_base.html" %} {% block title %}Flow Callout policy{% endblock %} {% block body %}
+{% extends "_base.html" %}
+{% block title %}FlowCallout policy{% endblock %}
+{% block body %}
+
   <img src="/api-platform/images/icon_policy_flow-callout.png">
 
-  <h3>What</h3>
-
-  <p>Use the Flow Callout policy to call out to a shared flow from either an API proxy or another
+  <p>Use the FlowCallout policy to call out to a shared flow from either an API proxy or another
   shared flow.</p>
 
   <p>In a shared flow, you create a sequence of steps that you can reuse at run time from multiple
-  places. These steps are implemented as policies, as with an API proxy. The Flow Callout policy
-  gives you a way to call to the shared flow from API proxies and other shared flows.</p>
+  places. These steps are implemented as policies, as within an API proxy. The FlowCallout policy
+  gives you a way to invoke the shared flow from API proxies and other shared flows. 
+  It works like a function call in a traditional programming language.</p>
 
   <ul>
-    <li>For example, imagine that you've implemented a shared flow with security features such as
-    API key verification and OAuth token validation. Using the Flow Callout policies, you can route
-    requests through that flow from multiple API proxies. In this way, you can enforce standard
-    security in one place, then use it from multiple others.</li>
+    <li>For example, imagine that you've built a shared flow with security features such as
+    API key verification, OAuth token validation, and regular expression protection.  This shared flow
+    represents your convention for a way to check inbound requests. 
+    Using the FlowCallout policies, you can invoke that shared flow from multiple API proxies.
+    </li>
 
-    <li>You can call one shared flow from another by implementing a Flow Callout policy in a shared
-    flow. For example, the security shared flow could use a Flow Callout policy to call to another
-    shared flow that performs a transformation on the incoming request message.</li>
+    <li>You can call one shared flow from another by implementing a FlowCallout policy from within a shared
+    flow. </li>
   </ul>
 
   <aside class="note"><b>Note:</b> For more on shared flows, see <a href=
   "/api-platform/fundamentals/shared-flows.html">Reusable shared flows</a>. You can also call a
-  shared flow from outside API proxy code to do request pre-processing or response post-processing.
+  shared flow from outside API proxy code to enforce request pre-processing or response post-processing 
+  for all API Proxies deployed in an environment.
   For more, see <a href="/api-platform/fundamentals/flow-hooks.html">Attaching a shared flow using
   a flow hook</a>.</aside>
 
-  <h3 id="samples"><a id="Samples" name="Samples"></a>Samples</h3><!-- Begin tab list -->
-  <!-- End tab list --><!-- Begin tabbed region -->
+  <h3 id="samples">Samples</h3>
 
   <div class="ds-selector-tabs">
     <section>
-      <h3 class="two-line-tab">Call a shared flow from an API proxy</h3>
+      <h3 class="two-line-tab">Verify API key in shared flow</h3>
 
-      <p>This example creates a callout to a local API proxy (that is, one in the same organization
-      and environment) called <code>data-manager</code>, specifying its proxy endpoint whose name
-      is <code>default</code>.</p>
+      <p>In this example a shared flow is used to perform common security-related tasks. Here the
+      shared flow validates an API key. API proxies and other shared flows can use the FlowCallout
+      policy to make calls into this shared flow.</p>
+
+      <p>The following shared flow definition includes a <code>Verify-API-Key</code> policy that executes
+        when the shared flow is called from a FlowCallout policy in an API proxy.</p>
+
+      <pre class="prettyprint">&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; standalone=&quot;yes&quot;?&gt;
+&lt;SharedFlow name=&quot;default&quot;&gt;
+    &lt;Step&gt;
+        &lt;Name&gt;Verify-API-Key&lt;/Name&gt;
+    &lt;/Step&gt;
+&lt;/SharedFlow&gt;</pre>
+
+      <p>The <code>VerifyAPIKey</code> policy within the preceding shared flow retrieves the key value and
+        verifies it.</p>
+
+     <pre class="prettyprint">&lt;VerifyAPIKey async=&quot;false&quot; continueOnError=&quot;false&quot; enabled=&quot;true&quot; name=&quot;Verify-API-Key&quot;&gt;
+    &lt;DisplayName&gt;Verify API Key&lt;/DisplayName&gt;
+    &lt;APIKey ref=&quot;request.queryparam.apikey&quot;/&gt;
+&lt;/VerifyAPIKey&gt;</pre>
+
+    <p>The following FlowCallout policy, used in an API proxy, calls the preceding shared flow to
+      verify the API key. The <code>verify-apikey-shared</code> shared flow bundle (not shown here)
+      configures the shared flow in the way an APIProxy bundle configures a proxy.</p>
+
       <pre class="prettyprint">
-&lt;LocalTargetConnection&gt;
-    &lt;APIProxy&gt;data-manager&lt;/APIProxy&gt;
-    &lt;ProxyEndpoint&gt;default&lt;/ProxyEndpoint&gt;
-&lt;/LocalTargetConnection&gt;
+&lt;FlowCallout async="false" continueOnError="false" enabled="true" name="Auth-Flow-Callout"&gt;
+    &lt;DisplayName&gt;Auth Flow Callout&lt;/DisplayName&gt;
+    &lt;SharedFlowBundle&gt;verify-apikey-shared&lt;/SharedFlowBundle&gt;
+&lt;/FlowCallout&gt;
 </pre>
     </section>
-  </div><!-- End tabbed region. -->
+    <section>
+      <h3 class="two-line-tab">Pass parameters to a shared flow</h3>
+
+      <p>This example illustrates how to pass parameters from a FlowCallout policy to a
+      shared flow. Here, a FlowCallout policy calls to a shared flow designed to perform common
+      string handling functions. The shared flow includes JavaScript that concatenates its input,
+        lower-cases its input, or both. The FlowCallout policy defines parameters that specify
+      the string input, output, and what to do with the input.</p>
+
+      <ol>
+
+      <li><p>The <code>String-Handler</code> FlowCallout policy calls the shared flow,
+        passing parameters specifying the variable to store the shared flow's output, what shared flow
+        operation to use, and what input to use (here, a string literal, but it could also be a
+        flow variable). The <code>Parameter</code> elements specify the names and values of variables
+      to create runtime. The shared flow can retrieve these variables for use in its own code.</p>
+
+      <pre class="prettyprint">&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; standalone=&quot;yes&quot;?&gt;
+&lt;FlowCallout async=&quot;false&quot; continueOnError=&quot;false&quot; enabled=&quot;true&quot; name=&quot;String-Handler&quot;&gt;
+  &lt;DisplayName&gt;String Handler&lt;/DisplayName&gt;
+  &lt;Parameters&gt;
+    &lt;Parameter name=&quot;input&quot;&gt;Gladys Kravitz&lt;/Parameter&gt;
+    &lt;Parameter name=&quot;operations&quot;&gt;concatenate tolowercase&lt;/Parameter&gt;
+    &lt;Parameter name=&quot;outputVariable&quot;&gt;string.handler.output&lt;/Parameter&gt;
+  &lt;/Parameters&gt;
+  &lt;SharedFlowBundle&gt;StringHandler&lt;/SharedFlowBundle&gt;
+&lt;/FlowCallout&gt;
+</pre></li>
+
+      <li><p>The following <code>default</code> shared flow includes a <code>SharedStringFunctions</code> JavaScript policy that executes when the shared flow is called from a FlowCallout policy.</p>
+
+      <pre class="prettyprint">&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; standalone=&quot;yes&quot;?&gt;
+&lt;SharedFlow name=&quot;default&quot;&gt;
+  &lt;Step&gt;
+    &lt;Name&gt;SharedStringFunctions&lt;/Name&gt;
+  &lt;/Step&gt;
+&lt;/SharedFlow&gt;</pre></li>
+
+      <li><p>In the shared flow, the following <code>SharedStringFunctions</code> JavaScript policy
+        specifies the SharedStringFunctions.js JavaScript file with the code to execute.</p>
+
+      <pre class="prettyprint">&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; standalone=&quot;yes&quot;?&gt;
+&lt;Javascript async=&quot;false&quot; continueOnError=&quot;false&quot; enabled=&quot;true&quot; timeLimit=&quot;200&quot; name=&quot;SharedStringFunctions&quot;&gt;
+  &lt;DisplayName&gt;SharedStringFunctions&lt;/DisplayName&gt; &lt;Properties/&gt;
+  &lt;ResourceURL&gt;jsc://SharedStringFunctions.js&lt;/ResourceURL&gt;
+&lt;/Javascript&gt;</pre></li>
+
+      <li><p>The following JavaScript, SharedStringFunctions.js, executes from the
+        <code>SharedStringFunctions</code> JavaScript policy. This script retrieves values from
+        variables created from FlowCallout policy <code>Parameter</code> elements.</p>
+
+      <pre class="prettyprint">// Input value from the calling API proxy.
+var handledString = context.getVariable("input");
+// Variable to use for output from this script.
+var outputVariable = context.getVariable("outputVariable");
+// A space-separated list of things to do to the input string.
+// Convert to lower case to handle unintentional capitals in configuration.
+var operation = context.getVariable("operations").toLowerCase();
+
+// If "lowercase" was given as an operation, convert the input to lowercase.
+if (operation.includes("tolowercase")) {
+    handledString = handledString.toLowerCase();
+}
+
+// If "concatenate" was given as an operation, concatenate the input.
+if (operation.includes("concatenate")) {
+    handledString = handledString.replace(/\s+/g, '');
+}
+// Assign the resulting string to the output variable specified by
+// the calling API proxy.
+context.setVariable(outputVariable, handledString);</pre></li>
+        <li>Execution flows back from the JavaScript policy, to the shared flow, then to the
+          FlowCallout policy in the originating API proxy.</li>
+      </ol>
+    </section>
+  </div>
   <hr>
 
   <h2 id="elements">Element reference</h2>
@@ -59,8 +159,8 @@
 
   <h2 id="flowcalloutattributes">&lt;FlowCallout&gt; attributes</h2>
   <pre class="prettyprint">
-&lt;FlowCallout async="false" continueOnError="false" enabled="true" name="Service-Callout-1"&gt;
-</pre>{% dynamic include /includes/__policies-parent-element-attributes %}
+&lt;FlowCallout async="false" continueOnError="false" enabled="true" name="Flow-Callout-1"&gt;
+</pre>{% dynamic include /includes/___policies-parent-element-attributes %}
 
   <h2 id="request">&lt;SharedFlowBundle&gt; element</h2>
 
@@ -106,10 +206,184 @@
 
   <p>None.</p>
 
-  <h2 id="schemas">Schemas</h2>
+  <h2 id="parameterelement">&lt;Parameter&gt; element</h2>
+
+  <p>Specifies a parameter and value (or value source) to pass as a variable into the shared flow called by this
+    policy.</p>
+
+  <p>By using a parameter, you can specify a value (or a variable containing a value) that should be
+    passed to the shared flow called by the policy. This is conceptually similar to specifying a
+    parameter in a function call. As with a function parameter, a FlowCallout parameter's value can
+    vary based on the context of the shared flow call.</p>
+
+  <p>FlowCallout parameters are visible only during the shared flow's execution.</p>
+
+  <div class="ds-selector-tabs">
+    <section>
+      <h3 class="two-line-tab">Syntax</h3>
+      <p>You can use this element with any one of the following syntax forms. Note that where you
+        use a literal value, the format of the value you specify will depend on the code that
+      consumes it.</p>
+<pre class="prettyprint">
+&lt;!- A literal value in an attribute. --/&gt;
+&lt;Parameter name="parameter-name" value='parameter-value' /&gt;
+&lt;!- A reference to a variable in an attribute. --/&gt;
+&lt;Parameter name="parameter-name" ref='source-variable-name' /&gt;
+&lt;!- A literal value in the element content. --/&gt;
+&lt;Parameter name="parameter-name"&gt;parameter-value&lt;/Parameter&gt;
+&lt;!- An reference to an attribute in the element content. --/&gt;
+&lt;Parameter name="parameter-name"&gt;{source-variable-name}&lt;/Parameter&gt;
+</pre>
+    </section>
+    <section>
+      <h3 class="two-line-tab">Example</h3>
+      <p>This <code>String-Handler</code> FlowCallout policy passing parameters that specify where
+        to store the shared flow's output and what input to use. The <code>Parameter</code> elements
+        specify the names and values of  variables to create runtime. The shared flow can retrieve
+        these variables for use in its own code.</p>
+      <pre class="prettyprint">&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; standalone=&quot;yes&quot;?&gt;
+&lt;FlowCallout async=&quot;false&quot; continueOnError=&quot;false&quot; enabled=&quot;true&quot; name=&quot;String-Handler&quot;&gt;
+  &lt;DisplayName&gt;String Handler&lt;/DisplayName&gt;
+  &lt;Parameters&gt;
+    &lt;Parameter name=&quot;input&quot;&gt;Gladys Kravitz&lt;/Parameter&gt;
+    &lt;Parameter name=&quot;outputVariable&quot;&gt;string.handler.output&lt;/Parameter&gt;
+  &lt;/Parameters&gt;
+  &lt;SharedFlowBundle&gt;StringHandler&lt;/SharedFlowBundle&gt;
+&lt;/FlowCallout&gt;
+</pre>
+    </section>
+</div>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence</b></td>
+
+        <td>
+          <p>Required.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td><b>Type</b></td>
+
+        <td>N/A</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="parameterelement-attributes">Attributes</h3>
+
+  <table width="700">
+    <tbody>
+      <tr>
+        <th scope="col" width="118">Attribute</th>
+
+        <th scope="col" width="382">Description</th>
+
+        <th scope="col" width="382">Default</th>
+
+        <th scope="col" width="92">Presence</th>
+
+        <th scope="col" width="88">Type</th>
+      </tr>
+
+      <tr>
+      <tr>
+        <td>name</td>
+
+        <td>The name of the runtime variable to create with this parameter.</td>
+
+        <td style="vertical-align: top;">None.</td>
+
+        <td>Required.</td>
+
+        <td>String</td>
+      </tr>
+
+        <td>ref</td>
+
+        <td>
+          <p>The variable the contains the value to use at runtime. Omit this attribute if you're
+            specifying a literal value to use.</p>
+        </td>
+
+        <td style="vertical-align: top;">None.</td>
+
+        <td>Optional.</td>
+
+        <td>String</td>
+      </tr>
+
+      <tr>
+        <td>value</td>
+
+        <td>The value to use in the runtime variable created with this parameter. Omit this attribute if
+        you're specifying the name of a variable that should be the value source.</td>
+
+        <td style="vertical-align: top;">None.</td>
+
+        <td>Optional.</td>
+
+        <td>String</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="parameterselement">&lt;Parameters&gt; element</h2>
+
+<p>Specifies the set of <a href="#parameterelement">&lt;Parameter&gt;</a> elements to pass as variables into the shared flow called by this
+    policy.</p>
+
+  <div class="ds-selector-tabs">
+    <section>
+      <h3 class="two-line-tab">Syntax</h3>
+<pre class="prettyprint">
+&lt;Parameters&gt;
+  &lt;Parameter name="parameter-name" value='parameter-value' /&gt;
+&lt;/Parameters&gt;
+</pre>
+    </section>
+</div>
+
+  <table class="columns">
+    <tbody>
+      <tr>
+        <td><b>Default</b></td>
+
+        <td>N/A</td>
+      </tr>
+
+      <tr>
+        <td><b>Presence</b></td>
+
+        <td>
+          <p>Optional.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td><b>Type</b></td>
+
+        <td>N/A</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="parameterselement-attributes">Attributes</h3>
+
+<p>None.</p>
+
+    <h2 id="schemas">Schemas</h2>
 
   <aside class="note"><b>Sample:</b> See our <a href=
-  "https://github.com/apigee/api-platform-samples/tree/master/schemas/policy">Github repository</a>
+  "https://github.com/apigee/api-platform-samples/tree/master/schemas/policy">GitHub repository</a>
   samples for the most recent schemas.</aside>
 
   <h2 id="flowvariables">Flow variables</h2>
@@ -159,9 +433,11 @@
     </tbody>
   </table>
 
-  <h2 id="errors">Error codes</h2>
+  <h2 id="errorcodes">Error reference</h2>
 
-  <p>None.</p>
+<p> {% dynamic include /includes/___flowcallout-policy-error-codes %} </p>
+
+
 
   <h2 id="relatedtopics">Related topics</h2>
 
@@ -174,4 +450,6 @@
 
     <li>Executing shared flows across multiple proxies: <a href=
     "/api-platform/fundamentals/flow-hooks.html">Attaching a shared flow using a flow hook</a></li>
-  </ul>{% endblock %}
+  </ul>
+
+{% endblock %}

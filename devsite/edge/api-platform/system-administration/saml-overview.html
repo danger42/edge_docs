@@ -1,7 +1,100 @@
 {% extends "_base.html" %}
-{% block title %}Overview of using SAML to access the management API{% endblock %}
+{% block title %}SAML Overview{% endblock %}
 {% block body %}
 
+  <p>SAML supports a single sign-on (SSO) environment. By using SAML with Edge, you can support SSO
+  for the Edge UI and API in addition to any other services that you provide and that also support
+  SAML.</p>
+
+  <h2>Advantages of SAML authentication</h2>
+
+  <p>SAML authentication offers several advantages. By using SAML you can:</p>
+
+  <ul>
+    <li><strong>Take full control of user management:</strong> When users leave your organization
+      and are deprovisioned centrally, they are automatically denied access to Edge.</li>
+    <li><strong>Control how users authenticate to access Edge:</strong> You can choose different
+      authentication types for different Edge organizations.</li>
+    <li><strong>Control authentication policies:</strong> Your SAML provider may support
+      authentication policies that are more in line with your enterprise standards.</li>
+    <li><strong>Monitor logins, logouts, unsuccessful login attempts and high risk activities</strong>
+      on your Edge deployment.</li>
+  </ul>
+
+  <p>Note that SAML is only used for authentication by the Edge UI and Edge management API.
+  Authorization is still controlled by Edge user roles. See <a href=
+  "/api-platform/system-administration/understanding-roles">Assigning roles</a> for more.</p>
+
+  <p>SAML is supported as the authentication mechanism for the Cloud version of Edge and for Edge
+  for the Private Cloud version 4.17.09 and later.</p>
+
+<h2>Considerations</h2>
+<p>Before you decide to use SAML, you should consider the following requirements:</p>
+
+  <ul>
+    <li><strong>Existing users:</strong> You must add all existing organization users to the SAML
+      identity provider</li>
+    <li><strong>Portal:</strong> If you are using a Developer Services portal, the portal uses OAuth
+      to access Edge</li>
+    <li><strong>Basic Auth will be disabled:</strong> You will need to remove Basic Auth from all of
+      your scripts</li>
+    <li><strong>OAuth and SAML must be kept separate:</strong> If you use both OAuth2 and SAML, you
+      must use separate terminal sessions for your OAuth2 flow and SAML flow.</li>
+  </ul>
+
+<h2 id="using-saml">SAML and identity zones</h2>
+
+  <p>You enable SAML at the organization level through Edge identity zones. That means every
+  organization that supports SAML authentication must be added to an Edge identity zone.</p>
+
+  <p>An <em>Edge identity zone</em> is an authentication realm that defines a SAML identity provider
+  used for authentication. Only when a user authenticates with the identity provider can they access
+  the Edge organizations and resources scoped to the zone.</p>
+
+  <p>For more information, see <a href="using-saml#identity">Using an identity zone with SAML</a>.</p>
+
+<h2 id="ui">Using SAML with the Edge UI</h2>
+
+  <p>The SAML specification defines three entities:</p>
+  <ul>
+    <li>Principal (Edge UI user)</li>
+    <li>Service provider (Edge SSO) </li>
+    <li>Identity provider (returns SAML assertion)</li>
+  </ul>
+
+  <p>When SAML is enabled, the principal (an Edge UI user) requests access to the service provider
+  (Edge SSO). Edge SSO (in it's role as a SAML service provider) then requests and obtains an
+  identity assertion from the SAML identity provider and uses that assertion to create the OAuth2
+  token required to access the Edge UI. The user is then redirected to the Edge UI.</p>
+
+  <p>This process is shown below:</p>
+
+  <p><img alt="" src="/private-cloud/images/saml_v3.png"></p>
+
+  <p>In this diagram:</p>
+  <ol>
+    <li>User attempts to access the Edge UI by making a request to the login domain for the Edge
+      SSO, which includes the zone name. For example,
+      <code>https://<var>zoneName</var>.login.apigee.com</code>
+    </li>
+    <li>Unauthenticated requests to <code>https://<var>zoneName</var>.login.apigee.com</code>
+    are redirected to the customer's SAML identity provider. For example,
+    <code>https://idp.customer.com</code>.</li>
+    <li>If customer is not logged in to the identity provider, the customer is prompted to log
+    in.</li>
+    <li>The user is authenticated by the SAML identity provider. The SAML identity provider
+    generates and returns a SAML 2.0 assertion to the Edge SSO.</li>
+    <li>Edge SSO validates the assertion, extracts the user identity from the assertion, generates
+      the OAuth 2 authentication token for the Edge UI, and redirects the user to the main Edge UI
+      page at:
+      <pre class="prettyprint">https://<var>zoneName</var>.enterprise.apigee.com/platform/<var>orgName</var></pre>
+      <p>Where <var>orgName</var> is the name of an Edge organization.</p>
+    </li>
+  </ol>
+
+<h2>Get started!</h2>
+
+  <a class="button button-primary" href="enabling-saml-authentication-edge">See how to enable SAML</a>
 
 
 {% endblock %}

@@ -1,0 +1,61 @@
+{% extends "_base.html" %}
+{% block title %}Logging data to third party servers using the JavaScript policy{% endblock %}
+{% block body %}
+
+<p>Logging is one of the efficient ways for debugging problems. The information about the API
+request such as headers, form params, query params, dynamic variables, etc. can all be logged for
+later reference. The information can be logged locally on the Message Processors ({{opdk}} only) or
+to third party servers such as Sumo Logic, Splunk, or Loggly.</p>
+
+
+<h2>Antipattern</h2>
+
+<p>In the code below, the <code>httpClient</code> object in a {{javascript_policy}} is used to log the data to a
+Sumo Logic server. This means that the process of logging actually takes place during
+request/response processing. This approach is counterproductive because it adds to the processing
+time, thereby increasing overall latencies.</p>
+
+<p><strong>LogData_JS:</strong></p>
+<pre class="prettyprint">{% includecode content_path="api-platform/antipatterns/examples/1-4.xml" html_escape="True" %}</pre>
+
+<p><strong>LogData.js:</strong></p>
+<pre class="prettyprint">{% includecode content_path="api-platform/antipatterns/examples/1-5.xml" html_escape="True" %}</pre>
+
+<p>The culprit here is the call to <code>waitForComplete()</code>, which suspends the caller's
+operations until the logging process is complete. A valid pattern is to make this asynchronous
+by eliminating this call.</p>
+
+<h2>Impact</h2>
+
+<ul>
+  <li>Executing the logging code via the {{javascript_policy}} adds to the latency of the API
+    request.</li>
+  <li>Concurrent requests can stress the resources on the Message Processor and consequently
+    adversely affecting the processing of other requests.</li>
+</ul>
+
+<h2>Best Practice</h2>
+
+<ul>
+  <li>Use the {{message_logging_policy}} to transfer/log data to Log servers or third party log
+    management services such as Sumo Logic, Splunk, Loggly, etc.
+  <li>The biggest advantage of the Message Logging policy is that it can be defined in the Post
+    Client Flow, which gets executed after the response is sent back to the requesting client app.
+  <li>Having this policy defined in Post Client flow helps separate the logging activity and the
+    request/response processing thereby avoiding latencies.
+  <li>If there is a specific requirement or a reason to do logging via JavaScript (not the Post
+    Client flow option mentioned above), then it needs to be done asynchronously. In other words,
+    if you are using a <code>httpClient</code> object, you would need to ensure that the JavaScript does
+    <strong>NOT</strong> implement <code>waitForComplete</code>
+</ul>
+
+<h2>Further reading</h2>
+
+<ul>
+  <li>{{javascript_policy}}</li>
+  <li>{{message_logging_policy}}</li>
+  <li>Community article:
+  <a href="https://community.apigee.com/questions/38020/using-httpclient-from-within-javascript-callout-is.html" class="external">Using httpClient from within JavaScript callout, is waitForComplete() necessary?</a></li>
+</ul>
+
+{% endblock %}

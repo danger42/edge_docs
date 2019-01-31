@@ -1,4 +1,4 @@
-{% extends "private-cloud/v4.18.05/_base.html" %}
+{% extends "private-cloud/v4.19.01/_base.html" %}
 {% block title %}Moving Apigee servers{% endblock %}
 {% block body %}
 
@@ -78,15 +78,17 @@ default=dc-1:ra-1</pre>
       restart each system that used the modified seed node.
       <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-cassandra restart</pre>
     </li>
-    <li>Run the <code>nodetool ring</code>
-      command on the modified node to ensure that the ring is complete. The utility can be found at
+    <li>Run the <code>nodetool ring</code> command on the modified node to ensure that the ring is
+      complete. The utility can be found at
       <code>/opt/apigee/apigee-cassandra/bin</code>.
-      <pre class="devsite-terminal">nodetool -h localhost ring</pre>
+      <pre class="devsite-terminal">nodetool [-u <var>username</var> -pw <var>password</var>] -h localhost ring</pre>
+    <p>You only need to pass your username and password if you
+    <a href="how-monitor#cassauthenable">enabled JMX authentication for Cassandra</a>.</p>
     </li>
     <li>Run <code>nodetool repair</code> on the
       modified node.  Note that this process may take some time, so it is highly recommended
       that this not be done during peak API traffic hours.
-      <pre class="devsite-terminal">nodetool -h localhost repair</pre>
+      <pre class="devsite-terminal">nodetool [-u <var>username</var> -pw <var>password</var>] -h localhost repair -pr</pre>
     </li>
     <li>If necessary, repair ZooKeeper (see below), then restart every Apigee platform component
       starting with Management Server.</li>

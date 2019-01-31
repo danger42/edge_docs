@@ -1,0 +1,104 @@
+{% extends "private-cloud/v4.19.01/_base.html" %}
+{% block title %}AWS best practices{% endblock %}
+{% block body %}
+
+
+<p>This section summarizes our best practices and provides our recommendations for using OPDK with
+AWS cloud.</p>
+
+<p>Cassandra is used as a backend and datastore for almost all the policies and is a critical part of
+the Apigee Edge runtime environment. This document focuses on optimizing Casssandra for the
+AWS environment.</p>
+
+<h2>Storage and I/O requirements</h2>
+
+<p>Most Cassandra I/O is sequential, but there are cases where you require random I/O. An example is
+when reading Sorted String Tables during read operations. SSD is the recommended storage mechanism for
+Cassandra, because it provides extremely low-latency response times for random read operations
+while supplying enough sequential write performance for compaction operations. Replication is also
+taken into consideration here.</p>
+
+<p>Many instances in AWS EC2 comes with local storage in which the hard drive is physically attached
+to the hardware that the EC2 instance is hosted on. Apigee recommends leveraging both SSD and
+instance stores when running Cassandra in production. When you use an instance type with more than 1
+SSD, you can use RAID0 to get more throughput and storage capacity.</p>
+
+<h2>Network requirements</h2>
+
+<p>Cassandra uses the Gossip protocol to exchange information with other nodes about network
+topology. The use of Gossip plus the  distributed nature of Cassandra &mdash; which involves
+talking to multiple nodes for read and write operations &mdash; results in a lot of data transfer
+through the network. Apigee recommends using Instance type with at least 1Gbps network bandwidth
+and more than 1Gbps for production systems.</p>
+
+<p>Use a VPC with CIDR of /16. Since subnets in AWS cannot span across more than 1 AZ, Apigee
+recommends the following:</p>
+
+<ul>
+  <li>Create 1 subnet per Availability Zone (AZ)</li>
+  <li>Use 3 private subnets for your Apigee installation, with one Cassandra node in each AZ. The
+    3 subnets should have enough CIDR blocks to accommodate horizontal expansion of the Cassandra
+    cluster.</li>
+  <li>Configure 3 public subnets with dedicated NAT for Cassandra to be able to talk to the internet
+    for software download and security updates.</li>
+</ul>
+
+<p>Unlike legacy master-slave architectures, Cassandra has a master-less architecture in which all
+nodes play an identical role, so there is no single point of failure. Consider spreading your
+Cassandra nodes across multiple AZs to enable high availability. By spreading nodes across AZs, you
+can still maintain availability and uptime in the case of disaster.</p>
+
+<h2>Choosing an instance family</h2>
+
+<p>When looking at Cassandra CPU requirements, it's useful to note that insert-heavy workloads are
+CPU-bound in Cassandra before becoming IO-bound. In other words, all write operations go to the
+commit log, but Cassandra is so efficient in writing that the CPU becomes the limiting factor.
+Cassandra is highly concurrent and uses as many CPU cores as available.</p>
+
+<p>Apigee recommends using an instance family, which has a balance of both CPU and memory.
+Specifically, we recommend using C5 family instances if available in your AWS region and C3 as a
+fall back option. In some cases, 4xlarge is the optimal instance in both families that provides the
+best price/performance.</p>
+
+<p>Apigee also recommends using a default tenancy for Cassandra instances. When you scale to more
+than 1 instance per AZ, most likely all your Cassandra instances will be placed on the same
+underlying hardware if you set tenancy to be dedicated. So, when hardware fails, you will likely
+lose all your instances in that AZ.</p>
+
+<h2>Recommendation summary</h2>
+
+<p>The following table summarizes the Apigee recommendations for using AWS with {{opdk}}:</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <td class="alt">Instance Family</td>
+        <td>C5d (preferred ) or C3</td>
+      </tr>
+      <tr>
+        <td class="alt">Instance Type</td>
+        <td>C(x).4xlarge</td>
+      </tr>
+      <tr>
+        <td class="alt">Instance Store</td>
+        <td>SSD (local storage) with RAID0</td>
+      </tr>
+      <tr>
+        <td class="alt">Tenancy Type</td>
+        <td>default</td>
+      </tr>
+      <tr>
+        <td class="alt">Node Placement</td>
+        <td>1 Cassandra node per AZ</td>
+      </tr>
+      <tr>
+        <td class="alt">VPC and Subnet</td>
+        <td>1 subnet per AZ and a VPC per region</td>
+      </tr>
+    </tbody>
+  </table>
+
+<p>For more information, see
+<a href="https://aws.amazon.com/ec2/instance-types" class="external">Amazon instance types</a>.</p>
+
+{% endblock %}

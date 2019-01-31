@@ -1,0 +1,246 @@
+  {% extends "_base.html" %} {% block title %}Hosted Targets tasks{% endblock %} {% block body %}
+
+{{ hosted_targets_availability }}
+
+<h2>Undeploying a Hosted Targets proxy</h2>
+
+   <p>When you undeploy an Edge proxy that includes a Hosted Targets application, the associated
+     Hosted Targets app is undeployed, but the underlying application image is not deleted. If you
+     redeploy the proxy, the Hosted Targets app is redeployed.</p>
+
+<h2>Deleting a Hosted Targets proxy</h2>
+
+   <p>After you delete a Hosted Targets proxy, the underlying runtime instances will stop running
+     within some amount of time. The application code will persist, however.</p>
+
+   <aside class="note">If you would like to remove the code and you have an
+     Apigee support contract, please contact Apigee Support.</aside>
+
+<h2>Accessing log files</h2>
+
+   <p>Log files are useful for debugging and troubleshooting. You can view two types of log files for
+     a Hosted Targets deployment:</p>
+
+   <ul>
+      <li><strong>Build log</strong>&nbsp;- Shows you output related to deploying and building a Hosted Targets app.</li>
+      <li><strong>Runtime log</strong>&nbsp;- Shows you output related to the running Hosted Targets app. Runtime logs
+        are scoped to the environment and show log information for the currently deployed proxy revision.</li>
+   </ul>
+
+   <h3>Accessing logs from the Edge UI</h3>
+
+   <ol start="1">
+      <li>Go to: <a href="http://apigee.com/edge">apigee.com/edge</a></li>
+     <li>Enter your login credentials and click <strong>Sign In</strong>.</li>
+      <li>Ensure that you are in the New Edge UI. If not, click <strong>Try New Edge</strong>&nbsp;in
+        the Classic Edge navigation bar.</li>
+      <li>Select <strong>Develop &gt; API Proxies</strong>&nbsp;in the side navigation menu.</li>
+      <li>Select the proxy for which you want to view logs.</li>
+      <li>Click the <strong>Develop</strong>&nbsp;tab.</li>
+      <li>To see the build log, click <strong>Build Logs</strong>.
+<aside class="note">Build logs are not scoped to an environment. They are the same no matter which
+  environment you deployed to. </aside></li>
+      <li>To see the runtime log, click <strong>Runtime Logs</strong>.</li>
+   </ol>
+
+<h3>Accessing logs with the API</h3>
+
+<p>You can also use an Edge Management API to retrieve Hosted Targets logs. For details, see
+  <a href="https://apidocs.apigee.com/management/apis/get/o/%7Borg_name%7D/e/%7Benv_name%7D/apis/%7Bapi_name%7D/cachedlogs/categories/nodejs">Get Cached Node.js Logs</a>.
+
+<h2>Using a private npm repository</h2>
+
+        <p>This section explains how to deploy a Node.js proxy to Hosted Targets in cases where you
+          use a <a href="https://docs.npmjs.com/private-modules/intro">private NPM repository</a> in
+          your development environment.</p>
+
+        <h3>What you need to know about using a private repository</h3>
+
+        <p>When you deploy a Node.js app to Edge, all of your project's dependencies are imported automatically
+          as part of the deployment process.
+          Essentially, Hosted Targets runs <code>npm install</code> on your code when it is deployed.
+        However, if you use a <a href="https://docs.npmjs.com/private-modules/intro">private NPM repository</a> in your development environment, the private
+          dependencies cannot be resolved in the Cloud. In
+        this case, the solution is to use the <code>--bundled-dependencies</code> option when you use the
+        deployment utility <a href="https://github.com/apigee/apigeetool-node">apigeetool</a>. See also
+          <a href="/api-platform/hosted-targets/hosted-targets-tutorials#deploy-nodejs-from-your-system-to-edge">Deploy Node.js from your system to Edge.</a></p>
+
+          <p>When you use the <code>--bundled-dependencies</code> flag on <code>apigeetool</code>, your
+            Node.js app will be uploaded to Hosted Targets and any local/private files that are listed
+            in the <a href="https://docs.npmjs.com/files/package.json#bundleddependencies">bundledDependencies array</a>
+            in <code>package.json</code> are zipped and uploaded with the bundle.</p>
+
+        <aside class="note">
+
+          <p>Be sure that your bundled dependencies follow this directory structure structure within the ZIP file:</p>
+
+<pre>
+node_modules/
+  bundle-dependency-name/
+  ... (sources)
+</pre>
+          <p>Note that if a proxy bundle that you deploy exceeds 15MB in size, a deployment
+          error can occur. Because of this reason, it's best never to include a <code>node_modules</code>
+          directory in your deployment. Let Hosted Targets do the work of importing the dependencies.</p>
+
+        </aside>
+
+            <p>Although not a common situation, be aware that if you mirror a public NPM repository internally, your deployment will fail
+              if your deployment bundle includes a <code>.npmrc</code> or <code>package-lock.json</code> file that points
+              to your private mirror. In this case, be sure to omit <code>.npmrc</code> or <code>package-lock.json</code>
+              from your proxy bundle that you intend to deploy.</p>
+
+
+
+            <h3>Deploying with a private NPM repository</h3>
+
+   <p>To use modules provided from a private NPM repository, follow these steps:</p>
+
+<aside class="note">If you are using bundled dependencies, you must specify <code>runtimeVersion:6</code>
+  in your application's <href="/api-platform/hosted-targets/hosted-targets-reference#the-manifest-file"><code>app.yaml</code> file (the manifest file)</a>. For example:
+
+  <pre class="prettyprint">
+  runtime: node
+  <strong>runtimeVersion: 6</strong>
+  application: my-express-app
+  env:
+    - name: NODE_ENV
+      value: production
+    - name: LOG_LEVEL
+      value: 3
+  </pre>
+
+  <p>The reason for this setting is that there is a known Node.js bug in the NPM client shipped with
+  newer versions of Node.js. When this restriction is no longer necessary, this note will be updated
+  accordingly.</p>
+</aside>
+
+   <ol>
+      <li>Log into npm:
+        <pre class="devsite-terminal">npm login</pre></li>
+      <li>Get an npm auth token:</li>
+
+   <ol>
+      <li>Locate your <strong>.npmrc</strong>&nbsp;(should be in <strong>~/.npmrc</strong>).</li>
+     <li>In your <b>.npmrc</b>, note the token at the end of the line that looks like this: <br /><br />
+      <code>//registry.npmjs.org/:_authToken=****</code></li>
+
+
+  <aside class="note">The token is not derived from your password, but changing your password will
+    invalidate all tokens. The token will be valid until the password is changed. You can also
+    invalidate a single token by logging out on a machine that is logged in with that token.</aside>
+
+
+      <li>Or use the <code>npm token &lt;list | create | revoke&gt;</code>&nbsp;commands to list,
+        create, or revoke an auth token. See the <a href="https://docs.npmjs.com/cli/token">npm-token
+        documentation</a>&nbsp;for more details.</li>
+   </ol>
+
+     <li>In a browser, log into your Apigee account: <code>login.apigee.com</code>.</li>
+      <li>Go to the Key Value Maps configuration page:
+        <ol>
+          <li>In the New Edge UI: <b>Admin &gt; Environments &gt; Key Value Maps</b>.</li>
+          <li>In the Classic UI: <b>APIs &gt; Environment Configuration &gt; Key Value
+            Maps</b>.</li>
+        </ol>
+      <li>Click <strong>+ Key Value Map</strong>.</li>
+      <li>In the New Key Value Map dialog, enter a name and select <strong>Encrypted</strong>.
+<aside class="note">Add an Encrypted Key Value Map for each environment that you plan to use.</aside>
+</li>
+      <li>Click <strong>Add</strong>.</li>
+      <li>Add the auth token you previously located or created as a new entry in each of the KVMs
+        that you just created.</li>
+      <li>In your<strong> app.yaml</strong> file add an entry that references the KVM and key
+        associated with the npm auth token. It should look something like this:</li>
+
+<pre class="prettyprint">
+env:
+- name:&nbsp;NPM_TOKEN
+ valueRef:
+   name:&nbsp;npm_store
+   key:&nbsp;private_token</pre>
+
+<p>Where:</p>
+<ul>
+     <li>The top level <strong>name</strong>&nbsp;attribute corresponds to the name of the environment
+       variable that will be created.
+     <li>The <strong>name</strong>&nbsp;under <strong>valueRef</strong>&nbsp;corresponds to the KVM you
+       created previously.
+     <li>The <strong>key</strong>&nbsp;attribute corresponds to the key that maps to the npm token you
+       added to the KVM.
+</ul>
+
+      <li>Create a <strong>.npmrc</strong>&nbsp;file in the same directory as your package.json. This
+        file should look similar to this:
+        <pre>//registry.npmjs.org/:_authToken=${NPM_TOKEN}</pre>
+        or if you&rsquo;re not using <code>registry.npmjs.org</code>&nbsp;you can set the scope
+        in the .npmrc&nbsp;file
+     by adding a line like this <code>@myscope:registry=https://mycustomregistry.example.org</code>
+        See also the <a href="https://docs.npmjs.com/files/npmrc">npmrc documentation</a>. </li>
+      <li>Upload or update your Node.js proxy with the <strong>.npmrc</strong>&nbsp;file and <strong>app.yaml</strong>&nbsp;files included.</li>
+      <li>Make sure your new or updated proxy deploys and works with the desired private repository
+        module.</li>
+
+      <li>If the proxy does not deploy, check the build logs to see if it failed on installing the
+        private npm module. If so:</li>
+
+   <ol>
+      <li>Under the develop tab, make sure the <strong>.npmrc</strong>&nbsp;is present.</li>
+      <li>Make sure your token is valid (try installing the module locally with the token present
+        in the kvm).</li>
+      <li>If you are using a custom scope, make sure that is set.</li>
+</ol>
+</ol>
+
+<h3>Specifying the NPM version for bundled dependencies</h2>
+
+
+<p>
+By default, NPM v4 is used to install bundled dependencies in the Hosted Targets environment.
+  However, if you want to use a different NPM version, you can specify it in the <code>NPM_VERSION</code>
+  environment variable. You can set this variable in the application's manifest file. See <a href="/api-platform/hosted-targets/hosted-targets-reference#the-manifest-file">Manifest file elements</a> for details.
+</p>
+<aside class="note">Apigee uses NPM v4 by default because of an issue with NPM versions greater
+  than v4. This issue is documented in the NPM community article
+  <a href="https://npm.community/t/npm-install-for-package-with-local-dependency-fails/754/18">npm install for package with local dependency fails</a>.
+  If you set <code>NPM_VERSION</code> to an NPM version greater than v4, the dependency installation can fail.
+</aside>
+<p>
+If you use bundled dependencies, and if you do not specify <code>NPM_VERSION</code>, Hosted Targets
+  uses NPM v4 by default. If you do not use bundled dependencies, the version of NPM that is included
+  in your specified Node.js runtime is used.
+</p>
+
+<h3>Bundled depencencies example</h3>
+
+For an example that demonstrates the bundled dependencies feature with Hosted Targets, see
+<a href="https://github.com/apigee/api-platform-samples/tree/master/doc-samples/hosted-targets/node-hosted-custom-deps">How to create a Node.js application with Hosted Functions using custom modules</a>.
+
+<h2>Add a health check endpoint</h2>
+
+
+<p>
+You have the option of implementing a health check endpoint for your Node.js application. Apigee uses this endpoint when your
+  Node.js application starts to check that the application is up and running in the container.
+</p>
+<p>
+By default, the endpoint that Apigee expects is <code>/health</code>. You can change the default
+  endpoint, by specifying the endpoint in an environment variable named
+  <code>HOSTED_TARGET_HEALTH_CHECK_PATH</code>. You can set this variable in the application's manifest
+  file. See <a href="/api-platform/hosted-targets/hosted-targets-reference#the-manifest-file">Manifest file elements</a> for details.
+</p>
+<p>
+Implementing a health check endpoint is not required. However, if you do implement a health check
+  endpoint, note the following:
+</p><ul>
+
+<li>If your application exits when Apigee hits the endpoint, the application will not start up as expected.
+<li>It is okay if your endpoint returns a 404 Not Found HTTP status. The <code>/health</code> or
+  <code>HOSTED_TARGET_HEALTH_CHECK_PATH</code> is only used to check if your application is running.
+  The actual response is ignored. </li></ul>
+
+<aside class="note">The health check path is only used by Apigee when your application starts up.</aside>
+
+
+
+{% endblock %}

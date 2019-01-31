@@ -1,0 +1,120 @@
+{% extends "_base.html" %}
+{% block title %}Step 3: Use an ExtensionCallout policy{% endblock %}
+{% block body %}
+
+{{ extensions_availability }}
+
+  <p>When developing an API proxy, you can add support for an extension by adding an
+  {{extension_callout_policy}} to the proxy. (If you want help creating a simple proxy, see the
+  <a href="/api-platform/get-started/get-started">Build your first proxy</a>.)</p>
+
+  <p>When you add support for an extension, you're associating the ExtensionCallout policy with a
+  configured extension. That extension configuration's settings define how the extension interacts
+  with the backend resource it's connecting to. It's this specifically-configured extension that the
+  ExtensionCallout policy integrates into the API proxy.</p>
+
+  <aside class="note"><h3 class="hide-from-toc">NOTE</h3>The extension you want to add to an API
+  proxy must already be configured and deployed to the environment where the API proxy will be
+  deployed.</aside>
+
+<p><strong>To add an extension to your API proxy:</strong></p>
+
+  <ol>
+    <li>Open your API proxy in the Apigee Edge console, in the <strong>Develop</strong> view.</li>
+    <li>In the <strong>Navigator</strong> pane, select the <strong>PreFlow</strong>.
+      <p><img src="/api-platform/images/extensions-proxy-select-flow.png" class="screenshot" width="90%"/>
+    </li>
+    <li>In the upper right corner, click the <strong>+ Step</strong> button to add a policy.
+      <p><img src="/api-platform/images/extensions-proxy-add-step.png" class="screenshot" width="90%"/>
+    </li>
+    <li>In the <strong>Add Step</strong> dialog, in the policy list at the left side, click
+      <strong>Extension Callout</strong>.
+      <p><img src="/api-platform/images/extensions-proxy-add-step-add.png" class="screenshot" width="75%"/>
+      <p>If you don't see the ExtensionCallout policy in the list, be sure you're using the
+      new Edge UI. In addition, Apigee Extensions is currently available to Apigee Edge Cloud
+      Enterprise customers only.</p>
+    </li>
+    <li>In the right pane, select options to configure the policy:
+      <table>
+        <thead>
+          <tr>
+            <th>Field</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Display Name</strong></td>
+            <td>Enter the policy's display name.</td>
+          </tr>
+          <tr>
+            <td><strong>Name</strong></td>
+            <td>Enter the name to use for the policy programmatically. This must be unique in the proxy.</td>
+          </tr>
+          <tr>
+            <td><strong>Extension</strong></td>
+            <td>Choose the extension to use. This is the extension you configured earlier.</td>
+          </tr>
+          <tr>
+            <td><strong>Actions</strong></td>
+            <td>Select the "log" action.</td>
+          </tr>
+        </tbody>
+      </table>
+    </li>
+    <li>Click <strong>Add</strong>.
+    <li>In the flow view, click the policy to view its configuration XML.
+      <p><img src="/api-platform/images/extensions-proxy-select-policy.png" class="screenshot" width="70%"/>
+      <p>When you add the extension, you'll get example policy XML. Note that it includes schema
+      describing how to structure configuration for the <code>&lt;Input&gt;</code> element. (You can ignore the
+      <code>&lt;Output&gt;</code> element schema -- there's no response body returned by the
+      extension "log" action.)
+    </li>
+    <li>Edit your policy XML so that it looks like the following:
+      <pre class="prettyprint">{% htmlescape %}<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<ConnectorCallout async="false" continueOnError="true" enabled="true" name="Extension-Callout-Beta-1">
+  <DisplayName>Logging Extension</DisplayName>
+  <Connector>my-logging-extension</Connector>
+  <Action>log</Action>
+  <Input>{
+    "logName": "example-log",
+    "metadata": {
+      "resource": {
+        "type": "global",
+        "labels": {
+          "project_id": "my-gcp-project"
+        }
+      }
+    },
+    "message": "This is a test"
+  }</Input>
+</ConnectorCallout><!--
+Input JSON Schema for package=gcp-stackdriver-logging version=0.0.4
+{"type":"object","properties":{"logName":{"type":"string"},"metadata":{"type":"string"},"message":{"type":"string"}},"required":["logName","message"]}
+-->
+<!--
+Output JSON Schema for package=gcp-stackdriver-logging version=0.0.4
+{"type":"object","properties":{"content":{"type":"string"}},"required":[]}
+-->{% endhtmlescape %}</pre>
+      <p>Here, the <code>&lt;Input&gt;</code> defines the following:</p>
+      <ul>
+        <li><code>logName</code> is the name of the log to write to. If this doesn't exist, it will be created by the extension.</li>
+        <li><code>metadata</code> specifies information you can use to browse for the log in the Stackdriver console.</li>
+        <li><code>message</code> is simply the log message you want to write.</li>
+      </ul>
+    </li>
+    <li>Click the <strong>Save</strong> button.</li>
+  </ol>
+
+  <aside class="success"><h3>Congratulations!</h3> You've added an ExtensionCallout policy to your
+  API proxy. Next, you'll deploy it.</aside>
+
+
+  <h3>Next step</h3>
+  <p><a class="button button-disabled" href="/api-platform/tutorials/add-extension/add-new-extension">Step 1</a>
+  <a class="button button-disabled" href="/api-platform/tutorials/add-extension/configure-for-testing">Step 2</a>
+  <a class="button button-disabled" href="/api-platform/tutorials/add-extension/extension-callout-policy">Step 3</a>
+  <a class="button button-primary" href="/api-platform/tutorials/add-extension/proxy-deployment">Step 4: Deploy the proxy</a>
+  <a class="button button-disabled" href="/api-platform/tutorials/add-extension/xtra-credit">Step 5</a></p>
+
+{% endblock %}

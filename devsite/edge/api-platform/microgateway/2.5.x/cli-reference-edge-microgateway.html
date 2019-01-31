@@ -392,6 +392,7 @@ edgemicro configure -o [organization] -e [environment] -u [username] -p [passwor
         <td><code>-t, --token</code></td>
 
         <td>(Optional) Lets you use an OAuth token for authentication instead of username/password.
+          See also <a href="/api-platform/microgateway/2.5.x/setting-and-configuring-edge-microgateway#Oauthtoken">Secure API calls with an OAuth2 access token</a>.
         For example:<br>
         <br>
         <code>edgemicro configure -o docs -e test -t &lt;your token&gt;</code></td>
@@ -615,6 +616,7 @@ edgemicro private configure -o [organization] -e [environment] -u [username] -p 
         <td><code>-t, --token</code></td>
 
         <td>(Optional) Lets you use an OAuth token for authentication instead of username/password.
+          See also <a href="/api-platform/microgateway/2.5.x/setting-and-configuring-edge-microgateway#Oauthtoken">Secure API calls with an OAuth2 access token</a>.
         For example:<br>
         <br>
         <code>edgemicro configure -o docs -e test -t &lt;your token&gt;</code></td>
@@ -1379,7 +1381,7 @@ edgemicro upgradekvm -o [organization] -e [environment] -u [username]
       </tr>
 
       <tr>
-        <td>-u, --username</td>
+        <td><code>-u, --username</code></td>
 
         <td>Your Apigee username. You must be an org administrator for the specified
         organization.</td>
@@ -1396,6 +1398,16 @@ edgemicro upgradekvm -o [organization] -e [environment] -u [username]
         <td><code>-v, --virtualhost</code></td>
 
         <td>(Optional) The virtual host of the proxy.</td>
+      </tr>
+
+      <tr>
+        <td><code>-t, --token</code></td>
+
+        <td>(Optional.) Lets you use an OAuth token for authentication instead of username/password.
+          See also <a href="/api-platform/microgateway/2.5.x/setting-and-configuring-edge-microgateway#Oauthtoken">Secure API calls with an OAuth2 access token</a>.
+        For example:<br>
+        <br>
+        <code>edgemicro upgradekvm -o docs -e test -t &lt;your token&gt;</code></td>
       </tr>
 
       <tr>
@@ -1510,7 +1522,7 @@ edgemicro upgradeauth -o docs -e test -u jdoe@example.com
   <p>Upon success, the command returns output similar to the following:</p>
   <pre class="prettyprint">
 Going to create revision 2 of API edgemicro-auth
-Using /Users/willwitman/npm/lib/node_modules/edgemicro/node_modules/microgateway-edgeauth/apiproxy/edgemicro-auth.xml as the root file
+Using /Users/jdoe/npm/lib/node_modules/edgemicro/node_modules/microgateway-edgeauth/apiproxy/edgemicro-auth.xml as the root file
 Creating revision 2 of API edgemicro-auth
 Uploading java resource micro-gateway-products-javacallout-2.0.0.jar
 Uploading jsc resource generate-verify-jwt.js
@@ -1557,11 +1569,12 @@ edgemicro-auth proxy upgraded
 
   <h2><a id="keyrotation" name="keyrotation"></a>Rotating keys</h2>
 
-  <p dir="ltr">Use the rotatekey command to rotate the public/private keys stored in the encrypted
-  Key Value Map (KVM) in the Apigee Edge organization/environment that you configured to operate
-  with Edge Microgateway. (Added v2.5.x)</p>
+<p dir="ltr">Use the <code>edgemicro rotatekey</code> command to rotate the public/private key pairs
+  that were used to generate the JWT tokens used for OAuth security on Edge Microgateway. 
+     </p>
 
-  <p dir="ltr">To learn more, see [TBD]</p>
+  <p dir="ltr">To learn more, see <a href="/api-platform/microgateway/2.5.x/operation-and-configuration-reference-edge-microgateway#rotatingjwtkeys">
+    Rotating JWT keys</a>.</p>
 
   <p><strong>Usage</strong></p>
   <pre class="prettyprint">
@@ -1645,5 +1658,110 @@ Key Rotation successfully completed!
   <p>After rotation, you can see in the Edge UI that new keys have been added to the microgateway
   KVM.</p>
 
-  <p>[Insert screen shot here]</p>
+  <h2 id="forevermonitoring">Forever monitoring</h2>
+
+<p>Use the <code>edgemicro forever</code> command to manage the <a href="https://www.npmjs.com/package/forever">Forever</a>
+  process, a Node.js tool that automatically restarts a Node.js app in case the app goes down or has an error.
+  See also <a href=
+  "/api-platform/microgateway/2.5.x/operation-and-configuration-reference-edge-microgateway.html#forevermonitoring">
+  Forever monitoring</a>.
+
+ <p><strong>Usage</strong></p>
+
+<p>You must set the following environment variables before you execute the <code>edgemicro forever</code> command:</p>
+
+<ul>
+  <li><code>EDGEMICRO_ORG</code> - The Apigee organization for which you configured Edge Microgateway.</li>
+  <li><code>EDGEMICRO_ENV</code> - An environment for which you configured Edge Microgateway.</li>
+  <li><code>EDGEMICRO_KEY</code> - The key value returned that was returned when you ran the "edgemicro configure" command.</li>
+  <li><code>EDGEMICRO_SECRET</code> - The secret value returned that was returned when you ran the "edgemicro configure" command.</li>
+</ul>
+  <pre class="prettyprint">
+edgemicro forever -f [forever_file] -a [start|stop]
+</pre>
+
+
+
+  <p><strong>Parameters</strong></p>
+
+<table>
+  <tr><th>Parameter</th><th>Description</th></tr>
+  <tr><td><code>-f, --file</code></td><td>Specifies the location of the <code>forever.json</code> file.</td></tr>
+  <tr><td><code>-a, --action</code></td><td>Either <code>start</code> or <code>stop</code>.  The default is start.</td></tr>
+</table>
+
+<p><strong>Examples:</strong></p>
+<p>To start Forever:</p>
+<pre>edgemicro forever -f ~/mydir/forever.json -a start</pre>
+<p>To stop Forever:</p>
+<pre>edgemicro forever -a stop</pre>
+
+
+  <h2 id="revokekeys">Revoke keys</h2>
+
+<p>Use the <code>edgemicro revokekeys</code> command to revoke the key and secret credentials for an
+  Edge Microgateway configuration.</p>
+
+ <p><strong>Usage</strong></p>
+  <pre class="prettyprint">
+edgemicro revokekeys -o [organization] -e [environment] -u [username]
+-k [key] -s [secret]
+</pre>
+
+  <p><strong>Parameters</strong></p>
+
+  <table class="">
+    <tbody>
+      <tr>
+        <th scope="col" width="152">Parameters</th>
+
+        <th scope="col" width="453">Description</th>
+      </tr>
+
+      <tr>
+        <td><code>-o, --org</code></td>
+
+        <td>(Required) The Apigee organization for which you configured Edge Microgateway.</td>
+      </tr>
+
+      <tr>
+        <td><code>-e, --env</code></td>
+
+        <td>(Required) An environment for which you configured Edge Microgateway.</td>
+      </tr>
+
+      <tr>
+        <td><code>-u, --username</code></td>
+
+        <td>(Required) Your Apigee username. You must be an org administrator for the specified
+        organization.</td>
+      </tr>
+
+      <tr>
+        <td><code>-p, --password</code></td>
+
+        <td>(Optional) Your password. You will be prompted if you do not provide this parameter on
+        the command line.</td>
+      </tr>
+
+      <tr>
+        <td><code>-k, --key</code></td>
+
+        <td>(Required) The key to revoke.</td>
+      </tr>
+
+      <tr>
+        <td><code>-s, --secret</code></td>
+
+        <td>(Required) The secret to revoke.</td>
+      </tr>
+    </tbody>
+  </table>
+
+<p><strong>Examples</strong></p>
+<pre>edgemicro revokekeys -o myorg -e test -u jdoe@apigee.com
+-k 2c0064f5bd85f5573dcaffe21566fa7a2d49885cdbf8899370c8a4479285f -s 4b5d6355b874f7c46838893823e8d929dcb2e42fb9aebcb535089c9b98513</pre>
+
+<p>On success, you will see the following message:</p>
+<code>key 2c0064f5bd85f5573dcaffe21566fa7a2d49885cdbf8899370c8a4479285f revoked successfully</code>
 {% endblock %}

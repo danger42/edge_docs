@@ -1,0 +1,60 @@
+{% include "_localvars.html" %}
+
+<p>The following example uses three Assign Message policies:</p>
+<ol>
+  <li>Creates three flow variables in the request, with static values</li>
+  <li>Gets the flow variables dynamically in a second policy in the request flow</li>
+  <li>Sets them in the payload of the response</li>
+</ol>
+
+<pre class="prettyprint">
+&lt;!-- Policy #1: Set variables in the request --&gt;
+{% includecode content_path="api-platform/reference/policies/examples/assign-message/set-variables.xml" %}</pre>
+
+<p>In the first policy, the {{am_assignvariable_link}} element creates and sets three
+variables in the request. Each {{am_assignvariable_name_link}} element specifies
+a variable name, and {{am_assignvariable_value_link}} specifies the value.</p>
+
+<p>The second policy uses the {{am_assignvariable}} element to read in the values and creates three
+new variables:</p>
+
+<pre class="prettyprint">
+&lt;!-- Policy #2: Get variables from the request --&gt;
+{% includecode content_path="api-platform/reference/policies/examples/assign-message/get-variables.xml" %}</pre>
+
+<p>In the second policy, the {{am_assignvariable_ref_link}} element references the source variable,
+and {{am_assignvariable_name}} elements specify the names of the new variables. If the variable
+referenced by the {{am_assignvariable_ref}} element is not accessible, you can use the value
+specified by the {{am_assignvariable_value}} element.</p>
+
+<p><strong>To try out this set of policies:</strong></p>
+<ol>
+  <li>Add policies #1 and #2 to the request flow. Be sure to put policy #1 <em>before</em> policy
+    #2.</li>
+  <li>Add the third policy in the <em>response</em> flow.</li>
+  <li>The third policy uses the {{am_set}} element to add the variables to the response. The
+    following example constructs an XML payload in the response that Edge returns to the client:
+<pre class="prettyprint">
+&lt;!-- Policy #3: Add variables to the response --&gt;
+{% includecode content_path="api-platform/reference/policies/examples/assign-message/return-variables.xml" %}</pre>
+    <p>Note that the syntax to access flow variables in {{am_set}} is to wrap them in
+    curly braces.</p>
+    <p>Be sure to set the {{am_set_payload}} element's <code>contentType</code> attribute to
+    "application/xml".</p>
+  </li>
+  <li>Send a request to your API proxy; for example:
+    <pre class="devsite-terminal">curl -vL https://ahamilton-eval-test.apigee.net/myproxy</pre>
+    <p>Optionally, you can pipe the results through a utility such as <code>xmllint</code> so that
+    the XML is displayed in a nicely formatted structure:</p>
+    <pre class="devsite-terminal">curl -vL https://ahamilton-eval-test.apigee.net/myproxy <strong>| xmllint --format -</strong></pre>
+    <p>The body of the response should look like the following:</p>
+    <pre class="prettyprint">{% htmlescape %}<wrapper>
+  <secret>42</secret>
+  <config>
+    <environment>test</environment>
+    <protocol>gopher</protocol>
+  </config>
+</wrapper>{% endhtmlescape %}</pre>
+  </li>
+</ol>
+

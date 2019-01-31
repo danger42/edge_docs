@@ -1,68 +1,114 @@
 <!DOCTYPE html>
 <html devsite>
   <head>
-    <title>Key-Value Map Policy Error Codes</title>
+    <title>Key Value Map Operations policy error codes</title>
   </head>
   <body>
+  <p>This section describes the fault codes and error messages that are returned and fault variables that are set by Edge when this policy triggers an error.
+    This information is important to know if you are developing fault rules to
+  handle faults. To learn more, see <a href="/api-platform/fundamentals/what-you-need-know-about-policy-errors.html">What you need to know
+  about policy errors</a> and <a href="/api-platform/fundamentals/fault-handling.html">Handling
+  faults</a>.</p>
 
-  <p>This policy uses the following error codes:</p>
+
+  <h3>Runtime errors</h3>
+
+  <p>These errors can occur when the policy executes.</p>
+
+    <aside class="key-point">Need help resolving an error? Click
+  <i class="material-icons" title="Click this icon in the error table to visit the troubleshooting page.">build</i>
+  in the Fix column for detailed troubleshooting information.
+    <p>Use <u><a href="/api-monitoring">API Monitoring</a></u> to investigate fault codes and diagnose issues faster.</p></aside>
+
 
   <table>
     <thead>
       <tr>
-        <th scope="col">Error Code</th>
+        <th scope="col" width="623">Fault code</th>
 
-        <th scope="col">Message</th>
+        <th scope="col" width="49">HTTP status</th>
+
+        <th scope="col" width="863">Cause</th>
+        <th scope="col" width="63">Fix</th>
+      </tr>
+    </thead>
+
+    <tbody>
+
+      <tr>
+        <td><code>steps.keyvaluemapoperations.SetVariableFailed</code></td>
+
+          <td>500</td>
+        <td>
+          <p>This error occurs if you try to retrieve a value from an encrypted key value map and set
+            the value to a variable whose name does not have the prefix <code>private</code>. The prefix, which is
+            required for basic security purposes during debugging, hides the encrypted values from API
+            proxy Trace and debug sessions.</p>
+        </td>
+        <td><a href="/api-platform/troubleshoot/policies/runtime/key-value-map-runtime-errors#setvariablefailed"><i class="material-icons" title="Troubleshoot this error.">build</i></a></td>
+
+      </tr>
+      <tr>
+        <td><code>steps.keyvaluemapoperations.UnsupportedOperationException</code></td>
+
+          <td>500</td>
+        <td>
+          <p>This error occurs if the <code>mapIdentifier</code> attribute is set to empty string in
+            the Key Value Map Operations policy.</p>
+        </td>
+        <td><a href="/api-platform/troubleshoot/policies/runtime/key-value-map-runtime-errors#unsupportedoperationexception"><i class="material-icons" title="Troubleshoot this error.">build</i></a></td>
+
+      </tr>
+    </tbody>
+  </table>
+
+    <h3>Deployment errors</h3>
+
+  <p>These errors can occur when you deploy a proxy containing this policy.</p>
+
+     <aside class="key-point">Need help resolving an error? Click
+  <i class="material-icons" title="Click this icon in the error table to visit the troubleshooting page.">build</i>
+  in the Fix column for detailed troubleshooting information. </aside>
+
+  <table>
+   <thead>
+      <tr>
+        <th scope="col" width="523">Error name</th>
+        <th scope="col" width="863">Cause</th>
+        <th scope="col" width="63">Fix</th>
       </tr>
     </thead>
 
     <tbody>
       <tr>
-        <td></td>
+        <td><code>InvalidIndex</code></td>
+        <td>
+          If the <code>index</code> attribute specified in the <code>&lt;Get&gt;</code> element of Key Value Map Operations policy is
+          zero or a negative number, then the deployment of the API proxy fails. The index starts from
+          <code>1</code>, so an index of zero or negative integer is considered as invalid.
+        </td>
+        <td><a href="/api-platform/troubleshoot/policies/deployment/key-value-map-deployment-errors#invalidindex"><i class="material-icons" title="Troubleshoot this error.">build</i></a></td>
       </tr>
-
       <tr>
-        <td>SetVariableFailed</td>
+        <td><code>KeyIsMissing</code></td>
 
         <td>
-          <p>Failed to set variable {0} in KeyValueMapStepDefinition {1}</p>
-
-          <p>When getting values in encrypted key value maps, this error occurs if you fail to
-          prefix the <code>assignTo</code> variable with "<code>private.</code>" For example:</p>
-          <pre class="prettyprint">
-&lt;Get assignTo="<strong>private.</strong>encryptedVar" index="1"&gt;
-    &lt;Key&gt;
-      &lt;Parameter&gt;foo&lt;/Parameter&gt;
-    &lt;/Key&gt;
-&lt;/Get&gt;
-</pre>
+          This error occurs if the <code>&lt;Key&gt;</code> element is completely missing or <code>&lt;Parameter&gt;</code> element is
+          missing within <code>&lt;Key&gt;</code> element underneath the <code>&lt;Entry&gt;</code> of the <code>&lt;InitialEntries&gt;</code> element
+          of the Key Value Map Operations policy.
         </td>
+        <td><a href="/api-platform/troubleshoot/policies/deployment/key-value-map-deployment-errors#keyismissing"><i class="material-icons" title="Troubleshoot this error.">build</i></a></td>
       </tr>
 
       <tr>
-        <td>RemoveVariableFailed</td>
+        <td><code>ValueIsMissing</code></td>
 
-        <td>Failed to remove variable {0} in KeyValueMapStepDefinition {1}</td>
-      </tr>
-
-      <tr>
-        <td>InvalidIndex</td>
-
-        <td>Invalid index {0} in KeyValueMapStepDefinition {1}</td>
-      </tr>
-
-      <tr>
-        <td>KeyIsMissing</td>
-
-        <td>Key element is missing in KeyValueMapStepDefinition {0}</td>
-      </tr>
-
-      <tr>
-        <td>ValueIsMissing</td>
-
-        <td>Value element is missing in KeyValueMapStepDefinition {0}</td>
+        <td>This error occurs if the <code>&lt;Value&gt;</code> element is missing underneath the <code>&lt;Entry&gt;</code> element of
+          the <code>&lt;InitialEntries&gt;</code> element of the Key Value Map Operations policy.</td>
+        <td><a href="/api-platform/troubleshoot/policies/deployment/key-value-map-deployment-errors#valueismissing"><i class="material-icons" title="Troubleshoot this error.">build</i></a></td>
       </tr>
     </tbody>
   </table>
+
 </body>
     </html>

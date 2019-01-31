@@ -1,29 +1,30 @@
-  {% extends "_base.html" %} {% block title %}Hosted Targets tutorials (Beta){% endblock %} {% block body %}
+  {% extends "_base.html" %} {% block title %}Hosted Targets tutorials{% endblock %} {% block body %}
 
-<aside class="note">This is the Beta release of Hosted Targets. To learn more, see
-  <a href="https://cloud.google.com/terms/launch-stages">Google Cloud Platform Launch Stages</a>.</aside>
+{{ hosted_targets_availability }}
 
-   <aside class="note">For more examples to help you get started,
-     see <a href="./hosted-targets-reference#sample-hosted-targets-applications-on-github">Sample applications on GitHub</a>.</aside>
+<p>The following tutorials explain how to deploy Node.js applications to Edge using
+  <a href="/api-platform/hosted-targets/hosted-targets-overview">Hosted Targets</a>,
+a native Node.js runtime environment hosted by Apigee.</p>
 
-<p>In the following tutorials, we explain how to:</p>
-<ul><li>deploy a Node.js app to Hosted Targets using the Edge UI.</li>
-  <li>deploy a Node.js app from your local development machine to Hosted Targets.</li>
-  <li>migrate an existing Node.js proxy to Hosted Targets.</li>
+<p>The tutorials walk through the following tasks:</p>
+
+<ul><li>Deploying a Node.js app to Hosted Targets using the Edge UI.</li>
+  <li>Deploying a Node.js app to Hosted Targets from your local development machine.</li>
+  <li>Migrating an existing proxy with a <a href="/api-platform/nodejs/overview-nodejs-apigee-edge">traditional
+    Edge Node.js target implementation</a> to Hosted Targets.</li>
 </ul>
    <h2>Deploy a Node.js app to Hosted Targets using the Edge UI</h2>
 
-
-
    <p>In this tutorial, you will deploy a simple Node.js app to Hosted Targets using the Edge
-     UI.</p>
+     UI. When you complete the tutorial, you will understand the basic structure and contents of
+a Hosted Targets proxy and how to access deployment and build log files.  </p>
 
    <h3>Sign in</h3>
 
    <ol start="1">
       <li>Go to: <a href="http://apigee.com/edge">apigee.com/edge</a></li>
-      <li>Enter your login credentials and sign in.</li>
-      <li>You must be in the New Edge UI. If not, click <strong>Try New Edge</strong>
+      <li>Enter your Apigee login credentials to sign in.</li>
+      <li>You must be in the New Edge UI to use Hosted Targets. If not, click <strong>Try New Edge</strong>
         in the Classic Edge navigation bar.</li>
    </ol>
 
@@ -32,56 +33,69 @@
    <ol start="1">
       <li>In the side navigation menu, select <strong>Develop &gt; API Proxies</strong>.</li>
       <li>Click <strong>+ Proxy</strong>.</li>
-      <li>In the Create Proxy page, select <strong>Hosted Target (Beta)</strong>.<br/><br/>
-        <img width="550" title="" src="/api-platform/images/HF-IMG-4.png" alt="" /><br/><br/></li>
+      <li>In the Create Proxy page, select <strong>Hosted Target</strong>.</li>
       <li>Click <strong>Next</strong>.</li>
      <li>In the Proxy Name field, enter <strong><code>hello-hosted-targets</code></strong>.</li>
+     <li>Be sure <strong>"Hello World" Sample</strong> is selected.
       <li>Click <strong>Next</strong>.</li>
       <li>In the Security page, select <strong>Pass through (none)</strong>&nbsp;for the Authorization.</li>
       <li>Click <strong>Next</strong>.</li>
       <li>Click <strong>Next</strong>.</li>
       <li>In the Build page, be sure the <strong>test</strong>&nbsp;environment is selected. Notice
         that the Proxy Type is <strong>Hosted Targets</strong>.</li>
-      <li>Click <strong>Build and Deploy</strong>.</li>
-      <li>After the proxy is successfully deployed, click <strong>View hello-hosted-targets proxy
-        in the editor</strong>.
-      <aside class="note">Did you get a deployment error?</strong>&nbsp;If you receive a deployment error, try
-        redeploying the proxy. In some cases, the deployment can time out and if you redeploy, the
-        problem will resolve itself.</aside></li>
+      <li>Click <strong>Build and Deploy</strong>. It may take a few moments for the proxy deployment to complete.</li>
+      <li>After the proxy is successfully deployed, click <strong>View hello-hosted-targets proxy</strong>
+        at the bottom of the page.
+      
       <li>Call the API proxy. The easiest way to do this is to go to the <strong>Trace</strong>
         tab, start a Trace
         session, and click <strong>Send</strong>. You should receive a 200 status with the following
         response:
-<pre>{"date":"2018-03-22T15:59:14.577Z","msg":"Hello, World!"}</pre></li>
+<pre>{"date":"2018-09-26T14:23:04.550Z","msg":"Hello, World!"}</pre></li>
    </ol>
 
    <h3>Examine the proxy</h3>
 
    <ol>
-      <li>Click the <strong>Develop</strong>&nbsp;tab.</li>
-      <li>In the Navigator, select the default&nbsp;Target Endpoint.</li>
-	   <li>Notice that there is an empty <code>&lt;HostedTarget/&gt;</code> tag in the endpoint XML. This empty tag is
+      <li>In the Edge UI, click the <strong>Develop</strong> tab.</li>
+     <li>In the Navigator, select <b>default</b> under Target Endpoints.</li>
+
+	   <li>In the code editor, notice that there is an empty <code>&lt;HostedTarget/&gt;</code> child
+       element under the <code>&lt;TargetEndpoint&gt;</code> element. This empty tag is
        required. It tells Edge that the target of the proxy is an application that is deployed to the
-       Hosted Targets environment. <br /><br /><img width="550" title="" src="/api-platform/images/HF-IMG-1.png" alt="" /></li>
+       Hosted Targets environment.
+
+       <p><img width="550" title="" src="/api-platform/images/HF-IMG-1.png" alt="" /></p></li>
+
       <li>In the Navigator, notice the contents under the <strong>Scripts</strong>&nbsp;section. The
-        Node.js app files are listed under the <strong>hosted</strong>&nbsp;label. <br /><br /><img width="550" title="" src="/api-platform/images/HF-IMG-6.png" alt="" /></li>
-      <aside class="note">If you were to download the proxy to your locall filesytem and examine the file structure,
+        Node.js app files are listed under the <strong>hosted</strong>&nbsp;label.
+
+        <p><img width="550" title="" src="/api-platform/images/HF-IMG-6.png" alt="" /></p></li>
+
+       <aside class="note">If you were to download the proxy to your local filesytem and examine the file structure,
         the <b>hosted</b> label in the UI corresponds to the <strong>resources/hosted</strong>
-        directory. <br /><br /><img width="350" title="" src="/api-platform/images/HF-IMG-5.png" alt="" /></aside></li>
-<li>Now, look at the <b>Scripts > hosted</b> files:</li>
+        directory.
+
+        <p><img width="350" title="" src="/api-platform/images/HF-IMG-5.png" alt="" /></p>
+
+      </aside>
+
+       </li>
+
+<li>In the Edge UI, examine the files listed under <strong>hosted</strong> in the <strong>Scripts</strong>:</li>
 
 
    <ul>
-     <li>The <strong>app.yaml</strong>&nbsp;file contains configuration information. For example,
+     <li>The <a href="/api-platform/hosted-targets/hosted-targets-reference#the-manifest-file">app.yaml file</a> contains configuration information. For example,
         you can add environment variables that will be available to the Node.js application at
-        runtime. You do not need to modify this file for this example. For the complete file
-        listings, see <a href="./hosted-targets-reference#sample-hosted-targets-applications-on-github">Sample Applications on GitHub</a>.
-      <aside class="note">There is no <strong>node_modules</strong>&nbsp;folder in the project. A
+        runtime. You do not need to modify this file for this example.
+
+       <aside class="note">There is no <strong>node_modules</strong>&nbsp;folder in the project. A
         <strong>node_modules</strong>&nbsp;folder is not required. Edge runs <strong>npm install</strong>
         for you when the Node.js app is deployed. It gets the dependencies from <strong>package.json</strong>.
         The only time you would need to explicitly provide <strong>node_modules</strong>&nbsp;is if
         you have custom modules that are not available through <strong>npm</strong>.</aside></li>
-     <li>The <strong>index.js</strong>&nbsp;file is the app's main file.</li>
+     <li>The <strong>index.js</strong>&nbsp;file is the Node.js app's main file.</li>
         <li>If your app has any module
         dependencies, they must be listed in <strong>package.json</strong>.</li>
    </ul>
@@ -93,63 +107,74 @@
      and also at runtime.</p>
 
    <ol start="1">
-      <li>Click the <strong>Develop</strong>&nbsp;tab.</li>
+      <li>In the Edge UI, click the <strong>Develop</strong>&nbsp;tab.</li>
       <li>To see the build log, click <strong>Build Logs</strong>.</li>
       <li>To see the deployment log, click <strong>Runtime Logs</strong>. <br /><br />See also
-        <a href="./hosted-targets-reference#about-log-files">About log files</a>.</li>
+        <a href="./hosted-targets-tasks#accessing-log-files">Accessing log files</a>.</li>
    </ol>
 
    <h3>Summary</h3>
 
    <ul>
       <li>You deployed a simple Node.js application to the Hosted Targets environment and tested
-        it. The details of how the app are deployed to this environment are handled entirely for you
-        by Edge.</li>
+        it in the Edge UI.</li>
       <li>You learned that a Hosted Targets proxy requires a special empty tag in the Target
         Endpoint called <code>&lt;HostedTarget/&gt;</code>.</li>
-      <li>You learned that Edge loads module dependencies for you automatically.</li>
+      <li>You learned that Edge loads module dependencies for you automatically, and that dependencies
+        must be listed in the <code>package.json</code> file.</li>
+     <li>You also learned how to check build and runtime log files.</li>
    </ul>
 
 <h2>Deploy Node.js from your system to Edge</h2>
 
    <p>This section explains how to deploy a standalone Node.js application from your local system to
-     Hosted Targets using <a href="https://www.npmjs.com/package/apigeetool">apigeetool</a>. The Node.js app will be bundled into a new Hosted Targets proxy and deployed on Edge.</p>
+     Hosted Targets using <a href="https://www.npmjs.com/package/apigeetool">apigeetool</a>. The <code>apigeetool</code>
+     utility bundles the Node.js app into a new Hosted Targets proxy and deploys it to Edge.</p>
 
    <aside class="note">Node.js apps running in Hosted Targets must expose an HTTP API listening
-     on <strong>process.env.PORT</strong>.</aside>
+     on <strong>process.env.PORT</strong>. See also <a href="/api-platform/hosted-targets/hosted-targets-reference#environment-variables-set-in-the-application-runtime">Environment
+     variables set in the application runtime</a>.</aside>
+
+ <h3>Install apigeetool</h3>
+
+   <p>Using&nbsp;<strong>apigeetool</strong>&nbsp;is the recommended way for developers to deploy proxy
+     code to Edge. To install  <strong>apigeetool</strong>&nbsp;run the following NPM command:</p>
+<pre class="devsite-terminal">npm install -g apigeetool</pre>
 
    <h3>Create the Node.js app</h3>
 
-   <p>To make things easy, we provide the code for a simple Node.js app for you to deploy to Hosted
-     Targets using <b>apigeetool</b>.</p>
+   <p>To make things easy, the code for a simple Node.js app is provided for you.</p>
 
    <ol>
       <li>Create a directory for the Node.js app. Call the directory <strong>node-hosted-express</strong>.</li>
       <li><strong>cd</strong>&nbsp;to the new directory.</li>
       <li>Create a file called <strong>index.js</strong>&nbsp;and copy this code into it.
-     <aside class="note">Notice&nbsp;that the app require the <strong>express&nbsp;module</strong>.
-       When you deploy, Hosted Targets runs <b>npm install</b> to import this external module.</aside></li>
-    <pre class="prettyprint">
-    var express = require('express')
-    var app = express()
+     <aside class="note">Notice&nbsp;that the app requires the <strong>express&nbsp;module</strong>.
+       When you deploy, Hosted Targets runs <b>npm install</b> to import this external module. You do
+       not need to include the <code>node_modules</code> directory as part of the deployment to Edge.
+        The only time you would need to explicitly provide node_modules is if you have custom modules
+       that are not available through npm.</aside></li>
+<pre class="prettyprint">
+var express = require('express')
+var app = express()
 
-    app.get('/', function(req, res) {
-        res.json({
-            hello: "Hello World!"
-        })
+app.get('/', function(req, res) {
+    res.json({
+        hello: "Hello World!"
     })
+})
 
-    app.get('/hello/:name', function(req, res) {
-        var name = req.params.name
-        res.json({
-            hello: "hello " + name
-        })
+app.get('/hello/:name', function(req, res) {
+    var name = req.params.name
+    res.json({
+        hello: "hello " + name
     })
+})
 
-    var server = app.listen(process.env.PORT || 9000, function() {
-        console.log('Listening on port %d', server.address().port)
-    })
-    </pre>
+var server = app.listen(process.env.PORT || 9000, function() {
+    console.log('Listening on port %d', server.address().port)
+})
+</pre>
 
 
       <li>Create a file called <strong>package.json</strong>, and copy this code into it. Notice that
@@ -173,33 +198,35 @@
       <li>Create a file called <strong>app.yaml</strong>, and copy this code into it:</li>
 <pre class="prettyprint">
 runtime: node
-runtimeVersion:8
-application:my-express-app
+runtimeVersion: 8
+application: my-express-app
 env:
   - name: NODE_ENV
     value: production
   - name: LOG_LEVEL
-    value:3
+    value: 3
 </pre>
 
       <li>Make sure your directory looks like this:
 <pre class="devsite-terminal">
-ls node-hosted-express
+ls
 app.yaml index.js package.json
 </pre>
 
      </li>
    </ol>
 
-   <h3>About the directory structure of your Node.js app</h3>
+   <h3>Review of the required directory structure for the app code</h3>
 
-   <p>To deploy a Node.js app to Hosted Targets, the app must have the same structure as a standard
-     Node.js app. However, please note the following:</p>
+   <p>Your Node.js app must have the
+     same structure as a standard Node.js app. However, be sure that you have followed these
+     requirements before deploying with <code>apigeetool</code> to Edge:</p>
 
    <ul>
-      <li>You must add the required <strong>app.yaml</strong>&nbsp;manifest file to the root directory
-        of your Node.js app. For details on the structure of this file, see <a href="./hosted-targets-reference#about-the-manifest-file">manifest file</a>.</li>
-      <li>You must supply a <strong>package.json</strong>&nbsp;file. </li>
+      <li>The <strong>app.yaml</strong> manifest file is required and must exist in the root
+        directory of your app. To learn more about this file, see <a href="./hosted-targets-reference#about-the-manifest-file">manifest file</a>.</li>
+      <li>A <strong>package.json</strong>&nbsp;file is required. It must list any dependencies that your
+     app requires.</li>
       <li>A <strong>node_modules</strong>&nbsp;folder is <strong>not</strong> <strong>required</strong>.
         Edge runs <strong>npm install</strong>&nbsp;for you when the Node.js app is deployed. It gets
         the dependencies from <strong>package.json</strong>. The only time you would need to explicitly
@@ -207,24 +234,19 @@ app.yaml index.js package.json
         through <strong>npm</strong>.</li>
    </ul>
 
-   <h3>Installing apigeetool</h3>
 
-   <p>Using&nbsp;<strong>apigeetool</strong>&nbsp;is the recommended way for developers to deploy proxy
-     code to Edge. To install  <strong>apigeetool</strong>&nbsp;run the following NPM command:</p>
-<pre class="devsite-terminal">npm install -g apigeetool</pre>
 
    <h3>Deploying the proxy</h3>
 
    <ol>
-      <li>In a terminal, <strong>cd</strong>&nbsp;the root directory of your Node.js application.</li>
-      <li>Execute the <strong>apigeetool</strong>&nbsp;utility with the <strong>deployhostedtarget</strong>
-        command:</li>
+      <li>In a terminal, <strong>cd</strong> to the root directory of your Node.js application.</li>
+      <li>Execute <strong>apigeetool</strong> with the <strong>deployhostedtarget</strong> command:</li>
 
 
-   <aside class="note">The command automatically bundles the Node.js application into an API proxy and
-     deploys it to Apigee Edge as a Hosted Target. <strong>The deployment may take a few minutes to
+     <aside class="note"><code>apigeetool</code> automatically bundles the Node.js application into an API proxy and
+     deploys it to the Hosted Targets environment on Apigee Edge. <strong>The deployment may take a few minutes to
      complete</strong>.&nbsp;</aside>
-<pre class="devsite-terminal">apigeetool deployhostedtarget -o &lt;org&gt; -e &lt;env&gt; -n &lt;proxy-name&gt; -b /node-hosted-express -u &lt;username&gt;</pre>
+     <pre class="devsite-terminal">apigeetool deployhostedtarget -o <var>org</var> -e <var>env</var> -n <var>proxy-name</var> -b /node-hosted-express -u <var>username</var></pre>
 
      <p>where <strong>-n</strong>&nbsp;is the name you want to give to the new proxy. It must be unique
        within the organization. The characters you are allowed to use in the name are restricted to the following: <code>a-z0-9._\-$ %</code></p>
@@ -234,11 +256,11 @@ app.yaml index.js package.json
 <pre class="devsite-terminal">apigeetool deployhostedtarget -o myorg -e test -n node-hosted-express -b /node-hosted-express -u jdoe@apigee.com</pre>
 
    <p>For more information on using <strong>apigeetool</strong>&nbsp;see
-     <a href="https://github.com/apigee/apigeetool-node">https://github.com/apigee/apigeetool-node</a></p>
+     <a href="https://github.com/apigee/apigeetool-node">https://github.com/apigee/apigeetool-node</a>.</p>
 </ol>
    <h3>Testing the proxy</h3>
 
-   <p>You can test the proxy with a cURL command, using a REST client like Postman, or in the Edge UI
+   <p>You can test the proxy with a cURL command, with a REST client like Postman, or in the Edge UI
      in the Trace tool. Here's an example cURL command.</p>
 
 
@@ -248,7 +270,7 @@ app.yaml index.js package.json
    <h3>Getting the Build Logs</h3>
 
    <p>Build logs show you output related to deploying and building the Node.js app. See also <a href="./hosted-targets-reference#about-log-files">Log files</a>. </p>
-<pre class="devsite-terminal">apigeetool getlogs -u &lt;username&gt; -o &lt;org&gt; -e &lt;env&gt; --hosted-build -n &lt;proxy-name&gt;</pre>
+<pre class="devsite-terminal">apigeetool getlogs -u <var>username</var> -o <var>org</var> -e <var>env</var> --hosted-build -n <var>proxy-name</var></pre>
 
 
    <p>For example:</p>
@@ -257,7 +279,7 @@ app.yaml index.js package.json
 
    <p>Runtime logs show output related to the running app. Runtime logs are scoped to the environment
      and return logs for the currently deployed proxy revision. See also <a href="./hosted-targets-reference#about-log-files">Log files</a>.</p>
-<pre class="devsite-terminal">apigeetool getlogs -u &lt;username&gt; -o &lt;org&gt; -e &lt;env&gt; --hosted-runtime -n &lt;proxy-name&gt;</pre>
+<pre class="devsite-terminal">apigeetool getlogs -u <var>username</var> -o <var>org</var> -e <var>env</var> --hosted-runtime -n <var>proxy-name</var></pre>
 
    <p>For example:</p>
 
@@ -265,25 +287,33 @@ app.yaml index.js package.json
 
    <h3>Viewing the proxy in the Edge UI</h3>
 
-   <p>After a successful deployment, you can view and edit your proxy in the Edge UI.</p>
+   <p>After a successful deployment, you can view and edit your proxy in the API Proxies part of the
+     Edge UI.</p>
 
    <h2>Migrating an existing Node.js proxy to a Hosted Targets proxy</h2>
 
-   <p>This section explains how to manually migrate an existing Node.js proxy to a Hosted Targets
-     proxy. It also explains now to deploy the proxy after you've performed the migration steps.</p>
+   <p>This section explains how to manually migrate an existing Edge API proxy that employs the
+     <a href="/api-platform/nodejs/overview-nodejs-apigee-edge">traditional
+     Node.js target implementation</a> to Hosted Targets. It also explains how to deploy the proxy after
+     you've performed the migration steps.</p>
 
-   <p><strong>Use case:&nbsp;</strong>If you have an existing Edge Node.js proxy (one that uses Trireme),
-     you can "migrate" it to a Hosted Targets proxy by following the steps in this section. This way, the proxy structure, policies, flows, and so on from your original proxy are preserved. You can perform the migration in <strong>four steps</strong>, outlined below, and then deploy it with <strong>apigeetool</strong>.</p>
+<p>The migration steps preserve the API proxy structure, policies, flows, and other configuration elements.
+  You can perform the migration in <strong>four steps</strong>, as outlined below, and then deploy
+  the migrated proxy with <a href="https://www.npmjs.com/package/apigeetool">apigeetool</a>.</p>
+
+
 
    <aside class="note">
-     You cannot migrate an app that uses <strong>apigee-access</strong>.
-     See <a href="./hosted-targets-faq#how-should-we-work-around-the-lack-of-apigee-access">How should we work around the lack of apigee-access</a>.</aside>
+     You cannot directly migrate an app that uses <strong>apigee-access</strong>.
+     See <a href="./hosted-targets-faq#how-should-we-work-around-the-lack-of-apigee-access">Is it possible to work around the lack of apigee-access?</a>.</aside>
 
 
    <h3>Step 1: Adjust the proxy file structure</h3>
 
-   <p>In a traditional Edge Node.js proxy, the file structure looks like this, where the
-     root directory of your Node.js app is located under the <strong>resources/node</strong>&nbsp;directory:</p>
+   <p>To adjust the file structure, the API proxy must be on your local filesystem. If the proxy is
+     deployed on Edge, you must <a href="/api-platform/fundamentals/download-api-proxies">download it</a>
+     before continuing. In the traditional configuration, and Edge proxy "bundle" that includes Node.js code follows this file structure.
+     The Node.js application code is placed in the <code>resources/node</code>&nbsp;directory:</p>
 <pre>
 apiproxy/
     policies/
@@ -295,24 +325,24 @@ apiproxy/
 
 
    <p><br />For Hosted Targets, you must place the root directory of your Node.js app under a
-     directory called <strong>resources/hosted</strong>. Simply create a new directory called
-     <strong>resources/hosted</strong>&nbsp;and move the contents of <strong>resources/node</strong>
-     into it. Then, you can delete the <strong>resources/node</strong>&nbsp;directory. </p>
+     directory called <code>resources/hosted</code>. Simply create a new directory called
+     <strong>resources/hosted</strong>&nbsp;and move the contents of <code>resources/node</code>
+     into it. Then, you can delete the <code>resources/node</code>&nbsp;directory. </p>
 
-     <pre>apiproxy/
-         policies/
-         proxies/
-         targets/
-         resources/
-           hosted/
-             Your application code</pre>
+ <pre>apiproxy/
+     policies/
+     proxies/
+     targets/
+     resources/
+       hosted/
+         Your application code</pre>
 
    <h3>Step 2: Add the manifest file</h3>
 
-   <p>Create a manifest file called <strong>app.yaml</strong>&nbsp;and place it in the
-     <strong>apiproxy/resources/hosted</strong>&nbsp;directory.</p>
+   <p>Create a manifest file called <code>app.yaml</code>&nbsp;and place it in the
+     <code>apiproxy/resources/hosted</code>&nbsp;directory.</p>
 
-   <p>Following is an example <strong>app.yaml</strong>&nbsp;file. It specifies that the runtime is
+   <p>Following is an example <code>app.yaml</code>&nbsp;file. It specifies that the runtime is
      Node.js (required). It also creates an environment variable in the execution environment
      (a variable that could be accessed by the Node.js app). The environment variable is optional
      and is only shown here as an example. For more details and examples, see <a href="./hosted-targets-reference#about-the-manifest-file">The manifest file</a>.</p>
@@ -323,31 +353,32 @@ runtime:&nbsp;node
       value:&nbsp;production</pre>
 
 
-   <p><br />Here is an example showing the Node.js project structure in the correct location in the
-     proxy:</p>
-    <pre>
-    apiproxy/
-       resources/
-          hosted/
-            index.js
-            node_modules/
-            app.yaml
-            package.json
-    </pre>
+   <p><br />The following example shows a Node.js project structure that is in the correct location in the
+     proxy for Hosted Targets deployment:</p>
+<pre>
+apiproxy/
+   resources/
+      hosted/
+        index.js
+        node_modules/
+        app.yaml
+        package.json</pre>
 
-   <aside class="note">The <strong>node_modules</strong>&nbsp;directory is <strong>not&nbsp;required</strong>.
-     Edge will perform an <strong>npm install</strong>&nbsp;when the app is deployed. However, if your app uses private or custom modules not available through <strong>npm</strong>, then you can include them in the <strong>node_modules</strong>&nbsp;directory and they will be deployed along with the app.</aside>
+   <aside class="note">The <code>node_modules</code>&nbsp;directory is <strong>not&nbsp;required</strong>.
+     Edge will perform an <code>npm install</code>&nbsp;when the app is deployed. However, if your app
+     uses private or custom modules not available through <strong>npm</strong>, then you can include them in the <strong>node_modules</strong>&nbsp;directory and they will be deployed along with the app.</aside>
 
    <h3>Step 3: Make sure you have a package.json file</h3>
 
-   <p>In traditional Edge Node.js proxies, the <strong>package.json</strong>&nbsp;was
-     optional. However, for Hosted Targets, you must supply one in the <strong>apiproxy/resources/hosted</strong> directory.</p>
+   <p>In traditional Edge Node.js proxies, the <code>package.json</code>&nbsp;was
+     optional. However, for Hosted Targets, you must supply one in the <code>apiproxy/resources/hosted</code> directory. Be sure
+to specify any required dependencies for your app in this file.</p>
    <h3>Step 4: Modify the target endpoint of the proxy</h3>
 
-   <p>A traditional Node.js proxy requires that a tag called <strong>&lt;ScriptTarget&gt;</strong>
-     be present in the target endpoint file (typically <strong>/apiproxy/targets/default.xml</strong>).
+   <p>A traditional Node.js proxy requires that a tag called <code>&lt;ScriptTarget&gt;</code>
+     be present in the target endpoint file (typically <code>/apiproxy/targets/default.xml</code>).
      For Hosted Targets, you need to add an empty tag called <strong>&lt;HostedTarget/&gt;</strong>.
-     If there's a <strong>ScriptTarget</strong>&nbsp;tag in the file, you can simply remove it.
+     If there's a <code>ScriptTarget</code>&nbsp;tag in the file, you can simply remove it.
      For example:</p>
     <pre class="prettyprint">
     &lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
@@ -379,20 +410,31 @@ runtime:&nbsp;node
       <li>Use this command to deploy the proxy:
         <aside class="note">If you are replacing a currently "traditional" Edge Node.js proxy,
           be sure to use the same proxy name in the following command (the <strong>-n</strong>&nbsp;parameter)
-          as the deployed proxy. The <strong>apigeetool</strong>&nbsp;utility will undeploy the
+          as the deployed proxy. The <code>apigeetool</code>&nbsp;utility will undeploy the
           existing proxy and deploy the new Hosted Targets proxy.</aside>
      </li>
 
 
-   <pre class="devsite-terminal">apigeetool deployproxy -u username -o &lt;your-org&gt; -e &lt;your-env&gt; -n &lt;proxy-name&gt; -d .</pre>
+     <pre class="devsite-terminal">apigeetool deployproxy -u <var>username</var> -o <var>org</var> -e <var>env</var> -n <var>proxy-name</var> -d .</pre>
+
+     <p>For example:</p>
+
+     <pre class="devsite-terminal">apigeetool deployproxy -u jdoe -o docs -e test -n hello-world -d .</pre>
   </ol>
 
- <p>For more information on using <strong>apigeetool</strong>&nbsp;see:
-     <a href="https://github.com/apigee/apigeetool-node">https://github.com/apigee/apigeetool-node/blob/hosted-functions/README.md</a></p>
+ <p>For more information on using <code>apigeetool</code>&nbsp;see:
+     <a href="https://github.com/apigee/apigeetool-node">https://github.com/apigee/apigeetool-node/blob/master/README.md</a>.</p>
    <h3>Testing the proxy</h3>
 
-   <p>You can test the proxy with a cURL command, using a REST client like Postman, or in the Edge UI
+   <p>You can test the proxy with a cURL command, with a REST client like Postman, or in the Edge UI
      in the Trace tool. Here's an example cURL command:</p>
 <pre class="devsite-terminal">
-curl http://myorg-test.apigee.net/myhelloapp
-Hello,World!</pre>{% endblock %}
+curl http://myorg-test.apigee.net/hello-world
+Hello,World!</pre>
+
+   <aside class="note">For more examples to help you get started,
+     see <a href="./hosted-targets-reference#sample-hosted-targets-applications-on-github">Sample
+     applications on GitHub</a>.</aside>
+
+
+{% endblock %}

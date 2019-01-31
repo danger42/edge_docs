@@ -4,58 +4,63 @@
     <title>Spike Arrest Policy Error Codes</title>
   </head>
   <body>
-  <p>This section describes the error messages and flow variables that are set when this policy
-  triggers an error. This information is important to know if you are developing fault rules for a
-  proxy. To learn more, see <a href=
-  "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html">What you need to know
+  <p>This section describes the fault codes and error messages that are returned and fault variables that are set by Edge when this policy triggers an error.
+    This information is important to know if you are developing fault rules to
+  handle faults. To learn more, see <a href="/api-platform/fundamentals/what-you-need-know-about-policy-errors.html">What you need to know
   about policy errors</a> and <a href="/api-platform/fundamentals/fault-handling.html">Handling
   faults</a>.</p>
 
-  <h3>Error code prefix</h3>
-
-  <p><code>policies.ratelimit</code> <span style="font-size: 10pt">(<a href=
-  "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html#aboutthedefaultpolicyerrorresponse">What's
-  this?</a>)</span></p>
 
   <h3>Runtime errors</h3>
 
   <p>These errors can occur when the policy executes.</p>
 
+    <aside class="key-point">Need help resolving an error? Click <i class="material-icons" title="Click this icon in the error table to visit the troubleshooting page.">build</i> in the Fix column for detailed troubleshooting information.
+<p>Use <u><a href="/api-monitoring">API Monitoring</a></u> to investigate fault codes and diagnose issues faster.</p></aside>
+
+
   <table>
-    <thead>
-      <tr>
-        <th scope="col" width="273">Error name</th>
+    <th scope="col" width="623">Fault code</th>
 
-        <th scope="col" width="60">HTTP status</th>
+        <th scope="col" width="49">HTTP status</th>
 
-        <th scope="col" width="601">Occurs when</th>
-      </tr>
-    </thead>
+        <th scope="col" width="863">Cause</th>
+        <th scope="col" width="63">Fix</th>
 
     <tbody>
+       <tr>
+        <td><code>policies.ratelimit.FailedToResolveSpikeArrestRate</code></td>
+
+        <td>500</td>
+
+        <td>This error occurs if the reference to the variable containing the rate setting
+within the <code>&lt;Rate&gt;</code> element cannot be resolved to a value within the Spike Arrest
+policy.  This element is mandatory and used to specify the spike arrest rate in
+          the form of <code>{int}pm</code> or <code>{int}ps</code>.</td>
+        <td><a href="/api-platform/troubleshoot/policies/runtime/spike-arrest-runtime-errors#failedtoresolvespikearrestrate"><i class="material-icons" title="Troubleshoot this error.">build</i></a></td>
+
+      </tr>
+       <tr>
+        <td><code>policies.ratelimit.InvalidMessageWeight</code></td>
+
+        <td>500</td>
+
+        <td>This error occurs if the value specified for the <code>&lt;MessageWeight&gt;</code> element through
+a flow variable is invalid (a non-integer value).</td>
+        <td><a href="/api-platform/troubleshoot/policies/runtime/spike-arrest-runtime-errors#invalidmessageweight"><i class="material-icons" title="Troubleshoot this error.">build</i></a></td>
+
+      </tr>
       <tr>
-        <td><code>SpikeArrestViolation</code></td>
+        <td><code>policies.ratelimit.SpikeArrestViolation</code></td>
 
         <td>500</td>
 
         <td>The rate limit is exceeded.</td>
+        <td> </td>
+
       </tr>
 
-      <tr>
-        <td><code>InvalidMessageWeight</code></td>
 
-        <td>500</td>
-
-        <td>The message weight value must be an integer.</td>
-      </tr>
-
-      <tr>
-        <td><code>FailedToResolveSpikeArrestRate</code></td>
-
-        <td>500</td>
-
-        <td>The referenced variable used to specify the rate can't be resolved.</td>
-      </tr>
     </tbody>
   </table>
 
@@ -63,12 +68,14 @@
 
   <p>These errors can occur when you deploy a proxy containing this policy.</p>
 
+  <aside class="key-point">Need help resolving an error? Click <i class="material-icons" title="Click this icon in the error table to visit the troubleshooting page.">build</i> in the Fix column for detailed troubleshooting information.</aside>
+
   <table>
     <thead>
       <tr>
-        <th scope="col" width="273">Error name</th>
-
-        <th scope="col" width="603">Occurs when</th>
+        <th scope="col" width="523">Error name</th>
+        <th scope="col" width="863">Cause</th>
+        <th scope="col" width="63">Fix</th>
       </tr>
     </thead>
 
@@ -76,30 +83,15 @@
       <tr>
         <td><code>InvalidAllowedRate</code></td>
 
-        <td>Valid values are [int]ps or [int]pm.</td>
+        <td>If the spike arrest rate specified in the <code>&lt;Rate&gt;</code> element of the Spike Arrest
+          Policy is not an integer or if the rate does not have <code>ps</code> or <code>pm</code> as a suffix,
+then the deployment of the API proxy fails.</td>
+        <td><a href="/api-platform/troubleshoot/policies/deployment/spike-arrest-deployment-errors#invalidallowedrate"><i class="material-icons" title="Troubleshoot this error.">build</i></a></td>
+
       </tr>
     </tbody>
   </table>
 
-  <h3>Other errors</h3>
-
-  <table>
-    <thead>
-      <tr>
-        <th scope="col" width="273">Error name</th>
-
-        <th scope="col" width="605">Occurs when</th>
-      </tr>
-    </thead>
-
-    <tbody>
-      <tr>
-        <td><code>ErrorLoadingProperties</code></td>
-
-        <td>See fault string.</td>
-      </tr>
-    </tbody>
-  </table>
 
   <h3>Fault variables</h3>
 
@@ -107,12 +99,11 @@
   "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html">What you need to know
   about policy errors</a>.</p>
 
-  <table>
+
+      <table>
     <tbody>
       <tr>
-        <th width="324">Variables set <code><span style="font-size: 10pt">(<a href=
-        "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html">Learn
-        more</a>)</span></code></th>
+        <th width="324">Variables</th>
 
         <th width="428">Where</th>
 
@@ -120,25 +111,22 @@
       </tr>
 
       <tr>
-        <td width="324"><code>[prefix].[policy_name].failed</code></td>
+        <td><code>fault.name="<var>fault_name</var>"</code></td>
 
-        <td width="428">The fault variable <code>[prefix]</code> is
-        <code><strong>ratelimit</strong>.</code><br>
-        The <code>[policy_name]</code> is the name of the policy that threw the error.</td>
-
-        <td width="428"><code>ratelimit.SA-SpikeArrestPolicy.failed = true</code></td>
-      </tr>
-
-      <tr>
-        <td><code>fault.[error_name]</code></td>
-
-        <td><code>[error_name]</code> = The specific error name to check for as listed in the table
-        above.</td>
+        <td><var>fault_name</var> is the name of the fault, as listed in the <a href="#runtime-errors">Runtime errors</a> table above. The fault name is the last part of the fault code.</td>
 
         <td><code>fault.name Matches "SpikeArrestViolation"</code></td>
       </tr>
+      <tr>
+        <td width="324"><code>ratelimit.<var>policy_name</var>.failed</code></td>
+
+        <td width="428"><var>policy_name</var> is the user-specified name of the policy that threw the fault.</td>
+
+        <td width="428"><code>ratelimit.SA-SpikeArrestPolicy.failed = true</code></td>
+      </tr>
     </tbody>
   </table>
+
 
   <h3>Example error response</h3>
 

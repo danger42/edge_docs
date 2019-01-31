@@ -1,0 +1,72 @@
+{% extends "_base.html" %}
+{% block title %}Invoking a proxy within proxy using custom code or as a target{% endblock %}
+{% block body %}
+
+<p>Edge lets you invoke one API Proxy from another API Proxy. This feature is useful especially if
+you have an API Proxy that contains reusable code that can be used by other API Proxies.</p>
+
+<h2>Antipattern</h2>
+
+<p>Invoking one API Proxy from another either using HTTPTargetConnection in the target endpoint or
+custom JavaScript code results in additional network hop.</p>
+
+<h3>Invoke Proxy 2 from Proxy 1 using HTTPTargetConnection</h3>
+<p>The following code sample invokes Proxy 2 from Proxy 1 using HTTPTargetConnection:</p>
+
+<pre class="prettyprint">{% includecode content_path="api-platform/antipatterns/examples/2-1.xml" html_escape="True" %}</pre>
+
+<h3>Invoke Proxy 2 from Proxy 1 from the JavaScript code</h3>
+
+<p>The next code sample invokes Proxy 2 from Proxy 1 using JavaScript:</p>
+
+<pre class="prettyprint">{% includecode content_path="api-platform/antipatterns/examples/2-2.xml" html_escape="True" %}</pre>
+
+<h3>Code Flow</h3>
+
+<p>To understand why this has an inherent disadvantage, we need to understand the route a request
+takes as illustrated by the diagram below:</p>
+
+<figure>
+  <img src="/api-platform/images/antipatterns/proxies-requests.png"/>
+  <figcaption><strong>Figure 1</strong>: Code Flow</figcaption>
+</figure>
+
+<p>As depicted in the diagram, a request traverses multiple distributed components, including the
+Router and the Message Processor.</p>
+
+<p>In the code samples above, invoking Proxy 2 from Proxy 1 means that the request has to be routed
+through the traditional route (i.e Router &gt; MP) at runtime. This would be akin to invoking an API
+from a client thereby making multiple network hops that add to the latency. These hops are
+unnecessary considering that Proxy 1 request has already "reached" the MP.</p>
+
+
+<h2>Impact</h2>
+
+<p>Invoking one API Proxy from another API Proxy incurs unnecessary network hops, that is the
+request has to be passed on from one Message Processor to another Message Processor.</p>
+
+<h2>Best practice</h2>
+
+<ul>
+  <li>Use the <a href="/api-services/content/connecting-proxies-other-proxies">proxy chaining</a>
+    feature for invoking one API Proxy from another. Proxy chaining is more
+    efficient as it uses local connection to reference the target endpoint (another API Proxy).
+    <p>The code sample shows proxy chaining using LocalTargetConnection in your endpoint
+    definition:</p>
+    <pre class="prettyprint">{% includecode content_path="api-platform/antipatterns/examples/2-3.xml" html_escape="True" %}</pre>
+    <p>The invoked API Proxy gets executed within the same Message Processor; as a result, it avoids
+    the network hop as shown in the following figure:</p>
+    <figure>
+      <img src="/api-platform/images/antipatterns/proxy-chaining.png"/>
+      <figcaption><strong>Figure 2</strong>: Code Flow with Proxy Chaining</figcaption>
+    </figure>
+  </li>
+</ul>
+
+<h2>Further reading</h2>
+
+<ul>
+  <li><a href="/api-services/content/connecting-proxies-other-proxies">Proxy chaining</a></li>
+</ul>
+
+{% endblock %}

@@ -1,0 +1,487 @@
+  {% extends "_base.html" %} {% block title %}Troubleshooting Monetization Problems{% endblock %}
+  {% block body %}
+
+<aside class="note">Was this troubleshooting playbook helpful? Please let us know
+  by clicking <a href="" class="google-feedback"
+   data-p="1636213" data-b="docsite" data-context="troubleshooting-feedback">
+  Send Feedback
+</a>.</aside>
+
+  <p>This topic provides information and guidance on troubleshooting commonly observed monetization
+  problems.</p>
+
+  <aside class="note"><b>Note:</b> The troubleshooting steps in this topic can be performed by both
+  Edge Private and Public Cloud users.</aside>
+
+  <h2 id="developersuspended">Developer Suspended</h2>
+
+  <h3 id="developersuspended-symptom">Symptom</h3>
+
+  <p>Developer is suspended and will not be able to make any additional monetization
+  transactions/API calls.</p>
+
+  <aside class="note"><b>Note:</b> Developer suspension is enforced by the <a href="">Monetization
+  Limits Check Policy</a>. If the policy is not attached to the proxy (or it is disabled), calls
+  will go through unchecked, but they will be rated as FAILED. This would enable developers to get
+  unlimited calls "for free".</aside>
+
+  <h3 id="developersuspended-errormessages">Error Messages</h3>
+  <pre class="prettyprint">
+&lt;error&gt;
+   &lt;messages&gt;
+        &lt;message&gt;Exceeded developer limit configuration -&lt;/message&gt;
+        &lt;message&gt;Is Developer Suspended - true&lt;/message&gt;
+   &lt;/messages&gt; 
+&lt;/error&gt;
+</pre>
+
+  <h3 id="developersuspended-diagnosis">Diagnosis</h3>
+
+  <p>To determine the reason that the developer has been suspended, perform the following
+  steps:</p>
+
+  <ol start="1">
+    <li>Execute the following API call to identify the error code associated with the suspended
+    developer:
+
+      <ol>
+        <li>If you are a Public Cloud User, use the below API:
+          <pre class="prettyprint">
+curl -X GET "https://api.enterprise.apigee.com/v1/mint/organizations/{org}/suspended-developers/{developer-email}" -u orgadminEmail:password
+</pre>
+        </li>
+
+        <li>If you are a Private Cloud User, use the below API:
+          <pre class="prettyprint">
+curl -X GET "http://&lt;management-host&gt;:&lt;port#&gt;/v1/mint/organizations/{org}/suspended-developers/{developer-email}" -u orgadminEmail:password
+</pre>
+        </li>
+      </ol>
+    </li>
+
+    <li>Compare the error code with the following reasons codes to determine why the developer was
+    suspended.</li>
+  </ol>
+
+  <p>See also: <a href=
+  "">http://docs.apigee.com/monetization/content/unsuspend-developers#suspend-reason-codes</a></p>
+
+  <table>
+    <tbody>
+      <tr>
+        <td colspan="1" rowspan="1">
+          <p><strong>Reason Code</strong></p>
+        </td>
+
+        <td colspan="1" rowspan="1">
+          <p><strong>Cause</strong></p>
+        </td>
+
+        <td colspan="1" rowspan="1">
+          <p><strong>Details</strong></p>
+        </td>
+      </tr>
+
+      <tr>
+        <td colspan="1" rowspan="1">
+          <p>INSUFFICIENT_FUNDS</p>
+        </td>
+
+        <td colspan="1" rowspan="1">
+          <p>Developer account balance is depleted</p>
+        </td>
+
+        <td colspan="1" rowspan="1">
+          <p>If the prepaid developer account balance does not have enough funds for any additional
+          transactions, then the developer will be suspended.</p>
+
+          <p>For postpaid developers, this error can occur if they exceed their credit limit or if
+          the credit limit set on the currency used is depleted.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td colspan="1" rowspan="1">
+          <p>LIMIT_VIOLATED</p>
+        </td>
+
+        <td colspan="1" rowspan="2">
+          <p>Developer is unable to make any further transactions</p>
+        </td>
+
+        <td colspan="1" rowspan="2">
+          <p>Every developer is allowed to make a fixed number of transactions based on the rate
+          plan purchased. If the number of transactions is exceeded, then the developer is
+          suspended and cannot complete additional transactions.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td colspan="1" rowspan="1">
+          <p>RATE_PLAN_RATE_BAND_EXCEEDED</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td colspan="1" rowspan="1">
+          <p>NO_CURRENT_PUBLISHABLE_ENTITY</p>
+        </td>
+
+        <td colspan="1" rowspan="1">
+          <p>Developer has not purchased any rate plan</p>
+        </td>
+
+        <td colspan="1" rowspan="1">
+          <p>A developer must purchase a rate plan before completing any transactions.</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="developersuspended-resolution">Resolution</h3>
+
+  <table>
+    <tbody>
+      <tr>
+        <td colspan="1" rowspan="1">
+          <p><strong>Error</strong></p>
+        </td>
+
+        <td colspan="1" rowspan="1">
+          <p><strong>Steps to Resolve</strong></p>
+        </td>
+      </tr>
+
+      <tr>
+        <td colspan="1" rowspan="1">
+          <p>INSUFFICIENT_FUNDS</p>
+        </td>
+
+        <td colspan="1" rowspan="1">
+          <p>The developer needs to make sure that there is a sufficient account balance or
+          available credit in order to complete any additional transactions.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td colspan="1" rowspan="1">
+          <p>LIMIT_VIOLATED</p>
+        </td>
+
+        <td colspan="1" rowspan="2">
+          <ol start="1">
+            <li>Make the following API calls to get the developer rate plan and transaction
+            details, respectively:</li>
+          </ol>
+
+          <ul>
+            <li>Run the following API call to get the start and end date of the rate plans that the
+            developer has purchased:</li>
+          </ul>
+
+          <p>
+          http://docs.apigee.com/monetize/apis/get/organizations/%7Borg_name%7D/developers/%7Bdeveloper_id%7D/developer-accepted-rateplans</p>
+
+          <ul>
+            <li>Run the following API call to get the number of successful transactions made by the
+            developer :</li>
+          </ul>
+
+          <p>
+          http://docs.apigee.com/monetize/apis/get/organizations/%7Borg_name%7D/transactions/developers/%7Bdeveloper_email_or_id%7D</p>
+
+          <ol start="2">
+            <li>In Edge UI, you can also check the number of calls a developer is allowed to make
+            by selecting:</li>
+          </ol>
+
+          <p>Packages -&gt; PackageName -&gt; RatePlanName -&gt; Rate Card</p>
+
+          <p>For example, if the package name is &#8216;Pro Package&#8217; and it&#8217;s a Free
+          Plan, then the path would be:</p>
+
+          <p>Packages -&gt; Pro Package -&gt; Free Plan -&gt; Rate Card</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td colspan="1" rowspan="1">
+          <p>RATE_PLAN_RATE_BAND_EXCEEDED</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td colspan="1" rowspan="1">
+          <p>NO_CURRENT_PUBLISHABLE_ENTITY</p>
+        </td>
+
+        <td colspan="1" rowspan="1">
+          <p>The developer has to purchase a rate plan to be able to make API calls.</p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  <hr>
+
+  <h2 id="monetizationsetupissues">Monetization setup issues</h2>
+
+  <h3 id="monetizationsetupissues-symptoms">Symptoms</h3>
+
+  <p>The Monetization setup issues can manifest as different symptoms such as:</p>
+
+  <ul>
+    <li>Webhooks functionality not working</li>
+  </ul>
+
+  <ul>
+    <li>Cannot create webhooks</li>
+
+    <li>Webhook notifications not being triggered</li>
+  </ul>
+
+  <ul>
+    <li>Monetization Reports not showing any transactions</li>
+  </ul>
+
+  <ul>
+    <li>For example, the Analytics data indicates that the developer has completed many
+    transactions in a specific period of time, but the Monetization reports don&#8217;t list any of
+    those transactions.</li>
+  </ul>
+
+  <ul>
+    <li>Transactions not getting recorded</li>
+  </ul>
+
+  <h3 id="monetizationsetupissues-errormessages">Error Messages</h3>
+
+  <p>You may not observe any error messages, but you will see issues as explained in the
+  Description section above.</p>
+
+  <h3 id="monetizationsetupissues-possiblecauses">Possible Causes</h3>
+
+  <p>If you are seeing any of the symptoms listed above in the Description section, then it&#8217;s
+  very likely the transactions are not being monetized.</p>
+
+  <h3 id="monetizationsetupissues-diagnosingthecause">Diagnosing the cause</h3>
+
+  <ol start="1">
+    <li>Use the management API call described in the following section to check if the transactions
+    are being monetized.
+
+      <p><a href="https://docs.apigee.com/api-platform/monetization/transaction-status">View the status of transactions</a></p>
+    </li>
+  </ol>
+
+  <ol start="2">
+    <li>If you don&#8217;t see any transactions being listed as &#8216;SUCCESS&#8217; within the
+    specified duration, then the transactions are not monetized.</li>
+  </ol>
+
+  <p>The typical causes for the transactions not being monetized are:</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <td colspan="1" rowspan="1">
+          <p><strong>Cause</strong></p>
+        </td>
+      </tr>
+
+      <tr>
+        <td colspan="1" rowspan="1">
+          <p><a href="#monetizationlimits">Monetization Limits Check Policy Not Attached To API
+          Proxy</a></p>
+        </td>
+      </tr>
+
+      <tr>
+        <td colspan="1" rowspan="1">
+          <p><a href="#notmonetized">APIProduct is not Monetized</a></p>
+        </td>
+      </tr>
+
+      <tr>
+        <td colspan="1" rowspan="1">
+          <p><a href="#recordingpolicy">Transaction Recording Policy incorrectly defined</a></p>
+        </td>
+      </tr>
+
+      <tr>
+        <td colspan="1" rowspan="1">
+          <p><a href="#notpurchased">Developer has not purchased rate plan</a></p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>The following sections describe how to diagnose and resolve each issue.</p>
+
+  <h2 id="monetizationlimitscheckpolicynotusedinapiproxy"><a id="monetizationlimits" name=
+  "monetizationlimits"></a>Monetization Limits Check Policy not used in API Proxy</h2>
+
+  <h3 id="monetizationlimitscheckpolicynotusedinapiproxy-diagnosis">Diagnosis</h3>
+
+  <ol start="1">
+    <li>Check whether the Monetization Limits Check Policy is attached to the API proxies.</li>
+  </ol>
+
+  <ol start="2">
+    <li>If the policy is not attached, then this could be the reason that transactions are listed
+    as &#8216;FAILED&#8217;.</li>
+  </ol>
+
+  <h3 id="monetizationlimitscheckpolicynotusedinapiproxy-resolution">Resolution</h3>
+
+  <p>Attach the Monetization Limits Check Policy to the required API proxies, as described in the
+  following section:</p>
+
+  <p><a href=
+  "">http://docs.apigee.com/monetization/content/enforce-monetization-limits-using-monetization-limits-check-policy</a></p>
+
+  <p>If the problem persists, then check if the <a href="#h.jkzg4momoxim">API Product is not
+  monetized</a>.</p>
+
+  <h2 id="apiproductisnotmonetized"><a id="notmonetized" name="notmonetized"></a>API Product is not
+  monetized</h2>
+
+  <h3 id="apiproductisnotmonetized-diagnosis">Diagnosis</h3>
+
+  <ol start="1">
+    <li>Check if the API product is monetized (only monetized API products are rated and will be
+    listed under transactions). A monetized product is one that has at least one active rate plan
+    available.</li>
+  </ol>
+
+  <ol start="2">
+    <li>Use the following management API call to get the list of monetized API products:
+
+      <ol>
+        <li>If you are a Public Cloud User, use the below API:
+          <pre class="prettyprint">
+curl -v https://api.enterprise.apigee.com/v1/mint/organizations/{org_id}/products?monetized=true -u orgadminEmail:password
+</pre>
+        </li>
+
+        <li>If you are a Private Cloud User, use the below API:
+          <pre class="prettyprint">
+curl -v http://&lt;management-host&gt;:&lt;port#&gt;/v1/mint/organizations/{org_id}/products?monetized=true -u orgadminEmail:password
+      
+</pre>
+        </li>
+      </ol>
+    </li>
+
+    <li>If the API product associated with your API Proxy is not monetized, then this could be the
+    reason that the transactions are not being monetized.</li>
+  </ol>
+
+  <h3 id="apiproductisnotmonetized-resolution">Resolution</h3>
+
+  <p>To monetize an API product, perform the following steps:</p>
+
+  <ol start="1">
+    <li>Create a transaction recording policy, as described in the following section:
+
+      <p><a href=
+      "">http://docs.apigee.com/monetization/content/create-transaction-recording-policy</a></p>
+    </li>
+  </ol>
+
+  <ol start="2">
+    <li>Check that the API Product has an active rate plan.</li>
+  </ol>
+
+  <p>If the problem persists, then check if <a href=
+  "https://www.google.com/url?q=https://docs.google.com/document/d/1EYkPcMdQ41GMDbG36ZQ-syw_v-icq5CfkcahN4RWx_I/edit%23heading%3Dh.oruak0hw4pps&amp;sa=D&amp;ust=1518626847155000&amp;usg=AFQjCNHSppwKWKB0fH7shH5MR1f9ZojpZQ">
+  Transaction recording policy incorrectly defined</a></p>
+
+  <h2 id="transactionrecordingpolicyincorrectlydefined"><a id="recordingpolicy" name=
+  "recordingpolicy"></a>Transaction recording policy incorrectly defined</h2>
+
+  <h3 id="transactionrecordingpolicyincorrectlydefined-diagnosis">Diagnosis</h3>
+
+  <ol start="1">
+    <li>Enable the UI trace for the API Proxy that has the Monetization Limits Check Policy
+    attached.</li>
+  </ol>
+
+  <ol start="2">
+    <li>Select a particular API request from the UI trace.</li>
+  </ol>
+
+  <ol start="3">
+    <li>Select the Analytics &#8216;AX&#8217; flow and check if the following monetization (mint)
+    flow variables have the proper values:
+      <pre class="prettyprint">
+mint.tx.status - Should match the value set up for "success criteria" in the transaction recording policy for the API product being used. When tracing, the txProviderStatus in the transaction recording policy is stored in the variable 'mint.tx.status'.
+mint.tx.app_id - Application id of API product.
+mint.tx.prod_id - API product id.
+        
+</pre>
+    </li>
+  </ol>
+
+  <ol start="4">
+    <li>Here&#8217;s a sample UI trace that shows the mint flow variables are setup correctly.</li>
+  </ol>
+
+  <ol start="5">
+    <li>If you observe an error in the mint.tx.status variable, then it indicates that the
+    transaction recording policy is incorrectly defined.</li>
+  </ol>
+
+  <p><img alt="" src="/api-platform/images/mon-img-1.png"></p>
+
+  <h3 id="transactionrecordingpolicyincorrectlydefined-resolution">Resolution</h3>
+
+  <ol start="1">
+    <li>Ensure that all the steps documented in the following section have been followed correctly
+    while creating the transaction recording policy.</li>
+  </ol>
+
+  <p><a href=
+  "">http://docs.apigee.com/monetization/content/create-transaction-recording-policy</a></p>
+
+  <ol start="2">
+    <li>The key value is the &#8216;transaction success criteria&#8217; set in the transaction
+    recording policy.</li>
+  </ol>
+
+  <p><a href=
+  "">http://docs.apigee.com/monetization/content/create-transaction-recording-policy#success-criteria</a></p>
+
+  <h2 id="developerhasnotpurchasedrateplan"><a id="notpurchased" name="notpurchased"></a>Developer
+  has not purchased rate plan</h2>
+
+  <h3 id="developerhasnotpurchasedrateplan-diagnosis">Diagnosis</h3>
+
+  <ol>
+    <li>Use the following management API call to verify the rate plans purchased by the developer:
+
+      <ol>
+        <li>If you are a Public Cloud user, use the below API:
+          <pre class="prettyprint">
+curl -v https://api.enterprise.apigee.com/v1/mint/organizations/{org}/developers/{dev_email}/products/{prod}/developer-rateplans -u orgadminEmail:password
+</pre>
+        </li>
+
+        <li>If you are a Private Cloud user, use the below API:
+          <pre class="prettyprint">
+curl -v http://&lt;management-host&gt;:&lt;port#&gt;/v1/mint/organizations/{org}/developers/{dev_email}/products/{prod}/developer-rateplans -u orgadminEmail:password
+</pre>
+        </li>
+      </ol>
+    </li>
+
+    <li>Based on the response from the above call, find the plan that was active at the time that
+    the transaction was completed by the developer.</li>
+  </ol>
+
+  <h3 id="developerhasnotpurchasedrateplan-resolution">Resolution</h3>
+
+  <p>Developer must purchase the rate plan based on their requirements and then execute the
+  transactions/APIs.</p>
+
+  <p>If the problem persists, contact <a href="https://support.apigee.com">Apigee
+  Support</a>.</p>{% endblock %}

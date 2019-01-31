@@ -1,4 +1,6 @@
-  {% extends "_base.html" %} {% block title %}Controlling how a proxy executes with flows{% endblock %} {% block body %}
+{% extends "_base.html" %}
+{% block title %}Using flows{% endblock %}
+{% block body %}
 
   <p>Any application programming model includes a way to control the flow of processing. In an API
   proxy, that's done with flows. To flows you add logic, condition statements, error handling, and
@@ -9,168 +11,123 @@
   When you define a condition to specify whether and when logic executes, you add the condition to
   a flow.</p>
 
-  <p>The following flow configuration example defines a flow in which the VerifyAPIKey policy
-  executes <em>if</em> the incoming request path ends with <code>/</code> and the request's HTTP
-  verb is GET.</p>
-  <pre class="prettyprint">
-&lt;Flow name="Get Food Carts"&gt;
-    &lt;Description&gt;Get Food Carts&lt;/Description&gt;
-    &lt;Request&gt;
-        &lt;Step&gt;
-            &lt;Name&gt;Verify-API-Key&lt;/Name&gt;
-        &lt;/Step&gt;
-    &lt;/Request&gt;
-    &lt;Condition&gt;(proxy.pathsuffix MatchesPath "/") and (request.verb = "GET")&lt;/Condition&gt;
-&lt;/Flow&gt;
-</pre>
+  <p>The following illustration shows how flows are ordered sequentially within a proxy endpoint
+  and target endpoint:</p>
 
-  <p>The <code>Verify-API-Key</code> value in the flow's <code>&lt;Name&gt;</code> element serves
-  to include a policy configured elsewhere in the proxy with XML such as the following:</p>
-  <pre class="prettyprint">
-&lt;?xml version="1.0" encoding="UTF-8" standalone="yes"?&gt;
-&lt;VerifyAPIKey async="false" continueOnError="false" enabled="true" name="Verify-API-Key"&gt;
-    &lt;DisplayName&gt;Verify API Key&lt;/DisplayName&gt;
-    &lt;Properties/&gt;
-    &lt;APIKey ref="request.header.x-api-key"/&gt;
-&lt;/VerifyAPIKey&gt;
-</pre>
+  <p><img alt="" src="/api-platform/images/ProxyToBackendWithFlows_v3.png"></p>
 
-  <h2 id="designingflowexecutionsequence">Designing flow execution sequence</h2>
+  <p>To configure flows, use XML-based configuration files. The following example executes the
+  {{spike_arrest_policy}} policy during the proxy endpoint's PreFlow:</p>
+  <pre class="prettyprint">{% includecode content_path="api-platform/fundamentals/examples/flows/simple-1.xml"%}</pre>
+
+  <p>The "Spike-Arrest-1" value references a policy that you configured elsewhere in the
+  proxy.</p>
+
+  <p>Flows can also contain conditional statements, so that the policies in a flow are executed
+  only when certain conditions are met. The following example flow configuration executes a
+  {{verify_api_key_policy}} <em>only if</em>
+  the request's HTTP verb is "GET":</p>
+
+  <pre class="prettyprint">{% includecode content_path="api-platform/fundamentals/examples/flows/conditional-1.xml"%}</pre>
+
+  <p>For more information, see <a href="flow-variables-and-conditions">Conditions with flow
+  variables</a>.</p>
+
+  <h2 id="addinglogictoflows">Adding logic to flows</h2>
+
+  <p>To add logic to your proxy, add policies to your proxy's flows. Just as
+  flows execute in a sequence (PreFlow -&gt; Flows -&gt; PostFlow, as described in this topic), the
+  contents of a flow execute in a sequence.</p>
+
+  <p>The following example shows how a request might be processed, based on the structure of your
+  flow configuration:</p>
+
+  <p><img src="/api-platform/images/flows/simple-proxyendpoint-flow-diagram.png" class="screenshot"/></p>
+
+  <p>To add a policy to a flow, use one {{step}} element for each policy within a {{request}} or
+  {{response}}.</p>
+
+  <p>The following example flow configuration references three policies (configured elsewhere in
+  their own XML files). The policies execute in order ("Verify-API-Key" first, followed by
+  "Remove-API-Key", followed by "My-Quota".</p>
+  <pre class="prettyprint">{% includecode content_path="api-platform/fundamentals/examples/flows/multiple-steps-1.xml"%}</pre>
+
+  <p>The Apigee Edge console presents this sequence of policies as a row of icons, in which each
+  icon represents a policy in the flow, in order:</p>
+
+  <p><img src="/api-platform/images/flow-policy-sequence.png"></p>
+
+  <p>Edge comes with many different types of predefined policies to implement security, manage
+  traffic, and manipulate messages. In addition, policies let you add your own custom code to
+  completely customize message processing.</p>
+
+  <p>For example:</p>
+  <ul>
+
+    <li>Attach an {{oauthv2_policy}} to the <strong>request PreFlow of the ProxyEndpoint</strong>.
+      Because the ProxyEndpoint's request PreFlow is the first flow in the pipeline, you can
+      immediately reject a request if it violates your security policies.</li>
+    <li>Attach a {{json_to_xml_policy}} to the <strong>response PostFlow of the
+      TargetEndpoint</strong> to convert a response from JSON to XML.</li>
+    <li>Attach a {{javascript_policy}} to a <strong>Conditional Flow of the ProxyEndpoint</strong>
+      to execute JavaScript code to process the request.</li>
+  </ul>
+
+  <h2 id="designingflowexecutionsequence">Where to add policies</h2>
 
   <p>You structure flows so that you can have logic execute in the right sequence along the
   processing path.</p>
 
-  <aside class="note"><b>Note:</b> See {{gs_tutorial}} for a simple
-  tutorial on creating a flow. For specifics on configuring flows, see <a href=
-  "/api-platform/fundamentals/flow-configurations.html">Configuring flows</a>.</aside>
+<p><strong>When deciding where in the proxy flow to add your policies:</strong></p>
+<ol>
+  <li>First, choose the segment you want to add the policy to:
+    <ul>
+      <li><strong>Request:</strong> Execute logic on objects related to the request. This often includes
+        authentication, quotas, and using request properties such as form and query string
+        parameters to determine which policies to execute.</li>
+      <li><strong>Response:</strong> Execute logic on objects related to the response. This often includes
+        fault handling, logging, and transforming the response before sending it back to the
+        client.</li>
+    </ul>
+  </li>
+  <li>Next, choose the endpoint you want to target:
+    <ul>
+      <li><strong>ProxyEndpoint:</strong> Code that interacts with the proxy's client. Contains the flows closest to
+        the client. You can use policies that act <em>first</em> on the request from the client,
+        and <em>last</em> on the response to the client.</li>
+      <li><strong>TargetEndpoint:</strong> Code that interacts with the proxy's backend target. Contains the flows
+        closest to the backend resource. Provides a place for you to add logic that prepares a
+        request for, then handles the response from, a backend resource.</li>
+    </ul>
+  </li>
+  <li>Finally, choose the flow in which to execute your policy:
+    <ul>
+      <li><a href="#preflow">PreFlow</a>: <strong>Executes code first</strong>. Useful when you need
+        to make sure that
+        certain code executes before anything else happens.
+        <p>If the PreFlow is in a TargetEndpoint, it executes after the proxy endpoint's
+        PostFlow.</p>
+      </li>
+      <li><a href="#conditionalflow">Conditional Flow</a>: <strong>Conditional logic</strong> that
+        executes after the PreFlow and before the PostFlow.
+        <p>Only one conditional flow is executed per segment--the first flow whose condition
+        evaluates to true.</p>
+      </li>
+      <li><a href="#postflow">PostFlow</a>: <strong>After core logic</strong> is a good place to log
+        data, send a notification that something happened while processing the request, and so on.
+        Executes after conditional flows and PreFlow.
+        <p>If the PostFlow is in a proxy endpoint, and there's a target endpoint, the proxy
+        endpoint PostFlow executes before the target endpoint PreFlow.</p>
+      </li>
+      <li><a href="#postclientflow">PostClientFlow</a> (ClientEndpoint only): <strong>After the
+        proxy's response</strong>.
+        <p>A flow for logging messages after a response is returned to the client.</p>
+      </li>
+    </ul>
+  </li>
+</ol>
 
-  <p>When deciding where to add logic, you'll first choose whether to add it to a proxy endpoint or
-  target endpoint. An API proxy divides its code between code that interacts with the proxy's
-  client (proxy endpoint) and optional code that interacts with the proxy's backend target, if any
-  (target endpoint).</p>
-
-  <p>Both endpoints contain flows, as described here:</p>
-
-  <table>
-    <thead>
-      <tr>
-        <th>Endpoint type</th>
-
-        <th>Description</th>
-
-        <th>Flows supported</th>
-      </tr>
-    </thead>
-
-    <tbody>
-      <tr>
-        <td>ProxyEndpoint</td>
-
-        <td>Contains the API proxy flows closest to the client. Provides places for logic to act
-        first on the request from the client, then last on the response to the client.</td>
-
-        <td>PreFlow, conditional flows, PostFlow, PostClientFlow</td>
-      </tr>
-
-      <tr>
-        <td>TargetEndpoint</td>
-
-        <td>Contains the API proxy flows closest to the backend resource. Provides places for logic
-        to prepare a request for, then handle the response from, a backend resource. </td>
-
-        <td>PreFlow, conditional flows, PostFlow</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <p>You configure flow with XML that specifies what should happen and in what order. The following
-  illustration shows how flows are ordered sequentially within a proxy endpoint and target
-  endpoint:</p>
-
-  <p><img alt="" src="/api-platform/images/ProxyToBackendWithFlows_v3.png"></p>
-
-  <p>The proxy endpoint and target endpoint each contain flows that you can arrange in the
-  following sequence:</p>
-
-  <table>
-    <thead>
-      <tr>
-        <th>Position</th>
-
-        <th>Flow type</th>
-
-        <th>Description</th>
-      </tr>
-    </thead>
-
-    <tbody>
-      <tr>
-        <td>1</td>
-
-        <td>PreFlow</td>
-
-        <td>
-          <p>Useful when you need to make sure that certain code executes before anything else
-          happens.</p>
-
-          <p>If the PreFlow is in a target endpoint, it executes after the proxy endpoint's
-          PostFlow.</p>
-        </td>
-      </tr>
-
-      <tr>
-        <td>2</td>
-
-        <td>Conditional Flow</td>
-
-        <td>
-          <p>The place for conditional logic. Executes after the PreFlow and before the
-          PostFlow.</p>
-
-          <div>
-            Only one conditional flow is executed per segment--the first flow whose condition
-            evaluates to true. That means you can have one conditional flow executed as part of
-            each of the:
-          </div>
-
-          <ul>
-            <li>ProxyEndpoint's request pipeline</li>
-
-            <li>TargetEndpoint's request pipeline</li>
-
-            <li>ProxyEndpoint's response pipeline</li>
-
-            <li>TargetEndpoint's response pipeline</li>
-          </ul>
-        </td>
-      </tr>
-
-      <tr>
-        <td>3</td>
-
-        <td>PostFlow</td>
-
-        <td>
-          <p>A good place to need to log data, send a notification that something happened while
-          processing the request, and so on. Executes after conditional flows and PreFlow.</p>
-
-          <p>If the PostFlow is in a proxy endpoint, and there's a target endpoint, the proxy
-          endpoint PostFlow executes before the target endpoint PreFlow.</p>
-        </td>
-      </tr>
-
-      <tr>
-        <td>4</td>
-
-        <td>PostClientFlow (proxy flow only)</td>
-
-        <td>A flow for logging messages after a response is returned to the client.</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <h3 id="designingflowexecutionsequence-havingcodeexecutefirstwithapreflow">Having code execute
-  first with a PreFlow</h3>
+  <h3 id="preflow">About the PreFlow</h3>
 
   <p>A PreFlow is useful when you need to make sure that certain code executes before anything else
   happens.</p>
@@ -186,104 +143,93 @@
 
   <p>In the following example, SpikeArrest and Quota policies execute before processing passes to
   conditional flows.</p>
-  <pre class="prettyprint">
-&lt;PreFlow name="MyPreFlow"&gt;
-    &lt;Request&gt;
-        &lt;Step&gt;
-            &lt;Name&gt;Spike-Arrest&lt;/Name&gt;
-        &lt;/Step&gt;
-        &lt;Step&gt;
-            &lt;Name&gt;Quota&lt;/Name&gt;
-        &lt;/Step&gt;
-    &lt;/Request&gt;
-    &lt;Response/&gt;
-&lt;/PreFlow&gt;
-</pre>
+  <pre class="prettyprint">{% includecode content_path="api-platform/fundamentals/examples/flows/preflow-1.xml"%}</pre>
 
-  <h3 id="designingflowexecutionsequence-havingcodeexecuteconditionallywithaconditionalflow">Having
-  code execute conditionally with a conditional flow</h3>
+  <h3 id="conditionalflow">About Conditional Flows</h3>
 
-  <p>Between a PreFlow and a PostFlow, you can have flows that execute conditionally. This gives
+  <p>Between a PreFlow and a PostFlow, you can have flows that execute conditionally called the
+  <em>Conditional Flow</em>. The Conditional Flow uses the {{flows_link}} element.</p>
+
+  <p>Conditional Flows provide
   you an opportunity to configure multiple sequences of logic, but have only one execute based on
-  your proxy's state. A conditional flow is optional if you can execute all logic in PreFlow or
+  your proxy's state. A Conditional Flow is optional if you can execute all logic in PreFlow or
   PostFlow and no conditions are required (in other words, only one path through the endpoint is
   supported).</p>
 
-  <p>Each flow specifies a condition that tests for different state values. This effectively
-  branches execution based on conditions. For example, you might want to convert XML to JSON only
-  when the requesting app is running on a mobile device.</p>
+  <p>Within a Conditional Flow, you can define multiple {{flow_link}} elements. Each flow specifies
+  a condition that tests for different state values. This effectively
+  branches execution based on conditions. For example, you might want to convert XML to JSON,
+  but only when the requesting app is running on a mobile device.</p>
 
-  <aside class="note"><b>Note:</b> In a conditional flow, the condition is evaluated in both the
-  request and response. You cannot have separate conditions for request and response. Only one
-  conditional flow is executed--the first flow whose condition evaluates to true.</aside>
+  <aside class="note"><h3 class="hide-from-toc">NOTE</h3>In a Conditional Flow, the condition is
+  evaluated in both the request and response. You cannot have separate conditions for the request
+  and response. Only one flow is executed--the first flow whose condition evaluates to true.</aside>
 
-  <p>Here, quota constraints are enforced only if the request is a <code>GET</code> request with a
-  URI pattern of <code>/issue/**</code> (/issue/ with anything in the URI after the last forward
-  slash).</p>
-  <pre class="prettyprint">
-&lt;Flow name="MyFlow"&gt;
-    &lt;Description/&gt;
-    &lt;Request&gt;
-        &lt;Step&gt;
-            &lt;Name&gt;Quota&lt;/Name&gt;
-        &lt;/Step&gt;
-    &lt;/Request&gt;
-    &lt;Response/&gt;
-    <strong>&lt;Condition&gt;(proxy.pathsuffix MatchesPath "/issue/**") and (request.verb = "GET")&lt;/Condition&gt;</strong>
-&lt;/Flow&gt;
-</pre>
+  <p>Here, quota constraints are enforced only if the request is a <code>GET</code> and the request
+  uses a URI pattern that matches <code>/issue/**</code> (e.g., "/issue/" with anything in the URI
+  after the last forward slash).</p>
+  <pre class="prettyprint">{% includecode content_path="api-platform/fundamentals/examples/flows/quota-with-conditions.xml"%}</pre>
 
   <p>You use flow variables to specify conditions. For more about using variables in conditions,
-  see <a href="/api-platform/fundamentals/flow-variables-and-conditions.html">Flow variables and
+  see <a href="/api-platform/fundamentals/flow-variables-and-conditions">Flow variables and
   conditions</a>.</p>
 
-  <p>For examples of using pattern matching in conditions, see <a href=
-  "/api-platform/fundamentals/pattern-matching-conditional-statements.html">Pattern matching in
-  conditional statements</a>.</p>
+  <p>When defining your conditional flows, you can also define a default flow that executes only
+  if no other flow executes.</p>
 
-  <h3 id="designingflowexecutionsequence-havingcodeexecuteaftercorelogicwithapostflow">Having code
-  execute after core logic with a PostFlow</h3>
+  <aside class="key-point">
+    <h3 id="defaultflow" class="hide-from-toc">Best Practice</h3>Apigee recommends that you define a
+    default flow if your Conditional Flows are explicitely declared endpoints. The default flow will
+    intercept and/or report all other requests that a potential hacker might use to enumerate
+    undeclared endpoints that might exist at the backend.
+  </aside>
+
+  <h3 id="postflow">About the PostFlow</h3>
 
   <p>A PostFlow is a great place to perform actions after your endpoint's core logic, and before
-  endpoint processing finishes. A PostFlow executes after conditional flows and PreFlow.</p>
+  endpoint processing finishes. A PostFlow executes after Conditional Flows and PreFlow. Actions
+  that you might execute in a PostFlow include logging data, sending notifications, transforming
+  the response message format, and so on.</p>
 
-  <p>A PostFlow is a good place to log some data, send a notification that something happened,
-  transform the response message format, and so on.</p>
+  <p>In the following example, a policy named "set-response-header" executes before Apigee Edge
+  sends the response back to the client:</p>
+  <pre class="prettyprint">{% includecode content_path="api-platform/fundamentals/examples/flows/set-response-header.xml"%}</pre>
 
-  <p>In the following example, an AssignMessage policy called SetResponseHeaders sets headers of
-  the response message before Apigee Edge sends the response back to the client.</p>
-  <pre class="prettyprint">
-&lt;PostFlow&gt;
-    &lt;Response&gt;
-        &lt;Step&gt;
-            &lt;Name&gt;SetResponseHeaders&lt;/Name&gt;
-        &lt;/Step&gt;
-    &lt;/Response&gt;
- &lt;/PostFlow&gt;
-</pre>
-
-  <h3 id=
-  "designingflowexecutionsequence-havingcodeexecuteaftertheclientreceivesyourproxysresponsewithapostclientflow">
-  Having code execute after the client receives your proxy's response with a PostClientFlow</h3>
-
-  <p>A PostClientFlow can include only MessageLogging policies. If you include one, a
-  PostClientFlow would be the last flow to execute, executing after a response is sent to the
-  client.</p>
+  <h3 id="postclientflow">About the PostClientFlow</h3>
+  <p><strong>Element:</strong> {{postclientflow_link}}</p>
+  <p><strong>Scopes:</strong> ProxyEndpoint only</p>
 
   <p>A PostClientFlow is good for final logging. Also, you can log the time interval between when
   the start and end timestamps for the response message. The <code>client.send.start.time</code>
   and <code>client.send.end.time</code> variable values aren't calculated until after the response
   is sent.</p>
 
+  <p>A PostClientFlow can only include the {{message_logging_policy}}. If you include one, a
+  PostClientFlow would be the last flow to execute, executing after a response is sent to the
+  client.</p>
+
+  <p>Here's an example of a PostClientFlow with a message logging policy attached:</p>
+
+  <pre class="prettyprint">{% includecode content_path="api-platform/fundamentals/examples/flows/pcf-with-logging.xml"%}</pre>
+
+<div class="video">
+    <p><strong>Video:</strong> Check out this short video showing you how to create a PostClientFlow
+    using the Message Logging policy from the Four Minute Video For Developers (4MV4D) series.</p>
+
+    <div style="text-align: left; margin:15px">
+      <iframe allowfullscreen="" frameborder="0" height="315" src=
+      "https://www.youtube.com/embed/R2HO3XsC9ZU?list=PLIXjuPlujxxxe3iTmLtgfIBgpMo7iD7fk" width=
+      "560"></iframe>
+    </div>
+  </div>
+
   <p>For more information, see:</p>
 
   <ul>
-    <li><a href="/api-platform/reference/policies/api-proxy-configuration-reference.html">API proxy
-    configuration reference</a></li>
-
+    <li>{{apiproxy_reference}}</li>
     <li><a href=
-    "https://community.apigee.com/content/kbentry/18196/tutorial-apigee-edge-post-client-flow.html">
-    https://community.apigee.com/content/kbentry/18196/tutorial-apigee-edge-post-client-flow.html</a></li>
+    "https://community.apigee.com/content/kbentry/18196/tutorial-apigee-edge-post-client-flow.html" class="external">
+    Tutorial : Apigee Edge - Post Client Flow</a> (Apigee Community)</li>
   </ul><!--
 <table class="table">
   <thead>
@@ -372,46 +318,6 @@
   </tbody>
 </table>
 -->
-
-  <h2 id="addinglogictoflows">Adding logic to flows</h2>
-
-  <p>When you add logic to your proxy, you do it by adding policies to your proxy's flows. Just as
-  flows execute in a sequence (PreFlow then Flow then PostFlow, as described in this topic), the
-  contents of a flow execute in a sequence.</p>
-
-  <aside class="note"><b>Note:</b> For more about policies, including how to add them with the
-  console and in code, see <a href=
-  "/api-platform/develop/policy-attachment-and-enforcement.html">What's a policy?</a> For details
-  about attaching policies to flows, see <a href=
-  "/api-platform/fundamentals/flow-configurations.html">Configuring flows</a>.</aside>
-
-  <p>The following example flow configuration references three policies (configured elsewhere in
-  their own XML files). The policy referenced by <code>Verify-API-Key</code> executes before the
-  policy referenced by <code>Remove-API-Key</code>; both are followed by the policy represented by
-  <code>Quota</code>.</p>
-  <pre class="prettyprint">
-&lt;Flow name="Get Food Cart Menus"&gt;
-    &lt;Description&gt;Get Food Cart Menus&lt;/Description&gt;
-    &lt;Request&gt;
-        &lt;Step&gt;
-            &lt;Name&gt;Verify-API-Key&lt;/Name&gt;
-        &lt;/Step&gt;
-        &lt;Step&gt;
-            &lt;Name&gt;Remove-API-Key&lt;/Name&gt;
-        &lt;/Step&gt;
-        &lt;Step&gt;
-            &lt;Name&gt;Quota&lt;/Name&gt;
-        &lt;/Step&gt;
-    &lt;/Request&gt;
-    &lt;Condition&gt;(proxy.pathsuffix MatchesPath "/") and (request.verb = "GET")&lt;/Condition&gt;
-&lt;/Flow&gt;
-</pre>
-
-  <p>The Apigee Edge console present this sequence of policies as a row of icons, where each icon
-  represents the policy.</p>
-
-  <p><img alt="" src="/api-platform/images/flow-policy-sequence.png"></p>
-
   <h2 id="debuggingflows">Debugging flows</h2>
 
   <p>The Apigee Edge Trace tool provides a graphical way to see how the logic in your API proxy
@@ -429,16 +335,9 @@
   <p>The following example is the response stanza from a PreFlow in a target endpoint -- in other
   words, it's the code that executes immediately upon receiving the response from a backend target.
   In the example, a fault is raised if the response from the target isn't 200 (success).</p>
-  <pre class="prettyprint">
-&lt;PreFlow name="PreFlow"&gt;
-    &lt;Response&gt;
-        &lt;Step&gt;
-            &lt;Name&gt;RaiseFault&lt;/Name&gt;
-            &lt;Condition&gt;(response.status.code GreaterThan "200")&lt;/Condition&gt;
-        &lt;/Step&gt;
-    &lt;/Response&gt;
-&lt;/PreFlow&gt;
-</pre>
+  <pre class="prettyprint">{% includecode content_path="api-platform/fundamentals/examples/flows/errors-1.xml"%}</pre>
 
   <p>For more about error handling, see <a href=
-  "/api-platform/fundamentals/fault-handling.html">Handling faults</a>.</p>{% endblock %}
+  "/api-platform/fundamentals/fault-handling">Handling faults</a>.</p>
+
+{% endblock %}

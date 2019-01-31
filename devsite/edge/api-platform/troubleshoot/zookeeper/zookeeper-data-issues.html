@@ -1,0 +1,141 @@
+  {% extends "_base.html" %} {% block title %}Zookeeper Data Issues{% endblock %} {% block body %}
+
+<aside class="note">Was this troubleshooting playbook helpful? Please let us know
+  by clicking <a href="" class="google-feedback"
+   data-p="1636213" data-b="docsite" data-context="troubleshooting-feedback">
+  Send Feedback
+</a>.</aside>
+
+  <h2 id="description">Symptom</h2>
+
+  <p>Data related issues, commonly referred to as wiring issues, can manifest as one of the
+  following symptoms:</p>
+
+  <ul>
+    <li>Failures during startup of Management servers</li>
+
+    <li>Deployment failures</li>
+
+    <li>Datastore errors on the UI</li>
+
+    <li>Cross data center connectivity issues among Message Processors and Management servers</li>
+
+    <li>Analytics showing no data</li>
+  </ul>
+
+  <p>These issues are not related to the ZooKeeper infrastructure, but related to invalid data that
+  is available in the ZooKeeper tree.</p>
+
+  <h2 id="resolution">Possible causes</h2>
+
+  <p>The typical causes for this issue are:</p>
+
+  <ol>
+    <li>Nodes wired to the wrong region or pod name during installation due to mistakes in the
+    silent installation file.</li>
+
+    <li>A failed installation of a component creates duplicate registrations when you reinstall the
+    component multiple times. In this case, cleanup is required to remove the registration with the
+    wrong UUIDs.</li>
+  </ol>
+
+  <h3 id="data-diagnosis">Diagnosis</h3>
+
+  <p><strong>To diagnose, gather the following data:</strong></p>
+
+  <ol>
+    <li>Topology diagram, with hostname and ip addresses of each node and what Apigee component
+    exist on the node. A mapping like the following using the profile of the Apigee install would
+    be most helpful:
+
+      
+      <pre class="prettyprint">
+DC-1
+DS: ip1 hostname
+DS: ip2 hostname
+DS: ip3 hostname
+MS: ip4 hostname
+RMP: ip5 hostname
+RMP: ip6 hostname
+SAX: ip7 hostname
+
+DC-2
+DS: ip8 hostname
+DS: ip9 hostname
+DS: ip10 hostname
+MS: ip11 hostname
+RMP: ip12 hostname
+RMP: ip13 hostname
+SAX: ip14 hostname
+</pre>
+    </li>
+
+    <li>Generate ZooKeeper tree output to check the wiring:
+      <pre class="prettyprint">
+/opt/apigee/apigee-ZooKeeper/contrib/zk-tree.sh &gt; zk-tree-output.txt
+</pre>
+    </li>
+
+    <li>For ease of verification of the data in ZooKeeper tree, run the following management API
+    calls to get the list of server UUIDs in each of data centers:
+
+      
+
+      <p><strong>Gateway Servers</strong></p>
+      <pre class="prettyprint">
+curl -u sysadmin@email.com "http://<var>management-server-host</var>:8080/v1/servers?pod=gateway&amp;region=<var>region-name</var>"
+</pre>
+
+      <p><strong>Central Servers</strong></p>
+      <pre class="prettyprint">
+curl -u sysadmin@email.com "http://<var>management-server-host</var>:8080/v1/servers?pod=central&amp;region=<var>region-name</var>"
+</pre>
+
+      <p><strong>Analytics Servers</strong></p>
+      <pre class="prettyprint">
+curl -u sysadmin@email.com "http://<var>management-server-host</var>:8080/v1/servers?pod=analytics&amp;region=<var>region-name</var>"
+</pre>
+    </li>
+
+    <li>Check the UUIDs on each component and make sure they match what you see in the ZooKeeper
+    tree:
+
+      
+
+      <p><strong>Router</strong></p>
+      <pre class="prettyprint">
+curl 0:8081/v1/servers/self/uuid
+</pre>
+
+      <p><strong>Message Processor</strong></p>
+      <pre class="prettyprint">
+curl 0:8082/v1/servers/self/uuid
+</pre>
+
+      <p><strong>Qpid Agent</strong></p>
+      <pre class="prettyprint">
+curl 0:8083/v1/servers/self/uuid
+</pre>
+
+      <p><strong>Postgres Agent</strong></p>
+      <pre class="prettyprint">
+curl 0:8084/v1/servers/self/uuid
+</pre>
+    </li>
+
+    <li>Use the UUID data to search the ZooKeeper tree output generated in step #2 to validate the
+    components wiring and to remove any duplicate registrations for the component that have the
+    wrong UUIDs.</li>
+
+    <li>Use the management API calls listed <a href=
+    "/private-cloud/latest/moving-apigee-servers#changingtheipaddressofacassandranode-updatedatastoreregistrations">
+    here</a> for correcting datastore registration. The components like Routers, Message
+    Processors, Postgres, and Qpid self register to ZooKeeper during startup time.</li>
+  </ol>
+
+  <h3 id="data-resolution">Resolution</h3>
+
+  <p>ZooKeeper data-related problems need to be addressed on a case-by-case basis. Data in
+  ZooKeeper is based on Apigee Edge topologies and vary by each use case. If one of the problem
+  symptoms is being experienced, collect the data as explained in the previous section and
+  contact <a href="https://support.apigee.com">Apigee Support</a>.</p>{% endblock %}

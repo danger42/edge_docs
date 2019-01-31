@@ -1,4 +1,4 @@
-{% extends "private-cloud/v4.18.05/_base.html" %}
+{% extends "private-cloud/v4.19.01/_base.html" %}
 {% block title %}Configuring TLS for the management UI{% endblock %}
 {% block body %}
 
@@ -113,6 +113,134 @@ KEY_PASS=<var>clearTextKeystorePWord</var></pre>
       <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-ui restart</pre>
     </li>
   </ol>
+
+<h2>Setting optional TLS properties</h2>
+
+<p>The Edge UI supports optional TLS configuration properties that you can use to set the following:
+</p>
+
+<ul>
+<li>Default TLS protocol
+<li>List of supported TLS protocols
+<li>Supported TLS algorithms
+<li>Supported TLS ciphers</li>
+</ul>
+
+<p>These optional parameters are only available when you set the following configuration property
+  in the config file:</p>
+
+<pre class="prettyprint">TLS_CONFIGURE=y</pre>
+
+<aside class="note"><b>Note: </b>You can only set these optional parameters in a config file passed
+  to the <code>apigee-service edge-ui configure-ssl</code> command.
+  You cannot set these properties using the interactive command.</aside>
+
+<p>The following table describes these properties:</p>
+
+<table>
+  <thead>
+  <tr>
+   <th>Property</th>
+   <th>Description</th>
+  </tr>
+    </thead>
+    <tbody>
+  <tr>
+   <td><code>TLS_PROTOCOL</code>
+   </td>
+   <td>Defines the default TLS protocol for the Edge UI. By default, it is TLS 1.2.
+     Valid values are TLSv1.2, TLSv1.1, TLSv1.
+   </td>
+  </tr>
+  <tr>
+   <td><code>TLS_ENABLED_PROTOCOL</code>
+   </td>
+    <td><p>Defines the list of enabled protocols as a comma-separated array. For example:</p>
+
+      <pre class="prettyprint">TLS_ENABLED_PROTOCOL=[\"TLSv1.2\", \"TLSv1.1\", \"TLSv1\"]</pre>
+
+      <p>Notice that you have to escape the " character.<p>
+
+      <p>By default all protocols are enabled.</p>
+   </td>
+  </tr>
+  <tr>
+   <td><code>TLS_DISABLED_ALGO</code>
+   </td>
+   <td><p>Defines the disabled cipher suites and can also be used to prevent small key sizes from being
+     used for TLS handshaking. There is no default value.</p>
+
+     <p>The values passed to the <code>TLS_DISABLED_ALGO</code> correspond to the allowed values for
+  <code>jdk.tls.disabledAlgorithms</code> as described <a class="external" href="https://www.playframework.com/documentation/2.3.x/CipherSuites#disabling-weak-ciphers-and-weak-key-sizes-globally">here</a>.
+  However, you must escape space characters when setting <code>TLS_DISABLED_ALGO</code>:<p>
+
+     <pre class="prettyprint">TLS_DISABLED_ALGO=EC\ keySize\ &lt;\ 160,RSA\ keySize\ &lt;\ 2048</pre>
+   </td>
+  </tr>
+  <tr>
+   <td><code>TLS_ENABLED_CIPHERS</code>
+   </td>
+    <td><p>Defines the list of available TLS ciphers as a comma-separated array. For example: </p>
+
+      <pre class="prettyprint">TLS_DISABLED_ALGO=[\"TLS_DHE_RSA_WITH_AES_128_CBC_SHA\",
+\"TLS_DHE_DSS_WITH_AES_128_CBC_SHA\"]</pre>
+
+      <p>Notice that you have to escape the " character.<p>
+
+      <p>The default list of enabled ciphers is:</p>
+
+      <pre class="prettyprint">"TLS_DHE_RSA_WITH_AES_256_CBC_SHA",
+"TLS_DHE_RSA_WITH_AES_128_CBC_SHA",
+"TLS_DHE_DSS_WITH_AES_128_CBC_SHA",
+"TLS_RSA_WITH_AES_256_CBC_SHA",
+"TLS_RSA_WITH_AES_128_CBC_SHA",
+"SSL_RSA_WITH_RC4_128_SHA",
+"SSL_RSA_WITH_RC4_128_MD5",
+"TLS_EMPTY_RENEGOTIATION_INFO_SCSV"</pre>
+
+      <p>Find the list of available ciphers
+  <a class="external" href="https://docs.oracle.com/javase/8/docs/technotes/guides/security/StandardNames.html#ciphersuites">here</a>.
+   </td>
+  </tr>
+ </tbody>
+</table>
+
+
+<h2>Use secure cookies</h2>
+
+  <p>{{opdk}} supports adding the <code>secure</code> flag to the <code>Set-Cookie</code> header for
+  responses from the Edge UI. If this flag is present, then the cookie can only be sent over
+  TLS-enabled channels. If it is not present, then the cookie can be sent over any channel, whether
+  it is secure or not.</p>
+
+  <p>Cookies without the <code>secure</code> flag can potentially allow an attacker to capture and
+  reuse the cookie or hijack an active session. Therefore, best practice is to enable this
+  setting.</p>
+
+<p><strong>To set the <code>secure</code> flag for Edge UI cookies:</strong></p>
+<ol>
+  <li>Open the following file in a text editor:
+    <pre>/opt/apigee/customer/application/ui.properties</pre>
+    <p>If the file does not exist, create it.</p>
+  </li>
+  <li>Set the <code>conf_application_session.secure</code> property to <code>true</code> in the
+    <code>ui.properties</code> file, as the following example shows:
+    <pre>conf_application_session.secure=true</pre>
+  </li>
+  <li>Save your changes.</li>
+  <li>Restart Edge UI by using the <code>apigee-serice</code> utility, as the following example
+    shows:
+    <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-ui restart</pre>
+  </li>
+</ol>
+
+<p>To confirm the change is working, check the response headers from the Edge UI by using
+a utility such as <code>curl</code>; for example:</p>
+
+<pre class="devsite-terminal">curl -i -v https://<var>edge_UI_URL</var></pre>
+
+<p>The header should contain a line that looks like the following:</p>
+<pre>Set-Cookie: <strong>secure;</strong> ...</pre>
 
   <h2 id="disabletlsontheedgeui">Disable TLS on the Edge UI</h2>
 

@@ -1,0 +1,160 @@
+{% extends "_base.html" %}
+{% block title %}Re-using a Quota policy{% endblock %}
+{% block body %}
+
+<p>Apigee Edge provides the ability to configure the number of allowed requests for an API Proxy for
+a specific period of time using the {{quota_policy}}.</p>
+
+<h2>Antipattern</h2>
+
+<p>If a {{quota_policy}} is reused, then the quota counter will be decremented each time the
+Quota policy gets executed irrespective of where it is used. That is, if a Quota policy is
+reused:</p>
+
+<ul>
+  <li>Within the same flow or different flows of an API Proxy
+  <li>In different target endpoints of an API Proxy
+</ul>
+
+<p>Then the quota counter gets decremented each time it is executed and we will end up getting
+Quota violation errors much earlier than the expected for the specified interval of time.</p>
+
+<p>Let’s use the following example to explain how this works.</p>
+
+<h3>API Proxy</h3>
+
+<p>Let’s say we have an API Proxy named “TestTargetServerQuota”, which routes traffic to two
+different target servers based on the resource path. And we would like to restrict the API traffic
+to 10 requests per minute for each of these target servers. Here’s the table that depicts this
+scenario:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Resource Path</th>
+        <th>Target Server</th>
+        <th>Quota</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>/target-us</code></td>
+        <td><code>target-US.somedomain.com</code></td>
+        <td>10 requests per minute</td>
+      </tr>
+      <tr>
+        <td><code>/target-eu</code></td>
+        <td><code>target-EU.somedomain.com</code></td>
+        <td>10 requests per minute</td>
+      </tr>
+    </tbody>
+  </table>
+
+<h3>Quota policy</h3>
+
+<p>Since the traffic quota is same for both the target servers, we define single Quota policy
+named “Quota-Minute-Target-Server” as shown below:</p>
+
+<pre class="prettyprint">{% includecode content_path="api-platform/antipatterns/examples/1-8.xml" html_escape="True" %}</pre>
+
+<h3>Target endpoints</h3>
+
+<p>Let’s use the Quota policy “Quota-Minute-Target-Server” in the preflow of the target endpoint
+“Target-US”:</p>
+
+<pre class="prettyprint">{% includecode content_path="api-platform/antipatterns/examples/1-9.xml" html_escape="True" %}</pre>
+
+<p>And reuse the same Quota policy “Quota-Minute-Target-Server” in the preflow of the other target
+endpoint “Target-EU” as well:</p>
+
+<pre class="prettyprint">{% includecode content_path="api-platform/antipatterns/examples/1-10.xml" html_escape="True" %}</pre>
+
+<h3>Incoming traffic pattern</h3>
+
+<p>Let’s say we get a total of 10 API requests for this API Proxy within the first 30 seconds in
+the following pattern:</p>
+
+  <table>
+      <tr>
+        <th>Resource Path</th>
+        <td><code>/target-us</code></td>
+        <td><code>/target-eu</code></td>
+        <td>All</td>
+      </tr>
+      <tr>
+        <th># Requests</th>
+        <td>4</td>
+        <td>6</td>
+        <td>10</td>
+      </tr>
+  </table>
+
+<p>A little later, we get the 11th API request with the resource path as <code>/target-us</code>,
+let’s say after 32 seconds.</p>
+
+<p>We expect the request to go through successfully assuming that we still have 6 API requests for
+the target endpoint <code>target-us</code> as per the quota allowed.</p>
+
+<p>However, in reality, we get a <code>Quota violation error</code>.</p>
+
+<p><strong>Reason:</strong> Since we are using the same Quota policy in both the target endpoints, a
+single quota counter is used to track the API requests hitting both the target endpoints. Thus we
+exhaust the quota of 10 requests per minute collectively rather than for the individual target
+endpoint.</p>
+
+<h2>Impact</h2>
+
+<p>This antipattern can result in a fundamental mismatch of expectations, leading to a perception
+that the quota limits got exhausted ahead of time.</p>
+
+<h2>Best practice</h2>
+
+<ul>
+  <li>Use the <code>&lt;Class&gt;</code> or <code>&lt;Identifier&gt;</code> elements to ensure multiple,
+    unique counters are maintained by defining a single {{quota_policy}}. Let's redefine the Quota policy
+    “Quota-Minute-Target-Server” that we just explained in the previous section by using the header
+    <code>target_id</code> as the <code>&lt;Identifier&gt;</code> for as shown below:
+
+    <pre class="prettyprint">{% includecode content_path="api-platform/antipatterns/examples/1-11.xml" html_escape="True" %}</pre>
+
+    <ul>
+      <li>We will continue to use this Quota policy in both the target endpoints “Target-US” and
+        “Target-EU” as before.
+      <li>Now let’s say if the header <code>target_id</code> has a value “US” then the requests are routed to the
+        target endpoint “Target-US”.
+      <li>Similarly if the header <code>target_id</code> has a value “EU” then the requests are routed to the target
+        endpoint “Target-EU”.
+      <li>So even if we use the same Quota policy in both the target endpoints, separate quota counters
+        are maintained based on the <code>&lt;Identifier&gt;</code> value.
+      <li>Therefore, by using the <code>&lt;Identifier&gt;</code> element we can ensure that each of the target endpoints
+        get the allowed quota of 10 requests.
+    </ul>
+  </li>
+  <li>Use separate Quota policy in each of the flows/target endpoints/API Proxies to ensure that you
+    always get the allowed count of API requests. Let’s now look at the same example used in the
+    above section to see how we can achieve the allowed quota of 10 requests for each of the target
+    endpoints.
+    <ul>
+      <li>Define a separate Quota policy, one each for the target endpoints “Target-US” and
+        “Target-EU”
+        <p>Quota policy for Target Endpoint “Target-US”:</p>
+        <pre class="prettyprint">{% includecode content_path="api-platform/antipatterns/examples/1-12.xml" html_escape="True" %}</pre>
+        <p>Quota policy for Target Endpoint “Target-EU”:</p>
+        <pre class="prettyprint">{% includecode content_path="api-platform/antipatterns/examples/1-13.xml" html_escape="True" %}</pre>
+      </li>
+      <li>Use the respective quota policy in the definition of the target endpoints as shown below:
+        <p>Target Endpoint “Target-EU”:</p>
+        <pre class="prettyprint">{% includecode content_path="api-platform/antipatterns/examples/1-14.xml" html_escape="True" %}</pre>
+        <p>Target Endpoint “Target-EU”:</p>
+        <pre class="prettyprint">{% includecode content_path="api-platform/antipatterns/examples/1-15.xml" html_escape="True" %}</pre>
+      </li>
+      <li>Since we are using separate Quota policy in the target endpoints “Target-US” and
+        “Target-EU”, a separate counter will be maintained. This ensures that we get the allowed
+        quota of 10 API requests per minute for each of the target endpoints.</li>
+    </ul>
+  <li>Use the <code>&lt;Class&gt;</code> or <code>&lt;Identifier&gt;</code> elements to ensure
+    multiple, unique counters are maintained.</li>
+</ul>
+
+
+{% endblock %}

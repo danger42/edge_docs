@@ -1,33 +1,70 @@
-{% extends "private-cloud/v4.18.05/_base.html" %}
+{% extends "private-cloud/v4.19.01/_base.html" %}
 {% block title %}Configuring the Router timeout{% endblock %}
 {% block body %}
 
   <p>You can configure the Router timeout when accessing Message Processors as part of an API proxy
   request.</p>
 
-  <p>The Edge Router has a preset timeout of 57 seconds when attempting to access a Message
-  Processor as part of handling a request through an API proxy. When that timeout expires, the
-  Router will attempt to connect to another Message Processor, if one is available. Otherwise, it
-  will return an error.</p>
+  <p>The Edge Router has a default timeout of 57 seconds when attempting to access a Message
+  Processor as part of handling a request through an API proxy. After that timeout expires, the
+  Router attempts to connect to another Message Processor, if one is available. Otherwise, it
+  returns an error.</p>
 
-  <p>You can use two properties to control this timeout:</p>
+  <p>The following two properties control the Router timeout:</p>
 
-  <ul>
-    <li><code>conf_load_balancing_load.balancing.driver.proxy.read.timeout</code> specifies
-      the wait time, in seconds, for a single Message Processor. The default value is 57 seconds.</li>
-    <li><code>conf_load_balancing_load.balancing.driver.nginx.upstream_next_timeout</code> specifies
-      the total wait time for all Message Processors, in seconds, when your Edge installation has
-      multiple Message Processors. It has a default value of the current value of
-      <code>conf_load_balancing_load.balancing.driver.proxy.read.timeout</code>, or 57 seconds.</li>
-  </ul>
+  <table>
+      <thead>
+        <tr>
+          <th>Property</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td colspan="2" class="alt"><code>conf_load_balancing_load.balancing.driver.proxy.read.timeout</code></td>
+        </tr>
+        <tr>
+          <td width="20%">&nbsp;</td>
+          <td>Specifies the wait time for a single Router. The default value is 57 seconds.
+            <p>You can set the time interval as something other than seconds by using the following
+            notation:</p>
+            <pre>ms: milliseconds
+s:  seconds (default)
+m:  minutes
+h:  hours
+d:  days
+w:  weeks
+M:  months (length of 30 days)
+y:  years (length of 365 days)</pre>
+            <p>For example, to set the wait time to 2 hours, you can use either of the following
+            values:</p>
+            <pre class="prettyprint">conf_load_balancing_load.balancing.driver.proxy.read.timeout=2h  # 2 hours
+  OR
+conf_load_balancing_load.balancing.driver.proxy.read.timeout=120m  # 120 minutes</pre>
+          </td>
+        </tr>
+        <tr>
+          <td colspan="2" class="alt"><code>conf_load_balancing_load.balancing.driver.nginx.upstream_next_timeout</code></td>
+        </tr>
+        <tr>
+          <td width="20%">&nbsp;</td>
+          <td>Specifies the total wait time for all Message Processors when your Edge
+            installation has multiple Message Processors. It has a default value of the current
+            value of <code>conf_load_balancing_load.balancing.driver.proxy.read.timeout</code>, or
+            57 seconds.
+            <p>As with the <code>conf_load_balancing_load.balancing.driver.proxy.read.timeout</code>
+            property, you can specify time intervals other than the default (seconds).</td>
+        </tr>
+      </tbody>
+    </table>
 
-  <p>To configure the Router:</p>
+  <p><strong>To configure the Router's timeout:</strong></p>
   <ol>
-    <li>Edit the <code>/opt/apigee/customer/application/router.properties</code> file (if the file
-      does not exist, create it).</li>
-    <li>Set the properties as shown below:
-      <pre>conf_load_balancing_load.balancing.driver.proxy.read.timeout=120
-conf_load_balancing_load.balancing.driver.nginx.upstream_next_timeout=240</pre>
+    <li>Edit the <code>/opt/apigee/customer/application/router.properties</code> file. If the file
+      does not exist, create it.</li>
+    <li>Set the properties in the configuration file, as the following example shows:
+      <pre class="prettyprint">conf_load_balancing_load.balancing.driver.proxy.read.timeout=1800000ms  # 1800000 milliseconds
+conf_load_balancing_load.balancing.driver.nginx.upstream_next_timeout=1d  # 1 day</pre>
     </li>
     <li>Make sure the properties file is owned by the 'apigee' user:
       <pre class="devsite-terminal">chown apigee:apigee /opt/apigee/customer/application/router.properties</pre>
@@ -36,5 +73,9 @@ conf_load_balancing_load.balancing.driver.nginx.upstream_next_timeout=240</pre>
       <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-router restart</pre>
     </li>
   </ol>
+
+
+<p>To set retry options, use the <code>RetryOption</code> property as described in
+<a href="/api-platform/fundamentals/virtual-host-property-reference#virtualhostconfigurationproperties">virtual host configuration properties</a>.</p>
 
 {% endblock %}

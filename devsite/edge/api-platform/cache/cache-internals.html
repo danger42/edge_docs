@@ -1,72 +1,60 @@
   {% extends "_base.html" %} {% block title %}Cache internals{% endblock %} {% block body %}
 
-  <p>This topic describes the workings of the cache beneath policies such as the <a href=
-  "/api-platform/reference/policies/populate-cache-policy.html">Populate Cache policy</a>, <a href=
-  "/api-platform/reference/policies/lookup-cache-policy.html">LookupCache policy</a>, <a href=
-  "/api-platform/reference/policies/invalidate-cache-policy.html">InvalidateCache policy</a>, and
-  <a href="/api-platform/reference/policies/response-cache-policy.html">Response Cache
-  policy</a>.</p>
+  <p>This topic describes the workings of the cache beneath policies such as the
+    <a href="/api-platform/reference/policies/populate-cache-policy.html">Populate Cache policy</a>,
+    <a href="/api-platform/reference/policies/lookup-cache-policy.html">LookupCache policy</a>,
+    <a href="/api-platform/reference/policies/invalidate-cache-policy.html">InvalidateCache policy</a>, and
+  <a href="/api-platform/reference/policies/response-cache-policy.html">Response Cache policy</a>.</p>
 
   <h2 id="sharedandenvironmentcaches">Shared and environment caches</h2>
 
   <p>Each caching policy you configure can use one of two cache types: an included shared cache
-  that your applications have access to and an environment cache that you create.</p>
+  that your applications have access to and one or more environment-scoped caches that you create.</p>
 
   <ul>
     <li>
-      <b>Shared cache</b> -- By default, your proxies have access to a shared cache included for
-      environments you create. The shared cache works well for basic use cases.
+      <b>Shared cache</b> -- By default, your proxies have access to one shared cache in
+      each environment. The shared cache works well for basic use cases.
 
-      <p>You can work with the shared cache only by using caching policies. It can't be managed
-      using the management API. You can have a caching policy use the shared cache by simply
-      omitting the policy's <code>&lt;CacheResource&gt;</code> element.</p>
+      <p>You can work with the shared cache only by using caching policies, not the management
+      API. To have a caching policy use the shared cache, simply omit the policy's
+      <code>&lt;CacheResource&gt;</code> element.</p>
     </li>
 
     <li>
       <b>Environment cache</b> -- When you want to configure cache properties with values you
       choose, you can create an environment-scoped cache. For more about creating a cache, see
-      <a href="/api-platform/cache/manage-caches-environment.html">Creating and editing an
-      environment cache</a>.
+      <a href="/api-platform/cache/manage-caches-environment.html">Creating and editing an environment cache</a>.
 
-      <p>When you create an environment cache, you configure its default properties. There is no
-      limit to the number of caches you can create. You can have a caching policy use the
+      <p>When you create an environment cache, you configure its default properties. You can have a caching policy use the
       environment cache by specifying the cache name in the policy's
       <code>&lt;CacheResource&gt;</code> element.</p>
     </li>
   </ul>
 
-  <aside class="note">
-    <h3>Object size limit in cache</h3>
-    <p>The maximum size of each cached object is
-    <strong>{{ limit_cache_value_size }}</strong>. For more information, see <a href="#cachelimits">
-      Managing cache limits</a></p>.
-  </aside>
-
   <h2 id="inmemoryandpersistentcachelevels">In-memory and persistent cache levels</h2>
 
   <p>Both the shared and environment caches are built on a two-level system made up of an in-memory
-  level and a persistent level. Policies interact with both levels as a combined framework. The
-  relationship between the levels is managed by the system.</p>
+  level and a persistent level. Policies interact with both levels as a combined framework.
+  Edge manages the relationship between the levels.</p>
 
   <p><map name="GraffleExport" id="GraffleExport">
-    <area coords="176,107,308,146" href="/api-platform/reference/policies/invalidate-cache-policy" shape=
-    "rect">
+    <area coords="176,107,308,146" href="/api-platform/reference/policies/invalidate-cache-policy" shape="rect">
     <area coords="176,55,308,94" href="/api-platform/reference/policies/lookup-cache-policy" shape="rect">
     <area coords="359,55,490,94" href="/api-platform/reference/policies/response-cache-policy" shape="rect">
     <area coords="176,3,308,42" href="/api-platform/reference/policies/populate-cache-policy" shape="rect">
-  </map><img border="0" src="/api-platform/images/cache_internals_imagemap4.png" usemap=
-  "#GraffleExport"></p>
+  </map><img border="0" src="/api-platform/images/cache_internals_imagemap4.png" usemap="#GraffleExport"></p>
 
   <ul>
     <li>
-      <b>Level 1 is an in-memory cache (L1)</b> for fast access. Each message processing node has
-      its own in-memory cache (implemented from Ehcache) for the fastest response to requests.
+      <b>Level 1 is an in-memory cache (L1)</b> for fast access. Each message processing node (MP)
+      has its own in-memory cache (implemented from Ehcache) for the fastest response to requests.
 
       <ul>
         <li>On each node, a certain percentage of memory is reserved for use by the cache.</li>
 
         <li>As the memory limit is reached, Apigee Edge removes cache entries from memory (though
-        they are still kept in the L2 data store) to ensure that memory remains available for other
+        they are still kept in the L2 persistent cache) to ensure that memory remains available for other
         processes.</li>
 
         <li>Entries are removed in the order of time since last access, with the oldest entries
@@ -74,6 +62,7 @@
 
         <li>These caches are also limited by the number of entries in the cache.</li>
       </ul>
+      <aside class="note">{{ limit_cps_caching }}</aside>
     </li>
 
     <li>
@@ -88,11 +77,9 @@
         regions), cache entries are available regardless of which node receives a request for the
         cached data.</li>
 
-        <li>Only entries of a certain size may be cached. See <a href="#cachelimits">
-          Managing cache limits</a>.</li>
+        <li>Only entries of a certain size may be cached, and other cache limits apply.
+          See <a href="#cachelimits"> Managing cache limits</a>.</li>
 
-        <li>There is no limit on the number of cache entries. The entries are expired in the
-        persistent cache only on the basis of expiration settings.</li>
       </ul>
     </li>
   </ul>
@@ -100,10 +87,8 @@
   <aside class="note"><b>Note:</b> For HIPAA (Health Insurance Portability and Accountability Act)
   and Payment Card Industry (PCI) organizations, cached data is encrypted.</aside>
 
-  <aside class="note"><b>Note:</b> You might also be interested in <a href=
-  "https://community.apigee.com/articles/1620/apigee-edge-caching-in-detail.html">Apigee Edge
-  Caching In Detail</a>, on the <a href="https://community.apigee.com/">Apigee
-  community</a>.</aside>
+  <p>You might also be interested in <a href="https://community.apigee.com/articles/1620/apigee-edge-caching-in-detail.html">Apigee Edge Caching In Detail</a>,
+    on the <a href="https://community.apigee.com/">Apigee community</a>.</p>
 
   <h2 id="howpoliciesusethecache">How policies use the cache</h2>
 
@@ -115,21 +100,21 @@
     ResponseCache policy):
 
       <ol>
-        <li>The entry is written to the in-memory L1 cache on only the message processor that
-        handled the request. If the memory limits on the message processor are reached before the
-        entry expires, the entry is removed from L1 cache.</li>
+        <li>Edge writes the entry to the in-memory L1 cache on only the message processor
+        that handled the request. If the memory limits on the message processor are reached
+        before the entry expires, the Edge removes the entry from L1 cache.</li>
 
-        <li>The entry is also written to L2 cache.</li>
+        <li>Edge also writes the entry to L2 cache.</li>
       </ol>
     </li>
 
     <li>When a policy <strong>reads</strong> from the cache (LookupCache or ResponseCache policy):
 
       <ol>
-        <li>The system looks first for the entry in the in-memory L1 cache of the message processor
+        <li>Edge looks first for the entry in the in-memory L1 cache of the message processor
         handling the request.</li>
 
-        <li>If there's no corresponding in-memory entry, the system looks for the entry in the L2
+        <li>If there's no corresponding in-memory entry, Edge looks for the entry in the L2
         persistent cache.</li>
 
         <li>If the entry isn't in the persistent cache:
@@ -137,8 +122,8 @@
           <ul>
             <li>LookupCache policy: No value is retrieved from the cache. </li>
 
-            <li>ResponseCache policy: The actual response from the target is returned to the
-            client, and the entry is stored in cache until it expires or is invalidated.</li>
+            <li>ResponseCache policy: Edge returns the actual response from the target to the
+            client and stores the entry in cache until it expires or is invalidated.</li>
           </ul>
         </li>
       </ol>
@@ -169,25 +154,18 @@
 
   <h2 id="cachelimits">Managing cache limits</h2>
 
-  <p>Through configuration, you can manage some aspects of the cache.</p>
-
-  <aside class="note"><strong>Note:</strong>
-  The in-memory overall maximum is limited by system resources,
-  and is not configurable. The overall capacity of the persistent cache is effectively unlimited,
-  but with the following specific constraints:
+  <p>Through configuration, you can manage some aspects of the cache. The overall space
+  available for in-memory cache is limited by system resources and is not configurable.
+  The following constraints apply to cache:</p>
     <ul>
-      <li>Caches allowed per environment: <strong>{{ limit_caches_per_env }}</strong></li>
-      <li>Size limit of a cached item name: <strong>{{ limit_cache_key_size }}</strong></li>
-      <li>Size limit of a cached item value: <strong>{{ limit_cache_value_size }}</strong></li>
-    </ul>
-</aside>
-
-  <ul>
-    <li>
-      <b>In-memory (L1) cache.</b> Memory limits for your cache are not configurable. Limits are
+      <li><b>Cache limits</b>: <a href="/api-platform/reference/limits">Various cache limits</a>
+      apply, such as name and value size, total number of caches, the number of items in a cache,
+      and expiration.</li>
+      <li>
+      <strong>In-memory (L1) cache.</strong> Memory limits for your cache are not configurable. Limits are
       set by Apigee for each message processor that hosts caches for multiple customers.
 
-      <p>In a hosted environment*, where in-memory caches for all customer deployments are hosted
+      <p>In a hosted cloud environment, where in-memory caches for all customer deployments are hosted
       across multiple shared message processors, each processor features an Apigee-configurable
       memory percentage threshold to ensure that caching does not consume all of the application's
       memory. As the threshold is crossed for a given message processor, cache entries are evicted
@@ -196,19 +174,19 @@
     </li>
 
     <li><b>Persistent (L2) cache.</b> Entries evicted from the in-memory cache
-    remain in the persistent cache in keeping with configurable time-to-live settings.</li>
+    remain in the persistent cache according to configurable time-to-live settings.</li>
   </ul>
 
-  <aside class="note"><b>Private Cloud:</b> * In Edge for Private Cloud, you have finer-grained
-  control over memory used for caching, including the maximum amount available. Although the
-  settings can be changed, it's typically not necessary to alter the default configuration.</aside>
+  <aside class="note"><strong>Private Cloud:</strong> In Edge for Private Cloud, you have
+  finer-grained control over memory used for caching, including the maximum amount of
+  available space. Although you can change the settings, the default configuration is sufficient
+  in most situations.</aside>
 
   <h3 id="managingcachelimits-configurableoptimizations">Configurable optimizations</h3>
 
   <p>The following table lists settings you can use to optimize cache performance. You can specify
-  values for these settings when you create a new environment cache, as described in <a href=
-  "/api-platform/cache/manage-caches-environment.html">Creating and editing an environment
-  cache</a>.</p>
+  values for these settings when you create a new environment cache, as described in
+    <a href="/api-platform/cache/manage-caches-environment.html">Creating and editing an environment cache</a>.</p>
 
   <table width="715">
     <colgroup>

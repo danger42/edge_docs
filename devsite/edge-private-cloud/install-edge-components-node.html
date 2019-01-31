@@ -1,13 +1,9 @@
-{% extends "private-cloud/v4.18.05/_base.html" %}
+{% extends "private-cloud/v4.19.01/_base.html" %}
 {% block title %}Install Edge components on a node{% endblock %}
 {% block body %}
 
   <p>After you install the Edge <code>apigee-setup</code> utility on a node, use the
   <code>apigee-setup</code> utility to install one or more Edge components on the node.</p>
-
-  <aside class="note"><strong>Note:</strong> See <a href="install-edge-apigee-setup-utility">Install the
-  Edge apigee-setup utility</a> for more on installing the Edge <code>apigee-setup</code>
-  utility.</aside>
 
   <p>The apigee-setup utility uses a command in the form:</p>
   <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/setup.sh -p <var>component</var> -f <var>configFile</var></pre>
@@ -21,6 +17,9 @@
 
   <p>For example, to install the Edge Management Server:</p>
   <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/setup.sh -p ms -f /usr/local/myConfig</pre>
+
+  <p>For information on installing the Edge <code>apigee-setup</code>, see
+  <a href="install-edge-apigee-setup-utility">Install the Edge apigee-setup utility</a>.</p>
 
   <h2 id="installationconsiderations">Installation considerations</h2>
 
@@ -46,8 +45,8 @@
   process. </p>
 
   <aside class="note"><strong>Note:</strong> While you can enable authentication when you install Cassandra,
-  you cannot change the default username and password. You have to perform that step manually after
-  installation of Cassandra completes.</aside>
+  you cannot change the default username and password. You must perform that step manually after
+  the installation of Cassandra completes.</aside>
 
   <p>For more, see <a href="enable-cassandra-authentication">Enable Cassandra
   authentication</a>.</p>
@@ -166,7 +165,7 @@
       <tr>
         <td><code>pdb</code></td>
         <td>Install Postgres database only - used only when installing the {{portal_1st_use}}.
-        See <a href="developer-services-portal-installation">Install the portal</a>.</td>
+        See <a href="portal-installation">Install the portal</a>.</td>
       </tr>
       <tr>
         <td>
@@ -299,19 +298,20 @@
       Routers.</li>
   </ul>
 
-  <aside class="note"><strong>Note:</strong> You must disable SELinux or set it to permissive mode before you
-  install Edge components. See <a href="install-edge-apigee-setup-utility">Install the Edge
-  apigee-setup utility</a> for more.</aside>
+  <h3>Prerequisites</h3>
+  <p>Before you can install Edge components, you must:</p>
 
-  <aside class="note"><strong>Note:</strong> The <a href="installation-requirements">Installation
-  requirements</a> details the installation prerequisites and provides a list of required files to
-  obtain before proceeding with the installation. Ensure that you have reviewed the requirements
-  before beginning the installation process.</aside>
+  <ul>
+    <li>Check the <a href="installation-requirements">Installation requirements</a> for
+      prerequisites and a list of required files to obtain before proceeding with the
+      installation. Ensure that you have reviewed the requirements before beginning the installation
+      process.</li>
+    <li>Disable SELinux or set it to permissive mode. See
+      <a href="install-edge-apigee-setup-utility">Install the Edge apigee-setup utility</a> for
+      more.</li>
+  </ul>
 
   <h3 id="installedgecomponents-allinoneinstallation">All-in-one installation</h3>
-
-  <aside class="note"><strong>Note:</strong> See a video of an Edge all-in-one install
-  <a href="https://community.apigee.com/articles/21648/video-of-an-edge-private-cloud-aio-install.html" class="external">here</a>.</aside>
 
   <ol>
     <li>Install all components on a single node using the command:
@@ -325,513 +325,10 @@
       organization</a>.</li>
   </ol>
 
-  <p>Shown below is a silent configuration file for this topology. For a complete reference on
-  the config file, see <a href="edge-configuration-file-reference">Edge configuration file
-  reference</a>.</p>
-
-  <pre class="prettyprint"><strong># With SMTP
-IP1=<var>IP_or_DNS_name_of_Node_1</var></strong>
-HOSTIP=$(hostname -i)
-ENABLE_SYSTEM_CHECK=y
-ADMIN_EMAIL=opdk@google.com
-# Admin password must be at least 8 characters long and contain one uppercase
-# letter, one lowercase letter, and one digit or special character
-APIGEE_ADMINPW=<var>ADMIN_PASSWORD</var>
-LICENSE_FILE=/tmp/license.txt
-MSIP=$IP1
-LDAP_TYPE=1
-APIGEE_LDAPPW=<var>LDAP_PASSWORD</var>
-MP_POD=gateway
-REGION=dc-1
-ZK_HOSTS="$IP1"
-ZK_CLIENT_HOSTS="$IP1"
-# Must use IP addresses for CASS_HOSTS, not DNS names.
-CASS_HOSTS="$IP1"
-# Default is postgres
-PG_PWD=postgres
-SKIP_SMTP=n
-SMTPHOST=smtp.example.com
-SMTPUSER=smtp@example.com
-# omit for no username
-SMTPPASSWORD=<var>SMTP_PASSWORD</var>
-# omit for no password
-SMTPSSL=n
-SMTPPORT=25
-SMTPMAILFROM="My Company &lt;myco@company.com&gt;"</pre>
-
-  <h3 id="installedgecomponents-2hoststandaloneinstallation">2-host standalone installation</h3>
-
-  <p>See <a href="installation-topologies">Installation topologies</a> for the list of Edge
-  topologies and node numbers.</p>
-
-  <ol>
-    <li>Install Standalone Gateway and node 1
-      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/setup.sh -p sa -f <var>configFile</var></pre>
-    </li>
-    <li>Install Analytics on node 2:
-      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/setup.sh -p sax -f <var>configFile</var></pre>
-    </li>
-    <li>Restart the Edge UI component on node 1:
-      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-ui restart</pre>
-    </li>
-    <li>Test the installation as described at <a href="test-install">Test the install</a>.</li>
-    <li>Onboard your organization as described at <a href="onboard-organization">Onboard an
-      organization</a>.</li>
-  </ol>
+  <p>See a video of an Edge all-in-one install
+  <a href="https://community.apigee.com/articles/21648/video-of-an-edge-private-cloud-aio-install.html" class="external">here</a>.</p>
 
   <p>Shown below is a silent configuration file for this topology. For a complete reference on
   the config file, see <a href="edge-configuration-file-reference">Edge configuration file
   reference</a>.</p>
 
-  <pre class="prettyprint"><strong># With SMTP
-IP1=<var>IP_or_DNS_name_of_Node_1</var></strong>
-HOSTIP=$(hostname -i)
-ENABLE_SYSTEM_CHECK=y
-ADMIN_EMAIL=opdk@google.com
-APIGEE_ADMINPW=<var>ADMIN_PASSWORD</var>
-LICENSE_FILE=/tmp/license.txt
-MSIP=$IP1
-LDAP_TYPE=1
-APIGEE_LDAPPW=<var>LDAP_PASSWORD</var>
-MP_POD=gateway
-REGION=dc-1
-ZK_HOSTS="$IP1"
-ZK_CLIENT_HOSTS="$IP1"
-# Must use IP addresses for CASS_HOSTS, not DNS names.
-CASS_HOSTS="$IP1"
-# Default is postgres
-PG_PWD=postgres
-SKIP_SMTP=n
-SMTPHOST=smtp.example.com
-SMTPUSER=smtp@example.com
-# omit for no username
-SMTPPASSWORD=<var>SMTP_PASSWORD</var>
-# omit for no password
-SMTPSSL=n
-SMTPPORT=25
-SMTPMAILFROM="My Company &lt;myco@company.com&gt;"</pre>
-
-  <h3 id="installedgecomponents-5hostclusteredinstallation">5-host clustered installation</h3>
-
-  <p>See <a href="installation-topologies">Installation topologies</a> for the list of Edge
-  topologies and node numbers.</p>
-
-  <ol>
-    <li>Install Datastore cluster on nodes 1, 2 and 3:
-      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/setup.sh -p ds -f <var>configFile</var></pre>
-    </li>
-    <li>Install Management Server on node 1:
-      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/setup.sh -p ms -f <var>configFile</var></pre>
-    </li>
-    <li>Install Router and Message Processor on nodes 2 and 3:
-      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/setup.sh -p rmp -f <var>configFile</var></pre>
-    </li>
-    <li>Install Analytics on node 4 and 5:
-      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/setup.sh -p sax -f <var>configFile</var></pre>
-    </li>
-    <li>Restart the Edge UI component on node 1:
-      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-ui restart</pre>
-    </li>
-    <li>Test the installation as described at <a href="test-install">Test the install</a>.</li>
-    <li>Onboard your organization as described at <a href="onboard-organization">Onboard an
-      organization</a>.</li>
-  </ol>
-
-  <p>Shown below is a silent configuration file for this topology. For a complete reference on
-  the config file, see <a href="edge-configuration-file-reference">Edge configuration file
-  reference</a>.</p>
-
-  <pre class="prettyprint"><strong># With SMTP
-IP1=<var>IP_or_DNS_name_of_Node_1</var>
-IP2=<var>IP_or_DNS_name_of_Node_2</var>
-IP3=<var>IP_or_DNS_name_of_Node_3</var>
-IP4=<var>IP_or_DNS_name_of_Node_4</var>
-IP5=<var>IP_or_DNS_name_of_Node_5</var></strong>
-HOSTIP=$(hostname -i)
-ENABLE_SYSTEM_CHECK=y
-ADMIN_EMAIL=opdk@google.com
-APIGEE_ADMINPW=<var>ADMIN_PASSWORD</var>
-LICENSE_FILE=/tmp/license.txt
-MSIP=$IP1
-USE_LDAP_REMOTE_HOST=n
-LDAP_TYPE=1
-APIGEE_LDAPPW=<var>LDAP_PASSWORD</var>
-MP_POD=gateway
-REGION=dc-1
-ZK_HOSTS="$IP1 $IP2 $IP3"
-ZK_CLIENT_HOSTS="$IP1 $IP2 $IP3"
-# Must use IP addresses for CASS_HOSTS, not DNS names.
-CASS_HOSTS="$IP1 $IP2 $IP3"
-# Default is postgres
-PG_PWD=postgres
-PG_MASTER=$IP4
-PG_STANDBY=$IP5
-SKIP_SMTP=n
-SMTPHOST=smtp.example.com
-SMTPUSER=smtp@example.com
-# omit for no username
-SMTPPASSWORD=<var>SMTP_PASSWORD</var>
-# omit for no password
-SMTPSSL=n
-SMTPPORT=25
-SMTPMAILFROM="My Company &lt;myco@company.com&gt;"
-</pre>
-
-  <h3 id="installedgecomponents-9hostclusteredinstallation">9-host clustered installation</h3>
-
-  <p>See <a href="installation-topologies">Installation Topologies</a> for the list of Edge
-  topologies and node numbers.</p>
-
-  <ol>
-    <li>Install Datastore Cluster Node on node 1, 2 and 3:
-      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/setup.sh -p ds -f <var>configFile</var></pre>
-    </li>
-    <li>Install Apigee Management Server on node 1:
-      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/setup.sh -p ms -f <var>configFile</var></pre>
-    </li>
-    <li>Install Router and Message Processor on nodes 4 and 5:
-      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/setup.sh -p rmp -f <var>configFile</var></pre>
-    </li>
-    <li>Install Apigee Analytics Qpid Server on node 6 and 7:
-      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/setup.sh -p qs -f <var>configFile</var></pre>
-    </li>
-    <li>Install Apigee Analytics Postgres Server on node 8 and 9:
-      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/setup.sh -p ps -f <var>configFile</var></pre>
-    </li>
-    <li>Restart the Edge UI component on node 1:
-      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-ui restart</pre>
-    </li>
-    <li>Test the installation as described at <a href="test-install">Test theinstall</a>.</li>
-    <li>Onboard your organization as described at <a href="onboard-organization">Onboard an
-      organization</a>.</li>
-  </ol>
-
-  <p>Shown below is a silent configuration file for this topology. For a complete reference on
-  the config file, see <a href="edge-configuration-file-reference">Edge configuration file
-  reference</a>.</p>
-
-  <pre class="prettyprint"><strong># With SMTP
-IP1=<var>IP_or_DNS_name_of_Node_1</var>
-IP2=<var>IP_or_DNS_name_of_Node_2</var>
-IP3=<var>IP_or_DNS_name_of_Node_3</var>
-IP8=<var>IP_or_DNS_name_of_Node_8</var>
-IP9=<var>IP_or_DNS_name_of_Node_9</var></strong>
-HOSTIP=$(hostname -i)
-ENABLE_SYSTEM_CHECK=y
-ADMIN_EMAIL=opdk@google.com
-APIGEE_ADMINPW=<var>ADMIN_PASSWORD</var>
-LICENSE_FILE=/tmp/license.txt 
-MSIP=$IP1 
-USE_LDAP_REMOTE_HOST=n 
-LDAP_TYPE=1
-APIGEE_LDAPPW=<var>LDAP_PASSWORD</var>
-MP_POD=gateway
-REGION=dc-1 
-ZK_HOSTS="$IP1 $IP2 $IP3" 
-ZK_CLIENT_HOSTS="$IP1 $IP2 $IP3" 
-# Must use IP addresses for CASS_HOSTS, not DNS names.
-CASS_HOSTS="$IP1 $IP2 $IP3" 
-# Default is postgres
-PG_PWD=postgres
-SKIP_SMTP=n
-PG_MASTER=$IP8
-PG_STANDBY=$IP9
-SMTPHOST=smtp.example.com
-SMTPUSER=smtp@example.com
-# omit for no username
-SMTPPASSWORD=<var>SMTP_PASSWORD</var>
-# omit for no password
-SMTPSSL=n
-SMTPPORT=25
-SMTPMAILFROM="My Company &lt;myco@company.com&gt;"</pre>
-
-  <h3 id="installedgecomponents-13hostclusteredinstallation">13-host clustered installation</h3>
-
-  <p>See <a href="installation-topologies">Installation topologies</a> for the list of Edge
-  topologies and node numbers.</p>
-
-  <ol>
-    <li>Install Datastore Cluster Node on node 1, 2 and 3:
-      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/setup.sh -p ds -f <var>configFile</var></pre>
-    </li>
-    <li>Install OpenLDAP on node 4 and 5:
-      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/setup.sh -p ld -f <var>configFile</var></pre>
-    </li>
-    <li>Install Apigee Management Server on node 6 and 7:
-      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/setup.sh -p ms -f <var>configFile</var></pre>
-    </li>
-    <li>Install Apigee Analytics Postgres Server on node 8 and 9:
-      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/setup.sh -p ps -f <var>configFile</var></pre>
-    </li>
-    <li>Install Router and Message Processor on nodes 10 and 11:
-      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/setup.sh -p rmp -f <var>configFile</var></pre>
-    </li>
-    <li>Install Apigee Analytics Qpid Server on node 12 and 13:
-      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/setup.sh -p qs -f <var>configFile</var></pre>
-    </li>
-    <li>Restart the Edge UI component on nodes 6 and 7:
-      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-ui restart</pre>
-    </li>
-    <li>Test the installation as described at <a href="test-install">Test the install</a>.</li>
-    <li>Onboard your organization as described at <a href="onboard-organization">Onboard an
-      organization</a>.</li>
-  </ol>
-
-  <p>Shown below is a silent configuration file for this topology. For a complete reference on
-  the config file, see <a href="edge-configuration-file-reference">Edge configuration file
-  reference</a>.</p>
-
-  <table>
-    <tbody>
-      <tr>
-        <td>
-          <pre class="prettyprint"><strong># For all components except OpenLDAP
-IP1=<var>IP_or_DNS_name_of_Node_1</var>
-IP2=<var>IP_or_DNS_name_of_Node_2</var>
-IP3=<var>IP_or_DNS_name_of_Node_3</var>
-IP4=<var>IP_or_DNS_name_of_Node_4</var>
-IP5=<var>IP_or_DNS_name_of_Node_5</var>
-IP6=<var>IP_or_DNS_name_of_Node_6</var>
-IP7=<var>IP_or_DNS_name_of_Node_7</var>
-IP8=<var>IP_or_DNS_name_of_Node_8</var>
-IP9=<var>IP_or_DNS_name_of_Node_9</var></strong>
-HOSTIP=$(hostname -i)
-ENABLE_SYSTEM_CHECK=y
-ADMIN_EMAIL=opdk@google.com
-APIGEE_ADMINPW=<var>ADMIN_PASSWORD</var>
-LICENSE_FILE=/tmp/license.txt
-<strong># First Management Server on IP6
-MSIP=$IP6
-USE_LDAP_REMOTE_HOST=y
-LDAP_HOST=$IP4
-LDAP_PORT=10389
-# Second Management Server on IP7
-# MSIP=$IP7
-# USE_LDAP_REMOTE_HOST=y
-# LDAP_HOST=$IP5
-# LDAP_PORT=10389
-# Same password for both OpenLDAPs.
-APIGEE_LDAPPW=<var>LDAP_PASSWORD</var> </strong>
-MP_POD=gateway
-REGION=dc-1
-ZK_HOSTS="$IP1 $IP2 $IP3"
-ZK_CLIENT_HOSTS="$IP1 $IP2 $IP3"
-# Must use IP addresses for CASS_HOSTS, not DNS names.
-CASS_HOSTS="$IP1 $IP2 $IP3"
-# Default is postgres
-PG_PWD=postgres
-PG_MASTER=$IP8
-PG_STANDBY=$IP9
-SKIP_SMTP=n
-SMTPHOST=smtp.example.com
-SMTPUSER=smtp@example.com
-# omit for no username
-SMTPPASSWORD=<var>SMTP_PASSWORD</var>
-# omit for no password
-SMTPSSL=n
-SMTPPORT=25
-SMTPMAILFROM="My Company &lt;myco@company.com&gt;"</pre>
-        </td>
-        <td>
-          <pre class="prettyprint"><strong># For OpenLDAP on IP4 and IP5
-IP1=<var>IP_or_DNS_name_of_Node_1</var>
-IP2=<var>IP_or_DNS_name_of_Node_2</var>
-IP3=<var>IP_or_DNS_name_of_Node_3</var>
-IP4=<var>IP_or_DNS_name_of_Node_4</var>
-IP5=<var>IP_or_DNS_name_of_Node_5</var>
-IP6=<var>IP_or_DNS_name_of_Node_6</var>
-IP7=<var>IP_or_DNS_name_of_Node_7</var>
-IP8=<var>IP_or_DNS_name_of_Node_8</var>
-IP9=<var>IP_or_DNS_name_of_Node_9</var></strong>
-HOSTIP=$(hostname -i)
-ENABLE_SYSTEM_CHECK=y
-ADMIN_EMAIL=opdk@google.com
-APIGEE_ADMINPW=<var>ADMIN_PASSWORD</var>
-<strong># First OpenLDAP Server on IP4
-MSIP=$IP6
-USE_LDAP_REMOTE_HOST=n
-LDAP_TYPE=2
-LDAP_SID=1
-LDAP_PEER=$IP5
-# Second OpenLDAP Server on IP5
-# MSIP=$IP7
-# USE_LDAP_REMOTE_HOST=n
-# LDAP_TYPE=2
-# LDAP_SID=2
-# LDAP_PEER=$IP4
-# Set same password for both OpenLDAPs.
-APIGEE_LDAPPW=<var>LDAP_PASSWORD</var></strong></pre>
-        </td>
-      </tr>
-    </tbody>
-  </table>
-
-  <h3 id="installedgecomponents-12hostclusteredinstallation">12-host clustered installation</h3>
-
-  <p>Before you install Edge on a12-host clustered topology (two data centers), you must understand
-  how to set the ZooKeeper and Cassandra properties in the silent config file. </p>
-
-  <aside class="note"><strong>Note:</strong> Shown below is a complete config file for both data
-  centers.</aside>
-
-  <ul>
-    <li>ZooKeeper
-      <p>For the <code>ZK_HOSTS</code> property for both data centers, specify the IP addresses or DNS names of all
-      ZooKeeper nodes from both data centers, in the same order, and mark any nodes with the with
-      <code>:observer</code> modifier. Nodes without the <code>:observer</code> modifier are called
-      "voters". You must have an odd number of "voters" in your configuration.</p>
-      <p>In this topology, the ZooKeeper host on host 9 is the observer:</p>
-
-      <p><img alt="" src="/private-cloud/images/zookeperDC.png"></p>
-
-      <p>For the <code>ZK_CLIENT_HOSTS</code> property for each data center, specify the IP addresses or DNS names of
-      only the ZooKeeper nodes in the data center, in the same order, for all ZooKeeper nodes in the
-      data center. In the example configuration file shown below, node 9 is tagged with the
-      <code>:observer</code> modifier so that you have five voters: Nodes 1, 2, 3, 7, and 8.</p>
-    </li>
-    <li>Cassandra<br>
-      <p>All datacenters must to have the same number of Cassandra nodes.</p>
-      <p>For <code>CASS_HOSTS</code> for each data center, ensure that you specify all Cassandra IP addresses (not
-      DNS names) for both data centers. For data center 1, list the Cassandra nodes in that data
-      center first. For data center 2, list the Cassandra nodes in that data center first. List the
-      Cassandra nodes in the same order for all Cassandra nodes in the data center.</p>
-      <p>All Cassandra nodes must have a suffix ":<var>d</var>,<var>r</var>". For example
-      <code><var>ip</var>:1,1</code> = datacenter 1 and rack/availability zone 1; and
-      <code><var>ip</var>:2,1</code> = datacenter 2 and rack/availability zone 1.</p>
-      <p>For example, "192.168.124.201:1,1 192.168.124.202:1,1 192.168.124.203:1,1 192.168.124.204:2,1
-      192.168.124.205:2,1 192.168.124.206:2,1"</p>
-      <p>The first node in rack/availability zone 1 of each datacenter will be used as the seed
-      server.</p>
-      <p>In this deployment model, Cassandra setup will look like the following:</p>
-      <p><img alt="" src="/private-cloud/images/cassandraDC.png"></p>
-    </li>
-  </ul>
-
-  <p>See <a href="installation-topologies">Installation Topologies</a> for the list of Edge
-  topologies and node numbers.</p>
-
-  <ol>
-    <li>Install Datastore Cluster Node on node 1, 2, 3, 7, 8, and 9:
-      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/setup.sh -p ds -f <var>configFile</var></pre>
-    </li>
-    <li>Install Apigee Management Server with OpenLDAP replication on node 1 and 7:
-      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/setup.sh -p ms -f <var>configFile</var></pre>
-    </li>
-    <li>Install Router and Message Processor on nodes 2, 3, 8 and 9:
-      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/setup.sh -p rmp -f <var>configFile</var></pre>
-    </li>
-    <li>Install Apigee Analytics Qpid Server on node 4, 5, 10, and 11:
-      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/setup.sh -p qs -f <var>configFile</var></pre>
-    </li>
-    <li>Install Apigee Analytics Postgres Server on node 6 and 12:
-      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/setup.sh -p ps -f <var>configFile</var></pre>
-    </li>
-    <li>Restart the Edge UI component on nodes 1 and 7:
-      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-ui restart</pre>
-    </li>
-    <li>Test the installation as described at <a href="test-install">Test the install</a>.</li>
-    <li>Onboard your organization as described at <a href="onboard-organization">Onboard an
-      organization</a>.</li>
-  </ol>
-
-  <p>Shown below is a silent configuration file for this topology. Notice that this config
-  file. For a complete reference on the config file, see <a href=
-  "edge-configuration-file-reference">Edge configuration file reference</a>.</p>
-
-  <ul>
-    <li>Configures OpenLDAP with replication across two OpenLDAP nodes.</li>
-    <li>Specifies the <code>:observer</code> modifier on one ZooKeeper node. In a single data
-    center installation, omit that modifier.</li>
-  </ul>
-
-  <table>
-    <tbody>
-      <tr>
-        <td>
-          <pre class="prettyprint">
-<strong># Datacenter 1
-IP1=<var>IP_or_DNS_name_of_Node_1</var>
-IP2=<var>IP_or_DNS_name_of_Node_2</var>
-IP3=<var>IP_or_DNS_name_of_Node_3</var>
-IP6=<var>IP_or_DNS_name_of_Node_6</var>
-IP7=<var>IP_or_DNS_name_of_Node_7</var>
-IP8=<var>IP_or_DNS_name_of_Node_8</var>
-IP9=<var>IP_or_DNS_name_of_Node_9</var>
-IP12=<var>IP_or_DNS_name_of_Node_12</var></strong>
-HOSTIP=$(hostname -i)
-MSIP=$IP1
-ENABLE_SYSTEM_CHECK=y
-ADMIN_EMAIL=opdk@google.com
-APIGEE_ADMINPW=<var>ADMIN_PASSWORD</var>
-LICENSE_FILE=/tmp/license.txt
-USE_LDAP_REMOTE_HOST=n
-<strong>LDAP_TYPE=2
-LDAP_SID=1
-LDAP_PEER=$IP7</strong>
-APIGEE_LDAPPW=<var>LDAP_PASSWORD</var>
-MP_POD=gateway-1
-REGION=dc-1
-<strong>ZK_HOSTS="$IP1 $IP2 $IP3 $IP7 $IP8 $IP9:observer"
-ZK_CLIENT_HOSTS="$IP1 $IP2 $IP3"
-# Must use IP addresses for CASS_HOSTS, not DNS names.
-CASS_HOSTS="$IP1:1,1 $IP2:1,1 $IP3:1,1 $IP7:2,1 $IP8:2,1 $IP9:2,1"</strong>
-# Default is postgres
-PG_PWD=postgres
-PG_MASTER=$IP6
-PG_STANDBY=$IP12
-SKIP_SMTP=n
-SMTPHOST=smtp.example.com
-SMTPUSER=smtp@example.com
-# omit for no username
-SMTPPASSWORD=<var>SMTP_PASSWORD</var>
-# omit for no password
-SMTPSSL=n
-SMTPPORT=25
-SMTPMAILFROM="My Company &lt;myco@company.com&gt;"</pre>
-        </td>
-        <td>
-          <pre class="prettyprint"><strong># Datacenter 2
-IP1=<var>IP_or_DNS_name_of_Node_1</var>
-IP2=<var>IP_or_DNS_name_of_Node_2</var>
-IP3=<var>IP_or_DNS_name_of_Node_3</var>
-IP6=<var>IP_or_DNS_name_of_Node_6</var>
-IP7=<var>IP_or_DNS_name_of_Node_7</var>
-IP8=<var>IP_or_DNS_name_of_Node_8</var>
-IP9=<var>IP_or_DNS_name_of_Node_9</var>
-IP12=<var>IP_or_DNS_name_of_Node_12</var></strong>
-HOSTIP=$(hostname -i)
-MSIP=$IP7
-ENABLE_SYSTEM_CHECK=y
-ADMIN_EMAIL=opdk@google.com
-APIGEE_ADMINPW=<var>ADMIN_PASSWORD</var>
-LICENSE_FILE=/tmp/license.txt
-USE_LDAP_REMOTE_HOST=n
-<strong>LDAP_TYPE=2
-LDAP_SID=2
-LDAP_PEER=$IP1</strong>
-APIGEE_LDAPPW=<var>LDAP_PASSWORD</var>
-MP_POD=gateway-2
-REGION=dc-2
-<strong>ZK_HOSTS="$IP1 $IP2 $IP3 $IP7 $IP8 $IP9:observer"
-ZK_CLIENT_HOSTS="$IP7 $IP8 $IP9"
-# Must use IP addresses for CASS_HOSTS, not DNS names.
-CASS_HOSTS="$IP7:2,1 $IP8:2,1 $IP9:2,1 $IP1:1,1 $IP2:1,1 $IP3:1,1"</strong>
-# Default is postgres
-PG_PWD=postgres
-PG_MASTER=$IP6
-PG_STANDBY=$IP12
-SKIP_SMTP=n
-SMTPHOST=smtp.example.com
-SMTPUSER=smtp@example.com
-# omit for no username
-SMTPPASSWORD=<var>SMTP_PASSWORD</var>
-# omit for no password
-SMTPSSL=n
-SMTPPORT=25
-SMTPMAILFROM="My Company &lt;myco@company.com&gt;"</pre>
-        </td>
-      </tr>
-    </tbody>
-  </table>
-
-{% endblock %}
