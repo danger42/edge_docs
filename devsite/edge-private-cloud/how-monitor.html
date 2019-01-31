@@ -1,352 +1,521 @@
-{% extends "private-cloud/v4.18.05/_base.html" %}
+{% extends "private-cloud/v4.19.01/_base.html" %}
 {% block title %}How to monitor{% endblock %}
 {% block body %}
 
   <p>This document describes the monitoring techniques of components supported by an on-premise
   deployment of Apigee Edge.</p>
 
-  <h2 id="enablingjmx">Enabling JMX</h2>
+  <h2>Overview</h2>
 
-  <p>JMX is enabled by default for Cassandra, and disabled by default for all other Edge
-  components. You must therefore enable JMX individually for each component.</p>
+  <p>Edge supports several ways for getting details about services as well as checking their
+  statuses. The following table lists the types of checks you can perform on each eligible
+  service:</p>
 
-  <p>Each component supports JMX on a different port. The following table lists the JMX port and
-  the file that you modify to enable JMX on that port:</p>
-  <table>
+  <table class="green">
+    <thead>
+      <tr>
+        <th></th>
+        <th></th>
+        <td style="text-align: center;" class="alt" colspan="3"><strong>Mgmt API</strong></td>
+        <th></th>
+        <th></th>
+        <th></th>
+      </tr>
+      <tr>
+        <th width="12%">Service</th>
+        <th width="12%">Memory Usage [JMX<sup>*</sup>]</th>
+        <td class="alt" width="12%"><strong>Service Check</strong></td>
+        <td class="alt" width="12%"><strong>User/Org/ Deployment Status</strong></td>
+        <td class="alt" width="12%"><strong>axstatus</strong></td>
+        <th width="12%">Database check</th>
+        <th width="12%"><code>apigee-service</code> Status</th>
+        <th width="12%">{{am}}**</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="alt">Management&nbsp;Server</td>
+        <td>{{yes}}</td>
+        <td>{{yes}}</td>
+        <td>{{yes}}</td>
+        <td>{{no}}</td>
+        <td>{{no}}</td>
+        <td>{{yes}}</td>
+        <td>{{yes}}</td>
+      </tr>
+      <tr>
+        <td class="alt">Message Processor</td>
+        <td>{{yes}}</td>
+        <td>{{yes}}</td>
+        <td>{{no}}</td>
+        <td>{{no}}</td>
+        <td>{{no}}</td>
+        <td>{{yes}}</td>
+        <td>{{yes}}</td>
+      </tr>
+      <tr>
+        <td class="alt">Postgres</td>
+        <td>{{yes}}</td>
+        <td>{{yes}}</td>
+        <td>{{yes}}</td>
+        <td>{{yes}}</td>
+        <td>{{yes}}</td>
+        <td>{{yes}}</td>
+        <td>{{yes}}</td>
+      </tr>
+      <tr>
+        <td class="alt">Qpid</td>
+        <td>{{yes}}</td>
+        <td>{{yes}}</td>
+        <td>{{no}}</td>
+        <td>{{yes}}</td>
+        <td>{{no}}</td>
+        <td>{{yes}}</td>
+        <td>{{yes}}</td>
+      </tr>
+      <tr>
+        <td class="alt">Router</td>
+        <td>{{yes}}</td>
+        <td>{{yes}}</td>
+        <td>{{no}}</td>
+        <td>{{no}}</td>
+        <td>{{no}}</td>
+        <td>{{yes}}</td>
+        <td>{{yes}}</td>
+      </tr>
+      <tr>
+        <td class="alt"></td>
+        <td class="alt"><a href="#usejmx">More Info</a></td>
+        <td class="alt"><a href="#perform-service-checks">More Info</a></td>
+        <td class="alt"><a href="#user-org-deployment">More Info</a></td>
+        <td class="alt"><a href="#postgres-axstatus">More Info</a></td>
+        <td class="alt"><a href="#postgressqldatabase">More Info</a></td>
+        <td class="alt"><a href="#apigee-service">More Info</a></td>
+        <td class="alt"><a href="apigee-monit">More Info</a></td>
+      </tr>
+      <tr>
+        <td class="alt" colspan="8">
+          <p><sup>* Before you can use JMX, you must enable it, as
+          described in <a href="#enablingjmx">Enable JMX</a>.</sup></p>
+          <p><sup>** The {{am}} service checks if a component is up and will attempt to
+          restart it if it isn't. For more information, see <a href="apigee-monit">Self healing with
+          apigee-monit</a>.</sup></p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="ports">JMX and Management API monitoring ports</h3>
+
+  <p>Each component supports JMX and Management API monitoring calls on different ports. The
+  following table lists the JMX and Management API ports for each type of server:</p>
+
+  <table class="blue">
     <thead>
       <tr>
         <th>Component</th>
         <th>JMX Port</th>
-        <th>File</th>
+        <th>Management API Port</th>
       </tr>
     </thead>
     <tbody>
       <tr>
         <td>Management Server</td>
         <td>1099</td>
-        <td><code>/opt/apigee/edge-management-server/bin/start</code></td>
+        <td>8080</td>
       </tr>
       <tr>
         <td>Router</td>
         <td>1100</td>
-        <td><code>/opt/apigee/edge-router/bin/start</code></td>
+        <td>8081</td>
       </tr>
       <tr>
         <td>Message Processor</td>
         <td>1101</td>
-        <td><code>/opt/apigee/edge-message-processor/bin/start</code></td>
+        <td>8082</td>
       </tr>
       <tr>
         <td>Qpid</td>
         <td>1102</td>
-        <td><code>/opt/apigee/edge-qpid-server/bin/start</code></td>
+        <td>8083</td>
       </tr>
       <tr>
         <td>Postgres</td>
         <td>1103</td>
-        <td><code>/opt/apigee/edge-postgres-server/bin/start</code></td>
+        <td>8084</td>
       </tr>
     </tbody>
   </table>
 
-  <p>For example, to enable JMX on the Management Server, open
-  <code>/opt/apigee/edge-management-server/bin/start</code> in an editor. You should see the
-  following line used to start the Management Server:</p>
-  <pre class="prettyprint">
-exec $JAVA -classpath "$classpath" -Xms$min_mem -Xmx$max_mem $xx_opts
--Djava.security.auth.login.config=$conf_path/jaas.config
--Dinstallation.dir=$install_dir $sys_props -Dconf.dir=$conf_path
--Ddata.dir=$data_dir $* $debug_options com.apigee.kernel.MicroKernel
-</pre>
+  <h2 id="usejmx">Use JMX to monitor</h2>
 
-  <p>Edit this line to add the following:</p>
-  <pre class="prettyprint">
--Dcom.sun.management.jmxremote <strong>-Dcom.sun.management.jmxremote.port=1099</strong>
--Dcom.sun.management.jmxremote.local.only=false
--Dcom.sun.management.jmxremote.authenticate=false
--Dcom.sun.management.jmxremote.ssl=false
-</pre>
+    <p>The monitoring processes for the Management Server, Message Processor, Qpid, and Postgres all
+    use JMX. However, JMX is enabled by default only for Cassandra, and disabled by default for all
+    other Edge components. You must therefore enable JMX individually for each component before you
+    can monitor them.</p>
 
-  <p>Note that this line specifies the JMX port number as 1099 for the Management Server. Set the
-  port number for each component as defined in the table above. For example:</p>
-  <pre class="prettyprint">
-exec $JAVA -classpath "$classpath" -Xms$min_mem -Xmx$max_mem $xx_opts
--Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=1099
--Dcom.sun.management.jmxremote.local.only=false
--Dcom.sun.management.jmxremote.authenticate=false
--Dcom.sun.management.jmxremote.ssl=false
--Djava.security.auth.login.config=$conf_path/jaas.config
--Dinstallation.dir=$install_dir $sys_props
--Dconf.dir=$conf_path
--Ddata.dir=$data_dir $* $debug_options com.apigee.kernel.MicroKernel
-</pre>
+    <p>JMX authentication is not enabled by default. You can enable JMX authentication for all
+    components. For Cassandra, use the instructions in
+    <a href="#cassauthenable">Enable JMX authentication for Cassandra</a>.</p>
 
-  <p>Save the file and then restart the component. For example to restart the Management
-  Server:</p>
-  <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/?apigee-service edge-management-server restart</pre>
+    <h3 id="enablingjmx">Enable JMX</h3>
 
-  <h2 id="enablingjmxauthenticationandsettingthejmxpassword">Enabling JMX authentication and setting
-  the JMX password</h2>
+    <p>JMX is enabled by default only for Cassandra, and disabled by default for all other Edge
+    components. This section describes how to enable JMX for the other Edge components.</p>
 
-  <p>The monitoring process for the Management Server, Message Processor, Qpid, and Postgres all
-  use JMX. JMX is enabled by default and remote JMX access does not require a password.</p>
+    <p><strong>To enable JMX:</strong></p>
 
-  <p>To enable JMX authentication, each component has a <code>change_jmx_auth</code> action that you
-  use to enable/disable authentication and to set the JMX credentials.</p>
+    <ol>
+      <li>Edit the component's configuration file. This file is located at
+        <code>opt/apigee/edge-<var>component_name</var>/bin/start</code>. In production
+        environments, these configuration files will be on different machines.
+        <p>Choose from the following file locations on each server:</p>
+        <ul>
+          <li>Management Server: <code>/opt/apigee/edge-management-server/bin/start</code></li>
+          <li>Message Processor: <code>/opt/apigee/edge-message-processor/bin/start</code></li>
+          <li>Postgres: <code>/opt/apigee/edge-postgres-server/bin/start</code></li>
+          <li>Qpid: <code>/opt/apigee/edge-qpid-server/bin/start</code></li>
+          <li>Router: <code>/opt/apigee/edge-router/bin/start</code></li>
+        </ul>
+        <p>For example, the Management Server's configuration file on its server is at
+        <code>/opt/apigee/edge-management-server/bin/start</code>.</p>
+      </li>
+      <li>Add the following <code>com.sun.management.jmxremote</code> options to the <code>exec</code>
+        line that starts the component:
+        <pre class="prettyprint {{dc2c}}">-Dcom.sun.management.jmxremote \
+  -Dcom.sun.management.jmxremote.port=<var>port_number</var> \
+  -Dcom.sun.management.jmxremote.local.only=false \
+  -Dcom.sun.management.jmxremote.authenticate=false \
+  -Dcom.sun.management.jmxremote.ssl=false</pre>
+        <p>Where <var>port_number</var> is the JMX port for the service. To get your service's JMX
+        port number, see <a href="#ports">JMX and Management API monitoring ports</a>.</p>
 
-  <aside class="note"><strong>Note:</strong> To enable JMX authentication for Cassandra, see
-  <a href="#apachecassandra">Apache Cassandra</a>.</aside>
+        <p>For example, to enable JMX on the Management Server, add the following to the Management
+        Server's configuration file:</p>
+        <pre class="prettyprint {{dc2c}}">exec $JAVA -classpath "$classpath" -Xms$min_mem -Xmx$max_mem $xx_opts \
+  -Djava.security.auth.login.config=$conf_path/jaas.config \
+  -Dinstallation.dir=$install_dir $sys_props -Dconf.dir=$conf_path \
+  -Ddata.dir=$data_dir \
+  <strong>-Dcom.sun.management.jmxremote \
+  -Dcom.sun.management.jmxremote.port=1099 \
+  -Dcom.sun.management.jmxremote.local.only=false \
+  -Dcom.sun.management.jmxremote.authenticate=false \
+  -Dcom.sun.management.jmxremote.ssl=false \</strong>
+   $* $debug_options com.apigee.kernel.MicroKernel</pre>
 
-  <p>To enable JMX authentication, use the following command:</p>
-  <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service <var>comp</var> change_jmx_auth <var>optionsOrConfigFile</var></pre>
+        <aside class="note"><h3 class="hide-from-toc">NOTE</h3>Do not add carriage returns/newlines
+        to commands in the configuration file. The formatting in the examples above is for
+        readability; in practice, you cannot have individual commands span multiple lines in the
+        configuration file.</aside>
 
-  <p>Where:</p>
-  <ul>
-    <li><var>comp</var> is either <code>edge-management-server</code>, <code>edge-message-processor</code>,
-    <code>edge-qpid-server</code>, or <code>edge-postgres-server</code>.</li>
-    <li>Options are:
-      <ul>
-        <li><code>-u</code>: username</li>
-        <li><code>-p</code>: password</li>
-        <li><code>-e</code>: y (enable) or n (disable)</li>
-      </ul>
-    </li>
-    <li>Config file includes:
-      <ul>
-        <li><code>JMX_USERNAME=<var>username</var></code></li>
-        <li><code>JMX_ENABLED=y/n</code></li>
-        <li><code>JMX_PASSWORD=<var>password</var></code> (if not set or not passed in with
-          <code>-p</code>, you are prompted)</li>
-      </ul>
-    </li>
-  </ul>
+        <p>This example specifies port 1099 for the Management Server. As stated previously, each
+        service has its own port number.</p>
 
-  <p>For example, to use options on the command line:</p>
-  <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-management-server change_jmx_auth -u foo -p bar -e y</pre>
+        <p>The edited line in the configuration file looks like the following:</p>
+        <pre class="prettyprint">exec $JAVA -classpath "$classpath" -Xms$min_mem -Xmx$max_mem $xx_opts -Djava.security.auth.login.config=$conf_path/jaas.config -Dinstallation.dir=$install_dir $sys_props -Dconf.dir=$conf_path -Ddata.dir=$data_dir -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=1099 -Dcom.sun.management.jmxremote.local.only=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false $* $debug_options com.apigee.kernel.MicroKernel</pre>
+      </li>
+      <li>Save the configuration file.</li>
+      <li>Restart the component with the <code>restart</code> command.
+        <p>For example, to restart the Management Server, execute the following command:</p>
+        <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-management-server restart</pre>
+      </li>
+    </ol>
 
-  <p>If  you have a config file:</p>
-  <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-management-server change_jmx_auth -f <var>configFile</var></pre>
+    <p>Authentication for JMX is not enabled by default. You can enable JMX authentication for all
+    components, as described in <a href="#jmx-auth">Enable JMX authentication</a>. To enable JMX
+    authentication for Cassandra, see
+    <a href="#cassauthenable">Enable JMX authentication for Cassandra</a>.</p>
 
-  <p>If you are running Edge on multiple nodes, run this command on all nodes, specifying the same
-  username and password.</p>
+    <h3 id="jmx-auth">Enable JMX authentication</h3>
 
-  <p>To later disable JMX authentication, use the command:</p>
-  <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-management-server change_jmx_auth -e n</pre>
+    <p>JMX authentication is not enabled by default. You can enable JMX authentication for all
+    components. For Cassandra, use the instructions in
+    <a href="#cassauthenable">Enable JMX authentication for Cassandra</a></p>
 
-  <h2 id="managementserver">Management Server</h2>
+    <p>To enable JMX authentication, execute the following <code>change_jmx_auth</code> action on all
+    nodes:</p>
+    <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service <var>component</var> change_jmx_auth [<var>options</var>|-f <var>config_file</var>]</pre>
 
-  <h3 id="managementserver-usingjconsoletomonitorsystemhealthcheckandprocessinformation">Using
-  JConsole to monitor system health check and process information</h3>
+    <p>Where:</p>
+    <ul>
+      <li><var>component</var> is one of the following:
+        <ul>
+          <li><code>edge-management-server</code></li>
+          <li><code>edge-message-processor</code></li>
+          <li><code>edge-postgres-server</code></li>
+          <li><code>edge-qpid-server</code></li>
+          <li><code>edge-router</code></li>
+        </ul>
+      <li><var>options</var> specifies the following:
+        <ul>
+          <li><code>-u <var>username</var></code></li>
+          <li><code>-p <var>password</var></code></li>
+          <li><code>-e [y|n]</code> (enable or disable)</li>
+        </ul>
+      </li>
+      <li><var>config_file</var> specifies the location of a configuration file in which you define
+      the following:
+        <ul>
+          <li><code>JMX_USERNAME=<var>username</var></code></li>
+          <li><code>JMX_ENABLED=y|n</code></li>
+          <li><code>JMX_PASSWORD=<var>password</var></code> (if not set or not passed in with
+            <code>-p</code>, you are prompted)</li>
+        </ul>
+      </li>
+    </ul>
 
-  <p>Use JConsole (a JMX compliant tool) to manage and monitor health check and process statistics.
-  Using JConsole, you can consume JMX statistics exposed by Management Server (or any server) and
-  display them in a graphical interface. For more information, see
-  <a href="https://docs.oracle.com/javase/8/docs/technotes/guides/management/jconsole.html" class="external">Using jconsole</a>.</p>
+    <p>You can either use the command line options or the configuration file to define the username,
+    password, and enable/disable state. You do not specify both a set of options and a configuration
+    file.</p>
 
-  <p>Use <code>JConsole</code> and the following service URL to monitor the JMX attributes
-  (MBeans) offered via JMX.</p>
-  <pre class="prettyprint">service:jmx:rmi:///jndi/rmi://<var>IP_address</var>:<var>port</var>/jmxrmi</pre>
+    <p>The following example enables JMX authentication for the Management Server using the command
+    line options:</p>
+    <pre class="devsite-terminal prettyprint">/opt/apigee/apigee-service/bin/apigee-service edge-management-server
+    change_jmx_auth -u foo -p bar -e y</pre>
 
-  <p>Where <var>IP_address</var> is the IP address of Management Server (or respective server). By
-  default, the port is 1099 for the Management Server.</p>
+    <p>The following example uses a configuration file rather than command line options:</p>
+    <pre class="devsite-terminal prettyprint">/opt/apigee/apigee-service/bin/apigee-service edge-management-server
+    change_jmx_auth -f /tmp/my-config-file</pre>
 
-  <p>The following table shows the generic JMX statistics:</p>
+    <p>If you are running Edge on multiple nodes, run the command on all nodes, specifying the same
+    username and password.</p>
+
+    <p>To disable JMX authentication on the command line, use the "-e n" option, as the following
+    example shows:</p>
+    <pre class="devsite-terminal prettyprint">/opt/apigee/apigee-service/bin/apigee-service edge-management-server
+    change_jmx_auth <strong>-e n</strong></pre>
+
+    <h3 id="jconsole">Monitor with JConsole</h3>
+
+    <p>Use JConsole (a JMX compliant tool) to manage and monitor health check and process statistics.
+    With JConsole, you can consume JMX statistics exposed by your servers and display them in a
+    graphical interface. For more information, see
+    <a href="https://docs.oracle.com/javase/8/docs/technotes/guides/management/jconsole.html" class="external">Using JConsole</a>.</p>
+
+    <p>JConsole uses the following service URL to monitor the JMX attributes (MBeans) offered via
+    JMX:</p>
+    <pre>service:jmx:rmi:///jndi/rmi://<var>IP_address</var>:<var>port_number</var>/jmxrmi</pre>
+
+    <p>Where:</p>
+    <ul>
+      <li><var>IP_address</var> is the IP address of the server you want to monitor.
+      <li><var>port_number</var> is the <a href="#ports">JMX port number</a> of the server you want to
+        monitor.</li>
+    </ul>
+
+    <p>For example, to monitor the Management Server, issue a command like the following (assuming
+    the server's IP address is 216.3.128.12):</p>
+    <pre>service:jmx:rmi:///jndi/rmi://216.3.128.12:1099/jmxrmi</pre>
+
+    <p>Note that this example specifies port 1099, which is the Management Server JMX port. For other
+    ports, see <a href="#ports">JMX and Management API monitoring ports</a>.</p>
+
+    <p>The following table shows the generic JMX statistics:</p>
+    <table>
+      <thead>
+        <tr>
+          <th>JMX MBeans</th>
+          <th>JMX Attributes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td rowspan="3">
+            <p>Memory</p>
+          </td>
+          <td>
+            <p>HeapMemoryUsage</p>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <p>NonHeapMemoryUsage</p>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <p>Usage</p>
+          </td>
+        </tr>
+        <tr>
+          <td colspan="2">
+            <aside class="note"><h3 class="hide-from-toc">NOTE</h3>Attribute values are displayed in four
+            values: committed, init, max, and used.</aside>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+
+  <h2 id="managementapi">Monitor with the Management API</h2>
+
+  <p>Edge includes several APIs that you can use to perform service checks on your servers as well as
+  check your users, organizations, and deployments. This section describes these APIs.</p>
+
+  <h3>Perform service checks</h3>
+
+  <p>The Management API provides several endpoints for monitoring and diagnosing issues with your
+  services. These endpoints include:</p>
+
   <table>
     <thead>
       <tr>
-        <th>JMX MBeans</th>
-        <th>JMX Attributes</th>
+        <th>Endpoint</th>
+        <th>Description</th>
       </tr>
     </thead>
     <tbody>
       <tr>
-        <td rowspan="3">
-          <p>Memory</p>
-        </td>
-        <td>
-          <p>HeapMemoryUsage</p>
-        </td>
-      </tr>
-      <tr>
-        <td>
-          <p>NonHeapMemoryUsage</p>
-        </td>
-      </tr>
-      <tr>
-        <td>
-          <p>Usage</p>
+        <td><code>/servers/self/up</code></td>
+        <td><p>Checks to see if a service is running. This API call does not require you to
+          authenticate.</p>
+          <p>If the service is running, this endpoint returns the following response:</p>
+          <pre class="prettyprint">&lt;ServerField&gt;
+  &lt;Up&gt;true&lt;/Up&gt;
+&lt;/ServerField&gt;</pre>
+          <p>If the service is not running, you will get a response similar to the following
+          (depending on which service it is and how you checked it):</p>
+          <pre>curl: Failed connect to localhost:<var>port_number</var>; Connection refused</pre>
         </td>
       </tr>
       <tr>
-        <td colspan="2">
-          <aside class="note"><strong>Note:</strong> Attribute values will be displayed in four
-          values: committed, init, max, and used.</aside>
+        <td><code>/servers/self</code></td>
+        <td><p>Returns information about the service, including:</p>
+          <ul>
+            <li>Configuration properties</li>
+            <li>Start time and up time</li>
+            <li>Build, RPM, and UUID information</li>
+            <li>Internal and external hostname and IP address</li>
+            <li>Region and pod</li>
+            <li><code>&lt;isUp&gt;</code> property, indicating whether the service is running</li>
+          </ul>
+          <p>This API call requires you to authenticate with your Apigee admin credentials.</p>
         </td>
       </tr>
     </tbody>
   </table>
 
-  <h3 id="managementserver-usingedgeapplicationapichecks">Using Edge Application API checks</h3>
+  <p>To use these endpoints, invoke a utility such as <code>curl</code> with commands that use the
+  following syntax:</p>
+  <pre class="devsite-terminal">curl http://<var>host</var>:<var>port_number</var>/v1/servers/self/up -H "Accept: [application/json|application/xml]"
+<code class="devsite-terminal">curl http://<var>host</var>:<var>port_number</var>/v1/servers/self -u <var>username</var>:<var>password</var> -H "Accept: [application/json|application/xml]"</code></pre>
 
-  <p>You can perform API check on the Management Server (or any server) by invoking the following
-  CURL command:</p>
-  <pre class="devsite-terminal">curl http://<var>host</var>:8080/v1/servers/self/up -H "Accept: application/json"</pre>
+  <p>Where:</p>
+  <ul>
+    <li><var>host</var> is the IP address of the server you want to check. If you are logged into
+      the server, you can use "localhost"; otherwise, specify the IP address of the server as well
+      as the username and password.</li>
+    <li><var>port_number</var> is the Management API port for the server you want to check. This is
+      a different port for each type of component. For example, the Management Server's
+      Management API port is 8080. For a list of Management API port numbers to use, see
+      <a href="#ports">JMX and Management API monitoring ports</a></li>
+  </ul>
 
-  <p>Where <var>host</var> is the IP address of Management Server. You can specify the
-  <code>Accept</code> type as <code>application/json</code> or <code>application/xml</code>.</p>
+  <p>To change the format of the response, you can specify the <code>Accept</code> header as
+  "application/json" or "application/xml".</p>
 
-  <p>This call returns the "true" and "false". If true, that means node is up and Java service is
-  running.</p>
+  <p>The following example gets the status of the Router on localhost (port 8081):</p>
+  <pre class="devsite-terminal">curl http://localhost:8081/v1/servers/self/up -H "Accept: application/xml"</pre>
 
-  <p>If you do not receive a HTTP 200 (OK) response, the Edge is unable to respond to port 8080
-  requests.</p>
+  <p>The following example gets information about the Message Processor at 216.3.128.12 (port
+  8082):</p>
+  <pre class="devsite-terminal">curl http://216.3.128.12:8082/v1/servers/self -u <var>sysAdminEmail</var>:<var>password</var>
+  -H "Accept: application/xml"</pre>
 
-  <h4>Troubleshooting</h4>
+  <h3 id="user-org-deployment">Monitor user, organization, and deployment status</h3>
 
+  <p>You can use the Management API to monitor user, organization, and deployment status of your
+  proxies on Management Servers and Message Processors by issuing the following commands:</p>
+
+  <pre class="devsite-terminal">curl http://<var>host</var>:<var>port_number</var>/v1/users -u <var>sysAdminEmail</var>:<var>password</var>
+<code class="devsite-terminal">curl http://<var>host</var>:<var>port_number</var>/v1/organizations -u <var>sysAdminEmail</var>:<var>password</var></code>
+<code class="devsite-terminal">curl http://<var>host</var>:<var>port_number</var>/v1/organizations/orgname/deployments -u <var>sysAdminEmail</var>:<var>password</var></code></pre>
+
+  <p>Where <var>port_number</var> is either 8080 for the Management Server or 8082 for the Message
+  Processor.</p>
+
+  <p>This call requires you to authenticate with your system administration username and
+  password.</p>
+
+  <p>The server should return a "deployed" status for all calls. If these fail, do the following:</p>
   <ol>
-    <li>Login to the server and run the following command:
-      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-management-server status</pre>
+    <li>Check the server logs for any errors. The logs are located at:
+      <ul>
+        <li>Management Server: <code>opt/apigee/var/log/edge-management-server</code></li>
+        <li>Message Processor: <code>opt/apigee/var/log/edge-message-processor</code></li>
+      </ul>
     </li>
-    <li>If the service is not running start the service:
-      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-management-server start</pre>
+    <li>Make a call against the server to check whether it is functioning properly.</li>
+    <li>Remove the server from the ELB and then restart it:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service <var>service_name</var> restart</pre>
+      <p>Where <var>service_name</var> is:</p>
+      <ul>
+        <li><code>edge-management-server</code></li>
+        <li><code>edge-message-processor</code></li>
+      </ul>
     </li>
   </ol>
 
-  <h3 id="managementserver-usingedgeapplicationusersorganizationanddeploymentchecks">Using Edge
-  Application: Users, organization and deployment checks</h3>
+  <h2 id="apigee-service">Check status with the <code>apigee-service</code> command</h2>
+  <p>You can troubleshoot your Edge services by using the <code>apigee-service</code> command when you are
+  logged into the server running the service.</p>
 
-  <p>Management Server plays a vital role in holding all other parcels together in each on-premises
-  installation. You can check for user, organization and deployment status on the management server
-  by issuing the following commands:</p>
-  <pre class="devsite-terminal">curl -u <var>userEmail</var>:<var>password</var> http://localhost:8080/v1/users
-<code class="devsite-terminal">curl -u <var>userEmail</var>:<var>password</var> http://localhost:8080/v1/organizations</code>
-<code class="devsite-terminal">curl -u <var>userEmail</var>:<var>password</var> http://localhost:8080/v1/organizations/orgname/deployments</code></pre>
-
-  <p>The system should display "deployed" status for all calls. If these fail, do the
-  following:</p>
+  <p><strong>To check the status of a service with <code>apigee-service</code>:</strong></p>
   <ol>
-    <li>Check the Management Server logs (at <code>opt/apigee/var/log/edge-management-server</code>)
-      for any errors.</li>
-    <li>Make a call against Management Server to check whether it is functioning properly.</li>
-    <li>Remove the server from the ELB and then restart the Management Server.
-      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-management-server restart</pre>
+    <li>Log in to the server and run the following command:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service <var>service_name</var> status</pre>
+      <p>Where <var>service_name</var> is one of the following:</p>
+      <ul>
+        <li>Management Server: <code>edge-management-server</code></li>
+        <li>Message Processor: <code>edge-message-processor</code></li>
+        <li>Postgres: <code>edge-postgres-server</code></li>
+        <li>Qpid: <code>edge-qpid-server</code></li>
+        <li>Router: <code>edge-router</code></li>
+      </ul>
+      <p>For example:</p>
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-message-processor status</pre>
+    </li>
+    <li>If the service is not running, start the service:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service <var>service_name</var> start</pre>
+    </li>
+    <li>After restarting the service, check that it is functioning, either by using the
+      <code>apigee-service status</code> command you used previously or by using the Management API
+      described in <a href="#managementapi">Monitor with the Management API</a>.
+      <p>For example:</p>
+      <pre class="devsite-terminal">curl -v http://localhost:<var>port_number</var>/v1/servers/self/up</pre>
+      <p>Where <var>port_number</var> is the <a href="#ports">Management API port</a> for the service.</p>
+      <p>This example assumes you are logged into the server and can use "localhost" as the
+      hostname. To check the status remotely with the Management API, you must specify the IP
+      address of the server and include the system administrator username and password in your API
+      call.</p>
     </li>
   </ol>
 
-  <h2 id="router">Router</h2>
+  <aside class="note"><h3 class="hide-from-toc">NOTE</h3>Ensure that you specify the correct port
+  when checking a service. Each service uses a different port for the Management API
+  monitoring, as described in <a href="#ports">JMX and Management API monitoring ports</a>.</aside>
 
-  <p>You can perform API check on the Router (or any server) by invoking the following CURL
-  command:</p>
-  <pre class="devsite-terminal">curl http://<var>host</var>:8081/v1/servers/self/up</pre>
+  <h2 id="postgres">Postgres monitoring</h2>
+  <p>Postgres supports several utilities that you can use to check its status. These utilities
+  are described in the sections that follow.</p>
 
-  <p>Where, host is the IP address of Router.</p>
+  <h3 id="postgres-orgs">Check organizations and environments on Postgres</h3>
 
-  <p>This call returns the "true" and "false". If true, that means the node is up and Router
-  service is running.</p>
-
-  <p>If you do not receive a <code>HTTP 200 (OK)</code> response, Edge is unable to respond to port
-  8081 requests.</p>
-
-  <h3 id="router-troubleshooting">Troubleshooting</h3>
-
-  <ol>
-    <li>Login to the server and run the following commands:
-      <pre class="devsite-terminal">/<var>inst_root</var>/apigee/apigee-service/bin/apigee-service edge-router status</pre>
-    </li>
-    <li>If the service is not running start the service
-      <pre class="devsite-terminal">/<var>inst_root</var>/apigee/apigee-service/bin/apigee-service edge-router start</pre>
-    </li>
-    <li>After restart check that it is functioning:
-      <pre class="devsite-terminal">curl -v http://localhost:<var>port</var>/v1/servers/self/up</pre>
-      <p>Where <var>port</var> is 8081 for Router and 8082 for Message Processor.</p>
-    </li>
-  </ol>
-
-  <h3 id="router-usingjconsoletomonitorsystemhealthcheckandprocessinformation">Using
-  JConsole to monitor system health check and process information</h3>
-
-  <p>Follow the same as described above for the Management Server.</p>
-
-  <aside class="note"><strong>Note</strong>: Ensure that you use port 1100.</aside>
-
-  <h2 id="messageprocessor">Message Processor</h2>
-
-  <h3 id="messageprocessor-usingjconsoletomonitorsystemhealthcheckandprocessinformation">Using
-  JConsole to monitor system health check and process information</h3>
-
-  <p>Follow the same as described above for the Management Server.</p>
-
-  <aside class="note"><strong>Note</strong>: Ensure that you use port 1101.</aside>
-
-  <h3 id="messageprocessor-usingedgeapplicationapichecks">Using Edge Application API checks</h3>
-
-  <p>Follow the same as described above for the Router.</p>
-
-  <aside class="note"><strong>Note</strong>: Ensure that you use port 8082.</aside>
-
-  <h3 id="messageprocessor-usingjmxmessageflowchecks">Using JMX message flow checks</h3>
-
-  <p>Follow the same as described above for the Management Server.</p>
-
-  <aside class="note"><strong>Note</strong>: Ensure that you use port 1101.</aside>
-
-  <h2 id="qpidserver">Qpid Server</h2>
-
-  <h3 id="qpidserver-usingjconsoletomonitorsystemhealthcheckandprocessinformation">Using JConsole
-  to monitor system health check and process information</h3>
-
-  <p>Follow the same as described above for the Management Server.</p>
-
-  <aside class="note"><strong>Note</strong>: Ensure that you use port 1102.</aside>
-
-  <h3 id="qpidserver-usingedgeapplicationapichecks">Using Edge Application API checks</h3>
-
-  <p>Follow the same as described above for the Management Server.</p>
-
-  <aside class="note"><strong>Note</strong>: Ensure that you use port 8083. The following curl
-  command is also supported for Qpid Server:
-  <pre class="devsite-terminal">curl http://<var>qpid_IP</var>:8083/v1/servers/self</pre>
-  </aside>
-
-  <h2 id="postgresserver">Postgres Server</h2>
-
-  <h3 id="postgresserver-usingjconsoletomonitorsystemhealthcheckandprocessinformation">Using
-  JConsole to monitor system health check and process information</h3>
-
-  <p>Follow the same as described above for the Management Server.</p>
-
-  <aside class="note"><strong>Note</strong>: Ensure that you use port 1103.</aside>
-
-  <h3 id="postgresserver-usingedgeapplicationapichecks">Using Edge Application API checks</h3>
-
-  <p>Follow the same as described above for the Management Server.</p>
-
-  <aside class="note"><strong>Note</strong>: Ensure that you use port 8084. The following curl
-    command is also supported for Postgres Server:
-    <pre class="devsite-terminal">curl http://<var>postgres_IP</var>:8084/v1/servers/self</pre>
-  </aside>
-
-  <h3 id="postgresserver-usingedgeapplicationorganizationandenvironmentchecks">Using Edge
-  Application organization and environment checks</h3>
-
-  <p>You can check for organization and environment name that are onboarded on the Postgres Server
-  by issuing the following curl commands:
-  <pre class="devsite-terminal">curl http://<var>postgres_IP</var>:8084/v1/servers/self/organizations</pre>
-
-  <aside class="note"><strong>Note</strong>: Ensure that you use port 8084.</aside>
+  <p>You can check for organization and environment names that are onboarded on the Postgres Server
+  by issuing the following <code>curl</code> command:</p>
+  <pre class="devsite-terminal">curl -v http://<var>postgres_IP</var>:8084/v1/servers/self/organizations</pre>
 
   <p>The system should display the organization and environment name.</p>
 
-  <h3 id="postgresserver-usingedgeapplicationaxstatuscheck">Using Edge Application axstatus check</h3>
+  <h3 id="postgres-axstatus">Verify analytics status</h3>
 
-  <p>You can verify the status of the analytics servers by issuing the following CURL
-  command.</p>
-  <pre class="devsite-terminal">curl -u <var>userEmail</var>:<var>password</var> http://<var>host</var>:<var>port</var>/v1/organizations/<var>orgname</var>/environments/<var>envname</var>/provisioning/axstatus</pre>
+  <p>You can verify the status of the Postgres and Qpid analytics servers by issuing the following
+  <code>curl</code> command:</p>
+  <pre class="devsite-terminal">curl -u <var>userEmail</var>:<var>password</var> http://<var>host</var>:<var>port_number</var>/v1/organizations/<var>orgname</var>/environments/<var>envname</var>/provisioning/axstatus</pre>
 
-  <p>The system should display SUCCESS status for all analytics servers. The output of above CURL
-  command is shown below:</p>
-  <pre class="prettyprint">
-{
+  <p>The system should display a success status for all analytics servers, as the following example
+  shows:</p>
+  <pre class="prettyprint">{
   "environments" : [ {
     "components" : [ {
       "message" : "success at Thu Feb 28 10:27:38 CET 2013",
@@ -364,30 +533,34 @@ exec $JAVA -classpath "$classpath" -Xms$min_mem -Xmx$max_mem $xx_opts
    } ],
   "organization" : "acme",
   "status" : "SUCCESS"
-}
-</pre>
+}</pre>
 
-  <h2 id="postgressqldatabase">PostgresSQL database</h2>
+  <h3 id="postgressqldatabase">PostgresSQL database</h3>
 
-  <h3 id="postgressqldatabase-usingthecheck_postgresplscript">Using the check_postgres.pl script</h3>
+  <p>This section describes techniques that you can use specifically for monitoring the Postgres
+  database.</p>
+
+  <h4 id="postgres-script">Use the <code>check_postgres.pl</code> script</h4>
 
   <p>To monitor the PostgresSQL database, you can use a standard monitoring script,
-  <code>check_postgres.pl</code> which is available at
+  <code>check_postgres.pl</code>. For more information, see
   <a href="https://bucardo.org/wiki/Check_postgres" class="external">http://bucardo.org/wiki/Check_postgres</a>.</p>
 
-  <aside class="note"><strong>Note</strong>: The script, check_postgres.pl needs to be installed in
-  each Postgres node.</aside>
-
-  <p>Before you run the script:</p>
+  <p><strong>Before you run the script:</strong></p>
   <ol>
+    <li>You must install the check_postgres.pl script on each Postgres node.</li>
     <li>Ensure that you have installed <code>perl-Time-HiRes.x86_64</code>, a Perl module that
       implements high resolution alarm, sleep, gettimeofday, and interval timers. For example, you
       can install it by using the following command:<br>
       <pre class="devsite-terminal">yum install perl-Time-HiRes.x86_64</pre>
     </li>
+    <li>CentOS 7: Before using check_postgres.pl on CentOS v7, install the
+      <code>perl-Data-Dumper.x86_64</code> RPM.</li>
   </ol>
 
-  <p>The default output of the API calls using the script, <code>check_postgres.pl</code>, is Nagios
+  <p><strong>check_postgres.pl output</strong></p>
+
+  <p>The default output of the API calls using <code>check_postgres.pl</code> is Nagios
   compatible. After you install the script, do the following checks:</p>
   <ol>
     <li>Check the database size:
@@ -408,31 +581,32 @@ exec $JAVA -classpath "$classpath" -Xms$min_mem -Xmx$max_mem $xx_opts
     </li>
   </ol>
 
-  <aside class="note"><strong>Note</strong>: Please refer to
+  <aside class="note"><h3 class="hide-from-toc">NOTE</h3>Please refer to
   <a href="https://bucardo.org/check_postgres/check_postgres.pl.html" class="external">http://bucardo.org/check_postgres/check_postgres.pl.html</a>
   in case you need any help on using the above commands.</aside>
 
-  <h3 id="postgressqldatabase-dbchecks">DB checks</h3>
+  <h4 id="postgres-dbchecks">Run database checks</h4>
 
   <p>You can verify that the proper tables are created in PostgresSQL database. Log in to PostgreSQL
   database using the following command:</p>
-  <pre class="devsite-terminal">psql -h /opt/apigee/var/run/apigee-postgresql/  -U apigee -d apigee</pre>
+  <pre class="devsite-terminal">psql -h /opt/apigee/var/run/apigee-postgresql/ -U apigee -d apigee</pre>
 
   <p>Then run:</p>
   <pre class="devsite-terminal">\d analytics."<var>org</var>.<var>env</var>.fact"</pre>
 
-  <h3 id="postgressqldatabase-checkhealthstatusofpostgresprocess">Check health status of postgres
-  process</h3>
+  <h4 id="postgres-checkhealth">Check health status of postgres process</h4>
 
-  <p>You can perform API check on the postgres machine by invoking the following curl command:</p>
-  <pre class="devsite-terminal">http://<var>postgres_IP</var>:8084/v1/servers/self/health/</pre>
+  <p>You can perform API checks on the Postgres machine by invoking the following <code>curl</code>
+  command:</p>
+  <pre class="devsite-terminal">curl -v http://<var>postgres_IP</var>:8084/v1/servers/self/health</pre>
 
-  <aside class="note"><strong>Note</strong>: Ensure that you use port 8084.</aside>
+  <aside class="note"><h3 class="hide-from-toc">NOTE</h3>Ensure that you use port 8084.</aside>
 
-  <p>It returns the <code>ACTIVE</code> status when postgres process is active. If the postgres
-  process is not up and running, it returns the <code>INACTIVE</code> status.</p>
+  <p>This command returns the <code>ACTIVE</code> status when postgres process is active. If the
+  Postgres process is not up and running, it returns the <code>INACTIVE</code> status.</p>
 
-  <h3 id="postgressqldatabase-postgresresources">Postgres resources</h3>
+  <h4 id="postgres-resources">Postgres resources</h4>
+  <p>For additional information about monitoring the Postgres service, see the following:</p>
 
   <ul>
     <li><a href="https://www.postgresql.org/docs/9.0/static/monitoring.html" class="external">http://www.postgresql.org/docs/9.0/static/monitoring.html</a></li>
@@ -440,53 +614,93 @@ exec $JAVA -classpath "$classpath" -Xms$min_mem -Xmx$max_mem $xx_opts
     <li><a href="https://bucardo.org/check_postgres/check_postgres.pl.html" class="external">http://bucardo.org/check_postgres/check_postgres.pl.html</a></li>
   </ul>
 
+
   <h2 id="apachecassandra">Apache Cassandra</h2>
-
-  <h3 id="apachecassandra-usingjconsolemonitortaskstatistics">Using JConsole: Monitor task
-  statistics</h3>
-
-  <p>Use JConsole and the following service URL to monitor the JMX attributes (MBeans) offered via
-  JMX:</p>
-  <pre class="prettyprint">service:jmx:rmi:///jndi/rmi://<var>IP_address</var>:7199/jmxrmi</pre>
-
-  <p>Where <var>IP_address</var> is the IP of the Cassandra server.</p>
 
   <p>JMX is enabled by default for Cassandra and remote JMX access to Cassandra does not require a
   password.</p>
 
-  <p>To enable JMX authentication to add a password:</p>
+
+  <h3 id="cassauthenable">Enable JMX authentication for Cassandra</h3>
+
+  <p>You can enable JMX authentication for Cassandra. After doing so, you will then be required to
+  pass a username and password to all calls to the <code>nodetool</code> utility.</p>
+
+  <p><strong>To enable JMX authentication for Cassandra:</strong></p>
   <ol>
-    <li>Edit <code>/opt/apigee/customer/application/cassandra.properties</code>. If the file does
-      not exist, create it.</li>
-    <li>Add the following to the file:
-      <pre class="prettyprint">conf_cassandra-env_com.sun.management.jmxremote.authenticate=true</pre>
+    <li>Create and edit the <code>cassandra.properties</code> file:
+      <ol>
+        <li>Edit the <code>/opt/apigee/customer/application/cassandra.properties</code> file. If the
+          file does not exist, create it.</li>
+        <li>Add the following to the file:
+          <pre class="prettyprint">conf_cassandra-env_com.sun.management.jmxremote.authenticate=true</pre>
+        </li>
+        <li>Save the <code>cassandra.properties</code> file.</li>
+        <li>Change the owner of the file to "apigee:apigee", as the following example shows:
+          <pre class="devsite-terminal">chown apigee:apigee /opt/apigee/customers/application/router.properties</pre>
+        </li>
+      </ol>
+      <p>For more information on using properties files to set tokens, see
+        <a href="how-configure-edge">How to configure Edge</a>.</p>
     </li>
-    <li>Save the file.</li>
-    <li>Copy the following files from your <code>$JAVA_HOME</code> directory to
-    <code>/opt/apigee/data/apigee-cassandra/</code>:
-    <pre class="devsite-terminal">cp ${JAVA_HOME}/lib/management/jmxremote.password.template $APIGEE_ROOT/data/apigee-cassandra/jmxremote.password
-<code class="devsite-terminal">cp ${JAVA_HOME}/lib/management/jmxremote.access $APIGEE_ROOT/data/apigee-cassandra/jmxremote.access</code></pre>
+    <li>Create and edit <code>jmx_auth.sh</code>:
+      <ol>
+        <li>Create a file at the following location if it does not exist:
+          <pre>/opt/apigee/customer/application/jmx_auth.sh</pre>
+        </li>
+        <li>Add the following properties to the file:
+          <pre>export CASS_JMX_USERNAME=<var>JMX_USERNAME</var>
+export CASS_JMX_PASSWORD=<var>JMX_PASSWORD</var></pre>
+        </li>
+        <li>Save the <code>jmx_auth.sh</code> file.</li>
+        <li>Source the file:
+          <pre class="devsite-terminal">source /opt/apigee/customer/application/jmx_auth.sh</pre>
+        </li>
+      </ol>
     </li>
-    <li>Edit <code>jmxremote.password</code> and add username and password to the file:
-      <pre class="prettyprint">cassandra <var>password</var></pre>
-      <p>Where <var>password</var> is the JMX password.</p>
+    <li>Copy and edit the <code>jmxremote.password</code> file:
+      <ol>
+        <li>Copy the following file from your <code>$JAVA_HOME</code> directory to
+          <code>/opt/apigee/data/apigee-cassandra/</code>:
+          <pre class="devsite-terminal">cp ${JAVA_HOME}/lib/management/jmxremote.password.template $APIGEE_ROOT/data/apigee-cassandra/jmxremote.password</pre>
+        </li>
+        <li>Edit the <code>jmxremote.password</code> file and add your JMX username and password
+          using the following syntax:
+          <pre class="prettyprint"><var>JMX_USERNAME</var> <var>JMX_PASSWORD</var></pre>
+          <p>Where <var>JMX_USERNAME</var> and <var>JMX_PASSWORD</var> are the JMX username and
+          password you set previously.</p>
+        </li>
+        <li>Make sure the file is owned by "apigee" and that the file mode is 400:
+          <pre class="devsite-terminal">chown apigee:apigee /opt/apigee/data/apigee-cassandra/jmxremote.password
+<code class="devsite-terminal">chmod 400 /opt/apigee/data/apigee-cassandra/jmxremote.password</code></pre>
+        </li>
+      </ol>
     </li>
-    <li>Edit <code>jmxremote.access</code> and add the following role:
-      <pre class="prettyprint">cassandra readwrite</pre>
+    <li>Edit the <code>jmxremote.access</code> file in place:
+      <ol>
+        <li>Open the <code>${JAVA_HOME}/lib/management/jmxremote.access</code> file and add the
+          following role:
+          <pre class="prettyprint">cassandra readwrite</pre>
+        </li>
+        <li>Make sure the file is owned by "apigee" and that the file mode is 400:
+          <pre class="devsite-terminal">chown apigee:apigee ${JAVA_HOME}/lib/management/jmxremote.access
+<code class="devsite-terminal">chmod 400 ${JAVA_HOME}/lib/management/jmxremote.access</code></pre>
+        </li>
+      </ol>
     </li>
-    <li>Make sure the files are owned by "apigee" and that the file mode is 400:
-      <pre class="devsite-terminal">chown apigee:apigee /opt/apigee/data/apigee-cassandra/jmxremote.*
-<code class="devsite-terminal">chmod 400 /opt/apigee/data/apigee-cassandra/jmxremote.*</code></pre>
-    </li>
+    <!-- execute the next 2 steps? -->
     <li>Run <code>configure</code> on Cassandra:
       <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-cassandra configure</pre>
     </li>
     <li>Restart Cassandra:
       <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-cassandra restart</pre>
     </li>
+    <li>Repeat this process on all other Cassandra nodes.</li>
   </ol>
 
-  <p>To later disable authentication:</p>
+  <h3 id="cassauthdisable">Disable JMX authentication for Cassandra</h3>
+
+  <p><strong>To disable JMX authentication for Cassandra:</strong></p>
   <ol>
     <li>Edit <code>/opt/apigee/customer/application/cassandra.properties</code>.</li>
     <li>Remove the following line in the file:
@@ -498,9 +712,19 @@ exec $JAVA -classpath "$classpath" -Xms$min_mem -Xmx$max_mem $xx_opts
     <li>Restart Cassandra:
       <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-cassandra restart</pre>
     </li>
+    <li>Repeat this process on all other Cassandra nodes.</li>
   </ol>
 
-  <h3 id="apachecassandra-cassandrajmxstatistics">Cassandra JMX statistics</h3>
+  <h3 id="cassandra-jconsole">Use JConsole: Monitor task statistics</h3>
+
+  <p>Use JConsole and the following service URL to monitor the JMX attributes (MBeans) offered via
+  JMX:</p>
+  <pre>service:jmx:rmi:///jndi/rmi://<var>IP_address</var>:7199/jmxrmi</pre>
+
+  <p>Where <var>IP_address</var> is the IP of the Cassandra server.</p>
+
+
+  <h3 id="cassandra-jmxstats">Cassandra JMX statistics</h3>
 
   <table>
     <thead>
@@ -596,68 +820,78 @@ exec $JAVA -classpath "$classpath" -Xms$min_mem -Xmx$max_mem $xx_opts
     </tbody>
   </table>
 
-  <h3 id="apachecassandra-usingnodetoolutilitytomanageclusternodes">Using nodetool utility to
-  manage cluster nodes</h3>
+  <h3 id="cassandra-nodetool">Use nodetool to manage cluster nodes</h3>
 
-  <p>The nodetool utility, which is a command line interface for Cassandra, is used to manage
-  cluster nodes. The utility can be found at <code>opt/apigee/apigee-cassandra/bin</code>.</p>
-
-  <p>For more info on nodetool utility, see
-  <a href="https://www.datastax.com/docs/1.0/references/nodetool" class="external">http://www.datastax.com/docs/1.0/references/nodetool</a>.</p>
+  <p>The <code>nodetool</code> utility is a command line interface for Cassandra that manages
+  cluster nodes. The utility can be found at <code>/opt/apigee/apigee-cassandra/bin</code>.</p>
 
   <p>The following calls can be made on all Cassandra cluster nodes:</p>
   <ol>
     <li><strong>General ring info</strong> (also possible for single Cassandra node): Look for the
     "Up" and "Normal" for all nodes.
-    <pre class="devsite-terminal" data-terminal-prefix="[host]# ">nodetool -h localhost ring</pre>
+    <pre class="devsite-terminal" data-terminal-prefix="[host]# ">nodetool [-u <var>username</var> -pw <var>password</var>] -h localhost ring</pre>
+    <p>You only need to pass your username and password if you
+    <a href="how-monitor#cassauthenable">enabled JMX authentication for Cassandra</a>.</p>
     <p>The output of the above command looks as shown below:
-    <pre class="prettyprint">Address         DC      Rack     Status State   Load    Owns    Token
-192.168.124.201 dc1     ra1      Up     Normal  1.67 MB 33,33%  0
-192.168.124.202 dc1     ra1      Up     Normal  1.68 MB 33,33%  56713727820156410577229101238628035242
-192.168.124.203 dc1     ra1      Up     Normal  1.67 MB 33,33%  113427455640312821154458202477256070484</pre>
+    <pre class="prettyprint">Datacenter: dc-1
+==========
+Address            Rack     Status State   Load    Owns    Token
+192.168.124.201    ra1      Up     Normal  1.67 MB 33,33%  0
+192.168.124.202    ra1      Up     Normal  1.68 MB 33,33%  5671...5242
+192.168.124.203    ra1      Up     Normal  1.67 MB 33,33%  1134...0484</pre>
     </li>
     <li><strong>General info about nodes</strong> (call per node)
-      <pre class="devsite-terminal" data-terminal-prefix="[host]# ">nodetool -h localhost info</pre>
-      <p>The output of the above command looks as shown below:</p>
-      <pre class="prettyprint">Token            : 0
-Gossip active    : true
-Load             : 1.67 MB
-Generation No    : 1361968765
-Uptime (seconds) : 78108
-Heap Memory (MB) : 46,80 / 772,00
-Data Center      : dc1
-Rack             : ra1
-Exceptions       : 0</pre>
+      <pre class="devsite-terminal" data-terminal-prefix="[host]# ">nodetool [-u <var>username</var> -pw <var>password</var>]  -h localhost info</pre>
+      <p>The output of the above command looks like the following:</p>
+
+      <pre class="prettyprint">ID                     : e2e42793-4242-4e82-bcf0-oicu812
+Gossip active          : true
+Thrift active          : true
+Native Transport active: true
+Load                   : 273.71 KB
+Generation No          : 1234567890
+Uptime (seconds)       : 687194
+Heap Memory (MB)       : 314.62 / 3680.00
+Off Heap Memory (MB)   : 0.14
+Data Center            : dc-1
+Rack                   : ra-1
+Exceptions             : 0
+Key Cache              : entries 150, size 13.52 KB, capacity 100 MB, 1520781 hits, 1520923 requests, 1.000 recent hit rate, 14400 save period in seconds
+Row Cache              : entries 0, size 0 bytes, capacity 0 bytes, 0 hits, 0 requests, NaN recent hit rate, 0 save period in seconds
+Counter Cache          : entries 0, size 0 bytes, capacity 50 MB, 0 hits, 0 requests, NaN recent hit rate, 7200 save period in seconds
+Token                  : 0</pre>
     </li>
     <li><strong>Status of the thrift server</strong> (serving client API)
-      <pre class="devsite-terminal" data-terminal-prefix="[host]# ">nodetool -h localhost statusthrift</pre>
-      <p>The output of the above command displays status as "running".</p>
+      <pre class="devsite-terminal" data-terminal-prefix="[host]# ">nodetool [-u <var>username</var> -pw <var>password</var>] -h localhost statusthrift</pre>
+      <p>The output of the above command looks like the following:<br>
+    <pre class="prettyprint">running</pre>
     </li>
     <li><strong>Status of data streaming operations</strong>: Observe traffic for cassandra nodes:
-      <pre class="devsite-terminal" data-terminal-prefix="[host]# ">nodetool -h localhost netstats 192.168.124.203</pre>
-      <p>The output of the above command looks as shown below:<br>
+      <pre class="devsite-terminal" data-terminal-prefix="[host]# ">nodetool [-u <var>username</var> -pw <var>password</var>] -h localhost netstats</pre>
+      <p>The output of the above command looks like the following:<br>
     <pre class="prettyprint">Mode: NORMAL
-Nothing streaming to /192.168.124.203
-Nothing streaming from /192.168.124.203
-Pool Name    Active    Pending    Completed
-Commands     n/a         0           1688
-Responses    n/a         0          292277</pre>
+Not sending any streams.
+Read Repair Statistics:
+Attempted: 151612
+Mismatch (Blocking): 0
+Mismatch (Background): 0
+Pool Name                    Active   Pending      Completed   Dropped
+Commands                        n/a         0              0         0
+Responses                       n/a         0              0       n/a</pre>
     </li>
   </ol>
 
-  <h3 id="apachecassandra-cassandramonitoringui">Cassandra Monitoring (UI)</h3>
+  <p>For more info on <code>nodetool</code>, see
+  <a href="https://docs.datastax.com/en/archived/cassandra/2.1/cassandra/tools/toolsNodetool_r.html" class="external">About the nodetool utility</a>.</p>
 
-  <p>Refer to the datastax opscenter URL: <a href=
-  "https://www.datastax.com/products/opscenter" class="external">http://www.datastax.com/products/opscenter</a>.</p>
-
-  <h3 id="apachecassandra-cassandraresource">Cassandra Resource</h3>
+  <h3 id="apachecassandra-cassandraresource">Cassandra resource</h3>
 
   <p>Refer to the following URL: <a href=
   "https://www.datastax.com/docs/1.0/operations/monitoring" class="external">http://www.datastax.com/docs/1.0/operations/monitoring</a>.</p>
 
   <h2 id="apachezookeeper">Apache ZooKeeper</h2>
 
-  <h3 id="apachezookeeper-checkingzookeeperstatus">Checking ZooKeeper status</h3>
+  <h3 id="apachezookeeper-checkingzookeeperstatus">Check ZooKeeper status</h3>
 
   <ol>
     <li>Ensure the ZooKeeper process is running. ZooKeeper writes a PID file to
@@ -673,7 +907,7 @@ Responses    n/a         0          292277</pre>
     </li>
   </ol>
 
-  <h3 id="apachezookeeper-usingzookeeperfourletterwords">Using ZooKeeper four-letter words</h3>
+  <h3 id="apachezookeeper-usingzookeeperfourletterwords">Use ZooKeeper four-letter words</h3>
 
   <p>ZooKeeper can be monitored via a small set of commands (four-letter words) that are sent to
   the port 2181 using netcat (nc) or telnet.</p>
@@ -732,11 +966,9 @@ print c.recv(512)</pre>
     </li>
   </ol>
 
-  <h2 id="openldap">OpenLDAP</h2>
+  <h2 id="openldap">LDAP level test</h2>
 
-  <h3 id="openldap-ldapleveltest">LDAP level test</h3>
-
-  <p>You can monitor the OpenLDAP to see whether the specific requests are served properly. In
+  <p>You can monitor OpenLDAP to see whether the specific requests are served properly. In
   other words, check for a specific search that returns the right result.</p>
 
   <ol>

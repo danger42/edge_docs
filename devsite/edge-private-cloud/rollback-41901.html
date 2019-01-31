@@ -1,0 +1,449 @@
+{% extends "private-cloud/v4.19.01/_base.html" %}
+{% block title %}Roll back Apigee Edge {{cur_version}}{% endblock %}
+{% block body %}
+
+  <p>If you encounter an error during an update to Edge {{cur_version}}, you can roll back the
+  component that caused the error and then try the update again.</p>
+
+  <p>You can roll back Edge {{cur_version}} to the following Feature Release versions:</p>
+  <!-- should match list of direct upgrade paths -->
+  <ul>
+    <li>Version 4.18.05</li>
+    <li>Version 4.18.01</li>
+    <li>Version 4.17.09<sup>*</sup></li>
+  </ul>
+
+  <p><sup>*</sup> To roll back from {{cur_version}} to 4.17.09, you must
+  <a href="#rollback-postgres">roll back Postgres</a> in addition to rolling back the components on
+  each node. If you roll back from 4.18.01 or 4.18.05, you do not need to roll back Postgres as the upgrade
+  process did not include a Postgres update.</p>
+
+  {{multi_version_caution}}
+
+  <p>There are two scenarios where you might want to perform a rollback:</p>
+  <ol>
+    <li><a href="#feature-release">Roll back to a previous Feature Release</a>. For example from
+      {{cur_version}} to 4.18.05.</li>
+    <li><a href="#update-version">Roll back to a previous <em>update version</em> in the same release</a>. For
+      example, from {{cur_version}}.02 to {{cur_version}}.01.</li>
+  </ol>
+
+  <p>For more information, see <a href="/release/apigee-edge-release-process">Apigee Edge release
+  process</a>.</p>
+
+  <aside class="note"><strong>Note:</strong> The Edge
+    <a href="installation-topologies#allinoneinstallation">all-in-one</a> and
+    <a href="installation-topologies#standaloneinstallation2host">2-node</a> topologies are designed
+    for a "getting started" or prototyping environment, not for production. Therefore, there is no
+    rollback procedure for the all-in-one and 2-node topologies.
+    <p>In the situation where the update of these topologies fails, try the update procedure again.
+    If the update continues to fail after multiple attempts, then the easiest option is to do a
+    fresh install of {{cur_version}}.</p>
+  </aside>
+
+  <h2 id="whocanperformtherollback">Who can perform a rollback</h2>
+
+  <p>The user performing a rollback should be the same as the user who originally updated Edge, or a
+  user running as root.</p>
+
+  <p>By default, Edge components run as the user "apigee". In some cases, you might be running Edge
+  components as different users. For example, if the Router has to access privileged ports, such as
+  those below 1000, then you have to run the Router as root or as a user with access to those
+  ports. Or, you might run one component as one user, and another component as another user.</p>
+
+  <h2 id="commoncode">Components with common code</h2>
+
+  <p>The following Edge components share common code. Therefore, to roll back any one of
+    these components on a node, you must roll back all of these components that are on that node.
+    <ul>
+      <li><code>edge-management-server</code> (Management Server)</li>
+      <li><code>edge-message-processor</code> (Message Processor)</li>
+      <li><code>edge-router</code> (Router)</li>
+      <li><code>edge-postgres-server</code> (Postgres Server)</li>
+      <li><code>edge-qpid-server</code> (Qpid Server)</li>
+    </ul>
+  <p>For example, if you have the Management Server, Router, and Message Processor installed on
+  the node, to roll back any one of them you must roll back all three.</p>
+
+  <h2 id="feature-release">Roll back to a previous Feature Release</h2>
+
+  <p>To roll back from {{cur_version}} to 4.17.09, you must
+  <a href="#rollback-postgres">roll back Postgres</a> in addition to rolling back the components on
+  each node. If you roll back from 4.18.01 or 4.18.05, you do not need to roll back Postgres as the upgrade
+  process did not include a Postgres update.</p>
+
+  <p>To roll back to a previous Feature Release, do the following on each node that hosts the
+  component:</p>
+
+  <ol>
+    <li>
+      <p>Download the <code>bootstrap.sh</code> file for the version to which you want to roll
+      back:</p>
+      <ul>
+        <li>To roll back to 4.18.05, download <code>bootstrap_4.18.05.sh</code>:
+          <pre class="devsite-terminal">curl https://software.apigee.com/bootstrap_4.18.05.sh -o /tmp/bootstrap_4.18.05.sh </pre>
+        </li>
+        <li>To roll back to 4.18.01, download <code>bootstrap_4.18.01.sh</code>:
+          <pre class="devsite-terminal">curl https://software.apigee.com/bootstrap_4.18.01.sh -o /tmp/bootstrap_4.18.01.sh </pre>
+        </li>
+        <li>To roll back to 4.17.09, download <code>bootstrap_4.17.09.sh</code>:
+          <pre class="devsite-terminal">curl https://software.apigee.com/bootstrap_4.17.09.sh -o /tmp/bootstrap_4.17.09.sh </pre>
+        </li>
+      </ul>
+    <li>Stop the component to roll back:
+      <ol>
+        <li>To roll back any of the <a href="#commoncode">components with common code</a> on the
+          node, you must stop them all, as the following example shows:
+          <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-management-server stop
+<code class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-router stop</code>
+<code class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-message-processor stop</code>
+<code class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-qpid-server stop</code>
+<code class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-postgres-server stop</code></pre>
+        </li>
+        <li>To roll back any <em>other</em> component on the node, stop just that component:
+          <ul>
+            <li><pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service <var>component</var> stop</pre></li>
+          </ul>
+        </li>
+      </ol>
+    </li>
+    <li>If you are rolling back Monetization, uninstall it from all Management Server and Message
+      Processor nodes:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-mint-gateway uninstall</pre>
+    </li>
+    <li>Uninstall the component to roll back on the node:
+      <ol>
+        <li>To roll back any of the <a href="#commoncode">components with common code</a> on the
+          node, you must uninstall them all by uninstalling the <code>edge-gateway</code> component
+          group, as the following example shows:
+          <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-gateway uninstall</pre>
+        </li>
+        <li>To roll back any other component on the node, uninstall just that component, as the
+          following example shows:
+          <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service <var>component</var> uninstall</pre>
+          <p>Where <var>component</var> is the component name.</p>
+        </li>
+        <li>To roll back Edge Router, you must delete the contents of the
+          <code>/opt/nginx/conf.d</code> file in addition to uninstalling the
+          <code>edge-gateway</code> component group:
+          <pre class="devsite-terminal">cd /opt/nginx/conf.d
+<code class="devsite-terminal">rm -rf *</code></pre>
+        </li>
+      </ol>
+    </li>
+    <li>Uninstall the {{cur_version}} version of <code>apigee-setup</code>:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-setup uninstall</pre>
+    </li>
+    <li>Install the 4.18.05, 4.18.01, or 4.17.09 version of the <code>apigee-service</code>
+      utility and its dependencies. The following example installs the 4.17.09 version of the
+      <code>apigee-service</code>:
+      <pre class="devsite-terminal">sudo bash /tmp/bootstrap_4.17.09.sh apigeeuser=<var>uName</var> apigeepassword=<var>pWord</var></pre>
+      <p>Where <var>uName</var> and <var>pWord</var> are the username and password you received
+      from Apigee. If you omit <var>pWord</var>, you will be prompted to enter it.</p>
+      <p>If you get an error, be sure you downloaded the <code>bootstrap.sh</code> file in step
+      1.</p>
+    </li>
+    <li>Install <code>apigee-setup</code>:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-setup install</pre>
+    </li>
+    <li>Install the older version of the component:
+      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/setup.sh -p <var>component</var> -f <var>configFile</var></pre>
+      <p>Where <var>component</var> is the component to install and <var>configFile</var> is your
+      configuration file for the older version.</p>
+    </li>
+    <li>If you are rolling back Qpid, flush iptables:
+      <pre class="devsite-terminal">sudo iptables -F</pre>
+    </li>
+    <li>Repeat this process for each node that hosts the component you are rolling back.</li>
+  </ol>
+
+  <p>To roll back from {{cur_version}} to 4.17.09, you must
+  <a href="#rollback-postgres">roll back Postgres</a> in addition to rolling back the components on
+  each node. If you roll back from 4.18.01 or 4.18.05, you do not need to roll back Postgres as the upgrade
+  process did not include a Postgres update.</p>
+
+  <h2 id="update-version">Roll back to a previous update version</h2>
+
+  <p>To roll back a component to a specific version of a release, do the following on each node
+  that hosts the component:</p>
+    <ol>
+      <li>Download the specific component version:
+        <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service <var>component_version</var> install</pre>
+        <p>Where <var>component_version</var> is the component and update version to install. For
+        example:</p>
+        <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-ui-4.17.09-0.0.3749 install</pre>
+        <p>If you are using the Apigee online repo, you can determine the available component
+        versions by using the following command:
+        <pre class="devsite-terminal">yum --showduplicates list comp</pre>
+        <p>For example:</p>
+        <pre class="devsite-terminal">yum --showduplicates list edge-ui</pre>
+      </li>
+      <li>Use <code>apigee-setup</code> to install the component:
+        <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/setup.sh -p <var>comp</var> -f <var>configFile</var></pre>
+        <p>For example:</p>
+        <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/setup.sh -p ui -f <var>configFile</var></pre>
+        <p>Note that you specify only the component name when you install it, not the version.</p>
+      </li>
+      <li>Repeat this process for each node that hosts the component you are rolling back.</li>
+    </ol>
+
+  <p>To roll back from {{cur_version}} to 4.17.09, you must
+  <a href="#rollback-postgres">roll back Postgres</a> in addition to rolling back the components on
+  each node. If you roll back from 4.18.01 or 4.18.05, you do not need to roll back Postgres as the upgrade
+  process did not include a Postgres update.</p>
+
+  <h2 id="rollback-postgres">Roll back the Postgres 9.6 update</h2>
+
+  <p>If you upgraded to {{cur_version}} from version 4.17.09, you must roll back your
+  Postgres update in addition to the Edge components.
+
+  <p>To rollback the Postgres update when updating Postgres in a master-standby configuration:</p>
+  <ul>
+    <li>Promote the new standby node to become the Postgres master. The new Postgres master will be
+      the same version as your previous Edge installation.</li>
+    <li>Configure the old standby node to be a standby node of the new master. The old standby node
+      will be the same version as your previous Edge installation.</li>
+    <li>Register the new master and standby nodes with the analytics and consumer groups.</li>
+  </ul>
+
+  <p>When you are done with the rollback, the old master node will no longer be necessary. You can
+  then decommission the old master node.</p>
+
+  <aside class="note"><strong>Note:</strong> If you are performing an update in an environment that
+    uses a single Postgres node, such as the
+    <a href="installation-topologies#allinoneinstallation">all-in-one</a> and
+    <a href="installation-topologies#standaloneinstallation2host">2-node</a> topologies, there is no
+    rollback procedure.
+    <p>In the situation where the update of these topologies fails, try the rollback procedure
+    again. If the rollback continues to fail after multiple attempts, then Apigee recommends that
+     you do a fresh install of the previous version.</p>
+  </aside>
+
+  <ol>
+    <li>Make sure the new standby Postgres node is running:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-all status</pre>
+      <p>If Postgres is not running, start it:</p>
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-all start</pre>
+    </li>
+    <li>Make sure Postgres is stopped on the old master node and old standby node:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-all status</pre>
+      <p>If Postgres is running, stop it:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-postgres-server stop &gt; /opt/apigee/apigee-service/bin/apigee-service apigee-postgresql stop</pre>
+    </li>
+    <li>If installed, start Qpid on the old standby node:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-qpid-server start</pre>
+      <aside class="note"><strong>Note</strong>: In many configurations, the old standby node will
+      only be hosting Postgres but not Qpid.</aside>
+    </li>
+    <li>Promote the new standby node as the Postgres master:
+      <ol>
+        <li>Promote the new standby node to be the <strong>new master</strong>:
+          <pre class="devsite-terminal">apigee-service apigee-postgresql promote-standby-to-master <var>new_standby_IP</var></pre>
+          <p>If prompted, enter the Postgres password for the 'apigee' user, which defaults to
+          "postgres".</p>
+        </li>
+        <li>Edit the config file that you used to install your current version of Edge to specify
+          the following:
+          <pre># IP address of the <strong>new master</strong>:
+PG_MASTER=<var>new_standby_IP</var>
+# IP address of the <strong>old standby</strong> node
+PG_STANDBY=<var>old_standby_IP</var></pre>
+        </li>
+        <li>Configure the <strong>new master</strong>:<br>
+          <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-postgresql setup-replication-on-master -f <var>configFile</var></pre>
+        </li>
+      </ol>
+    </li>
+    <li>Rebuild the old standby node:
+      <ol>
+        <li>Edit the config file that you used to install your current version of Edge to specify
+          the following:
+          <pre># IP address of the <strong>new master</strong>:
+PG_MASTER=<var>new_standby_IP</var>
+# IP address of the <strong>old standby</strong> node
+PG_STANDBY=<var>old_standby_IP</var></pre>
+        </li>
+        <li>Remove data directory on the old standby node:
+          <pre class="devsite-terminal">cd /opt/apigee/data/apigee-postgresql/pgdata &gt; rm -rf *</pre>
+        </li>
+        <li>Reconfigure the old standby node to be a standby node of the new master:
+          <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-postgresql setup-replication-on-standby -f <var>configFile</var></pre>
+        </li>
+        <li>Make sure Postgres is running on the old standby node:
+          <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-all status</pre>
+          <p>If it is not running, start it:</p>
+          <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-postgres-server start</pre>
+        </li>
+      </ol>
+    </li>
+    <li>Verify that the new standby node was added by viewing the
+      <code>/opt/apigee/apigee-postgresql/conf/pg_hba.conf</code> file on the new master.
+    </li>
+    <li>View the current analytics and consumer group information by running the following command
+    on the Management Server:
+    <pre class="devsite-terminal">curl -u <var>sysAdminEmail:password</var> http://<var>ms_IP</var>:8080/v1/analytics/groups/ax</pre>
+    <p>This command returns the analytics group name in the <code>name</code> field, and the
+    consumer group name in the <code>name</code> field under <code>consumer-groups</code>. It also
+    returns the UUIDs of the old Postgres master and standby nodes in the
+    <code>postgres-server</code> field, and in the <code>datastores</code> field. You should see
+    output in the form:
+    <pre class="prettyprint">{
+  <strong>"name" : "axgroup-001",</strong>
+  "properties" : {
+  },
+  "scopes" : [ "VALIDATE~test", "sgilson~prod" ],
+  "uuids" : {
+    "qpid-server" : [ "8381a053-433f-4382-bd2a-100fd37a1592", "4b6856ec-ef05-498f-bac6-ef5f0d5f6521" ],
+    <strong>"postgres-server" : [
+      "ab1158bd-1d59-4e2a-9c95-24cc2cfa6edc:27f90844-efab-4b32-8a23-8f85cdc9a256"
+    ]</strong>
+  },
+  <strong>"consumer-groups" : [ {
+    "name" : "consumer-group-001",</strong>
+    "consumers" : [ "8381a053-433f-4382-bd2a-100fd37a1592", "4b6856ec-ef05-498f-bac6-ef5f0d5f6521" ],
+    "datastores" :
+      <strong>[ "ab1158bd-1d59-4e2a-9c95-24cc2cfa6edc:27f90844-efab-4b32-8a23-8f85cdc9a256" ],</strong>
+      "properties" : {     }
+    }
+  ],
+  "data-processors" : {
+  }
+}</pre>
+    </li>
+    <li>Get the UUID address of the old master by running the following <code>curl</code> command on
+      the old master node:
+      <pre class="devsite-terminal">curl -u <var>sysAdminEmail:password</var> http://<var>node_IP</var>:8084/v1/servers/self</pre>
+      <p>You should see the UUID of the node at the end of the output, in the form:</p>
+      <pre>"type" : [ "postgres-server" ],
+<strong>"uUID" : "599e8ebf-5d69-4ae4-aa71-154970a8ec75"</strong></pre>
+      <aside class="note"><strong>Note</strong>: The <code>edge-postgres-server</code> service must
+        be running. If the Postgres server is not running, you can run the following command on the
+        Management Server to determine the UUID:
+        <pre class="devsite-terminal">curl -u <var>sysAdminEmail:password</var> http://<var>ms_IP</var>:8080/v1/servers?pod=analytics</pre>
+        <p>The output of this command lists the UUID for the IP address of each Postres node.</p>
+      </aside>
+    </li>
+    <li>Repeat previous step to get the IP addresses of the old standby node and the new
+      master.</li>
+    <li>Remove old master and standby nodes from the consumer group:
+      <pre class="devsite-terminal">curl -u <var>sysAdminEmail:password</var> -X DELETE \
+  "http://<var>ms_IP</var>:8080/v1/analytics/groups/ax/<var>axgroup-001</var>/consumer-groups/<var>consumer-group-001</var>/datastores/<var>masterUUID,standbyUUID</var>" -v</pre>
+      <p>Where <var>axgroup-001</var> and <var>consumer-group-001</var> are the default names of the
+      analytics and consumer groups. <var>masterUUID,standbyUUID</var> are in the same order as they
+      appeared above when you viewed the current analytics and consumer group information above. You
+      might have to specify them as <var>standbyUUID,masterUUID</var>.</p>
+      <p>The <code>datastores</code> property for <code>consumer-groups</code> should now be
+      empty.</p>
+    </li>
+    <li>Remove the old master and standby nodes from the analytics group:
+      <pre class="devsite-terminal">curl -u <var>sysAdminEmail:password</var> -X DELETE \
+  "http://<var>ms_IP</var>:8080/v1/analytics/groups/ax/<var>axgroup-001</var>/servers?uuid=<var>masterUUID,standbyUUID</var>&amp;type=postgres-server" -v</pre>
+      <p>The <code>postgres-server</code> property under <code>uuids</code> should now be empty.</li>
+    <li>Register new PG master and standby nodes with the analytics and consumer groups:<br>
+      <pre class="devsite-terminal">curl -u <var>sysAdminEmail:password</var> -X POST -H "Content-Type: application/json" -d ''
+  "http://<var>ms_IP</var>:8080/v1/analytics/groups/ax/<var>axgroup-001</var>/servers?uuid=<var>masterUUID,standbyUUID</var>&amp;type=postgres-server" -v
+<code class="devsite-terminal">curl -u <var>sysAdminEmail:password</var> -X POST -H "Content-Type:application/json" -d ''
+  "http://<var>ms_IP</var>:8080/v1/analytics/groups/ax/<var>axgroup-001</var>/consumer-groups/<var>consumer-group-001</var>/datastores?uuid=<var>masterUUID,standbyUUID</var>" -v</code></pre>
+  </li>
+    <li>Validate the analytics group:
+      <pre class="devsite-terminal">curl -u <var>sysAdminEmail:password</var> http://<var>ms_IP</var>:8080/v1/analytics/groups/ax</pre>
+      <p>You should see the UUIDs of the new master and standby nodes listed in the analytics group
+      and the consumer group.</p>
+    </li>
+    <li>Restart the Edge Management Server:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-management-server restart</pre>
+    </li>
+    <li>Restart all Qpid servers:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-qpid-server restart</pre>
+    </li>
+    <li>Restart all Postgres servers:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-postgres-server restart</pre>
+    </li>
+    <li>Verify the replication status by issuing the following scripts on both servers. The system
+      should display identical results on both servers to ensure a successful replication:
+      <p>On the new master, run:</p>
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-postgresql postgres-check-master</pre>
+      <p>Validate that it says it is the master. On the old standby node:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-postgresql postgres-check-standby</pre>
+      <p>Validate that it says it is the standby.</p>
+    </li>
+    <li>Repeat the previous step after making several API requests to ensure that the nodes are in
+      synch.</li>
+    <li>Decommission the old Postgres master using the procedure in
+      <a href="/private-cloud/v4.17.09/update-apigee-edge-4160141605-41709">Update Apigee Edge
+      4.16.01/4.16.05 to 4.17.09</a>.
+      <aside class="note"><strong>Note</strong>: If the old master node was running Qpid, you can
+        leave that server up to run Qpid. Ensure that it is running. If not, start it:
+        <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-management-server start</pre>
+      </aside>
+      <p>Alternatively, you can <a href="#uninstall-qpid">uninstall Qpid from the old master and
+      install Qpid on the new master node</a>. After uninstalling Qpid, you can decommission the
+      old master node.</p>
+    </li>
+  </ol>
+
+  <h3 id="uninstall-qpid">Uninstall Qpid from the old master and install Qpid on the new master</h3>
+
+  <p>To uninstall Qpid from the old master and install it on the new master:</p>
+
+  <ol>
+    <li>Block access to Qpid port 5672 on the old master from access by Message Processors by
+      running the following command on all Message Processors:
+      <pre class="devsite-terminal">iptables -A OUTPUT -p tcp -d 10.233.147.20 --dport 5672 -j DROP</pre>
+    </li>
+    <li>Ensure that the Qpid message queue is empty by running the following command. You cannot
+      uninstall Qpid until it has processed all pending messages:
+      <pre class="devsite-terminal">qpid-stat -q</pre>
+      <p>This command displays a table containing a count for <code>msg, msgIn, and msgOut</code>.
+      All messages will have been processed when <code>msg=0</code>,
+      and <code>msgIn=msgOut</code>.</p>
+    </li>
+    <li>Determine the UUID of the Qpid server on the old master by running the following command on
+      the old master. Save this information for later in the procedure:
+      <pre class="devsite-terminal">curl -u <var>sysAdminEmail:password</var> http://<var>node_IP</var>::8083/v1/servers/self</pre>
+    </li>
+    <li>Stop Qpid on the old master:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-qpid-server stop
+<code class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-qpidd stop</code></pre>
+    </li>
+    <li>Uninstall Qpid server:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-qpid-server uninstall
+<code class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-qpidd uninstall</code></pre>
+    </li>
+    <li>Remove the old Qpid server from the analytics and consumer groups:
+      <pre class="devsite-terminal">curl -u <var>sysAdminEmail:password</var> -X DELETE -H "Content-Type: application/json" -d '' \
+  "http://<var>ms_IP</var>:8080/v1/analytics/groups/ax/<var>axgroup-001</var>/consumer-groups/<var>consumer-group-001/consumers</var>/<var>qpid_UUID</var>" -v
+<code class="devsite-terminal">curl -u <var>sysAdminEmail:password</var> -X DELETE \
+  "http://<var>ms_IP</var>:8080/v1/analytics/groups/ax/<var>axgroup-001</var>/servers?uuid=<var>qpid_UUID</var>&amp;type=qpid-server" -v</code></pre>
+    </li>
+    <li>Remove the old Qpid server from Zookeeper:
+      <pre class="devsite-terminal">curl -u <var>sysAdminEmail:password</var> -X DELETE \
+  http://<var>ms_IP</var>:8080/v1/servers/<var>qpid_UUID</var></pre>
+    </li>
+    <li>Install Qpid on the new master:
+      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/setup.sh -p qs -f <var>configFile</var></pre>
+    </li>
+    <li>Determine the UUID of the Qpid server on the new master by running the following command on
+      the new master. Save this information for later in the procedure:
+      <pre class="devsite-terminal">curl -u <var>sysAdminEmail:password</var>
+  http://<var>node_IP</var>::8083/v1/servers/self</pre>
+    </li>
+    <li>Register the new Qpid server with the analytics and consumer groups:
+      <pre class="devsite-terminal">curl -u <var>sysAdminEmail:password</var> -X POST -H "Content-Type: application/json" -d '' \
+  "http://<var>ms_IP</var>:8080/v1/analytics/groups/ax/<var>axgroup-001</var>/servers?uuid=<var>qpid_UUID</var>&amp;type=qpid-server" -v
+<code class="devsite-terminal">curl -u <var>sysAdminEmail:password</var> -X POST -H "Content-Type:application/json" -d '' \
+  "http://<var>ms_IP</var>:8080/v1/analytics/groups/ax/<var>axgroup-001</var>/consumer-groups/<var>consumer-group-001</var>/consumers?uuid=<var>qpid_UUID</var>" -v</code></pre>
+    </li>
+    <li>Restart all Message Processors:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-message-processor restart</pre>
+    </li>
+    <li>Run the following command on the new Qpid server to check that queues were created:<br>
+      <pre class="devsite-terminal">qpid-stat -q</pre>
+      <p>Ensure that you see <code>msg</code>, <code>msgIn</code>, and <code>msgOut</code> being
+      updated as the Qpid server processes messages.</p>
+    </li>
+  </ol>
+
+  <p>Contact {{support}} if you encounter issues when rolling back.</p>
+
+{% endblock %}

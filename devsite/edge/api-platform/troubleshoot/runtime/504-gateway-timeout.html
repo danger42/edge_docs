@@ -1,0 +1,872 @@
+  {% extends "_base.html" %} {% block title %}504 Gateway Timeout{% endblock %} {% block body %}
+
+<aside class="note">Was this troubleshooting playbook helpful? Please let us know
+  by clicking <a href="" class="google-feedback"
+   data-p="1636213" data-b="docsite" data-context="troubleshooting-feedback">
+  Send Feedback
+</a>.</aside>
+
+  <h2 id="symptom">Symptom</h2>
+
+  <p>The client application receives an HTTP status code of <strong>504</strong> with the message
+  <strong>"Gateway Timeout"</strong> as a response for the API calls.</p>
+
+  <p>The HTTP status code - <strong>504 Gateway Timeout</strong> error indicates that the client
+  did not receive a timely response from the Edge Gateway or backend server during the execution of
+  an API</p>
+
+  <h2 id="error-messages">Error Messages</h2>
+
+  <p>Client application gets the following response code:</p>
+  <pre class="prettyprint">
+HTTP/1.1 504 Gateway Timeout
+</pre>
+
+  <p>In some cases, the following error message may also be observed:</p>
+  <pre class="prettyprint">
+{
+   "fault": {
+      "faultstring": "Gateway Timeout", 
+      "detail": {
+           "errorcode": "messaging.adaptors.http.flow.GatewayTimeout"
+       }
+    }
+}
+</pre>
+
+  <h2 id="how-does-the-timeout-occur">What causes gateway timeouts?</h2>
+
+  <p>Typical path for an API request via the Edge platform will be <strong>Client -&gt; Router
+  -&gt; Message Processor -&gt; Backend Server</strong> as shown in the below figure:</p>
+
+  <p><img alt="" src="/api-platform/images/TS-IMG-4-3-b.png"></p>
+
+  <p>The client application, routers, and Message Processors within Edge platform are set up with
+  suitable timeout values. The Edge platform expects a response to be sent within a certain period
+  of time for every API request based on the timeout values. If you don't get the response within
+  the specified period of time, then <strong>504 Gateway Timeout Error</strong> is returned.</p>
+
+  <p>The following table provides more details about when timeouts may occur in Edge:</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <td><strong>Timeout Occurrence</strong></td>
+
+        <td><strong>Details</strong></td>
+      </tr>
+
+      <tr>
+        <td>Timeout occurs on Message Processor</td>
+
+        <td>
+          <ul>
+            <li>Backend server does not respond to the Message Processor within a specified timeout
+            period on the Message Processor.</li>
+
+            <li>Message Processor times out and sends the response status as <strong>504 Gateway
+            Timeout</strong> to the Router.</li>
+          </ul>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Timeout occurs on Router</td>
+
+        <td>
+          <ul>
+            <li>Message Processor does not respond to the router within the specified timeout
+            period on the Router.</li>
+
+            <li>Router times out and sends the response status as <strong>504 Gateway
+            Timeout</strong> to the client application<strong>.</strong></li>
+          </ul>
+        </td>
+      </tr>
+
+      <tr>
+        <td>Timeout occurs on client application</td>
+
+        <td>
+          <ul>
+            <li>Router does not respond to the client application within the specified timeout
+            period on the router.</li>
+
+            <li>The Client application times out and ends the response status as <strong>504
+            Gateway Timeout</strong> to the end user<strong>.</strong></li>
+          </ul>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="causes">Possible Causes</h2>
+
+  <p>In Edge, the typical causes for 504 Gateway Timeout error are:</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <td><strong>Cause</strong></td>
+
+        <td><strong>Details</strong></td>
+
+        <td>Steps Given For</td>
+      </tr>
+
+      <tr>
+        <td><a href="#slowbackendserver">Slow Backend Server</a></td>
+
+        <td>The backend server that is processing the API request is too slow due to high load or
+        poor performance.</td>
+
+        <td>Public and Private Cloud users</td>
+      </tr>
+
+      <tr>
+        <td><a href="#slowapiprocessing">Slow API Proxy processing by Edge</a></td>
+
+        <td>Edge takes a long time to process the API request due to high load or poor
+        performance.</td>
+
+        <td> </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="slow-backend-server"><strong><a id="slowbackendserver" name="slowbackendserver"></a>Slow
+  Backend Server</strong></h2>
+
+  <p>If the backend server is very slow and/or taking a long time to process the API request, then
+  you will get a 504 Gateway Timeout error. As explained in the section above, the timeout can
+  occur under one of the following scenarios:</p>
+
+  <ol>
+    <li>Message Processor times out before backend server responds.</li>
+
+    <li>Router times out before Message Processor/backend server responds.</li>
+
+    <li>Client application times out before Router/Message Processor/backend server responds.</li>
+  </ol>
+
+  <p>The following sections describe how to diagnose and resolve the issue under each of these
+  scenarios.</p>
+
+  <h3 id="scenario-#1-message-processor-times-out-before-backend-server-responds">Scenario #1
+  Message Processor times out before Backend Server responds</h3>
+
+  <h4 id="steps-to-diagnose">Diagnosis</h4>
+
+  <p>You can use the following procedures to diagnose if the 504 Gateway Timeout error has occurred
+  because of the slow backend server.</p>
+
+  <h4 id="procedure-#1-using-trace">Procedure #1 Using Trace</h4>
+
+  <aside class="note"><b>Note:</b> Both Private and Public Cloud users can perform these
+  steps.</aside>
+
+  <p>If the issue is still active (504 Errors are still happening), then follow the below
+  steps:</p>
+
+  <ol>
+    <li>Trace the affected API in Edge UI. Either wait for the error to occur or if you have the
+    API call, then make some API calls and reproduce the 504 Gateway Timeout Error.</li>
+
+    <li>Once the error has occurred, examine the specific request which shows the response code as
+    504.</li>
+
+    <li>Check the elapsed time at each phase and make a note of the phase where most time is
+    spent.</li>
+
+    <li>If you observe the "Error" with the longest elapsed time immediately after one of the
+    following phases, then it indicates that the backend server is slow or taking a long time to
+    process the request:
+
+      <ul>
+        <li>"Request sent to target server"</li>
+
+        <li>Service Callout policy</li>
+      </ul>
+    </li>
+  </ol>
+
+  <p>The following provides a sample Trace showing that the backend server did not respond even
+  after 55 seconds resulting in a 504 Gateway Timeout Error:</p>
+
+  <p><img alt="" src="/api-platform/images/TS-IMG-4-4b.png"></p>
+
+  <p>In the above trace, the Message Processor times out after 55002 ms as the backend server does
+  not respond.</p>
+
+  <h3 id="procedure-#2-using-message-processor-logs">Procedure #2 Using Message Processor Logs</h3>
+
+  <aside class="note"><b>Note:</b> Only Private Cloud users can perform these steps.</aside>
+
+  <ol>
+    <li>Check the Message Processor's log
+    (<code>/opt/apigee/var/log/edge-message-processor/logs/system.log</code>)</li>
+
+    <li>If you find "Gateway Timeout" and "onTimeoutRead" errors for the specific API proxy request
+    at the specific time, then it indicates that the Message Processor has timed out.
+
+      <p><strong>Sample Message Processor log showing Gateway Timeout Error</strong></p>
+      <pre class="prettyprint">
+2015-09-29 20:16:54,340 org:myorg env:staging api:profiles rev:13 NIOThread@1
+ERROR ADAPTORS.HTTP.FLOW - AbstractResponseListener.onException() :
+AbstractResponseListener.onError(HTTPResponse@4d898cf1, Gateway
+Timeout) 
+2015-09-29 20:16:57,361 org:myorg env:staging api:profileNewsletters rev:8
+NIOThread@0 ERROR HTTP.CLIENT - HTTPClient$Context$3.onTimeout() :
+SSLClientChannel[C:XX.XX.XX.XX:443 Remote
+host:192.168.38.54:38302]@120171 useCount=2 bytesRead=0
+bytesWritten=824 age=55458ms lastIO=55000ms .onTimeoutRead
+</pre>
+
+      <p>In the above Message Processor log, you notice that the backend server denoted with the IP
+      address XX.XX.XX.XX did not respond even after 55 seconds (<strong>lastIO=55000ms</strong>).
+      As a result, the Message Processor timed out and sent 504 Gateway Timeout Error.</p>
+
+      <table>
+        <tbody>
+          <tr>
+            <td width="735">
+              <h4>Check This: How is timeout controlled on Message Processor?</h4>
+
+              <ul>
+                <li>How is timeout controlled on Message Processor Message Processors are usually
+                set with a <strong>default timeout value</strong> of 55 seconds) via the property
+                "<strong>HTTPTransport.io.timeout.millis</strong>". This timeout value is
+                applicable for all the API Proxies that belong to an organization served by this
+                Message Processor.
+
+                  <ul>
+                    <li>If the backend server does not respond within 55 seconds, then the Message
+                    Processor times out and sends 504 Gateway Timeout error to the client.</li>
+                  </ul>
+                </li>
+
+                <li>The timeout value specified in the Message Processor can be
+                <strong>overridden</strong> by the property "<strong>io.timeout.millis</strong>"
+                specified within the API Proxy. This timeout value is applicable to a specific API
+                Proxy in which the above mentioned property is specified. For example, if the
+                <strong>io.timeout.millis</strong> is set to 10 seconds within the API Proxy, then
+                the timeout value of 10 seconds will be used for this specific API Proxy.
+
+                  <ul>
+                    <li>If the backend server does not respond within 10 seconds for the specific
+                    API Proxy, then the Message Processor times out and sends 504 Gateway Timeout
+                    error to the client.</li>
+                  </ul>
+                </li>
+              </ul>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      
+    </li>
+  </ol>
+
+  <h4 id="resolution">Resolution</h4>
+
+  <ol>
+    <li>Check why the backend server is taking more than 55 seconds and see if it can be
+    fixed/optimized to respond faster.</li>
+
+    <li>If it is not possible to fix/optimize the backend server or it is known that the backend
+    server takes a longer time than the configured timeout, then <a href=
+    "https://docs.google.com/document/d/1rZTsu5Bz5sFstEcO0hIhBXj_2SGgvpHa9Y8O7s5sx7w/edit#heading=h.o1z61lvr3fel">
+    Increase the timeout value on Router and Message Processor</a> to a suitable value. Only
+    Private Cloud users can perform this step. If you are on Public Cloud, contact <a href=
+    "https://support.apigee.com">Apigee Support</a> for assistance.</li>
+  </ol>
+
+  <h3 id="scenario-#2-router-times-out-before-message-processor-backend-server-responds">Scenario
+  #2 - Router times out before Message Processor/Backend Server responds</h3>
+
+  <aside class="note"><b>Note:</b> Only Private Cloud users can perform the following
+  steps.</aside>
+
+  <p>You might get 504 Gateway Timeout Errors if the router times out before the Message
+  Processor/backend server responds. This can happen under one of the following circumstances:</p>
+
+  <ul>
+    <li>The timeout value set on the Router is shorter than the timeout value set on the Message
+    Processor. For example, let's say the timeout on Router is 50 seconds, while the Message
+    Processor is 55 seconds.
+
+      <table>
+        <tbody>
+          <tr>
+            <td><strong>Timeout on Router</strong></td>
+
+            <td><strong>Timeout on Message Processor</strong></td>
+          </tr>
+
+          <tr>
+            <td>50 seconds</td>
+
+            <td>55 seconds</td>
+          </tr>
+        </tbody>
+      </table>
+    </li>
+
+    <li>The timeout value on the Message Processor is overridden with a higher timeout value using
+    the <strong>"io.timeout.millis"</strong> property set within the target endpoint configuration
+    of the API Proxy:
+
+      <p>For example, if the following timeout values are set:</p>
+
+      <table>
+        <tbody>
+          <tr>
+            <td><strong>Timeout on Router</strong></td>
+
+            <td><strong>Timeout on Message Processor</strong></td>
+
+            <td><strong>Timeout within API Proxy</strong></td>
+          </tr>
+
+          <tr>
+            <td>57 seconds</td>
+
+            <td>55 seconds</td>
+
+            <td>120 seconds</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p>But the <strong>io.timeout.millis</strong> is set to 120 seconds in the API Proxy:</p>
+      <pre class="prettyprint">
+&lt;HTTPTargetConnection&gt;
+     &lt;Properties&gt;
+          &lt;Property name="io.timeout.millis"&gt;120000&lt;/Property&gt;
+      &lt;/Properties&gt;
+      &lt;URL&gt;http://www.apigee.com&lt;/URL&gt;
+&lt;/HTTPTargetConnection&gt;
+</pre>
+
+      <p>Then, the Message Processor will not timeout after 55 seconds even though it's timeout
+      value (55 seconds) is less than the timeout value on the router (57 seconds). This is because
+      the timeout value of 55 seconds on the Message Processor is overridden by the the value of
+      120 seconds that is set within the API Proxy. So the timeout value of the Message Processor
+      for this specific API Proxy will be 120 seconds.</p>
+
+      <p>Since the Router has a lower timeout value (57 seconds) compared to 120 seconds set within
+      the API Proxy, the router will timeout if the backend server does not respond back after 57
+      seconds.</p>
+    </li>
+  </ul>
+
+  <h4 id="steps-to-diagnose">Diagnosis</h4>
+
+  <ol>
+    <li>Check the Nginx access log
+    (<code>/opt/apigee/var/log/edge-router/nginx/&lt;org&gt;~&lt;env&gt;.&lt;port#&gt;_access_log</code>)</li>
+
+    <li>If the router times out before the Message Processor, then you will see the status of 504
+    on the Nginx access logs for the specific API request and the <strong>message id</strong> from
+    the Message Processor will be set as "-". This is because the Router didn't get any response
+    from the Message Processor within the timeout period set on the router.
+
+      <p><strong>Sample Nginx Log Entry showing 504 due to Router timing out</strong></p>
+
+      <p><img alt="" src="/api-platform/images/TS-IMG-4-8b.png"></p>
+    </li>
+
+    <li>In the above example, notice the status of 504 on Nginx, the message id from the Message
+    Processor is "-" and total time elapsed is 57.001 seconds. This is because the router timed out
+    after 57.001 seconds and we didn't get any response from the Message Processor.</li>
+
+    <li>In this case, you will see <strong>"Broken Pipe"</strong> Exceptions in the Message
+    Processor logs (<code>/opt/apigee/var/log/edge-message-processor/logs/system.log).</code>
+      <pre class="prettyprint">
+2017-06-09 00:00:25,886 org:myorg env:test api:myapi-v1 rev:23 messageid:rrt-mp01-18869-23151-1  NIOThread@1 INFO  HTTP.SERVICE - ExceptionHandler.handleException() : Exception java.io.IOException: Broken pipe occurred while writing to channel ClientOutputChannel(ClientChannel[A:XX.XX.XX.XX:8998 Remote host:YY.YY.YY.YY:51400]@23751 useCount=1 bytesRead=0 bytesWritten=486 age=330465ms  lastIO=0ms )
+2017-06-09 00:00:25,887  org:myorg env:test api:myapi-v1 rev:23 messageid:rrt-mp01-18869-23151-1  NIOThread@1 INFO  HTTP.SERVICE - ExceptionHandler.handleException() : Exception trace:
+java.io.IOException: Broken pipe
+        at com.apigee.nio.channels.ClientOutputChannel.writePending(ClientOutputChannel.java:51) ~[nio-1.0.0.jar:na]
+        at com.apigee.nio.channels.OutputChannel.onWrite(OutputChannel.java:116) ~[nio-1.0.0.jar:na]
+        at com.apigee.nio.channels.OutputChannel.write(OutputChannel.java:81) ~[nio-1.0.0.jar:na]
+         &#8230; &lt;snipped&gt;
+</pre>
+    </li>
+  </ol>
+
+  <p>This error is displayed because once the router times out, it closes the connection with the
+  Message Processor. When the Message Processor completes its processing, it attempts to write the
+  response to the router. Since the connection to the router is already closed, you get the
+  <strong>Broken Pipe exception</strong> on the Message Processor.</p>
+
+  <p>This exception is expected to be seen under the circumstances explained above. So the actual
+  cause for the 504 Gateway Timeout error is still the backend server taking longer time to respond
+  and you need to address that issue.</p>
+
+  <h4 id="resolution">Resolution</h4>
+
+  <ol>
+    <li>If it's a custom backend server, then
+
+      <ol>
+        <li>Check why the backend server is taking a long time to respond and see if it can be
+        fixed/optimized to respond faster.</li>
+
+        <li>If it is not possible to fix/optimize the backend server or it is a known fact that the
+        backend server takes a long time, then <a href=
+        "#increase-the-timeout-value-on-router-and-message-processor">Increase the timeout value on
+        Router and Message Processor</a>.
+
+          <table>
+            <tbody>
+              <tr>
+                <td width="792">
+                  <h4>Idea: Set the timeout value on the different components in the following
+                  order:</h4>
+
+                  <p><strong>Timeout on Client &gt; Timeout on Router &gt; Timeout on Message
+                  Processor &gt; Timeout within API Proxy</strong></p>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </li>
+      </ol>
+    </li>
+
+    <li>If it's a NodeJS backend server, then:
+
+      <ol>
+        <li>Check if the NodeJS code makes calls to any other backend server(s) and if it's taking
+        a long time to return a response. Check why the backend server(s) is taking longer time and
+        fix the problem as appropriate.</li>
+
+        <li>Check if the Message Processor(s) is experiencing high CPU or Memory usage:
+
+          <ol>
+            <li>If any Message Processor is experiencing high CPU usage, then generate three
+            <a href=
+            "https://docs.google.com/document/d/19b8MqMH9PSwqIK4Uj6gELLA8nNZeNaczROBi5Bpq7mg/edit#heading=h.aqgmb6oiggg3">
+              thread dumps</a> every 30 seconds using the following command:
+              <pre class="prettyprint">
+&lt;JAVA_HOME&gt;/bin/jstack -l &lt;pid&gt; &gt; &lt;filename&gt;
+            
+</pre>
+            </li>
+
+            <li>If any Message Processor is experiencing high memory usage then generate a
+              <a href="https://docs.google.com/document/d/19b8MqMH9PSwqIK4Uj6gELLA8nNZeNaczROBi5Bpq7mg/edit#heading=h.w29jvrr9wkvf">
+              heap dump</a> using the following command:
+              <pre class="prettyprint">
+sudo -u apigee &lt;JAVA_HOME&gt;/bin/jmap -dump:live,format=b,file=&lt;filename&gt; &lt;pid&gt;
+                
+</pre>
+            </li>
+
+            <li>Restart the Message Processor using the below command. It should bring down the CPU
+            and Memory:
+              <pre class="prettyprint">
+/opt/apigee/apigee-service/bin/apigee-service edge-message-processor restart
+                    
+</pre>
+            </li>
+
+            <li>Monitor the API calls to confirm if the problem still exists.</li>
+
+            <li>Contact <a href="https://support.apigee.com/">Apigee Support</a> and provide the
+            thread dumps, heap dump, and Message Processor logs
+            (<code>/opt/apigee/var/log/edge-message-processor/logs/system.log)</code>to help
+            investigate the cause for the high CPU/memory usage.</li>
+          </ol>
+        </li>
+      </ol>
+    </li>
+  </ol>
+
+  <table>
+    <tbody>
+      <tr>
+        <td>
+          <h4>Check This: How is timeout controlled for NodeJS backend servers on Message
+          Processor</h4>
+
+          <ul>
+            <li>The NodeJS backend server runs within the JVM process of Message Processor. The
+            timeout value for NodeJS backend servers is controlled via the property
+            "<strong>http.request.timeout.seconds</strong>" in nodejs.properties file. This
+            property is set to 0 by default i.e., the timeout is disabled by default for all the
+            API Proxies that belong to an organization served by this Message Processor. So even if
+            a NodeJS backend server takes long time, the Message Processor will not timeout.</li>
+
+            <li>However, if the NodeJS backend server takes long and if the time taken by the API
+            request is &gt; 57 seconds, then the Router will timeout and sends 504 Gateway Timeout
+            Error to the client.</li>
+          </ul>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  
+
+  <h3 id=
+  "slowbackendserver-scenario3clientapplicationtimesoutbeforeroutermessageprocessorbackendserverresponds">
+  <strong>Scenario #3 - Client Application times out before Router/Message Processor/Backend Server
+  responds</strong></h3>
+
+  <aside class="note"><b>Note:</b> Only Private Cloud users can perform these steps.</aside>
+
+  <p>You might get 504 Gateway Timeout Errors if the client application times out before the
+  backend server responds. This situation can happen if:</p>
+
+  <ol>
+    <li>The timeout value set on the client application is lower than the timeout value set on the
+    router and Message Processor:
+
+      <p>For example, if the following timeout values are set:</p>
+
+      <table>
+        <tbody>
+          <tr>
+            <td><strong>Timeout on Client</strong></td>
+
+            <td><strong>Timeout on Router</strong></td>
+
+            <td><strong>Timeout on Message Processor</strong></td>
+          </tr>
+
+          <tr>
+            <td>50 seconds</td>
+
+            <td>57 seconds</td>
+
+            <td>55 seconds</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p>In this case, the total time available to get a response for an API request through Edge
+      is &lt;= 50 seconds. This includes the time taken to make an API request, the request being
+      processed by Edge (Router, Message Processor), the request being sent to the backend server
+      (if applicable), backend processing the request and sending the response, Edge processing the
+      response and finally sending it back to the client.</p>
+
+      <p>If the router does not respond to the client within 50 seconds, then the client will
+      timeout and close the connection with the router. The client will get the response code of
+      504.</p>
+
+      <p>This will cause the Nginx to set a status code of 499 indicating the client closed the
+      connection.</p>
+
+      
+    </li>
+  </ol>
+
+  <h4><strong>Diagnosis</strong></h4>
+
+  <ol>
+    <li>If the client application times out before it gets a response from the router, then it will
+    close the connection with the router. In this situation, you will see a status code of 499 in
+    the Nginx access logs for the specific API request.
+
+      <p><strong>Sample Nginx Log Entry showing status code 499</strong><br>
+      <br>
+      <img alt="" src="/api-platform/images/TS-IMG-4-12b.png"></p>
+    </li>
+
+    <li>In the above example, note that the status of 499 on the Nginx and total time elapsed is
+    50.001 seconds. This indicates that the client timed out after 50.001 seconds.</li>
+
+    <li>In this case, you will see <strong>"Broken Pipe"</strong> Exceptions in the Message
+    Processor logs (<code>/opt/apigee/var/log/edge-message-processor/logs/system.log).</code><br>
+      <pre class="prettyprint">
+2017-06-09 00:00:25,886 org:myorg env:test api:myapi-v1 rev:23 messageid:rrt-1-11193-11467656-1  NIOThread@1 INFO  HTTP.SERVICE - ExceptionHandler.handleException() : Exception java.io.IOException: Broken pipe occurred while writing to channel ClientOutputChannel(ClientChannel[A:XX.XX.XX.XX:8998 Remote host:YY.YY.YY.YY:51400]@23751 useCount=1 bytesRead=0 bytesWritten=486 age=330465ms  lastIO=0ms )
+2017-06-09 00:00:25,887  org:myorg env:test api:myapi-v1 rev:23 messageid:rrt-1-11193-11467656-1  NIOThread@1 INFO  HTTP.SERVICE - ExceptionHandler.handleException() : Exception trace:
+java.io.IOException: Broken pipe
+        at com.apigee.nio.channels.ClientOutputChannel.writePending(ClientOutputChannel.java:51) ~[nio-1.0.0.jar:na]
+        at com.apigee.nio.channels.OutputChannel.onWrite(OutputChannel.java:116) ~[nio-1.0.0.jar:na]
+        at com.apigee.nio.channels.OutputChannel.write(OutputChannel.java:81) ~[nio-1.0.0.jar:na]
+         &#8230; &lt;snipped&gt;
+
+</pre>
+    </li>
+
+    <li>After the Router times out, it closes the connection with the Message Processor. When the
+    Message Processor completes its processing, it attempts to write the response to the Router.
+    Since the connection to the Router is already closed, you get the <strong>Broken Pipe
+    exception</strong> on the Message Processor.</li>
+
+    <li>This exception is expected under the circumstances explained above. So the actual cause for
+    the 504 Gateway Timeout error is still that the backend server takes a long time to respond and
+    you need to address that issue.</li>
+  </ol>
+
+  <h4 id="resolution">Resolution</h4>
+
+  <ol>
+    <li>If it's your custom backend server then:
+
+      <ol>
+        <li>Check the backend server to determine why it is taking more than 57 seconds and see if
+        it can be fixed/optimized to respond faster.</li>
+
+        <li>If it is not possible to fix/optimize the backend server or if you know that the
+        backend server will take a long time, then i<a href=
+        "#increase-the-timeout-value-on-router-and-message-processor">ncrease the timeout value on
+        router and Message Processor</a>.<br>
+          <br>
+
+          <table>
+            <tbody>
+              <tr>
+                <td width="789">
+                  <h4>Idea: Set the timeout value on the different components in the following
+                  order:</h4>
+
+                  <p><strong>Timeout on Client &gt; Timeout on Router &gt; Timeout on Message
+                  Processor &gt; Timeout within API Proxy</strong></p>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </li>
+      </ol>
+    </li>
+
+    <li>If it's a NodeJS backend, then:
+
+      <ol>
+        <li>Check if the NodeJS code makes calls to any other backend server(s) and if that's
+        taking a long time to return. Check why those backend server(s) is taking longer time.</li>
+
+        <li>Check if the Message Processor(s) is experiencing high CPU or memory usage:
+
+          <ol>
+            <li>If a Message Processor is experiencing high CPU usage, then generate three
+              <a href="https://docs.google.com/document/d/19b8MqMH9PSwqIK4Uj6gELLA8nNZeNaczROBi5Bpq7mg/edit#heading=h.aqgmb6oiggg3">
+              thread dumps</a> every 30 seconds using the following command:
+              <pre class="prettyprint">
+&lt;JAVA_HOME&gt;/bin/jstack -l &lt;pid&gt; &gt; &lt;filename&gt;
+</pre>
+            </li>
+
+            <li>If a Message Processor is experiencing high memory usage, then generate a
+              <a href="https://docs.google.com/document/d/19b8MqMH9PSwqIK4Uj6gELLA8nNZeNaczROBi5Bpq7mg/edit#heading=h.w29jvrr9wkvf">
+              heap dump</a> using the following command:
+              <pre class="prettyprint">
+sudo -u apigee &lt;JAVA_HOME&gt;/bin/jmap -dump:live,format=b,file=&lt;filename&gt; &lt;pid&gt;
+</pre>
+            </li>
+
+            <li>Restart the Message Processor using the below command. This should bring down the
+            CPU and Memory:
+              <pre class="prettyprint">
+/opt/apigee/apigee-service/bin/apigee-service edge-message-processor restart
+</pre>
+            </li>
+
+            <li>Monitor the API calls to confirm if the problem still exists.</li>
+
+            <li>Contact <a href="https://support.apigee.com/">Apigee Support</a> and provide the
+            thread dumps, heap dump, and Message Processor logs
+            (<code>/opt/apigee/var/log/edge-message-processor/logs/system.log)</code>to help them
+            investigate the cause for the high CPU/memory usage.</li>
+          </ol>
+        </li>
+      </ol>
+    </li>
+  </ol>
+
+  <h3 id="increase-the-timeout-value-on-router-and-message-processor">Increase the timeout value on
+  Router and Message Processor</h3>
+
+  <p>Choose the timeout values to be set on the Router and Message Processor carefully depending on
+  your requirements. Don't set arbitrarily large timeout values. If you need assistance, contact
+  <a href="https://support.apigee.com/">Apigee Support</a>.</p>
+
+  <h4 id="router">Router</h4>
+  <pre class="prettyprint">
+chown apigee:apigee /opt/apigee/customer/application/router.properties
+</pre>
+
+  <ol>
+    <li>Create the <code>/opt/apigee/customer/application/router.properties</code> file on the
+    Router machine, if it does not already exist.</li>
+
+    <li>Add the following line to this file:
+      <pre class="prettyprint">
+conf_load_balancing_load.balancing.driver.proxy.read.timeout=&lt;time in seconds&gt;
+</pre>
+
+      <p>For example, if you want to set the timeout value of 120 seconds, then set it as
+      follows:</p>
+      <pre class="prettyprint">
+conf_load_balancing_load.balancing.driver.proxy.read.timeout=120
+</pre>
+    </li>
+
+    <li>Ensure this file is owned by apigee:</li>
+
+    <li>Restart the router:
+      <pre class="prettyprint">
+/opt/apigee/apigee-service/bin/apigee-service edge-router restart
+</pre>
+    </li>
+
+    <li>If you have more than one router, repeat the above steps on all the routers.</li>
+  </ol>
+
+  <h4 id="message-processor">Message Processor</h4>
+
+  <ol>
+    <li>Create <code>/opt/apigee/customer/application/message-processor.properties</code> file on
+    the Message Processor machine, if it does not already exist.</li>
+
+    <li>Add the following line to this file:
+      <pre class="prettyprint">
+conf_http_HTTPTransport.io.timeout.millis=&lt;time in milliseconds&gt;
+</pre>
+
+      <p>For example, if you want to set the timeout value of 120 seconds, then set it as
+      follows:</p>
+      <pre class="prettyprint">
+conf_http_HTTPTransport.io.timeout.millis=120000
+</pre>
+    </li>
+
+    <li>Ensure this file is owned by apigee:
+      <pre class="prettyprint">
+chown apigee:apigee /opt/apigee/customer/application/message-processor.properties 
+</pre>
+    </li>
+
+    <li>Restart the Message Processor:
+      <pre class="prettyprint">
+/opt/apigee/apigee-service/bin/apigee-service edge-message-processor restart
+  
+</pre>
+    </li>
+
+    <li>If you have more than one Message Processor, repeat the above steps on all the Message
+    Processors.</li>
+  </ol>
+
+  <table>
+    <tbody>
+      <tr>
+        <td width="772">
+          <h4>Idea: Set the timeout value on the different components in the following order:</h4>
+
+          <p><strong>Timeout on Client &gt; Timeout on Router &gt; Timeout on Message Processor
+          &gt; Timeout within API Proxy</strong></p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  
+
+  <h2 id="slow-api-request-processing-by-edge"><strong><a id="slowapiprocessing" name=
+  "slowapiprocessing"></a>Slow API Request Processing by Edge</strong></h2>
+
+  <p>If Edge is very slow and/or taking a long time to process the API request, then you will get a
+  504 Gateway Timeout error.</p>
+
+  <h3 id="steps-to-diagnose">Diagnosis</h3>
+
+  <ol>
+    <li>Trace the affected API in Edge UI.</li>
+
+    <li>Either wait for the error to occur or if you have the API call, then make some API calls
+    and reproduce the 504 Gateway Timeout Error.</li>
+
+    <li>Note, in this case, you may see a successful response in the Trace.
+
+      <ol>
+        <li>The Router/client times out as the Message Processor does not respond back within the
+        specified timeout period on the Router/client (whichever has the lowest time out period).
+        However, the Message Processor continues to process the request and may complete
+        successfully.</li>
+
+        <li>In addition, the <strong>HTTPTransport.io.timeout.millis</strong> value set on the
+        Message Processor triggers only if the Message Processor communicates with a HTTP/HTTPS
+        backend server. In other words, this timeout will not get triggered when any policy (other
+        than Service Callout policy) within API Proxy is taking a long time.</li>
+      </ol>
+    </li>
+
+    <li>After the error has occurred, examine the specific request that has the <strong>longest
+    elapsed time</strong>.</li>
+
+    <li>Check the elapsed time at each phase and make a note of the phase where the most time is
+    spent.</li>
+
+    <li>If you observe the longest elapsed time in any of the policies other than the Service
+    Callout policy, then that indicates that Edge is taking a long time to process the
+    request.</li>
+
+    <li>Here's a sample UI trace showing very high elapsed time on JavaScript Policy:
+
+      <p><img alt="" src="/api-platform/images/TS-IMG-4-16.png" width="600"></p>
+    </li>
+
+    <li>In the above example, you notice that the JavaScript policy takes an abnormally long amount
+    of time of ~ 245 seconds.</li>
+  </ol>
+
+  <h3 id="resolution">Resolution</h3>
+
+  <ol>
+    <li>Check if the policy that took a long time to respond and if there is any custom code that
+    might require a long time to process. If there is any such code, then see if you can
+    fix/optimize the identified code.</li>
+
+    <li>If there is no custom code that might cause high processing time, then check if the Message
+    Processor(s) is experiencing high CPU or memory usage:
+
+      <ol>
+        <li>If any Message Processor is experiencing high CPU usage, then generate three <a href=
+        "https://docs.google.com/document/d/19b8MqMH9PSwqIK4Uj6gELLA8nNZeNaczROBi5Bpq7mg/edit#heading=h.aqgmb6oiggg3">
+          thread dumps</a> every 30 seconds using the following command:
+          <pre class="prettyprint">
+&lt;JAVA_HOME&gt;/bin/jstack -l &lt;pid&gt; &gt; &lt;filename&gt;
+      
+</pre>
+        </li>
+
+        <li>If any Message Processor is having high Memory usage, then generate a <a href=
+        "https://docs.google.com/document/d/19b8MqMH9PSwqIK4Uj6gELLA8nNZeNaczROBi5Bpq7mg/edit#heading=h.w29jvrr9wkvf">
+          heap dump</a> using the following command:
+          <pre class="prettyprint">
+sudo -u apigee &lt;JAVA_HOME&gt;/bin/jmap -dump:live,format=b,file=&lt;filename&gt; &lt;pid&gt;
+</pre>
+        </li>
+
+        <li>Restart the Message Processor using the below command. This should bring down the CPU
+        and Memory.
+          <pre class="prettyprint">
+/opt/apigee/apigee-service/bin/apigee-service edge-message-processor restart
+</pre>
+        </li>
+
+        <li>Monitor the API calls and confirm if the problem still exists.</li>
+
+        <li>Contact <a href="https://support.apigee.com/">Apigee Support</a> and provide the thread
+        dumps, heap dump, and Message Processor logs
+        (<code>/opt/apigee/var/log/edge-message-processor/logs/system.log)</code>to help them
+        investigate the cause for the high CPU/memory usage.</li>
+      </ol>
+    </li>
+  </ol>
+  <h2 id="api-monitoring">Diagnose issues using API Monitoring</h2>
+  <p><strong>Note:</strong> The steps in this section can be performed by Public Cloud users only.</p>
+
+<p><a href="/api-monitoring">API Monitoring</a> enables you to isolate problem areas quickly to diagnose error, performance, and latency issues and their source,
+  such as developer apps, API proxies, backend targets, or the API platform.</p>
+
+<p><a href="/api-monitoring/sample-scenarios">Step through a sample scenario</a> that demonstrates how to troubleshoot 5xx issues with your APIs using API Monitoring.
+For example, you may want to set up an alert to be notified when the number of 504 status codes exceeds a particular threshold.</p>
+
+
+{% endblock %}

@@ -1,0 +1,344 @@
+  {% extends "_base.html" %} {% block title %}Create an API proxy from an OpenAPI Specification{% endblock %} {% block body %}
+
+  <div class="tutorial-container">
+    <div class="tutorial-learn">
+      <p><strong>What you'll learn</strong></p>
+
+      <p>In this tutorial, you'll learn to:</p>
+
+      <ul>
+        <li>Create an Edge API proxy from an OpenAPI Specification.</li>
+
+        <li>Call the API proxy using cURL.</li>
+
+        <li>Add a policy to a conditional flow.</li>
+
+        <li>Test the policy invocation using cURL.</li>
+      </ul>
+    </div>
+
+    <div class="tutorial-section">
+      <p>In this tutorial, you'll learn how to create an Edge API proxy from an OpenAPI
+      Specification using the Apigee Edge management UI. When you call the API proxy with an
+      HTTP client, such as cURL, the API proxy sends the request to the Apigee mock target
+      service.</p>
+
+      <p><strong>About the Open API Initiative</strong></p>
+
+      <p><a href="https://openapis.org" target="_blank"><img alt="Open API Initiative" src=
+      "/api-platform/images/OpenAPI_Pantone.png"></a>"The Open API Initiative (OAI) is focused on
+      creating, evolving and promoting a vendor neutral API Description Format based on the Swagger
+      Specification." For more information about the Open API Initiative, see <a href=
+      "https://openapis.org" target="_blank">https://openapis.org</a>.</p>
+
+      <p>An <em>OpenAPI Specification</em> uses a standard format to describe a RESTful API.
+      Written in either JSON or YAML format, an OpenAPI Specification is machine readable, but is
+      also easy for humans to read and understand. The specification describes such elements of an
+      API as its base path, paths and verbs, headers, query parameters, operations, content types,
+      response descriptions, and more. In addition, an OpenAPI Specification is commonly used to
+      generate API documentation.</p>
+
+      <p><strong>About the Apigee mock target service</strong></p>
+
+      <p>The Apigee mock target service used in this tutorial is hosted at Apigee and returns
+      simple data. It requires no API key or access token. In fact, you can access it in a web
+      browser. Try it out by clicking the following:</p>
+
+      <p><a href="https://mocktarget.apigee.net" target=
+      "_blank">http://mocktarget.apigee.net</a></p>
+
+      <p>The target service returns the greeting <code>Hello, guest!</code></p>
+
+      <p>For information about the full set of APIs the mock target service supports, click on the
+      following:</p>
+
+      <p><a href="https://mocktarget.apigee.net/help" target=
+      "_blank">http://mocktarget.apigee.net/help</a></p>
+    </div>
+
+    <div class="tutorial-section">
+      <h2 id="whatyoullneed">What you'll need</h2>
+
+      <ul>
+        <li>An Apigee Edge account. If you don't have an account, you can sign up by following the
+        instructions at <a href=
+        "/api-platform/get-started/creating-apigee-edge-account.html">Creating an Apigee Edge
+        account</a>.</li>
+
+        <li>An OpenAPI Specification. In this tutorial, you'll use the <code>mocktarget.yaml</code>
+        OpenAPI Specification which describes Apigee's mock target
+        service, <code>http://mocktarget.apigee.net</code>. For more information, see
+        <code>https://github.com/apigee/api-platform-samples/tree/master/default-proxies/helloworld/openapi</code>.</li>
+
+        <li><a href="https://curl.haxx.se/">cURL</a> installed on your machine to make API calls
+        from the command line; or a web browser.</li>
+      </ul>
+    </div>
+
+    <div class="tutorial-section">
+      <h2 id="createtheapiproxy">Create the API proxy</h2>
+
+      <p>To create the API proxy from an OpenAPI Specification:</p>
+
+      <ol>
+        <li>Go to <a href="https://enterprise.apigee.com" target=
+        "_blank">https://enterprise.apigee.com</a> and log into the Edge management UI.</li>
+
+        <li>Click <strong>APIs &gt; API Proxies</strong> in the top menu.<br>
+        <img alt="APIs menu" src="/api-platform/images/tutorial-apiproxies.png"></li>
+
+        <li>Click <strong>+ API Proxy</strong>.<br>
+        <img alt="Add API proxy" src="/api-platform/images/api_proxy_button.png"></li>
+
+        <li>In the Build a Proxy wizard, select <strong>Reverse proxy (most common)</strong> and
+        click <strong>Use OpenAPI</strong>.<br>
+        <img alt="Build a Proxy type" src=
+        "/api-platform/images/tutorial-build-proxy-openapi.png"></li>
+
+        <li>In the Use OpenAPI dialog, enter the path to the raw content on GitHub for the OpenAPI
+        Specification in the <strong>URL</strong> field:<br>
+        <br>
+        <code>https://raw.githubusercontent.com/apigee/api-platform-samples/master/default-proxies/helloworld/openapi/mocktarget.yaml</code><br>
+
+         </li>
+
+        <li>Click <strong>Apply</strong>.</li>
+
+        <li>Click <strong>Next</strong>.
+
+          <p>The Details page in the Build a Proxy wizard displays. The fields are pre-populated
+          using values defined in the OpenAPI Specification, as shown in the following
+          figure.</p><img alt="Build a Proxy Details" src=
+          "/api-platform/images/tutorial-build-proxy-details-v2.png">
+
+          <p>The following table describes the default values that are pre-populated using
+          properties in the OpenAPI Specification. An excerpt of the OpenAPI Specification
+          illustrating the properties used is shown following the table.</p>
+
+          <table>
+            <thead>
+              <tr>
+                <th width="20%">Field</th>
+
+                <th width="40%">Description</th>
+
+                <th width="40%">Default</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr>
+                <td><strong>Proxy Name</strong></td>
+
+                <td>Name of the API proxy. For example: <code>Mock-Target-API</code>.</td>
+
+                <td><code>title</code> property from the OpenAPI Specification with spaces replaced
+                by dashes</td>
+              </tr>
+
+              <tr>
+                <td><strong>Proxy Base Path</strong></td>
+
+                <td>Path component that uniquely identifies this API proxy within the organization.
+                The public-facing URL of this API proxy is comprised of your organization name, an
+                environment where this API proxy is deployed, and this Proxy Base Path. For
+                example: <code>http://myorg-test.apigee.net/mock-target-api</code></td>
+
+                <td><strong>Proxy Name</strong> field content converted to all lower case</td>
+              </tr>
+
+              <tr>
+                <td><strong>Existing API</strong></td>
+
+                <td>Target URL invoked on behalf of this API proxy. Any URL that is accessible over
+                the open Internet can be used. For example:
+                <code>http://mocktarget.apigee.net</code></td>
+
+                <td>
+                  Properties in OpenAPI Specification are combined to create target URL:
+
+                  <ul>
+                    <li><code>http://</code> or <code>https://</code> (depending on the
+                    <code>schemes</code> property)</li>
+
+                    <li><code>host</code> property</li>
+
+                    <li><code>basePath</code> property (if specified)</li>
+                  </ul>
+                </td>
+              </tr>
+
+              <tr>
+                <td><strong>Description</strong></td>
+
+                <td>Description of the API proxy.</td>
+
+                <td><code>description</code> property</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <p>The following provides an excerpt from the OpenAPI Specification showing the
+          properties that are used to pre-populate the fields.</p>
+          <pre class="terminal">
+swagger: '2.0'
+info:
+  <strong>description</strong>: 'OpenAPI Specification for the Apigee mock target service endpoint.'
+  version: 1.0.0
+  <strong>title</strong>: Mock Target API
+<strong>host</strong>: mocktarget.apigee.net
+<strong>schemes</strong>:
+  - http
+  - https
+...
+  
+</pre>
+        </li>
+
+        <li>Edit the <strong>Description</strong> field as follows: <code>API proxy for the Apigee
+        mock target service endpoint.</code></li>
+
+        <li>Click <strong>Next</strong>.</li>
+
+        <li>On the Flows page, make sure all operations are selected.
+
+          <aside class="key-point"><b>Tip:</b> Conditional flows are generated automatically from
+          the operations that are defined within the <code>paths</code> object in the OpenAPI
+          Specification. Conditional flows tell Edge, "When you see this, perform this logic."
+          For example, when an API call is a GET on the <code>/xml</code> resource (the condition),
+          transform the response to JSON (through a policy attached to the conditional flow). Only
+          one flow executes per transaction&#8212;the first flow whose condition evaluates to
+          true.</aside><img alt="Build a Proxy Flows" src=
+          "/api-platform/images/tutorial-build-proxy-flows-v2.png">
+        </li>
+
+        <li>Click <strong>Next</strong>.</li>
+
+        <li>On the Security page, select <strong>Pass through (none)</strong> as the security
+        option, and click <strong>Next</strong>.</li>
+
+        <li>On the Virtual Hosts page, make sure all virtual hosts are selected and click
+        <strong>Next</strong>.</li>
+
+        <li>On the Build page, make sure the <strong>test</strong> environment is selected, and
+        click <strong>Build and Deploy</strong>.</li>
+
+        <li>On the Summary page, you see an acknowledgement that your new API proxy was created
+        successfully and deployed to your test environment.<br>
+        <img alt="Build a Proxy Summary" src=
+        "/api-platform/images/tutorial-build-proxy-summary.png"></li>
+
+        <li>Click <strong>Mock-Target-API</strong> to display the Overview page for the API
+        proxy.<br>
+        <img alt="Summary of Mock Target API proxy" src=
+        "/api-platform/images/tutorial-mock-target-overview-v5.png"></li>
+      </ol>
+
+      <p>Congratulations! You've created an API proxy from an OpenAPI Specification. Next you'll
+      test it to see how it works.</p>
+    </div>
+
+    <div class="tutorial-section">
+      <h2 id="testtheapiproxy">Test the API proxy</h2>
+
+      <p>You can test your <code>Mock-Target-API</code> API using cURL or a web browser.</p>
+
+      <p>In a terminal window, run the following cURL command. Substitute your organization name in
+      the URL.</p>
+
+      <aside class="key-point"><b>Tip:</b> You can also enter the URL in a web browser to get the
+      same response.</aside>
+      <pre class="prettyprint">
+curl http://&lt;<em>org_name</em>&gt;-test.apigee.net/mock-target-api
+</pre>
+
+      <p><strong>Response</strong></p>
+
+      <p>You should see the following response:</p>
+      <pre class="prettyprint">
+Hello, Guest!        
+</pre>
+
+      <p>Way to go! You've built a simple API proxy from an OpenAPI Specification and tested
+      it.</p>
+    </div>
+
+    <div class="tutorial-section">
+      <h2 id="addanxmltojsonpolicy">Add an XML to JSON policy</h2>
+
+      <p>Next, you'll add the XML to JSON policy to the <strong>View XML Response</strong>
+      conditional flow that was generated automatically when you created the API proxy from the
+      OpenAPI Specification. The policy will convert the target's XML response to a JSON
+      response.</p>
+
+      <p>First, call the API so that you can compare the results with those received after you add
+      the policy. In a terminal window execute the following cURL command. You're calling the
+      target service's <code>/xml</code> resource, which natively returns a simple block of XML.
+      Substitute your organization name in the URL.</p>
+      <pre class="prettyprint">
+curl http://&lt;<em>org_name</em>&gt;-test.apigee.net/mock-target-api/xml
+</pre>
+
+      <p><strong>Response</strong></p>
+
+      <p>You should see the following response:</p>
+      <pre class="prettyprint">
+&lt;root&gt; 
+  &lt;city&gt;San Jose&lt;/city&gt; 
+  &lt;firstName&gt;John&lt;/firstName&gt; 
+  &lt;lastName&gt;Doe&lt;/lastName&gt; 
+  &lt;state&gt;CA&lt;/state&gt; 
+&lt;/root&gt;
+</pre>
+
+      <p>Now let's do something that converts the XML response to JSON. Add the XML to JSON policy
+      to the View XML Response conditional flow in the API proxy.</p>
+
+      <ol>
+        <li>Click the <strong>Develop</strong> tab in the top right corner of the Mock-Target-API
+        Overview page in the Edge Management UI.<br>
+        <img alt="Developer tab" src="/api-platform/images/tutorial-developtab.png"></li>
+
+        <li>In the left Navigator pane, under Proxy Endpoints &gt; default, click the <strong>View
+        XML Response</strong> conditional flow.<br>
+        <img alt="Select View XML Response" src=
+        "/api-platform/images/tutorial-select-viewxml.png"></li>
+
+        <li>Click the bottom <strong>+Step</strong> button, corresponding to the
+        <strong>Response</strong> for the flow. <br>
+        <img alt="Select +Step" src="/api-platform/images/tutorial-select-responsestep.png"><br>
+        The Add Step dialog opens to display a categorized list of all the policies that you can
+        add.<br>
+         </li>
+
+        <li>Scroll to the Mediation category and select <strong>XML to JSON</strong>.<br>
+        <img alt="Add Step dialog" src="/api-platform/images/tutorial-add-step.png"></li>
+
+        <li>Keep the default values for <strong>Display Name</strong> and
+        <strong>Name</strong>.</li>
+
+        <li>Click <strong>Add</strong>. The XML to JSON policy is applied to the response.<img alt=
+        "XML to JSON policy in flow" src="/api-platform/images/tutorial-xmltojson.png"></li>
+
+        <li>Click <strong>Save</strong>.</li>
+      </ol>
+
+      <p>Now that you've added the policy, call the API again using cURL. Notice that you're still
+      calling the same <code>/xml</code> resource. The target service still returns its block of
+      XML, but now the policy in the API proxy will convert the response to JSON. Make this
+      call:</p>
+      <pre class="prettyprint">
+curl http://&lt;<em>org_name</em>&gt;-test.apigee.net/mock-target-api/xml
+</pre>
+
+      <p>Note that the XML response is converted to JSON:</p>
+      <pre class="prettyprint">
+{"root":{"city":"San Jose","firstName":"John","lastName":"Doe","state":"CA"}}
+</pre>
+
+      <p>Congratulations! You have successfully tested the execution of a policy added to a
+      conditional flow.</p>
+    </div>
+  </div>
+
+  {% endblock %}

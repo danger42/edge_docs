@@ -1,0 +1,225 @@
+{% extends "_base.html" %} {% block title %}Using the secure store{% endblock %} {% block body %}
+
+  <aside class="warning"><p><strong>Deprecated feature:</strong> The Edge secure store (vault) is
+  deprecated (as described on the <a href="/release/deprecated-features">Deprecations
+  and retirements page</a>) and will be retired in the future.</p>
+  <p>The Edge secure store (vault) was created to provide an encrypted data store for sensitive
+  information. After you create a vault, you can retrieve vault data only with Node.js. As of Edge
+  for Public Cloud release <a href=
+  "/release/notes/160921-apigee-edge-public-cloud-release-notes.html">160921</a>, you can create
+  encrypted key value maps (KVMs) to store sensitive data. Encrypted KVMs have an advantage over
+  the Edge vault, because encrypted values can be retrieved with the Key Value Map Operations
+  policy as well as with Node.js (using the <code>apigee-access</code> <a href=
+  "/api-platform/nodejs/accessing-key-value-maps-nodejs.html">KVM functions</a>), giving you more
+  flexibility in your API proxies or Node.js apps. For more information on KVMs, see <a href=
+  "/api-platform/cache/persistence-tools.html#longtermpersistenceofkeyvaluedata">Long-term
+    persistence caching</a>.</p></aside>
+
+  <h2 id="usingthesecurestoreserviceapis">Using the secure store service APIs</h2>
+
+  <p>The secure store service lets you store sensitive data, such as security credentials for
+  back-end services, in encrypted format so that they are protected from unauthorized use. These
+  secure storage areas are called "vaults", and can be scoped to either the organization or
+  environment levels on Apigee Edge.</p>
+
+  <p>For example, the secure store may be used to store a password required by a Node.js
+  application in order to reach a protected resource, such as a database server. You can store the
+  password in the secure store through an API before deployment, and the application can look up
+  the value at runtime.</p>
+
+  <p>By doing this, there is therefore no need to include the password in the source code control
+  system, or to deploy it alongside the Node.js source code to Apigee Edge. Instead, the value is
+  stored by Apigee in encrypted form and it will only be retrieved when the application needs
+  it.</p>
+
+  <p>For documentation on the secure store APIs, see <a href=
+  "/api-reference/api/vaults">Vaults</a>. The following sections also provide an overview of using
+  the secure store API.</p>
+
+  <h3 id="usingthesecurestoreserviceapis-storingdatabyorganization">Storing data by
+  organization</h3>
+
+  <p>Each Apigee Edge organization has a set of secure stores, and each environment has an
+  additional store. That way organizations that have different security requirements for different
+  back ends can store different secure values. This section describes storing by organization.</p>
+
+  <h4>Usage</h4>
+
+  <ul>
+    <li>Retrieve the names of all the secure stores:</li>
+  </ul>
+  <pre class="prettyprint">
+GET /o/{organization}/vaults
+</pre>
+
+  <ul>
+    <li>Retrieve a list of entries (but not their encrypted values) from a named vault.</li>
+  </ul>
+  <pre class="prettyprint">
+GET /o/{organization}/vaults/{name}
+</pre>
+
+  <ul>
+    <li>
+      <p>Retrieve a single entry (but not its encrypted value).</p>
+    </li>
+  </ul>
+  <pre class="prettyprint">
+GET /o/{organization}/vaults/{name}/entries/{entryname}
+</pre>
+
+  <ul>
+    <li>
+      <p>Create a new vault named "name" with no values:</p>
+    </li>
+  </ul>
+  <pre class="prettyprint">
+POST /o/{organization}/vaults
+
+{ "name": "{name}" }
+
+curl https://api.enterprise.apigee.com/v1/o/testorg/vaults
+  -H "Content-Type: application/json"
+  -d '{"name": "test2" }' -X POST
+</pre>
+
+  <ul>
+    <li>
+      <p>Place a new entry in the vault with the specified name and secure value.</p>
+    </li>
+  </ul>
+  <pre class="prettyprint">
+POST /o/{organization}/vaults/{vaultname}/entries
+
+{ "name": "{entryname}", "value": "{securevalue}" }
+
+
+curl https://api.enterprise.apigee.com/v1/o/testorg/vaults/test2/entries
+  -H "Content-Type: application/json"
+  -d '{"name": "value1", "value": "verysecret" }' -X POST
+</pre>
+
+  <ul>
+    <li>
+      <p>Replace the value of the specified entry with a new value:</p>
+    </li>
+  </ul>
+  <pre class="prettyprint">
+PUT /o/{organization}/vaults/{vaultname}/entries/{entryname}
+
+curl https://api.enterprise.apigee.com/v1/o/testorg/vaults/test2/entries/value1
+
+  -d 'verymoresecret' -X PUT
+</pre>
+
+  <ul>
+    <li>
+      <p>Return "true" if the specified value matches what is already in the store, and "false" if
+      it does not. In both cases, an HTTP status code of 200 is used. This may be used to validate
+      the contents of the store. Note that once stored, there is no API to retrieve the unencrypted
+      value:</p>
+      <pre class="prettyprint">
+POST /o/{organization}/vaults/{vaultname}/entries/{entryname}?action=verify
+
+curl https://api.enterprise.apigee.com/v1/o/testorg/vaults/test2/entries/value1?action=verify
+  -d 'verymoresecret'  -X POST
+</pre>
+    </li>
+
+    <li>Delete the specified vault entry:</li>
+  </ul>
+  <pre class="prettyprint">
+DELETE /o/{organization}/vaults/{vaultname}/entries/{entryname}
+</pre>
+
+  <ul>
+    <li>
+      <p>Delete the entire vault.</p>
+      <pre class="prettyprint">
+DELETE /o/{organization}/vaults/{name}
+</pre>
+    </li>
+  </ul>
+
+  <h3 id="usingthesecurestoreserviceapis-storingdatabyenvironment">Storing data by environment</h3>
+
+  <p>You can also store data by Apigee Edge environment. In this case, the data is scoped to an
+  environment (such as "prod"). With this feature, at runtime different values can be stored
+  depending on where the Node.js script is running. </p>
+
+  <h4>Usage</h4>
+  <pre class="prettyprint">
+GET /o/{organization}/e/{env}/vaults
+
+GET /o/{organization}/e/{env}/vaults/{name}
+
+GET /o/{organization}/e/{env}/vaults/{name}/entries/{entryname}
+
+POST /o/{organization}/e/{env}/vaults
+
+POST /o/{organization}/e/{env}/vaults/{vaultname}/entries
+
+PUT /o/{organization}/e/{env}/vaults/{vaultname}/entries/{entryname}
+
+POST /o/{organization}/e/{env}/vaults/{vaultname}/entries/{entryname}?action=verify
+
+DELETE /o/{organization}/e/{env}/vaults/{vaultname}/entries/{entryname}
+
+DELETE /o/{organization}/e/{env}/vaults/{name}
+</pre>
+
+  <h2 id="retrievingvaluesfromthesecurestoreinnodejs">Retrieving values from the secure store in
+  Node.js</h2>
+
+  <h3 id="retrievingvaluesfromthesecurestoreinnodejs-installingapigeeaccess">Installing
+  apigee-access</h3>
+
+  <p>To use <code>apigee-access</code> in your Node.js code, you need to install it
+  first. For example:</p>
+
+  <ol>
+    <li>cd to your project's root directory.</li>
+
+    <li>Execute: <code>npm install apigee-access --save</code></li>
+  </ol>
+
+  <h3 id="retrievingvaluesfromthesecurestoreinnodejs-functions">Functions</h3>
+
+  <p>The apigee-access getVault() function is used to retrieve a particular vault, either per
+  organization or based on the current environment where the Node.js code is running.  </p>
+
+  <p>getVault() takes two parameters:  </p>
+
+  <ul>
+    <li>The name of the secure store to retrieve.</li>
+
+    <li>The scope, which may be <code>organization</code> or <code>environment</code>. If not
+    specified, then <code>organization</code> is assumed.</li>
+  </ul>
+
+  <p>The object returned by getVault() has two functions:  </p>
+
+  <ul>
+    <li><strong>getKeys(callback)</strong>: Return an array containing the names of all the keys in
+    the specified vault. The callback function will be called with two arguments: An error if the
+    operation fails, or "undefined" if it does not, and the actual array as the second argument.
+     </li>
+
+    <li><strong>get(key, callback)</strong>: Return the secure value associated with a particular
+    key. The callback function will be called with two arguments: An error if the operation fails,
+    or "undefined" if it does not, and the actual value as the second argument.  </li>
+  </ul>
+
+  <h3 id="retrievingvaluesfromthesecurestoreinnodejs-example">Example  </h3>
+
+  <p>Here's a Node.js sample that demonstrates how to get a value from a vault. The
+  <code>apigee-access</code> module is installed for this code to work, as explained
+  previously. </p>
+  <pre class="prettyprint">
+var apigee = require('apigee-access');
+   var orgVault = apigee.getVault('vault1', 'organization');
+   orgVault.get('key1', function(err, secretValue) {
+   // use the secret value here
+});
+</pre>
+{% endblock %}

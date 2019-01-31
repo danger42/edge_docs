@@ -1,0 +1,84 @@
+{% extends "_base.html" %}
+{% block title %}Leaving unused NodeJS API Proxies deployed{% endblock %}
+{% block body %}
+
+<p>One of the unique and useful features of Apigee Edge is the ability to wrap a NodeJS application
+in an API Proxy. This allows developers to create event-driven server-side applications using
+Edge.</p>
+
+<h2>Antipattern</h2>
+
+<p>Deployment of API Proxies is the process of making them available to serve API requests. Each of
+the deployed API Proxies is loaded into Message Processor’s runtime memory to be able to serve the
+API requests for the specific API Proxy. Therefore, the runtime memory usage increases with the
+increase in the number of deployed API Proxies. Leaving any unused API Proxies deployed can cause
+unnecessary use of runtime memory.</p>
+
+<p>In the case of NodeJS API Proxies, there is a further implication.</p>
+
+<p>The platform launches a “Node app” for every deployed NodeJS API Proxy. A Node app is akin to a
+standalone node server instance on the Message Processor JVM process.</p>
+
+<p>In effect, for every deployed NodeJS API Proxy, Edge launches a node server each, to process
+requests for the corresponding proxies. If the same NodeJS API Proxy is deployed in multiple
+environments, then a corresponding node app is launched for each environment. In situations
+where there are a lot of deployed but unused NodeJS API Proxies, multiple Node apps are launched.
+Unused NodeJS proxies translate to idle Node apps which consume memory and affect start up times of
+the application process.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th colspan="3">Used Proxies</th>
+        <th colspan="3">Unused Proxies</th>
+      </tr>
+      <tr>
+        <th># Proxies</th>
+        <th># Deployed Environments</th>
+        <th># nodeapps Launched</th>
+        <th># Proxies</th>
+        <th># Deployed Environments</th>
+        <th># Node apps Launched</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>10</td>
+        <td>dev, test, prod (3)</td>
+        <td>10x3=30</td>
+        <td>12</td>
+        <td>dev, test, prod (3)</td>
+        <td>12x3=36</td>
+      </tr>
+    </tbody>
+  </table>
+
+<p>In the illustration above, 36 unused nodeapps are launched, which uses up system memory and has
+an adverse effect on start up times of the process.</p>
+
+<h2>Impact</h2>
+
+<ul>
+  <li>High memory usage and cascading effect on application’s ability to process further
+    requests</li>
+  <li>Likely performance impact on the API Proxies that are actually serving traffic</li>
+</ul>
+
+<h2>Best practice</h2>
+
+<ul>
+  <li>Undeploy any unused API Proxies</li>
+  <li>Use the Analytics Proxy Performance dashboard to determine which proxies are not serving
+    traffic; undeploy the ones you don't need</li>
+</ul>
+
+<h2>Further reading</h2>
+
+<ul>
+  <li><a href="/api-services/content/overview-nodejs-apigee-edge">Overview of Node.js on Apigee Edge</a></li>
+  <li><a href="/api-services/content/getting-started-nodejs-apigee-edge">Getting started with Node.js on Apigee Edge</a></li>
+  <li><a href="/api-services/content/debugging-nodejs-proxies">Debugging and troubleshooting Node.js proxies</a></li>
+</ul>
+
+
+{% endblock %}

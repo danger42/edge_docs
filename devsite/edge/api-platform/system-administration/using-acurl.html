@@ -1,0 +1,152 @@
+{% extends "_base.html" %}
+{% block title %}Using acurl{% endblock %}
+{% block body %}
+
+<p>The <code>acurl</code> utility provides a convenience wrapper around a standard <code>curl</code>
+command. <code>acurl</code>:</p>
+  <ul>
+    <li>Exchanges your Apigee credentials for an OAuth2 access token</li>
+    <li>Passes that token in the <code>Authorization</code> header of the API request</li>
+    <li>Detects when an access token has expired, and sends the refresh token</li>
+  </ul>
+
+<p>You use access tokens to call the management API with the
+<a href="using-oauth2-security-apigee-edge-management-api">OAuth</a> or
+<a href="enabling-saml-authentication-edge">SAML</a> workflows.</p>
+
+<p><strong>Prerequisite:</strong> Before you can use <code>acurl</code>, you must
+<a href="auth-tools#install">install it</a>.</li>
+
+<p>If you use OAuth2 to access the management API, but don't use <code>acurl</code>, then you must
+get an access token and add it to the header of the API request yourself. One way to get an
+access token is with the <a href="using-gettoken">get_token</a> utility.</p>
+
+  <h2>acurl syntax</h2>
+
+  <p>The <code>acurl</code> utility uses the following syntax:</p>
+
+  <pre class="prettyprint devsite-terminal">acurl <var>management_API_endpoint</var> -u <var>email_address</var>[:<var>password</var>] [-p <var>passcode</var>] [-m <var>mfa_code</var>]</pre>
+
+  <p>Where:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Option</th>
+        <th>Required?</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><var>management_API_endpoint</var></td>
+        <td><strong>Required</strong></td>
+        <td>The management API endpoint. For a complete list of endpoints, see {{apiref}}.</td>
+      </tr>
+      <tr>
+        <td><var>email_address</var></td>
+        <td><strong>Required&nbsp;(first&nbsp;time&nbsp;only)</strong></td>
+        <td>The email address associated with your Apigee account. You must pass your email
+          address in the first time you call <code>acurl</code>. On subsequent calls, your access
+          token authenticates you. You will not need to pass your email address in again until the
+          access and refresh tokens have expired.</td>
+      </tr>
+      <tr>
+        <td><var>password</var></td>
+        <td>Optional</td>
+        <td>The password for your Apigee account. If you omit the password, you will be prompted to
+          enter it on your first <code>acurl</code> call. If you do not want to use your password
+          directly in the command, you can use a one<a href="auth-tools#passcode">one-time passcode</a>
+          instead of your password.</td>
+      </tr>
+      <tr>
+        <td><var>passcode</var></td>
+        <td>Optional</td>
+        <td>A <a href="auth-tools#passcode">one-time passcode</a> that you can use isntead of a
+          password.</td>
+      </tr>
+      <tr>
+        <td><var>mfa_code</var></td>
+        <td>Optional</td>
+        <td>A temporary code that you must pass to <code>acurl</code> if you have enabled
+          <a href="/api-platform/system-administration/enable-two-factor-auth-your-apigee-account">multi-factor
+          authentication (MFA)</a>. If you do not have MFA enabled, you can omit this option.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>For example:</p>
+  <pre class="devsite-terminal">acurl https://api.enterprise.apigee.com/v1/organizations/ahamilton-eval
+<code class="devsite-terminal">acurl https://api.enterprise.apigee.com/v1/organizations/ahamilton-eval -u ahamilton@apigee.com</code>
+<code class="devsite-terminal">acurl https://api.enterprise.apigee.com/v1/organizations/ahamilton-eval -u ahamilton@apigee.com -p 424242</code>
+<code class="devsite-terminal">acurl https://api.enterprise.apigee.com/v1/organizations/ahamilton-eval -u ahamilton@apigee.com:mypassw0rd</code>
+<code class="devsite-terminal">acurl https://api.enterprise.apigee.com/v1/organizations/ahamilton-eval -u ahamilton@apigee.com:mypassw0rd -m 123456</code></pre>
+
+
+  <pre class="devsite-terminal prettyprint">acurl <strong>-v -X POST -H 'Content-Type: application/json'</strong> \
+    https://api.enterprise.apigee.com/v1/organizations/ahamilton-eval/apiproducts/myproduct/attributes/attr \
+    -u ahamilton@apigee.com <strong>-d '{"value":42}'</strong></pre>
+
+  <p>A successful <code>acurl</code> call returns results based on which management API endpoint you
+  called. In addition, <code>acurl</code> stores both the access and refresh tokens
+  in <code>~/.sso-cli</code>.</p>
+
+  <p>You can continue to make calls without entering a password until both the access token and the
+  refresh token expire, as described in <a href="auth-tools#expiration">Token expiration</a>.</p>
+
+  <h2 id="usingacurl">Call acurl for the first time</h2>
+
+  <p>The first time you call <code>acurl</code>, you need to provide your Apigee credentials (your
+  email address and password associated with your Apigee account) so that
+  <code>acurl</code> can exchange them for an access token and refresh token. You don't have to
+  use your Apigee credentials again until the refresh token has expired.</p>
+
+  <p>The following example shows the first call to <code>acurl</code> that gets details about an
+  organization using the <a href="https://apidocs.apigee.com/management/apis/get/organizations/%7Borg_name%7D" class="external">Get
+  Organization</a> endpoint:</p>
+
+  <pre class="devsite-terminal">acurl https://api.enterprise.apigee.com/v1/organizations/ahamilton-eval \
+  -u ahamilton@apigee.com
+Enter the password for user &apos;ahamilton@apigee.com
+<code class="devsite-terminal">mypassw0rd</code>
+{
+  &quot;createdAt&quot; : 1491854501264,
+  &quot;createdBy&quot; : &quot;noreply_iops@apigee.com&quot;,
+  &quot;displayName&quot; : &quot;ahamilton&quot;,
+  &quot;environments&quot; : [ &quot;prod&quot;, &quot;test&quot; ],
+  &quot;lastModifiedAt&quot; : 1491854501264,
+  &quot;lastModifiedBy&quot; : &quot;noreply_iops@apigee.com&quot;,
+  &quot;name&quot; : &quot;ahamilton&quot;,
+  &quot;properties&quot; : {
+    &quot;property&quot; : [ {
+      &quot;name&quot; : &quot;features.isSmbOrganization&quot;,
+      &quot;value&quot; : &quot;false&quot;
+    }, {
+      &quot;name&quot; : &quot;features.isCpsEnabled&quot;,
+      &quot;value&quot; : &quot;true&quot;
+    } ]
+  },
+  &quot;type&quot; : &quot;trial&quot;
+}</pre>
+
+  <p>The <code>acurl</code> utility gets an access token and inserts it into the call to the
+  management API endpoint:</p>
+  <pre class="devsite-terminal">curl -H "Authorization: Bearer <var>oauth2_access_token</var>" ...</pre>
+
+  <p><code>acurl</code> stores the access token locally in <code>~/.sso-cli</code>, and uses it for
+  subsequent calls.</p>
+
+  <p>After the access token expires, <code>acurl</code> automatically uses the refresh token to get
+  a new access token. When the refresh token expires, <code>acurl</code> will fail and prompt you
+  for your Apigee credentials.</p>
+
+  <p>This request gets details about the "ahamilton-eval" organization. For a complete list of
+  management API endpoints, see {{apiref}}.</p>
+
+  <aside class="key-point"><h3 class="hide-from-toc">TIP</h3>
+  <p>If you receive a <code>404 (Not Found)</code> response, check that you specified the correct
+  URL for the endpoint. Do not include the environment ("test" or "prod") in the name of the
+  organization in your URL. For example, use ".../organizations/ahamilton-eval/...", not
+  ".../organizations/ahamilton-eval<strong>-test</strong>/..." for the endpoint.</aside>
+
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends "_base.html" %}
+{% block title %}Accessing the request/response payload when streaming is enabled{% endblock %}
+{% block body %}
+
+<p>In Edge, the default behavior is that HTTP request and response payloads are stored in an
+in-memory buffer before they are processed by the policies in the API Proxy.</p>
+
+<p>If streaming is enabled, then request and response payloads are streamed without modification to
+the client app (for responses) and the target endpoint (for requests). Streaming is useful
+especially if an application accepts or returns large payloads, or if there’s an application that
+returns data in chunks over time.</p>
+
+<h2>Antipattern</h2>
+
+<p>Accessing the request/response payload with streaming enabled causes Edge to go back to the
+default buffering mode.</p>
+
+<figure>
+  <img src="/api-platform/images/antipatterns/payload-with-streaming.png">
+  <figcaption><strong>Figure 1</strong>: Accessing request/response payload with streaming enabled</figcaption>
+</figure>
+
+<p>The illustration above shows that we are trying to extract variables from the request payload and
+converting the JSON response payload to XML using JSONToXML policy. This will disable the streaming
+in Edge.</p>
+
+<h2>Impact</h2>
+
+<ul>
+  <li>Streaming will be disabled which can lead to increased latencies in processing the data</li>
+  <li>Increase in the heap memory usage or OutOfMemory Errors can be observed on Message Processors
+    due to use of in-memory buffers especially if we have large request/response payloads</li>
+</ul>
+
+<h2>Best practice</h2>
+
+<ul>
+  <li>Don't access the request/response payload when streaming is enabled.</li>
+</ul>
+
+<h2>Further reading</h2>
+
+<ul>
+  <li><a href="/api-services/content/enabling-streaming">Streaming requests and responses</a></li>
+  <li><a href="https://community.apigee.com/questions/29759/how-does-apigee-edge-streaming-works.html" class="external">How does APIGEE Edge Streaming work?</a></li>
+  <li><a href="https://community.apigee.com/questions/8806/how-to-handle-streaming-data-together-with-normal.html" class="external">How to handle streaming data together with normal request/response payload in a single API Proxy</a></li>
+  <li><a href="/api-services/content/best-practices-api-proxy-design-and-development">Best practices for API proxy design and development</a></li>
+</ul>
+
+{% endblock %}

@@ -5,73 +5,71 @@
   </head>
   <body>
 
-  <p>This section describes the error messages and flow variables that are set when this policy
-  triggers an error. This information is important to know if you are developing fault rules for a
-  proxy. To learn more, see <a href=
-  "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html">What you need to know
+  <p>This section describes the fault codes and error messages that are returned and fault variables that are set by Edge when this policy triggers an error.
+    This information is important to know if you are developing fault rules to
+  handle faults.  To learn more, see <a href="/api-platform/fundamentals/what-you-need-know-about-policy-errors.html">What you need to know
   about policy errors</a> and <a href="/api-platform/fundamentals/fault-handling.html">Handling
   faults</a>.</p>
-
-  <h3>Error code prefix</h3>
-
-  <p><code>steps.assignmessage</code> <span style="font-size: 10pt">(<a href=
-  "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html#aboutthedefaultpolicyerrorresponse">What's
-  this?</a>)</span></p>
 
   <h3>Runtime errors</h3>
 
   <p>These errors can occur when the policy executes.</p>
 
+    <aside class="key-point">Need help resolving an error? Click <i class="material-icons" title="Click this icon in the error table to visit the troubleshooting page.">build</i> in the Fix column for detailed troubleshooting information.
+  <p>Use <a href="/api-monitoring">API Monitoring</a> to investigate fault codes and diagnose issues faster.</p></aside>
+
   <table>
     <thead>
       <tr>
-        <th scope="col" width="271">Error name</th>
+        <th scope="col" width="623">Fault code</th>
 
-        <th scope="col" width="58">HTTP status</th>
+        <th scope="col" width="49">HTTP status</th>
 
-        <th scope="col" width="379">Cause</th>
+        <th scope="col" width="863">Cause</th>
+        <th scope="col" width="63">Fix</th>
       </tr>
     </thead>
 
     <tbody>
-      <tr>
-        <td><code>UnresolvedVariable</code></td>
-
-        <td>500</td>
-
-        <td>A flow variable referenced in the policy does not exist. Be sure that the variable is
-        in scope - some of the built-in Edge variables are only available in certain flow
-        contexts.</td>
-      </tr>
-
-      <tr>
-        <td><code>VariableOfNonMsgType</code></td>
-
-        <td>500</td>
-
-        <td>The policy tried to assign a value to a non-message type variable. Message type
-        variables include <code>request</code> and <code>response</code>. They also can be custom
-        variables that are of type message. You might see this in the <code>&lt;Copy&gt;</code>
-        element if you set the source attribute to a variable that is not of type Message.</td>
-      </tr>
-
-      <tr>
-        <td><code>SetVariableFailed</code></td>
+       <tr>
+        <td><code>steps.assignmessage.SetVariableFailed</code></td>
 
         <td>500</td>
 
         <td>The policy was not able to set a variable. See the fault string for the name of the
         unresolved variable.</td>
+        <td></td>
       </tr>
-
-      <tr>
-        <td><code>InvalidIndex</code></td>
+       <tr>
+        <td><code>steps.assignmessage.VariableOfNonMsgType</code></td>
 
         <td>500</td>
 
-        <td>The index must be geater than zero when specified in the Copy and Remove operations.
-        For example, a query parameter can have multiple values. This error occurs if you specify
-        an invalid index, such as 0 or a negative number.</td>
+        <td>
+          <p>This error occurs if the <code>source</code> attribute in the <code>&lt;Copy&gt;</code> element is set to a variable
+          which is not of type <a href="/api-platform/reference/variables-reference#messagevariables">message</a>.</p>
+
+          <p>Message type variables represent entire HTTP requests and responses. The built-in Edge
+          flow variables <code>request</code>, <code>response</code>, and <code>message</code> are of type message. To learn more
+          about message variables, see the <a href="/api-platform/reference/variables-reference#messagevariables">Variables reference</a>.</p>
+        </td>
+        <td><a href="/api-platform/troubleshoot/policies/runtime/assign-message-runtime-errors#variableofnonmsgtype"><i class="material-icons" title="Troubleshoot this error.">build</i></a></td>
+      </tr>
+      <tr>
+        <td><code>steps.assignmessage.UnresolvedVariable</code></td>
+
+        <td>500</td>
+
+        <td>
+          <p>This error occurs if a variable specified in the Assign Message policy is either:</p>
+          <ul>
+            <li>out of scope (not available in the specific flow where the policy is being executed)</li>
+              or
+            <li>can't be resolved (is not defined)</li>
+          </ul>
+
+        </td>
+        <td><a href="/api-platform/troubleshoot/policies/runtime/assign-message-runtime-errors#unresolvedvariable"><i class="material-icons" title="Troubleshoot this error.">build</i></a></td>
       </tr>
     </tbody>
   </table>
@@ -80,26 +78,44 @@
 
   <p>These errors can occur when you deploy a proxy containing this policy.</p>
 
-  <table>
-    <thead>
-      <tr>
-        <th scope="col" width="272">Error name</th>
+    <aside class="key-point">Need help resolving an error? Click
+  <i class="material-icons" title="Click this icon in the error table to visit the troubleshooting page.">build</i>
+  next to the error's cause description to visit the troubleshooting page. </aside>
 
-        <th scope="col" width="381">Cause</th>
+  <table>
+   <thead>
+      <tr>
+        <th scope="col" width="523">Error name</th>
+        <th scope="col" width="863">Cause</th>
+        <th scope="col" width="63">Fix</th>
       </tr>
     </thead>
 
     <tbody>
       <tr>
+        <td><code>InvalidIndex</code></td>
+        <td>
+         If the index specified in the <code>&lt;Copy&gt;</code> and/or <code>&lt;Remove&gt;</code> elements of the Assign Message
+          policy is 0 or a negative number, then deployment of the API Proxy fails.
+        </td>
+        <td><a href="/api-platform/troubleshoot/policies/deployment/assign-message-deployment-errors#invalidindex"><i class="material-icons" title="Troubleshoot this error.">build</i></a></td>
+      </tr>
+      <tr>
         <td><code>InvalidVariableName</code></td>
 
-        <td>The policy schema validation failed because a variable name is invalid.</td>
+        <td>
+          If the child element <code>&lt;Name&gt;</code> is empty or not specified in the <code>&lt;AssignVariable&gt;</code> element,
+          then the deployment of the API proxy fails because there is no valid variable name to
+          which to assign a value. A valid variable name is required.
+        </td>
+        <td><a href="/api-platform/troubleshoot/policies/deployment/assign-message-deployment-errors#invalidvariablename"><i class="material-icons" title="Troubleshoot this error.">build</i></a></td>
       </tr>
 
       <tr>
         <td><code>InvalidPayload</code></td>
 
         <td>A payload specified in the policy is invalid.</td>
+        <td></td>
       </tr>
     </tbody>
   </table>
@@ -113,33 +129,29 @@
   <table>
     <tbody>
       <tr>
-        <th width="324">Variables set <code><span style="font-size: 10pt">(<a href=
-        "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html">Learn
-        more</a>)</span></code></th>
+        <th width="324">Variables</th>
 
         <th width="428">Where</th>
 
         <th width="428">Example</th>
       </tr>
+      <tr>
+        <td><code>fault.name="<var>fault_name</var>"</code></td>
+
+        <td><var>fault_name</var> is the name of the fault, as listed in the <a href="#runtime-errors">Runtime errors</a> table above. The fault name is the last part of the fault code.</td>
+
+        <td><code>fault.name Matches "UnresolvedVariable"</code></td>
+      </tr>
 
       <tr>
-        <td width="324"><code>[prefix].[policy_name].failed</code></td>
+        <td width="324"><code>assignmessage.<var>policy_name</var>.failed</code></td>
 
-        <td width="428">The <code>[prefix]</code> is
-        <code><strong>assignmessage</strong>.</code><br>
-        The <code>[policy_name]</code> is the name of the policy that threw the error.</td>
+        <td width="428"><var>policy_name</var> is the user-specified name of the policy that threw the fault.</td>
 
         <td width="428"><code>assignmessage.AM-SetResponse.failed = true</code></td>
       </tr>
 
-      <tr>
-        <td><code>fault.name = [error_name]</code></td>
 
-        <td><code>[error_name]</code> is the specific error name to check for as listed in the
-        table above.</td>
-
-        <td><code>fault.name = "UnresolvedVariable"</code></td>
-      </tr>
     </tbody>
   </table>
 

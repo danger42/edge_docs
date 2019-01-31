@@ -1,0 +1,107 @@
+{% extends "_base.html" %}
+{% block title %}Access the management API{% endblock %}
+{% block body %}
+
+  <p>You can use Apigee Edge RESTful management APIs to create, configure, and manage API proxies
+  and API products, policies for logic in your API proxies, apps and app developers, and caches. For
+  information on using the management API, see
+  <a href="/api-platform/fundamentals/developing-apigee-edge#usingtherestfulmanagementapi">Using the
+  RESTful management API</a> and the {{apiref}}.</p>
+
+  <p>To access the Edge management API, you must authenticate in one of the following ways:</p>
+
+  <ul>
+    <li><strong><a href="using-oauth2">OAuth2</a></strong>
+      <p>Exchange your Edge Basic Auth credentials for an OAuth2 access token and refresh token.
+      Make calls to the Edge management API by passing the access token in the API call.</p>
+    </li>
+    <li><strong><a href="enabling-saml-authentication-edge">SAML</a></strong>
+     <p>While still using OAuth2 access tokens, generate these tokens from SAML assertions returned
+     by an identity provider.</p>
+    </li>
+    <li><strong><a href="basic-auth">Basic Auth</a></strong> (not recommended)
+      <p>Access the management API by passing your username and password in each request. This
+      method is not recommended. If you do use Basic Auth to access the management API, you should
+      strongly consider using it with
+      <a href="/api-platform/system-administration/enable-two-factor-auth-your-apigee-account">two-factor authentication</a>.</p>
+    </li>
+  </ul>
+
+  <p>OAuth2 and Basic Authentication are both enabled by default for Edge in the Cloud accounts.
+  Only Basic Authentication is enabled by default for Edge for the Private Cloud. </p>
+
+  <aside class="note"><h3 class="hide-from-toc">NOTE</h3>
+    <p>Apigee recommends that you enable 2-factor authentication for your Apigee account.  When
+    2-factor authentication is enabled, you get a randomly generated number from Apigee and send it
+    along with your credentials.</p>
+    <p>For more information, see the following resources:</p>
+    <ul>
+      <li><a href="enable-two-factor-auth-your-apigee-account">Enable two-factor authentication for
+        your Apigee account</a>
+      <li><a href="{{community_article}}/26487/two-factor-authentication-using-one-time-passwords.html" class="external">Two-Factor
+        Authentication Using One-Time Passwords</a> on the Apigee Community</li>
+    </ul>
+  </aside>
+
+  <h2 id="sametime">Use OAuth2 and SAML <em>at the same time</em></h2>
+
+  <p>You can have an environment in which one organization authenticates with SAML and another
+  with OAuth2. However, you must be aware that the tokens  and the mechanisms for getting those
+  tokens <em>are not interchangeable</em>.</p>
+
+  <p>To make calls to both OAuth2 and SAML:</p>
+    <ol>
+      <li>Multiple machines: Execute the commands from different machines. Both OAuth2 and SAML
+        store tokens in <code>~/.sso-cli</code>, so when you get OAuth2 tokens, it will overwrite
+        the SAML tokens, and vice versa.</li>
+      <li>Single machine: Get new tokens every time you switch between OAuth2 to SAML.</li>
+    </ol>
+
+  <h2>Format the response</h2>
+
+  <p>The management API returns data as JSON by default. For many requests, you can get the response
+  sent back as XML instead. To do this, set the <code>Accept</code> request header to
+  "application/XML", as the following example shows:</p>
+
+  <pre class="devsite-terminal prettyprint">curl -H "Authorization: Bearer `get_token`" \
+  -H "Accept: application/xml" \
+  https://api.enterprise.apigee.com/v1/organizations/ahamilton-eval/apis/helloworld/revisions/1/policies/ \
+  | xmllint --format -</pre>
+  <p>The response should look like the following:</p>
+  <pre class="prettyprint">&lt;List&gt;
+  &lt;Item&gt;SOAP-Message-Validation-1&lt;/Item&gt;
+  &lt;Item&gt;Spike-Arrest-1&lt;/Item&gt;
+  &lt;Item&gt;XML-to-JSON-1&lt;/Item&gt;
+&lt;/List&gt;</pre>
+  <p>Note that this example prettyprints the results by piping the response through
+  <code>xmllint</code>.</p>
+
+  <p>The {{acurl}} utility does not support the <code>Accept</code> header. As a result, you can
+  only get JSON-formatted responses with <code>acurl</code>.</p>
+
+  <p>To prettyprint a JSON response, you can use the json.tool Python library:</p>
+  <pre class="devsite-terminal prettyprint">curl -H "Authorization: Bearer `get_token`" \
+  -H "Accept: application/xml" \
+  https://api.enterprise.apigee.com/v1/organizations/ahamilton-eval/apis/helloworld/revisions/1/policies/ \
+  | <strong>python -m json.tool</strong></pre>
+  <p>The response should look like the following:</p>
+  <pre class="prettyprint">[
+  "SOAP-Message-Validation-1",
+  "Spike-Arrest-1",
+  "XML-to-JSON-1"
+]
+</pre>
+
+  <h2>Management API limits</h2>
+
+  <p>Each organization is limited to the following management API call rates:</p>
+  <ul>
+    <li>{{ limit_management_api_rate_paid }} for organizations on paid plans</li>
+    <li>{{ limit_management_api_rate_trial }} for trial organizations</li>
+  </ul>
+  <p>HTTP status codes 401 and 403 do not count against this limit. Any calls that exceed these
+  limits return a 429 Too Many Requests status code.</p>
+
+
+
+{% endblock %}

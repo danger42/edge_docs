@@ -1,273 +1,398 @@
-{% extends "_base.html" %} {% block title %}Apigee product limits{% endblock %} {% block body %}
+{% extends "_base.html" %} {% block title %}Limits{% endblock %}
+{% block body %}
 
-<p>Be aware of the following product limits as you build and manage your API program with Edge.
-By staying within these limits, you help avoid service disruptions. In cases where the product
-doesn't currently enforce a limit, the limit still applies and may be enforced by the product
-at any time.</p>
+<p>Consider the following product configuration limits as you build, manage, and review
+  your API program implementation. We’ve designed the Apigee product for stability and performance
+  when configured within these limits. Customers are responsible for tracking
+  and ensuring they stay within the configuration limits (see the
+  "How to check current usage" column below). Customers exceeding the limits may
+  experience one or more of these types of symptoms: high API latencies, low API throughput,
+  and failing API calls. Customers filing support cases related to issues caused by limit
+  exceptions may be asked to make necessary modifications to their configuration.</p>
 
+<p>Limits may or may not be enforced automatically (see the "Currently enforced?" column below).
+  As and when we automate limit enforcement for a limit currently not enforced, we will use
+  commercially reasonable efforts to notify affected customers so they can take corrective
+  actions in advance of such enforcement.</p>
+
+<p>These configuration limits apply to both Apigee Public Cloud and Private Cloud (on-premises)
+  products and are unrelated to your <a href="https://apigee.com/api-management/#/pricing">plan
+  entitlements</a>. Some features, noted in this topic, are available only in Apigee Public
+  Cloud.</p>
+
+<p>There are also size and character limits for files
+  and configurations (more details <a href="/api-platform/reference/naming-guidelines">here</a>).</p>
+
+<p><a href="/notifications">Subscribe to notifications</a> about limits updates on this page.</p>
 
 {# The input corresponds to the table or list. #}
 <input type="text"
     class="devsite-filter"
-    placeholder="Enter keywords to filter the list."
+    placeholder="Enter keywords to filter the table."
     data-div="table-div-id"
     data-classes="column1-class, column2-class"
 />
 
 <div id="table-div-id">
 
+
   <table>
     <thead>
       <tr>
         <th width="40%">Feature area</th>
         <th>Limit</th>
-        <th width="20%">Cloud, Private Cloud, or Both</th>
+        <th>Currently enforced?</th>
+        <th width="20%">How to check current usage</th>
       </tr>
     </thead>
 
     {# You must assign the class "list" to tbody. #}
     <tbody class="list">
-      <tr>
-        <td class="column1-class" colspan="3" style="text-align: center; background-color: #4AD3DD;">
-          <h2><strong>Analytics</strong></h2></td>
-      </tr>
+
 
       <tr>
-        <td class="column1-class"><strong>API analytics data retention</strong> per organization</td>
-        <td class="column2-class">{{ limit_analytics_data_retention }}</td>
-        <td>Cloud</td>
-      </tr>
-      <tr>
-        <td class="column1-class"><strong>API concurrent queries</strong> per organization
-        (includes custom queries, does not include built-in dashboards)
-        </td>
-        <td class="column2-class">{{ limit_analytics_concurrent_queries }}</td>
-        <td>Cloud</td>
-      </tr>
-
-      <tr>
-        <td class="column1-class" colspan="3" style="text-align: center; background-color: #4AD3DD;">
+        <td class="column1-class" colspan="4" style="text-align: center; background-color: #4AD3DD;">
           <h2><strong>API Proxies</strong></h2></td>
       </tr>
 
       <tr>
-        <td class="column1-class">API proxy <strong>calls</strong></td>
-        <td class="column2-class">{{ limit_apiproxy_calls }}</td>
-        <td></td>
-      </tr>
-      <tr>
-        <td class="column1-class">API proxy <strong>bundle size</strong> (proxies other than
-        Hosted Functions)</td>
+        <td class="column1-class">API proxy or shared flow<strong> zip file bundle size</strong>
+        (proxies other than Hosted Targets and Node.js)</td>
         <td class="column2-class">{{ limit_apiproxy_bundle }}</td>
-        <td></td>
+        <td>Yes</td>
+        <td><a href="/api-platform/fundamentals/download-api-proxies">Check usage</a></td>
       </tr>
       <tr>
-        <td class="column1-class">API proxy <strong>bundle size</strong> (Hosted Functions)</td>
-        <td class="column2-class">{{ limit_apiproxy_bundle_hosted_functions }}</td>
-        <td></td>
+        <td class="column1-class"><p><strong>Hosted Targets bundle size</strong></p>
+          <p><a href="/api-platform/hosted-targets/hosted-targets-overview">Hosted Targets</a>
+            are currently available only in Apigee Public Cloud.</p></td>
+        <td class="column2-class">{{ limit_apiproxy_bundle_hosted_targets }}</td>
+        <td>Planned</td>
+        <td><a href="/api-platform/hosted-targets/hosted-targets-overview#what-you-need-to-know-about-hosted-targets">
+          Check usage</a></td>
       </tr>
       <tr>
-        <td class="column1-class"><strong>API proxies</strong> per organization</td>
-        <td class="column2-class">{{ limit_apiproxies_per_org }}</td>
-        <td></td>
-      </tr>
-      <tr>
-        <td class="column1-class">Number of <strong>revisions</strong> per API proxy</td>
+        <td class="column1-class"><strong>API proxy revisions</strong> retained in history</td>
         <td class="column2-class">{{ limit_apiproxy_revisions_per_proxy }}</td>
-        <td></td>
+        <td>Planned</td>
+        <td><a href="https://apidocs.apigee.com/management/apis/get/organizations/%7Borg_name%7D/apis/%7Bapi_name%7D/revisions" class="external">
+          Check usage</a></td>
       </tr>
       <tr>
-        <td class="column1-class">API proxy <strong>resource file size</strong> (such as Node.js,
-        JavaScript, or Java files)</td>
-        <td class="column2-class">Less than {{ limit_apiproxy_resource_file_size }}, which is the
-        API proxy bundle size limit</td>
-        <td></td>
+        <td class="column1-class">API proxy <strong>resource file size</strong> (such as XSL,
+        JavaScript, Python, or JAR files). Doesn't include Hosted Targets resources.</td>
+        <td class="column2-class">{{ limit_apiproxy_resource_file_size }}</td>
+        <td>Yes</td>
+        <td><a href="/api-platform/develop/resource-files">Check usage</a></td>
+      </tr>
+      <tr>
+        <td class="column1-class"><strong>Extensions</strong></td>
+        <td class="column2-class" colspan="2">
+        The <a href="/api-platform/extensions/extensions-overview">extensions</a> feature
+        is a plan entitlement. <br/>
+        See the
+        <a href="https://specs.apigee.com/files/ApigeeEdgeCloud_user_SpecSheet.pdf" class="external">
+        Apigee Edge Cloud specification sheet</a> for details.</td>
+        <td><a href="https://apidocs.apigee.com/extensions-management-api/apis/get/v1/organizations/%7Borg%7D/environments/%7Benv%7D/extensions-0" class="external">
+          Check usage</a></td>
+      </tr>
+
+
+      <tr>
+        <td class="column1-class" colspan="4" style="text-align: center; background-color: #4AD3DD;">
+          <h2><strong>Quota</strong></h2></td>
       </tr>
 
       <tr>
-        <td class="column1-class" colspan="3" style="text-align: center; background-color: #4AD3DD;">
-          <h2><strong>Persistence: Cache, KVMs</strong></h2></td>
+        <td class="column1-class">
+          <a href="/api-platform/reference/policies/quota-policy#asyncconfig">Distributed quota
+            synchronization interval</a></td>
+        <td class="column2-class">{{ limit_quota_sync }}</td>
+        <td>Yes</td>
+        <td><a href="/api-platform/reference/policies/quota-policy#asyncconfig">Check usage</a></td>
       </tr>
-
       <tr>
-        <td class="column1-class"><strong>Total storage limit</strong> for cache, KVMs,
-        and developer app keys/secrets combined</td>
-        <td class="column2-class">{{ limit_data_storage }}</td>
-        <td></td>
+        <td class="column1-class" colspan="4" style="text-align: center; background-color: #4AD3DD;">
+          <h2><strong>Persistence: Cache, KVM</strong></h2></td>
+      </tr>
+     <tr>
+        <td class="column1-class"><strong>Caches at the environment scope</strong></td>
+        <td class="column2-class">{{ limit_caches_per_env }}</td>
+        <td>Planned</td>
+        <td><a href="https://apidocs.apigee.com/management/apis/get/organizations/%7Borg_name%7D/environments/%7Benv_name%7D/caches" class="external">
+          Check usage</a></td>
+      </tr>
+      <tr>
+        <td class="column1-class"><strong>Items in a cache</strong></td>
+        <td class="column2-class">{{ limit_cache_items_per_cache }}</td>
+        <td>Planned</td>
+        <td>Planned</td>
       </tr>
       <tr>
         <td class="column1-class"><strong>Cache key size</strong></td>
         <td class="column2-class">{{ limit_cache_key_size }}</td>
-        <td></td>
+        <td>Yes</td>
+        <td><a href="/api-platform/reference/policies/lookup-cache-policy">Check usage</a></td>
       </tr>
       <tr>
         <td class="column1-class"><strong>Cache value size</strong></td>
         <td class="column2-class">{{ limit_cache_value_size }}</td>
-        <td></td>
+        <td>Yes</td>
+        <td><a href="/api-platform/reference/policies/lookup-cache-policy">Check usage</a></td>
       </tr>
       <tr>
-        <td class="column1-class"><strong>Cache expiration</strong>, minimum time</td>
-        <td class="column2-class">{{ limit_cache_expiration_min }}</td>
-        <td></td>
+        <td class="column1-class"><strong>Cache expiration</strong></td>
+        <td class="column2-class">{{ limit_cache_expiration }}</td>
+        <td>Planned</td>
+        <td><a href="https://apidocs.apigee.com/management/apis/get/organizations/%7Borg_name%7D/environments/%7Benv_name%7D/caches/%7Bcache_name%7D" class="external">
+          Check usage</a></td>
       </tr>
       <tr>
-        <td class="column1-class"><strong>Cache expiration</strong>, maximum time</td>
-        <td class="column2-class">{{ limit_cache_expiration_max }}</td>
-        <td></td>
+        <td class="column1-class"><strong>Key Value Maps (KVMs)</strong> at the organization scope</td>
+        <td class="column2-class">{{ limit_kvms_per_org_scope }}</td>
+        <td>Planned</td>
+        <td><a href="https://apidocs.apigee.com/management/apis/get/organizations/%7Borg_name%7D/keyvaluemaps" class="external">
+          Check usage</a></td>
+      </tr>
+      <tr>
+        <td class="column1-class"><strong>Key Value Maps (KVMs)</strong> at the environment scope</td>
+        <td class="column2-class">{{ limit_kvms_per_env_scope }}</td>
+        <td>Planned</td>
+        <td><a href="https://apidocs.apigee.com/management/apis/get/organizations/%7Borg_name%7D/environments/%7Benv_name%7D/keyvaluemaps" class="external">
+          Check usage</a></td>
+      </tr>
+      <tr>
+        <td class="column1-class"><strong>Key Value Maps (KVMs)</strong> at the proxy scope</td>
+        <td class="column2-class">{{ limit_kvms_per_proxy_scope }}</td>
+        <td>Planned</td>
+        <td><a href="https://apidocs.apigee.com/management/apis/get/organizations/%7Borg_name%7D/apis/%7Bapi_name%7D/keyvaluemaps" class="external">
+          Check usage</a></td>
+      </tr>
+      <tr>
+        <td class="column1-class"><strong>Items in KVMs</strong></td>
+        <td class="column2-class">{{ limit_kvm_items }}</td>
+        <td>Planned</td>
+        <td>Check usage:<br/>
+          <a href="https://apidocs.apigee.com/management/apis/get/organizations/%7Borg_name%7D/keyvaluemaps/%7Bmap_name%7D/keys" class="external">
+            organization</a> <br/>
+          <a href="https://apidocs.apigee.com/management/apis/get/organizations/%7Borg_name%7D/environments/%7Benv_name%7D/keyvaluemaps/%7Bmap_name%7D/keys" class="external">
+            environment</a> <br/>
+          <a href="https://apidocs.apigee.com/management/apis/get/organizations/%7Borg_name%7D/apis/%7Bapi_name%7D/keyvaluemaps/%7Bmap_name%7D/keys" class="external">
+            API proxy</a> <br/>
+          <a href="https://apidocs.apigee.com/management/apis/get/organizations/%7Borg_name%7D/apis/%7Bapi_name%7D/revisions/%7Brevision%7D/keyvaluemaps/%7Bmap_name%7D/keys" class="external">
+            API proxy revision</a>
+        </td>
       </tr>
       <tr>
         <td class="column1-class"><strong>Key Value Map (KVM) key size</strong></td>
         <td class="column2-class">{{ limit_kvm_key_size }}</td>
-        <td></td>
+        <td>Yes</td>
+        <td>Check usage:<br/>
+          <a href="https://apidocs.apigee.com/management/apis/get/organizations/%7Borg_name%7D/keyvaluemaps/%7Bmap_name%7D/keys" class="external">
+            organization</a> <br/>
+          <a href="https://apidocs.apigee.com/management/apis/get/organizations/%7Borg_name%7D/environments/%7Benv_name%7D/keyvaluemaps/%7Bmap_name%7D/keys" class="external">
+            environment</a> <br/>
+          <a href="https://apidocs.apigee.com/management/apis/get/organizations/%7Borg_name%7D/apis/%7Bapi_name%7D/keyvaluemaps/%7Bmap_name%7D/keys" class="external">
+            API proxy</a> <br/>
+          <a href="https://apidocs.apigee.com/management/apis/get/organizations/%7Borg_name%7D/apis/%7Bapi_name%7D/revisions/%7Brevision%7D/keyvaluemaps/%7Bmap_name%7D/keys" class="external">
+            API proxy revision</a>
+        </td>
       </tr>
       <tr>
         <td class="column1-class"><strong>Key Value Map (KVM) value size</strong></td>
         <td class="column2-class">{{ limit_kvm_value_size }}</td>
-        <td></td>
+        <td>Planned</td>
+        <td><a href="/api-platform/reference/policies/key-value-map-operations-policy#GetElement">Check usage</a></td>
       </tr>
 
       <tr>
-        <td class="column1-class" colspan="3" style="text-align: center; background-color: #4AD3DD;">
+        <td class="column1-class" colspan="4" style="text-align: center; background-color: #4AD3DD;">
           <h2><strong>Keys, Developers, Apps, Products</strong></h2></td>
       </tr>
 
       <tr>
-        <td class="column1-class"><strong>Total storage limit</strong> for cache, KVMs,
-        and developer app keys/secrets combined</td>
-        <td class="column2-class">{{ limit_data_storage }}</td>
-        <td></td>
-      </tr>
-      <tr>
         <td class="column1-class"><strong>Consumer key</strong> (API key) size</td>
         <td class="column2-class">{{ limit_consumer_key_size }}</td>
-        <td></td>
+        <td>Yes</td>
+        <td><a href="https://apidocs.apigee.com/management/apis/get/organizations/%7Borg_name%7D/developers/%7Bdeveloper_email_or_id%7D/apps/%7Bapp_name%7D-0" class="external">
+          Check usage</a></td>
       </tr>
       <tr>
         <td class="column1-class"><strong>Consumer secret</strong> size</td>
         <td class="column2-class">{{ limit_consumer_secret_size }}</td>
-        <td></td>
+        <td>Yes</td>
+        <td><a href="https://apidocs.apigee.com/management/apis/get/organizations/%7Borg_name%7D/developers/%7Bdeveloper_email_or_id%7D/apps/%7Bapp_name%7D-0" class="external">
+          Check usage</a></td>
       </tr>
       <tr>
-        <td class="column1-class">The number of <strong>custom attributes</strong> you can set on
+        <td class="column1-class"><strong>Custom attributes</strong> you can set on
           developers, developer apps, API products, OAuth access tokens, and other Edge entities</td>
         <td class="column2-class">{{ limit_custom_attribute }}</td>
-        <td></td>
+        <td>Yes</td>
+        <td>Check usage:<br/>
+          <a href="https://apidocs.apigee.com/management/apis/get/organizations/%7Borg_name%7D/developers/%7Bdeveloper_email_or_id%7D/attributes" class="external">
+            Developers</a> <br/>
+          <a href="https://apidocs.apigee.com/management/apis/get/organizations/%7Borg_name%7D/developers/%7Bdeveloper_email_or_id%7D/apps/%7Bapp_name%7D/attributes" class="external">
+            Developer apps</a> <br/>
+          <a href="https://apidocs.apigee.com/management/apis/get/organizations/%7Borg_name%7D/apiproducts/%7Bapiproduct_name%7D/attributes" class="external">
+            API products</a> <br/>
+          <a href="https://apidocs.apigee.com/management/apis/get/organizations/%7Borg_name%7D/oauth2/accesstokens/%7Baccess_token%7D" class="external">
+            Access tokens</a>
+        </td>
       </tr>
       <tr>
         <td class="column1-class"><strong>Custom attribute name size</strong></td>
         <td class="column2-class">{{ limit_custom_attribute_name_size }}</td>
-        <td></td>
+        <td>Yes</td>
+        <td>Check usage:<br/>
+          <a href="https://apidocs.apigee.com/management/apis/get/organizations/%7Borg_name%7D/developers/%7Bdeveloper_email_or_id%7D/attributes" class="external">
+            Developers</a> <br/>
+          <a href="https://apidocs.apigee.com/management/apis/get/organizations/%7Borg_name%7D/developers/%7Bdeveloper_email_or_id%7D/apps/%7Bapp_name%7D/attributes" class="external">
+            Developer apps</a> <br/>
+          <a href="https://apidocs.apigee.com/management/apis/get/organizations/%7Borg_name%7D/apiproducts/%7Bapiproduct_name%7D/attributes" class="external">
+            API products</a> <br/>
+          <a href="https://apidocs.apigee.com/management/apis/get/organizations/%7Borg_name%7D/oauth2/accesstokens/%7Baccess_token%7D" class="external">
+            Access tokens</a>
+        </td>
       </tr>
       <tr>
         <td class="column1-class"><strong>Custom attribute value size</strong></td>
         <td class="column2-class">{{ limit_custom_attribute_value_size }}</td>
-        <td></td>
+        <td>Yes</td>
+        <td>Check usage:<br/>
+          <a href="https://apidocs.apigee.com/management/apis/get/organizations/%7Borg_name%7D/developers/%7Bdeveloper_email_or_id%7D/attributes/%7Battribute_name%7D" class="external">
+            Developers</a> <br/>
+          <a href="https://apidocs.apigee.com/management/apis/get/organizations/%7Borg_name%7D/developers/%7Bdeveloper_email_or_id%7D/apps/%7Bapp_name%7D/attributes/%7Battribute_name%7D" class="external">
+            Developer apps</a> <br/>
+          <a href="https://apidocs.apigee.com/management/apis/get/organizations/%7Borg_name%7D/apiproducts/%7Bapiproduct_name%7D/attributes/%7Battribute_name%7D" class="external">
+            API products</a> <br/>
+          <a href="https://apidocs.apigee.com/management/apis/get/organizations/%7Borg_name%7D/oauth2/accesstokens/%7Baccess_token%7D" class="external">
+            Access tokens</a>
+        </td>
+      </tr>
+      <tr>
+        <td class="column1-class"><strong>Developers</strong> per organization</td>
+        <td class="column2-class">{{ limit_developers_per_org }}</td>
+        <td>Planned</td>
+        <td><a href="https://apidocs.apigee.com/management/apis/get/organizations/%7Borg_name%7D/developers" class="external">
+          Check usage</a></td>
       </tr>
 
       <tr>
-        <td class="column1-class" colspan="3" style="text-align: center; background-color: #4AD3DD;">
+        <td class="column1-class" colspan="4" style="text-align: center; background-color: #4AD3DD;">
           <h2><strong>OAuth</strong></h2></td>
       </tr>
 
       <tr>
-        <td class="column1-class"><strong>OAuth access token expiration</strong>, minimum</td>
-        <td class="column2-class">{{ limit_oauth_access_token_expiration_min }}
-        (the default is {{ limit_oauth_access_token_expiration_default }})</td>
-        <td></td>
+        <td class="column1-class"><strong>OAuth access token expiration</strong></td>
+        <td class="column2-class">{{ limit_oauth_access_token_expiration}}</td>
+        <td>Planned</td>
+        <td><a href="https://apidocs.apigee.com/management/apis/get/organizations/%7Borg_name%7D/oauth2/accesstokens/%7Baccess_token%7D" class="external">
+          Check usage</a></td>
       </tr>
       <tr>
-        <td class="column1-class"><strong>OAuth access token expiration</strong>, maximum</td>
-        <td class="column2-class">{{ limit_oauth_access_token_expiration_max }}
-        (the default is {{ limit_oauth_access_token_expiration_default }})</td>
-        <td></td>
+        <td class="column1-class"><strong>OAuth refresh token expiration</strong></td>
+        <td class="column2-class">{{ limit_oauth_refresh_token_expiration }}</td>
+        <td>Planned</td>
+        <td>Planned</td>
       </tr>
       <tr>
-        <td class="column1-class"><strong>OAuth refresh token expiration</strong>, maximum</td>
-        <td class="column2-class">{{ limit_oauth_refresh_token_expiration_max }}
-        (the default is {{ limit_oauth_refresh_token_expiration_default }})</td>
-        <td></td>
-      </tr>
-      <tr>
-        <td class="column1-class">The number of <strong>custom attributes</strong> you can set on
-          OAuth tokens</td>
-        <td class="column2-class">{{ limit_custom_attribute }}</td>
-        <td></td>
+        <td class="column1-class"><strong>OAuth access and refresh token size</strong></td>
+        <td class="column2-class">{{ limit_oauth_token_size }}</td>
+        <td>Yes</td>
+        <td><a href="/api-platform/reference/policies/get-oauth-v2-info-policy">Check usage</a></td>
       </tr>
 
       <tr>
-        <td class="column1-class" colspan="3" style="text-align: center; background-color: #4AD3DD;">
+        <td class="column1-class"><strong>Custom attributes</strong> you can set on
+          OAuth tokens</td>
+        <td class="column2-class">{{ limit_custom_attribute }}</td>
+        <td>Yes</td>
+        <td><a href="/api-platform/reference/policies/get-oauth-v2-info-policy">Check usage</a></td>
+      </tr>
+
+      <tr>
+        <td class="column1-class" colspan="4" style="text-align: center; background-color: #4AD3DD;">
           <h2><strong>Environment and Organization</strong></h2></td>
       </tr>
 
       <tr>
-        <td class="column1-class"><strong>Users</strong> per organization</td>
-        <td class="column2-class">{{ limit_users_per_org }}</td>
-        <td></td>
-      </tr>
-      <tr>
-        <td class="column1-class"><strong>Environments</strong> per organization</td>
-        <td class="column2-class">{{ limit_environments_per_org }}</td>
-        <td></td>
-      </tr>
-      <tr>
-        <td class="column1-class"><strong>Management API calls</strong></td>
-        <td class="column2-class">{{ limit_management_api_rate_paid }} for paid plans<br/>
-        {{ limit_management_api__rate_trial }} for trial organizations</td>
-        <td></td>
-      </tr>
-      <tr>
         <td class="column1-class"><strong>Target Servers</strong> per environment</td>
         <td class="column2-class">{{ limit_target_servers_per_env }}</td>
-        <td></td>
+        <td>Planned</td>
+        <td><a href="https://apidocs.apigee.com/management/apis/get/organizations/%7Borg_name%7D/environments/%7Benv_name%7D/targetservers" class="external">
+          Check usage</a></td>
       </tr>
       <tr>
         <td class="column1-class"><strong>Virtual hosts</strong> per environment</td>
         <td class="column2-class">{{ limit_vhosts_per_env }}</td>
-        <td></td>
+        <td>Planned</td>
+        <td><a href="https://apidocs.apigee.com/management/apis/get/organizations/%7Borg_name%7D/environments/%7Benv_name%7D/virtualhosts" class="external">
+          Check usage</a></td>
+      </tr>
+      <tr>
+        <td class="column1-class"><strong>TLS certificates</strong> per environment</td>
+        <td class="column2-class">{{ limit_tls_certs_per_env }}</td>
+        <td>Planned</td>
+        <td><a href="https://apidocs.apigee.com/management/apis/get/organizations/%7Borg_name%7D/environments/%7Benv_name%7D/keystores/%7Bkeystore_name%7D/aliases" class="external">
+          Check usage</a></td>
+      </tr>
+
+
+      <tr>
+        <td class="column1-class" colspan="4" style="text-align: center; background-color: #4AD3DD;">
+          <h2><strong>System</strong></h2></td>
       </tr>
 
       <tr>
-        <td class="column1-class" colspan="3" style="text-align: center; background-color: #4AD3DD;">
-          <h2><strong>Developer Portals (not available in trial organizations)</strong></h2></td>
+        <td class="column1-class">API proxy <strong>request URL size</strong></td>
+        <td class="column2-class">{{ limit_apiproxy_url_size }}</td>
+        <td>Yes</td>
+        <td><a href="/api-platform/debug/using-trace-tool-0">Check usage</a></td>
       </tr>
       <tr>
-        <td class="column1-class"><strong>Users</strong> per portal</td>
-        <td class="column2-class">{{ limit_portal_users }}</td>
-        <td></td>
+        <td class="column1-class"><strong>Request header size</strong></td>
+        <td class="column2-class">{{ limit_header_request }}</td>
+        <td>Yes</td>
+        <td><a href="/api-platform/debug/using-trace-tool-0">Check usage</a></td>
       </tr>
       <tr>
-        <td class="column1-class"><strong>Files/Assets</strong> per portal</td>
-        <td class="column2-class">{{ limit_portal_files }}</td>
-        <td></td>
+        <td class="column1-class"><strong>Response header size</strong></td>
+        <td class="column2-class">{{ limit_header_response }}</td>
+        <td>Yes</td>
+        <td><a href="/api-platform/debug/using-trace-tool-0">Check usage</a></td>
       </tr>
       <tr>
-        <td class="column1-class"><strong>Files/Assets</strong> per portal</td>
-        <td class="column2-class">{{ limit_portal_files }}</td>
-        <td></td>
+        <td class="column1-class"><strong>Request size</strong>
+          (for non-<a href="/api-platform/develop/enabling-streaming">streamed</a> HTTP requests)</td>
+        <td class="column2-class">{{ limit_request_size }}</td>
+        <td>Yes</td>
+        <td><a href="/api-platform/debug/using-trace-tool-0">Check usage</a></td>
       </tr>
       <tr>
-        <td class="column1-class"><strong>APIs</strong> per portal</td>
-        <td class="column2-class">{{ limit_portal_apis }}</td>
-        <td></td>
+        <td class="column1-class"><strong>Request size</strong>
+          (for <a href="/api-platform/develop/enabling-streaming">streamed</a> HTTP requests)</td>
+        <td class="column2-class">No limit. However, if the connection is terminated unexpectedly,
+          you must re-initiate the connection.
+        </td>
+        <td>No</td>
+        <td>N/A</td>
       </tr>
       <tr>
-        <td class="column1-class"><strong>Menus</strong> per portal</td>
-        <td class="column2-class">{{ limit_portal_menus }}</td>
-        <td></td>
+        <td class="column1-class"><strong>Response size</strong>
+          (for non-<a href="/api-platform/develop/enabling-streaming">streamed</a> HTTP requests)</td>
+        <td class="column2-class">{{ limit_response_size }}</td>
+        <td>Yes</td>
+        <td>cURL the API proxy</td>
       </tr>
-      <tr>
-        <td class="column1-class"><strong>Pages</strong> per portal</td>
-        <td class="column2-class">{{ limit_portal_pages }}</td>
-        <td></td>
-      </tr>
-
 
     </tbody>
   </table>
 </div>
 
-<p>The above represents current product limits. Google reserves the right to change product
-features and functionality or the above limits by posting or otherwise making them accessible.</p>
+<p><strong>The information above represents current product limits. Google reserves the right to
+change product features and functionality or the above limits upon posting or otherwise making them
+accessible.</strong></p>
 
 <!--You must include this script on the page for the filter to work.-->
 <script src="/_static/js/managed/listjs.js"></script>
