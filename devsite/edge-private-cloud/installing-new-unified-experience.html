@@ -1,0 +1,384 @@
+{% extends "private-cloud/v4.19.01/_base.html" %}
+{% block title %}Installing the New Edge Experience{% endblock %}
+{% block body %}
+
+  <p>This document describes how to install the New Edge experience for Edge
+  for the Private Cloud. The New Edge experience is the next generation of UI for Edge.</p>
+
+  <aside class="note"><strong>Note:</strong> In this document, the existing Edge UI is referred to
+  as the Edge <em>classic</em> UI.</aside>
+
+  <p>To try out the New Edge experience in an Edge for Private Cloud installation, you must:</p>
+
+  <ul>
+    <li>Enable SAML on Edge. The New Edge experience only supports SAML as the authentication
+      mechanism.</li>
+    <li>Install the New Edge experience on its own node. You cannot install it on a node that
+      contains other Edge components.</li>
+  </ul>
+
+  <p>For more on the New Edge experience, see
+  <a href="new-edge-experience-private-cloud">The New Edge Experience for
+  Private Cloud</a>.</p>
+
+  <h2 id="installation-overview">Installation overview</h2>
+
+  <p>To install the New Edge experience for Edge for the Private Cloud, you
+  perform two different installation processes:</p>
+
+  <ul>
+    <li><strong>Install the base Edge UI</strong>, called <em>shoehorn</em>, and configure the base
+      Edge UI to use SAML to authenticate with Edge.<br>
+      <aside class="note"><strong>Note</strong>: You cannot use the base Edge UI to connect to Edge.
+      It is simply a requirement for installing the New Edge experience.</aside>
+    </li>
+    <li><strong>Install the New Edge experience</strong>, and configure the New Edge experience to
+      use SAML to authenticate with Edge. After installing the New Edge experience, you can log in
+      and use it to work with Edge.</li>
+  </ul>
+
+  <h2 id="installation-prerequisites">Installation prerequisites</h2>
+
+  <ul>
+    <li>You must enable SAML on Edge before you install the New Edge experience. The New Edge
+      experience only supports SAML as its authentication mechanism.
+      <aside class="note"><strong>Note</strong>: In a non-production environment, you can leave
+      basic authentication enabled on Edge so that users of the classic UI and of the Edge API can
+      still use basic authentication.</aside>
+      <p>For information on enabling SAML on Edge, see
+      <a href="supporting-saml-edge-private-cloud">Supporting SAML on Edge for Private Cloud</a>.</p>
+    </li>
+    <li>The New Edge experience only supports TLS v1.2. Becasue you connect to the SAML IDP over TLS,
+    your SAML IDP must therefore support TLS v1.2.</li>
+    <li>You must install the New Edge experience on its own node. You cannot install it on a node
+      that contains other Edge components. The node must meet the following requirements:
+      <ul>
+        <li>JAVA 1.8</li>
+        <li>4 GBytes of RAM</li>
+        <li>2-core</li>
+        <li>60GB disk space</li>
+        <li>You must first install the {{cur_version}} version of the <code>apigee-setup</code> utility on
+          the node as described at <a href="install-edge-apigee-setup-utility">Install the Edge
+          apigee-setup utility</a>.</li>
+        <li>Port 3001 must be open. This is the default port used for requests to the New Edge experience.
+        If you change the port by using the properties described below, make sure that port is open.</li>
+      </ul>
+    </li>
+  </ul>
+
+  <h2 id="considerations-before-installing-the-new-ue">Considerations before installing the New
+  Edge experience</h2>
+
+  <p>As described above in the prerequisites, the New Edge experience requires that you enable SAML
+  on Edge. That means user authentication is controlled by a SAML IDP, where you configure the SAML
+  IDP to use email addresses as the user ID. All New Edge experience users must therefore be
+  registered in the SAML IDP.</p>
+
+  <p>The Edge classic UI, the default UI you installed with Edge for the Private Cloud, does not
+  require SAML. It can use either SAML or basic authentication. That means you can either:</p>
+
+  <ul>
+    <li>Enable SAML support on Edge and on both the classic UI and the New Edge experience.
+      <p>In this scenario, all classic UI and New Edge experience users are registered in the SAML IDP.
+      For information on adding new users to the SAML IDP, see
+      <a href="register-new-edge-users">Register new Edge users</a>.</p>
+    </li>
+    <li>Enable SAML support on Edge, but leave basic auth enabled. The New Edge experience uses
+      SAML and the classic UI still uses basic authentication.
+      <p>In this scenario, all classic UI users log in with basic authentication credentials, where
+      their credentials are stored in the Edge OpenLDAP database. New Edge experience users are
+      registered in the SAML IDP and log in by using SAML.</p>
+      <p>However, a classic UI user cannot log in to the New Edge experience until you have added that
+      user to the SAML IDP as described in <a href="register-new-edge-users">Register new Edge
+      users</a>.</p>
+    </li>
+  </ul>
+
+  <h2>Installation configuration changes from previous releases</h2>
+
+  <p>Be aware of the following changes fo the installation procedure from the Beta release of the New Edge experience.</p>
+
+  <h3>Installation configuration changes from Edge 4.18.05</h3>
+
+    <p>The Edge {{cur_version}} release of the New Edge experience contains the following changes to the
+    configuration file from the Edge 4.18.05 release:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Change type</th>
+        <th>Affected properties</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Removed</td>
+        <td><pre class="prettyprint">MANAGEMENT_UI_SSO_PUBLIC_KEY_CACHE_HOURS</pre>
+      <p>That property has a predefined value of 0.5 (30 minutes) and cannot be changed.</p></td>
+      </tr>
+      <tr>
+        <td>Added</td>
+        <td>You can now use properties to enable TLS on the New Edge experience.
+          See <a href="configuring-tls-ue">Configuring TLS for the New Edge experience</a> for more.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="installation-changes">Installation configuration changes from Edge 4.18.01</h3>
+
+  <p>The Edge {{cur_version}} release of the New Edge experience contains the following changes to the
+    configuration file from the Edge 4.18.01 release:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Change type</th>
+        <th>Affected properties</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Added</td>
+        <td><pre class="prettyprint"># Shoehorn UI configurations.
+SHOEHORN_SCHEME
+SHOEHORN_IP
+SHOEHORN_PORT
+
+# Classic UI configurations.
+CLASSIC_UI_SCHEME
+CLASSIC_UI_IP
+CLASSIC_UI_PORT
+
+# Information about Edge SSO module.
+MANAGEMENT_UI_SKIP_VERIFY</pre>
+</td>
+      </tr>
+      <tr>
+        <td>Removed</td>
+        <td><pre class="prettyprint">ROUTES_SHOEHORN
+ROUTES_CLASSICUI</pre></td>
+      </tr>
+      <tr>
+        <td>Replaced</td>
+        <td><pre class="prettyprint">MANAGEMENT_UI_USE_HTTPS</pre> Replaced by: <pre class="prettyprint">MANAGEMENT_UI_SCHEME</pre></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="installation-configuration-file">Installation configuration file</h2>
+
+  <p>The configuration file contains all the information necessary to install and configure the New
+  Edge experience. You can use the same configuration file to install and configure both the base
+  UI and the New Edge experience.</p>
+
+  <p>An example configuration file is shown below:</p>
+  <pre class="prettyprint">
+# IP of the Edge Management Server.
+# This node also hosts the Edge SSO module and the current, or classic, Edge UI.
+IP1=11.111.111.111
+
+# IP of the New Edge experience node.
+IP2=22.222.222.222
+
+# Edge sys admin credentials.
+ADMIN_EMAIL=your@email.com
+APIGEE_ADMINPW=yourPassword    # If omitted, you are prompted for it.
+
+# Edge Management Server information.
+APIGEE_PORT_HTTP_MS=8080
+MSIP=$IP1
+MS_SCHEME=http
+
+#
+# Shoehorn UI configuration.
+#
+
+# Set to http even if you enable TLS on the New Edge experience.
+SHOEHORN_SCHEME=http
+SHOEHORN_IP=$MANAGEMENT_UI_IP
+SHOEHORN_PORT=9000
+
+#
+# New Edge experience configuration.
+#
+
+# Enable the New Edge experience.
+EDGEUI_ENABLE_UNIFIED_UI=y
+# Specify IP and port for the New Edge experience.
+MANAGEMENT_UI_PORT=3001
+MANAGEMENT_UI_IP=$IP2
+# Specify a Private Cloud deployment.
+MANAGEMENT_UI_APP_ENV=OPDK
+# Disable TLS on the New Edge experience.
+MANAGEMENT_UI_SCHEME=http
+
+# Location of New Edge experience.
+MANAGEMENT_UI_PUBLIC_URIS=$MANAGEMENT_UI_SCHEME://$MANAGEMENT_UI_IP:$MANAGEMENT_UI_PORT
+MANAGEMENT_UI_SSO_REGISTERED_PUBLIC_URIS=$MANAGEMENT_UI_PUBLIC_URIS
+MANAGEMENT_UI_SSO_CSRF_SECRET=<var>CHANGE_TO_YOUR_SECRET</var>
+# Duration of CSRF token.
+MANAGEMENT_UI_SSO_CSRF_EXPIRATION_HOURS=24
+# Defaults to 8760 hours, or 365 days.
+MANAGEMENT_UI_SSO_STRICT_TRANSPORT_SECURITY_AGE_HOURS=8760
+
+# SSO configuration for the New Edge experience.
+MANAGEMENT_UI_SSO_ENABLED=y
+MANAGEMENT_UI_SSO_CLIENT_OVERWRITE=y
+MANAGEMENT_UI_SSO_CLIENT_ID=newueclient
+MANAGEMENT_UI_SSO_CLIENT_SECRET=secret111
+
+#
+# Edge Classic UI configuration.
+# Some settings are for the classic UI,
+# but are still required to configure the New Edge experience.
+#
+
+# These settings assume that classic UI is installed on the Management Server.
+CLASSIC_UI_IP=$MSIP
+CLASSIC_UI_PORT=9000
+CLASSIC_UI_SCHEME=http
+EDGEUI_PUBLIC_URIS=$CLASSIC_UI_SCHEME://$CLASSIC_UI_IP:$CLASSIC_UI_PORT
+
+# Information about publicly accessible URL for Classic UI.
+EDGEUI_SSO_REGISTERD_PUBLIC_URIS=$EDGEUI_PUBLIC_URIS
+
+# Enable SSO.
+EDGEUI_SSO_ENABLED=y
+
+# The name of the OAuth client used to connect to apigee-sso. 
+# The default client name is edgeui.
+# Apigee recommends that you use the same settings as you used
+# when enabling SAML on the classic Edge UI.
+EDGEUI_SSO_CLIENT_NAME=edgeui
+# Oauth client password using uppercase, lowercase, number, and special chars. 
+EDGEUI_SSO_CLIENT_SECRET=ssoClient123
+# If set, existing EDGEUI client will deleted and new one will be created.
+EDGEUI_SSO_CLIENT_OVERWRITE=y
+
+# Information about Edge SSO module.
+# Externally accessible IP or DNS of Edge SSO module.
+SSO_PUBLIC_URL_HOSTNAME=$IP1
+SSO_PUBLIC_URL_PORT=9099
+# Default is http. Set to https if you enabled TLS on the Edge SSO module.
+# If Edge SSO uses a self-signed cert, you must also set MANAGEMENT_UI_SKIP_VERIFY to "y".
+SSO_PUBLIC_URL_SCHEME=http
+# MANAGEMENT_UI_SKIP_VERIFY=y
+# SSO admin credentials as set when you installed Edge SSO module.
+SSO_ADMIN_NAME=ssoadmin
+SSO_ADMIN_SECRET=Secret123
+
+#
+# Required SMTP information.
+#
+
+SKIP_SMTP=n       # Skip now and configure later by specifying "y".
+SMTPHOST=smtp.gmail.com
+SMTPUSER=your@email.com
+SMTPPASSWORD=yourEmailPassword
+SMTPSSL=y
+SMTPPORT=465      # If no SSL, use a different port, such as 25.
+SMTPMAILFROM="My Company <var>myco@company.com</var>"
+</pre>
+
+  <h2 id="install-the-base-edge-ui-shoehorn">Install the base Edge UI (shoehorn)</h2>
+
+  <p>You must install the base Edge UI, called <em>shoehorn</em>, before you can install the New
+  Edge experience.</p>
+
+  <p>To install the base UI:</p>
+
+  <ol>
+    <li>Install the {{cur_version}} version of the <code>apigee-setup</code> utility on the node as
+      described at <a href="install-edge-apigee-setup-utility">Install the Edge apigee-setup
+      utility</a>.</li>
+    <li>Clean Yum:
+      <pre class="devsite-terminal">sudo yum clean all</pre>
+    </li>
+    <li>Create the config file as described above and ensure that is is owned by the "apigee" user:
+      <pre class="devsite-terminal">chown apigee:apigee <var>configFile</var></pre>
+      <p>where <var>configFile</var> is the configuration file described above in
+      <a href="#installation-configuration-file">Installation configuration file</a>.</p>
+    </li>
+    <li>Change the value of the <code>MANAGEMENT_UI_SSO_CSRF_SECRET</code> property in the config
+      file to your CSRF secret.
+      <aside class="note"><strong>NOTE: </strong>Do not use the default value in the
+      config file example above for your CSRF secret. Change it to a unique value that only you
+      know.</aside>
+    </li>
+    <li>Install the Shoehorn version of the Edge UI:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-ui install</pre>
+    </li>
+    <li>Configure the Edge UI:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-ui setup -f <var>configFile</var></pre>
+    </li>
+    <li>Enable SAML on the Edge UI:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-ui configure-sso -f <var>configFile</var></pre>
+      <p><aside class="caution"><strong>Caution</strong>: Do not attempt to log in to the UI until
+      after you have installed and configured the New Edge experience below.</aside>
+    </li>
+  </ol>
+
+  <h2 id="install-the-new-ue">Install the New Edge experience</h2>
+
+  <p>After installing the base Edge UI, you can then install and configure the New Edge
+  experience.</p>
+
+  <p>To install the New Edge experience:</p>
+
+  <ol>
+    <li>Install the New Edge experience:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-management-ui install</pre>
+    </li>
+
+    <li>Change to the <code>edge-management-ui</code> directory:
+      <pre class="devsite-terminal">cd /opt/apigee/edge-management-ui</pre>
+    </li>
+
+    <li>Configure the New Edge experience:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-management-ui setup -f <var>configFile</var></pre>
+
+      <p>where <var>configFile</var> is the configuration file described above in
+      <a href="#installation-configuration-file">Installation configuration file</a>.</p>
+    </li>
+
+    <li>Enable SAML on the New Edge experience:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-management-ui configure-sso -f <var>configFile</var></pre>
+    </li>
+
+    <li>Log in to the New Edge experience by opening the following URL in a browser:
+      <pre>http://<var>newEdgeExperienceIP</var>:3001</pre>
+      <p>where <var>newEdgeExperienceIP</var> is the IP address of the node hosting
+      the New Edge experience. You will be prompted for your SAML credentials. After entering your
+      credentials, the New Edge experience appears.</p>
+    </li>
+
+    <li>See <a href="new-edge-experience-private-cloud">The New
+    Edge Experience for Private Cloud</a> for more information, including links for
+    information on using the New Edge experience.</li>
+  </ol>
+
+  <h2 id="uninstall-the-new-ue">Uninstall the New Edge experience</h2>
+
+  <p>To uninstall the New Edge experience:</p>
+  <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-management-ui uninstall</pre>
+
+  <p>To uninstall the base Edge UI (shoehorn):</p>
+  <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-ui uninstall</pre>
+
+  <p>To completely remove Edge from the node:</p>
+
+  <ol>
+    <li>Stop all Edge services running on the machine:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-all stop</pre>
+    </li>
+    <li>Clear the yum cache:
+      <pre class="devsite-terminal">sudo yum clean all</pre>
+    </li>
+    <li>Remove all the Apigee RPMs:
+      <pre class="devsite-terminal">sudo rpm -e $(rpm -qa | egrep "(apigee-|edge-)")</pre>
+    </li>
+    <li>Remove the installation root directory:
+      <pre class="devsite-terminal">sudo rm -rf /opt/apigee</pre>
+      </li>
+  </ol>
+{% endblock %}

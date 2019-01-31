@@ -1,0 +1,153 @@
+  {% extends "_base.html" %} {% block title %}Bad Config Files{% endblock %} {% block body %}
+
+<aside class="note">Was this troubleshooting playbook helpful? Please let us know
+  by clicking <a href="" class="google-feedback"
+   data-p="1636213" data-b="docsite" data-context="troubleshooting-feedback">
+  Send Feedback
+</a>.</aside>
+
+  <h2 id="symptom">Symptom</h2>
+
+  <aside class="note"><b>Note:</b> This troubleshooting topic only applies to Edge Private Cloud
+  users.</aside>
+
+  <p>The Edge Router is implemented by using Nginx. During the Edge upgrade process, or when
+  changing the configuration of the Router, you might see Nginx configuration errors. When these
+  errors occur, Edge marks all the Nginx configuration files that caused the issue to
+  <code>/opt/nginx/conf.d</code>:</p>
+  <pre class="prettyprint">
+-rw-r--r-- 1 apigee apigee 522 Jul 20 08:41 0-default.conf.bad 
+-rw-r--r-- 1 apigee apigee 577 Jul 20 08:42 0-fallback.conf 
+-rw-r--r-- 1 apigee apigee 1062 Jul 20 08:18 0-map.conf 
+-rw-r--r-- 1 apigee apigee 1887 Jul 20 08:42 custorg_test_default.conf.bad
+</pre>
+
+  <h2 id="errormessages">Error Messages</h2>
+
+  <p>You will not see any error messages. However, you might not be able to execute your API
+  proxies because of the bad config files.</p>
+
+  <h2 id="possiblecauses">Possible Causes</h2>
+
+  <p>Typically the Nginx config files are marked bad either because incorrect value(s) are set to
+  Nginx property(ies) in the <code>/opt/apigee/customer/application/router.properties</code> file
+  or incorrect changes are made to a virtual host.</p>
+
+  <h2 id="diagnosis">Diagnosis</h2>
+
+  <ol start="1">
+    <li>Remove the <strong>.bad</strong> suffix from the file names in the
+    <code>/opt/nginx/conf.d</code> directory so they end in .conf.</li>
+  </ol>
+
+  <ol start="2">
+    <li>Run the Nginx configtest tool to determine the reason for the failure:
+      <pre class="prettyprint">
+/opt/nginx/scripts/apigee-nginx configtest
+</pre>
+    </li>
+  </ol>
+
+  <h2 id="resolution">Resolution</h2>
+
+  <ol start="1">
+    <li>If the config test identifies the reason for the bad config files, then fix the issue by
+    making the appropriate changes to the specific property in the
+    <code>/opt/apigee/customer/application/router.properties</code> file or virtual host.</li>
+  </ol>
+
+  <ol start="2">
+    <li>Remove the <code>/opt/nginx/conf.d</code> directory:
+      <pre class="prettyprint">
+rm -rf /opt/nginx/conf.d
+</pre>
+    </li>
+  </ol>
+
+  <ol start="3">
+    <li>Restart the Router:
+      <pre class="prettyprint">
+/opt/apigee/apigee-service/bin/apigee-service edge-router restart
+</pre>
+    </li>
+  </ol>
+
+  <ol start="4">
+    <li>You should no longer see bad config files in the
+    <code>/opt/nginx/conf.d </code>directory.</li>
+  </ol>
+
+  <p>If the problem persists, contact <a href=
+  "https://www.google.com/url?q=http://support.apigee.com/&amp;sa=D&amp;ust=1518544414394000&amp;usg=AFQjCNHEYNRvh7N_GDkCvt3aFKCpbLQKEg">
+  Apigee Support</a>.</p>
+
+  <p>Here&#8217;s an example that shows how to fix the problem based on the information provided by
+  the Nginx config test.</p>
+
+  <p><strong>Example: Incorrect Value set for a Nginx property</strong></p>
+
+  <ol start="1">
+    <li>Let&#8217;s say you updated the property &#8220;<a href=
+    "https://www.google.com/url?q=http://nginx.org/en/docs/http/ngx_http_proxy_module.html%23proxy_busy_buffers_size&amp;sa=D&amp;ust=1518544414394000&amp;usg=AFQjCNGAnNJ5l92CQH-kiQwXMr9tC8dMHQ">proxy_busy_buffers_size</a>&#8221;
+    to 128K in the <code>/opt/apigee/customer/application/router.properties</code> file, as shown
+    below:
+      <pre class="prettyprint">
+conf_load_balancing_load.balancing.driver.proxy.busy.buffer.size=128k 
+</pre>
+    </li>
+  </ol>
+
+  <p>This caused the config files to be marked as bad in <code>/opt/apigee/nginx/conf.d</code>
+  directory.</p>
+
+  <ol start="2">
+    <li>Run the Nginx configtest command to determine the reason for failure:
+      <pre class="prettyprint">
+/opt/nginx/scripts/apigee-nginx configtest
+nginx: [emerg] "proxy_busy_buffers_size" must be equal to or greater than the maximum of the value of "proxy_buffer_size" and one of the "proxy_buffers" in /opt/nginx/conf/nginx.conf:47
+nginx: configuration file /opt/nginx/conf/nginx.conf test failed
+</pre>
+    </li>
+  </ol>
+
+  <p>The configtest results indicates that the value for the property
+  <strong>proxy_busy_buffers_size</strong> should be equal to or greater than
+  <strong>proxy_buffer_size</strong>, but seems to be set with an incorrect value.</p>
+
+  <ol start="3">
+    <li>Check the values set for the properties
+    <strong>proxy_buffer_size</strong> and <strong>proxy_busy_buffers_size</strong>
+    in the <code>0-default.conf</code> file:
+      <pre class="prettyprint">
+proxy_buffer_size 512k;
+proxy_busy_buffers_size 128k;
+</pre>
+    </li>
+  </ol>
+
+  <ol start="4">
+    <li>Update the value of proxy_busy_buffers_size to 512K in the
+    <code>/opt/apigee/customer/application/router.properties</code> file:
+      <pre class="prettyprint">
+conf_load_balancing_load.balancing.driver.proxy.busy.buffer.size=512k
+</pre>
+    </li>
+  </ol>
+
+  <ol start="5">
+    <li>Remove the <code>/opt/nginx/conf.d</code> folder:
+      <pre class="prettyprint">
+rm -rf /opt/nginx/conf.d
+</pre>
+    </li>
+  </ol>
+
+  <ol start="6">
+    <li>Restart the router:
+      <pre class="prettyprint">
+/opt/apigee/apigee-service/bin/apigee-service edge-router restart
+</pre>
+    </li>
+  </ol>
+
+  <p>The issue was fixed and the bad config files were removed.</p>{% endblock %}

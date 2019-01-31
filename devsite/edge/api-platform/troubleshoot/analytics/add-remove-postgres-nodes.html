@@ -1,0 +1,729 @@
+  {% extends "_base.html" %} {% block title %}Adding and deleting analytics components in analytics groups{% endblock %} {% block body %}
+
+<aside class="note">Was this troubleshooting playbook helpful? Please let us know
+  by clicking <a href="" class="google-feedback"
+   data-p="1636213" data-b="docsite" data-context="troubleshooting-feedback">
+  Send Feedback
+</a>.</aside>
+
+  <p>In an Edge for Private Cloud instalaltion, you might have to remove Postgres and Qpid servers
+    from an existing analytics group, or add them to an analytics group.
+    This document describes how to add and remove Postgres and Qpid servers in an existing Edge installation
+  for a single Postgres installation and a master-standby Postgres installation.</p>
+
+  <p>See <a href="set-master-standby-replication-postgres">Set up master-standby replication for Postgres</a>
+  for more.</p>
+
+<h2>Prerequisites</h2>
+
+<p>Ability to make management server API calls using the system admin credentials.</p>
+
+
+<h2 id="add-server">Add an existing Postgres server to an analytics group</h2>
+
+<p>The process for adding Postgres server components depends on whether Postgres was installed
+  as a single server with no replication, or as two servers with  master-standby replication enabled.</p>
+
+<h3>Scenario #1: One Postgres server, no Postgres replication</h3>
+
+<ol>
+
+  <li><p>Determine the name of the analytics and consumer groups.</p>
+
+      <p>By default, the name of the analytics
+      group is <code>axgroup-001</code>, and the name of the consumer group is
+      <code>consumer-group-001</code>. In the silent config file for a region, you can set the name of
+      the analytics group by using the <code>AXGROUP</code> property.</p>
+
+      <p>If you are unsure of the names of the analytics and consumer groups, use the following command
+      to display them:</p>
+
+<pre class="devsite-terminal">curl -u <var>adminEmail:pword</var> "http://<var>ms-IP</var>:8080/v1/analytics/groups/ax"</pre>
+
+<p>This call returns a response containing the names of the analytics group:</p>
+
+<pre class="prettyprint">[ {
+  <strong>"name" : "axgroup-001",</strong>
+  "properties" : {
+  },
+  "scopes" : [ "example~prod", "example~test" ]
+  …
+</pre>
+
+<p>In this example, the analytics group name is <code>axgroup-001.</code></p>
+
+</li>
+
+<li>Use the following API to determine the UUID of the <code>postgres-server</code> component:
+
+<pre class="devsite-terminal">curl http://<var>pg-IP</var>:8084/v1/servers/self</pre>
+
+<p>In the following API calls, replace <var>axgoupname</var> and <var>UUID</var> with the
+  analytics group name and UUID determined above.</p>
+
+</li>
+
+<li>Use the following API call to add the Postgres server UUID to the <code>postgres-server</code> element:
+
+<pre class="devsite-terminal">curl -v -u <var>adminEmail:pword</var> -X POST -H 'Content-Type:application/json' "http://<var>ms-IP</var>:8080/v1/analytics/groups/ax/<var>axgroupname</var>/servers?uuid=<var>UUID</var>&type=postgres-server&force=true"</pre>
+
+<p>Example call and output:</p>
+
+<pre class="devsite-terminal">curl -v -u <var>adminEmail:pword</var> -X POST -H 'Content-Type:application/json' "http://localhost:8080/v1/analytics/groups/ax/axgroup-001/servers?uuid=8ee86b70-5b33-44b6-b2f8-1b0ec0ec8d77&type=postgres-server&force=true"</pre>
+
+<pre class="prettyprint">[ {
+  "name" : "axgroup-001",
+  "properties" : {
+  },
+  "scopes" : [ "example~prod", "example~test" ],
+  "uuids" : {
+    "qpid-server" : [ "94c96375-1ca7-412d-9eee-80fda94f6e07"],
+    "postgres-server" : ["8ee86b70-5b33-44b6-b2f8-1b0ec0ec8d77"]
+  },
+  "consumer-groups" : [ {
+    "name" : "consumer-group-001",
+    "consumers" : [ "94c96375-1ca7-412d-9eee-80fda94f6e07"],
+    "datastores" : [ ],
+    "properties" : {
+    }
+  } ],
+  "data-processors" : {
+  }
+</pre>
+
+</li>
+
+<li>Use the following API to add the Postgres server UUID to the consumer group :
+
+<pre class="devsite-terminal">curl -v -u <var>adminEmail:pword</var> -X POST -H 'Content-Type:application/json' "http://<var>ms-IP</var>:8080/v1/analytics/groups/ax/<var>axgroupname</var>/consumer-groups/consumer-group-001/datastores?uuid=<var>UUID</var>"</pre>
+
+<p>Example call and output:</p>
+
+<pre class="devsite-terminal">curl -v -u <var>adminEmail:pword</var> -X POST -H 'Content-Type:application/json' "http://localhost:8080/v1/analytics/groups/ax/axgroup-001/consumer-groups/consumer-group-001/datastores?uuid=8ee86b70-5b33-44b6-b2f8-1b0ec0ec8d77"</pre>
+
+<pre class="prettyprint">[ {
+  "name" : "axgroup-001",
+  "properties" : {
+  },
+  "scopes" : [ "example~prod", "example~test" ],
+  "uuids" : {
+    "qpid-server" : [ "94c96375-1ca7-412d-9eee-80fda94f6e07"],
+    "postgres-server" : ["8ee86b70-5b33-44b6-b2f8-1b0ec0ec8d77"]
+  },
+  "consumer-groups" : [ {
+    "name" : "consumer-group-001",
+    "consumers" : [ "94c96375-1ca7-412d-9eee-80fda94f6e07"],
+    "datastores" : ["8ee86b70-5b33-44b6-b2f8-1b0ec0ec8d77"],
+    "properties" : {
+    }
+  } ],
+  "data-processors" : {
+  }
+</pre>
+
+</li>
+
+<li>Restart all <code>edge-postgres-server</code> and <code>edge-qpid-server</code> components on
+  all nodes to make sure the change is picked up by those components:
+
+<pre><code class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-qpid-server restart</code>
+<code class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-qpid-server wait_for_ready</code>
+<code class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-postgres-server restart</code>
+<code class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge edge-postgres-server wait_for_ready</code></pre>
+    </li>
+
+</ol>
+
+
+<h3>Scenario #2: Two Postgres servers with  master-standby replication</h3>
+
+<ol>
+
+  <li><p>Determine the name of the analytics and consumer groups.</p>
+
+      <p>By default, the name of the analytics
+      group is <code>axgroup-001</code>, and the name of the consumer group is
+      <code>consumer-group-001</code>. In the silent config file for a region, you can set the name of
+      the analytics group by using the <code>AXGROUP</code> property.</p>
+
+      <p>If you are unsure of the names of the analytics and consumer groups, use the following command
+      to display them:</p>
+
+<pre class="devsite-terminal">curl -u <var>adminEmail:pword</var> "http://<var>ms-IP</var>:8080/v1/analytics/groups/ax"</pre>
+
+<p>This call returns a response containing the names of defined analytics groups:</p>
+
+<pre class="prettyprint">[ {
+  <strong>"name" : "axgroup-001",</strong>
+  "properties" : {
+  },
+  "scopes" : [ "example~prod", "example~test" ]
+  …
+</pre>
+
+
+<p>In this example, the analytics group name is <code>axgroup-001.</code></p>
+
+</li>
+
+<li>Use the following API call to find the UUIDs of each master <code>postgres-server</code>
+  component AND the standby <code>postgres-server</code> component:
+
+<pre class="devsite-terminal">curl http://<var>pg-IP</var>:8084/v1/servers/self</pre>
+
+
+<p>In the following API calls you would have to replace <var>axgoupname</var> with
+  <code>axgroup-001</code> and the UUID that was obtained in step 2 on the master server needs
+  to be used in place of <var>masteruuid</var> and the UUID that was returned in step 2 for the
+  standby server needs to be used as <var>slaveuuid</var>.</p>
+
+</li>
+
+<li>Use the following API to add the Postgres server UUIDs to the <code>postgres-server</code> element:
+
+<pre class="devsite-terminal">curl -v -u <var>adminEmail:pword</var> -X POST -H 'Content-Type:application/json' "http://<var>ms-IP</var>:8080/v1/analytics/groups/ax/<var>axgroupname</var>/servers?uuid=<var>masteruuid</var>,<var>slaveuuid</var>>&type=postgres-server&force=true"</pre>
+
+<p>Example call and output:</p>
+
+<pre class="devsite-terminal">curl -v -u <var>adminEmail:pword</var> -X POST -H 'Content-Typ:application/json' "http://localhost:8080/v1/analytics/groups/ax/axgroup-001/servers?uuid=8ee86b70-5b33-44b6-b2f8-1b0ec0ec8d77,731c8c43-8c35-4b58-ad1a-f572b69c5f0&type=postgres-server&force=true"</pre>
+
+<pre class="prettyprint">[ {
+  "name" : "axgroup-001",
+  "properties" : {
+  },
+  "scopes" : [ "example~prod", "example~test" ],
+  "uuids" : {
+        "qpid-server" : ["54a96375-33a7-4fba-6bfa-80fda94f6e07" ],
+        "postgres-server" : [ "8ee86b70-5b33-44b6-b2f8-1b0ec0ec8d77:731c8c43-8c35-4b58-ad1a-f572b69c5f0"]
+  },
+  "consumer-groups" : [ {
+    "name" : "consumer-group-001",
+    "consumers" : [ "54a96375-33a7-4fba-6bfa-80fda94f6e07" ],
+    "datastores" : [],
+    "properties" : {
+    }
+  } ],
+  "data-processors" : {
+  }
+
+</pre>
+
+</li>
+
+<li>Use the following API to add the Postgres server UUIDs to the consumer group:
+
+<pre class="devsite-terminal">curl -v -u <var>adminEmail:pword</var> -X POST -H -H 'Content-Type:application/json' "http://<var>ms-IP</var>:8080/v1/analytics/groups/ax/<var>axgroupname</var>/consumer-groups/consumer-group-001/datastores?uuid=<var>masteruuid</var>,<var>slaveuuid</var>"</pre>
+
+<p>Example call and output:</p>
+
+<pre class="devsite-terminal">curl -v -u <var>adminEmail:pword</var> -X POST -H 'Content-Typ:application/json' "http://localhost:8080/v1/analytics/groups/ax/axgroup-001/consumer-groups/consumer-group-001/datastores?uuid=8ee86b70-5b33-44b6-b2f8-1b0ec0ec8d77,731c8c43-8c35-4b58-ad1a-f572b69c5f0"</pre>
+
+<pre class="prettyprint">[ {
+  "name" : "axgroup-001",
+  "properties" : {
+  },
+  "scopes" : [ "example~prod", "example~test" ],
+  "uuids" : {
+        "qpid-server" : ["54a96375-33a7-4fba-6bfa-80fda94f6e07" ],
+        "postgres-server" : [ "8ee86b70-5b33-44b6-b2f8-1b0ec0ec8d77:731c8c43-8c35-4b58-ad1a-f572b69c5f0"]
+  },
+  "consumer-groups" : [ {
+    "name" : "consumer-group-001",
+    "consumers" : [ "54a96375-33a7-4fba-6bfa-80fda94f6e07" ],
+    "datastores" : ["8ee86b70-5b33-44b6-b2f8-1b0ec0ec8d77:731c8c43-8c35-4b58-ad1a-f572b69c5f0"],
+    "properties" : {
+    }
+  } ],
+  "data-processors" : {
+  }
+</pre>
+
+</li>
+
+<li>Restart all <code>edge-postgres-server</code> and <code>edge-qpid-server</code> components on
+  all nodes to make sure the change is picked up by those components:
+
+<pre><code class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-qpid-server restart</code>
+<code class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-qpid-server wait_for_ready</code>
+<code class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-postgres-server restart</code>
+<code class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge edge-postgres-server wait_for_ready</code></pre>
+    </li>
+
+</ol>
+
+
+<h2>Add an existing Qpid server to an analytics group</h2>
+
+<ol>
+
+<li>Find the analytics group name using the following API:
+
+<pre class="devsite-terminal">curl -u <var>adminEmail:pword</var> "http://<var>ms-IP</var>:8080/v1/analytics/groups/ax"</pre>
+
+<p>This should return a response containing the names of the analytics groups and scopes:</p>
+
+<pre class="prettyprint">[  {
+  <strong>"name" : "axgroup-001",</strong>
+  "properties" : {
+  },
+  "scopes" : [ "example~prod", "example~test" ]
+  …
+</pre>
+
+
+<p>In this example, the analytics group name is <code>axgroup-001.</code></p>
+
+</li>
+
+<li>Use the following API call to determine the UUID of each the Qpid server component you want
+  to add to the analytics group:
+
+ <pre class="devsite-terminal">curl http://<var>qp-IP</var>:8083/v1/servers/self</pre>
+
+</li>
+
+<li>Use the following API call to add a single Qpid server UUID to the <code>qpid-server</code>
+  element (repeat for as many UUIDs as necessary):
+
+<pre class="devsite-terminal">curl -v -u <var>adminEmail:pword</var> -X POST -H 'Content-Type:application/json' "http://<var>ms-IP</var>:8080/v1/analytics/groups/ax/<var>axgroupname</var>/servers?uuid=<var>qpiduuid</var>&type=qpid-server"</pre>
+
+<p>Example call and output:</p>
+
+<pre class="devsite-terminal">curl -v -u <var>adminEmail:pword</var> -X POST -H 'Accept:application/json' "http://localhost:8080/v1/analytics/groups/ax/axgroup-001/servers?uuid=94c96375-1ca7-412d-9eee-80fda94f6e0&type=qpid-server"</pre>
+
+<pre class="prettyprint">[  {
+  "name" : "axgroup-001",
+  "properties" : {
+  },
+  "scopes" : [ "example~prod", "example~test" ],
+  "uuids" : {
+        "qpid-server" : [ "94c96375-1ca7-412d-9eee-80fda94f6e07", "54a96375-33a7-4fba-6bfa-80fda94f6e07" ],
+        "postgres-server" : [ "8ee86b70-5b33-44b6-b2f8-1b0ec0ec8d77:731c8c43-8c35-4b58-ad1a-f572b69c5f0"]
+  },
+  "consumer-groups" : [ {
+    "name" : "consumer-group-001",
+    "consumers" : [ "54a96375-33a7-4fba-6bfa-80fda94f6e07" ],
+    "datastores" : ["8ee86b70-5b33-44b6-b2f8-1b0ec0ec8d77:731c8c43-8c35-4b58-ad1a-f57 ],
+    "properties" : {
+    }
+  } ],
+  "data-processors" : {
+  }
+</pre>
+
+</li>
+
+<li>Use the following API call to add a single Qpid server UUID to the consumers element of
+  the consumer group (repeat for as many UUIDs as necessary):
+
+<pre class="devsite-terminal">curl -v -u <var>adminEmail:pword</var> -X POST -H 'Content-Type:application/json' "http://<var>ms-IP</var>:8080/v1/analytics/groups/ax/<var>axgroupname</var>/consumer-groups/consumer-group-001/consumers?uuid=<var>qpiduuid</var>" </pre>
+
+<p>Example call and output:</p>
+
+<pre class="devsite-terminal">curl -v -u <var>adminEmail:pword</var> -X POST -H 'Accept:application/json' "http://localhost:8080/v1/analytics/groups/ax/axgroup-001//consumer-groups/consumer-group-001/consumers?uuid=94c96375-1ca7-412d-9eee-80fda94f6e0"</pre>
+
+<pre class="prettyprint">[  {
+  "name" : "axgroup-001",
+  "properties" : {
+  },
+  "scopes" : [ "example~prod", "example~test" ],
+  "uuids" : {
+        "qpid-server" : [ "94c96375-1ca7-412d-9eee-80fda94f6e07", "54a96375-33a7-4fba-6bfa-80fda94f6e07" ],
+        "postgres-server" : [ "8ee86b70-5b33-44b6-b2f8-1b0ec0ec8d77:731c8c43-8c35-4b58-ad1a-f572b69c5f0"]
+  },
+  "consumer-groups" : [ {
+    "name" : "consumer-group-001",
+    "consumers" : [ "94c96375-1ca7-412d-9eee-80fda94f6e07","54a96375-33a7-4fba-6bfa-80fda94f6e07" ],
+    "datastores" : ["8ee86b70-5b33-44b6-b2f8-1b0ec0ec8d77:731c8c43-8c35-4b58-ad1a-f57 ],
+    "properties" : {
+    }
+  } ],
+  "data-processors" : {
+  }
+
+</pre>
+
+</li>
+
+<li>Restart all <code>edge-qpid-server</code> components on all nodes to make sure the change
+      is picked up by those components:
+
+<pre><code class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-qpid-server restart</code>
+<code class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-qpid-server wait_for_ready</code></pre>
+    </li>
+</ol>
+
+
+
+<h2>Remove a Postgres server from an an analytics group</h2>
+
+<p>The process for removing a Postgres server depends on whether Postgres replication was enabled or not.</p>
+
+<h3>Scenario #1: One Postgres server, no replication</h3>
+
+<ol>
+  <li><p>Determine the name of the analytics and consumer groups.</p>
+
+      <p>By default, the name of the analytics
+      group is <code>axgroup-001</code>, and the name of the consumer group is
+      <code>consumer-group-001</code>. In the silent config file for a region, you can set the name of
+      the analytics group by using the <code>AXGROUP</code> property.</p>
+
+      <p>If you are unsure of the names of the analytics and consumer groups, use the following command
+      to display them:</p>
+
+<pre class="devsite-terminal">curl -u <var>adminEmail:pword</var> "http://<var>ms-IP</var>:8080/v1/analytics/groups/ax"</pre>
+
+<p>This should return a response like the following:</p>
+
+
+<pre class="prettyprint">[ {
+  "name" : "axgroup-001",
+  "properties" : {
+  },
+  "scopes" : [ "example~prod", "example~test" ],
+  "uuids" : {
+    "qpid-server" : [ "94c96375-1ca7-412d-9eee-80fda94f6e07" ],
+    "postgres-server" : [ "8ee86b70-5b33-44b6-b2f8-1b0ec0ec8d77"]
+  },
+  "consumer-groups" : [ {
+    "name" : "consumer-group-001",
+    "consumers" : [ "94c96375-1ca7-412d-9eee-80fda94f6e07" ],
+    "datastores" : [ "8ee86b70-5b33-44b6-b2f8-1b0ec0ec8d77" ],
+    "properties" : {
+    }
+  } ],
+  "data-processors" : {
+  }
+</pre>
+
+
+<p>In this example, the analytics group name is <code>axgroup-001</code>, consumer group name
+  <code>consumer-group-001</code> and the <code>postgres-server</code> UUID is
+  <code>8ee86b70-5b33-44b6-b2f8-1b0ec0ec8d77</code>. Note that this ID is associated with both
+  the <code>postgres-server</code> and the <code>datastores</code> element
+  under <code>consumer-groups</code>. </p>
+
+<p>Use the analytics group name, consumer group name and UUID obtained in the steps below.</p>
+
+<li>Use the following API call to remove the <code>postgres-server</code> UUID from the
+  <code>datastores</code> element of the consumer group:
+
+<pre class="devsite-terminal">curl -v -u <var>adminEmail:pword</var> -X DELETE -H 'Accept:application/json' "http://<var>ms-IP</var>:8080/v1/analytics/groups/ax/<var>axgroupname</var>/consumer-groups/<var>consumergroupname</var>/datastores/<var>UUID</var>"</pre>
+
+<p>Example call and output:</p>
+
+<pre class="devsite-terminal">curl -v -u <var>adminEmail:pword</var> -X DELETE -H 'Accept:application/json' "http://localhost:8080/v1/analytics/groups/ax/axgroup-001/consumer-groups/consumer-group-001/datastores/8ee86b70-5b33-44b6-b2f8-1b0ec0ec8d77"</pre>
+
+<pre class="prettyprint">[ {
+  "name" : "axgroup-001",
+  "properties" : {
+  },
+  "scopes" : [ "example~prod", "example~test" ],
+  "uuids" : {
+    "qpid-server" : [ "94c96375-1ca7-412d-9eee-80fda94f6e07" ],
+    "postgres-server" : [ "8ee86b70-5b33-44b6-b2f8-1b0ec0ec8d77"]
+  },
+  "consumer-groups" : [ {
+    "name" : "consumer-group-001",
+    "consumers" : [ "94c96375-1ca7-412d-9eee-80fda94f6e07" ],
+    "datastores" : [ ],
+    "properties" : {
+    }
+  } ],
+  "data-processors" : {
+  }
+</pre>
+
+</li>
+
+<li>Use the following API to remove the <code>postgres-server</code> UUID from the
+  <code>postgres-server</code> element:
+
+<pre class="devsite-terminal">curl -v -u <var>adminEmail:pword</var> -X DELETE -H 'Accept:application/json' "http://<var>ms-IP</var>:8080/v1/analytics/groups/ax/<var>axgroupname</var>/servers?uuid=<var>UUID</var>&type=postgres-server"</pre>
+
+<p>Example call and output:</p>
+
+<pre class="devsite-terminal">curl -v -u <var>adminEmail:pword</var> -X DELETE -H 'Accept:application/json' "http://localhost:8080/v1/analytics/groups/ax/axgroup-001/servers?uuid=8ee86b70-5b33-44b6-b2f8-1b0ec0ec8d77&type=postgres-server"</pre>
+
+<pre class="prettyprint">[ {
+  "name" : "axgroup-001",
+  "properties" : {
+  },
+  "scopes" : [ "example~prod", "example~test" ],
+  "uuids" : {
+    "qpid-server" : [ "94c96375-1ca7-412d-9eee-80fda94f6e07" ],
+    "postgres-server" : [ ]
+  },
+  "consumer-groups" : [ {
+    "name" : "consumer-group-001",
+    "consumers" : [ "94c96375-1ca7-412d-9eee-80fda94f6e07" ],
+    "datastores" : [ ],
+    "properties" : {
+    }
+  } ],
+  "data-processors" : {
+  }
+</pre>
+
+  </li>
+  <li>Depending on if you are <strong>replacing</strong> or <strong>deleting</strong> the Postgres server:
+
+    <ul>
+
+<li><strong>If you are replacing the Postgres server</strong>, see <a href=#add-server>Add a Postgres server</a>
+   for the steps to add a Postgres servers.</li>
+
+<li><strong>If you are deleting a Postgres server</strong>, restart all
+  <code>edge-postgres-server</code> and <code>edge-qpid-server</code> components on all nodes to
+  make sure the change is picked up by those components by running the following commands:
+
+<pre><code class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-qpid-server restart</code>
+<code class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-qpid-server wait_for_ready</code>
+<code class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-postgres-server restart</code>
+<code class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge edge-postgres-server wait_for_ready</code></pre>
+
+</li>
+
+</ul>
+</ol>
+
+
+<h3>Scenario #2: Two Postgres servers with  master-standby replication</h3>
+
+<ol>
+
+<li><p>Find the analytics group name and Postgres server UUIDs that are currently registered using
+  the following API:</p>
+
+<pre class="devsite-terminal">curl -u <var>adminEmail:pword</var> "http://<var>ms-IP</var>:8080/v1/analytics/groups/ax"</pre>
+
+<p>This call returns a response like the following:</p>
+
+<pre class="prettyprint">[ {
+  "name" : "axgroup-001",
+  "properties" : {
+  },
+  "scopes" : [ "example~prod", "example~test" ],
+  "uuids" : {
+        "qpid-server" : [ "94c96375-1ca7-412d-9eee-80fda94f6e07", "54a96375-33a7-4fba-6bfa-80fda94f6e07" ],
+        "postgres-server" : [ "8ee86b70-5b33-44b6-b2f8-1b0ec0ec8d77:731c8c43-8c35-4b58-ad1a-f572b69c5f0"]
+  },
+  "consumer-groups" : [ {
+    "name" : "consumer-group-001",
+    "consumers" : [ "94c96375-1ca7-412d-9eee-80fda94f6e07", "54a96375-33a7-4fba-6bfa-80fda94f6e07" ],
+    "datastores" : [ "8ee86b70-5b33-44b6-b2f8-1b0ec0ec8d77:731c8c43-8c35-4b58-ad1a-f572b69c5f0" ],
+    "properties" : {
+    }
+  } ],
+  "data-processors" : {
+  }
+</pre>
+
+
+<p>In this example, the analytics group name is <code>axgroup-001</code>, and the
+  <code>postgres-server</code> UUIDs are <code>8ee86b70-5b33-44b6-b2f8-1b0ec0ec8d77</code> and
+  <code>731c8c43-8c35-4b58-ad1a-f572b69c5f0</code>. Note the <code>postgres-server</code> and
+  <code>datastores</code> element have the same value. </p>
+
+<p>Use the analytics group name, consumer group name, and UUIDs obtained in this step in the steps below.</p>
+
+</li>
+
+<li>Use the following API to remove the <code>postgres-server</code> UUIDs from the
+  <code>datastores</code> element of the consumer group (note that the master and slave UUIDs are
+  separated by a comma in the API but will be separated by a colon in the output of the analytics
+  group call mentioned above):
+
+<pre class="devsite-terminal">curl -v -u <var>adminEmail:pword</var> -X DELETE -H 'Accept:application/json' "http://<var>ms-IP</var>:8080/v1/analytics/groups/ax/<var>axgroupname</var>/consumer-groups/<var>consumergroupname</var>/datastores/<var>masteruuid</var>,<var>slaveuuid</var>"</pre>
+
+<p>Example call and output:</p>
+
+<pre class="devsite-terminal">curl -v -u <var>adminEmail:pword</var> -X DELETE -H 'Accept:application/json' "http://localhost:8080/v1/analytics/groups/ax/axgroup-001/consumer-groups/consumer-group-001/datastores/8ee86b70-5b33-44b6-b2f8-1b0ec0ec8d77,731c8c43-8c35-4b58-ad1a-f572b69c5f0"</pre>
+
+<pre class="prettyprint">[ {
+  "name" : "axgroup-001",
+  "properties" : {
+  },
+  "scopes" : [ "example~prod", "example~test" ],
+  "uuids" : {
+        "qpid-server" : [ "94c96375-1ca7-412d-9eee-80fda94f6e07", "54a96375-33a7-4fba-6bfa-80fda94f6e07" ],
+        "postgres-server" : [ "8ee86b70-5b33-44b6-b2f8-1b0ec0ec8d77:731c8c43-8c35-4b58-ad1a-f572b69c5f0"]
+  },
+  "consumer-groups" : [ {
+    "name" : "consumer-group-001",
+    "consumers" : [ "94c96375-1ca7-412d-9eee-80fda94f6e07", "54a96375-33a7-4fba-6bfa-80fda94f6e07" ],
+    "datastores" : [ ],
+    "properties" : {
+    }
+  } ],
+  "data-processors" : {
+  }
+</pre>
+
+</li>
+
+<li>Use the following API to remove the <code>postgres-server</code> UUIDs from the
+  <code>postgres-server</code> element:
+
+<pre class="devsite-terminal">curl -v -u <var>adminEmail:pword</var> -X DELETE -H 'Accept:application/json' "http://<var>ms-IP</var>:8080/v1/analytics/groups/ax/<var>axgroupname</var>/servers?uuid=<var>masteruuid</var>,<var>slaveuuid</var>&type=postgres-server"</pre>
+
+<p>Example call and output:</p>
+
+<pre class="devsite-terminal">curl -v -u <var>adminEmail:pword</var> -X DELETE -H 'Accept:application/json' "http://localhost:8080/v1/analytics/groups/ax/axgroup-001/servers?uuid=8ee86b70-5b33-44b6-b2f8-1b0ec0ec8d77,731c8c43-8c35-4b58-ad1a-f572b69c5f0&type=postgres-server"</pre>
+
+<pre class="prettyprint">[ {
+  "name" : "axgroup-001",
+  "properties" : {
+  },
+  "scopes" : [ "example~prod", "example~test" ],
+  "uuids" : {
+    "qpid-server" : [ "94c96375-1ca7-412d-9eee-80fda94f6e07", "54a96375-33a7-4fba-6bfa-80fda94f6e07" ],
+    "postgres-server" : [ ]
+  },
+  "consumer-groups" : [ {
+    "name" : "consumer-group-001",
+    "consumers" : [ "94c96375-1ca7-412d-9eee-80fda94f6e07", "54a96375-33a7-4fba-6bfa-80fda94f6e07" ],
+    "datastores" : [ ],
+    "properties" : {
+    }
+  } ],
+  "data-processors" : {
+  }
+</pre>
+
+  </li>
+
+  <li>Depending on if you are <strong>replacing</strong> or <strong>deleting</strong> the Postgres server:
+
+    <ul>
+
+<li><strong>If you are replacing the Postgres server</strong>, see <a href=#add-server>Add a Postgres server</a>
+   for the steps to add a Postgres servers.</li>
+
+<li><strong>If you are deleting a Postgres server</strong>, restart all
+  <code>edge-postgres-server</code> and <code>edge-qpid-server</code> components on all nodes to
+  make sure the change is picked up by those components by running the following commands:
+
+<pre><code class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-qpid-server restart</code>
+<code class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-qpid-server wait_for_ready</code>
+<code class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-postgres-server restart</code>
+<code class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge edge-postgres-server wait_for_ready</code></pre>
+
+</li>
+
+</ul>
+
+
+
+<h2>Remove a Qpid server from an analytics group</h2>
+
+<ol>
+
+<li>Find the Qpid server UUIDs that are currently registered using the following API:
+
+<pre class="devsite-terminal">curl -u <var>adminEmail:pword</var> "http://<var>ms-IP</var>:8080/v1/analytics/groups/ax"</pre>
+
+This should return a response in the form:
+
+<pre class="prettyprint">[  {
+  "name" : "axgroup-001",
+  "properties" : {
+  },
+  "scopes" : [ "example~prod", "example~test" ],
+  "uuids" : {
+        "qpid-server" : [ "94c96375-1ca7-412d-9eee-80fda94f6e07", "54a96375-33a7-4fba-6bfa-80fda94f6e07" ],
+        "postgres-server" : [ "8ee86b70-5b33-44b6-b2f8-1b0ec0ec8d77:731c8c43-8c35-4b58-ad1a-f572b69c5f0"]
+  },
+  "consumer-groups" : [ {
+    "name" : "consumer-group-001",
+    "consumers" : [ "94c96375-1ca7-412d-9eee-80fda94f6e07", "54a96375-33a7-4fba-6bfa-80fda94f6e07" ],
+    "datastores" : [ "8ee86b70-5b33-44b6-b2f8-1b0ec0ec8d77:731c8c43-8c35-4b58-ad1a-f572b69c5f0" ],
+    "properties" : {
+    }
+  } ],
+  "data-processors" : {
+  }
+</pre>
+
+
+<p>In this example, the analytics group name is <code>axgroup-001</code>, and the Qpid server UUIDs
+  are <code>94c96375-1ca7-412d-9eee-80fda94f6e0</code> and <code>54a96375-33a7-4fba-6bfa-80fda94f6e07</code>.
+  Note the <code>qpid-server</code> and <code>consumers</code> element have the same values. </p>
+
+<p>Use the analytics group name, consumer group name and UUIDs obtained in this step in the steps below.</p>
+
+</li>
+
+<li>Use the following API call to remove a single <code>qpid-server</code> UUID from the <code>consumers</code>
+  element of  the consumer group (repeat for as many UUIDs as necessary):
+
+<pre class="devsite-terminal">curl -v -u <var>adminEmail:pword</var> -X DELETE -H'Accept:application/json' "http://<var>ms-IP</var>:8080/v1/analytics/groups/ax/<var>axgroupname</var>/consumer-groups/consumer-group-001/consumers/<var>qpiduuid</var>"</pre>
+
+<p>Example call and output:</p>
+
+<pre class="devsite-terminal">curl -v -u <var>adminEmail:pword</var> -X DELETE -H 'Accept:application/json' "http://localhost:8080/v1/analytics/groups/ax/axgroup-001/consumer-groups/consumer-group-001/consumers/94c96375-1ca7-412d-9eee-80fda94f6e0"</pre>
+
+<pre class="prettyprint">[  {
+  "name" : "axgroup-001",
+  "properties" : {
+  },
+  "scopes" : [ "example~prod", "example~test" ],
+  "uuids" : {
+        "qpid-server" : [ "94c96375-1ca7-412d-9eee-80fda94f6e07", "54a96375-33a7-4fba-6bfa-80fda94f6e07" ],
+        "postgres-server" : [ "8ee86b70-5b33-44b6-b2f8-1b0ec0ec8d77:731c8c43-8c35-4b58-ad1a-f572b69c5f0"]
+  },
+  "consumer-groups" : [ {
+    "name" : "consumer-group-001",
+    "consumers" : [ "54a96375-33a7-4fba-6bfa-80fda94f6e07" ],
+    "datastores" : ["8ee86b70-5b33-44b6-b2f8-1b0ec0ec8d77:731c8c43-8c35-4b58-ad1a-f57 ],
+    "properties" : {
+    }
+  } ],
+  "data-processors" : {
+  }
+</pre>
+
+</li>
+
+<li>Use the following API call to remove a single <code>qpid-server</code> UUID from the
+  <code>qpid-server</code> element (repeat for as many UUIDs as necessary):
+
+<pre class="devsite-terminal">curl -v -u <var>adminEmail:pword</var> -X DELETE -H 'Accept:application/json' "http://<var>ms-IP</var>:8080/v1/analytics/groups/ax/<var>axgroupname</var>/servers?uuid=<var>qpiduuid</var>&type=qpid-server"</pre>
+
+<p>Example call and output:</p>
+
+<pre class="devsite-terminal">curl -v -u <var>adminEmail:pword</var> -X DELETE -H 'Accept:application/json' "http://localhost:8080/v1/analytics/groups/ax/axgroup-001/serevers?=94c96375-1ca7-412d-9eee-80fda94f6e0&type=qpid-server"</pre>
+
+<pre class="prettyprint">[  {
+  "name" : "axgroup-001",
+  "properties" : {
+  },
+  "scopes" : [ "example~prod", "example~test" ],
+  "uuids" : {
+        "qpid-server" : ["54a96375-33a7-4fba-6bfa-80fda94f6e07" ],
+        "postgres-server" : [ "8ee86b70-5b33-44b6-b2f8-1b0ec0ec8d77:731c8c43-8c35-4b58-ad1a-f572b69c5f0"]
+  },
+  "consumer-groups" : [ {
+    "name" : "consumer-group-001",
+    "consumers" : [ "54a96375-33a7-4fba-6bfa-80fda94f6e07" ],
+    "datastores" : ["8ee86b70-5b33-44b6-b2f8-1b0ec0ec8d77:731c8c43-8c35-4b58-ad1a-f57 ],
+    "properties" : {
+    }
+  } ],
+  "data-processors" : {
+  }
+</pre>
+
+</li>
+
+<li>Restart all <code>edge-qpid-server</code> components on all nodes to make sure the change
+      is picked up by those components:
+
+<pre><code class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-qpid-server restart</code>
+<code class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-qpid-server wait_for_ready</code></pre>
+    </li>
+
+</ol>
+
+{% endblock %}

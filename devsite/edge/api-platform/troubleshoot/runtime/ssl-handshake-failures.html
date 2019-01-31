@@ -1,0 +1,1071 @@
+  {% extends "_base.html" %} {% block title %}TLS/SSL Handshake Failures{% endblock %} {% block body %}
+
+<aside class="note">Was this troubleshooting playbook helpful? Please let us know
+  by clicking <a href="" class="google-feedback"
+   data-p="1636213" data-b="docsite" data-context="troubleshooting-feedback">
+  Send Feedback
+</a>.</aside>
+
+  <h2 id="ssl-handshake-failures">Symptom</h2>
+
+<p>
+  A <i>TLS/SSL handshake failure</i> occurs when a client and server cannot establish communication using the
+  TLS/SSL protocol. When this error occurs in Apigee Edge, the client
+    application receives an HTTP status 503 with the message <strong>Service Unavailable</strong>. You
+  see this error following any API call where an TLS/SSL handshake failure occurs.</p>
+
+  <h2 id="error-messages">Error Messages</h2>
+  <pre class="prettyprint">
+HTTP/1.1 503 Service Unavailable
+</pre>
+
+  <p>You can also see this error message when an TLS/SSL handshake failure occurs:</p>
+  <pre class="prettyprint">
+Received fatal alert: handshake_failure
+</pre>
+
+  <h2 id="overview-of-ssl-handshake">Possible causes</h2>
+
+  <p>TLS (Transport Layer Security, whose predecessor is SSL) is the standard security technology for
+  establishing an encrypted link between a web server and a web client, such as a browser or an app.
+    A <i>handshake</i> is a process that enables the TLS/SSL client and server to establish a set of secret
+  keys with which they can communicate. During this process, the client and server:</p>
+
+  <ol>
+    <li>Agree on the version of the protocol to use.</li>
+
+    <li>Select the cryptographic algorithm to be used.</li>
+
+    <li>Authenticate each other by exchanging and validating digital certificates.</li>
+  </ol>
+
+  <p>If the TLS/SSL handshake succeeds, then the TLS/SSL client and server transfer data to each
+  other securely. Otherwise, if a TLS/SSL handshake failure occurs the connection is terminated and the client
+    receives a <code>503 Service Unavailable</code> error.</p>
+
+  <p>Possible causes for TLS/SSL handshake failures are:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th><strong>Cause</strong></th>
+
+        <th><strong>Description</strong></th>
+
+        <th><strong>Who can perform the troubleshooting steps</strong></th>
+    </thead>
+    <tbody>
+      <tr>
+        <td><a href="#protocolmismatch">Protocol mismatch</a></td>
+
+        <td>The protocol used by the client is not supported by the server. </td>
+
+        <td>Private and Public Cloud users</td>
+      </tr>
+
+      <tr>
+        <td><a href="#ciphermismatch">Cipher Suite mismatch</a></td>
+
+        <td>The cipher suite used by the client is not supported by the server. </td>
+
+        <td>Private and Public Cloud users</td>
+      </tr>
+
+      <tr>
+        <td rowspan="3"><a href="#incorrectcertificate">Incorrect Certificate</a></td>
+
+        <td>The hostname in the URL used by the client does not match the hostname in the certificate
+        stored at the server end.</td>
+
+        <td>Private and Public Cloud users</td>
+      </tr>
+
+      <tr>
+        <td>An incomplete or invalid certificate chain is stored at the client or server end.</td>
+
+        <td>Private and Public Cloud users</td>
+      </tr>
+
+      <tr>
+        <td>An incorrect or expired certificate is sent by the client to the server or from the server
+          to the client.</td>
+
+        <td>Private and Public Cloud users</td>
+      </tr>
+
+      <tr>
+        <td><a href="#snienabledserver">SNI Enabled Server</a></td>
+
+        <td>The backend server is Server Name Indication (SNI) enabled; however, the client cannot communicate with the
+        SNI servers. </td>
+
+        <td>Private Cloud users only</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="protocolmismatch"><a id="protocolmismatch" name="protocolmismatch"></a>Protocol
+  Mismatch</h2>
+
+<aside class="note">The steps in this section are for Edge Private Cloud and Edge Public Cloud users.</aside>
+
+  <p>A TLS/SSL handshake failure occurs if the protocol used by the client is not supported by the
+    server either at the incoming (northbound) or outgoing (southbound) connection. See also <a href="/api-platform/troubleshoot/runtime/503-service-unavailable.html#determiningthesourceoftheproblem-understandingnorthboundandsouthboundconnections">Understanding
+    northbound and southbound connections</a>.
+
+  <h3 id="steps-to-diagnose">Diagnosis</h3>
+
+  <ol>
+    <li>Determine whether the error occurred at the <strong>northbound</strong> or
+    <strong>southbound</strong> connection. For further guidance on making this determination, see <a href=
+    "/api-platform/troubleshoot/runtime/503-service-unavailable.html#determiningthesourceoftheproblem">
+    Determining the source of the problem</a>. </li>
+
+    <li>Run the <a href=
+        "/api-platform/troubleshoot/diagnostic-tools-and-logs.html#tcpippacketsniffertcpdumputility">
+        tcpdump</a> utility to gather further information:
+
+      <ul>
+        <li>If you are a <strong>Private Cloud user</strong>, then you can collect the <code>tcpdump</code>
+          data at the relevant client or server. A client can be the client app (for incoming,
+        or northbound connections) or the Message
+        Processor (for outgoing, or southbound connections). A server can be the Edge Router (for
+          incoming, or northbound connections) or the backend server
+        (for outgoing, or southbound connections) based on your determination from Step 1.</li>
+
+        <li>If you are a <strong>Public Cloud user</strong>, then you can collect the <code>tcpdump</code>
+          data only on the client app (for incoming, or northbound connections) or the backend server
+          (for outgoing, or southbound connections), because you do
+        not have access to the Edge Router or Message Processor.</li>
+      </ul>
+
+      <pre class="devsite-terminal">
+tcpdump -i any -s 0 host <var>IP address</var> -w <var>File name</var>
+</pre>
+      See <a href="/api-platform/troubleshoot/diagnostic-tools-and-logs.html#tcpippacketsniffertcpdumputility">tcpdump</a>
+    data for more information on using the <code>tcpdump</code> command.
+    </li>
+
+    <li>Analyze the <code>tcpdump</code> data using the <a href="https://www.wireshark.org/">Wireshark tool</a>
+    or a similar tool.</li>
+
+    <li>Here's a sample analysis of the <a href=
+    "/api-platform/troubleshoot/diagnostic-tools-and-logs.html#tcpippacketsniffertcpdumputility">tcpdump</a>
+    using Wireshark:
+
+      <ul>
+        <li>In this example, the TLS/SSL handshake failure occurred between the Message Processor and
+        the backend server (the outgoing, or southbound connection).</li>
+
+        <li>Message #4 in the <code>tcpdump</code> output below shows that the Message Processor (Source) sent a
+        "Client Hello" message to the backend server (Destination).<br>
+
+          <p><img class="screenshot" alt="" src="/api-platform/images/IMG-3-10f.png"></p>
+        </li>
+
+        <li><p>If you select the <code>Client Hello</code> message, it shows that the Message Processor is using the
+          TLSv1.2 protocol, as shown below:</p>
+
+          <p><img class="screenshot" alt="" src="/api-platform/images/IMG-3-11b.png"></p>
+        </li>
+
+        <li>Message #5 shows that the backend server acknowledges the "Client Hello" message from
+        the Message Processor.</li>
+
+        <li>The backend server immediately sends <strong>Fatal Alert : Close Notify</strong> to the
+        Message Processor (message #6). This means the TLS/SSL Handshake failed and the connection will
+        be closed.</li>
+
+        <li><p>Looking further into message #6 shows that cause of TLS/SSL handshake failure is that the
+          backend server supports only TLSv1.0 protocol as shown below:</p>
+
+          <p><img class="screenshot" alt="" src="/api-platform/images/IMG-3-12b.png"></p>
+        </li>
+
+        <li>Because there is a mismatch between the protocol used by the Message Processor and the
+        backend server, the backend server sent the message: <strong>Fatal Alert Message: Close
+        Notify</strong>.</li>
+      </ul>
+    </li>
+  </ol>
+
+  <h3 id="resolution">Resolution</h3>
+
+  <p>The Message Processor runs on Java 8 and uses TLSv1.2 protocol by default. If the backend
+  server does not support the TLSv1.2 protocol, then you can take one of the following steps to resolve
+  this issue:</p>
+
+  <ol>
+    <li>Upgrade your backend server to support the TLSv1.2 protocol. This is a recommended solution as
+    the protocol TLSv1.2 is more secure.</li>
+
+    <li>If you are unable to upgrade your backend server immediately for some reason, then you can
+      force the Message Processor to use the TLSv1.0 protocol to communicate with
+      the backend server by following these steps:
+
+      <ol>
+        <li>If you did not specify a target server in the proxy's TargetEndpoint definition, then set
+          the <code>Protocol</code> element to <code>TLSv1.0</code> as shown
+        below:
+          <pre class="prettyprint">
+&lt;TargetEndpoint name="default"&gt;
+ &#8230;
+ &lt;HTTPTargetConnection&gt;
+   &lt;SSLInfo&gt;
+       &lt;Enabled&gt;true&lt;/Enabled&gt;
+       &lt;Protocols&gt;
+           &lt;Protocol&gt;TLSv1.0&lt;Protocol&gt;
+       &lt;/Protocols&gt;
+   &lt;/SSLInfo&gt;
+   &lt;URL&gt;https://myservice.com&lt;/URL&gt;
+ &lt;/HTTPTargetConnection&gt;
+ &#8230;
+&lt;/TargetEndpoint&gt;
+</pre>
+        </li>
+
+        <li>If you configured a <a href=
+        "/management/apis/post/organizations/%7Borg_name%7D/environments/%7Benv_name%7D/targetservers">
+        target server</a> for your proxy, then use <a href=
+        "/management/apis/put/organizations/%7Borg_name%7D/environments/%7Benv_name%7D/targetservers/%7Btargetserver%7D">
+        this management API</a> to set the protocol to TLSv1.0 in the specific target server
+        configuration.</li>
+      </ol>
+    </li>
+  </ol>
+
+  <h2 id="cipher-mismatch"><a id="ciphermismatch" name="ciphermismatch"></a>Cipher Mismatch</h2>
+
+<aside class="note">The steps in this section are for Edge Private Cloud and Edge Public Cloud users.</aside>
+
+  <p>You can see a TLS/SSL handshake failure if the cipher suite algorithm used by the client is not
+  supported by the server either at the incoming (northbound) or outgoing (southbound) connection in Apigee Edge.
+    See also <a href="/api-platform/troubleshoot/runtime/503-service-unavailable.html#determiningthesourceoftheproblem-understandingnorthboundandsouthboundconnections">Understanding
+    northbound and southbound connections</a>.</p>
+
+  <h3 id="steps-to-diagnose">Diagnosis</h3>
+
+  <ol>
+    <li>Determine whether the error occurred at
+    the <strong>northbound</strong> or <strong>southbound</strong> connection.
+    For further guidance on making this determination, see <a href=
+    "/api-platform/troubleshoot/runtime/503-service-unavailable.html#determiningthesourceoftheproblem">Determining
+    the source of the problem</a>. </li>
+
+    <li>Run the <a href=
+        "/api-platform/troubleshoot/diagnostic-tools-and-logs.html#tcpippacketsniffertcpdumputility">
+        tcpdump</a> utility to gather further information:
+
+      <ul>
+        <li>If you are a <strong>Private Cloud user</strong>, then you can collect the <code>tcpdump</code>
+          data at the relevant client or server. A client can be the client app (for incoming,
+        or northbound connections) or the Message
+        Processor (for outgoing, or southbound connections). A server can be the Edge Router (for
+          incoming, or northbound connections) or the backend server
+        (for outgoing, or southbound connections) based on your determination from Step 1.</li>
+
+        <li>If you are a <strong>Public Cloud user</strong>, then you can collect the <code>tcpdump</code>
+          data only on the client app (for incoming, or northbound connections) or the backend server
+          (for outgoing, or southbound connections), because you do
+        not have access to the Edge Router or Message Processor.</li>
+      </ul>
+
+      <pre class="devsite-terminal">
+tcpdump -i any -s 0 host <var>IP address</var> -w <var>File name</var>
+</pre>
+      See <a href="/api-platform/troubleshoot/diagnostic-tools-and-logs.html#tcpippacketsniffertcpdumputility">tcpdump</a>
+    data for more information on using the <code>tcpdump</code> command.
+    </li>
+
+    <li>Analyse the <code>tcpdump</code> data using the <a href="https://www.wireshark.org/">Wireshark</a> tool
+    or any other tool that you are familiar with.</li>
+
+    <li>Here's the sample analysis of the <code>tcpdump</code> output using Wireshark:
+
+      <ul>
+        <li>In this example, the TLS/SSL Handshake failure occurred between the Client application and
+        Edge router (northbound connection). The <code>tcpdump</code> output was collected on the Edge
+        router.</li>
+
+        <li><p>The message #4 in the <code>tcpdump</code> output below shows that the client application (source) sent a
+          "Client Hello" message to the Edge Router (destination).</p>
+
+          <p><img class="screenshot" alt="" src="/api-platform/images/IMG-3-14d.png"></p>
+        </li>
+
+        <li><p>Selecting the Client Hello message shows that the client application is using the
+          TLSv1.2 protocol.</p>
+
+          <p><img class="screenshot" alt="" src="/api-platform/images/IMG-3-15b.png"></p>
+        </li>
+
+        <li>Message #5 shows that the Edge Router acknowledges the "Client Hello" message from
+        the client application.</li>
+
+        <li>The Edge router immediately sends a <strong>Fatal Alert : Handshake Failure</strong> to
+        the client application (message #6). This means the TLS/SSL handshake failed and the connection
+        will be closed.</li>
+
+        <li>Looking further into message #6 shows the following information:
+
+          <ul>
+            <li>The Edge Router supports TLSv1.2 protocol. This means that the protocol matches
+            between the client application and the Edge Router.</li>
+
+            <li><p>However, the Edge router still sends the <strong>Fatal Alert: Handshake
+              Failure</strong> to the client application as shown in the screenshot below:</p>
+
+              <p><img class="screenshot" alt="" src="/api-platform/images/IMG-3-16b.png"></p>
+            </li>
+          </ul>
+        </li>
+
+        <li>The error could be the result of one of the following issues:
+
+          <ul>
+            <li>The client application is not using the cipher suite algorithms supported by the
+            Edge Router.</li>
+
+            <li>The Edge Router is SNI-enabled, but the client application is not sending the
+            server name.</li>
+          </ul>
+        </li>
+
+        <li>Message #4 in the <code>tcpdump</code> output lists the cipher suite algorithms supported by the client
+        application, as shown below:
+
+          <p><img class="screenshot" alt="" src="/api-platform/images/IMG-3-17b.png"></p>
+        </li>
+
+        <li>The list of cipher suite algorithms supported by the Edge Router are listed in the
+        <code>/opt/nginx/conf.d/0-default.conf</code> file. In this example, the Edge Router
+        supports only the High Encryption cipher suite algorithms.</li>
+
+        <li>The client application does not use any of the High Encryption cipher suite algorithms.
+        This mismatch is the cause of the
+        TLS/SSL handshake failure.</li>
+
+        <li>Because the Edge Router is SNI-enabled, scroll down to message #4 in the <code>tcpdump</code> output and
+        confirm that the client application is sending the server name correctly, as shown in the
+        figure below:<br>
+          <br>
+          <img class="screenshot" width="75%" alt="" src="/api-platform/images/IMG-3-18d.png"><br>
+
+
+        </li>
+
+        <li>If this name is valid, you can infer that the TLS/SSL handshake failure
+        has occurred because the cipher suite algorithmss used by the client application are not supported by
+        the Edge Router.</li>
+      </ul>
+    </li>
+  </ol>
+
+  <h3 id="resolution">Resolution</h3>
+
+ <p>You must ensure that the client uses the cipher suite algorithms that are supported by the
+   server. To solve the issue described in the previous Diagnosis section, download and install the <a href=
+        "https://www.oracle.com/technetwork/java/javase/downloads/jce8-download-2133166.html">Java
+        Cryptography Extension (JCE)</a> package and include it in the Java installation to support
+        High Encryption cipher suite algorithms.</p>
+
+
+  <h2 id="incorrect-certificate"><a id="incorrectcertificate" name=
+  "incorrectcertificate"></a>Incorrect Certificate</h2>
+
+<aside class="note">The steps in this section are for Edge Private Cloud and Edge Public Cloud users.</aside>
+
+  <p>A TLS/SSL handshake failure occurs if you have incorrect certificates in the keystore/truststore,
+    either at the incoming (northbound) or outgoing (southbound) connection in Apigee Edge.
+    See also <a href="/api-platform/troubleshoot/runtime/503-service-unavailable.html#determiningthesourceoftheproblem-understandingnorthboundandsouthboundconnections">Understanding
+    northbound and southbound connections</a>. </p>
+
+  <p>If the problem is <i>northbound</i>, then you may see different error messages
+  depending on the underlying cause.</p>
+
+  <p>The following sections list example error messages and the steps to diagnose and resolve this
+  issue.</p>
+
+  <h3 id="incorrectcertificate-errormessages">Error messages</h3>
+
+  <p>You might see different error messages depending on the cause of the TLS/SSL handshake failure.
+  Here's a sample error message that you might see when you call an API proxy:</p>
+  <pre class="prettyprint">
+* SSL certificate problem: Invalid certificate chain
+* Closing connection 0
+curl: (60) SSL certificate problem: Invalid certificate chain
+More details here: http://curl.haxx.se/docs/sslcerts.html
+</pre>
+
+  <h3 id="causes">Possible causes</h3>
+
+  <p>The typical causes for this issue are:</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <td><strong>Cause</strong></td>
+
+        <td><strong>Description</strong></td>
+
+        <td><strong>Who can perform the troubleshooting steps</strong></td>
+      </tr>
+
+      <tr>
+        <td><a href="#hostnamemismatch">Hostname Mismatch</a></td>
+
+        <td>
+          The hostname used in the URL and the certificate in the keystore of the router does not
+          match. For example, a mismatch occurs if the host name used in the URL is <code>myorg.domain.com</code> while
+          the certificate has the hostname in its CN as <code>CN=something.domain.com.</code></p>
+        </td>
+
+        <td>Edge Private and Public Cloud users</td>
+      </tr>
+
+      <tr>
+        <td><a href="#incompleteorincorrectcertificatechain">Incomplete or Incorrect certificate
+        chain</a></td>
+
+        <td>The certificate chain is not complete or not correct. </td>
+
+        <td>Edge Private and Public Cloud users only</td>
+      </tr>
+
+      <tr>
+        <td><a href="#expiredunknowncertificatesent">Expired or unknown certificate sent by the
+        server or client</a></td>
+
+        <td>An expired or unknown certificate is sent by the server or client either at the northbound or at
+        the southbound connection. </td>
+
+        <td>Edge Private Cloud and Edge Public Cloud users</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="hostname-mismatch"><a id="hostnamemismatch" name="hostnamemismatch"></a>Hostname
+  Mismatch</h3>
+
+  <aside class="note"><strong>Note:</strong> The steps in this section can be
+  performed by both Edge Private and Edge Public Cloud users.</aside>
+
+  <h4 id="steps-to-diagnose">Diagnosis</h4>
+
+  <ol>
+    <li>Note the hostname used in the URL returned by the following Edge management API call:
+      <pre class="devsite-terminal">curl -v https://myorg.domain.com/v1/getinfo</pre>
+      For example:
+      <pre class="devsite-terminal">curl -v https://api.enterprise.apigee.com/v1/getinfo</pre>
+    </li>
+
+    <li>Get the CN used in the certificate stored in the specific keystore. You can use the
+    following Edge management APIs to get the details of the certificate:
+
+      <ol>
+        <li>
+          <a href=
+          "/management/apis/get/organizations/%7Borg_name%7D/environments/%7Benv_name%7D/keystores/%7Bkeystore_name%7D/certs">
+          Get the certificate name in the keystore</a>:<br>
+          <br>
+          If you are a <strong>Private Cloud user</strong>, use the Management API as follows:<br>
+          <pre class="devsite-terminal">curl -v https://<var>management-server-ip</var>:<var>port</var>/v1/organizations/<var>org-name</var>/environments/<var>env-name</var>/keystores/<var>keystore-name</var>/certs</pre>
+          If you are a <strong>Public Cloud user</strong>, use the Management API as follows:<br>
+
+          <pre class="devsite-terminal">
+curl -v https://api.enterprise.apigee.com/v1/organizations/<var>org-name</var>/environments/<var>env-name</var>/keystores/<var>keystore-name</var>/certs
+</pre>
+        </li>
+
+        <li>
+          <a href=
+          "/management/apis/get/organizations/%7Borg_name%7D/environments/%7Benv_name%7D/keystores/%7Bkeystore_name%7D/certs/%7Bcert_name%7D">
+          Get the details of the certificate in the keystore using the Edge management API.</a><br>
+          <br>
+          If you are a <strong>Private Cloud user</strong>:<br>
+
+          <pre class="devsite-terminal">
+curl -v https://<var>management-server-ip</var>:<var>port</var>/v1/organizations/<var>org-name</var>/environments/<var>env-name</var>/keystores/<var>keystore-name</var>/certs/<var>cert-name</var>
+</pre>If you are a <strong>Public Cloud user</strong>:<br>
+
+          <pre class="devsite-terminal">
+curl -v https://api.enterprise.apigee.com/v1/organizations/<var>org-name</var>/environments/<var>env-name</var>/keystores/<var>keystore-name</var>/certs/<var>cert-name</var>
+</pre>
+
+          <p>Sample cert::</p>
+          <pre class="prettyprint">
+"certInfo": [
+    {
+      "basicConstraints": "CA:FALSE",
+      "expiryDate": 1456258950000,
+      "isValid": "No",
+      "issuer": "SERIALNUMBER=07969287, CN=Go Daddy Secure Certification Authority, OU=http://certificates.godaddy.com/repository, O=\"GoDaddy.com, Inc.\", L=Scottsdale, ST=Arizona, C=US",
+      "publicKey": "RSA Public Key, 2048 bits",
+      "serialNumber": "07:bc:a7:39:03:f1:56",
+      "sigAlgName": "SHA1withRSA",
+      "subject": "CN=something.domain.com, OU=Domain Control Validated, O=something.domain.com",
+      "validFrom": 1358287055000,
+      "version": 3
+    },
+</pre>
+
+          <p>The subject name in the primary certificate has the CN as
+          <code>something.domain.com.</code></p>
+
+          <p>Because the hostname used in the API request URL (refer to step#1 above) and the subject
+          name in the certificate don't match, you get the TLS/SSL handshake failure.</p>
+        </li>
+      </ol>
+    </li>
+  </ol>
+
+  <h4 id="resolution">Resolution</h4>
+
+  <p>This issue can be resolved in one of the following two ways:</p>
+
+  <ul>
+    <li>Obtain a certificate (if you don't have one already) where the subject CN has a wildcard
+    certificate, then upload the new complete certificate chain to the keystore. For example:
+      <pre class="prettyprint">
+"subject": "CN=*.domain.com, OU=Domain Control Validated, O=*.domain.com",</pre>
+    </li>
+
+    <li>Obtain a certificate (if you don't have one already) with an existing subject CN, but use
+      <var>your-org</var>.<var>your-domain</var> as a subject alternative name, then upload the complete
+    certificate chain to the keystore.</li>
+  </ul>
+
+  <h4 id="references">References</h4>
+
+  <p><a href="/api-platform/system-administration/keystores-and-truststores.html">Keystores and
+  Truststores</a></p>
+
+  <h3 id="incomplete-or-incorrect-certificate-chain"><a id="incompleteorincorrectcertificatechain"
+  name="incompleteorincorrectcertificatechain"></a>Incomplete or incorrect certificate chain</h3>
+
+<aside class="note">The steps in this section are for Edge Private Cloud and Edge Public Cloud users.</aside>
+
+
+  <h4 id="steps-to-diagnose">Diagnosis</h4>
+
+
+  <ol>
+    <li>Get the CN used in the certificate stored in the specific keystore. You can use the
+    following Edge management APIs to get the details of the certificate:
+
+      <ol>
+        <li>
+          <a href=
+          "/management/apis/get/organizations/%7Borg_name%7D/environments/%7Benv_name%7D/keystores/%7Bkeystore_name%7D/certs">
+          Get the certificate name in the keystore</a>:<br>
+          <br>
+          If you are a <strong>Private Cloud user</strong>:<br>
+          <pre class="devsite-terminal">
+curl -v https://<var>management-server-ip</var>:<var>port</var>/v1/organizations/<var>org-name</var>/environments/<var>env-name</var>/keystores/<var>keystore-name</var>/certs
+</pre>If you are a <strong>Public Cloud user</strong>:<br>
+
+          <pre class="devsite-terminal">
+curl -v https://api.enterprise.apigee.com/v1/organizations/<var>org-name</var>/environments/<var>env-name</var>/keystores/<var>keystore-name</var>/certs
+</pre>
+        </li>
+
+        <li>
+          <a href=
+          "/management/apis/get/organizations/%7Borg_name%7D/environments/%7Benv_name%7D/keystores/%7Bkeystore_name%7D/certs/%7Bcert_name%7D">
+          Get the details of the certificate in the keystore:</a><br>
+          <br>
+          If you are a <strong>Private Cloud user</strong>:<br>
+          <pre class="devsite-terminal">
+curl -v https://<var>management-server-ip</var>:<var>port</var>/v1/organizations/<var>org-name</var>/environments/<var>env-name</var>/keystores/<var>keystore-name</var>/certs/<var>cert-name</var>
+</pre>If you are a <strong>Public Cloud user</strong>:<br>
+
+          <pre class="devsite-terminal">
+curl -v https://api.enterprise.apigee.com/v1/organizations/<var>org-name</var>/environments/<var>env-name</var>/keystores/<var>keystore-name</var>/certs/<var>cert-name</var>
+</pre>
+        </li>
+
+        <li>Validate the certificate and its chain and verify that it adheres to the guidelines
+        provided in the article<a href=
+        "https://search.thawte.com/support/ssl-digital-certificates/index?page=content&amp;actp=CROSSLINK&amp;id=SO16297">
+        How certificate chains work</a> to ensure it's a valid and complete certificate chain.
+          If the certificate chain stored in the keystore is either incomplete or invalid, then
+        you see the TLS/SSL handshake failure.</li>
+
+        <li>The following grahpic shows a sample certificate with an invalid certificate chain,
+          where the intermediate and root certificates do not match:</li>
+
+
+      <p><strong>Sample intermediate and root certificate where issuer and
+      subject do not match</strong></p>
+
+      <p><img class="screenshot" alt="" src="/api-platform/images/IMG-3-21b.png"><br>
+       </p>
+</ol>
+</ol>
+
+      <h4 id="resolution">Resolution</h4>
+
+      <ol>
+        <li>Obtain a certificate (if you don't have one already) that includes a complete and valid
+        certificate chain.</li>
+
+        <li>Run the following openssl command to verify that the certificate chain is correct and
+        complete:
+          <pre class="prettyprint">
+openssl verify -CAfile <var>root-cert</var> -untrusted <var>intermediate-cert</var> <var>main-cert</var></pre>
+        </li>
+
+        <li>Upload the validated certificate chain to the keystore.</li>
+      </ol>
+
+      <h3 id="expired-unknown-certificate-sent-by-the-server-client"><a id=
+      "expiredunknowncertificatesent" name="expiredunknowncertificatesent"></a>Expired or unknown
+      certificate sent by the server or client</h3>
+
+<aside class="note">The steps in this section are for Edge Private Cloud and Edge Public Cloud users.</aside>
+
+
+      <p>If an incorrect/expired certificate is sent by the server/client either at the northbound
+      or at the southbound connection, then the other end (server/client) rejects the certificate
+      leading to a TLS/SSL handshake failure.</p>
+
+      <h4 id="steps-to-diagnose">Diagnosis</h4>
+
+      <ol>
+        <li>Determine whether the error occurred at
+    the <strong>northbound</strong> or <strong>southbound</strong> connection.
+    For further guidance on making this determination, see <a href=
+    "/api-platform/troubleshoot/runtime/503-service-unavailable.html#determiningthesourceoftheproblem">Determining
+    the source of the problem</a>. </li>
+
+    <li>Run the <a href=
+        "/api-platform/troubleshoot/diagnostic-tools-and-logs.html#tcpippacketsniffertcpdumputility">
+        tcpdump</a> utility to gather further information:
+
+      <ul>
+        <li>If you are a <strong>Private Cloud user</strong>, then you can collect the <code>tcpdump</code>
+          data at the relevant client or server. A client can be the client app (for incoming,
+        or northbound connections) or the Message
+        Processor (for outgoing, or southbound connections). A server can be the Edge Router (for
+          incoming, or northbound connections) or the backend server
+        (for outgoing, or southbound connections) based on your determination from Step 1.</li>
+
+        <li>If you are a <strong>Public Cloud user</strong>, then you can collect the <code>tcpdump</code>
+          data only on the client app (for incoming, or northbound connections) or the backend server
+          (for outgoing, or southbound connections), because you do
+        not have access to the Edge Router or Message Processor.</li>
+      </ul>
+
+      <pre class="devsite-terminal">
+tcpdump -i any -s 0 host <var>IP address</var> -w <var>File name</var>
+</pre>
+      See <a href="/api-platform/troubleshoot/diagnostic-tools-and-logs.html#tcpippacketsniffertcpdumputility">tcpdump</a>
+    data for more information on using the <code>tcpdump</code> command.
+    </li>
+
+        <li>Analyze the <code>tcpdump</code> data using <a href="https://www.wireshark.org/">Wireshark</a> or a
+        similar tool.</li>
+
+        <li>From the <code>tcpdump</code> output, determine the host (client or server) that is rejecting the
+        certificate during the verification step.</li>
+
+        <li>You can retrieve the certificate sent from the other end from the <code>tcpdump</code> output, provided the
+        data is not encrypted. This will be useful to compare if this certificate matches with the
+        certificate available in the truststore.</li>
+
+        <li>Review the sample <code>tcpdump</code> for the SSL communication between the Message Processor and
+        the backend server.
+
+          <p><strong>Sample <code>tcpdump</code> showing Certificate Unknown error</strong></p>
+
+          <p><strong><img class="screenshot" alt="" src="/api-platform/images/IMG-3-22d.png"></strong><br>
+           </p>
+
+          <ol>
+            <li>The Message Processor (client) sends "Client Hello" to the backend server
+            (server) in message #59.</li>
+
+            <li>The backend server sends "Server Hello" to the Message Processor in message
+            #61.</li>
+
+            <li>They mutually validate the protocol and cipher suite algorithms used.</li>
+
+            <li>The backend server sends the Certificate and Server Hello Done message to the
+            Message Processor in message #68.</li>
+
+            <li>The Message Processor sends the Fatal Alert <strong>"Description: Certificate
+            Unknown"</strong> in message #70.</li>
+
+            <li>Looking further into message #70, there are no additional details details other
+            than alert message as shown below:
+
+              <p><img class="screenshot" alt="" src="/api-platform/images/IMG-3-23b.png"><br>
+               </p>
+            </li>
+
+            <li>Review message #68 to get the details about the certificate sent by the backend
+            server, as shown in the following graphic:
+
+              <p><img class="screenshot" alt="" src="/api-platform/images/IMG-3-24b.png"></p>
+            </li>
+
+            <li>The backend server's certificate and its complete chain are all available
+            underneath the "Certificates" section, as shown in the above figure.</li>
+          </ol>
+        </li>
+
+        <li>If the certificate is found to be unknown either by the Router (northbound) or the
+        Message Processor (southbound) as in the example illustrated above, then follow these
+        steps:
+
+          <ol>
+            <li>Get the certificate and its chain that is stored in the specific truststore. (Refer
+            to the virtual host configuration for the Router and target endpoint configuration for
+            the Message Processor). You can use the following APIs to get the details of the
+            certificate:
+
+              <ol>
+                <li>
+                  <a href=
+                  "/management/apis/get/organizations/%7Borg_name%7D/environments/%7Benv_name%7D/keystores/%7Bkeystore_name%7D/certs">
+                  Get the certificate name in the truststore:</a>
+                  <pre class="devsite-terminal">
+curl -v https://<var>management-server-ip</var>:<var>port</var>/v1/organizations/<var>org-name</var>/environments/<var>env-name</var>/keystores/<var>truststore-name</var>/certs</pre>
+                </li>
+
+                <li>
+                  <a href=
+                  "/management/apis/get/organizations/%7Borg_name%7D/environments/%7Benv_name%7D/keystores/%7Bkeystore_name%7D/certs/%7Bcert_name%7D">
+                  Get the details of the certificate in the truststore:</a>
+                  <pre class="devsite-terminal">
+curl -v https://<var>management-server-ip</var>:<var>port</var>/v1/organizations/<var>org-name</var>/environments/<var>env-name</var>/keystores/<var>truststore-name</var>/certs/<var>cert-name</var></pre>
+                </li>
+              </ol>
+            </li>
+
+            <li>Check if the certificate stored in the truststore of the Router (northbound) or
+            Message Processor (southbound) matches with the certificate that is stored in the
+            keystore of the client application (northbound) or target server (southbound), or the
+            one that is obtained from the <code>tcpdump</code> output. If there's a mismatch, then that's the cause for
+            the TLS/SSL handshake failure.</li>
+          </ol>
+        </li>
+
+        <li>If the certificate is found to be unknown either by the client application (northbound)
+        or the target server (southbound), then follow these steps:
+
+          <ol>
+            <li>Get the complete certificate chain used in the certificate stored in the specific
+            keystore. (Refer to the virtual host configuration for the Router and target endpoint
+            configuration for the Message Processor.) You can use the following APIs to get the
+            details of the certificate:
+
+              <ol>
+                <li>
+                  <a href=
+                  "/management/apis/get/organizations/%7Borg_name%7D/environments/%7Benv_name%7D/keystores/%7Bkeystore_name%7D/certs">
+                  Get the certificate name in the keystore:</a>
+                  <pre class="devsite-terminal">
+curl -v https://<var>management-server-ip</var>:<var>port</var>/v1/organizations/<var>org-name</var>/environments/<var>env-name</var>/keystores/<var>keystore-name</var>/certs</pre>
+                </li>
+
+                <li>
+                  <a href=
+                  "/management/apis/get/organizations/%7Borg_name%7D/environments/%7Benv_name%7D/keystores/%7Bkeystore_name%7D/certs/%7Bcert_name%7D">
+                  Get the details of the certificate in the keystore:</a><br>
+                  <pre class="devsite-terminal">
+curl -v https://<var>management-server-ip</var>:<var>port</var>/v1/organizations/<var>org-name</var>/environments/<var>env-name</var>/keystores/<var>keystore-name</var>/certs/<var>cert-name</var>
+</pre>
+                </li>
+              </ol>
+            </li>
+
+            <li>Check if the certificate stored in the keystore of the Router (northbound) or
+            Message Processor (southbound) matches the certificate stored in the truststore of the
+            client application (northbound) or target server (southbound), or the one that is
+            obtained from the <code>tcpdump</code> output. If there's a mismatch, then that's the cause for the SSL
+            handshake failure.</li>
+          </ol>
+        </li>
+
+        <li>If the certificate sent by a server/client is found to be expired then the receiving
+        client/server rejects the certificate and you see the following alert message in the
+        <code>tcpdump</code>:
+
+          <p><strong>Alert (Level: Fatal, Description: Certificate expired)</strong></p>
+        </li>
+
+        <li>Verify that the certificate in the keystore of the appropriate host is expired.</li>
+      </ol>
+
+      <h4 id="resolution">Resolution</h4>
+
+      <p>To resolve the issue identified in the example above, upload the valid backend server's
+      certificate to the trustore on the Message Processor.</p>
+
+      <p>The following table summarizes the steps to resolve the issue depending on the cause of the
+        problem.</p>
+
+      <table>
+        <tbody>
+          <tr>
+            <td><strong>Cause</strong></td>
+
+            <td><strong>Description</strong></td>
+
+            <td><strong>Resolution</strong></td>
+          </tr>
+
+          <tr>
+            <td rowspan="2"><strong>Expired Certificate</strong></td>
+
+            <td>
+              <strong>NorthBound</strong>
+
+              <ul>
+                <li>Certificate stored on the keystore of the router is expired.</li>
+
+                <li>Certificate stored on the keystore of the client application is expired (2-way
+                SSL).</li>
+              </ul>
+            </td>
+
+            <td>Upload a new certificate and its complete chain to the keystore on the appropriate
+            host.</td>
+          </tr>
+
+          <tr>
+            <td>
+              <strong>SouthBound</strong>
+
+              <ul>
+                <li>Certificate stored on the keystore of the Target Server is expired.</li>
+
+                <li>Certificate stored on the keystore of the Message Processor is expired (2-way
+                SSL).</li>
+              </ul>
+            </td>
+
+            <td>Upload a new certificate and its complete chain to the keystore on the appropriate
+            host.</td>
+          </tr>
+
+          <tr>
+            <td rowspan="2"><strong>Unknown Certificate</strong></td>
+
+            <td>
+              <strong>NorthBound</strong>
+
+              <ul>
+                <li>Certificate stored on the truststore of the client application does not match
+                the Router's certificate.</li>
+
+                <li>Certificate stored on the truststore of the router does not match the client
+                application's certificate (2 way SSL).</li>
+              </ul>
+            </td>
+
+            <td>Upload the valid certificate to the truststore on the appropriate host.</td>
+          </tr>
+
+          <tr>
+            <td>
+              <strong>SouthBound</strong>
+
+              <ul>
+                <li>Certificate stored on the truststore of the target server does not match the
+                Message Processor's certificate.</li>
+
+                <li>Certificate stored on the truststore of the Message Processor does not match
+                the target server's certificate (2-way SSL).</li>
+              </ul>
+            </td>
+
+            <td>Upload the valid certificate to the truststore on the appropriate host.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 id="sni-enabled-server"><a id="snienabledserver" name="snienabledserver"></a>SNI Enabled
+      Server</h2>
+
+      <p>The TLS/SSL handshake failure can occur when the client is communicating with a Server
+        Name Indication (SNI) Enabled
+      Server, but the client is not SNI enabled. This could happen either at the northbound or the
+      southbound connection in Edge.</p>
+
+      <p>First, you need to identify the hostname and port number of the server being used and check if
+      it is SNI enabled or not.</p>
+
+      <aside classs="note">The steps in this section are for Edge Private Cloud users
+        only.</aside>
+
+      <h3 id="identification-of-sni-enabled-server">Identification of SNI enabled server</h3>
+
+      <ol>
+        <li>Execute the <code>openssl</code> command and try to connect to the relevant server hostname (Edge
+        Router or backend server) <strong>without passing the server name</strong>, as shown below:
+          <pre class="prettyprint">
+openssl s_client -connect <var>hostname</var>:<var>port</var>
+</pre>
+
+          You may get the certificates and sometimes you may observe the handshake failure in
+            the openssl command, as shown below:<br>
+              <pre class="prettyprint">
+CONNECTED(00000003)
+9362:error:14077410:SSL routines:SSL23_GET_SERVER_HELLO:sslv3 alert handshake failure:/BuildRoot/Library/Caches/com.apple.xbs/Sources/OpenSSL098/OpenSSL098-64.50.6/src/ssl/s23_clnt.c:593
+</pre>
+
+        </li>
+
+        <li>Execute the the <code>openssl</code> command and try to connect to the relevant server hostname
+        (Edge router or backend server) by <strong>passing the server name</strong> as shown below:
+          <pre class="prettyprint">
+openssl s_client -connect <var>hostname</var>:<var>port</var> -servername <var>hostname</var>
+</pre>
+        </li>
+
+        <li>If you get a handshake failure in step #1 or get different certificates in step #1 and
+        step #2, then it indicates that the specified Server is SNI enabled.</li>
+      </ol>
+
+      <p>Once you've identified that the server is SNI enabled, you can follow the steps below to
+      check if the TLS/SSL handshake failure is caused by the client not being able to communicate with
+      the SNI server.</p>
+
+      <h3 id="steps-to-diagnose">Diagnosis</h3>
+
+      <ol>
+        <li>Determine whether the error occurred at
+    the <strong>northbound</strong> or <strong>southbound</strong> connection.
+    For further guidance on making this determination, see <a href=
+    "/api-platform/troubleshoot/runtime/503-service-unavailable.html#determiningthesourceoftheproblem">Determining
+    the source of the problem</a>. </li>
+
+    <li>Run the <a href=
+        "/api-platform/troubleshoot/diagnostic-tools-and-logs.html#tcpippacketsniffertcpdumputility">
+        tcpdump</a> utility to gather further information:
+
+      <ul>
+        <li>If you are a <strong>Private Cloud user</strong>, then you can collect the <code>tcpdump</code>
+          data at the relevant client or server. A client can be the client app (for incoming,
+        or northbound connections) or the Message
+        Processor (for outgoing, or southbound connections). A server can be the Edge Router (for
+          incoming, or northbound connections) or the backend server
+        (for outgoing, or southbound connections) based on your determination from Step 1.</li>
+
+        <li>If you are a <strong>Public Cloud user</strong>, then you can collect the <code>tcpdump</code>
+          data only on the client app (for incoming, or northbound connections) or the backend server
+          (for outgoing, or southbound connections), because you do
+        not have access to the Edge Router or Message Processor.</li>
+      </ul>
+
+      <pre class="devsite-terminal">
+tcpdump -i any -s 0 host <var>IP address</var> -w <var>File name</var>
+</pre>
+      See <a href="/api-platform/troubleshoot/diagnostic-tools-and-logs.html#tcpippacketsniffertcpdumputility">tcpdump</a>
+    data for more information on using the <code>tcpdump</code> command.
+    </li>
+
+        <li>Analyze the <code>tcpdump</code> output using <a href="https://www.wireshark.org/">Wireshark</a> or a
+        similar tool.</li>
+
+        <li>Here's the sample analysis of <code>tcpdump</code> using Wireshark:
+
+          <ol>
+            <li>In this example, the TLS/SSL handshake failure occurred between the Edge Message
+            Processor and backend server (southbound connection).</li>
+
+            <li>The message #4 in the <code>tcpdump</code> output below shows that the Message Processor (source) sent
+            a "Client Hello" message to the backend server (destination).
+
+              <p><img class="screenshot" alt="" src="/api-platform/images/IMG-3-10f.png"></p>
+            </li>
+
+            <li>Selecting the "Client Hello" message shows that the Message
+            Processor is using the TLSv1.2 protocol.
+
+              <p><img class="screenshot" alt="" src="/api-platform/images/IMG-3-27b.png"></p>
+            </li>
+
+            <li>The message #4 shows that the backend server acknowledges the "Client Hello" message
+            from the Message Processor.</li>
+
+            <li>The backend server immediately sends a <strong>Fatal Alert : Handshake
+            Failure</strong> to the Message Processor (message #5). This means the TLS/SSL handshake
+            failed and the connection will be closed.</li>
+
+            <li>Review message #6 to discover the following information
+
+              <ul>
+                <li>The backend server does support TLSv1.2 protocol. This means that the protocol
+                matched between the Message Processor and the backend server.</li>
+
+                <li>However, the backend server still sends the <strong>Fatal Alert: Handshake
+                Failure</strong> to the Message Processor as shown in the figure below:
+
+                  <p><img class="screenshot" alt="" src="/api-platform/images/IMG-3-28b.png"></p>
+                </li>
+              </ul>
+            </li>
+
+            <li>This error might occur for one of the following reasons:
+
+              <ul>
+                <li>The Message Processor is not using the cipher suite algorithms supported by the
+                backend server.</li>
+
+                <li>The backend server is SNI enabled, but the client application is not sending
+                the server name.</li>
+              </ul>
+            </li>
+
+            <li>Review the message #3 (Client Hello) in the <code>tcpdump</code> output in more detail. Note that the
+            <strong>Extension: server_name</strong> is missing, as shown below:
+
+              <p><img class="screenshot" alt="" src="/api-platform/images/IMG-3-29b.png"></p>
+            </li>
+
+            <li>This confirms that the Message Processor did not send the
+            <strong>server_name</strong> to the SNI-enabled backend server.</li>
+
+            <li>This is the cause for the TLS/SSL handshake failure and the reason that the backend
+            server sends the <strong>Fatal Alert: Handshake Failure</strong> to the Message
+            Processor.</li>
+          </ol>
+        </li>
+
+        <li>Verify that the <code>jsse.enableSNIExtension property</code> in
+        <code>system.properties</code> is set to false on the Message Processor to confirm that the
+        Message Processor is not enabled to communicate with the SNI-enabled server.</li>
+      </ol>
+
+      <h3 id="resolution">Resolution</h3>
+
+      <p>Enable the Message Processor(s) to communicate with SNI enabled servers by performing the
+      following steps:</p>
+
+      <ol>
+        <li>Create the<code>/opt/apigee/customer/application/message-processor.properties</code>
+        file (if it does not exist already).</li>
+
+        <li>Add the following line into this file:
+        <code>conf_system_jsse.enableSNIExtension=true</code></li>
+
+        <li>Chown the owner of this file to <code>apigee:apigee</code>:
+
+          <pre>chown apigee:apigee /opt/apigee/customer/application/message-processor.properties</pre></li>
+
+        <li>Restart the Message Processor.
+
+          <pre>/opt/apigee/apigee-service/bin/apigee-service message-processor restart</pre></li>
+
+        <li>If you have more than one Message Processor, repeat the steps #1 through #4 on all the
+        Message Processors.</li>
+      </ol>
+
+      <p>If you are unable to determine the cause for TLS/SSL Handshake failure and fix the issue or
+      you need any further assistance, contact <a href="https://support.apigee.com">Apigee
+      Support</a>. Share the complete details about the issue along with the <code>tcpdump</code> output.</p>
+    </li>
+  </ol>{% endblock %}

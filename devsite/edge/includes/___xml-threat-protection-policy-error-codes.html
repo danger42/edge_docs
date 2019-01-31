@@ -4,267 +4,105 @@
     <title>XML Threat Protection Policy Error Codes</title>
   </head>
   <body>
-  <p>This section describes the error messages and flow variables that are set when this policy
-  triggers an error. This information is important to know if you are developing fault rules for a
-  proxy. To learn more, see <a href=
-  "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html">What you need to know
+  <p>This section describes the fault codes and error messages that are returned and fault variables that are set by Edge when this policy triggers an error.
+    This information is important to know if you are developing fault rules to
+  handle faults. To learn more, see <a href="/api-platform/fundamentals/what-you-need-know-about-policy-errors.html">What you need to know
   about policy errors</a> and <a href="/api-platform/fundamentals/fault-handling.html">Handling
   faults</a>.</p>
-
-  <h3>Error code prefix</h3>
-
-  <p><code>steps.xmlthreatprotection</code> <span style="font-size: 10pt">(<a href=
-  "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html#aboutthedefaultpolicyerrorresponse">What's
-  this?</a>)</span></p>
 
   <h3>Runtime errors</h3>
 
   <p>These errors can occur when the policy executes.</p>
+        <aside class="key-point">Use <u><a href="/api-monitoring">API Monitoring</a></u> to investigate fault codes and diagnose issues faster.</aside>
 
   <table>
     <thead>
       <tr>
-        <th scope="col" width="230">* Error name</th>
+        <th scope="col" width="623">Fault code</th>
 
-        <th scope="col" width="541">Fault string</th>
+        <th scope="col" width="49">HTTP status</th>
 
-        <th scope="col" width="79">* HTTP status</th>
-
-        <th scope="col" width="281">Cause</th>
+        <th scope="col" width="863">Cause</th>
+        <th scope="col" width="63">Fix</th>
       </tr>
     </thead>
 
     <tbody>
-      <tr>
-        <td><code><!--td {border: 1px solid #ccc;}br {mso-data-placement:same-cell;}-->
-        <!--td {border: 1px solid #ccc;}br {mso-data-placement:same-cell;}-->
-        <!--td {border: 1px solid #ccc;}br {mso-data-placement:same-cell;}--><span data-sheets-userformat="{'2':513,'3':{'1':0},'12':0}"
-        data-sheets-value=
-        "{'1':2,'2':'xmlthreatprotection.NodeDepthExceeded'}">NodeDepthExceeded</span></code></td>
 
-        <td><code>XMLThreatProtection stepDefinition {0}: Node depth exceeded {1}</code></td>
+      <tr>
+        <td><code>steps.xmlthreatprotection.ExecutionFailed</code></td>
 
         <td>500</td>
 
-        <td>See fault string.</td>
+        <td>
+          The XMLThreatProtection policy can throw many different types of ExecutionFailed errors.
+          Most of these errors occur when a specific threshold set in the policy is exceeded. These
+          types of errors include:
+          <a href="/api-platform/troubleshoot/policies/runtime/xmlthreatprotection-runtime-errors#elementnameexceeded">element name length</a>,
+          <a href="/api-platform/troubleshoot/policies/runtime/xmlthreatprotection-runtime-errors#childcountexceeded">child count</a>,
+          <a href="/api-platform/troubleshoot/policies/runtime/xmlthreatprotection-runtime-errors#nodedepthexceeded">node depth</a>,
+          <a href="/api-platform/troubleshoot/policies/runtime/xmlthreatprotection-runtime-errors#attributecountexceeded">attribute count</a>,
+          <a href="/api-platform/troubleshoot/policies/runtime/xmlthreatprotection-runtime-errors#attributenameexceeded">attribute name length</a>,
+          and many others. You can see the complete list in the <a href="/api-platform/troubleshoot/policies/runtime/xmlthreatprotection-runtime-errors">XMLThreatProtection policy runtime error troubleshooting</a> topic.
+
+        </td>
+        <td><a href="/api-platform/troubleshoot/policies/runtime/xmlthreatprotection-runtime-errors#executionfailed"><i class="material-icons" title="Troubleshoot this error.">build</i></a></td>
       </tr>
 
-      <tr>
-        <td><code><!--td {border: 1px solid #ccc;}br {mso-data-placement:same-cell;}-->
-        <!--td {border: 1px solid #ccc;}br {mso-data-placement:same-cell;}--><span data-sheets-userformat="{'2':513,'3':{'1':0},'12':0}"
-        data-sheets-value=
-        "{'1':2,'2':'xmlthreatprotection.AttrCountExceeded'}">AttrCountExceeded</span></code></td>
-
-        <td><code>XMLThreatProtection stepDefinition {0}: Attribute count exceeded {1}</code></td>
+       <tr>
+        <td><code>steps.xmlthreatprotection.InvalidXMLPayload</code></td>
 
         <td>500</td>
 
-        <td>See fault string.</td>
+        <td>
+         This error occurs if the input message payload specified by the XMLThreatProtection policy's <code>&lt;Source&gt;</code> element is not a valid XML Document.
+        </td>
+        <td><a href="/api-platform/troubleshoot/policies/runtime/xmlthreatprotection-runtime-errors#invalidxmlpayload"><i class="material-icons" title="Troubleshoot this error.">build</i></a></td>
       </tr>
 
-      <tr>
-        <td><code>
-        <!--td {border: 1px solid #ccc;}br {mso-data-placement:same-cell;}--><span data-sheets-userformat="{'2':513,'3':{'1':0},'12':0}"
-        data-sheets-value=
-        "{'1':2,'2':'xmlthreatprotection.ChildCountExceeded'}">ChildCountExceeded</span></code></td>
-
-        <td><code>XMLThreatProtection stepDefinition {0}: Children count exceeded {1}</code></td>
+       <tr>
+        <td><code>steps.xmlthreatprotection.SourceUnavailable</code></td>
 
         <td>500</td>
 
-        <td>See fault string.</td>
+        <td>
+          This error occurs if the <a href="/api-platform/reference/variables-reference#message">message</a>
+          variable specified in the <code>&lt;Source&gt;</code> element is either:
+
+          <ul>
+            <li>Out of scope (not available in the specific flow where the policy is being executed)</li>
+            <li>Is not one of the valid values <code><em>request</em></code>, <code><em>response</em></code>,
+              or <code><em>message</em></code></li>
+          </ul>
+        </td>
+        <td><a href="/api-platform/troubleshoot/policies/runtime/xmlthreatprotection-runtime-errors#sourceunavailable"><i class="material-icons" title="Troubleshoot this error.">build</i></a></td>
       </tr>
-
-      <tr>
-        <td><code>
-        <!--td {border: 1px solid #ccc;}br {mso-data-placement:same-cell;}--><span data-sheets-userformat="{'2':513,'3':{'1':0},'12':0}"
-        data-sheets-value=
-        "{'1':2,'2':'xmlthreatprotection.NSCountExceeded'}">NSCountExceeded</span></code></td>
-
-        <td><code>XMLThreatProtection stepDefinition {0}: Namespace count exceeded {1}</code></td>
+       <tr>
+        <td><code>steps.xmlthreatprotection.NonMessageVariable</code></td>
 
         <td>500</td>
 
-        <td>See fault string.</td>
-      </tr>
-
-      <tr>
-        <td><code>
-        <!--td {border: 1px solid #ccc;}br {mso-data-placement:same-cell;}--><span data-sheets-userformat="{'2':513,'3':{'1':0},'12':0}"
-        data-sheets-value=
-        "{'1':2,'2':'xmlthreatprotection.ElemNameExceeded'}">ElemNameExceeded</span></code></td>
-
-        <td><code>XMLThreatProtection stepDefinition {0}: Element name length exceeded
-        {1}</code></td>
-
-        <td>500</td>
-
-        <td>See fault string.</td>
-      </tr>
-
-      <tr>
-        <td><code><!--td {border: 1px solid #ccc;}br {mso-data-placement:same-cell;}-->
-        <!--td {border: 1px solid #ccc;}br {mso-data-placement:same-cell;}-->
-        <!--td {border: 1px solid #ccc;}br {mso-data-placement:same-cell;}--><span data-sheets-userformat="{'2':513,'3':{'1':0},'12':0}"
-        data-sheets-value=
-        "{'1':2,'2':'xmlthreatprotection.AttrNameExceeded'}">AttrNameExceeded</span></code></td>
-
-        <td><code>XMLThreatProtection stepDefinition {0}: Attribute name length exceeded
-        {1}</code></td>
-
-        <td>500</td>
-
-        <td>See fault string.</td>
-      </tr>
-
-      <tr>
-        <td><code><!--td {border: 1px solid #ccc;}br {mso-data-placement:same-cell;}-->
-        <!--td {border: 1px solid #ccc;}br {mso-data-placement:same-cell;}--><span data-sheets-userformat="{'2':513,'3':{'1':0},'12':0}"
-        data-sheets-value=
-        "{'1':2,'2':'xmlthreatprotection.AttrValueExceeded'}">AttrValueExceeded</span></code></td>
-
-        <td><code>XMLThreatProtection stepDefinition {0}: Attribute value length exceeded
-        {1}</code></td>
-
-        <td>500</td>
-
-        <td>See fault string.</td>
-      </tr>
-
-      <tr>
-        <td><code><!--td {border: 1px solid #ccc;}br {mso-data-placement:same-cell;}-->
-        <!--td {border: 1px solid #ccc;}br {mso-data-placement:same-cell;}--><span data-sheets-userformat="{'2':513,'3':{'1':0},'12':0}"
-        data-sheets-value=
-        "{'1':2,'2':'xmlthreatprotection.NSPrefixExceeded'}">NSPrefixExceeded</span></code></td>
-
-        <td><code>XMLThreatProtection stepDefinition {0}: Namespace prefix length exceeded
-        {1}</code></td>
-
-        <td>500</td>
-
-        <td>See fault string.</td>
-      </tr>
-
-      <tr>
-        <td><code>
-        <!--td {border: 1px solid #ccc;}br {mso-data-placement:same-cell;}--><span data-sheets-userformat="{'2':513,'3':{'1':0},'12':0}"
-        data-sheets-value=
-        "{'1':2,'2':'xmlthreatprotection.NSURIExceeded'}">NSURIExceeded</span></code></td>
-
-        <td><code>XMLThreatProtection stepDefinition {0}: Namespace uri length exceeded
-        {1}</code></td>
-
-        <td>500</td>
-
-        <td>See fault string.</td>
-      </tr>
-
-      <tr>
-        <td><code>
-        <!--td {border: 1px solid #ccc;}br {mso-data-placement:same-cell;}--><span data-sheets-userformat="{'2':513,'3':{'1':0},'12':0}"
-        data-sheets-value=
-        "{'1':2,'2':'xmlthreatprotection.PITargetExceeded'}">PITargetExceeded</span></code></td>
-
-        <td><code>XMLThreatProtection stepDefinition {0}: Processing Instruction target length
-        exceeded {1}</code></td>
-
-        <td>500</td>
-
-        <td>See fault string.</td>
-      </tr>
-
-      <tr>
-        <td><code>
-        <!--td {border: 1px solid #ccc;}br {mso-data-placement:same-cell;}--><span data-sheets-userformat="{'2':513,'3':{'1':0},'12':0}"
-        data-sheets-value=
-        "{'1':2,'2':'xmlthreatprotection.PIDataExceeded'}">PIDataExceeded</span></code></td>
-
-        <td><code>XMLThreatProtection stepDefinition {0}: Processing Instruction data length
-        exceeded {1}</code></td>
-
-        <td>500</td>
-
-        <td>See fault string.</td>
-      </tr>
-
-      <tr>
-        <td><code>
-        <!--td {border: 1px solid #ccc;}br {mso-data-placement:same-cell;}--><span data-sheets-userformat="{'2':513,'3':{'1':0},'12':0}"
-        data-sheets-value=
-        "{'1':2,'2':'xmlthreatprotection.CommentExceeded'}">CommentExceeded</span></code></td>
-
-        <td><code>XMLThreatProtection stepDefinition {0}: Comment length exceeded {1}</code></td>
-
-        <td>500</td>
-
-        <td>See fault string.</td>
-      </tr>
-
-      <tr>
-        <td><code>
-        <!--td {border: 1px solid #ccc;}br {mso-data-placement:same-cell;}--><span data-sheets-userformat="{'2':513,'3':{'1':0},'12':0}"
-        data-sheets-value=
-        "{'1':2,'2':'xmlthreatprotection.TextExceeded'}">TextExceeded</span></code></td>
-
-        <td><code>XMLThreatProtection stepDefinition {0}: Text length exceeded {1}</code></td>
-
-        <td>500</td>
-
-        <td>See fault string.</td>
-      </tr>
-
-      <tr>
-        <td><code>
-        <!--td {border: 1px solid #ccc;}br {mso-data-placement:same-cell;}--><span data-sheets-userformat="{'2':513,'3':{'1':0},'12':0}"
-        data-sheets-value=
-        "{'1':2,'2':'xmlthreatprotection.SourceUnavailable'}">SourceUnavailable</span></code></td>
-
-        <td><code>XMLThreatProtection stepDefinition {0}: Source {1} is not available</code></td>
-
-        <td>500</td>
-
-        <td>See fault string.</td>
-      </tr>
-
-      <tr>
-        <td><code>
-        <!--td {border: 1px solid #ccc;}br {mso-data-placement:same-cell;}--><span data-sheets-userformat="{'2':513,'3':{'1':0},'12':0}"
-        data-sheets-value=
-        "{'1':2,'2':'xmlthreatprotection.NonMessageVariable'}">NonMessageVariable</span></code></td>
-
-        <td><code>Variable {0} does not resolve to a Message</code></td>
-
-        <td>500</td>
-
-        <td>See fault string.</td>
-      </tr>
-
-      <tr>
-        <td><code>
-        <!--td {border: 1px solid #ccc;}br {mso-data-placement:same-cell;}--><span data-sheets-userformat="{'2':513,'3':{'1':0},'12':0}"
-        data-sheets-value=
-        "{'1':2,'2':'xmlthreatprotection.ExecutionFailed'}">ExecutionFailed</span></code></td>
-
-        <td><code>XMLThreatProtection stepDefinition {0}: Execution failed. reason: {1}</code></td>
-
-        <td>500</td>
-
-        <td>See fault string.</td>
+        <td>
+          This error occurs if the <code>&lt;Source&gt;</code> element is set to a variable which
+          is not of type
+          <a href="/api-platform/reference/variables-reference#message">message</a>.
+        </td>
+        <td><a href="/api-platform/troubleshoot/policies/runtime/xmlthreatprotection-runtime-errors#nonmessagevariable"><i class="material-icons" title="Troubleshoot this error.">build</i></a></td>
       </tr>
     </tbody>
   </table>
 
-  <p><strong>* Notes:</strong></p>
+  <p><strong>Notes:</strong></p>
 
   <ul>
     <li>The error name ExecutionFailed is the default error name and will be returned regardless of
     the type of error detected; however, this default can be changed by setting an
     organization-level property. When this property is set, the error name will reflect the actual
-    error. For example, "TextExceeded" or "AttrValueExceeded". See the Usage Notes for
+    error. For example, "TextExceeded" or "AttrValueExceeded". See <a href="#usagenotes">Usage Notes</a> for
     details.</li>
 
     <li>The 500 HTTP status is the default; however, the HTTP Status can be changed to 400 for
-    request flow faults by setting an organization-level property. See the Usage Notes for
+    request flow faults by setting an organization-level property. See <a href="#usagenotes">Usage Notes</a> for
     details.</li>
   </ul>
 
@@ -278,34 +116,31 @@
   "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html">What you need to know
   about policy errors</a>.</p>
 
-  <table>
+
+
+        <table>
     <tbody>
       <tr>
-        <th width="265">Variables set <code><span style="font-size: 10pt">(<a href=
-        "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html">Learn
-        more</a>)</span></code></th>
+        <th width="324">Variables</th>
 
-        <th width="468">Where</th>
+        <th width="428">Where</th>
 
-        <th width="342">Example</th>
+        <th width="428">Example</th>
       </tr>
 
       <tr>
-        <td width="265"><code>[prefix].[policy_name].failed</code></td>
+        <td><code>fault.name="<var>fault_name</var>"</code></td>
 
-        <td width="468">The <code>[prefix]</code> is <code><strong>xmlattack</strong>.</code><br>
-        The <code>[policy_name]</code> is the name of the policy that threw the error.</td>
-
-        <td width="342"><code>xmlattack.XPT-SecureRequest.failed = true</code></td>
-      </tr>
-
-      <tr>
-        <td><code>fault.name = [error_name]</code></td>
-
-        <td><code>[error_name]</code> = The specific error name to check for as listed in the table
-        above.</td>
+        <td><var>fault_name</var> is the name of the fault, as listed in the <a href="#runtime-errors">Runtime errors</a> table above. The fault name is the last part of the fault code.</td>
 
         <td><code>fault.name Matches "SourceUnavailable"</code></td>
+      </tr>
+      <tr>
+        <td width="324"><code>xmlattack.<var>policy_name</var>.failed</code></td>
+
+        <td width="428"><var>policy_name</var> is the user-specified name of the policy that threw the fault.</td>
+
+        <td width="428"><code>xmlattack.XPT-SecureRequest.failed = true</code></td>
       </tr>
     </tbody>
   </table>

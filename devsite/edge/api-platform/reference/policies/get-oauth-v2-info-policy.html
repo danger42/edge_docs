@@ -1,101 +1,97 @@
-  {% extends "_base.html" %} {% block title %}Get OAuth V2 Info policy{% endblock %} {% block body %} <img src="/api-platform/images/icon_policy_security.jpg">
+  {% extends "_base.html" %} {% block title %}GetOAuthV2Info policy{% endblock %} {% block body %} <img src="/api-platform/images/icon_policy_security.jpg">
 
   <h3>What</h3>
 
   <p>Gets attributes of access tokens, refresh tokens, authorization codes, and client app
-  attributes and populates variables with the values of those attributes. This policy type can be
-  useful when you need to configure dynamic, conditional behavior based on a value in a token or
-  code. Whenever token validation occurs, variables are automatically populated with the values of
-  token attributes. However, in cases where token validation has not occured, you can use this
-  feature to explicity populate variables with the attribute values of a token.  See also
+  attributes and populates variables with the values of those attributes.</p>
+
+  <p>This policy is useful when you need to configure dynamic, conditional behavior based on a value
+  in a token or auth code. Whenever token validation occurs, variables are automatically populated
+  with the values of token attributes. However, in cases where token validation has not occured, you
+  can use this feature to explicity populate variables with the attribute values of a token.  See also
   <a href="/api-platform/security/oauth/customizing-access-tokens.html">Customizing Tokens and
   Authorization Codes</a>.</p>
 
-  <aside class="note"><b>Note:</b> An access token that you pass to this policy must be valid or
-  the policy will throw an invalid_access_token error. Also, the resource path that is used to call
+  <p>An access token that you pass to this policy must be valid or the policy will throw an
+  <code>invalid_access_token</code> error.</p>
+
+  <aside>
+  <h3>NOTE</h3>
+  <p>The resource path that is used to call
   a proxy with this policy must be included in the Product that was used to generate the original
-  token. In other words, if you call the proxy with the path /tokeninfo, then the /tokeninfo
-  resource path must be included in the Product that was used to generate the token. If not, you
-  will receive an InvalidAPICallAsNoApiProductMatchFound error. For more information, see this
-  <a href=
+  token. In other words, if you call the proxy with the path <code>/tokeninfo</code>, then the
+  <code>/tokeninfo</code> resource path must be included in the Product that was used to generate
+  the token. If not, you will receive an <code>InvalidAPICallAsNoApiProductMatchFound</code> error.
+  <p>For more information, see <a href=
   "https://community.apigee.com/questions/42994/getoauthv2info-fails-if-token-generated-using-prod.html">
-  Apigee Community post</a>. </aside>
+  GetOAuthV2Info fails if token generated using product with resource paths</a> in the
+  {{community}}.</p>
+  </aside>
 
   <h2 id="samples">Samples</h2><!-- Begin tab list -->
   <!-- End tab list --><!-- Begin tabbed region -->
 
+  <p>The following samples use the Get OAuth V2 Info policy to retrieve information about various
+  components of the OAuth2 workflow and then then access that information within code.</p>
+
   <div class="ds-selector-tabs">
     <section>
-      <h3 class="two-line-tab">Access token</h3>
-
-      <p>This example shows how to retrieve profile information for an access token and use it to
-      populate a set of variables. In this case, the policy expects to find the access token in a
-      query parameter called <code>access_token</code>. Given the access token, the policy
-      looks up the token's profile and populates a set of variables with the profile data. The
-      variables will be prefixed with <code>oauthv2accesstoken. </code></p>
-      <pre class="prettyprint">
-&lt;GetOAuthV2Info name="GetTokenAttributes"&gt;
+      <h3>Access token</h3>
+      <p>To get a reference to an access token, use the <code>&lt;AccessToken&gt;</code> element in
+      your policy.</p>
+      <p>The following example expects to find the access token in a query parameter named
+      "access_token" (the actual implementation details are up to you):</p>
+      <pre class="prettyprint">&lt;GetOAuthV2Info name="MyTokenAttrsPolicy"&gt;
   &lt;AccessToken ref="request.queryparam.access_token"&gt;&lt;/AccessToken&gt;
 &lt;/GetOAuthV2Info&gt;
 </pre>
-
-      <p>You can then access the variables using JavaScript or another means. For example, to
-      retrieve the scope(s) associated with an access token using JavaScript:</p>
-      <pre class="prettyprint">
-var scope = context.getVariable(&#8216;oauthv2accesstoken.GetTokenAttributes.scope&#8217;);
-</pre>
+      <p>Given the access token, the policy looks up the token's profile and populates a set of
+      variables with the profile data.</p>
+      <p>You can then access the variables using JavaScript or another means. The following example
+      retrieves the scope(s) associated with the access token using JavaScript:</p>
+      <pre class="prettyprint">var scope = context.getVariable('oauthv2accesstoken.MyTokenAttrsPolicy.scope');</pre>
+      <p>Note that to access those variables in code, you must prefix them with
+      "oauthv2accesstoken". For a complete list of variables available via the access token, see
+      <a href="#flowvariables-accesstokenvariables">Access token variables</a>.</p>
     </section>
-
     <section>
-      <h3 class="two-line-tab">Auth code</h3>
-
-      <h3>Retrieving authorization code attributes</h3>
-
-      <p>As with access tokens (described in the Access Code example), you can retrieve
-      authorization code attributes by using the <code>AuthorizationCode</code> element in the
-      policy as follows:</p>
-      <pre class="prettyprint">
-&lt;GetOAuthV2Info name="GetAuthCodeAttributes"&gt;
-    &lt;AuthorizationCode ref="{variable name}"/&gt;
-&lt;/GetOAuthV2Info&gt;
-</pre>
-
-      <h3>For example:</h3>
-      <pre class="prettyprint">
-&lt;GetOAuthV2Info name="GetAuthCodeAttributes"&gt;
-    &lt;AuthorizationCode ref="request.queryparam.code"&gt;&lt;/AuthorizationCode&gt;
-&lt;/GetOAuthV2Info&gt;
-</pre>
-
-      
+      <h3>Auth code</h3>
+      <p>To get authorization code attributes, use the <code>&lt;AuthorizationCode&gt;</code>
+      element in your policy.</p>
+      <p>The following example expects to find the access token in a form
+      parameter named "code" (the actual implementation details are up to you):</p>
+      <pre class="prettyprint">&lt;GetOAuthV2Info name="MyAuthCodeAttrsPolicy"&gt;
+  &lt;AuthorizationCode ref="request.formparam.code"&gt;&lt;/AuthorizationCode&gt;
+&lt;/GetOAuthV2Info&gt;</pre>
+      <p>Given the auth code, the policy looks up the code's information and populates a set of
+      variables with the auth code data.</p>
+      <p>You can then access the variables using JavaScript or another means. The following example
+      retrieves a custom attribute associated with the authorization code using JavaScript:</p>
+      <pre class="prettyprint">var attr = context.getVariable(‘oauthv2authcode.MyAuthCodeAttrsPolicy.custom_attribute_name’);</pre>
+      <p>Note that to access those variables in code, you must prefix them with "oauthv2authcode".
+      For a complete list of variables available via the auth code, see
+      <a href="#flowvariables-authorizationcodevariables">Authorization code variables</a>.</p>
     </section>
-
     <section>
-      <h3 class="two-line-tab">Refresh token</h3>
-
-      <h3>Retrieving refresh token attributes</h3>
-
-      <p>As with access tokens (described in the Access Code example), you can retrieve refresh
-      token attributes by using the <code>RefreshToken</code> element in the policy as
-      follows:</p>
-      <pre class="prettyprint">
-&lt;GetOAuthV2Info name="GetTokenAttributes"&gt;
-    &lt;RefreshToken ref="{variable name}"/&gt;
-&lt;/GetOAuthV2Info&gt;
-</pre>
-
-      <h3>For example:</h3>
-      <pre class="prettyprint">
-&lt;GetOAuthV2Info name="GetTokenAttributes"&gt;
-  &lt;RefreshToken ref="request.queryparam.refresh_token"&gt;&lt;/RefreshToken&gt;
-&lt;/GetOAuthV2Info&gt;
-    
-</pre>
+      <h3>Refresh token</h3>
+      <p>To get refresh token attributes, use the <code>&lt;RefreshToken&gt;</code> element in your
+      policy.</p>
+      <p>The following example expects to find the access token in a query parameter named
+      "refresh_token" (the actual implementation details are up to you):</p>
+      <pre class="prettyprint">&lt;GetOAuthV2Info name="MyRefreshTokenAttrsPolicy"&gt;
+  &lt;RefreshToken ref="request.queryparam.refresh_token"/&gt;
+&lt;/GetOAuthV2Info&gt;</pre>
+      <p>Given the refresh token, the policy looks up the refresh token's information and populates
+      a set of variables with the refresh token data.</p>
+      <p>You can then access those variables using JavaScript or another means. The following
+      example retrieves a custom attribute associated with the refresh token using JavaScript:</p>
+      <pre class="prettyprint">var attr = context.getVariable(‘oauthv2refreshtoken.MyRefreshTokenAttrsPolicy.accesstoken.custom_attribute_name’);</pre>
+      <p>Note that to access the variables in code, you must prefix them with
+      "oauthv2refreshtoken". For a complete list of variables available via the refresh token, see
+      <a href="#flowvariables-refreshtokenvariables">Refresh token variables</a>.</p>
     </section>
-
     <section>
-      <h3 class="two-line-tab">Static</h3>
-
+      <h3>Static</h3>
       <p>In some rare cases you may need to get the profile of a statically configured token (one
       that is not accessible through a variable). You can do this by providing the value of the
       access token as an element.</p>
@@ -110,7 +106,7 @@ var scope = context.getVariable(&#8216;oauthv2accesstoken.GetTokenAttributes.sco
     </section>
 
     <section>
-      <h3 class="two-line-tab">Client ID</h3>
+      <h3>Client ID</h3>
 
       <p>This example shows how to retrieve information about the client app using the client ID.
       Upon execution, the policy populates a set of variables with client information. In this
@@ -142,7 +138,10 @@ context.getVariable("oauthv2client.GetClientAttributes.developer.app.name");
 &lt;?xml version="1.0" encoding="UTF-8" standalone="yes"?&gt;
 &lt;GetOAuthV2Info async="false" continueOnError="false" enabled="true" name="GetOAuthV2Info-1"
     &lt;DisplayName&gt;Get OAuth v2.0 Info 1&lt;/DisplayName&gt;
-    &lt;AccessToken ref={some-variable}&gt;&lt;/AccessToken&gt;
+    &lt;AccessToken ref="<var>variable</var>"&gt;&lt;/AccessToken&gt;
+    &lt;AuthorizationCode ref="<var>variable</var>"&gt;&lt;/AuthorizationCode&gt;
+    &lt;ClientId ref="<var>variable</var>"&gt;&lt;/ClientId&gt;
+    &lt;RefreshToken ref="<var>variable</var>"&gt;&lt;/RefreshToken&gt;
 &lt;/GetOAuthV2Info
 </pre>
 

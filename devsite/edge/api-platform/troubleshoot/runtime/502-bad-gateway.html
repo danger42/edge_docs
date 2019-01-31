@@ -1,0 +1,351 @@
+  {% extends "_base.html" %} {% block title %}502 Bad Gateway{% endblock %} {% block body %}
+
+<aside class="note">Was this troubleshooting playbook helpful? Please let us know
+  by clicking <a href="" class="google-feedback"
+   data-p="1636213" data-b="docsite" data-context="troubleshooting-feedback">
+  Send Feedback
+</a>.</aside>
+
+  <h2 id="symptom">Symptom</h2>
+
+  <p>The client application gets an HTTP status code of <strong>502</strong> with the message
+  <strong>"Bad Gateway"</strong> as a response for API calls.</p>
+
+  <p>The HTTP status code 502 means that the client is not receiving a valid response from the
+  backend servers that should actually fulfill the request.</p>
+
+  <h2 id="errormessages">Error Messages</h2>
+
+  <p>Client application gets the following response code:</p>
+  <pre class="prettyprint">
+HTTP/1.1 502 Bad Gateway
+</pre>
+
+  <p>In addition, you may observe the following error message:</p>
+  <pre class="prettyprint">
+{
+   "fault": {
+      "faultstring": "Unexpected EOF at target", 
+      "detail": {
+           "errorcode": "messaging.adaptors.http.UnexpectedEOFAtTarget"
+       }
+    }
+}
+</pre>
+
+  <h2 id="possiblecauses">Possible Causes</h2>
+
+  <p>One of the typical causes for 502 Bad Gateway Error is the <strong>"Unexpected EOF"</strong>
+  error, which can be caused due to following reasons:</p>
+
+  <table width="880">
+    <tbody>
+      <tr>
+        <td width="240"><strong>Cause</strong></td>
+
+        <td width="470"><strong>Details</strong></td>
+
+        <td width="127"><strong>Steps Given For</strong></td>
+      </tr>
+
+      <tr>
+        <td><a href="#incorrecttargetserver">Incorrectly configured Target Server</a></td>
+
+        <td>Target server is not properly configured to support TLS/SSL connections.</td>
+
+        <td>Edge Private and Public Cloud Users</td>
+      </tr>
+
+      <tr>
+        <td><a href="#EOFException">EOFException from Backend Server</a></td>
+
+        <td>The backend server may send EOF abruptly.</td>
+
+        <td>Edge Private Cloud Users Only</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="incorrectly-configured-target-server"><a id="incorrecttargetserver" name=
+  "incorrecttargetserver"></a>Incorrectly configured Target Server</h2>
+
+  <p>Target server is not properly configured to support TLS/SSL connections.</p>
+
+  <h3 id="incorrectlyconfiguredtargetserver-diagnosis">Diagnosis</h3>
+
+<h4>Diagnostic Steps for Public Cloud Users only</h4>
+<p><a href="/api-monitoring">API Monitoring</a> enables you to isolate problem areas quickly to diagnose error, performance, and latency issues and their source,
+  such as developer apps, API proxies, backend targets, or the API platform.</p>
+<p><a href="/api-monitoring/sample-scenarios">Step through a sample scenario</a> that demonstrates how to troubleshoot 5xx issues with your APIs using API Monitoring.
+    For example, you may want to set up an alert to be notified when the number of <code>messaging.adaptors.http.UnexpectedEOFAtTarget</code> faults exceeds a particular threshold.</p>
+
+
+  <h4>Diagnostic Steps for Private and Public Cloud Users</h4>
+
+  <ol>
+    <li>Enable the trace in UI for the affected API.</li>
+
+    <li>If the trace for the failing API request shows the following:
+
+      <ol>
+        <li>The 502 Bad Gateway error is seen as soon as the Target Flow request started.</li>
+
+        <li>The error.class displays <strong>messaging.adaptors.http.UnexpectedEOF.</strong>
+
+          <p>Then it is very likely that this issue is caused by an incorrect target server
+          configuration.</p>
+        </li>
+      </ol>
+    </li>
+
+    <li>Get the target server definition using the Edge management API call:
+
+      <ol>
+        <li>If you are a Public Cloud user, use this API:
+          <pre class="prettyprint">
+curl -v https://api.enterprise.apigee.com/v1/organizations/&lt;orgname&gt;/environments/&lt;envname&gt;/targetservers/&lt;targetservername&gt; -u &lt;username&gt;
+</pre>
+        </li>
+
+        <li>If you are a Private Cloud user, use this API:
+          <pre class="prettyprint">
+curl -v http://&lt;management-server-host&gt;:&lt;port #&gt;/v1/organizations/&lt;orgname&gt;/environments/&lt;envname&gt;/targetservers/&lt;targetservername&gt; -u &lt;username&gt;
+</pre>
+
+          <p>Sample Faulty Target Server Definition:</p>
+          <pre class="prettyprint">
+&lt;TargetServer  name="target1"&gt;
+  &lt;Host&gt;mocktarget.apigee.net&lt;/Host&gt;
+  &lt;Port&gt;443&lt;/Port&gt;
+  &lt;IsEnabled&gt;true&lt;/IsEnabled&gt;
+&lt;/TargetServer &gt;
+</pre>
+        </li>
+      </ol>
+    </li>
+
+    <li>The illustrated target server definition is an example for one of the typical
+    misconfigurations which is explained as follows:
+
+      <p>Let's assume that the target server <strong>"mocktarget.apigee.net"</strong> is configured
+      to accept <strong>secure (HTTPS)</strong> connections on port # 443. However, if you look at
+      the target server definition, there are no other attributes/flags that indicate that it is
+      meant for secure connections. This causes Edge to treat the API requests going to the
+      specific target server as <strong>HTTP (non-secure) requests</strong>. So Edge will not
+      initiate the SSL Handshake process with this target server.</p>
+    </li>
+  </ol>
+
+  <p>Since the target server is configured to accept only HTTPS (SSL) requests on 443, it will
+  reject the request from Edge or close the connection. As a result, you get an
+  UnexpectedEOFAtTarget error on the Message Processor. The Message Processor will send "502 Bad
+  Gateway" as a response to the client.</p>
+
+  <h3 id="incorrectlyconfiguredtargetserver-resolution">Resolution</h3>
+
+  <p>Always ensure that the target server is configured correctly as per your requirements.</p>
+
+  <p>For the illustrated example above, if you want to make requests to a secure (HTTPS/SSL) target
+  server, you need to include the SSLInfo attributes with the <strong>"enabled"</strong> flag set
+  to true. While it is allowed to add the SSLInfo attributes for a target server in the target
+  endpoint definition itself, it is recommended to add the SSLInfo attributes as part of the target
+  server definition to avoid any confusion.</p>
+
+  <ol>
+    <li>If the backend service requires <strong>one-way SSL communication</strong>, then:
+
+      <ol>
+        <li>You need to enable the TLS/SSL in the target server definition by including the SSLInfo
+        attributes where the "enabled" flag is set to true as shown below:
+          <pre class="prettyprint">
+&lt;TargetServer name="mocktarget"&gt;
+  &lt;Host&gt;mocktarget.apigee.net&lt;/Host&gt;
+  &lt;Port&gt;443&lt;/Port&gt;
+  &lt;IsEnabled&gt;true&lt;/IsEnabled&gt;
+  &lt;SSLInfo&gt;
+      &lt;Enabled&gt;true&lt;/Enabled&gt;
+  &lt;/SSLInfo&gt;
+&lt;/TargetServer&gt;
+</pre>
+        </li>
+
+        <li>If you want to validate the target server's certificate in Edge, then we also need to
+        include the truststore (containing the target server's certificate) as shown below:
+          <pre class="prettyprint">
+&lt;TargetServer  name="mocktarget"&gt;
+    &lt;IsEnabled&gt;true&lt;/IsEnabled&gt;
+    &lt;Host&gt;mocktarget.apigee.net&lt;/Host&gt;
+    &lt;Port&gt;443&lt;/Port&gt;
+    &lt;SSLInfo&gt;
+        &lt;Ciphers/&gt;
+        &lt;ClientAuthEnabled&gt;false&lt;/ClientAuthEnabled&gt;
+        &lt;Enabled&gt;true&lt;/Enabled&gt;
+        &lt;IgnoreValidationErrors&gt;false&lt;/IgnoreValidationErrors&gt;
+        &lt;Protocols/&gt;
+        &lt;TrustStore&gt;mocktarget-truststore&lt;/TrustStore&gt;
+    &lt;/SSLInfo&gt;
+&lt;/TargetServer&gt;
+</pre>
+        </li>
+      </ol>
+    </li>
+
+    <li>If the backend service requires <strong>two-way SSL communication</strong>, then:
+
+      <ol>
+        <li>You need to have SSLInfo attributes with ClientAuthEnabled, Keystore, KeyAlias, and
+        Truststore flags set appropriately, as shown below:
+          <pre class="prettyprint">
+&lt;TargetServer  name="mocktarget"&gt; 
+
+     &lt;IsEnabled&gt;true&lt;/IsEnabled&gt; 
+
+     &lt;Host&gt;www.example.com&lt;/Host&gt; 
+
+     &lt;Port&gt;443&lt;/Port&gt; 
+
+     &lt;SSLInfo&gt; 
+
+         &lt;Ciphers/&gt; 
+
+         &lt;ClientAuthEnabled&gt;true&lt;/ClientAuthEnabled&gt; 
+
+         &lt;Enabled&gt;true&lt;/Enabled&gt; 
+
+         &lt;IgnoreValidationErrors&gt;false&lt;/IgnoreValidationErrors&gt; 
+
+         &lt;KeyAlias&gt;keystore-alias&lt;/KeyAlias&gt; 
+
+         &lt;KeyStore&gt;keystore-name&lt;/KeyStore&gt; 
+
+         &lt;Protocols/&gt; 
+
+         &lt;TrustStore&gt;truststore-name&lt;/TrustStore&gt; 
+
+     &lt;/SSLInfo&gt; 
+
+  &lt;/TargetServer &gt;
+</pre>
+        </li>
+      </ol>
+    </li>
+  </ol>
+
+  <h3 id="incorrectlyconfiguredtargetserver-references"><strong>References</strong></h3>
+
+  <p><a href="/api-platform/deploy/load-balancing-across-backend-servers.html">Load balancing
+  across backend servers</a></p>
+
+  <h2 id="eofexception-from-the-backend-server"><a id="EOFException" name=
+  "EOFException"></a>EOFException from the Backend Server</h2>
+
+  <p>The backend server may send EOF (End of File) abruptly.</p>
+
+  <h3 id="eofexceptionfromthebackendserver-diagnosis">Diagnosis</h3>
+
+<h4>Diagnostic Steps for Public Cloud Users only</h4>
+<p><a href="/api-monitoring">API Monitoring</a> enables you to isolate problem areas quickly to diagnose error, performance, and latency issues and their source,
+  such as developer apps, API proxies, backend targets, or the API platform.</p>
+<p><a href="/api-monitoring/sample-scenarios">Step through a sample scenario</a> that demonstrates how to troubleshoot 5xx issues with your APIs using API Monitoring.
+    For example, you may want to set up an alert to be notified when the number of <code>messaging.adaptors.http.UnexpectedEOFAtTarget</code> faults exceeds a particular threshold.</p>
+
+<h4>Diagnostic Steps for Private Cloud Users only</h4>
+
+  <ol>
+    <li>Check the Message Processor logs
+    (<code>/opt/apigee/var/log/edge-message-processor/logs/system.log</code>) and search if you
+    have got "eof unexpected" for the specific API or if you have the unique messageid for the API
+    request, then you can search for it.
+
+      <p><strong>Sample exception stack trace from Message Processor log</strong></p>
+      <pre class="prettyprint">
+"message": "org:myorg env:test api:api-v1 rev:10 messageid:rrt-1-14707-63403485-19 NIOThread@0 ERROR HTTP.CLIENT - HTTPClient$Context$3.onException() : SSLClientChannel[C:193.35.250.192:8443 Remote host:0.0.0.0:50100]@459069 useCount=6 bytesRead=0 bytesWritten=755 age=40107ms lastIO=12832ms .onExceptionRead exception: {} 
+java.io.EOFException: eof unexpected 
+at com.apigee.nio.channels.PatternInputChannel.doRead(PatternInputChannel.java:45) ~[nio-1.0.0.jar:na] 
+at com.apigee.nio.channels.InputChannel.read(InputChannel.java:103) ~[nio-1.0.0.jar:na] 
+at com.apigee.protocol.http.io.MessageReader.onRead(MessageReader.java:79) ~[http-1.0.0.jar:na] 
+at com.apigee.nio.channels.DefaultNIOSupport$DefaultIOChannelHandler.onIO(NIOSupport.java:51) [nio-1.0.0.jar:na] 
+at com.apigee.nio.handlers.NIOThread.run(NIOThread.java:123) [nio-1.0.0.jar:na]" 
+</pre>
+
+      <p>In the above example, you can see that the <strong>"java.io.EOFException: eof
+      unexpected"</strong> error occurred while Message Processor is trying to read a response from
+      the backend server. This exception indicates the end of file (EOF), or the end of stream has
+      been reached unexpectedly.</p>
+
+      <p>That is, the Message Processor sent the API request to the backend server and was waiting
+      or reading the response. However, the backend server terminated the connection abruptly
+      before the Message Processor got the response or could read the complete response.</p>
+    </li>
+
+    <li>Check your backend server logs and see if there are any errors or information that could
+    have led the backend server to terminate the connection abruptly. If you find any
+    errors/information, then go to Resolution step and fix the issue appropriately in your backend
+    server.</li>
+
+    <li>If you don't find any errors or information in your backend server, collect the <a href=
+    "https://docs.google.com/document/d/19b8MqMH9PSwqIK4Uj6gELLA8nNZeNaczROBi5Bpq7mg/edit#heading=h.a71av9yi88eq">
+      tcpdump</a> output on the Message Processor(s):
+
+      <ol>
+        <li>If your backend server host has a single IP address then use the following command:
+          <pre class="prettyprint">
+tcpdump -i any -s 0 host &lt;IP address&gt; -w &lt;File name&gt;
+</pre>
+        </li>
+
+        <li>If your backend server host has multiple IP addresses, then use the following command:
+          <pre class="prettyprint">
+tcpdump -i any -s 0 host &lt;Hostname&gt; -w &lt;File name&gt;
+</pre>
+
+          <aside class="note"><b>Note:</b> If you are running this command on the Message
+          Processor, use the IP address/hostname of the backend server. You can also take the
+          tcpdump on the backend server. If you are running the command on the backend server, use
+          the IP address of the Message Processor in the above tcpdump command.</aside>
+
+          <p>Typically, this error is caused because the backend server responds back with
+          [FIN,ACK] as soon as the Message Processor sends the request to the backend server.</p>
+        </li>
+      </ol>
+    </li>
+
+    <li>Consider the following tcpdump example.
+
+      <p><strong>Sample tcpdump taken when 502 Bad Gateway Error (UnexpectedEOFAtTarget)
+      occurred</strong></p>
+
+      <p><img alt="" src="/api-platform/images/IMG-2-8d.png"></p>
+    </li>
+
+    <li>From the TCPDump output, you notice the following sequence of events:
+
+      <ol>
+        <li>The Message Processor sends the API request to the backend server.</li>
+
+        <li>The backend server immediately responds back with [FIN,ACK].</li>
+
+        <li>This is followed by the Message Processor responding with [FIN,ACK] to the backend
+        server.</li>
+
+        <li>Eventually the connections are closed with [ACK] and [RST] from both the sides.</li>
+
+        <li>Since the backend server sends [FIN,ACK], you get the exception
+        <strong>"java.io.EOFException: eof unexpected"</strong> exception on the Message
+        Processor.</li>
+      </ol>
+    </li>
+
+    <li>This can happen if there's a network issue at the backend server. Engage your network
+    operations team to investigate this issue further.</li>
+  </ol>
+
+  <h3 id="eofexceptionfromthebackendserver-resolution">Resolution</h3>
+
+  <p>Fix the issue on the backend server appropriately.</p>
+
+  <p>If the issue persists and you need assistance troubleshooting 502 Bad Gateway Error or you
+  suspect that it's an issue within Edge, contact <a href="https://support.apigee.com/">Apigee
+  Support</a>.</p>
+
+{% endblock %}

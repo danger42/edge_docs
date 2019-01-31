@@ -5,15 +5,13 @@
   <p>This topic presents a tour demonstrating how to use policies to extract statistical data from
   a request and feed that data to the Edge Analytics system. Then, it shows how to create a custom
   analytics report based on that data, which appears as custom dimensions. In addition, this topic
-  explains how to extract statitstical data by using the Edge <a href=
-  "#SolutionBuilder">Solution Builder</a> tool. </p>
+  explains how to extract statitstical data by using the Edge <a href="#SolutionBuilder">Solution Builder</a> tool. </p>
 
   <h2 id="tourextractingcustomanalyticsdatausingpolicies">Tour: Extracting custom analytics data
   using policies</h2>
 
-  <p>In <a href=
-  "/api-platform/analytics/use-analytics-api-measure-api-program-performance.html">Use the
-  analytics API to measure API program performance</a>, you learned how to use the RESTful API
+  <p>In <a href="/api-platform/analytics/use-analytics-api-measure-api-program-performance.html">Use the analytics API to measure API program performance</a>,
+    you learned how to use the RESTful API
   exposed by Analytics Services to get statistics on a variety of entities monitored by Apigee
   Edge.</p>
 
@@ -29,8 +27,7 @@
   the statistical data, you can use the Edge management UI or API to retrieve and filter statistics
   that the Edge collects. </p>
 
-  <h3 id="tourextractingcustomanalyticsdatausingpolicies-parsingresponsepayloadsusingpolicies">
-  <a id="ParsingPolicies" name="ParsingPolicies"></a>Parsing response payloads using policies</h3>
+  <h3 id="tourextractingcustomanalyticsdatausingpolicies-parsingresponsepayloadsusingpolicies"><a id="ParsingPolicies" name="ParsingPolicies"></a>Parsing response payloads using policies</h3>
 
   <p>The Yahoo Weather API returns an XML-formatted response. You request a weather report for
   particular location by providing a WOEID, which stand for "where on Earth ID". The WOEID for Palo
@@ -48,9 +45,8 @@ $ curl http://weather.yahooapis.com/forecastrss?w=12797282
   obtain a response from the Yahoo Weather API.</p>
 
   <aside class="key-point">
-    <b>Tip:</b> If you don't have an account on Apigee Edge, see <a href=
-    "/api-platform/get-started/creating-apigee-edge-account.html">Creating an Apigee Edge
-    account</a>.
+    <b>Tip:</b> If you don't have an account on Apigee Edge, see
+    <a href="/api-platform/get-started/creating-apigee-edge-account.html">Creating an Apigee Edge account</a>.
 
     <p>If you want to create your own API proxy for the Yahoo Weather API, see {{gs_tutorial}}.</p>
   </aside>
@@ -92,9 +88,8 @@ $ curl http://{org_name}-test.apigee.net/weather/forecastrss?w=2520841
   <p>The weather response contains potentially valuable information. However, Apigee Edge doesn't
   yet 'know' how to feed this message content into Analytics Services for processing. To enable
   data extraction, Edge provides the Extract Variables policy, which can parse message payloads
-  with JSONPath or XPath expressions. See <a href=
-  "/api-platform/reference/policies/extract-variables-policy.html">Extract Variables policy</a> for
-  more.</p>
+  with JSONPath or XPath expressions.
+    See <a href="/api-platform/reference/policies/extract-variables-policy.html">Extract Variables policy</a> for more.</p>
 
   <p>To extract the information of interest from the weather report, use an XPath expression. For
   example, to extract the value of the city, the XPath expression is:</p>
@@ -147,23 +142,20 @@ xmlns:yweather="http://xml.weather.yahoo.com/ns/rss/1.0
       <li>Case is ignored.</li>
 
       <li>In addition to the above, keywords listed on the following page are not allowed:<br>
-      <a href="https://www.postgresql.org/docs/8.1/static/sql-keywords-appendix.html" target=
-      "_blank">https://www.postgresql.org/docs/8.1/static/sql-keywords-appendix.html</a></li>
+      <a href="https://www.postgresql.org/docs/8.1/static/sql-keywords-appendix.html" target="_blank">https://www.postgresql.org/docs/8.1/static/sql-keywords-appendix.html</a></li>
     </ul>
   </aside>
 
   <p>The Extract Variables policy below shows how to exrtract data from the XML response and write
-  it to custom variables. The <span style=
-  "font-family:courier new,courier,monospace;">&lt;VariablePrefix&gt;</span> tag specifies that the
-  variable names are prefixed by <code>weather.</code> Each <span style=
-  "font-family:courier new,courier,monospace;">&lt;Variable&gt;</span> tag uses the <span style=
-  "font-family:courier new,courier,monospace;">name</span> attribute that specifies the name of the
+  it to custom variables. The <span style="font-family:courier new,courier,monospace;">&lt;VariablePrefix&gt;</span> tag specifies that the
+  variable names are prefixed by <code>weather.</code> Each
+    <span style="font-family:courier new,courier,monospace;">&lt;Variable&gt;</span> tag uses the
+    <span style="font-family:courier new,courier,monospace;">name</span> attribute that specifies the name of the
   custom variables and the associated XPath expression.</p>
 
-  <p>Add this policy to your API proxy in the Edge UI or, if you are building the API proxy in XML,
-  add a file under
-  <code>/apiproxy/policies</code> named <code>ParseWeatherReport.xml,</code> with the
-  following content:</p>
+  <p>Add this policy to your API proxy in the Edge UI. If you are building the API proxy in XML,
+  add the policy to a file under
+  <code>/apiproxy/policies</code> named <code>ParseWeatherReport.xml</code>:</p>
   <pre class="prettyprint">
 &lt;ExtractVariables name="ParseWeatherReport"&gt;
  &lt;!-- Parse the XML weather report using XPath. --&gt;
@@ -192,15 +184,12 @@ xmlns:yweather="http://xml.weather.yahoo.com/ns/rss/1.0
 
   <p>The next step is to create another policy that reads the custom variables created by the
   Extract Variables policy and writes them to the Analytics Services for processing. The Statistics
-  Collector policy is used for this operation. See <a href=
-  "/api-platform/reference/policies/statistics-collector-policy.html">Statistics Collector
-  policy</a> for more.</p>
+  Collector policy is used for this operation. See <a href="/api-platform/reference/policies/statistics-collector-policy.html">Statistics Collector policy</a> for more.</p>
 
-  <p>In the Statistics Collector policy, the <span style=
-  "font-family:courier new,courier,monospace;">ref</span> attribute of the <span style=
-  "font-family: 'courier new', courier, monospace;">&lt;Statistics&gt;</span> tag specifies
-  the name of the variable for which you want to collect statistics. The <span style=
-  "font-family: 'courier new', courier, monospace;">name</span> attribute  specifies the
+  <p>In the Statistics Collector policy, the <span style="font-family:courier new,courier,monospace;">ref</span> attribute of the
+    <span style="font-family: 'courier new', courier, monospace;">&lt;Statistics&gt;</span> tag specifies
+  the name of the variable for which you want to collect statistics.
+    The <span style="font-family: 'courier new', courier, monospace;">name</span> attribute  specifies the
   name of the collection of statistical data for that variable stored by the Analytics Server, and
   the <span style="font-family:courier new,courier,monospace;">type</span> attribute specifies the
   data type of the recorded data. You can then query that collection to view the collected
@@ -232,14 +221,10 @@ xmlns:yweather="http://xml.weather.yahoo.com/ns/rss/1.0
   server and data written by any previous Statistics Collector policies is lost. One scenario where
   you might have multiple Statistics Collector policies in an API proxy is when you have one one in
   the request or response flow, and another in a fault handler. If a fault occurs in the API proxy,
-  then the Statistics Collector in the fault handler determines the data collected. See <a href=
-  "/api-platform/reference/policies/statistics-collector-policy.html">Statistics Collector
-  policy</a> for more. </aside>
+  then the Statistics Collector in the fault handler determines the data collected.
+    See <a href="/api-platform/reference/policies/statistics-collector-policy.html">Statistics Collector policy</a> for more. </aside>
 
-  <h3 id=
-  "tourextractingcustomanalyticsdatausingpolicies-attachingpoliciestotheproxyendpointresponseflow">
-  <a id="AttachingPolicies" name="AttachingPolicies"></a>Attaching policies to the ProxyEndpoint
-  response Flow</h3>
+  <h3 id="tourextractingcustomanalyticsdatausingpolicies-attachingpoliciestotheproxyendpointresponseflow"><a id="AttachingPolicies" name="AttachingPolicies"></a>Attaching policies to the ProxyEndpoint response Flow</h3>
 
   <p>To make things work properly, policies must be attached to the API proxy Flow in the
   appropriate location. In this use case, the policies must execute after the response has been
@@ -275,15 +260,12 @@ xmlns:yweather="http://xml.weather.yahoo.com/ns/rss/1.0
 &lt;/ProxyEndpoint&gt;
 </pre>
 
-  <h3 id="tourextractingcustomanalyticsdatausingpolicies-deployingtheapiproxy">Deploying the API
-  proxy</h3>
+  <h3 id="tourextractingcustomanalyticsdatausingpolicies-deployingtheapiproxy">Deploying the API proxy</h3>
 
   <p>After you have made these changes, you need to deploy the API proxy that you have
   configured.</p>
 
-  <h3 id=
-  "tourextractingcustomanalyticsdatausingpolicies-populatinganalyticsdataforcustomvariables">
-  Populating Analytics data for custom variables</h3>
+  <h3 id="tourextractingcustomanalyticsdatausingpolicies-populatinganalyticsdataforcustomvariables">Populating Analytics data for custom variables</h3>
 
   <p>After you deploy your changes, you need to populate some data in Analytics Services. You can
   do this by running the following commands, each of which uses a WOEID for a different geographic
@@ -309,8 +291,7 @@ $ curl http://{org_name}-test.apigee.net/weather/forecastrss?w=44418
 $ curl http://{org_name}-test.apigee.net/weather/forecastrss?w=2520841
 </pre>
 
-  <h3 id="tourextractingcustomanalyticsdatausingpolicies-generatingareportofstatistics">Generating
-  a report of statistics</h3>
+  <h3 id="tourextractingcustomanalyticsdatausingpolicies-generatingareportofstatistics">Generating a report of statistics</h3>
 
   <p>Now that you have sent some statistical data to the Analytics Server, you can use the Edge
   management UI or API to view the collected statistics in the same way that you use the API to get
@@ -321,8 +302,8 @@ $ curl http://{org_name}-test.apigee.net/weather/forecastrss?w=2520841
   data. In the example above, you specifed the data type as string for all four variables. For data
   of type string, reference the statistical data as a Dimension in a custom report. For numerical
   data types (integer/float/long/double), reference the statistical date in a custom report as a
-  Metric. See <a href="/api-platform/analytics/create-custom-reports.html">Manage custom
-  reports</a> for more.   </p>
+  Dimension or as a Metric.
+    See <a href="/api-platform/analytics/create-custom-reports.html">Manage custom reports</a> for more.   </p>
 
   <h4>Generating a custom report using the Edge UI</h4>
 
@@ -474,31 +455,29 @@ $ curl https://api.enterprise.apigee.com/v1/o/{org_name}/environments/test/stats
 }
 </pre>
 
-  <p>For complete API documentation, see the <a href="/api/api_resources/50-reports">Analytics
-  Services API reference</a>.</p>
+  <p>For complete API documentation, see the <a href="/api/api_resources/50-reports">Analytics Services API reference</a>.</p>
 
-  <h2 id="creatingcustomanalyticsvariableswiththesolutionbuilder"><a id="SolutionBuilder" name=
-  "SolutionBuilder"></a>Creating custom analytics variables with the Solution Builder</h2>
+  <h2 id="creatingcustomanalyticsvariableswiththesolutionbuilder"><a id="SolutionBuilder" name="SolutionBuilder"></a>Creating custom analytics variables with the Solution Builder</h2>
 
   <p>The Solution Builder lets you create custom analytics variables through an easy-to-use
   management UI dialog. </p>
 
-  <aside class="note"><b>Note:</b> You may wish to read the previous section "Parsing payloads
+  <p> You may wish to read the previous section "Parsing payloads
   using policies", which explains how the Extract Variables and Statistics Collector policies work
   hand-in-hand to feed custom variables to the Apigee Analytics system.  As you'll see, the UI
   follows this same pattern, but provides a convenient way for you to configure things entirely
   through the management UI. If you wish, try the Yahoo Weather API tutorial presented previously
-  in this topic using the UI instead of editing and attaching policies manually.</aside>
+  in this topic using the UI instead of editing and attaching policies manually.</p>
 
   <p>The Solution Builder dialog lets you configure analytics variables directly in the UI. This
   tool generates policies and attaches them to the API proxy for you. The policies extract
   variables of interest from requests or responses and pass the extracted variables to the Edge
   Analytics system.</p>
 
-  <aside class="note"><b>Note:</b> The Solution Builder creates new Extract Variables and
+  <p> The Solution Builder creates new Extract Variables and
   Statistics Collector policies and gives them unique names. The Solution Builder does not let you
-  go back and change these policies once they are created in a given proxy revision. If you wish to
-  make changes, you can edit the generated policies directly the policy editor.</aside>
+  go back and change these policies once they are created in a given proxy revision. To
+  make changes, edit the generated policies directly the policy editor.</p>
 
   <ol>
     <li>Go to the Overview page for your proxy in the Edge UI.</li>
@@ -530,8 +509,9 @@ $ curl https://api.enterprise.apigee.com/v1/o/{org_name}/environments/test/stats
     Metrics in the Custom Report builder UI.</li>
 
     <li>Pick where in the API proxy flow you wish to attach the generated policies Extract
-    Variables and Statistics Collector. For guidance, see "<a href="#AttachingPolicies">Attaching
-    policies to the ProxyEndpoint response Flow</a>". To make things work properly, policies must
+    Variables and Statistics Collector. For guidance,
+      see "<a href="#AttachingPolicies">Attaching policies to the ProxyEndpoint response Flow</a>".
+      To make things work properly, policies must
     be attached to the API proxy Flow in the appropriate location. You need to attach the
     polices at a stage in the flow where the variables you are trapping are in scope
     (populated).</li>
@@ -541,10 +521,13 @@ $ curl https://api.enterprise.apigee.com/v1/o/{org_name}/environments/test/stats
     <li>When you're done, click <strong>Build Solution</strong>. </li>
 
     <li>Save and deploy the proxy.</li>
+
   </ol>
 
   <p><img src="/api-platform/images/Screen-Shot-2014-06-20-at-1.21.58-PM.png" width="1006"></p>
 
-  <p>You can now generate a custom report for the data as described above. </p>
+  <p>You can now generate a custom report for the data as described above.</p>
+
+  {{ custom_dimensions_delay }}
 
   {% endblock %}

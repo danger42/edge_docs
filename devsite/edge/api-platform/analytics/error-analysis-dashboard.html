@@ -2,10 +2,29 @@
 
   <h2 id="whatdoesthisdashboardtellme">What does this dashboard tell me?</h2>
 
-  <p>The Error Code Analysis dashboard tells you about error rates for API proxies and targets.</p>
+  <p>The Error Code Analysis dashboard tells you about error rates for API proxies and targets.
+    The Error Code Analysis dashboard uses:</p>
 
-  <p><strong><span style="font-size: 12px;">The Error Code Analysis dashboard (partially
-  shown)</span></strong></p>
+    <ul>
+      <li><p>The response code to calculate proxy errors</p></li>
+      <li><p>The target response code to calculate target errors</p></li>
+    </ul>
+
+  <p>Errors reported on the Error Code Analysis dashboard might be different from errors reported
+    on the API Proxy Performance dashboard because that dashboard calculates error rates based on
+    the <code>is_error</code> flow variable. That variable can be explicitly set by the API proxy,
+    so it is not related to the error codes in the proxy response or target response.</p>
+
+  <p>When calculating error rates:</p>
+    <ul>
+      <li><p>A proxy can handle a target error and still return a success response. In this case,
+      the error is counted as a target error but not as a proxy error.</p></li>
+      <li><p>When the target response is either success or does not exist, but the proxy responded
+      with an error, the error is counted against the proxy. </p></li>
+      <li><p>If both the proxy and target respond with an error, the error is counted on the target.</p></li>
+    </ul>
+
+  <p><strong>The Error Code Analysis dashboard (partially shown)</strong></p>
 
   <p><img alt="" src="/api-platform/images/error-code-analysis2.png"></p>
 
@@ -14,8 +33,7 @@
     <p><strong>Video: </strong>Watch a short video for an overview of the Error Code Analysis dashboard.</p>
 
     <div style="text-align: left;">
-      <p><iframe allowfullscreen="" frameborder="0" height="315"  src=
-      "https://www.youtube.com/embed/qfm4sinOyIU" width="560"></iframe></p>
+      <p><iframe allowfullscreen="" frameborder="0" height="315"  src="https://www.youtube.com/embed/qfm4sinOyIU" width="560"></iframe></p>
     </div>
   </div>
 
@@ -37,8 +55,7 @@
     <li><a href="#targetbyresponsecode">Target Errors by Response Code</a></li>
   </ul>
 
-  <h3 id="whatdoesthisdashboardmeasure-errorcomposition"><a id="errorcomposition" name=
-  "errorcomposition"></a>Error Composition</h3>
+  <h3 id="whatdoesthisdashboardmeasure-errorcomposition"><a id="errorcomposition" name="errorcomposition"></a>Error Composition</h3>
 
   <table width="600px">
     <tbody>
@@ -60,7 +77,8 @@
         <td><strong>Proxy Errors</strong></td>
 
         <td>The total number of proxy errors seen in an Apigee Edge organization in the specified
-        time period. Proxy errors are measured between the time an entire request is received by
+        time period as determined by the response code.
+        Proxy errors are measured between the time an entire request is received by
         Apigee Edge from a client and the time the request is sent to the backend target.</td>
       </tr>
 
@@ -68,7 +86,8 @@
         <td><strong>Target Errors</strong></td>
 
         <td>The total number of target errors seen in an Apigee Edge organization in the specified
-        time period. Target errors are measured between the time an entire request is sent by
+        time period as determined by the target response code.
+        Target errors are measured between the time an entire request is sent by
         Apigee Edge to a backend target and the time the response is returned the client app.</td>
       </tr>
     </tbody>
@@ -97,8 +116,7 @@
         <td><strong>4XX</strong></td>
 
         <td>Shows the number proxy errors that resulted in HTTP 4xx errors. For a complete list of
-        HTTP status codes, see "<a href=
-        "https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html">Status Code Definitions</a>" in
+        HTTP status codes, see "<a href="https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html">Status Code Definitions</a>" in
         the HTTP specification.  </td>
       </tr>
 
@@ -106,8 +124,7 @@
         <td><strong>5XX</strong></td>
 
         <td>Shows the number API requests that resulted in HTTP 5xx errors. For a complete list of
-        HTTP status codes, see "<a href=
-        "https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html">Status Code Definitions</a>" in
+        HTTP status codes, see "<a href="https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html">Status Code Definitions</a>" in
         the HTTP specification.</td>
       </tr>
     </tbody>
@@ -136,16 +153,16 @@
         <td><strong>4XX</strong></td>
 
         <td>The number target errors that resulted in HTTP 4xx errors. For a complete list of HTTP
-        status codes, see "<a href="https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html">Status
-        Code Definitions</a>" in the HTTP specification.</td>
+        status codes, see "<a href="https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html">Status Code Definitions</a>"
+          in the HTTP specification.</td>
       </tr>
 
       <tr>
         <td><strong>5XX</strong></td>
 
         <td>The number target errors that resulted in HTTP 5xx errors. For a complete list of HTTP
-        status codes, see "<a href="https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html">Status
-        Code Definitions</a>" in the HTTP specification.</td>
+        status codes, see "<a href="https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html">Status Code Definitions</a>"
+          in the HTTP specification.</td>
       </tr>
     </tbody>
   </table>
@@ -191,8 +208,8 @@
 
         <td>
           <p>The total number of target errors seen in an Apigee Edge organization in the specified
-          time <strong>for each individual target</strong>. The number of error calls that did not
-          reach any target are listed in the Target Not Contacted column.  Hover over the bars
+          time <strong>for each individual target</strong>. The number of calls that did not
+            reach any target are listed in the <strong>Target Not Contacted</strong> column.  Hover over the bars
           to see the number of errors that came from the each proxy response flow and from the
           target response flow, respectively. </p>
 
@@ -256,7 +273,7 @@
   Dimension</strong> dropdown menu at the top of the dashboard.</p>
 
   <p>This dashboard uses standard controls, like the date and data aggregation selectors, hovering
-  over graphs for more context, exporting data to CSV, and so on. To learn more, see <a href=
-  "/api-platform/analytics/using-analytics-dashboards.html">Using the analytics dashboards</a>.</p>
+  over graphs for more context, exporting data to CSV, and so on. To learn more, see
+    <a href="/api-platform/analytics/using-analytics-dashboards.html">Using the analytics dashboards</a>.</p>
 
   {% endblock %}

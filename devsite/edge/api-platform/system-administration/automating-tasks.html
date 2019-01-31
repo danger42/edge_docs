@@ -1,5 +1,5 @@
 {% extends "_base.html" %}
-{% block title %}Automating tasks with SAML{% endblock %}
+{% block title %}Automate the token generation process{% endblock %}
 {% block body %}
 
   <p>When using SAML with the Edge API, the process that you use to obtain OAuth2 access and
@@ -7,204 +7,230 @@
   flow, you use a browser to obtain a one-time passcode that you then use to obtain OAuth2
   tokens.</p>
 
-  <p>However, your development environment might support automation for common development tasks,
+  <p>However, your environment might support automation for common development tasks,
   such as test automation or Continuous Integration/Continuous Deployment (CI/CD). To automate
   these tasks when SAML is enabled, you need a way to obtain and refresh OAuth2 tokens without
   having to copy/paste a passcode from a browser.</p>
+
+  <h2>Overview</h2>
 
   <p>Edge supports automated token generation in two ways. You can decide which way is better for
   your environment:</p>
 
   <ul>
-    <li>Edge supports machine users in your Edge SAML zone. A machine user can obtain OAuth2 tokens
-    without having to specify a passcode. That means you can completely automate the process of
-    obtaining and refreshing OAuth2 tokens by using the Edge management API. </li>
-    <li>Edge supports long OAuth2 tokens. A long OAuth2 access token is valid for one hour, just
-      like a regular access token, but the refresh token is valid for 30 days instead of 12
-      hours.
+    <li><strong><a href="#machine">Machine users</a>:</strong>
+      <p>Edge supports machine users in your Edge SAML zone. A machine user can obtain OAuth2 tokens
+      without having to specify a passcode. That means you can completely automate the process of
+      obtaining and refreshing OAuth2 tokens by using the Edge management API.</p>
+    </li>
+    <li><strong><a href="#long-tokens">Long tokens</a>:</strong>
+      <p>Long OAuth2 access tokens are valid for one hour, just like regular access tokens, but the
+      refresh tokens are valid for 30 days instead of 12 hours.</p>
       <p>Long tokens use a different OAuth client type than regular tokens. That means you must
-      configure <code>get_token</code> to use the long token client before you use it to obtain
+      configure {{get_token}} to use the long token client before you use it to obtain
       and refresh OAuth2 tokens. Typically, you do that configuration only on the machines running
       automated tasks so that normal users cannot create long tokens.</p>
     </li>
   </ul>
 
-  <h2 id="create-machine-user">Create a machine user</h2>
+  <h2 id="machiner">Machine users</h2>
 
   <p>On request, Apigee creates a machine user for you. You can have Apigee create a single machine
   user used by all of your organizations, or create a separate machine user for each
-  organization. </p>
+  organization.</p>
 
   <p>The machine user is created and stored in the Edge datastore, not in your SAML identity
   provider. Therefore, you are not responsible for maintaining the machine user. If you later want
-  to add other machine users, or delete an existing machine user, you must contact {{support}}.</p>
+  to add other machine users or delete an existing machine user, you must contact {{support}}.</p>
 
-  <p>When Apigee creates the machine user, Apigee assigns it an email address and a default
+  <p>When Apigee creates a new machine user, Apigee assigns it an email address and a default
   password. The email address of the machine user is in the form:</p>
 
   <ul>
-    <li><code>machine_<var>orgname</var>@apigee.com</code> if you create a machine
-    user for a specific organization.</li>
-    <li><code>machine_<var>zonename</var>@apigee.com</code> if you create a single
-    machine user for your entire zone. </li>
+    <li><code>machine_<var>orgname</var>@<var>yourdomain.com</var></code> if you create a machine
+      user for a specific organization.</li>
+    <li><code>machine_<var>zonename</var>@<var>yourdomain.com</var></code> if you create a single
+      machine user for your entire zone. </li>
   </ul>
 
   <p>Machine user email addresses are arbitrary and are not used for email activity. There's
   nothing special or programmatic about the addresses. The naming scheme is simply to help you know
   the scopes of your machine users.</p>
 
-  <p>Your first action is to reset the default password. You can then obtain OAuth2 tokens for the
-  machine user. The following procedure describes how to change the machine user's password:</p>
+  <h3>Reset the machine user's password</h3>
 
+  <p>After Apigee creates a machine user for you, you must reset the default password. You can then
+  obtain OAuth2 tokens for the machine user.</p>
+
+  <p><strong>To reset the machine user's password:</strong></p>
   <ol>
-    <li>Make a request to {{support}} to create a machine user for a specific organization or
-    zone.</li>
-    <li>Apigee returns to you the email address and password of the machine user.</li>
-    <li>Log in to the Edge UI and add the machine user to your organizations, and assign the
-    machine user to the necessary role. See
-    <a href="/api-platform/system-administration/adding-global-users">Adding global users</a> for
-    more.</li>
-    <li>Change the password of the machine user:
+    <li>Send a request to {{support}} to create a machine user for a specific organization or
+      zone.
+      <p>Apigee will send you the email address and password of the machine user.</p>
+    </li>
+    </li>
+    <li>Update the access privileges of the machine user:
       <ol>
-        <li>Use the following API call to obtain the JSON Web Token (JWT) for the machine
-          user:
-          <pre class="devsite-terminal">curl -s -X POST https://<var>zoneName</var>.login.apigee.com/oauth/token \
-  -H "Content-Type: application/x-www-form-urlencoded;charset=utf-8" \
-  -H "accept: application/json;charset=utf-8" \
-  -H "Authorization: Basic ZWRnZWNsaTplZGdlY2xpc2VjcmV0" \
-  -d "grant_type=password&amp;username=<var>machineUserEMail</var>&amp;password=<var>Password</var>"</pre>
-
-          <p>where <var>zoneName</var> is your SAML zone, and <var>machineUserEMail/Password</var>
-          are the machine user's email address and password that you received from Apigee.</p>
-
-          <p>The returned token includes an OAuth2 access token and is in the form:
-          <pre class="prettyprint">{"access_token":"eyJhbGc...Au91CzslYg","expires_in":43199,"scope":"scim.emails.read
-  scim.me openid password.write approvals.me scim.ids.read
-  oauth.approvals","jti":"6f27ffac-3cde-4eb9-8341-5855333bbbf9"}</pre>
-        </li>
-        <li>Decode the JWT token to obtain the <strong>user_id</strong> of the machine user. There
-        are many utilities that you can use to perform the decode. For example, you can install jwt
-        from <a href="https://www.npmjs.com/package/jwt-cli" class="external">https://www.npmjs.com/package/jwt-cli</a>.</li>
-        <li>Use the following API call to change the machine user's password:
-          <pre class="devsite-terminal">curl -s -X PUT https://<var>zoneName</var>.login.apigee.com/Users/<var>user_id</var>/password \
+        <li>Log in to the Edge UI.</li>
+        <li>Add the machine user to your organizations.</li>
+        <li>Assign the machine user to the necessary role.</li>
+      </ol>
+      <p>See <a href="/api-platform/system-administration/adding-global-users">Adding global users</a>
+      for more.</p>
+    </li>
+    <li>Get a JSON Web Token (JWT) for the machine user by calling the SAML token endpoint, as
+      the following example shows:
+      <pre class="devsite-terminal">curl -s -X POST https://<var>zoneName</var>.login.apigee.com/oauth/token \
+-H "Content-Type: application/x-www-form-urlencoded;charset=utf-8" \
+-H "accept: application/json;charset=utf-8" \
+-H "Authorization: Basic ZWRnZWNsaTplZGdlY2xpc2VjcmV0" \
+-d "grant_type=password&amp;username=<var>machine_user_email</var>&amp;password=<var>machine_user_password</var>"</pre>
+      <p>Where <var>zoneName</var> is your SAML zone and <var>machine_user_email</var> and
+      <var>machine_user_password</var> are the machine user's email address and password that you
+      received from Apigee.</p>
+      <p>The JWT token returned by the SAML token endpoint includes an OAuth2 access token and
+      is in the following form:</p>
+      <pre class="prettyprint">{
+  "access_token":"eyJhbGc...Au91CzslYg",
+  "expires_in":43199,
+  "scope":"scim.emails.read scim.me openid password.write approvals.me scim.ids.read oauth.approvals",
+  "jti":"6f27ffac-3cde-4eb9-8341-5855333bbbf9"
+}</pre>
+    </li>
+    <li>Decode the JWT token to obtain the <strong>user_id</strong> of the machine user. There
+    are many utilities that you can use to perform the decode. For example, you can install jwt
+    from <a href="https://www.npmjs.com/package/jwt-cli" class="external">https://www.npmjs.com/package/jwt-cli</a>.</li>
+    <li>Use the following API call to change the machine user's password:
+      <pre class="devsite-terminal">curl -s -X PUT https://<var>zoneName</var>.login.apigee.com/Users/<var>user_id</var>/password \
   -H "Content-Type:application/json" \
   -H "Accept:application/json" \
-  -H "Authorization: Bearer <var>ACCESS_TOKEN_FROM_STEP_4a</var>" \
-  -d '{ "oldPassword" : "<var>OldPassword</var>", "password" : "<var>NewPassword</var>"}'</pre>
-          <p>where <var>user_id</var> is the ID you obtained from the JWT token, and
-          <var>ACCESS_TOKEN_FROM_STEP_4a</var> is the access_token from step 4a.</p>
-          <p>This call returns a message in the form:
-          <pre class="prettyprint">{"status":"ok","message":"password updated"}</pre>
-        </li>
-      </ol>
+  -H "Authorization: Bearer <var>ACCESS_TOKEN_FROM_JWT</var>" \
+  -d '{ "oldPassword" : "<var>old_password</var>", "password" : "<var>new_password</var>"}'</pre>
+      <p>Where <var>user_ID_from_JWT</var> is the ID that you extracted from the JWT token, and
+      <var>ACCESS_TOKEN_FROM_JWT</var> is the access token that you extracted from the JWT.</p>
+      <p>This call returns a message in the following form:</p>
+      <pre class="prettyprint">{
+"status":"ok",
+"message":"password updated"
+}</pre>
     </li>
   </ol>
 
   <p>After you change the machine user's password, you can then use the Edge API to obtain and
-  refresh OAuth2 tokens by passing the machine user's credentials, instead of a passcode.</p>
+  refresh OAuth2 tokens by passing the machine user's credentials instead of a passcode.</p>
 
-  <p>The following procedure describes how to obtain OAuth2 tokens:</p>
+  <H3>Get the machine user's OAuth2 tokens</h3>
+
+  <p><strong>To get the machine user's OAuth2 tokens:</strong></p>
 
   <ol>
-    <li>Use the following API call to generate the initial access and refresh tokens:
+    <li>Generate the initial access and refresh tokens by calling the SAML token endpoint, as the
+      following example shows:
       <pre class="devsite-terminal">curl -H "Content-Type: application/x-www-form-urlencoded;charset=utf-8" \
   -H "accept: application/json;charset=utf-8" \
   -H "Authorization: Basic ZWRnZWNsaTplZGdlY2xpc2VjcmV0" -X POST \
   https://<var>zoneName</var>.login.apigee.com/oauth/token -s \
-  -d 'grant_type=password&amp;username=<var>machineUserEMail</var>&amp;password=<var>NewPassword</var>'</pre>
-      <p>For authorization, pass a reserved OAuth2 client credential in the <code>Authorization</code>
-      header. The call prints the access and refresh tokens to the screen.</p>
+  -d 'grant_type=password&amp;username=<var>machine_user_email</var>&amp;password=<var>new_password</var>'</pre>
+      <p>For authorization, pass a reserved OAuth2 client credential in the
+      <code>Authorization</code> header. The call prints the access and refresh tokens to
+      <code>stdout</code>.</p>
     </li>
     <li>Pass the access token to an Edge management API call as the Bearer header:
-      <pre class="devsite-terminal">curl -H "Authorization: Bearer <var>access_token</var>" \
+      <pre class="devsite-terminal">curl -H "Authorization: Bearer <var>ACCESS_TOKEN</var>" \
   https://api.enterprise.apigee.com/v1/organizations/<var>orgName</var></pre>
     </li>
-    <li>To later refresh the access token, use the following call that includes the refresh
-      token:
+    <li>When the access token expires, you can refresh it by sending the refresh token to the SAML
+      token endpoint, as the following example shows:
       <pre class="devsite-terminal">curl -H "Content-Type:application/x-www-form-urlencoded;charset=utf-8" \
   -H "Accept: application/json;charset=utf-8" \
   -H "Authorization: Basic ZWRnZWNsaTplZGdlY2xpc2VjcmV0" -X POST \
   https://<var>zoneName</var>.login.apigee.com/oauth/token \
-  -d 'grant_type=refresh_token&amp;refresh_token=<var>refreshToken</var>'</pre>
+  -d 'grant_type=refresh_token&amp;refresh_token=<var>REFRESH_TOKEN</var>'</pre>
     </li>
   </ol>
 
-  <h3 id="create-long-token">Create a long token</h3>
+  <h2 id="long-tokens">Long tokens</h2>
 
   <p>When you create a long OAuth2 token from a SAML assertion, the OAuth2 access token is valid
-  for one hour, but the long refresh token is valid for 30 days, instead of the usual 12 hours.</p>
+  for one hour, but the refresh token is valid for 30 days, instead of the usual 12 hours.</p>
 
-  <p>Make a request to {{support}} to enable long tokens. Apigee then returns to you an OAuth client
-  ID and secret, in the form <var>clientcli:clientclisecret</var>. You must then:</p>
+  <h3>Enable long tokens for your account</h3>
 
-  <ul>
-    <li>Base64 encode <var>clientcli:clientclisecret</var>.</li>
-    <li>Use the Base64 encoded <var>clientcli:clientclisecret</var> to generate long tokens.</li>
-  </ul>
+  <p>Before you can use long tokens, you must enable them for your account.</p>
 
-  <aside class="note"><strong>Note:</strong> Only use this client id and secret on machines running
-  automated tasks. It should not be given to normal users, otherwise those users will be able to
-  generate long tokens.</aside>
+  <p><strong>To enable long tokens:</strong></p>
 
-  <p>The process that you use to create and refresh tokens is the same as you use to create tokens
-  for the Edge management API, as shown above. The only difference are:</p>
-
-  <ul>
-    <li>If you use get_token to manage tokens, then you have to set the <code>CLIENT_AUTH</code>
-      environment variable for the long token client:
-      <pre class="devsite-terminal">export CLIENT_AUTH=<var>Base64EncodedClientIDAndSecret</var></pre>
-
-      <aside class="note"><strong>Note</strong>: Only make this change on your machines running
-      automated tasks.</aside>
+  <ol>
+    <li><p>Contact {{support}} to enable long tokens for your account.</p>
+      <p>Apigee will send you an OAuth2 client ID and secret, in the following form:</p>
+      <pre><var>clientcli:clientclisecret</var></pre>
     </li>
+    <li>Base64 encode <var>clientcli:clientclisecret</var>. You can do this with a utlity
+      such as <code>base64</code>.</li>
+    <li>Use the Base64-encoded <var>clientcli:clientclisecret</var> to generate long tokens.</li>
+  </ol>
 
-    <li>If you use the Edge API  to manage tokens, then you have to pass the Base64 encoded
-      client id and secret as the Basic auth header when generating or refreshing OAuth2 tokens:
+  <aside class="note"><h3 class="hide-from-toc">NOTE</h3>
+    <p>Only use this client ID and secret on machines running automated tasks. It should not be
+    given to normal users, otherwise those users will be able to generate long tokens.</p>
+  </aside>
+
+  <h3>Use a long refresh token</h3>
+
+  <p>The process that you use to create and refresh your access tokens is the same as you use to
+  create tokens for the Edge management API, as shown above, with the following differences:</p>
+
+  <ul>
+    <li>If you use {{get_token}} to get your access and refresh tokens, you must
+      set the <code>CLIENT_AUTH</code> environment variable for the long token client:
+      <pre class="devsite-terminal">export CLIENT_AUTH=<var>Base64EncodedClientIDAndSecret</var></pre>
+      <aside class="note"><h3 class="hide-from-toc">NOTE</h3>
+        <p>Only make this change on your machines running automated tasks.</p>
+      </aside>
+    </li>
+    <li>If you <a href="management-api-tokens">use the management API</a> to get access and refresh
+      tokens, you must pass the Base64-encoded client ID and secret as the Basic auth header when
+      generating or refreshing OAuth2 tokens:
       <pre class="prettyprint">-H "Authorization: Basic <var>Base64EncodedClientIDAndSecret</var>"</pre>
     </li>
   </ul>
 
-  <p>For example, when using <code>get_token</code>:</p>
+  <p><strong>To get and use a long refresh token with <code>get_token</code>:</strong></p>
   <ol>
-    <li>Base64 encode the client ID and secret you received from Apigee.</li>
-    <li>Set the <code>SSO_LOGIN_URL</code> used by get_token:
+    <li>Base64 encode the client ID and secret that you received from Apigee.</li>
+    <li>Set the <code>SSO_LOGIN_URL</code> used by <code>get_token</code>:
       <pre class="devsite-terminal">export SSO_LOGIN_URL=https://<var>zoneName</var>.login.apigee.com</pre>
     </li>
-    <li>Set <code>CLIENT_AUTH</code> used by <code>get_token</code> to the Base64 encoded client ID
-      and secret:
+    <li>Set the <code>CLIENT_AUTH</code> environment variable to the Base64 encoded client ID and
+      secret:
       <pre class="devsite-terminal">export CLIENT_AUTH=amVua4guc2NsaTpqZW5raW5zY2xpc2VjcmV0</pre>
     </li>
     <li>In a browser, go to the following URL to obtain a one-time passcode:
       <pre class="prettyprint">https://<var>zoneName</var>.login.apigee.com/passcode</pre>
     </li>
-    <li>Invoke get_token to obtain the OAuth2 access token:
+    <li>Invoke <code>get_token</code> to obtain the OAuth2 access token:
       <pre class="devsite-terminal">get_token</pre>
-      <p>You are prompted to enter the one-time passcode that you obtained in step 3.</p>
+      <p>You are prompted to enter the one-time passcode that you obtained in previous step.</p>
     </li>
-    <li>Enter the passcode. The <code>get_token</code> utility obtains the OAuth2 access token,
-    prints it to the screen, and writes it and the refresh token to <code>~/.sso-cli</code>.</li>
-    <li>Pass the access token to an Edge management API call as the <code>Bearer</code> header:
-      <pre class="devsite-terminal">curl -H "Authorization: Bearer <var>access_token</var>" \
-  https://api.enterprise.apigee.com/v1/organizations/<var>orgName</var></pre>
-    </li>
-    <li>After you obtain a new access token for the first time, you can obtain the access token and
-      pass it to an API call in a single command, as shown below:
-      <pre class="devsite-terminal">header='get_token' &amp;&amp; curl -H "Authorization: Bearer $header" \
-  https://api.enterprise.apigee.com/v1/organizations/<var>orgName</var></pre>
-      <p>With this form of the command, if the access token has expired, it is automatically refreshed
-      until the refresh token expires.</p>
+    <li><p>Enter the passcode.</p>
+      <p>The <code>get_token</code> utility gets the OAuth2 access token, prints it to
+      <code>stdout</code>, and writes it and the long refresh token to <code>~/.sso-cli</code>.</li>
+    <li>Pass the access token to an Edge management API call as the <code>Bearer</code> header; for
+      example:
+      <pre class="devsite-terminal">curl -H "Authorization: Bearer <var>ACCESS_TOKEN</var>" \
+  https://api.enterprise.apigee.com/v1/organizations/ahamilton-eval</pre>
     </li>
   </ol>
 
-  <p>Or use the following API call to generate the initial access and refresh tokens:</p>
+  <p>You can use the following API call to generate the initial access and refresh tokens:</p>
   <pre class="devsite-terminal">curl -H "Content-Type: application/x-www-form-urlencoded;charset=utf-8" \
   -H "accept: application/json;charset=utf-8" \
   -H "Authorization: Basic amVua4guc2NsaTpqZW5raW5zY2xpc2VjcmV0" -X POST \
   https://<var>zoneName</var>.login.apigee.com/oauth/token -s \
   -d 'grant_type=password&amp;response_type=token&amp;passcode=<var>passcode</var>'</pre>
 
-  <p>Pass the Base64 encoded string for the client id and secret as the Basic header. The call
-  prints the access and refresh tokens to the screen.</p>
+  <p>Pass the Base64 encoded string for the client ID and secret as the Basic header. The call
+  prints the access and refresh tokens to <code>stdout</code>.</p>
 
   <p>To later refresh the access token, use the following call that includes the refresh token
   generated from the previous call:</p>
@@ -212,7 +238,7 @@
   -H "Accept: application/json;charset=utf-8" \
   -H "Authorization: Basic amVua4guc2NsaTpqZW5raW5zY2xpc2VjcmV0" -X POST \
   https://<var>zoneName</var>.login.apigee.com/oauth/token \
-  -d 'grant_type=refresh_token&amp;refresh_token=<var>refreshToken</var>'</pre>
+  -d 'grant_type=refresh_token&amp;refresh_token=<var>REFRESH_TOKEN</var>'</pre>
 
 
 {% endblock %}

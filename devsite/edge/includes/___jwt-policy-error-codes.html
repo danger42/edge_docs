@@ -161,43 +161,70 @@ jwt.{policy_name}.{variable_name}
 
   <h2 id="errorreference">Error reference</h2>
 
-  <p>This section describes the error messages and flow variables that are set when this policy
-  triggers an error. This information is important to know if you are developing fault rules for a
-  proxy. To learn more, see <a href=
-  "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html">What you need to know
+  <p>TThis section describes the fault codes and error messages that are returned and fault variables that are set by Edge when this policy triggers an error.
+    This information is important to know if you are developing fault rules to
+  handle faults. To learn more, see <a href="/api-platform/fundamentals/what-you-need-know-about-policy-errors.html">What you need to know
   about policy errors</a> and <a href="/api-platform/fundamentals/fault-handling.html">Handling
   faults</a>.</p>
 
-  <h3 id="error-code-prefix">Error code prefix</h3>
-
-  <p><code>policies.jwt</code> (<a href=
-  "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html#aboutthedefaultpolicyerrorresponse">What's
-  this?</a>)</p>
-
-  <h2 id="runtime-errors">Runtime errors</h2>
+  <h3 id="runtime-errors">Runtime errors</h3>
 
   <p>These errors can occur when the policy executes.</p>
-
+    <aside class="key-point">Use <u><a href="/api-monitoring">API Monitoring</a></u> to investigate fault codes and diagnose issues faster.</aside>
   <table>
     <tbody>
       <tr>
-        <td><strong>Error name</strong></td>
+        <td><strong>Fault code</strong></td>
 
         <td><strong>HTTP status</strong></td>
 
         <td><strong>Occurs when</strong></td>
       </tr>
+       <tr>
+        <td><code>policies.jwt.AlgorithmInTokenNotPresentInConfiguration</code></td>
 
-      <tr>
-        <td><code>TokenExpired</code></td>
+        <td> </td>
+
+        <td>Occurs when the verification policy has multiple algorithms</td>
+      </tr>
+        <tr>
+        <td><code>policies.jwt.JwtAudienceMismatch</code></td>
 
         <td>401</td>
 
-        <td>The policy attempts to verify an expired token.</td>
+        <td>The audience claim failed on token verification.</td>
       </tr>
-
       <tr>
-        <td><code>InvalidJwt</code></td>
+        <td><code>policies.jwt.AlgorithmMismatch</code></td>
+
+        <td>401</td>
+
+        <td>The algorithm specified in the Generate policy did not match the one expected in the
+        Verify policy. The algorithms specified must match.</td>
+      </tr>
+       <tr>
+        <td><code>policies.jwt.JwtClaimNotPresent</code></td>
+
+        <td>401</td>
+
+        <td>The JWT did not contain a claim on token verification.</td>
+      </tr>
+       <tr>
+        <td><code>policies.jwt.ClaimTypeMismatch</code></td>
+
+        <td>401</td>
+
+        <td> </td>
+      </tr>
+        <tr>
+        <td><code>policies.jwt.FailedToDecode</code></td>
+
+        <td>401</td>
+
+        <td>The policy was unable to decode the JWT. The JWT is possibly corrupted.</td>
+      </tr>
+       <tr>
+        <td><code>policies.jwt.InvalidJwt</code></td>
 
         <td>401</td>
 
@@ -205,109 +232,64 @@ jwt.{policy_name}.{variable_name}
       </tr>
 
       <tr>
-        <td><code>JwtIssuerMismatch</code></td>
+        <td><code>policies.jwt.InvalidClaim</code></td>
+
+        <td>401</td>
+
+        <td> </td>
+      </tr>
+
+       <tr>
+        <td><code>policies.jwt.JwtIssuerMismatch</code></td>
 
         <td>401</td>
 
         <td>The issuer claim failed on token verification.</td>
       </tr>
-
-      <tr>
-        <td><code>JwtAudienceMismatch</code></td>
-
-        <td>401</td>
-
-        <td>The audience claim failed on token verification.</td>
-      </tr>
-
-      <tr>
-        <td><code>JwtSubjectMismatch</code></td>
+       <tr>
+        <td><code>policies.jwt.JwtSubjectMismatch</code></td>
 
         <td>401</td>
 
         <td>The subject claim failed on token verification.</td>
       </tr>
-
       <tr>
-        <td><code>JwtClaimNotPresent</code></td>
-
-        <td>401</td>
-
-        <td>The JWT did not contain a claim on token verification.</td>
-      </tr>
-
-      <tr>
-        <td><code>FailedToDecode</code></td>
-
-        <td>401</td>
-
-        <td>The policy was unable to decode the JWT. The JWT is possibly corrupted.</td>
-      </tr>
-
-      <tr>
-        <td><code>AlgorithmMismatch</code></td>
-
-        <td>401</td>
-
-        <td>The algorithm specified in the Generate policy did not match the one expected in the
-        Verify policy. The algorithms specified must match.</td>
-      </tr>
-
-      <tr>
-        <td><code>InvalidClaim</code></td>
-
-        <td>401</td>
-
-        <td> </td>
-      </tr>
-
-      <tr>
-        <td><code>ClaimTypeMismatch</code></td>
-
-        <td>401</td>
-
-        <td> </td>
-      </tr>
-
-      <tr>
-        <td><code>KeyIdMissing</code></td>
+        <td><code>policies.jwt.KeyIdMissing</code></td>
 
         <td> </td>
 
         <td> </td>
       </tr>
-
       <tr>
-        <td><code>NoMatchingPublicKey</code></td>
-
-        <td> </td>
-
-        <td>From JWKS.</td>
-      </tr>
-
-      <tr>
-        <td><code>KeyParsingFailed</code></td>
+        <td><code>policies.jwt.KeyParsingFailed</code></td>
 
         <td> </td>
 
         <td> </td>
       </tr>
-
-      <tr>
-        <td><code>NoAlgorithmFoundInToken</code></td>
+       <tr>
+        <td><code>policies.jwt.NoAlgorithmFoundInToken</code></td>
 
         <td> </td>
 
         <td>Occurs when the verification policy has multiple algorithms.</td>
       </tr>
 
-      <tr>
-        <td><code>AlgorithmInTokenNotPresentInConfiguration</code></td>
+       <tr>
+        <td><code>policies.jwt.NoMatchingPublicKey</code></td>
 
         <td> </td>
 
-        <td>Occurs when the verification policy has multiple algorithms</td>
+        <td>From JWKS.</td>
       </tr>
+      <tr>
+        <td><code>policies.jwt.TokenExpired</code></td>
+
+        <td>401</td>
+
+        <td>The policy attempts to verify an expired token.</td>
+      </tr>
+
     </tbody>
   </table>
 
@@ -389,35 +371,31 @@ jwt.{policy_name}.{variable_name}
   "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html">What you need to know
   about policy errors</a>.</p>
 
-  <table>
+    <table>
     <tbody>
       <tr>
-        <td><strong>Variables set <code>(<a href=
-        "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html">Learn
-        more</a>)</code></strong></td>
+        <th width="324">Variables</th>
 
-        <td><strong>Where</strong></td>
+        <th width="428">Where</th>
 
-        <td><strong>Example</strong></td>
+        <th width="428">Example</th>
       </tr>
-
       <tr>
-        <td><code>[prefix].[policy_name].failed</code></td>
+        <td><code>fault.name="<var>fault_name</var>"</code></td>
 
-        <td>The fault variable <code>[prefix]</code> is <strong><code>jwt.</code></strong> The
-        <code>[policy_name]</code> is the name of the policy that threw the error.</td>
-
-        <td><code>jwt.JWT-Policy.failed = true</code></td>
-      </tr>
-
-      <tr>
-        <td><code>fault.[error_name]</code></td>
-
-        <td><code>[error_name]</code> = The specific error name to check for as listed in the table
-        above.</td>
+        <td><var>fault_name</var> is the name of the fault, as listed in the <a href="#runtime-errors">Runtime errors</a> table above. The fault name is the last part of the fault code.</td>
 
         <td><code>fault.name Matches "TokenExpired"</code></td>
       </tr>
+
+      <tr>
+        <td width="324"><code>jwt.<var>policy_name</var>.failed</code></td>
+
+        <td width="428"><var>policy_name</var> is the user-specified name of the policy that threw the fault.</td>
+
+        <td width="428"><code>jwt.JWT-Policy.failed = true</code></td>
+      </tr>
+
     </tbody>
   </table>
 

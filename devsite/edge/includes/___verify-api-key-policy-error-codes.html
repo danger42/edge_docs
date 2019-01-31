@@ -4,34 +4,21 @@
     <title>Verify API Key Policy Error Codes</title>
   </head>
   <body>
-  <p>This section describes the error messages and flow variables that are set when this policy
-  triggers an error. This information is important to know if you are developing fault rules for a
-  proxy. To learn more, see <a href=
-  "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html">What you need to know
+  <p>This section describes the fault codes and error messages that are returned and fault variables that are set by Edge when this policy triggers an error.
+    This information is important to know if you are developing fault rules to
+  handle faults. To learn more, see <a href="/api-platform/fundamentals/what-you-need-know-about-policy-errors.html">What you need to know
   about policy errors</a> and <a href="/api-platform/fundamentals/fault-handling.html">Handling
   faults</a>.</p>
-
-  <h3>Error code prefix <span style="font-size: 10pt">(<a href=
-  "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html#aboutthedefaultpolicyerrorresponse">What's
-  this?</a>)</span></h3>
-
-  <p>The errorcode prefix is <code><strong>oauth.v2</strong></code> for the errors
-  <code>FailedToResolveAPIKey</code>, <code>InvalidApiKey</code>, and
-  <code>InvalidApiKeyForGivenResource</code>.</p>
-
-  <p>The prefix is <code><strong>keymanagement.service</strong></code> for the errors
-  <code>CompanyStatusNotActive</code>, <code>DeveloperStatusNotActive</code>, and
-  <code>invalid_client-app_not_approved</code>. See the Example error responses at the end of this
-  section.</p>
 
   <h3>Runtime errors</h3>
 
   <p>These errors can occur when the policy executes.</p>
+    <aside class="key-point">Use <u><a href="/api-monitoring">API Monitoring</a></u> to investigate fault codes and diagnose issues faster.</aside>
 
   <table>
     <thead>
       <tr>
-        <th scope="col" width="271">Error name</th>
+        <th scope="col" width="271">Fault code</th>
 
         <th scope="col" width="58">HTTP status</th>
 
@@ -41,7 +28,7 @@
 
     <tbody>
       <tr>
-        <td><code>CompanyStatusNotActive</code></td>
+        <td><code>keymanagement.service.CompanyStatusNotActive</code></td>
 
         <td>401</td>
 
@@ -54,12 +41,12 @@
       </tr>
 
       <tr>
-        <td><code>DeveloperStatusNotActive</code></td>
+        <td><code>keymanagement.service.DeveloperStatusNotActive</code></td>
 
         <td>401</td>
 
         <td>
-          <p>The developer who created the the Developer App that has the API key you are using has
+          <p>The developer who created the Developer App that has the API key you are using has
           an inactive status. When an App Developer's status is set to inactive, any Developer Apps
           created by that developer are deactivated. An admin user with appropriate permissions
           (such as Organization Administrator) can change a developer's status in the following
@@ -77,9 +64,19 @@
           </ul>
         </td>
       </tr>
-
       <tr>
-        <td><code>FailedToResolveAPIKey</code></td>
+        <td><code>keymanagement.service.invalid_client-app_not_approved</code></td>
+
+        <td>401</td>
+
+        <td>The Developer App associated with the API key is revoked.  A revoked app cannot
+        access any API products and cannot invoke any API managed by Apigee Edge. An org admin can
+        change the status of a Developer App using the management API. See <a href=
+        "/management/apis/post/organizations/{org_name}/developers/{developer_email_or_id}/apps/{app_name}">
+        Approve or Revoke Developer App</a>.</td>
+      </tr>
+      <tr>
+        <td><code>oauth.v2.FailedToResolveAPIKey</code></td>
 
         <td>401</td>
 
@@ -90,7 +87,7 @@
       </tr>
 
       <tr>
-        <td><code>InvalidApiKey</code></td>
+        <td><code>oauth.v2.InvalidApiKey</code></td>
 
         <td>401</td>
 
@@ -103,24 +100,12 @@
       </tr>
 
       <tr>
-        <td><code>InvalidApiKeyForGivenResource</code></td>
+        <td><code>oauth.v2.InvalidApiKeyForGivenResource</code></td>
 
         <td>401</td>
 
         <td>An API key was received by Edge, and it is valid; however, it does not match an
         approved key in the Developer App associated with your API proxy through a Product.</td>
-      </tr>
-
-      <tr>
-        <td><code>invalid_client-app_not_approved</code></td>
-
-        <td>401</td>
-
-        <td>The Developer App associated with the API key is revoked.  A revoked app cannot
-        access any API products and cannot invoke any API managed by Apigee Edge. An org admin can
-        change the status of a Developer App using the management API. See <a href=
-        "/management/apis/post/organizations/{org_name}/developers/{developer_email_or_id}/apps/{app_name}">
-        Approve or Revoke Developer App</a>.</td>
       </tr>
     </tbody>
   </table>
@@ -164,12 +149,12 @@
   "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html">What you need to know
   about policy errors</a>.</p>
 
-  <table>
+
+
+        <table>
     <tbody>
       <tr>
-        <th width="324">Variables set <code><span style="font-size: 10pt">(<a href=
-        "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html">Learn
-        more</a>)</span></code></th>
+        <th width="324">Variables</th>
 
         <th width="428">Where</th>
 
@@ -177,24 +162,18 @@
       </tr>
 
       <tr>
-        <td width="324"><code>[prefix].[policy_name].failed</code></td>
+        <td><code>fault.name="<var>fault_name</var>"</code></td>
 
-        <td width="428">
-          <p>The fault variable <code>[prefix]</code> is
-          <code><strong>oauthV2</strong>.</code></p>The <code>[policy_name]</code> is the name of
-          the policy that threw the error.
-        </td>
-
-        <td width="428"><code>oauthV2.VK-VerifyAPIKey.failed = true</code></td>
-      </tr>
-
-      <tr>
-        <td><code>fault.[error_name]</code></td>
-
-        <td><code>[error_name]</code> = The specific error name to check for as listed in the table
-        above.</td>
+        <td><var>fault_name</var> is the name of the fault, as listed in the <a href="#runtime-errors">Runtime errors</a> table above. The fault name is the last part of the fault code.</td>
 
         <td><code>fault.name Matches "FailedToResolveAPIKey"</code></td>
+      </tr>
+      <tr>
+        <td width="324"><code>oauthV2.<var>policy_name</var>.failed</code></td>
+
+        <td width="428"><var>policy_name</var> is the user-specified name of the policy that threw the fault.</td>
+
+        <td width="428"><code>oauthV2.VK-VerifyAPIKey.failed = true</code></td>
       </tr>
     </tbody>
   </table>

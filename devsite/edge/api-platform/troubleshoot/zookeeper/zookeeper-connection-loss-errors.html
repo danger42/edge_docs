@@ -1,0 +1,464 @@
+{% extends "_base.html" %}
+{% block title %}Zookeeper Connection Loss Errors{% endblock %}
+{% block body %}
+
+<aside class="note">Was this troubleshooting playbook helpful? Please let us know
+  by clicking <a href="" class="google-feedback"
+   data-p="1636213" data-b="docsite" data-context="troubleshooting-feedback">
+  Send Feedback
+</a>.</aside>
+
+  <h2 id="description">Symptom</h2>
+
+  <p>The ZooKeeper connectivity issues can manifest as different symptoms such as:</p>
+
+  <ol>
+    <li>API proxy deployment errors</li>
+
+    <li>Management API calls fail with 5XX errors</li>
+
+    <li>Routers or Message Processors fail to start</li>
+
+    <li>Analytics components report ZooKeeper connection loss in system.logs</li>
+  </ol>
+
+  <h2 id="diagnosis">Error messages</h2>
+
+  <p>The following provides examples of error messages that may be observed when there is
+  connection loss to ZooKeeper node(s).</p>
+
+  <ol>
+    <li>The following error is returned in Management Server logs when an API Proxy deployment
+    fails due to ZooKeeper Connection loss:
+      <pre class="prettyprint">
+org: env: main INFO ZOOKEEPER - ZooKeeperServiceImpl.exists() :
+Retry path existence path:
+  /regions/dc-1/pods/analytics/servers/692afe93-8010-45c6-b37d-e4e05b6b2eb5/reachable,
+  reason: KeeperErrorCode = ConnectionLoss
+org: env: main ERROR ZOOKEEPER - ZooKeeperServiceImpl.exists() :
+  Could not detect existence of path:
+  /regions/dc-1/pods/analytics/servers/692afe93-8010-45c6-b37d-e4e05b6b2eb5/reachable ,
+  reason: KeeperErrorCode = ConnectionLoss
+org: env: main ERROR KERNEL.DEPLOYMENT - ServiceDeployer.startService() :
+  ServiceDeployer.deploy() : Got a life cycle exception while starting service
+  [ServerRegistrationService, Error while checking path existence for path :
+  /regions/dc-1/pods/analytics/servers/692afe93-8010-45c6-b37d-e4e05b6b2eb5/reachable] :
+  com.apigee.zookeeper.ZooKeeperException{ code = zookeeper.ErrorCheckingPathExis tence,
+  message = Error while checking path existence for path :
+  /regions/dc-1/pods/analytics/servers/692afe93-8010-45c6-b37d-e4e05b6b2eb5/reachable,
+  associated contexts = []} 2015-03-25 10:22:39,811
+org: env: main ERROR KERNEL - MicroKernel.deployAll() : MicroKernel.deployAll() :
+Error in deploying the deployment : EventService com.apigee.zookeeper.ZooKeeperException:
+Error while checking path existence for path :
+  /regions/dc-1/pods/analytics/servers/692afe93-8010-45c6-b37d-e4e05b6b2eb5/reachable
+  at com.apigee.zookeeper.impl.ZooKeeperServiceImpl.exists(ZooKeeperServiceImpl.java:339)
+  ~[zookeeper-1.0.0.jar:na] at com.apigee.zookeeper.impl.ZooKeeperServiceImpl.exists(
+  ZooKeeperServiceImpl.java:323) ~[zookeeper-1.0.0.jar:na] at ... <em>snipped</em>
+</pre>
+    </li>
+
+    <li>During startup, the Routers and Message Processors connect to ZooKeeper. If there are
+    connectivity issues with ZooKeeper, then these components will fail to start with the following
+    error:
+      <pre class="prettyprint">
+2017-08-01 23:20:00,404  CuratorFramework-0 ERROR o.a.c.f.i.CuratorFrameworkImpl
+  - CuratorFrameworkImpl.logError() : Background operation retry gave up
+org.apache.zookeeper.KeeperException$ConnectionLossException: KeeperErrorCode = ConnectionLoss
+  at org.apache.zookeeper.KeeperException.create(KeeperException.java:99) ~[zookeeper-3.4.6.jar:3.4.6-1569965]
+  at org.apache.curator.framework.imps.CuratorFrameworkImpl.checkBackgroundRetry(CuratorFrameworkImpl.java:710) [curator-framework-2.5.0.jar:na]
+  at org.apache.curator.framework.imps.CuratorFrameworkImpl.performBackgroundOperation(CuratorFrameworkImpl.java:827) [curator-framework-2.5.0.jar:na]
+  at org.apache.curator.framework.imps.CuratorFrameworkImpl.backgroundOperationsLoop(CuratorFrameworkImpl.java:793) [curator-framework-2.5.0.jar:na]
+  at org.apache.curator.framework.imps.CuratorFrameworkImpl.access$400(CuratorFrameworkImpl.java:57) [curator-framework-2.5.0.jar:na]
+  at org.apache.curator.framework.imps.CuratorFrameworkImpl$4.call(CuratorFrameworkImpl.java:275) [curator-framework-2.5.0.jar:na]
+  at java.util.concurrent.FutureTask.run(FutureTask.java:266) [na:1.8.0_131]
+  at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1142) [na:1.8.0_131]
+  at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:617) [na:1.8.0_131]
+  at java.lang.Thread.run(Thread.java:748) [na:1.8.0_131]
+</pre>
+    </li>
+
+    <li>The Edge UI may display the following error indicating it was unable to check the
+    deployment status of the API Proxies:
+      <pre class="prettyprint">
+Error Fetching Deployments
+Error while checking path existence for path: <var>path</var>
+</pre>
+    </li>
+  </ol>
+
+  <h2 id="resolution">Possible causes</h2>
+
+  <p>The following table lists possible causes of this issue:</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <th>Cause</th>
+
+        <th>For</th>
+      </tr>
+
+      <tr>
+        <td><a href="#network">Network connectivity issue across different data centers</a></td>
+
+        <td>Edge Private Cloud users</td>
+      </tr>
+
+      <tr>
+        <td><a href="#node">ZooKeeper node not serving requests</a></td>
+
+        <td>Edge Private Cloud users</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>Click a link in the table to see possible resolutions to that cause.</p>
+  <!-- Specific Cause/Resolution -->
+
+  <h2 id="network">Network connectivity issue across different data centers</h2>
+
+  <h3 id="network-diagnosis">Diagnosis</h3>
+
+  <p>A ZooKeeper cluster may have nodes that span across multiple regions/data centers, such as
+  DC-1 and DC-2. The typical Apigee Edge 2 DC topology will have:</p>
+
+  <ul>
+    <li>ZooKeeper servers 1, 2, and 3 as voters in DC-1</li>
+
+    <li>ZooKeeper 4 and 5 as voters and ZooKeeper 6 as an observer in DC-2.</li>
+  </ul>
+
+  <p>If DC-1 region goes down or network connectivity between DC-1 and DC-2 is broken, then
+  ZooKeeper nodes cannot elect a new leader in DC-2 and they fail to communicate with the leader
+  node. ZooKeeper observers cannot elect a new leader and the two remaining voters in DC-2 do not
+  have a quorum of at least 3 voter nodes to elect a new leader. Thus, the ZooKeepers in DC-2 will
+  not be able to process any requests. The remaining ZooKeeper nodes in DC-2 will continue to loop
+  retrying to connect back to the ZooKeeper voters to find the leader.</p>
+
+  <h3 id="network-resolution">Resolution</h3>
+
+  <p>Apply the following solutions to address this issue in the specified order.</p>
+
+  <p>If you are unable to resolve the problem after trying these solutions, please
+  contact <a href="https://support.apigee.com">Apigee Support</a>.</p>
+
+  <h4>Solution #1</h4>
+
+  <ol>
+    <li>Work with your network administrators to repair the network connectivity issue between the
+    data centers.</li>
+
+    <li>When the ZooKeeper ensemble are able to communicate across the data centers and elect a
+    ZooKeeper leader, the nodes should become healthy and be able to process requests.</li>
+  </ol>
+
+  <h4>Solution #2</h4>
+
+  <ol>
+    <li>If the network connectivity will take time to repair, a workaround is to reconfigure
+    ZooKeeper nodes in the region where they are down. For example, reconfigure the ZooKeeper
+    cluster in DC-2 so that the 3 ZooKeeper nodes in this region are all voters and remove the
+    <code>server.#</code> in the <code>zoo.cfg</code> of the ZooKeepers from DC-1 region.
+
+      <ol>
+        <li>In the following example, <code>zoo.cfg</code> configures nodes for 2 regions where DC-1 uses <code>us-ea</code>
+        hostnames denoting US-East region and DC-2 uses <code>us-wo</code> hostnames denoting US-West region.
+        (NOTE: Only relevant configs are displayed):
+          <pre class="prettyprint">
+server.1=zk01ea.us-ea.4.apigee.com:2888:3888
+server.2=zk02ea.us-ea.4.apigee.com:2888:3888
+server.3=zk03ea.us-ea.4.apigee.com:2888:3888
+server.4=zk04wo.us-wo.4.apigee.com:2888:3888
+server.5=zk05wo.us-wo.4.apigee.com:2888:3888
+server.6=zk06wo.us-wo.4.apigee.com:2888:3888:observer
+</pre>
+
+          <p>In the above example, reconfigure the <code>zoo.cfg</code> as follows:</p>
+          <pre class="prettyprint">
+server.1=zk04wo.us-wo.4.apigee.com:2888:3888
+server.2=zk05wo.us-wo.4.apigee.com:2888:3888
+server.3=zk06wo.us-wo.4.apigee.com:2888:3888
+</pre>
+        </li>
+
+        <li>Using <a href="/private-cloud/latest/how-configure-edge">code with config</a>,
+        create a file <code>/opt/apigee/customer/application/zookeeper.properties</code> with the following:
+          <pre class="prettyprint">
+conf_zoo_quorum=server.1=zk04wo.us-wo.4.apigee.com:2888:3888\
+\nserver.2=zk05wo.us-wo.4.apigee.com:2888:3888\
+\nserver.3=zk06wo.us-wo.4.apigee.com:2888:3888\
+</pre>
+        </li>
+      </ol>
+
+      <p>In the above, the nodes from US-East are removed, and the US-West nodes get promoted to
+      voters when the <code>:observer</code> annotation is removed.</p>
+    </li>
+
+    <li>Back up <code>/opt/apigee/apigee-zookeeper/conf/zoo.cfg</code> and old
+    <code>/opt/apigee/customer/application/zookeeper.properties</code>.
+
+      <p>These files will be used to restore the defaults when the network connectivity is back up
+      between data centers.</p>
+    </li>
+
+    <li><p>Disable the observer notation for the observer node. To do this,
+      add the following configuration to the top of <code>/opt/apigee/customer/application/zookeeper.properties</code>:</p>
+      <pre>conf_zoo_peertype=</pre>
+    </li>
+
+    <li> <p>Edit the <code>/opt/apigee/data/apigee-zookeeper/data/myid</code> file as follows:</p>
+      <ul>
+        <li>For <code>server.1</code>, change the entry inside <code>myid</code> from <b>4</b> to <b>1</b>.</li>
+        <li>For <code>server.2</code>, change the <code>myid</code> from <b>5</b> to <b>2</b>.</li>
+        <li>For <code>server.3</code> change the <code>myid</code> from <b>6</b> to <b>3</b>.</li>
+      </ul>
+    </li>
+
+    <li>Restart the ZooKeeper nodes in the region where you reconfigured the ZooKeeper
+    cluster.</li>
+
+    <li>Repeat the above configuration from step #1b through step# 5 on all ZooKeeper nodes in
+    DC-2.</li>
+
+    <li>Validate the nodes are up with a leader:
+      <pre class="prettyprint">
+$ echo srvr | nc zk04wo.us-wo.4.apigee.com 2181
+&gt; echo srvr | nc zk05wo.us-wo.4.apigee.com 2181
+&gt; echo srvr | nc zk06wo.us-wo.4.apigee.com 2181
+</pre>
+
+      <p>The output of this command will contain a line that says "mode" followed by "leader" if it
+      is the leader, or "follower" if it is a follower.</p>
+
+      <p>When the network between data centers is reestablished, the ZooKeeper configurations
+      changes can be reverted on the ZooKeeper nodes in DC-2.</p>
+
+      <aside class="note"> NOTE: After network connectivity is reestablished and the ZooKeeper cluster
+        needs to be reverted back to the default with both data centers reconnected, revert the changes
+        that you made to the files <code>/opt/apigee/customer/application/zookeeper.properties</code> and
+        <code>/opt/apigee/data/apigee-zookeeper/data/myid</code> files and restart ZooKeeper.</aside>
+    </li>
+  </ol>
+
+  <h4>Solution #3</h4>
+
+  <ol>
+    <li>If ZooKeeper node(s) in the cluster is not started, then restart it.</li>
+
+    <li>Check ZooKeeper logs to determine why the ZooKeeper node went down.
+
+      <p>ZooKeeper logs are available in the following directory:</p>
+      <pre class="prettyprint">
+$ cd /opt/apigee/var/log/apigee-zookeeper
+$ ls -l
+total 188
+-rw-r--r--. 1 apigee apigee   2715 Jul 22 19:51 apigee-zookeeper.log
+-rw-r--r--. 1 apigee apigee  10434 Jul 17 19:51 config.log
+-rw-r--r--. 1 apigee apigee 169640 Aug  1 19:51 zookeeper.log
+</pre>
+    </li>
+
+    <li>Contact <a href="https://support.apigee.com">Apigee Support</a> and provide the
+    ZooKeeper logs to troubleshoot the cause of any ZooKeeper node that may have been stopped.</li>
+  </ol><!-- Specific Cause/Resolution -->
+
+  <h2 id="node">ZooKeeper node not serving requests</h2>
+
+  <p>A ZooKeeper node in the ensemble may become unhealthy and be unable to respond to client
+  requests. This could be because:</p>
+
+  <ol>
+    <li>The node was stopped without being restarted.</li>
+
+    <li>The node was rebooted without auto-start enabled.</li>
+
+    <li>System load on the node caused it to go down or become unhealthy.</li>
+  </ol>
+
+  <h3 id="node-diagnosis">Diagnosis</h3>
+
+  <ol>
+    <li>Execute the following ZooKeeper health check commands on each of the ZooKeeper nodes and
+    check the output:
+
+      <ol>
+        <li>
+          <pre class="prettyprint">
+$ echo "ruok" | nc localhost 2181
+</pre>
+
+          <aside class="note"><b>Note:</b> <strong>NOTE:</strong> Response &#8220;imok&#8221; is a
+          successful response.</aside>
+
+          <p>Example output:</p>
+          <pre class="prettyprint">
+$ echo "ruok" | nc localhost 2181
+imok
+</pre>
+        </li>
+
+        <li>
+          <pre class="prettyprint">
+echo srvr | nc localhost 2181
+</pre>
+
+          <p>Check the mode to determine if the ZooKeeper node is a leader or follower.</p>
+
+          <p>Example output for an all in one, single ZooKeeper node:</p>
+          <pre class="prettyprint">
+$ echo srvr | nc localhost 2181
+ZooKeeper version: 3.4.5-1392090, built on 09/30/2012 17:52 GMT
+Latency min/avg/max: 0/0/88
+Received: 4206601
+Sent: 4206624
+Connections: 8
+Outstanding: 0
+Zxid: 0x745
+Mode: standalone
+Node count: 282
+</pre>
+        </li>
+
+        <li>
+          <pre class="prettyprint">
+$ echo mntr | nc localhost 2181
+</pre>
+
+          <p>This command lists the ZooKeeper variables which can be used to check the health of
+          the ZooKeeper cluster.</p>
+
+          <p>Example output:</p>
+          <pre class="prettyprint">
+$ echo mntr | nc localhost 2181
+zk_version 3.4.5-1392090, built on 09/30/2012 17:52 GMT
+zk_avg_latency 0
+zk_max_latency 88
+zk_min_latency 0
+zk_packets_received     4206750
+zk_packets_sent 4206773
+zk_num_alive_connections 8
+zk_outstanding_requests 0
+zk_server_state standalone
+zk_znode_count 282
+zk_watch_count 194
+zk_ephemerals_count 1
+zk_approximate_data_size 22960
+zk_open_file_descriptor_count 34
+zk_max_file_descriptor_count 4096
+</pre>
+
+          <aside class="note"><b>Note:</b> <strong>NOTE:</strong> Contact <a href=
+          "https://support.apigee.com">Apigee Support</a> for assistance in interpreting the
+          output.</aside>
+        </li>
+
+        <li>
+          <pre class="prettyprint">
+$ echo stat | nc localhost 2181
+</pre>
+
+          <p>This command lists statistics about performance and connected clients.</p>
+
+          <p>Example output:</p>
+          <pre class="prettyprint">
+$ echo stat | nc localhost 2181
+ZooKeeper version: 3.4.5-1392090, built on 09/30/2012 17:52 GMT
+Clients:
+ /10.128.0.8:54152[1](queued=0,recved=753379,sent=753385)
+ /10.128.0.8:53944[1](queued=0,recved=980269,sent=980278)
+ /10.128.0.8:54388[1](queued=0,recved=457094,sent=457094)
+ /10.128.0.8:54622[1](queued=0,recved=972938,sent=972938)
+ /10.128.0.8:54192[1](queued=0,recved=150843,sent=150843)
+ /10.128.0.8:44564[1](queued=0,recved=267332,sent=267333)
+ /127.0.0.1:40820[0](queued=0,recved=1,sent=0)
+ /10.128.0.8:53960[1](queued=0,recved=150844,sent=150844)
+
+Latency min/avg/max: 0/0/88
+Received: 4206995
+Sent: 4207018
+Connections: 8
+Outstanding: 0
+Zxid: 0x745
+Mode: standalone
+Node count: 282
+</pre>
+
+          <aside class="note"><b>Note:</b> <strong>NOTE:</strong> Contact <a href=
+          "https://support.apigee.com">Apigee Support</a> for assistance in interpreting the
+          output.</aside>
+        </li>
+
+        <li>
+          <pre class="prettyprint">
+$ echo cons | nc localhost 2181
+</pre>
+
+          <p>This command gives extended details on ZooKeeper connections.</p>
+
+          <p>Example output:</p>
+          <pre class="prettyprint">
+$ echo cons | nc localhost 2181
+/127.0.0.1:40864[0](queued=0,recved=1,sent=0)
+/10.128.0.8:54152[1](queued=0,recved=753400,sent=753406,sid=0x15d521a96d40007,
+  lop=PING,est=1500321588647,to=40000,lcxid=0x972e9,lzxid=0x745,lresp=1502334173174,
+  llat=0,minlat=0,avglat=0,maxlat=26)
+/10.128.0.8:53944[1](queued=0,recved=980297,sent=980306,sid=0x15d521a96d40005,
+  lop=PING,est=1500321544896,to=40000,lcxid=0xce92a,lzxid=0x745,lresp=1502334176055,
+  llat=0,minlat=0,avglat=0,maxlat=23)
+/10.128.0.8:54388[1](queued=0,recved=457110,sent=457110,sid=0x15d521a96d4000a,
+  lop=PING,est=1500321673852,to=40000,lcxid=0x4dbe3,lzxid=0x745,lresp=1502334174245,
+  llat=0,minlat=0,avglat=0,maxlat=22)
+/10.128.0.8:54622[1](queued=0,recved=972967,sent=972967,sid=0x15d521a96d4000b,
+  lop=PING,est=1500321890175,to=40000,lcxid=0xccc9d,lzxid=0x745,lresp=1502334182417,
+  llat=0,minlat=0,avglat=0,maxlat=88)
+/10.128.0.8:54192[1](queued=0,recved=150848,sent=150848,sid=0x15d521a96d40008,
+  lop=PING,est=1500321591985,to=40000,lcxid=0x8,lzxid=0x745,lresp=1502334184475,
+  llat=3,minlat=0,avglat=0,maxlat=19)
+/10.128.0.8:44564[1](queued=0,recved=267354,sent=267355,sid=0x15d521a96d4000d,
+  lop=PING,est=1501606633426,to=40000,lcxid=0x356e2,lzxid=0x745,lresp=1502334182315,
+  llat=0,minlat=0,avglat=0,maxlat=35)
+/10.128.0.8:53960[1](queued=0,recved=150848,sent=150848,sid=0x15d521a96d40006,
+  lop=PING,est=1500321547138,to=40000,lcxid=0x5,lzxid=0x745,lresp=1502334177036,
+  llat=1,minlat=0,avglat=0,maxlat=20)
+</pre>
+
+          <aside class="note"><b>Note:</b> <strong>NOTE:</strong> Contact <a href=
+          "https://support.apigee.com">Apigee Support</a> for assistance in interpreting the
+          output.</aside>
+
+          <p>If any of the last 3 health check commands show the following message:</p>
+          <pre class="prettyprint">
+$ echo stat | nc localhost 2181
+    This ZooKeeper instance is not currently serving requests
+</pre>
+
+          <p>Then it indicates that specific ZooKeeper node(s) is not serving requests.</p>
+        </li>
+      </ol>
+    </li>
+
+    <li>Check the ZooKeeper logs on the specific node and try to locate any errors causing the
+    ZooKeeper to be down. ZooKeeper logs are available in the following directory:
+      <pre class="prettyprint">
+$ cd /opt/apigee/var/log/apigee-zookeeper
+$ ls -l
+total 188
+-rw-r--r--. 1 apigee apigee   2715 Jul 22 19:51 apigee-zookeeper.log
+-rw-r--r--. 1 apigee apigee  10434 Jul 17 19:51 config.log
+-rw-r--r--. 1 apigee apigee 169640 Aug  1 19:51 zookeeper.log
+</pre>
+    </li>
+  </ol>
+
+  <h3 id="node-resolution">Resolution</h3>
+
+  <ol>
+    <li>Restart all other ZooKeeper nodes in the cluster one by one.</li>
+
+    <li>Re-run the ZooKeeper health check commands on each node and see if you get the expected
+    output.</li>
+  </ol>
+
+  <p>Contact <a href="https://support.apigee.com">Apigee Support</a> to troubleshoot the cause of
+  system load if it persists or if restarts does not resolve the problem.</p>{% endblock %}

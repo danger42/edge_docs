@@ -1,9 +1,9 @@
-{% extends "private-cloud/v4.18.05/_base.html" %}
+{% extends "private-cloud/v4.19.01/_base.html" %}
 {% block title %}Portal overview{% endblock %}
 {% block body %}
 
   <p>{{portal_1st_use}} is a template portal for content and community management. It is based on
-  the <a href="www.drupal.org" class="external">open source Drupal project</a>. The default portal
+  the <a href="https://www.drupal.org" class="external">open source Drupal project</a>. The default portal
   setup provides the following services:</p>
     <ul>
       <li><strong>Content management:</strong> Use the portal to create and manage:
@@ -35,36 +35,55 @@
 
   <h2 id="supportednetworktopologies">Supported network topologies</h2>
 
-   <p>Do not install the portal on the same servers as Apigee Edge.</p>
+  {{portal_note}}
 
-  <p>The portal components can be installed in different network configurations, or topologies,
-  including:</p>
+  <p>The portal components can be installed in the following configurations, or topologies:</p>
 
   <ul>
-    <li><strong>Single machine:</strong> All portal components installed on a single machine.</li>
-    <li><strong>Small:</strong> The Drupal database is installed on a separate machine from the
-      other components.</li>
+    <li><strong>1 node:</strong> All portal components (Drupal, Nginx, PHP, Soir) installed
+      on a single machine with Postgres.</li>
+    <li><strong>2 nodes:</strong> All portal components on one machine; Postgres on the second
+      machine</li>
   </ul>
 
-  <aside class="note"><strong>Note:</strong> These topologies are the only topologies supported by
-  Apigee. If you use a different network topology, Apigee might not be able to support it. Contact
-  your account manager or {{support}} if you require a custom solution.</aside>
+  <p>The following images show the supported topologies:</p>
 
-  <p>The following figure shows the single-machine topology where all portal components are
-  installed on a single machine:</p>
+  <div class="ds-selector-tabs">
+    <section>
+      <h3>1 Node</h3>
+      <p>Figure 1 shows a 1-node portal topology in which all portal components are on
+      a single machine:</p>
+      <figure>
+        <img src="/private-cloud/images/portal/portal-topology-1-node.png" width="65%"/>
+        <figcaption><strong>Figure 1</strong>: 1-Node Portal Topology</figcaption>
+      </figure>
+    </section>
+    <section>
+      <h3>2 Nodes</h3>
+      <p>Figure 2 shows a 2-node portal topology in which Postgres is on a separate machine from the
+      rest of the portal components:</p>
+      <figure>
+        <img src="/private-cloud/images/portal/portal-topology-2-nodes.png" width="65%"/>
+        <figcaption><strong>Figure 2</strong>: 2-Node Portal Topology</figcaption>
+      </figure>
+    </section>
+  </div>
 
-  <p><img alt="" src="/private-cloud/images/portal-topography-aio.png"></p>
-
-  <aside class="note"><strong>Note:</strong>
+  <p>Note that:</p>
     <ul>
-      <li>On a new install of {{cur_version}}, the installation script installs Postgres and Nginx.</li>
-      <li>On an update to {{cur_version}} from an install that uses Postgres and Nginx, the installation
-        script updates Postgres and Nginx.</li>
+      <li>These topologies are the only topologies supported by Apigee. If you use a different
+        network topology, Apigee might not be able to support it. Contact your account manager or
+        {{support}} if you require a custom solution.</li>
+      <li>On a new install of {{cur_version}}, the installation script installs Postgres and
+        Nginx.</li>
+      <li>On an update to {{cur_version}} from an install that uses Postgres and Nginx, the
+        installation script updates Postgres and Nginx.</li>
       <li>On an update to {{cur_version}} from an install that uses MySQL/MariaDB/Apache, you
         <strong>must</strong> first convert your installation to Postgres/Nginx before you
-        can update to {{cur_version}}.</li>
+        can update to {{cur_version}}. For more information, see
+        <a href="convert-tar-based-portal-rpm-based-portal">Convert a
+        tar-based portal to an RPM-based portal</a>.</li>
     </ul>
-  </aside>
 
   <p>In this figure, the Public core contains the components that are publicly accessible. The
   Private core contains components that are not publicly accessible.</p>
@@ -91,26 +110,15 @@
       </tr>
       <tr>
         <td>Nginx 1.10.1</td>
-        <td>The Nginx web server used for installations of 4.18.05. </td>
+        <td>The Nginx web server used for installations of {{cur_version}}.</td>
         <td>Apigee</td>
-      </tr>
-      <tr>
-        <td>
-          <p>Apache&nbsp;Server&nbsp;Version&nbsp;2.2</p>
-        </td>
-        <td>
-          <p>The Apache web server used in previous versions of the portal.</p>
-        </td>
-        <td>
-          <p>Apigee</p>
-        </td>
       </tr>
       <tr>
         <td>
           <p>Postgres 9.6</p>
         </td>
         <td>
-          <p>The database used by Drupal for new installations of 4.18.05.</p>
+          <p>The database used by Drupal for new installations of {{cur_version}}.</p>
         </td>
         <td>
           <p>Apigee, or connect to an existing installation.</p>
@@ -119,37 +127,7 @@
       </tr>
       <tr>
         <td>
-          <p>MySQL 5.0.15 or later</p>
-        </td>
-        <td>
-          <p>The database used in previous versions of the portal on RedHat 6.x
-          or CentOS 6.x. </p>
-        </td>
-        <td>
-          <p>Apigee, or connect to an existing installation. If MySQL is installed by the Apigee
-          installer, it installs the latest version available for your OS.</p>
-          <p>If you want to connect to a remote MySQL installation, it must be version 5.0.15 or
-          later.</p>
-        </td>
-      </tr>
-      <tr>
-        <td>
-          <p>MariaDB 5.1.38 or later</p>
-        </td>
-        <td>
-          <p>The database used in previous versions of the portal on RedHat 7.x
-          or CentOS 7.x.</p>
-        </td>
-        <td>
-          <p>Apigee, or connect to an existing installation. If MariaDB is installed by the Apigee
-          installer, it installs the latest version available for your OS.</p>
-          <p>If you want to connect to a remote MariaDB installation, it must be version 5.1.38 or
-          later.</p>
-        </td>
-      </tr>
-      <tr>
-        <td>
-          <p>Drupal shared storage</p>
+          <p>Drupal&nbsp;shared&nbsp;storage</p>
         </td>
         <td>
           <p>The shared storage area used by Drupal for uploaded files, static scripts, and other
@@ -196,11 +174,6 @@
       </tr>
     </tbody>
   </table>
-
-  <p>The following example shows the small topology where the MySQL server resides on a separate
-  machine:</p>
-
-  <p><img alt="" src="/private-cloud/images/portal-topography-2-machine.png"></p>
 
   <h2 id="accesstheapigeecommunityforyourquestions">Access the Apigee community for your
   questions</h2>

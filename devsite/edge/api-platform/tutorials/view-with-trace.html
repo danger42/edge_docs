@@ -1,0 +1,99 @@
+{% extends "_base.html" %}
+{% block title %}View message data with Trace{% endblock %}
+{% block body %}
+
+  <p><strong>What you'll learn</strong></p>
+
+  <p>Through this tutorial, you'll learn to:</p>
+
+  <ul>
+    <li>See the response message's headers and body content.</li>
+    <li>See error messages.</li>
+  </ul>
+
+  <p><strong>What you'll need</strong></p>
+
+  <ul>
+    <li>An evaluation account with a proxy. If you don't have one yet, you can sign up for an
+      account and create a proxy with the directions in <a href="/api-platform/get-started/get-started">Get started with Apigee Edge</a>.</li>
+    <li>At least one policy in your proxy (also part of the Get started tutorial).</li>
+    <li><a href="https://curl.haxx.se/" class="external">curl</a> installed on your machine to
+      make API calls from the command line.</li>
+  </ul>
+
+  <h2>View message data</h2>
+
+  <p>The API proxy Trace tool lets you view headers, variables, objects, and other details such
+  as response time in the API proxy request and response flow. The Trace tool also lets you see
+  how a request or response changes as it is processed by an API proxy.</p>
+
+  <p>In a previous tutorial, we mentioned that the <code>Content-Type</code> changed from
+  <code>application/xml</code> to <code>application/json</code> after the XML to JSON policy
+  was executed. In this step, we'll use the Trace tool to view this change, view the initial
+  response body (XML) and the modified body (JSON), and see other interesting details.</p>
+
+  <ol>
+    <li>On the <strong>Develop</strong> tab of the API proxy, edit the Spike Arrest policy's
+    <code><strong>&lt;Rate&gt;</strong></code> to be <strong>1pm</strong> again, then
+    <strong>Save</strong> the proxy. This will allow us to see both successful and failed (over
+    the limit) API calls.</li>
+    <li>In the API proxy editor, click the <strong>Trace</strong> tab.
+      <p><img src="/api-platform/images/trace_tab.png"></p>
+    </li>
+    <li>Click <strong>Start Trace Session</strong>.
+      <p><img src="/api-platform/images/trace_start_session.png"></p>
+    </li>
+    <li>
+      <p>Call the API proxy again using cURL (or with the URL in a web browser) until you see
+      at least one 200 response and one 500 response in the Transactions pane of Trace.</p>
+      <pre class="devsite-terminal">curl "http://{org-name}-test.apigee.net/hellopolicies"</pre>
+      <p><img src="/api-platform/images/trace_helloworld_policies_transactions-1.png"></p>
+    </li>
+    <li>Click <strong>Stop Trace Session</strong>.
+      <p><img src="/api-platform/images/trace_stop_session.png"></p>
+    </li>
+    <li>Click the <strong>200</strong> transaction in the left Transactions pane. Its Trace
+      detail is loaded in the main window under Transaction Map, which shows a request/response
+      diagram. The Spike Arrest icon is in the request flow, and the XML to JSON icon is in the
+      response flow.</li>
+    <li>In the flow diagram, click the <strong>circle icon</strong> in the response, the
+      furthest one to the right (shown in the following diagram).
+      <p>The <strong>Phase Details</strong> pane shows the data available at that point in the
+      flow. If you scroll through that pane, you'll see the HTTP response headers and body
+      content.</p>
+      <ul>
+        <li><strong>Content-Type</strong> is <code>application/xml</code>, the normal response
+          format from the target service.</li>
+        <li><strong>Body</strong> shows the response content in XML.</li>
+      </ul>
+      <p><img src="/api-platform/images/trace_helloworld_policies_response_1.png"></p>
+    </li>
+    <li>Click the <strong>XML to JSON</strong> icon in the response flow. In <strong>Phase
+      Details</strong>, scroll to see that:
+      <ul>
+        <li><strong>Content-Type</strong> has been changed to
+          <code>application/json</code> by the XML to JSON policy.</li>
+        <li><strong>Body</strong> is in JSON format.</li>
+      </ul>
+      <p><img src="/api-platform/images/trace_helloworld_policies_response_2.png"></p>
+    </li>
+    <li>Now look at an error in Trace.
+      <p>Click the <strong>500</strong> transaction in the Transactions pane. In the main editor
+      window, you see a flow diagram with items in the request only, including a Spike Arrest
+      icon with a red exclamation point indicating an error.</p>
+      <p>Click the small tube <strong>error icon</strong> to the right of the Spike Arrest icon, and
+      look at the spike arrest violation details in the <strong>Phase Details</strong> pane.</p>
+      <p><img alt="Spike arrest error" src="/api-platform/images/trace_helloworld_policies_request_error_0.png"></p>
+    </li>
+  </ol>
+
+  <p>You can click the <strong>Back</strong> and <strong>Next</strong> buttons in the flow
+  diagram to move between points in the flow and see the Trace details.</p>
+
+  <p>If you want to see the entire Trace as a single document, download it by clicking
+  <strong>Download Trace Session</strong>.</p>
+
+  <p>For more information, see <a href="/api-platform/debug/using-trace-tool-0">Using the Trace
+  tool</a>.</p>
+
+{% endblock %}

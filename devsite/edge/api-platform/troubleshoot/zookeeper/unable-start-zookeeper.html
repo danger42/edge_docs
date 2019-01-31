@@ -1,0 +1,267 @@
+  {% extends "_base.html" %} {% block title %}Unable to Start Zookeeper{% endblock %} {% block body %}
+
+<aside class="note">Was this troubleshooting playbook helpful? Please let us know
+  by clicking <a href="" class="google-feedback"
+   data-p="1636213" data-b="docsite" data-context="troubleshooting-feedback">
+  Send Feedback
+</a>.</aside>
+
+  <h2 id="description">Symptom</h2>
+
+  <p>Unable to start the ZooKeeper process.</p>
+
+  <h2 id="diagnosis">Error messages</h2>
+
+  <p>When you attempt to start the ZooKeeper process, the following error message is returned
+  indicating that ZooKeeper could not be started:</p>
+  <pre class="prettyprint">
++ apigee-service apigee-zookeeper status
+apigee-service: apigee-zookeeper: Not running (DEAD)
+apigee-all: Error: status failed on [apigee-zookeeper]
+</pre>
+
+  <h2 id="resolution">Possible causes</h2>
+
+  <p>The following table lists possible causes of this issue:</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <th>Cause</th>
+
+        <th>For</th>
+      </tr>
+
+      <tr>
+        <td><a href="#misconfigured">Misconfigured ZooKeeper myid</a></td>
+
+        <td>Edge Private Cloud users</td>
+      </tr>
+
+      <tr>
+        <td><a href="#port">ZooKeeper port in use</a></td>
+
+        <td>Edge Private Cloud users</td>
+      </tr>
+
+      <tr>
+        <td><a href="#incorrect">Incorrect process ID in apigee-zookeeper.pid file</a></td>
+
+        <td>Edge Private Cloud users</td>
+      </tr>
+
+      <tr>
+        <td><a href="#election">ZooKeeper Leader Election Failure</a></td>
+
+        <td>Edge Private Cloud users</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>Click a link in the table to see possible resolutions to that cause.</p>
+  <!-- Specific Cause/Resolution -->
+
+  <h2 id="misconfigured">Misconfigured ZooKeeper myid</h2>
+
+  <p>The following sections provide an overview of the myid file and describe how to diagnose and
+  resolve misconfiguration issues.</p>
+
+  <h3 id="misconfiguredzookeepermyid-overviewofthemyidfile">Overview of the myid file</h3>
+
+  <p>On each ZooKeeper node, there are two files:</p>
+
+  <ol>
+    <li>The <code>/opt/apigee/apigee-zookeeper/conf/zoo.cfg</code> file which contains a list of
+    IPs for all the ZooKeeper nodes in the cluster.
+
+      <p>For example, if the <code>/opt/apigee/apigee-zookeeper/conf/zoo.cfg</code> contains the
+      IPs of 3 ZooKeeper nodes part of the cluster as follows:</p>
+      <pre class="prettyprint">
+server.1=11.11.11.11:2888:3888
+server.2=22.22.22.22:2888:3888
+server.3=33.33.33.33:2888:3888
+</pre>
+    </li>
+
+    <li>The <code>/opt/apigee/data/apigee-zookeeper/data/myid</code> file contains a single line of
+    text which corresponds to the server number of that particular ZooKeeper node. The myid of
+    server 1 would contain the text "1" and nothing else. The id must be unique within the ensemble
+    and should have a value between 1 and 255.
+
+      <p>For example, on ZooKeeper server.1, the
+      <code>/opt/apigee/data/apigee-zookeeper/data/myid</code> file should just contain the text 1
+      as shown below:</p>
+      <pre class="prettyprint">
+$ cat myid
+1
+</pre>
+    </li>
+  </ol>
+
+  <h3 id="misconfigured-diagnosis">Diagnosis</h3>
+
+  <ol>
+    <li>Check the ZooKeeper log <code>/opt/apigee/var/log/apigee-zookeeper/zookeeper.log</code> for
+    errors.</li>
+
+    <li>If you see the WARN message similar to &#8220;Connection broken for id #, my id = #&#8221;,
+    as shown in the below figure, then the possible cause for this issue could be that the server #
+    in the myid file is misconfigured or corrupted.
+      <pre class="prettyprint">
+[myid:2] - WARN [RecvWorker:2:QuorumCnxManager$RecvWorker@762] -
+  Connection broken for id 2, my id = 2, error = java.io.EOFException
+    at java.io.DataInputStream.readInt(DataInputStream.java:375)
+    at org.apache.zookeeper.server.quorum.QuorumCnxManager$RecvWorker.
+      run(QuorumCnxManager.java:747)
+</pre>
+    </li>
+
+    <li>Check the <code>/opt/apigee/apigee-zookeeper/conf/zoo.cfg</code> file and note down the
+    server.# for the current ZooKeeper node.</li>
+
+    <li>Check the <code>/opt/apigee/data/apigee-zookeeper/data/myid</code> file and see if the text
+    in this file matches the server.# noted in step #2.</li>
+
+    <li>If there is a mismatch, then you have identified the cause for ZooKeeper failing to
+    start.</li>
+  </ol>
+
+  <h3 id="misconfigured-resolution">Resolution</h3>
+
+  <p>If myid file is incorrectly configured, then edit the myid file and replace the value to a
+  correct text representing the server.# parameter in the zoo.cfg.</p>
+  <!-- Specific Cause/Resolution -->
+
+  <h2 id="port">ZooKeeper port in use</h2>
+
+  <h3 id="port-diagnosis">Diagnosis</h3>
+
+  <ol>
+    <li>Check ZooKeeper log <code>/opt/apigee/var/log/apigee-zookeeper/zookeeper.log</code> for
+    errors.</li>
+
+    <li>If you notice the exception <code>java.net.BindException: Address already in use</code>
+    while binding to the port #2181, as shown in the figure below, it indicates that the ZooKeeper
+    port 2181 is being used by another process. Hence, the ZooKeeper could not be started.
+      <pre class="prettyprint">
+2017-04-26 07:00:10,420 [myid:3] - INFO  [main:NIOServerCnxnFactory@94] -
+  binding to port 0.0.0.0/0.0.0.0:2181
+2017-04-26 07:00:10,421 [myid:3] - ERROR [main:QuorumPeerMain@89] -
+  Unexpected exception, exiting abnormally
+  java.net.BindException: Address already in use
+    at sun.nio.ch.Net.bind0(Native Method)
+    at sun.nio.ch.Net.bind(Net.java:433)
+    at sun.nio.ch.Net.bind(Net.java:425)
+    at sun.nio.ch.ServerSocketChannelImpl.bind(ServerSocketChannelImpl.java:223)
+    at sun.nio.ch.ServerSocketAdaptor.bind(ServerSocketAdaptor.java:74)
+    at sun.nio.ch.ServerSocketAdaptor.bind(ServerSocketAdaptor.java:67)
+    at org.apache.zookeeper.server.NIOServerCnxnFactory.configure(NIOServerCnxnFactory.java:95)
+    at org.apache.zookeeper.server.quorum.QuorumPeerMain.runFromConfig(QuorumPeerMain.java:130)
+    at org.apache.zookeeper.server.quorum.QuorumPeerMain.initializeAndRun(QuorumPeerMain.java:111)
+    at org.apache.zookeeper.server.quorum.QuorumPeerMain.main(QuorumPeerMain.java:78)
+</pre>
+    </li>
+
+    <li>Use the below netstat command to confirm that the ZooKeeper port 2181 is indeed being used
+    by another process:
+      <pre class="prettyprint">
+netstat -an | grep 2181
+</pre>
+    </li>
+  </ol>
+
+  <h3 id="port-resolution">Resolution</h3>
+
+  <p>If the ZooKeeper port 2181 is still in use, then follow the below steps to address this
+  issue:</p>
+
+  <ol>
+    <li>Use the <code>netstat</code> command to find the process that is holding onto port 2181.
+    Kill the process that is using the ZooKeeper port 2181:
+      <pre class="prettyprint">
+$ netstat -antp | grep 2181
+tcp        0      0 0.0.0.0:2181            0.0.0.0:*
+LISTEN      28016/java &lt;defunct&gt;
+$ kill -9 28016
+</pre>
+    </li>
+
+    <li>Clean up pid and lock files if they exist:
+      <pre class="prettyprint">
+/opt/apigee/var/run/apigee-zookeeper/apigee-zookeeper.pid
+/opt/apigee/var/run/apigee-zookeeper/apigee-zookeeper.lock
+</pre>
+    </li>
+
+    <li>Restart the ZooKeeper:
+      <pre class="prettyprint">
+/opt/apigee/apigee-service/bin/apigee-service apigee-zookeeper restart
+</pre>
+    </li>
+  </ol><!-- Specific Cause/Resolution -->
+
+  <h2 id="incorrect">Incorrect process ID in apigee-zookeeper.pid file</h2>
+
+  <p>When you attempt to stop/restart the ZooKeeper, it may fail because the
+  <code>apigee-zookeeper.pid</code> file contains older/incorrect pid and not that of the currently
+  running ZooKeeper process. This may happen if the ZooKeeper process terminated unexpectedly or
+  abruptly for some reason and the <code>apigee-zookeeper.pid</code> file was not deleted.</p>
+
+  <h3 id="incorrect-diagnosis">Diagnosis</h3>
+
+  <ol>
+    <li>Get the process id of the currently running ZooKeeper process by running the
+    <code>ps</code> command:
+      <pre class="prettyprint">
+ps -ef | grep zookeeper
+</pre>
+    </li>
+
+    <li>Check if the <code>/opt/apigee/var/run/apigee-ZooKeeper/apigee-zookeeper.pid</code> file
+    exists. If it exists, then note down the process id written into this file.</li>
+
+    <li>Compare the process ids taken from step #1 and #2. If they are different, then the cause
+    for this issue is having the incorrect process id in the <code>apigee-zookeeper.pid
+    file.</code></li>
+  </ol>
+
+  <h3 id="incorrect-resolution">Resolution</h3>
+
+  <ol>
+    <li>Edit the apigee-zookeeper.pid file and replace the incorrect process id with the correct
+    process id obtained from ps command (step #1 above).</li>
+
+    <li>Restart the ZooKeeper:
+      <pre class="prettyprint">
+/opt/apigee/apigee-service/bin/apigee-service apigee-zookeeper restart
+</pre>
+    </li>
+  </ol><!-- Specific Cause/Resolution -->
+
+  <h2 id="election">ZooKeeper Leader Election Failure</h2>
+
+  <h3 id="election-diagnosis">Diagnosis</h3>
+
+  <p><strong>To diagnose:</strong></p>
+
+  <ol>
+    <li>Check the ZooKeeper log <code>/opt/apigee/var/log/apigee-zookeeper/zookeeper.log</code> for
+    errors.</li>
+
+    <li>Check if there were any configuration changes which may cause ZooKeeper election of the
+    leader to fail.</li>
+
+    <li>Check the <code>/opt/apigee/apigee-zookeeper/conf/zoo.cfg</code> and make sure all
+    ZooKeepers in the cluster have the proper number and IP addresses for the server.# parameter.
+    Also note that for the leader election to succeed there needs to be at least 3 voters minimum
+    and the number of voters should be odd numbered. If there are too little voters, like only 2
+    voters, it cannot come to a quorum to decide a leader among only 2 voters.</li>
+  </ol>
+
+  <h3 id="election-resolution">Resolution</h3>
+
+  <p>Typically, ZooKeeper election failure is caused by a misconfigured myid. Use the resolution in
+  <a href="#misconfigured">Misconfigured ZooKeeper myid</a> to address the election failure.</p>
+
+  <p>If the problem persists and further diagnosis is needed, contact <a href=
+  "https://support.apigee.com">Apigee Support</a>.</p>{% endblock %}

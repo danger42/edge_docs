@@ -1,5 +1,5 @@
 {% extends "_base.html" %}
-{% block title %}Access Control policy{% endblock %}
+{% block title %}AccessControl policy{% endblock %}
 {% block body %}
 
   <p><img src="/api-platform/images/icon_policy_security.jpg"></p>
@@ -227,36 +227,62 @@
   <h3 id="xforwardedfor">About the X-Forwarded-For HTTP header</h3>
 
   <p>The Access Control policy evaulates the IP addresses in
-  the <code>X-Forwarded-For</code> HTTP header. Edge automatically populates that header
-  with the IP address it received from the last external TCP handshake (such as the client IP or
-  router). If there are multiple IP addresses in the header, the trusted, auto-populated IP is the
-  last one listed. For example, if the <code>X-Forwarded-For</code> header in the request
+    the <code>X-Forwarded-For</code> HTTP header. <b>Edge for the Cloud</b> automatically populates that header
+  with the IP addresses it received from the last external TCP handshake (such as the client IP or
+  router). If there are multiple IP addresses in the header, the header contains a list of IP addresses
+    of the chain of servers that processed a request. </p>
+
+    <p>The leftmost IP address in the header belongs
+    to the client and the rightmost is the server which forwarded the request to the current service.
+    For example, the <code>X-Forwarded-For</code> header in the request
   to an API proxy (viewed in the Trace tool) contains the following:</p>
   <pre class="prettyprint">
-111.222.333.444,111.111.111.111,73.153.16.114
+192.0.2.0,192.0.2.128,192.0.2.244
 </pre>
 
-  <p>then the last value, <code>73.153.16.114</code>, is the trusted IP that's auto-populated by
-  Edge.</p><!-- See also MGMT-3347 about enableMultipleXForwardCheckForACL -->
+  <p>The <code>X-Forwarded-For</code> header has the potential for being spoofed by a blacklisted IP,
+  except for the last address in the header, which is the IP address Edge received from the last external TCP handshake.
+  </p>
 
-  <p>By default, Edge ignores any <code>X-Forwarded-For</code> IPs in the header except
-  the last address, which is the IP address Edge received from the last external TCP handshake.
-  This feature is for security reasons, so that blacklisted IPs can't spoof valid IPs by sending
-  valid IPs in the <code>X-Forwarded-For</code> header.</p>
+  <p>Edge Analytics writes the value of the <code>X-Forwarded-For</code> header to the
+    <code>x_forwarded_for_ip</code> dimension. To determine the client IP that made
+    the request to Edge, use the values in the <code>ax_true_client_ip</code> or <code>ax_resolved_client_ip</code>
+    dimenstions. See <a href="/api-platform/analytics/analytics-reference">Analytics metrics, dimensions, and filters reference</a>
+    for more.</p>
 
   <aside class="warning">
-    <b>Warning:</b> However, you can configure Edge to consider all IPs in
+    <p><b>Warning:</b> In <b>Edge for the Private Cloud version 4.18.05 and later</b>, Edge automatically populates the
+    <code>X-Forwarded-For</code> HTTP header with the single IP address it received from the <b>last</b>
+    external TCP handshake (such as the client IP or router). That means the <code>X-Forwarded-For</code>
+      contains only a single IP address. </p></aside>
+
+     <aside class="warning">
+     <p><b>Warning:</b> In <b>Edge for the Private Cloud version 4.18.01 and earlier</b>,
+       Edge automatically populates the <code>X-Forwarded-For</code> HTTP header with the <b>first</b> IP address
+       it received from the last external TCP handshake (such as the client IP or router).
+       If there are multiple IP addresses in the header, the trusted, auto-populated IP is the <b>first</b> one listed.
+     For example, if the <code>X-Forwarded-For</code> header in the request to an API proxy
+       (viewed in the Trace tool) contains the following:</p>
+
+       <code>111.222.333.444,111.111.111.111,73.153.16.114</code>
+
+       <p>then the first value, 111.222.333.444, is the trusted IP that's auto-populated by Edge.</p>
+
+      <p>By default, Edge ignores any X-Forwarded-For IPs in the header except the first address,
+      which is the IP address Edge received from the first external TCP handshake.
+      This feature is for security reasons, so that blacklisted IPs can't spoof valid IPs by
+        sending valid IPs in the X-Forwarded-For header.</p>
+
+     </aside>
+
+   <p>For any version of <b>Edge for the Private Cloud</b>, you can configure it to consider all IPs in
     the <code>X-Forwarded-For</code> header. You'd want to do this in an architecture
     where you trust the IP addresses in <code>X-Forwarded-For</code>. Configuring Edge to
     allow <code>X-Forwarded-For</code> IP addresses involves setting
     the <code>feature.enableMultipleXForwardCheckForACL</code> property in your
-    organization. To set the property in the cloud, contact <a href=
-    "https://community.apigee.com/content/apigee-customer-support">Apigee Support</a>. To enable it
-    on-premises in Edge for Private Cloud, see the API call below.
+    organization. </p>
 
-    <aside class="note">
-      <b>Private Cloud:</b> Apigee Edge for Private Cloud customers can set
-      the <code>feature.enableMultipleXForwardCheckForACL</code> property with the
+      <b>Private Cloud</b> customers set the <code>feature.enableMultipleXForwardCheckForACL</code> property with the
       following API call. If there are other properties set on your organization, be sure to
       include those as well. Otherwise, they'll be removed.
       <pre class="prettyprint">
@@ -270,7 +296,6 @@ curl -u email:password -X POST -H "Content-type:application/xml" http://host:808
     &lt;/Properties&gt;
 &lt;/Organization&gt;"
 </pre>
-    </aside>
   </aside>
 
   <h3 id="cidr">About IP masking with CIDR notation</h3>

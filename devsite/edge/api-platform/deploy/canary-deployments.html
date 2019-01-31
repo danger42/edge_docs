@@ -1,0 +1,926 @@
+{% extends "_base.html" %}
+{% block title %}Canary deployments{% endblock %}
+{% block body %}
+
+{% setvar primary_revision %}<span style="color:#0000ff;">primary</span>{% endsetvar %}
+{% setvar canary_revision %}<span style="color:#38761d;">canary</span>{% endsetvar %}
+
+<p>Edge supports canary deployments for your API proxy releases. A <em>canary deployment</em> is a
+full deployment of 2 different revisions of an API proxy, in which a random selection of requests go
+to one revision, and the remaining users go to the other revision.</p>
+
+<p>With canary deployments, you can:</p>
+
+<ol>
+  <li><strong>Test new features with a limited audience:</strong> Try out new ideas with live
+    traffic, without impacting all users.</li>
+  <li><strong>Roll back to previous revision:</strong> If you discover an issue in a new revision,
+    you can quickly roll it back so that all traffic returns to the current (or, <em>primary</em>)
+    revision.</li>
+  <li><strong>Compare performance:</strong> To help you decide when a revision is ready for all
+    users, you can compare error rates and average response times for the new and primary revisions
+    in the Edge UI.</li>
+</ol>
+
+<h2>Overview</h2>
+<p>In a canary deployment, there are two complete but different revisions of your API proxy:</p>
+
+<ul>
+  <li>(<strong><span style="color:#0000ff;">BLUE</span></strong>) <em>Primary revision:</em> The
+    current revision; this was deployed prior to the creation of the canary deployment.</li>
+  <li>(<strong><span style="color:#38761d;">GREEN</span></strong>) <em>Canary revision:</em> The new
+    revision that you want to test before rolling out to all users.</li>
+</ul>
+
+<p>You configure the percentage of requests that go to each revision, from 1 to 99%, in 1%
+increments. For example, you might have 90% of requests go to your current (or <em>primary</em>)
+revision, and just 10% to the new (or <em>canary</em>) revision that contains new features you want
+to test. This is known as your proxy's <em>traffic percentage</em> or <em>traffic mix</em>.</p>
+
+<h4>Multiple ways to create and manage</h4>
+
+<p>You can create a new canary deployment, change its configuration, and end a canary deployment
+using either the <a href="#management-api">Management API</a> or the <a href="#ui">Edge UI</a>.</p>
+
+<p>The following table summarizes common actions you can take when working with canary
+deployments:</p>
+
+<table class="blue">
+  <tr>
+   <th rowspan="2">Action</th>
+   <th rowspan="2">Description</th>
+   <th colspan="2" >Can be applied to...</th>
+  </tr>
+  <tr>
+    <th>Primary Revision</th>
+    <th>Canary Revision</th>
+  </tr>
+  <tr>
+   <td class="alt">Get list</td>
+   <td>Get a list of all revisions for an API proxy</td>
+   <td>{{yes}}</td>
+   <td>{{yes}}</td>
+  </tr>
+  <tr>
+   <td class="alt">Get&nbsp;revision</td>
+   <td>Get details about a revision, such as its traffic percentage</td>
+   <td>{{yes}}</td>
+   <td>{{yes}}</td>
+  </tr>
+  <tr>
+   <td class="alt">Deploy</td>
+   <td>Deploy a revision or create a new canary deployment</td>
+   <td>{{yes}}</td>
+   <td>{{yes}}</td>
+  </tr>
+  <tr>
+   <td class="alt">Undeploy/delete</td>
+   <td>Undeploy revisions in a canary deployment<sup>*</sup></td>
+   <td>{{no}}</td>
+   <td>{{yes}}</td>
+  </tr>
+  <tr>
+   <td class="alt">Update</td>
+   <td>Upload a new proxy configuration bundle for a revision that is part of a canary
+     deployment</td>
+   <td>{{no}}</td>
+   <td>{{yes}}</td>
+  </tr>
+  <tr>
+    <td colspan="4" class="alt"><sup>*</sup> You can undeploy only a <em>canary</em> revision with the
+      management API. You cannot undeploy the <em>primary</em> revision with the management
+      API.</td>
+  </tr>
+</table>
+
+<h4>Requirements</h4>
+
+<p>To create a new canary deployment, both the new and current (or <em>primary</em>) revisions must
+share the same:</p>
+
+<ul>
+  <li>Base path
+  <li>API proxy
+  <li>Organization</li>
+</ul>
+
+<p>In addition, you must deploy both revisions to the same environment.</p>
+
+<h4>API proxy requests</h4>
+
+<p>To your API proxy users, the endpoint that they use when accessing your API proxy is the same,
+regardless of whether you are testing a canary deployment. Proxy users cannot manually override a
+request and send it to a specific revision in the deployment: all requests are treated the same and
+are randomly sent to either the primary or canary revision in the deployment.</p>
+
+<h4>User impact/performance</h4>
+
+<p>Canary deployments have no impact on end-users: the deployment is completely transparent to
+them and the developers who use your API proxies.</p>
+
+<p>In addition, there is no impact on performance for canary deployments. Both proxy versions are
+loaded into memory and requests are routed to one or the other based on a random, stateless,
+per-request decision.</p>
+
+<h4>Traffic mix limits</h4>
+
+<p>The following table shows the minimum and maximum values that you can set for the traffic
+mix:</p>
+
+<table class="red">
+  <tr>
+   <th>Revision</th>
+   <th>Minimum Traffic %</th>
+   <th>Maximum Traffic %</th>
+   <th>Notes</th>
+  </tr>
+  <tr>
+   <td>Current/primary&nbsp;revision</td>
+   <td>1%</td>
+   <td>99%</td>
+   <td rowspan="2" >You cannot disable or end either the canary revision or the primary revision in
+     a canary deployment by changing the traffic mix to 0% or 100%. Instead, you must
+     <a href="#mapi-promote">promote the canary revision</a> or
+     <a href="#mapi-rollback">roll it back</a>.</td>
+  </tr>
+  <tr>
+   <td>New/canary&nbsp;revision</td>
+   <td>1%</td>
+   <td>99%</td>
+  </tr>
+</table>
+
+<h4>Conventions</h4>
+<p>The examples in this section use the following conventions:</p>
+
+<ul>
+  <li>Revision <strong>#1</strong> is the primary or currently deployed revision</li>
+  <li>Revision <strong>#2</strong> is the new or canary revision that is being partially rolled
+    out</li>
+  <li>"ahamilton-eval" is the organization name</li>
+  <li>"getstarted" is the API proxy name</li>
+</ul>
+
+<h2 id="mapi">Use the management API with canary deployments</h2>
+
+<p>You can use the management API to create, change, get status, and end canary
+deployments.</p>
+
+<h3>Quick start</h3>
+
+<p>The following table lists common operations you might perform with the management API when
+working with canary deployments:</p>
+
+<table class="green">
+  <tr>
+   <th>Description</th>
+   <th>HTTP Verb</th>
+   <th>Management API Endpoint</th>
+  </tr>
+  <tr>
+   <td colspan="3" class="alt">Get information about revisions and deployments</td>
+  </tr>
+  <tr>
+   <td><a href="#mapi-list">List all revisions</a></td>
+   <td><code>GET</code></td>
+   <td><code>{{mgmt_api_basepath}}/o/<var>org_name</var>/apis/<var>proxy_name</var></code></td>
+  </tr>
+  <tr>
+   <td><a href="#mapi-details">Get&nbsp;all&nbsp;deployed&nbsp;revisions'&nbsp;details</a></td>
+   <td><code>GET</code></td>
+   <td><code>{{mgmt_api_basepath}}/o/<var>org_name</var>/apis/<var>proxy_name</var>&nbsp;\
+&nbsp;&nbsp;/deployments</code></td>
+  </tr>
+  <tr>
+   <td><a href="#mapi-details">Get revision details</a></td>
+   <td><code>GET</code></td>
+   <td><code>{{mgmt_api_basepath}}/o/<var>org_name</var>/e/<var>env_name</var>/apis/<var>proxy_name</var>&nbsp;\
+&nbsp;&nbsp;/r/<var>revision_number</var>/deployments</code></td>
+  </tr>
+  <tr>
+   <td colspan="3" class="alt">Create/change canary deployments</td>
+  </tr>
+  <tr>
+   <td><a href="#mapi-create">Create new canary deployment</a></td>
+   <td><code>POST</code></td>
+   <td><code>{{mgmt_api_basepath}}/o/<var>org_name</var>/e/<var>env_name</var>/apis/<var>proxy_name</var>&nbsp;\
+&nbsp;&nbsp;/r/<var>revision_number</var>/deployments?trafficPct=<var>traffic_percentage</var></code></td>
+  </tr>
+  <tr>
+   <td><a href="#mapi-mix">Change canary deployment's traffic mix</a></td>
+   <td><code>POST</code></td>
+   <td><code>{{mgmt_api_basepath}}/o/<var>org_name</var>/e/<var>env_name</var>/apis/<var>proxy_name</var>&nbsp;\
+&nbsp;&nbsp;/r/<var>revision_number</var>/deployments?trafficPct=<var>traffic_percentage</var></code></td>
+  </tr>
+  <tr>
+   <td colspan="3" class="alt">End a canary deployment</td>
+  </tr>
+  <tr>
+   <td><a href="#mapi-end">Promote canary revision</a></td>
+   <td><code>POST</code></td>
+   <td><code>{{mgmt_api_basepath}}/o/<var>org_name</var>/e/<var>env_name</var>/apis/<var>proxy_name</var>&nbsp;\
+&nbsp;&nbsp;/r/<var>revision_number</var>/deployments?override=true</code>
+   </td>
+  </tr>
+  <tr>
+   <td><a href="#mapi-end">Roll back to primary revision</a></td>
+   <td><code>DELETE</code></td>
+   <td><code>{{mgmt_api_basepath}}/o/<var>org_name</var>/e/<var>env_name</var>/apis/<var>proxy_name</var>&nbsp;\
+&nbsp;&nbsp;/r/<var>revision_number</var>/deployments</code>
+   </td>
+  </tr>
+</table>
+
+<p>Where:</p>
+
+<ul>
+  <li><var>org_name</var> is the name of the API proxy's organization. For example,
+    "ahamilton-eval". Both revisions must be in the same organization.</li>
+  <li><var>env_name</var> is the name of the API proxy's environment; this value is
+    either "test" or "prod". Both revisions must be in the same environment.</li>
+  <li><var>proxy_name</var> is the name of the API proxy on which you are deploying. For
+    example, "getstarted". Both revisions must be in the same API proxy.</li>
+  <li><var>revision_number</var> is the number assigned to each revision in the Edge UI.
+    For example, "1" or "2". Higher numbers indicate later revisions.</li>
+  <li><var>traffic_percentage</var> is the percentage of traffic that you want to send to
+    the new revision in the canary deployment.</li>
+  <li><code>override</code> determines if your request should ignore conflicts between revisions.
+    You must set this to "true" when promoting a canary revision to be the new primary
+    revisiion.</li>
+</ul>
+
+<p>Note the following about the management API requests:</p>
+
+<ul>
+  <li>All <code>POST</code> requests must set the <code>Content-Type</code> header to
+    "application/x-www-form-urlencoded"</li>
+  <li>You can toggle the response format by setting the <code>Accept</code> header to
+    "application/xml" or "application/json".</li>
+</ul>
+
+<aside class="key-point"><strong>TIP</strong><br/>The "o", "e", and "r" in management API
+  calls is shorthand for "organizations", "environments", and "revisions", respectively.</aside>
+
+<p>For a complete list of endpoints for the management API, see {{apiref}}.</p>
+
+<h3 id="mapi-listall">List all revisions</h3>
+
+<p>When working with canary deployments, you might find it useful to get a list of all revisions in
+an API proxy. To do this, send a <code>GET</code> request to the following endpoint:</p>
+
+<pre>{{mgmt_api_basepath}}/o/<var>org_name</var>/apis/<var>proxy_name</var></pre>
+
+<p>For example:</p>
+
+<pre class="devsite-terminal">curl -u ahamilton@apigee.com
+  {{mgmt_api_basepath}}/o/ahamilton-eval/apis/getstarted</pre>
+
+<p>The management API's response contains an array that lists the revisions in the proxy:</p>
+
+<pre class="prettyprint">{
+  "metaData" : {
+    ...
+  },
+  "name" : "getstarted",
+  "revision" : [ "1", "2" ]
+}
+</pre>
+
+<h3 id="mapi-details">Get canary deployment details</h3>
+
+<p>To get details about the deployed revisions, including revisions that are part of canary
+deployments, submit a <code>GET</code> request to the following endpoint:</p>
+
+<pre>{{mgmt_api_basepath}}/o/<var>org_name</var>/apis/<var>proxy_name</var>/deployments</pre>
+
+<p>For example:</p>
+
+<pre class="devsite-terminal">curl -u ahamilton@apigee.com {{mgmt_api_basepath}}/o/ahamilton-eval \
+  /apis/getstarted/deployments</pre>
+
+<p>Edge returns a response in JSON format by default.</p>
+
+<p>The following example shows a sample response for a proxy with a canary deployment.</p>
+
+  <div class="ds-selector-tabs">
+    <section>
+      <h3>Results (JSON)</h3>
+      <p>The following example shows a sample response in JSON, the default format returned by the
+      management API:</p>
+      <pre class="prettyprint">{
+  "name" : "getstarted",
+  "organization" : "ahamilton-eval",
+  "environment" : [ {
+    "name" : "prod",
+    "revision" : [
+      // The primary revision
+      {
+        "configuration" : {
+          "basePath" : "/"
+        },
+        ... // pod details omitted
+        "name" : "1",
+        "state" : "deployed"
+      },
+      // The "canary" revision
+      {
+        "configuration" : {
+          "basePath" : "/",
+          "canaryPrimaryRevision" : 1,
+          "canary" : true,
+          "trafficPercent" : 22
+        },
+        ... // pod details omitted
+        "name" : "2",
+        "state" : "deployed"
+      }
+  } ]
+}</pre>
+    </section>
+    <section>
+      <h3>Results (XML)</h3>
+      <p>The following example shows a sample response in XML:</p>
+      <pre class="prettyprint">&lt;APIProxyDeployment name="canary-test">
+  &lt;Organization>apigee-func&lt;/Organization>
+  &lt;Environment name="prod">
+    &lt;Revision name="1">
+      &lt;Configuration>
+        &lt;BasePath>/&lt;/BasePath>
+      &lt;/Configuration>
+      ... // pod details omitted
+      &lt;State>deployed&lt;/State>
+    &lt;/Revision>
+    &lt;Revision name="2">
+      &lt;Configuration>
+        &lt;Canary>true&lt;/Canary>
+        &lt;BasePath>/&lt;/BasePath>
+        &lt;TrafficPercent>22&lt;/TrafficPercent>
+        &lt;CanaryPrimaryRevision>1&lt;/CanaryPrimaryRevision>
+      &lt;/Configuration>
+      ... // pod details omitted
+      &lt;State>deployed&lt;/State>
+    &lt;/Revision>
+  &lt;/Environment>
+&lt;/APIProxyDeployment></pre>
+      <p>To get the output as XML, set the <code>Accept</code> header to "application/xml" in your
+      request, as the following example shows:</p>
+      <pre class="devsite-terminal">curl -u ahamilton@apigee.com <strong>-H "Accept: application/xml"</strong>
+  {{mgmt_api_basepath}}/o/ahamilton-eval/apis/getstarted/deployments</pre>
+    </section>
+  </div>
+
+
+<aside class="key-point"><strong>TIP</strong><br/>You can limit the revisions in the response by
+  including one or both of the following in your request URI:
+  <ul>
+    <li>"/e/<var>env_name</var>" limits the response to only the specified environment</li>
+    <li>"/r/<var>revision_number</var>" limits the response to only the specified revision</li>
+  </ul>
+  <p>The following example gets information about revision 2 in the "prod" environment only:</p>
+
+  <pre class="devsite-terminal">curl -u ahamilton@apigee.com {{mgmt_api_basepath}}/o/ahamilton-eval \
+  /e/prod/apis/getstarted/r/2/deployments</pre>
+</aside>
+
+<p>The <code>configuration</code> object for each revision in the response contains details about
+the deployment, including whether it's a canary revision.</p>
+
+<p>The following table describes the canary deployment-related fields of the
+<code>configuration</code> object:</p>
+
+<table class="blue">
+  <tr>
+   <th>Field</th>
+   <th>Type</th>
+   <th>Description</th>
+  </tr>
+  <tr>
+   <td><code>basePath</code></td>
+   <td>String</td>
+   <td>A URI fragment that uniquely identifies the URI path used by Apigee Edge to route incoming
+     messages to the proper API proxy.</td>
+  </tr>
+  <tr>
+   <td><code>canary</code></td>
+   <td>Boolean</td>
+   <td>(Canary revisions only)
+    <p>true if the revision is part of a canary deployment. Otherwise, false.</p>
+    <p>If the <code>canary</code> field is not present, then the revision is not a canary revision;
+    it is either the primary revision, or is in a different environment than the canary
+    deployment.</p>
+   </td>
+  </tr>
+  <tr>
+   <td><code>canaryPrimaryRevision</code></td>
+   <td>String</td>
+   <td>(Canary revisions only)
+    <p>The revision number of the original, or primary, revision in the canary deployment.</p>
+   </td>
+  </tr>
+  <tr>
+   <td><code>trafficPercent</code></td>
+   <td>Integer</td>
+   <td>(Canary revisions only)
+    <p>A value from 1 to 99, representing the percentage of total requests that Edge sends to the
+    canary revision. The remaining traffic is sent to the primary revision.</p>
+    <p>If the <code>trafficPercent</code> field is not present in the response, then the
+    revision is not a canary revision; it is most likely the primary revision or it is a revision
+    in different environment.</p>
+   </td>
+  </tr>
+</table>
+
+<p>If you try to get information about a revision that does not exist, the management API returns
+an <code>ApplicationRevisionDoesNotExist</code> error.</p>
+
+<h3 id="mapi-create">Create a new canary deployment</h3>
+
+<p>Traditionally, when you deploy a new revision with the management API, you undeploy the previous
+revision and deploy the new revision. However, when you create a <em>canary</em> deployment:</p>
+
+<ol>
+  <li>You do <strong><em>not</em></strong> undeploy the previous revision.</li>
+  <li>When you deploy the new revision, you specify the percentage of traffic that you want Edge to
+    send to the new revision with the <code>trafficPct</code> query parameter.</li>
+</ol>
+
+<p>To create a canary deployment, submit a <code>POST</code> request to the following endpoint:</p>
+
+<pre>{{mgmt_api_basepath}}/o/<var>org_name</var>/e/<var>env_name</var>/apis/<var>proxy_name</var> \
+  /r/<var>revision_number</var>/deployments?trafficPct=<var>traffic_percent</var></pre>
+
+<p>Where:</p>
+<ul>
+  <li><var>revision_number</var> is the latest (canary) revision, not the current primary
+    revision.</li>
+  <li><var>traffic_percent</var> is an integer from 1 to 99. For example, to send one
+    third of the traffic to your new revision, set <code>trafficPct</code> to 33.</li>
+</ul>
+
+<p>Both the revision number and traffic percentage are required when you create a new canary
+deployment. If you do not specify the traffic percentage, but do specify <code>override=true</code>,
+Edge deploys the new revision at 100% and undeploys (deletes) the previous revision. For more
+information, see <a href="#mapi-end">End a canary deployment</a>.</p>
+
+<p>The following example deploys revision "2", and instructs Edge to send 20% of all requests to
+it:</p>
+
+<pre class="devsite-terminal">curl -X POST -H "Content-Type: application/x-www-form-urlencoded" -u ahamilton@apigee.com
+  {{mgmt_api_basepath}}/o/ahamilton-eval/e/prod/apis/getstarted \
+  /r/2/deployments?trafficPct=20</pre>
+
+<p>Note that your request to create a new canary deployment must:</p>
+
+<ul>
+  <li>Set the HTTP verb to <code>POST</code></li>
+  <li>Set the <code>Content-Type</code> header to "application/x-www-form-urlencoded"</li>
+</ul>
+
+<p>Edge deploys the canary revision, and does not undeploy the primary revision. Both revisions are
+deployed <em>at the same time</em> with the same base path.</p>
+
+<p>If your request to create a canary deployment was successful, Edge returns details about the
+newly deployed revision, including the <code>configuration</code> object described previously. For
+example:</p>
+
+<pre class="prettyprint">{
+  "name" : "getstarted",
+  "organization" : "ahamilton-eval",
+  "environment" : [ {
+    "name" : "prod",
+    "revision" : [
+      {
+        "configuration" : {
+          "basePath" : "/",
+          "canaryPrimaryRevision" : 1,
+          "canary" : true,
+          "trafficPercent" : 22
+        },
+        ... // pod details
+        "name" : "2",
+        "state" : "deployed"
+      }
+  } ]
+}</pre>
+
+<h3 id="mapi-mix">Change the traffic mix</h3>
+
+<p>You can increase or decrease the percentage of traffic that Edge sends to a canary revision. To
+do this with the management API, submit a <code>POST</code> request to the following endpoint:</p>
+
+<pre>{{mgmt_api_basepath}}/o/<var>org_name</var>/e/<var>env_name</var>/apis/<var>proxy_name</var> \
+  /r/<var>revision_number</var>/deployments?trafficPct=<var>traffic_percent</var></pre>
+
+<p>For example, if you set your canary revision's (2) initial traffic percentage to 20, but you want to
+increase it to 50, send a request like the following:</p>
+
+<pre class="devsite-terminal">curl -X POST -H "Content-Type: application/x-www-form-urlencoded" -u ahamilton@apigee.com
+  {{mgmt_api_basepath}}/o/ahamilton-eval/e/prod/apis/getstarted \
+  /r/2/deployments?trafficPct=50</pre>
+
+<p>You cannot fully deploy a new revision by setting <code>trafficPct</code> to 100. Instead,
+<a href="#mapi-end">end the canary release</a> and deploy the new revision as a standard
+revision.</p>
+
+<h3 id="mapi-end">End a canary deployment with the management API</h3>
+
+<p>You typically end a canary deployment because you want to:</p>
+
+<ol>
+  <li><strong><a href="#mapi-promote">Promote the canary revision</a>:</strong> Replace the
+    primary revision with the canary revision and begin sending all traffic to it.
+    <p><strong>OR</strong></p>
+  </li>
+  <li><strong><a href="#mapi-rollback">Roll back to the primary revision</a>:</strong> Undeploy
+    the canary revision and send all requests back to the primary revision.</li>
+</ol>
+
+<h4 id="mapi-promote">Promote the canary revision</h4>
+
+<p><strong>To end a canary deployment and promote the canary revision:</strong></p>
+
+<ol>
+  <li>Deploy your new primary revision (previously the canary revision) <em>without specifying
+    <code>trafficPct</code></em>. Do this by sending a <code>POST</code> request to the following
+    endpoint:
+    <pre>{{mgmt_api_basepath}}/v1/o/<var>org_name</var>/e/<var>env_name</var>/apis/<var>proxy_name</var><strong> \
+  /r/<var>revision_number</var></strong>/deployments?override=true</pre>
+    <p>For example, if you complete the testing of a new revision (2) and want to deploy it so that it
+    is used by 100% of the requests, you can send a request like the following:</p>
+    <pre class="devsite-terminal">curl -X POST -H "Content-Type: x-www-form-urlencoded"
+  {{mgmt_api_basepath}}/o/ahamilton-eval/e/prod/apis/getstarted \
+  /<strong>r/2</strong>/deployments?override=true</pre>
+    <p>Note that you must set the <code>override</code> query parameter to <code>true</code> when
+    you promote the canary revision via the management API.</p>
+    <p>Edge deploys the new revision, and once the deployment is complete, the existing primary
+    revision is undeployed.</p>
+  </li>
+</ol>
+
+<p>You can only end a canary deployment by fully deploying the canary revision or rolling back to
+the primary revision. You cannot deploy any other revision until a canary deployment is ended.</p>
+
+<h4 id="mapi-rollback">Roll back to the primary revision</h4>
+
+<p>If, in this example, you decided that revision 2 was not yet ready for release, you can roll back
+to the primary revision (1) by undeploying the canary revision (2).</p>
+
+<p><strong>To end a canary deployment and roll back to the primary revision:</strong></p>
+
+<ol>
+  <li>Send a <code>DELETE</code> request to the following endpoint:
+    <pre >{{mgmt_api_basepath}}/v1/o/<var>org_name</var>/e/<var>env_name</var>/apis/<var>proxy_name</var> \
+  /r/<var>revision_number</var>/deployments</pre>
+    <p>For example:</p>
+    <pre class="devsite-terminal">curl -X DELETE -H "Content-Type: x-www-form-urlencoded"
+  {{mgmt_api_basepath}}/o/ahamilton-eval/e/prod/apis/getstarted \
+  /<strong>r/2</strong>/deployments</pre>
+    <p>Edge removes the canary revision, ending the canary deployment. Edge now sends 100% of the
+    traffic to the primary revision.</p>
+  </li>
+</ol>
+
+<p>You cannot send a <code>DELETE</code> request that removes the <em>primary</em> revision during a
+canary deployment.</p>
+
+
+<h3 id="errors">Common errors</h3>
+
+<p>The following table describes common errors that you might encounter when working with canary
+deployments and the management API:</p>
+
+<table class="pink">
+  <tr>
+   <th>Error</th>
+   <th>Description</th>
+  </tr>
+  <tr>
+   <td class="alt"><code>CanaryLimitedToOneRevision</code></td>
+   <td><p>Returned when you try to deploy a canary revision into an existing API proxy that already has
+     a canary revision.</p>
+     <p><strong>Resolution:</strong> Roll back or fully deploy a revision before you try to create a
+     new canary deployment.</p>
+   </td>
+  </tr>
+  <tr>
+   <td class="alt"><code>ApplicationRevisionDoesNotExist</code></td>
+   <td><p>Returned when your request references a revision that doesn't exist.</p>
+    <p><strong>Resolution:</strong> To ensure that you are referencing the correct revision number,
+    get a list of all revisions as described in <a href="#mapi-listall">List all revisions</a>.</p>
+   </td>
+  </tr>
+  <tr>
+   <td class="alt"><code>APIProxyRevisionAlreadyDeployed</code>
+   </td>
+   <td><p>Returned when you try to deploy a revision that is already deployed. The revision might be
+     part of a canary deployment, but this error is returned regardless of the type of
+     deployment.</p>
+     <p><strong>Resolution:</strong> To ensure that you are referencing the correct revision number,
+     get a list of all revisions as described in <a href="#mapi-listall">List all revisions</a>.</p>
+   </td>
+  </tr>
+</table>
+
+<h2 id="ui">Use the Edge UI with canary deployments</h2>
+
+<p>This section describes how to work with canary deployments in the Edge UI.</p>
+
+<h3 id="ui-view">View canary deployment status</h3>
+
+<p>The UI uses blue and green to indicate the {{primary_revision}} and
+{{canary_revision}} revisions, respectively.</p>
+
+<p><strong>To view your API proxy's deployment status:</strong></p>
+
+<ol>
+  <li>Open the {{mgmt_ui}} in a browser and log in.</li>
+  <li>Click <strong>API Proxies</strong> in the main window.
+    <p>The Management UI displays a list of proxies for the current environment in the
+    <strong>Proxies</strong> view.</p>
+  </li>
+  <li>Click the name of the API proxy whose canary deployment status you want to view.
+    <p>The Management UI displays a list of environments in which that proxy is running in the
+    Deployments Overview:</p>
+    <p><img src="/api-platform/images/canary/overview-status.png" class="screenshot"></p>
+  </li>
+</ol>
+
+<p>The <strong>Revision</strong> column indicates which revision is deployed in each environment.
+For canary deployments, the <strong>Revision</strong> column shows two revision numbers
+(the {{canary_revision}} revision and the {{primary_revision}} revision), and indicates the
+percentage of traffic that goes to each revision.</p>
+
+<p>The <strong>Status</strong> column tells you if a proxy is functional. It also provides a visual
+indicator of whether a canary deployment exists for that environment, and if so, how the traffic is
+split between the two revisions:</p>
+
+<table>
+  <tr>
+   <td><p><img src="/api-platform/images/canary/status-icon-all.png"></p></td>
+   <td>A single, non-canary deployment with 100% of the traffic going to a single, primary
+     revision.</td>
+  </tr>
+  <tr>
+   <td><p><img src="/api-platform/images/canary/status-icon-halfnhalf.png"></p></td>
+   <td>A canary deployment with about 50% of traffic going to the primary revision, and 50% going to
+     the canary revision.</td>
+  </tr>
+  <tr>
+   <td><p><img src="/api-platform/images/canary/status-icon-mostcanary.png"></p></td>
+   <td>A canary deployment with most of the traffic going to the current (or <em>primary</em>)
+     revision.</td>
+  </tr>
+  <tr>
+   <td><p><img src="/api-platform/images/canary/status-icon-disabled.png"></p></td>
+   <td>An undeployed or otherwise non-functioning API proxy.</td>
+  </tr>
+</table>
+
+<p>Note that if you hover over an icon in the <strong>Status</strong> column, the UI displays a
+tooltip with the exact traffic split:</p>
+
+<p><img src="/api-platform/images/canary/status-icon-tooltip.png" class="screenshot"></p>
+
+<p>Click the <strong>Status</strong> icon to edit the traffic mix for that deployment, as described
+in <a href="#ui-mix">Change the traffic mix</a>.</p>
+
+<h3 id="ui-create">Create a new canary deployment</h3>
+
+<p><strong>To create a new canary deployment in the UI:</strong></p>
+
+<ol>
+  <li>Open the {{mgmt_ui}} in a browser and log in.</li>
+  <li>Click <strong>API Proxies</strong> in the main window.
+    <p>The Management UI displays a list of proxies for the current environment in the
+    <strong>Proxies</strong> view.</p>
+  </li>
+  <li>Click an API proxy to edit.</li>
+  <li>In the row for the environment that you want to add a canary deployment, click the {{kebab}}
+    icon. The Management UI displays a list of options:
+
+    <p>[[tbd]]</p>
+
+  <li>Select the <strong>Canary Deployment</strong> option.
+    <p>The <strong>Create New Deployment</strong> dialog appears:</p>
+    <p><img src="/api-platform/images/canary/create-new-deployment.png" class="screenshot"></p>
+  </li>
+  <li>In the <strong>Create New Deployment</strong> dialog, select <strong>Canary Deployment</strong>
+    for the <strong>Type</strong>.
+    <p>The Create New Deployment dialog expands to include settings for a canary deployment:</p>
+    <p><var>[screenshot TBD]</var></p>
+  </li>
+  <li>Set the traffic mix, with the following considerations:
+  <ul>
+    <li>It's generally a good idea to start with a small percentage of traffic (such as 5 or 10%)
+      for the canary revision and gradually increase it.</li>
+    <li>Be sure to set the mix high enough that you'll get meaningful data based on your traffic
+      levels.</li>
+  </ul>
+  <li>Select the environment in which to create the canary deployment.</li>
+  <li>Select the revision that will be the canary revision (the partially rolled out one). This is
+    typically the most recent revision in the API proxy.</li>
+  <li>Click the <strong>Deploy</strong> button.
+    <p>Edge deploys your new revision and the current revision with a new proxy configuration. Edge
+    immediately begins to route the specified percentage of incoming requests to the canary
+    revision, and the remaining requests to the primary revision.</p>
+    <p>Within a few minutes, you should see analytics data comparing the two revisions, as described
+    in <a href="#perf">View revision performance</a>. Even though analytics data is delayed by a
+    few minutes, the change to your incoming requests happens immediately (whether you changed the
+    mix with <a href="#mapi-mix">the management API</a> or with
+    <a href="#ui-change">the UI</a>).</p>
+  </li>
+</ol>
+
+<h3 id="ui-change">Change the traffic mix</h3>
+
+<p>You can change the traffic mix for an existing canary deployment in the Edge Management UI. You
+can do this without stopping or undeploying either of the revisions in the canary deployment.</p>
+
+<p><strong>To change the traffic mix in the UI:</strong></p>
+
+<ol>
+  <li>Open the {{mgmt_ui}} in a browser and log in.</li>
+  <li>Click <strong>API Proxies</strong> in the main window.
+    <p>Edge displays the <strong>API Proxies Overview</strong>, which shows you a list of
+    environments and deployment information for each.</p>
+  </li>
+  <li>Click the {{kebab}} next to the environment that you want to change.
+    <p>Edge displays the following drop-down menu:</p>
+    <p><img src="/api-platform/images/canary/3dot-menu.png" class="screenshot"></p>
+  </li>
+  <li>Select <strong>Change Canary Deployment</strong> from the list.
+    <aside class="key-point"><strong>TIP</strong><br/>Alternatively, you can click the
+    traffic split icon in the <strong>Status</strong> column.</aside>
+    <p>Edge displays the <strong>Change Deployment</strong> dialog:</p>
+    <p><img src="/api-platform/images/canary/change-deployment-2.png" class="screenshot"></p>
+  </li>
+  <li>Use the slider and/or input fields to adjust the traffic mix.
+    <p>You cannot set either revision's traffic to 0% or 100% to end a canary deployment. To end
+    a canary deployment, you must follow the instructions in
+    <a href="#ui-end">End a canary deployment in the UI</a>.</p>
+  </li>
+  <li>Click the <strong>Deploy</strong> button.
+    <p>Edge immediately adjusts the percentage of requests that are sent to each of the revisions
+    in the canary deployment.</p>
+    <p>Note that although the change in the traffic mix applies to all new requests immediately, the
+    <a href="#perf">performance statistics</a> are delays by a few minutes.</p>
+  </li>
+</ol>
+
+<h3 id="ui-end">End a canary deployment in the UI</h3>
+
+<p>You typically end a canary deployment because you want to:</p>
+
+<ol>
+  <li><strong><a href="#promote-ui">Promote the canary revision</a>:</strong> Replace the
+    primary revision with the canary revision and begin sending all traffic to it.
+    <p><strong>OR</strong></p>
+  </li>
+  <li><strong><a href="#rollback-ui">Roll back to the primary revision</a>:</strong> Undeploy
+    the canary revision and send all requests back to the primary revision.</li>
+</ol>
+
+<h4 id="promote-ui">Promote the canary revision in the UI</h4>
+<p><strong>To end a canary deployment and promote the canary revision:</strong></p>
+
+<ol>
+  <li>Open the {{mgmt_ui}} in a browser and log in.</li>
+  <li>Click <strong>API Proxies</strong> in the main window. Edge displays the <strong>API Proxies
+    Overview,</strong> which shows you a list of environments and deployment information for
+    each.</li>
+  <li>Click the 3-dot menu next to the environment you want to change.</li>
+  <li>Select <strong>Promote Revision <var>X</var></strong> from the list, where <var>X</var> is the
+    revision number of your canary revision.
+    <p>Edge displays the <strong>Confirm Promotion</strong> dialog:<p>
+    <p><img src="/api-platform/images/canary/confirm-promotion.png" class="screenshot" width="50%"></p>
+  </li>
+  <li>Click the <strong>Promote</strong> button.
+    <p>Edge undeploys the primary revision and immediately begins sending <em>all</em> requests to
+    the canary revision, which has now become the primary revision. Edge also changes the deployment
+    configuration to a standard deployment. It is no longer considered a canary deployment.</p>
+  </li>
+</ol>
+
+<h4 id="rollback-ui">Roll back to the primary revision in the UI</h4>
+
+<p><strong>To end a canary deployment and roll back to the primary revision:</strong></p>
+
+<ol>
+  <li>Open the {{mgmt_ui}} in a browser and log in.</li>
+  <li>Click <strong>API Proxies</strong> in the main window. Edge displays the <strong>API Proxies
+    Overview,</strong> which shows you a list of environments and deployment information for
+    each.</li>
+  <li>Click the 3-dot menu next to the environment you want to change.</li>
+  <li>Select <strong>Roll Back to Revision <var>Y</var></strong> from the list, where <var>Y</var>
+    is the revision number of your primary revision.
+    <p>Edge displays the <strong>Confirm Rollback</strong> dialog:</p>
+    <p><img src="/api-platform/images/canary/confirm-rollback.png" class="screenshot" width="50%"></p>
+  </li>
+  <li>Click the <strong>Roll Back</strong> button.
+    <p>Edge undeploys the canary revision and immediately returns to sending <em>all</em> requests
+    to the primary revision. Edge also changes the deployment configuration to a standard
+    deployment. It is no longer considered a canary deployment.</p>
+  </li>
+</ol>
+
+<h2 id="perf">View revision performance</h2>
+
+<p>The Edge UI visualizes performance statistics (or <em>analytics</em>) for each revision in the
+<strong>Canary Dashboard</strong>.</p>
+
+<p>By looking at these statistics, you can decide if you should continue to roll out a canary
+revision, or roll back to the primary revision.</p>
+
+<p>Analytics data can take several minutes to reflect a new canary deployment or a change to an
+existing one. Because of this delay in analytics, you should avoid making rapid changes to the
+traffic mix.</p>
+
+<p>Note that even though analytics data is delayed by a few minutes, the change to your incoming
+requests happens immediately.</p>
+
+<p><strong>To view performance statistics:</strong></p>
+
+<ol>
+  <li>Open the {{mgmt_ui}} in a browser and log in.</li>
+  <li>Click <strong>API Proxies</strong> in the main window.</li>
+  <li>Click the <strong>Canary</strong> tab:
+    <p><img src="/api-platform/images/canary/canary-tab.png" class="screenshot"></p>
+    <!-- <p><var>Is this tab only visible if at least one environment has a canary deployment?</var></p> -->
+    <p>Edge displays the <strong>Canary Dashboard</strong>:</p>
+      <p><img src="/api-platform/images/canary/canary-dashboard.png" class="screenshot"></p>
+    <p>The <strong>Errors</strong> graph shows the percentage of requests that resulted in an error
+    for the revision.</p>
+    <p>The <strong>Average Response Time</strong> graph shows the average time, in milliseconds, that
+    the API proxy takes to respond to a request.</p>
+  <li>To change the environment, select a new one from the <strong>Environment</strong>
+    drop-down menu.</li>
+</ol>
+
+<p>For the graphs, note that:</p>
+
+<ul>
+  <li>The {{primary_revision}} revision is <strong><span style="color:#0000ff;">BLUE</span></strong>.</li>
+  <li>The {{canary_revision}} revision is <strong><span style="color:#38761d;">GREEN</span></strong>.</li>
+  <li>You can view performance data for the following time periods:
+    <ul>
+      <li>Hour</li>
+      <li>Day</li>
+      <li>Week (default)</li>
+      <li>Custom: Select a date range of up to 6 months in the past ({{edge_long}}) or 15 days
+      ({{opdk}}). These limits
+      <a href="/api-platform/analytics/using-analytics-dashboards.html#whatarethemostcommonfeaturesinthedashboards">can be modified</a>.</li>
+    </ul>
+  </li>
+  <li>If you change the timeframe, click the refresh button
+    <img src="/api-platform/images/canary/refresh.png"/> to refresh the graph data.</li>
+</ul>
+
+<h3>About the Errors graph</h3>
+
+<p>The Errors graph shows the percentage of requests that resulted in an error for the revision.
+This value represents all errors, whether they were caught and handled within Edge or not.</p>
+
+<p>Use the radio buttons at the right of the graph to filter by error type:</p>
+
+<ul>
+  <li><strong>All Errors</strong>: Include errors that occur anywhere in the proxy flow.</li>
+  <li><strong>Proxy Errors</strong>: Only include errors that are thrown when the request or
+    response is being handled in the ProxyEndpoint.</li>
+  <li><strong>Target Errors</strong>: Only include errors that are thrown when the request or
+    response is being handled in the TargetEndpoint.</li>
+</ul>
+
+<p>The default Errors graph filter is <strong>All Errors</strong>.</p>
+
+<h3>About the Average Response Time graph</h3>
+
+<p>The Average Response Time shows you the average time, in milliseconds, that it takes the API
+proxy to respond to a request.</p>
+
+<p>Use the radio buttons at the right of the graph to filter by endpoint:</p>
+
+<ul>
+<li><strong>Both endpoints:</strong> Represents the "total" average response time, which is the time
+  measured from when an API call is received on Apigee Edge to the time Edge begins sending a
+  response back to the client app.</li>
+<li><strong>ProxyEndpoint only:</strong> The time the request spends being processed by Edge; does
+  not include time spent being processed by the TargetEndpoint.</li>
+<li><strong>TargetEndpoint only:</strong> The time the request spends being processed by the
+  TargetEndpoint; to put it another way, it's the time the request is not being processed by Edge,
+  but rather, being processed by the backend system.</li>
+</ul>
+
+<p>The default Average Response Time graph filter is <strong>Both Endpoints</strong>.</p>
+
+<!--
+<h2>Other doc impact</h2>
+<p>This change to the UI will affect the following pages/documentation:</p>
+<p>https://docs.apigee.com/api-platform/deploy/understanding-deployment</p>
+<p>https://docs.apigee.com/api-platform/deploy/deploying-proxies-ui</p>
+<p>https://docs.apigee.com/api-platform/deploy/deploying-proxies-command-line</p>
+<p>https://docs.apigee.com/api-platform/deploy/deploy-api-proxies-using-management-api</p>
+<p>https://docs.apigee.com/release/whats-new-docs.html</p>
+<p>https://docs.apigee.com/api-platform/analytics/analytics-reference.html</p>
+-->
+
+{% endblock %}

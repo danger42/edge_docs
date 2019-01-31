@@ -1,21 +1,19 @@
   {% extends "_base.html" %} {% block title %}Conditions reference{% endblock %} {% block body %}
 
-  <p>Conditions enable API proxies to behave dynamically at runtime. Conditions define operations
+  <p><em>Conditions</em> enable API proxies to behave dynamically at runtime. Conditions define operations
   on variables, which are evaluated by the Apigee Edge processing pipeline. Conditional statements
   are boolean and always evaluate to true or false.</p>
 
   <aside class="key-point"><b>Tip:</b> For a tutorial-like topic that explains how to use pattern
   matching in conditional statements, see <a href=
-  "/api-platform/fundamentals/pattern-matching-conditional-statements.html">Pattern matching in
-  conditional statements</a>.</aside>
+  "/api-platform/fundamentals/flow-variables-and-conditions#patternmatching">Pattern matching with
+  conditionals</a>.</aside>
 
   <h2 id="useofvariablesinconditionalstatements">Use of variables in conditional statements</h2>
 
   <p>Developers commonly use both built-in flow variables and custom variables in conditional
-  statements.  For a complete list of the built-in variables, see <a href=
-  "/api-platform/reference/variables-reference.html">Variables reference</a>.  For
-  instructions, see on setting custom variables, see <a href=
-  "/api-platform/reference/policies/extract-variables-policy.html">Extract Variables policy</a></p>
+  statements.  For a complete list of the built-in variables, see {{variables_reference}}.  For
+  instructions, see on setting custom variables, see {{extract_variables_policy}}.</p>
 
   <h2 id="structureofconditionalstatements">Structure of conditional statements</h2>
 
@@ -40,82 +38,6 @@
   <pre class="prettyprint">
 (proxy.pathsuffix MatchesPath "/statuses") and (request.verb != "GET")
 </pre>
-
-  <h2 id="whereyoucanuseconditionalstatements">Where you can use conditional statements</h2>
-
-  <p>You can use conditions to implement conditional behavior to control:</p>
-
-  <ul>
-    <li>policy execution</li>
-
-    <li>flow execution</li>
-
-    <li>target endpoint route selection</li>
-  </ul>
-
-  <h3 id="whereyoucanuseconditionalstatements-policyexecution">Policy execution</h3>
-
-  <p>Using conditional statements, you can control the enforcement of policies. A common use case
-  is conditional transformation of response messages, based on HTTP header or message content.</p>
-
-  <p>For example, to conditionally transform XML to JSON based on the <code>Accept</code>
-  header:</p>
-  <pre class="prettyprint">
-&lt;Step&gt;
-  &lt;Condition&gt;request.header.accept = "application/json"&lt;/Condition&gt;
-  &lt;Name&gt;XMLToJSON&lt;/Name&gt;
-&lt;/Step&gt;
-</pre>
-
-  <h3 id="whereyoucanuseconditionalstatements-flowexecution">Flow execution</h3>
-
-  <p>Using conditional statements, you can control the execution of named flows in ProxyEndpoints
-  and TargetEndpoints. Note that only 'named' flows can be executed conditionally. Preflows and
-  postflows (both request and response) on ProxyEndpoints and TargetEndpoints execute for every
-  transaction, and thus provide unconditional 'failsafe' capabilities.</p>
-
-  <p>For example, to execute a conditional request flow based on the HTTP verb of the request
-  message, and conditional response flow based on a (potential) HTTP status code representing an
-  error:</p>
-  <pre class="prettyprint">
-&lt;Flow name="GetRequests"&gt;
-  &lt;Condition&gt;request.verb = "GET"&lt;/Condition&gt;
-  &lt;Request&gt;
-    &lt;Step&gt;
-      &lt;Condition&gt;request.path MatchesPath "/statuses/**"&lt;/Condition&gt;
-      &lt;Name&gt;StatusesRequestPolicy&lt;/Name&gt;
-    &lt;/Step&gt;
-  &lt;/Request&gt;
-  &lt;Response&gt;
-    &lt;Step&gt;
-      &lt;Condition&gt;(response.status.code = 503) or (response.status.code = 400)&lt;/Condition&gt;
-      &lt;Name&gt;MaintenancePolicy&lt;/Name&gt;
-    &lt;/Step&gt;
-  &lt;/Response&gt;
-&lt;/Flow&gt;
-</pre>
-
-  <h3 id="whereyoucanuseconditionalstatements-targetendpointrouteselection">Target endpoint route
-  selection</h3>
-
-  <p>Using conditional statements, you can control the target endpoint invoked by proxy endpoint
-  configuration. A route rule forwards a request to a particular target endpoint. When more than
-  one target endpoint is available, the route rule is evaluated for its condition and, if true, the
-  request is forwarded to the named target endpoint.</p>
-
-  <p>For example, to conditionally route messages to designated target endpoints based on
-  <code>Content-Type</code>:</p>
-  <pre class="prettyprint">
-&lt;RouteRule name="default"&gt;
-<span style=
-"color:#0000ff;"> &lt;!--this routing executes if the header indicates that this is an XML call. If true, the call is routed to the endpoint XMLTargetEndpoint--&gt;</span>
-  &lt;Condition&gt;request.header.Content-Type = "text/xml"&lt;/Condition&gt;
-  &lt;TargetEndpoint&gt;XmlTargetEndpoint&lt;/TargetEndpoint&gt;
-&lt;/RouteRule&gt;
-</pre>
-
-  <p>See <a href="/api-platform/fundamentals/flow-variables-and-conditions.html">Flow variables and
-  conditions</a> for more information.</p>
 
   <h2 id="pathexpressions">Path Expressions</h2>
 
@@ -333,8 +255,8 @@
 
         <td>Matches a glob-style pattern using the "*" wildcard character. The match is
         case-sensitive. For examples, see <a href=
-        "/api-platform/fundamentals/pattern-matching-conditional-statements.html">Pattern matching
-        in conditional statements</a>.</td>
+        "/api-platform/fundamentals/flow-variables-and-conditions#patternmatching">Pattern matching with
+        conditionals</a>.</td>
       </tr>
 
       <tr>
@@ -343,8 +265,8 @@
         <td>MatchesPath, LikePath</td>
 
         <td>Matches a path expression. The match is case-sensitive. For examples, see <a href=
-        "/api-platform/fundamentals/pattern-matching-conditional-statements.html">Pattern matching
-        in conditional statements</a>.</td>
+        "/api-platform/fundamentals/flow-variables-and-conditions#patternmatching">Pattern matching with
+        conditionals</a>.</td>
       </tr>
 
       <tr>
@@ -357,8 +279,8 @@
     </tbody>
   </table>
 
-  <h2 id="behaviorofnulloperandsinconditionalstatements"><a name="relational_null" id=
-  "relational_null"></a>Behavior of null operands in conditional statements</h2>
+  <h2 id="behaviorofnulloperandsinconditionalstatements">Behavior of null operands in conditional
+  statements</h2>
 
   <p>The following table shows whether conditions evaluate to true or false when values are null
     on the left-hand side (LHS) and/or right-hand side (RHS) of the operand shown:</p>

@@ -1,17 +1,22 @@
-{% extends "private-cloud/v4.18.05/_base.html" %}
+{% extends "private-cloud/v4.19.01/_base.html" %}
 {% block title %}Apache Cassandra maintenance tasks{% endblock %}
 {% block body %}
 
   <h2 id="antientropymaintenance">Anti-Entropy Maintenance</h2>
 
   <p>The Apache Cassandra ring nodes require periodic maintenance to ensure consistency across all
-  nodes.  To perform this maintenance, use the Cassandra "<span style=
-  "font-family:courier new,courier,monospace;">nodetool -h localhost repair</span>" command.</p>
+  nodes. To perform this maintenance, use the Cassandra
+  <code>nodetool -h localhost repair -pr</code> command.</p>
+
+  <p>Note that if you <a href="how-monitor#cassauthenable">enabled JMX authentication for Cassandra</a>,
+  you must include the username and password when you invoke <code>nodetool</code>. For example:</p>
+
+  <pre class="devsite-terminal">nodetool -u <var>username</var> -pw <var>password</var> -h localhost repair -pr</pre>
 
   <aside class="note">
     <strong>Note:</strong> This maintenance must be run on every Cassandra node at least every seven days in
     order to eliminate problems related to Cassandra "forgotten deletes". Running
-    <code>nodetool -h localhost repair</code> imposes a significant load on the system, so Apigee
+    <code>nodetool -h localhost repair -pr</code> imposes a significant load on the system, so Apigee
     recommends that this process only be run during periods of relatively low workload.
     <p>You should also run the command on one Cassandra node at a time. You can run it on different
     nodes on different days, or schedule it so that there are several hours between running it on
@@ -19,7 +24,7 @@
   </aside>
 
   <p>In a single-region or single-data-center Apigee installation, use the command
-  <code>nodetool -h localhost repair</code> on one Cassandra node to ensure consistency across all
+  <code>nodetool -h localhost repair -pr</code> on one Cassandra node to ensure consistency across all
   nodes in the ring. In a multi-region or multi-data-center Apigee installation, use
   <code>nodetool -h localhost repair -pr</code> on every node in the ring (across all regions or
   data centers).</p>

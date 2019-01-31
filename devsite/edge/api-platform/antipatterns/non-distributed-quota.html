@@ -1,0 +1,59 @@
+{% extends "_base.html" %}
+{% block title %}Non-distributed quota{% endblock %}
+{% block body %}
+
+<p>Apigee Edge provides the ability to configure the number of allowed requests to an API Proxy for
+a specific period of time using the {{quota_policy}}.</p>
+
+<h2>Antipattern</h2>
+
+<p>An API proxy request can be served by one or more distributed Edge components called
+<em>Message Processors</em>. If there are multiple Message Processors configured for serving API
+requests, then the quota will likely be exceeded because each Message Processor keeps it’s own
+"count" of the requests it processes.</p>
+
+<p>Let's explain this with the help of an example. Consider the following {{quota_policy}} for an API
+proxy:</p>
+
+<pre class="prettyprint">{% includecode content_path="api-platform/antipatterns/examples/1-6.xml" html_escape="True" %}</pre>
+
+<p>The above configuration should allow a total of 100 requests per hour.</p>
+
+<p>In practice, however, when multiple message processors are serving the API requests, the
+following happens:</p>
+
+<p><img src="/api-platform/images/antipatterns/request-to-mps.png"/></p>
+
+<p>In the above illustration:
+<ul>
+  <li>The quota policy is configured to allow 100 requests per hour.</li>
+  <li>The requests to the API Proxy are being served by two Message Processors.</li>
+  <li>Each Message Processor maintains its own quota count variable, <code>quota_count_mp1</code>
+    and <code>quota_count_mp2</code>, to track the number of requests they are processing.</li>
+  <li>Therefore each of the Message Processor will allow 100 API requests separately. The net effect
+    is that a total of 200 requests are processed instead of 100 requests.</li>
+</ul>
+
+<h2>Impact</h2>
+
+<p>This situation defeats the purpose of the quota configuration and can have detrimental effects on
+the backend servers that are serving the requests.</p>
+
+<p>The backend servers can:</p>
+
+<ul>
+  <li>Be stressed due to higher than expected incoming traffic</li>
+  <li>Become unresponsive to newer API requests leading to 503 errors</li>
+</ul>
+
+<h2>Best Practice</h2>
+
+<p>Consider, setting the <code>&lt;Distributed&gt;</code> element to <code>true</code> in the {{quota_policy}} to
+ensure that a common counter is used to track the API requests across all Message Processors.
+The <code>&lt;Distributed&gt;</code> element can be set as shown in the code snippet below:</p>
+
+<pre class="prettyprint">{% includecode content_path="api-platform/antipatterns/examples/1-7.xml" html_escape="True" %}</pre>
+
+
+
+{% endblock %}

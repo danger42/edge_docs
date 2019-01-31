@@ -5,29 +5,22 @@
   </head>
   <body>
 
-  <p>This section describes the error messages and flow variables that are set when this policy
-  triggers an error. This information is important to know if you are developing fault rules for a
-  proxy. To learn more, see <a href=
-  "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html">What you need to know
+  <p>This section describes the fault codes and error messages that are returned and fault variables that are set by Edge when this policy triggers an error.
+    This information is important to know if you are developing fault rules to
+  handle faults. To learn more, see <a href="/api-platform/fundamentals/what-you-need-know-about-policy-errors.html">What you need to know
   about policy errors</a> and <a href="/api-platform/fundamentals/fault-handling.html">Handling
   faults</a>.</p>
 
-  <h3>Error code prefix</h3>
-
-  <p><code>steps.oauth.v2</code> <span style="font-size: 10pt">(<a href=
-  "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html#aboutthedefaultpolicyerrorresponse">What's
-  this?</a>)</span></p>
-
   <h3>Runtime errors</h3>
 
-  <p>These errors can occur when the policy executes. The error names shown below are the strings
-  that are assigned to the <code>fault.name</code> variable when an error occurs. See the Fault
-  variables section below for more details.</p>
+ <p>These errors can occur when the policy executes.</p>
+        <aside class="key-point">Use <u><a href="/api-monitoring">API Monitoring</a></u> to investigate fault codes and diagnose issues faster.</aside>
+
 
   <table>
     <thead>
       <tr>
-        <th scope="col" width="279">Error name</th>
+        <th scope="col" width="279">Fault code</th>
 
         <th scope="col" width="58">HTTP status</th>
 
@@ -39,7 +32,191 @@
 
     <tbody>
       <tr>
-        <td><code>InvalidClientIdentifier</code></td>
+        <td><code>steps.oauth.v2.access_token_expired</code></td>
+
+        <td>401</td>
+
+        <td>The access token is expired.</td>
+
+        <td>
+          <p>VerifyAccessToken<br>
+          InvalidateToken</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td><code>steps.oauth.v2.access_token_not_approved</code></td>
+
+        <td>401</td>
+
+        <td>The access token was revoked.</td>
+
+        <td>VerifyAccessToken</td>
+      </tr>
+       <tr>
+        <td><code>steps.oauth.v2.apiresource_doesnot_exist</code></td>
+
+        <td>401</td>
+
+        <td>The requested resource does not exist any of the API products associated with the
+        access token.</td>
+
+        <td>VerifyAccessToken</td>
+      </tr>
+
+      <tr>
+        <td><code>steps.oauth.v2.FailedToResolveAccessToken</code></td>
+
+        <td>500</td>
+
+        <td>The policy expected to find an access token in a variable specified in the
+        <code>&lt;AccessToken&gt;</code> element, but the variable could not be resolved.</td>
+
+        <td>GenerateAccessToken</td>
+      </tr>
+
+      <tr>
+        <td><code>steps.oauth.v2.FailedToResolveAuthorizationCode</code></td>
+
+        <td>500</td>
+
+        <td>The policy expected to find an authorization code in a variable specified in the
+        <code>&lt;Code&gt;</code> element, but the variable could not be resolved.</td>
+
+        <td>GenerateAuthorizationCode</td>
+      </tr>
+
+      <tr>
+        <td><code>steps.oauth.v2.FailedToResolveClientId</code></td>
+
+        <td>500</td>
+
+        <td>The policy expected to find the Client ID in a variable specified in the
+        <code>&lt;ClientId&gt;</code> element, but the variable could not be resolved.</td>
+
+        <td>GenerateAccessToken<br>
+        GenerateAuthorizationCode<br>
+        GenerateAccessTokenImplicitGrant<br>
+        RefreshAccessToken</td>
+      </tr>
+
+      <tr>
+        <td><code>steps.oauth.v2.FailedToResolveRefreshToken</code></td>
+
+        <td>500</td>
+
+        <td>The policy expected to find a refresh token in a variable specified in the
+        <code>&lt;RefreshToken&gt;</code> element, but the variable could not be resolved.</td>
+
+        <td>RefreshAccessToken</td>
+      </tr>
+       <tr>
+        <td><code>steps.oauth.v2.FailedToResolveToken</code></td>
+
+        <td>500</td>
+
+        <td>The policy expected to find a token in a variable specified in the
+        <code>&lt;Tokens&gt;</code> element, but the variable could not be resolved.</td>
+
+        <td>
+          <p>ValidateToken<br>
+          InvalidateToken</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td><code>steps.oauth.v2.InsufficientScope</code></td>
+
+        <td>403</td>
+
+        <td>The access token presented in the request has a scope that does not match the scope
+        specified in the verify access token policy. To learn about scope, see <a href=
+        "/api-platform/security/oauth/working-scopes.html">Working with OAuth2 scopes</a>.</td>
+
+        <td>VerifyAccessToken</td>
+      </tr>
+            <tr>
+        <td><code>steps.oauth.v2.invalid_access_token</code></td>
+
+        <td>401</td>
+
+        <td>The access token sent from the client is invalid.</td>
+
+        <td>VerifyAccessToken</td>
+      </tr>
+
+      <tr>
+        <td><code>steps.oauth.v2.invalid_client</code></td>
+
+        <td>401</td>
+
+        <td>
+          <p>This error name is returned when the <code>&lt;GenerateResponse&gt;</code> property of
+          the policy is set to <strong>true</strong> and the client ID sent in the request is
+          invalid. Check to be sure you are using the correct client key and secret values for
+          the Developer App associated with your proxy. Typically, these values are sent as a
+          Base64 encoded Basic Authorization header.</p>
+
+          <p><strong>Note:</strong> It is recommended that you change existing fault rule
+          conditions to catch both the <code>invalid_client</code> and
+          <code>InvalidClientIdentifier</code> names. See the <a href=
+          "/release/notes/160921-apigee-edge-public-cloud-release-notes.html">16.09.21 Release
+          Notes</a> for more information and an example.</p>
+        </td>
+
+        <td>GenerateAccessToken<br>
+        RefreshAccessToken</td>
+      </tr>
+
+      <tr>
+        <td><code>steps.oauth.v2.invalid_request</code></td>
+
+        <td>400</td>
+
+        <td>This error name is used for multiple different kinds of errors, typically for missing
+        or incorrect parameters sent in the request. If <code>&lt;GenerateResponse&gt;</code> is
+        set to <code>false</code>, use fault variables (described below) to retrieve details about
+        the error, such as the fault name and cause.</td>
+
+        <td>GenerateAccessToken<br>
+        GenerateAuthorizationCode<br>
+        GenerateAccessTokenImplicitGrant<br>
+        RefreshAccessToken</td>
+      </tr>
+
+      <tr>
+        <td><code>steps.oauth.v2.InvalidAccessToken</code></td>
+
+        <td>401</td>
+
+        <td>The authorization header does not have the word "Bearer", which is required. For
+        example: <code>Authorization: Bearer your_access_token</code></td>
+
+        <td>VerifyAccessToken</td>
+      </tr>
+       <tr>
+        <td><code>steps.oauth.v2.InvalidAPICallAsNo\<br>
+        steps.oauth.v2.ApiProductMatchFound</code></td>
+
+        <td>401</td>
+
+        <td>
+          <p>The API proxy is not in the Product associated with the access token.</p>
+
+          <p><strong>Tips:</strong> Be sure that the product associated with the access token is
+          configured correctly. For example, if you use wildcards in resource paths, be sure the
+          wildcards are being used correctly. See <a href=
+          "/api-platform/publish/create-api-products.html">Create API products</a> for details.</p>
+
+          <p>See also <a href=
+          "https://community.apigee.com/articles/6831/oauth20-access-token-verification-throws-invalid-a.html">this
+          Apigee Community post</a> for more guidance on causes for this error. </p>
+        </td>
+
+        <td>VerifyAccessToken</td>
+      </tr>
+      <tr>
+        <td><code>steps.oauth.v2.InvalidClientIdentifier</code></td>
 
         <td>500</td>
 
@@ -63,141 +240,43 @@
           RefreshAccessToken</p>
         </td>
       </tr>
-
-      <tr>
-        <td><code>invalid_client</code></td>
-
-        <td>401</td>
-
-        <td>
-          <p>This error name is returned when the <code>&lt;GenerateResponse&gt;</code> property of
-          the policy is set to <strong>true</strong> and and the client ID sent in the request is
-          invalid. Check to be sure you are using the correct client key and secret values for
-          the Developer App associated with your proxy. Typically, these values are sent as a
-          Base64 encoded Basic Authorization header.</p>
-
-          <p><strong>Note:</strong> It is recommended that you change existing fault rule
-          conditions to catch both the <code>invalid_client</code> and
-          <code>InvalidClientIdentifier</code> names. See the <a href=
-          "/release/notes/160921-apigee-edge-public-cloud-release-notes.html">16.09.21 Release
-          Notes</a> for more information and an example.</p>
-        </td>
-
-        <td>GenerateAccessToken<br>
-        RefreshAccessToken</td>
-      </tr>
-
-      <tr>
-        <td><code>invalid_request</code></td>
-
-        <td>400</td>
-
-        <td>This error name is used for multiple different kinds of errors, typically for missing
-        or incorrect parameters sent in the request. If <code>&lt;GenerateResponse&gt;</code> is
-        set to <code>false</code>, use fault variables (described below) to retrieve details about
-        the error, such as the fault name and cause.</td>
-
-        <td>GenerateAccessToken<br>
-        GenerateAuthorizationCode<br>
-        GenerateAccessTokenImplicitGrant<br>
-        RefreshAccessToken</td>
-      </tr>
-
-      <tr>
-        <td><code>invalid_access_token</code></td>
-
-        <td>401</td>
-
-        <td>The access token sent from the client is invalid.</td>
-
-        <td>VerifyAccessToken</td>
-      </tr>
-
-      <tr>
-        <td><code>InvalidAccessToken</code></td>
-
-        <td>401</td>
-
-        <td>The authorization header does not have the word "Bearer", which is required. For
-        example: <code>Authorization: Bearer your_access_token</code></td>
-
-        <td>VerifyAccessToken</td>
-      </tr>
-
-      <tr>
-        <td><code>apiresource_doesnot_exist</code></td>
-
-        <td>401</td>
-
-        <td>The requested resource does not exist any of the API products associated with the
-        access token.</td>
-
-        <td>VerifyAccessToken</td>
-      </tr>
-
-      <tr>
-        <td><code>FailedToResolveToken</code></td>
+       <tr>
+        <td><code>steps.oauth.v2.InvalidParameter</code></td>
 
         <td>500</td>
 
-        <td>The policy expected to find a token in a variable specified in the
-        <code>&lt;Tokens&gt;</code> element, but the variable could not be resolved.</td>
+        <td>The policy must specify either an access token or an authorization code, but not
+        both.</td>
 
-        <td>
-          <p>ValidateToken<br>
-          InvalidateToken</p>
-        </td>
+        <td>GenerateAuthorizationCode<br>
+        GenerateAccessTokenImplicitGrant</td>
       </tr>
-
       <tr>
-        <td><code>FailedToResolveClientId</code></td>
+        <td><code>steps.oauth.v2.InvalidTokenType</code></td>
 
         <td>500</td>
 
-        <td>The policy expected to find the Client ID in a variable specified in the
-        <code>&lt;ClientId&gt;</code> element, but the variable could not be resolved.</td>
+        <td>The <code>&lt;Tokens&gt;/&lt;Token&gt;</code> element requires you to specify the token
+        type (for example, <code>refreshtoken</code>). If the client passes the wrong type, this
+        error is thrown.</td>
 
-        <td>GenerateAccessToken<br>
-        GenerateAuthorizationCode<br>
-        GenerateAccessTokenImplicitGrant<br>
-        RefreshAccessToken</td>
+        <td>ValidateToken<br>
+        InvalidateToken</td>
       </tr>
 
       <tr>
-        <td><code>FailedToResolveAccessToken</code></td>
+        <td><code>steps.oauth.v2.MissingParameter</code></td>
 
         <td>500</td>
 
-        <td>The policy expected to find an access token in a variable specified in the
-        <code>&lt;AccessToken&gt;</code> element, but the variable could not be resolved.</td>
+        <td>The response type is <code>token</code>, but no grant types are specified.</td>
 
-        <td>GenerateAccessToken</td>
+        <td>GenerateAuthorizationCode<br>
+        GenerateAccessTokenImplicitGrant</td>
       </tr>
 
       <tr>
-        <td><code>FailedToResolveRefreshToken</code></td>
-
-        <td>500</td>
-
-        <td>The policy expected to find a refresh token in a variable specified in the
-        <code>&lt;RefreshToken&gt;</code> element, but the variable could not be resolved.</td>
-
-        <td>RefreshAccessToken</td>
-      </tr>
-
-      <tr>
-        <td><code>FailedToResolveAuthorizationCode</code></td>
-
-        <td>500</td>
-
-        <td>The policy expected to find an authorization code in a variable specified in the
-        <code>&lt;Code&gt;</code> element, but the variable could not be resolved.</td>
-
-        <td>GenerateAuthorizationCode</td>
-      </tr>
-
-      <tr>
-        <td><code>UnSupportedGrantType</code></td>
+        <td><code>steps.oauth.v2.UnSupportedGrantType</code></td>
 
         <td>500</td>
 
@@ -216,98 +295,6 @@
         RefreshAccessToken</td>
       </tr>
 
-      <tr>
-        <td><code>InvalidTokenType</code></td>
-
-        <td>500</td>
-
-        <td>The <code>&lt;Tokens&gt;/&lt;Token&gt;</code> element requires you to specify the token
-        type (for example, <code>refreshtoken</code>). If the client passes the wrong type, this
-        error is thrown.</td>
-
-        <td>ValidateToken<br>
-        InvalidateToken</td>
-      </tr>
-
-      <tr>
-        <td><code>InvalidAPICallAsNo\<br>
-        ApiProductMatchFound</code></td>
-
-        <td>401</td>
-
-        <td>
-          <p>The API proxy is not in the Product associated with the access token.</p>
-
-          <p><strong>Tips:</strong> Be sure that the product assoicated with the access token is
-          configured correctly. For example, if you use wildcards in resource paths, be sure the
-          wildcards are being used correctly. See <a href=
-          "/api-platform/publish/create-api-products.html">Create API products</a> for details.</p>
-
-          <p>See also <a href=
-          "https://community.apigee.com/articles/6831/oauth20-access-token-verification-throws-invalid-a.html">this
-          Apigee Community post</a> for more guidance on causes for this error. </p>
-        </td>
-
-        <td>VerifyAccessToken</td>
-      </tr>
-
-      <tr>
-        <td><code>InsufficientScope</code></td>
-
-        <td>403</td>
-
-        <td>The access token presented in the request has a scope that does not match the scope
-        specified in the verify access token policy. To learn about scope, see <a href=
-        "/api-platform/security/oauth/working-scopes.html">Working with OAuth2 scopes</a>.</td>
-
-        <td>VerifyAccessToken</td>
-      </tr>
-
-      <tr>
-        <td><code>access_token_expired</code></td>
-
-        <td>401</td>
-
-        <td>The access token is expired.</td>
-
-        <td>
-          <p>VerifyAccessToken<br>
-          InvalidateToken</p>
-        </td>
-      </tr>
-
-      <tr>
-        <td><code>access_token_not_approved</code></td>
-
-        <td>401</td>
-
-        <td>The access token was revoked.</td>
-
-        <td>VerifyAccessToken</td>
-      </tr>
-
-      <tr>
-        <td><code>InvalidParameter</code></td>
-
-        <td>500</td>
-
-        <td>The policy must specify either an access token or an authorization code, but not
-        both.</td>
-
-        <td>GenerateAuthorizationCode<br>
-        GenerateAccessTokenImplicitGrant</td>
-      </tr>
-
-      <tr>
-        <td><code>MissingParameter</code></td>
-
-        <td>500</td>
-
-        <td>The response type is <code>token</code>, but no grant types are specified.</td>
-
-        <td>GenerateAuthorizationCode<br>
-        GenerateAccessTokenImplicitGrant</td>
-      </tr>
     </tbody>
   </table>
 
@@ -415,59 +402,47 @@
   <a href="/api-platform/fundamentals/what-you-need-know-about-policy-errors.html">What you need to
   know about policy errors</a>.</aside>
 
-  <table>
+ <table>
     <tbody>
       <tr>
-        <th width="324">Variables set <code><span style="font-size: 10pt">(<a href=
-        "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html">Learn
-        more</a>)</span></code></th>
+        <th width="324">Variables</th>
 
         <th width="428">Where</th>
 
         <th width="428">Example</th>
       </tr>
-
       <tr>
-        <td width="324"><code>[prefix].[policy_name].failed</code></td>
+        <td><code>fault.name="<var>fault_name</var>"</code></td>
 
-        <td width="428">The <code>[prefix]</code> is <code><strong>oauthV2</strong>.</code><br>
-        The <code>[policy_name]</code> is the name of the policy that threw the error.</td>
-
-        <td width="428"><code>oauthV2.GenerateAccesstoken.failed = true</code></td>
-      </tr>
-
-      <tr>
-        <td><code>[prefix].[policy_name].fault.name</code></td>
-
-        <td>The <code>[prefix]</code> is <code><strong>oauthV2</strong>.</code><br>
-        The <code>[policy_name]</code> is the name of the policy that threw the error.</td>
-
-        <td>
-          <p><code>oauthV2.GenerateAccesstoken.fault.name = invalid_request</code></p>
-
-          <p><strong>Note:</strong> For the VerifyAccessToken operation, the fault name includes
-          this suffix: <code>keymanagement.service</code> For example:
-          <code>keymanagement.service.invalid_access_token</code></p>
-        </td>
-      </tr>
-
-      <tr>
-        <td><code>[prefix].[policy_name].fault.cause</code></td>
-
-        <td>The <code>[prefix]</code> is <code><strong>oauthV2</strong>.</code><br>
-        The <code>[policy_name]</code> is the name of the policy that threw the error.</td>
-
-        <td><code>oauthV2.GenerateAccesstoken.cause = Required param : grant_type</code></td>
-      </tr>
-
-      <tr>
-        <td><code>fault.name = [error_name]</code></td>
-
-        <td><code>[error_name]</code> is the specific error name to check for as listed in the
-        table above.</td>
+        <td><var>fault_name</var> is the name of the fault, as listed in the <a href="#runtime-errors">Runtime errors</a> table above. The fault name is the last part of the fault code.</td>
 
         <td><code>fault.name = "invalid_request"</code></td>
       </tr>
+
+      <tr>
+        <td width="324"><code>oauthV2.<var>policy_name</var>.failed</code></td>
+
+        <td width="428"><var>policy_name</var> is the user-specified name of the policy that threw the fault.</td>
+
+        <td width="428"><code>oauthV2.GenerateAccesstoken.failed = true</code></td>
+      </tr>
+      <tr>
+        <td width="324"><code>oauthV2.<var>policy_name</var>.fault.name</code></td>
+
+        <td width="428"><var>policy_name</var> is the user-specified name of the policy that threw the fault.</td>
+
+        <td width="428"><code>oauthV2.GenerateAccesstoken.fault.name = invalid_request</code>
+          <p><strong>Note</strong>: For the VerifyAccessToken operation, the fault name includes this suffix: <code>keymanagement.service</code><br>
+            For example: <code>keymanagement.service.invalid_access_token</code></p></td>
+      </tr>
+      <tr>
+        <td width="324"><code>oauthV2.<var>policy_name</var>.fault.cause</code></td>
+
+        <td width="428"><var>policy_name</var> is the user-specified name of the policy that threw the fault.</td>
+
+        <td width="428"><code>oauthV2.GenerateAccesstoken.cause = Required param : grant_type</code></td>
+      </tr>
+
     </tbody>
   </table>
 
