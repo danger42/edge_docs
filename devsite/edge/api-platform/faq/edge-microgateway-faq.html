@@ -1,74 +1,134 @@
   {% extends "_base.html" %} {% block title %}Edge Microgateway FAQ{% endblock %} {% block body %}
 
-  <h2 id="generalquestions">General questions</h2>
+<h2 id="generalquestions">Getting started</h2>
 
-  <h3 id="generalquestions-howdoiobtainedgemicrogateway">How do I obtain Edge Microgateway?</h3>
 
-  <p>See <a href="/api-platform/microgateway/2.5.x/installing-edge-microgateway.html">Installing
-  Edge Microgateway</a>.</p>
 
-  <aside class="note"><b>Note:</b> Edge Microgateway ZIP files are no longer available. You must
-  use <code>npm</code> to download and install the software, as explained in the installation
-  guide.</aside>
-
-  <h3 id="generalquestions-howdoiinstalledgemicrogateway">How do I install Edge Microgateway</h3>
+  <h3 class="hide-from-toc" id="generalquestions-howdoiinstalledgemicrogateway">How do I install Edge Microgateway?</h3>
 
   <p>See <a href="/api-platform/microgateway/2.5.x/installing-edge-microgateway.html">Installing
   Edge Microgateway</a>.</p>
 
-  <h3 id="generalquestions-wherecanifinddocumentationforolderversionsofedgemicrogateway">Where can
-  I find documentation for older versions of Edge Microgateway?</h3>
+  <h3 class="hide-from-toc">How do I run Edge Microgateway?</h3>
 
-  <p>Previous versions of Edge Microgateway documentation are maintained right here, on the
-  <a href="https://apigee.com/docs">Apigee Edge doc site</a>. </p>
+  <p>See <a href="/api-platform/microgateway/2.5.x/setting-and-configuring-edge-microgateway.html">Setting up and configuring Edge Microgateway</a>.</p>
 
-  <h3 id="generalquestions-whatarethetypicalusecasesforedgemicrogateway">What are the typical use
-  cases for Edge Microgateway?</h3>
 
-  <p>See <a href="/api-platform/microgateway/2.5.x/overview-edge-microgateway.html">Overview of
-  Edge Microgateway</a>.</p>
 
-  <h3 id="generalquestions-whatenvironmentsaresupportedforedgemicrogateway">What environments are
-  supported for Edge Microgateway?</h3>
+  <h3 class="hide-from-toc" id="generalquestions-doineedanydatabasetorunmicrogateway">Do I need a database to run
+  Microgateway?</h3>
 
-  <p>See <a href="/api-platform/microgateway/2.5.x/overview-edge-microgateway.html">Overview of
-  Edge Microgateway</a>.</p>
+  <p>APIs proxied through Edge Microgateway may interact with a database running as part of a target
+  service. However, Edge Microgateway operates independently of any database or backend data
+  store.</p>
 
-  <h3 id="generalquestions-whatchangesonedgerequirearestartofedgemicrogateway">What changes on Edge
+
+<h2>Operation</h2>
+
+
+
+  <h3 class="hide-from-toc" id="generalquestions-whatchangesonedgerequirearestartofedgemicrogateway">What changes on Edge
   require a restart of Edge Microgateway?</h3>
 
-  <ul>
-    <li>If you add or remove an Edge Microgateway-aware proxy.</li>
+<p>Edge Microgateway automatically polls for changes made on Apigee Edge, such as changes to
+  microgateway-aware proxies, products, or developer
+  apps. The default polling interval is 600 seconds; however, you can change the interval with the
+  <code>config_change_poll_interval</code> configuration setting.
+  See <a href="/api-platform/microgateway/2.5.x/operation-and-configuration-reference-edge-microgateway#edgemicrogatewayconfigurationreference-edgemicroattributes">edgemicro attributes</a>.<p>
 
-    <li>If you change the basepath or target endpoint of an Edge Microgateway-aware proxy.</li>
+    If you do not want to wait for the polling interval, use the <code>edgemicro reload</code>
+    command to pick up the latest changes. See <a href="/api-platform/microgateway/2.5.x/cli-reference-edge-microgateway#reloading-the-microgateway-cluster">Reloading the microgateway cluster</a>.
 
-    <li>If you add or remove Products or Developer Apps from your Apigee Edge organization.</li>
-  </ul>
 
-  <h3 id="generalquestions-canideployedgemicrogatewayonsameserverwheremyapiisrunning">Can I deploy
-  Edge Microgateway on same server where my API is running?</h3>
+  <h3 class="hide-from-toc" id="generalquestions-howdoidifferentiatebetweenproxydeployedonedgevsproxyonmicrogateway">How
+  do I differentiate between a proxy deployed on Edge vs a proxy on Edge Microgateway?</h3>
 
-  <p>Yes. Edge Microgateway is a lightweight process that can run close to your API, including on
+  <p>When you configure Edge Microgateway, a list of microgateway-aware proxies deployed on Apigee
+  Edge is downloaded to the local configuration of Edge Microgateway. Microgateway-aware proxies
+  are ones named with the prefix <strong>edgemicro_</strong>.</p>
+
+
+
+
+<h3 class="hide-from-toc" id="generalquestions-whataremyoptionsforloggingwithedgemicrogateway">What are my options for
+  logging with Edge Microgateway?</h3>
+
+  <p>Edge Microgateway has a built-in logging feature. For details, see <a href=
+  "/api-platform/microgateway/2.5.x/operation-and-configuration-reference-edge-microgateway.html#managinglogfiles">
+  Managing log files</a>.</p>
+
+  <p>You can also write <a href=
+  "https://apigee.com/about/blog/developer/tutorial-adding-logger-plugin-apigee-edge-microgateway">a
+  custom plugin</a> to use a third-party logging service with Edge Microgateway. Because of the way Edge Microgateway works, you cannot use the
+  Apigee Edge <a href="/api-platform/reference/policies/message-logging-policy.html">Message
+  Logging policy</a> to log messages for Edge Microgateway.</p>
+
+<h3 class="hide-from-toc" id=
+  "testinganddebuggingquestions-canireusekeysecretcombinationsbetweeninstancesofedgemicrogateway">
+  Can I reuse key/secret combinations between instances of Edge Microgateway?</h3>
+
+  <p>As long as the organization and environment are same for the Microgateway instances, you can
+  reuse the key/secret pair that get generated during configuration.</p>
+
+
+  <h3 class="hide-from-toc" id="generalquestions-howdoiconfigureedgemicrogatewaytostartupinaproductionenvironment">How do
+  I configure Edge Microgateway to start up in a production environment</h3>
+
+  <p>You can set the environment variables for startup command parameters, such as <code>EDGEMICRO_KEY</code>,
+  <code>EDGEMICRO_SECRET</code>, <code>EDGEMICRO_ORG</code>, and <code>EDGEMICRO_ENV</code>.
+With these (and other) variables you can start
+  Edge Microgateway with the single command <strong>edgemicro start</strong>. See also <a href=
+  "/api-platform/microgateway/2.5.x/operation-and-configuration-reference-edge-microgateway.html#settingenvironmentvariables">
+  Setting environment variables</a>.</p>
+
+<h3 class="hide-from-toc" id="generalquestions-caniusecustomproductordeveloperappattributeswithedgemicrogateway">Can I
+  use custom product or developer app attributes with Edge Microgateway?</h3>
+
+  <p>No. By default, Edge Microgateway only acts on attributes related to basic routing and
+  security. However, as workarounds, you have this possible option:</p>
+
+  <ol>
+    <li>
+      <p>Add custom attributes to the edgemicro-auth proxy that Edge Microgateway deploys to Apigee
+      Edge. These attributes will be available when using API Key or OAuth token security.</p>
+    </li>
+
+    <li>
+      <p>Modify the OAuth plugin to act on those attributes.</p>
+    </li>
+  </ol>
+
+
+<h2>Deployment</h2>
+
+  <h3 class="hide-from-toc" id="generalquestions-canideployedgemicrogatewayonsameserverwheremyapiisrunning">Can I deploy
+  Edge Microgateway on the same server where my target service is running?</h3>
+
+  <p>Yes. Edge Microgateway is a lightweight process that can run close to your target service, including on
   the same machine.</p>
 
-  <h3 id=
-  "generalquestions-canideployanexistingproxybundlebothinedgecloudorprivatecloudandalsoasanedgemicrogatewaydeployment">
-  Can I deploy an existing proxy bundle both in Edge (Cloud or Private Cloud) and also as an Edge
-  Microgateway deployment?</h3>
 
-  <p>No. See "<a href=
+  <h3 class="hide-from-toc" id=
+  "generalquestions-canideployanexistingproxybundlebothinedgecloudorprivatecloudandalsoasanedgemicrogatewaydeployment">
+  Can I deploy an existing Edge proxy bundle as an Edge Microgateway deployment?</h3>
+
+
+  <p>No. Edge Microgateway-aware proxies have specific requirements and do not support all the features
+    of regular Edge proxies. See "<a href=
   "/api-platform/microgateway/2.5.x/setting-and-configuring-edge-microgateway.html#part2createentitiesonapigeeedge">Part
   2: Create entities on Apigee Edge</a>" </p>
 
-  <h3 id=
+
+  <h3 class="hide-from-toc" id=
   "generalquestions-isthereanyconfigurationtoenablefailoverbetweenanedgeproxybundledeploymentandedgemicrogatewaydeploymentforthesameapiproxy">
-  Is there any configuration to enable &#8216;failover&#8217; between an Edge proxy bundle
+  Can I enable failover between an Edge proxy bundle
   deployment and Edge Microgateway deployment for the same API Proxy?</h3>
 
   <p>No. Edge Microgateway does not know about non-microgateway API proxy deployments on Apigee
   Edge.</p>
 
-  <h3 id="generalquestions-whatisthehighavailabilitydeploymentmodelforedgemicrogateway">What is the
+
+  <h3 class="hide-from-toc" id="generalquestions-whatisthehighavailabilitydeploymentmodelforedgemicrogateway">What is the
   high availability deployment model for Edge Microgateway?</h3>
 
   <p>For a good discussion of how to run Edge Microgateway using NGINX as a load balancer, see
@@ -76,113 +136,136 @@
   "https://apigee.com/about/blog/developer/managing-apis-apigee-edge-microgateway-and-nginx">Managing
   APIs with Apigee Edge Microgateway and NGINX</a>.</p>
 
-  <h3 id="generalquestions-whichloadbalancerscaniusewithedgemicrogateway">Which load balancers can
+  <h3 class="hide-from-toc" id="generalquestions-whichloadbalancerscaniusewithedgemicrogateway">Which load balancers can
   I use with Edge Microgateway?</h3>
 
   <p>Edge Microgateway can work with any load balancer.  </p>
 
-  <h3 id="generalquestions-istherealimitonhowmanyproxiesicanmanage">Is there a limit on how many
-  proxies I can manage?</h3>
+  <h3 class="hide-from-toc" id="generalquestions-istherealimitonhowmanyproxiesicanmanage">Is there a limit on how many
+  Edge Microgateway proxies I can deploiy?</h3>
 
-  <p>There is no limit to the number of Microgateway-aware proxies you can deploy in an Apigee Edge
-  organization and environment and call through Edge Microgateway.</p>
+<p>Refer to the <a href="/api-platform/reference/limits">product configuration limits</a> specified for
+    regular Edge proxies. The number of microgateway-aware proxies you can deploy in an Apigee Edge
+  organization and environment and call through Edge Microgateway must conform to those same limits.</p>
 
-  <h3 id="generalquestions-doineedtobeanorgadministratortoconfigureanddeployedgemicrogateway">Do I
+
+ <h3 class="hide-from-toc" id="generalquestions-caniassociatetoaspecificorgorenvformyedgemicrogatewaydeployment">Can I
+  associate my Edge Microgateway deployment to a specific organization and environment?</h3>
+
+  <p>When you configure an instance of Edge Microgateway you must associate it with a specific Edge organization and environment.</p>
+
+  <h3 class="hide-from-toc" id=
+  "generalquestions-caniassociatetoaspecificregionifiamamultiregioncustomerformyedgemicrogatewaydeployment">
+  Can I associate my Edge Microgateway deployment to a specific region (if I am a multi-region customer)?</h3>
+
+  <p>Edge Microgateway automatically picks the best region for its interaction with Apigee Edge.
+  You can deploy Edge Microgateway instances in each region that you want to service.</p>
+
+
+
+<h2>Administration</h2>
+
+  <h3 class="hide-from-toc" id="generalquestions-doineedtobeanorgadministratortoconfigureanddeployedgemicrogateway">Do I
   need to be an org administrator to configure and deploy Edge Microgateway?</h3>
 
   <p>Yes. You need to have org admin credentials to configure and deploy Edge Microgateway.</p>
 
-  <h3 id="generalquestions-doineedtobeanorgadministratortorunedgemicrogateway">Do I need to be an
+  <h3 class="hide-from-toc" id="generalquestions-doineedtobeanorgadministratortorunedgemicrogateway">Do I need to be an
   org administrator to run Edge Microgateway?</h3>
 
   <p>No. Edge Microgateway is a Node.js application, and can be run by anyone with permission to
   run such applications on a given machine.</p>
 
-  <h3 id="generalquestions-cananyofmyorgusersuseedgemicrogateway">Can any of my &#8216;org&#8217;
+  <h3 class="hide-from-toc" id="generalquestions-cananyofmyorgusersuseedgemicrogateway">Can any of my organization
   users use Edge Microgateway?</h3>
 
   <p>You do not need to be an Apigee Edge organization user to make API calls through Edge
   Microgateway. However, you must have org-level permissions to create or change Edge Microgateway
   aware proxies that are deployed on Edge.</p>
 
-  <h3 id="generalquestions-whataretheperformanceconsiderationsforusingedgemicrogateway">What are
+
+
+
+<h2>Performance</h2>
+
+  <h3 class="hide-from-toc" id="generalquestions-whataretheperformanceconsiderationsforusingedgemicrogateway">What are
   the performance considerations for using Edge Microgateway?</h3>
 
   <p>If running Edge Microgateway collocated with the target application, be sure the server has
   sufficient capacity.</p>
 
-  <h3 id="generalquestions-caniassociatetoaspecificorgorenvformyedgemicrogatewaydeployment">Can I
-  associate to a specific org or env for my Edge Microgateway deployment?</h3>
+  <h3 class="hide-from-toc" id="generalquestions-whatarebestpracticesforrunningedgemicrogatewayatscale">What are best
+  practices for running Edge Microgateway at scale?</h3>
 
-  <p>When you configure an instance of Edge Microgateway you must associate it with a specific Edge
-  organization and environment.</p>
+  <p>Apigee recommends running multiple instances of Edge Microgateway on different servers fronted
+  by load balancers like <a href="https://www.nginx.com/resources/wiki/#">NGINX</a>. See also
+<a href=
+    "https://apigee.com/about/blog/developer/managing-apis-apigee-edge-microgateway-and-nginx">Managing
+    APIs with Apigee Edge Microgateway and NGINX</a> and <a href=
+    "https://community.apigee.com/questions/15116/apigee-edge-microgateway-vertical-and-horizontal-s.html">
+    Vertical horizontal scaling</a> on the Apigee Community.</p>
 
-  <h3 id=
-  "generalquestions-caniassociatetoaspecificregionifiamamultiregioncustomerformyedgemicrogatewaydeployment">
-  Can I associate to a specific region (if I am a multi-region customer) for my Edge Microgateway
-  deployment?</h3>
 
-  <p>Edge Microgateway automatically picks the best region for its interaction with Apigee Edge.
-  You can deploy Edge Microgateway instances in each region that you want to service.</p>
+ <h3 class="hide-from-toc" id=
+  "testinganddebuggingquestions-whataretheedgemicrogatewaytpsbydefaultwhatarehardwarerequirementsrequiredforamicrogatewayinstance">
+  What are the Edge Microgateway TPS by default &amp; what are Hardware Requirements required for a
+  Microgateway instance</h3>
 
-  <h3 id="generalquestions-doesedgemicrogatewayworkwithmyedgeforprivatecloud">Does Edge
-  Microgateway work with my Edge for Private Cloud?</h3>
+<p>Hardware requirements and TPS measurements are difficult to gauge with Edge Microgateway. It depends
+  on your setup, which is a combination of tuning Edge Microgateway, plugin usage, custom plugins,
+  and configuring other things like TLS. Apigee typically recommends that you get an idea of that
+  combination of items and do performance testing with your specific setup.</p>
+
+
+<h2>Private Cloud deployment</h2>
+
+  <h3 class="hide-from-toc" id="generalquestions-doesedgemicrogatewayworkwithmyedgeforprivatecloud">Does Edge
+  Microgateway work with Edge for Private Cloud?</h3>
 
   <p>Yes. For details, see <a href=
-  "/api-platform/microgateway/2.5.x/setting-and-configuring-edge-microgateway.html#part1settingupandconfiguringedgemicrogateway-apigeeprivatecloudconfigurationsteps">
+  "/api-platform/microgateway/2.5.x/setting-and-configuring-edge-microgateway.html#part1configureedgemicrogateway-apigeeprivatecloudconfigurationsteps">
   Apigee Private Cloud configuration steps</a>.</p>
 
-  <h3 id="generalquestions-howdoidifferentiatebetweenproxydeployedonedgevsproxyonmicrogateway">How
-  do I differentiate between proxy deployed on Edge vs proxy on Microgateway?</h3>
 
-  <p>When you configure Edge Microgateway, a list of microgateway-aware proxies deployed on Apigee
-  Edge are downloaded to the local configuration of Edge Microgateway. Microgateway-aware proxies
-  are ones named with the prefix <strong>edgemicro_</strong>.</p>
+<h2>Plugins</h2>
 
-  <h3 id="generalquestions-doineedanydatabasetorunmicrogateway">Do I need any database to run
-  Microgateway?</h3>
-
-  <p>APIs proxied through Edge Microgateway may interact with database running as part of a target
-  service. However, Edge Microgateway operates independently of any database or backend data
-  store.</p>
-
-  <h3 id="generalquestions-howisquotaenforcedwithedgemicrogateway">How is Quota enforced with Edge
+  <h3 class="hide-from-toc" id="generalquestions-howisquotaenforcedwithedgemicrogateway">How is Quota enforced with Edge
   Microgateway?</h3>
 
   <p>You can optionally add a quota plugin to your instance of Edge Microgateway. For details see
   <a href="/api-platform/microgateway/2.5.x/use-plugins.html#usingthequotaplugin">Using the quota
-  plugin</a> in the documentation.</p>
+  plugin</a>.</p>
 
-  <h3 id="generalquestions-howisspikearrestenforcedwithedgemicrogateway">How is Spike Arrest
+  <h3 class="hide-from-toc" id="generalquestions-howisspikearrestenforcedwithedgemicrogateway">How is Spike Arrest
   enforced with Edge Microgateway?</h3>
 
   <p>You can optionally add a spike arrest plugin to your instance of Edge Microgateway. For
   details see <a href=
   "/api-platform/microgateway/2.5.x/use-plugins.html#usingthespikearrestplugin">Using the spike
-  arrest plugin</a> in the documentation.</p>
+  arrest plugin</a>.</p>
 
-  <h3 id="generalquestions-arethereotherwaystowritepluginsotherthannodejsforedgemicrogateway">Are
+  <h3 class="hide-from-toc" id="generalquestions-arethereotherwaystowritepluginsotherthannodejsforedgemicrogateway">Are
   there other ways to write plugins other than Node.js for Edge Microgateway?</h3>
 
   <p>No. Plugins must be written in Node.js.</p>
 
-  <h3 id="generalquestions-whathappenswhenedgemicrogatewayisnotabletouploadanalyticsdatatoedge">
+  <h3 class="hide-from-toc" id="generalquestions-whathappenswhenedgemicrogatewayisnotabletouploadanalyticsdatatoedge">
   What happens when Edge Microgateway is not able to upload Analytics data to Edge?</h3>
 
   <p>Edge Microgateway has an in-memory buffer. If the buffer fills up, older payloads are dropped
   to let API traffic flow smoothly.</p>
 
-  <h3 id="generalquestions-caniaddpoliciestoedgemicrogateway">Can I add policies to Edge
+  <h3 class="hide-from-toc" id="generalquestions-caniaddpoliciestoedgemicrogateway">Can I add policies to Edge
   Microgateway?</h3>
 
-  <p>Edge Microgateway plugins serve a function similar as policies in Apigee Edge. You can add
-  functionality by using existing plugins or writing custom ones.</p>
+<p>If you attach regular Apigee Edge policies to "microgateway-aware"
+  proxies in Apigee Edge, they are ignored. Instead, Edge Microgateway uses <strong>plugins</strong> to provide functionality
+  similar to policies in Edge, such as quota, spike arrest, API key security, and OAuth2 security. You can add
+also write custom plugins. See <a href="/api-platform/microgateway/2.5.x/use-plugins.html">Use plugins</a> and
+  <a href ="/api-platform/microgateway/2.5.x/develop-custom-plugins">Develop custom plugins</a>.
 
-  
-
-  <h4>See also</h4>
-
-  <p>These Apigee Community posts and blogs discuss additional plugin use cases:</p>
+  <p>These Apigee Community posts and
+    blogs discuss additional plugin use cases:</p>
 
   <ul>
     <li>
@@ -210,103 +293,216 @@
     </li>
   </ul>
 
-  <h3 id="generalquestions-whataremyoptionsforloggingwithedgemicrogateway">What are my options for
-  logging with Edge Microgateway?</h3>
 
-  <p>Edge Microgateway has a built-in logging feature. For details, see <a href=
-  "/api-platform/microgateway/2.5.x/operation-and-configuration-reference-edge-microgateway.html#managinglogfiles">
-  Managing log files</a> in the Edge Microgateway docs.</p>
 
-  <p>You can also write <a href=
-  "https://apigee.com/about/blog/developer/tutorial-adding-logger-plugin-apigee-edge-microgateway">a
-  custom plugin</a> to use a third-party logging service with Edge Microgateway.</p>
 
-  <aside class="note"><b>Note:</b> Because of the way Edge Microgateway works, you cannot use the
-  Apigee Edge <a href="/api-platform/reference/policies/message-logging-policy.html">Message
-  Logging policy</a> to log messages for Edge Microgateway.</aside>
+  <h2 id="securityquestions">Security</h2>
 
-  <h3 id="generalquestions-howdoiconfigureedgemicrogatewaytostartupinaproductionenvironment">How do
-  I configure Edge Microgateway to start up in a production environment</h3>
 
-  <p>You can set the environment variables <code>EDGEMICRO_KEY</code> and
-  <code>EDGEMICRO_SECRET</code> to the key/secret pair required by the Microgateway startup
-  command.</p>
+<h3 class="hide-from-toc" id="how-do-i-protect-the-products-resource">How do I protect the <code>/products</code> resource?</h3>
 
-  <aside class="note"><b>Note:</b> In version 2.0 two more environment variables were added:
-  <code>EDGEMICRO_ORG</code> and <code>EDGEMICRO_ENV</code>. With these variables you can start
-  Edge Microgateway with the single command <strong>edgemicro start</strong>. See also <a href=
-  "/api-platform/microgateway/2.5.x/operation-and-configuration-reference-edge-microgateway.html#settingenvironmentvariables">
-  Setting environment variables</a>. </aside>
+<aside class="note">If you installed Edge Microgateway on or before October 5, 2018, Apigee recommends
+  that you consider performing the steps in this section to protect the <code>/products</code> endpoint
+  of the <strong>edgemicro-auth</strong> proxy.</aside>
 
-  <h4>See also</h4>
+<h4>Overview</h4>
+
+<p>When you <a href="/api-platform/microgateway/2.5.x/setting-and-configuring-edge-microgateway#Part1">configure Edge Microgateway</a>,
+  an API proxy called <strong>edgemicro-auth</strong> is deployed
+  to your organization:environment on Apigee Edge. This proxy exposes a <code>/products</code> endpoint that returns a
+  list of API Products. If you installed Edge Microgateway on or before October 5, 2018, Apigee recommends
+  that you take steps to protect this endpoint, because the response
+  contains the email address of the developer who created and modified the API Products in your Apigee
+  organization. </p>
+
+  <p>You can protect the endpoint by upgrading Edge Microgateway or by configuring Mutual TLS. Both
+    of these options are described below.</p>
+
+<h4>Check if the <code>/products</code> endpoint is protected</h4>
+
+<p>If you are unsure whether the <code>/products</code> endpoint is protected, go to the section
+    <a href="#verifytheresourceisprotected">Verify that the <code>/products</code> resource is protected</a> and do the steps there
+  before continuing.</p>
+
+<h4 class="hide-from-toc" id="upgradeedgemicrogateway">Option 1: Upgrade Edge Microgateway</h4>
+
+
+<p>
+If you installed Edge Microgateway on or before October 5, 2018, Apigee recommends that you upgrade to the
+  latest version of Edge Microgateway. Follow the steps in <a href="/api-platform/microgateway/2.5.x/operation-and-configuration-reference-edge-microgateway#upgrading-edge-microgateway-if-you-have-an-internet-connection"> Upgrading Edge Microgateway if you have an internet connection</a>.<p>
+<p>If you are unable to upgrade at this time, go to Option 2.</p>
+
+
+
+<h4 class="hide-from-toc" id="configuremutualtls">Option 2: Configure Mutual TLS</h4>
+
+<p>If you are unable to upgrade Edge Microgateway at this time, Apigee <strong>recommends</strong> that you protect the
+  communication between Edge Microgateway and the <strong>edgemicro-auth</strong> proxy with mutual
+  TLS (also known as two-way TLS).
+</p>
+
+<ol>
+  <li>Open the file <code>$HOME/.edgemicro/<var>org</var>-<var>env</var>-config.yaml</code>. See <a href=
+    "/api-platform/microgateway/2.5.x/installing-edge-microgateway.html#whereisedgemicrogatewayinstalled">
+    Where is Edge Microgateway installed</a> if you can't locate this file.</li>
+  <li>Add the following <code>tlsOptions</code> block to the
+    <code><var>org</var>-<var>env</var>-config.yaml</code> file to enable mutual TLS between
+  Edge Microgateway and Apigee Edge:
+
+    <aside class="note">You must set <strong>requestCert</strong> to <strong>true</strong> for this
+  property to be enabled.</aside>
+
+<pre class="prettyprint">edge_config:
+  bootstrap: >-
+    https://domain/edgemicro/bootstrap/organization/org/environment/env
+  jwt_public_key: 'https://domain/edgemicro-auth/publicKey'
+  managementUri: 'https://api.enterprise.apigee.com'
+  <strong>tlsOptions:
+    agentOptions:
+      requestCert: true
+      cert: '<var>path/to/cert</var>'
+      key: '<var>path/to/key</var>'</strong>
+</pre>
+
+<p>For example:</p>
+<pre class="prettyprint">
+tlsOptions:
+  agentOptions:
+    requestCert: true
+    cert: '/Users/jdoe/twowayssl/ssl/client.key'
+    key: '/Users/jdoe/twowayssl/ssl/ca.crt'</pre>
+
+<p>
+  You can also include the following optional <code>agentOptions</code> parameters:
+</p><ul>
+
+<li><code>ca</code>: Specifies the path to certificate authority.
+<li><code>pfx</code>: Include if you wish to use a p12/pfx file instead of cert and key.
+<li><code>passphrase</code>: The passphrase for a pfx file.
+<li><code>ciphers</code>: Specifies TLS ciphers.</li></ul>
+  </li>
+
+  <li>Ensure the virtual host to which the <strong>edgemicro-auth</strong> proxy is deployed has mutual TLS enabled.
+  For details, see <a href="https://docs.apigee.com/api-platform/fundamentals/configuring-virtual-hosts-cloud#definingavirtualhostfortwowaytls">Defining a virtual host for two-way TLS</a>
+    in the Apigee Edge documentation.
+
+    <p>The following screenshot shows how to enable mutual TLS on a virtual host in the Apigee Edge UI:</p>
+
+  <img src="/api-platform/images/emg-mutual-tls-enabled.png" width="80%" alt="" title="" class="screenshot">
+</li>
+
+  <li>Look at the <strong>edgemicro-auth</strong> API proxy in the Edge UI, and ensure that the
+    correct virtual host is specified in the proxy config. For example, if you created a TLS-enabled
+    virtual host called <code>mutualtls</code>, the proxy's <code>HTTPProxyConnection</code> stanza
+should look like this:
+<p>
+
+<pre class="prettyprint">
+&lt;HTTPProxyConnection&gt;
+    &lt;BasePath&gt;/edgemicro-auth&lt;/BasePath&gt;
+    &lt;Properties/&gt;
+    &lt;VirtualHost&gt;mutualtls&lt;/VirtualHost&gt;
+&lt;/HTTPProxyConnection&gt;
+</pre>
+
+</p></li></ol>
+
+
+<h4 class="hide-from-toc" id="verifytheresourceisprotected">Verify that the <code>/products</code> resource is protected</h4>
+
+<p>
+  This section explains how to test to check if the <code>/products</code>
+  resource is protected. It's important to perform this test after you have completed the steps
+  (Option 1 or Option 2) to protect the resource. You can do this with cURL, for example:
+</p>
+
+<pre class="devsite-terminal">curl -v https://<var>your_domain</var>/edgemicro-auth/products</pre>
+
+<aside class="note">If you are using Edge Private Cloud, use the router IP. If you have a custom domain, then
+  use your custom domain name (for example: api.companyname.com).
+</aside>
+<p>
+  If you see a response like one of the following, the <code>/products</code> endpoint is protected:
+</p>
+
+<pre class="prettyprint">{
+  "error":"unauthorized",
+  "error_description": "authentication failed"
+}</pre>
+
+<p>
+OR
+</p>
+
+<pre class="prettyprint">curl: (35) error:1408F10B:SSL routines:ssl3_get_record:wrong version number</pre>
+
+<p>
+  If you see a response that looks like this, then the <code>/products</code> resource is unprotected
+  and developer emails can be exposed:
+</p>
+
+<pre class="prettyprint">
+{
+   "apiProduct":[
+      {
+         "apiResources":[
+            "/",
+            "/**"
+         ],
+         "approvalType":"auto",
+         "attributes":[
+
+         ],
+         "createdAt":1537374680948,
+         "createdBy":"jdoe@foo.com",
+         "description":"",
+         "displayName":"mock",
+         "environments":[
+            "test"
+         ],
+         "lastModifiedAt":1537374680948,
+         "lastModifiedBy":"test@test.com",
+         "name":"mock",
+         "proxies":[
+            "edgemicro-auth",
+            "edgemicro_mock"
+         ],
+         "quota":"null",
+         "quotaInterval":"null",
+         "quotaTimeUnit":"null",
+         "scopes":[
+            ""
+         ]
+      }
+   ]
+}</pre>
+
+<p>Apigee also recommendeds that you test the HTTP virtual host:</p>
+
+<p>For example:</p>
+
+<pre class="devsite-terminal">curl -v http://<var>your_domain</var>/edgemicro-auth/products</pre>
+
+<p>If the cURL call returns the list of API Products, then it's possible that developer emails are
+exposed. If you do not wish to expose the endpoint with this non-TLS virtual host, be sure to remove it from the
+<strong>edgemicro-auth</strong> HTTPProxyConnection configuration.</p>
+
+
+<p>
+  To protect the resource do <strong>one</strong> of the following options:
 
   <ul>
-    <li>
-      <p><a href=
-      "https://community.apigee.com/questions/15116/apigee-edge-microgateway-vertical-and-horizontal-s.html">
-      Apigee Edge Microgateway Vertical and Horizontal scaling for 1000 TPS and beyond</a> on the
-      Apigee Community</p>
-    </li>
-  </ul>
+    <li><a href="#upgradeedgemicrogateway">Option 1: Upgrade Edge Microgateway</a>.
+    <li><a href="#configuremutualtls">Option 2: Configure Mutual TLS</a>.</li>
+</ul>
 
-  <h3 id="generalquestions-whatarebestpracticesforrunningedgemicrogatewayatscale">What are best
-  practices for running Edge Microgateway at scale?</h3>
 
-  <p>Apigee recommends running multiple instances of Edge Microgateway on different servers fronted
-  by load balancers like <a href="https://www.nginx.com/resources/wiki/#">NGINX</a>.</p>
 
-  <h4>See also</h4>
 
-  <ul>
-    <li><a href=
-    "https://apigee.com/about/blog/developer/managing-apis-apigee-edge-microgateway-and-nginx">Managing
-    APIs with Apigee Edge Microgateway and NGINX</a></li>
 
-    <li><a href=
-    "https://community.apigee.com/questions/15116/apigee-edge-microgateway-vertical-and-horizontal-s.html">
-    This post</a> on the Apigee Community.</li>
-  </ul>
 
-  <h3 id="generalquestions-caniusecustomproductordeveloperappattributeswithedgemicrogateway">Can I
-  use custom product or developer app attributes with Edge Microgateway?</h3>
 
-  <p>No. By default, Edge Microgateway only acts on attributes related to basic routing and
-  security. However, as workarounds, you have these possible options:</p>
-
-  <ol>
-    <li>
-      <p>Add custom attributes to the edgemicro-auth proxy that Edge Microgateway deploys to Apigee
-      Edge. These attributes will be available when using API Key or OAuth token security.</p>
-    </li>
-
-    <li>
-      <p>Modify oauth plugin to act on those attributes.</p>
-    </li>
-  </ol>
-
-  <h2 id="businessandlicensingquestions">Business and licensing questions</h2>
-
-  <h3 id=
-  "businessandlicensingquestions-whatistherelationshipbetweenapigee127andedgemicrogatewaysupportmodels">
-  What is the relationship between Apigee-127 and Edge Microgateway support models?</h3>
-
-  <p>Apigee-127 is an open source software project that is supported in the open source model. That
-  is, you can raise issues in the GitHub project and make a pull request if you attempt to fix
-  something. Apigee-127 does not require or include any Software Licenses Agreements with
-  Apigee.</p>
-
-  <p>Edge Microgateway, on the other hand, is an Enterprise product that is supported by Apigee for
-  Apigee customers. That is, Apigee customers can create support tickets, feature requests, and bug
-  reports using the <a href="https://apigee.com/about/support/portal">Apigee Support
-  portal</a>.</p>
-
-  <p>Note: Edge Microgateway is not in any way based on Apigee-127. They are completely different
-  projects with different goals. The only similarity is that both are implemented in Node.js. You
-  must not assume any other commonality.</p>
-
-  <h2 id="securityquestions">Security questions</h2>
-
-  <h3 id="securityquestions-howcanirenewanexpiredaccesstoken">How can I renew an expired access
+  <h3 class="hide-from-toc" id="securityquestions-howcanirenewanexpiredaccesstoken">How can I renew an expired access
   token?</h3>
 
   <p>Currently, you cannot renew the JWT token for a given Edge Microgateway instance.</p>
@@ -335,7 +531,7 @@
   the process for renewing bearer tokens when they expire</a>" on the Apigee Community.
     </p>
 
-  <h3 id="securityquestions-configuringsslonwindows">Configuring SSL on Windows</h3>
+  <h3 class="hide-from-toc" id="securityquestions-configuringsslonwindows">Configuring SSL on Windows</h3>
 
   <p>If you are running Edge Microgateway on Windows, <a href=
   "https://www.openssl.org/">OpenSSL</a> must be installed on the machine and added to the PATH.
@@ -343,7 +539,7 @@
   "https://www.openssl.org/docs/">OpenSSL documentation</a> for information about downloading and
   installing OpenSSL.</p>
 
-  <h3 id=
+  <h3 class="hide-from-toc" id=
   "securityquestions-caniwhitelistapiresourcesusingtheapiproductassociatedwithanedgemicroawareproxy">
   Can I white-list API resources using the API product associated with an Edge Micro-aware
   proxy?</h3>
@@ -362,17 +558,12 @@
   <strong>edgemicro_*</strong> proxy that is approved for list of products approved for that key or
   token.</p>
 
-  <p>See also</p>
-
-  <ul>
-    <li>
-      <p><a href=
+  <p>See also <a href=
       "https://community.apigee.com/questions/15626/when-using-the-edgemicro-gateway-in-the-products-w.html">
-      This post on the Apigee Community</a></p>
-    </li>
-  </ul>
+      this post on whitelisting on the Apigee Community</a>.</p>
 
-  <h3 id="securityquestions-caniusecustomsslcertificateswithedgemicrogateway">Can I use custom SSL
+
+  <h3 class="hide-from-toc" id="securityquestions-caniusecustomsslcertificateswithedgemicrogateway">Can I use custom SSL
   certificates with Edge Microgateway?</h3>
 
   <p>Only the <a href="/api-platform/system-administration/using-ssl-edge.html">default Apigee SSL
@@ -394,39 +585,30 @@
     </li>
   </ul>
 
-  <p><strong>Note:</strong> Also be sure you are using the supported version of Node.js for your
+  <aside class="note">Also be sure you are using the supported version of Node.js for your
   version of Edge Microgateway. See <a href=
   "/api-platform/microgateway/2.5.x/installing-edge-microgateway.html#prerequisites">Prerequisites</a>
-  in the Install doc for Edge Microgateway.</p>
+  in the Install doc for Edge Microgateway.</aside>
 
-  <h4>See also</h4>
-
-  <ul>
-    <li><a href=
+  <p>See also <a href=
     "https://community.apigee.com/questions/14877/verify-edge-micro-install-errors-on-ssl-cert.html">
-    Verify Edge Micro install errors on SSL cert</a> on the Apigee Community.</li>
-  </ul>
+    Verify Edge Micro install errors on SSL cert</a> on the Apigee Community.</p>
 
-  <h3 id="securityquestions-caniavoidusingorgadminaccountswithedgemicrogateway">Can I avoid using
+
+  <h3 class="hide-from-toc" id="securityquestions-caniavoidusingorgadminaccountswithedgemicrogateway">Can I avoid using
   Org Admin accounts with Edge Microgateway?</h3>
 
   <p>The Edge Microgateway configuration script deploys an edgemicro-auth proxy to Edge, and this
   deployment requires Org Admin credentials.</p>
 
   <p>However, after this initial deployment, you should be able to do the remaining setup and
-  configuration without needed Org Admin credentials.</p>
-
-  <h4>See also</h4>
-
-  <ul>
-    <li>
-      <p><a href=
+  configuration without needing Org Admin credentials. See also this community post on <a href=
       "https://community.apigee.com/questions/17901/do-you-guys-have-any-guidance-on-how-to-set-up-an.html">
-      This Apigee Community post</a>.</p>
-    </li>
-  </ul>
+      org admin credentials</a>.</p>
 
-  <h3 id="securityquestions-caniusemyownoauthtokenwithedgemicrogateway">Can I use my own OAuth
+
+
+  <h3 class="hide-from-toc" id="securityquestions-caniusemyownoauthtokenwithedgemicrogateway">Can I use my own OAuth
   token with Edge Microgateway?</h3>
 
   <p>You can use your own token, but first, you must turn off the built-in authorization for Edge
@@ -439,15 +621,17 @@
 
     <li>
       <p>Change the two oauth settings to true, as follows:</p>
-    </li>
-  </ol>
-  <pre class="prettyprint">
+
+<pre class="prettyprint">
 oauth:
     allowNoAuthorization: true
     allowInvalidAuthorization: true
 </pre>
+    </li>
+  </ol>
 
-  <h3 id="securityquestions-iamgettinganaccessdeniederrorwhenstartingedgemicrogateway">I am getting
+
+  <h3 class="hide-from-toc" id="securityquestions-iamgettinganaccessdeniederrorwhenstartingedgemicrogateway">I am getting
   an access denied error when starting Edge Microgateway</h3>
 
   <p>If you get an access denied error when starting Edge Microgateway with this command:</p>
@@ -455,11 +639,11 @@ oauth:
   <p><code>edgemicro start -o [org] -e [env] -k [key] -s [secret]</code></p>
 
   <p>It is possible the key and secret are not valid for some reason. The best thing to do is
-  regenerate the key and secret with the <a href="">edgemicro genkeys command</a>.</p>
+  regenerate the key and secret with the <a href="/api-platform/microgateway/2.5.x/cli-reference-edge-microgateway#generating-keys">edgemicro genkeys command</a>.</p>
 
-  <h2 id="testinganddebuggingquestions">Testing and debugging questions</h2>
+  <h2 id="testinganddebuggingquestions">Testing and debugging</h2>
 
-  <h3 id="testinganddebuggingquestions-howdoipreventtoomanyfileopenerrorsduringloadtesting">How do
+  <h3 class="hide-from-toc" id="testinganddebuggingquestions-howdoipreventtoomanyfileopenerrorsduringloadtesting">How do
   I prevent "too many file open" errors during load testing?</h3>
 
   <p>In some cases, your system may run into a situation where too many open file connections, and
@@ -467,20 +651,16 @@ oauth:
   incoming and outgoing transactions through the Microgateway.</p>
 
   <p>For testing and benchmarking purposes, Apigee recommends setting your system's ulimit command
-  to unlimited: <code>ulimit -n unlimited</code></p>
-
-  <h4>See also</h4>
-
-  <p><a href=
+  to unlimited: <code>ulimit -n unlimited</code>. See also <a href=
   "https://community.apigee.com/questions/15162/edge-microgateway-error-during-load-testing.html">Edge
-  Microgateway error during load testing</a> on the Apigee Community</p>
+  Microgateway error during load testing</a> on the Apigee Community.</p>
 
-  <h3 id="testinganddebuggingquestions-tipsforrapiddevelopmentanddebugging">Tips for rapid
+
+  <h3 class="hide-from-toc" id="testinganddebuggingquestions-tipsforrapiddevelopmentanddebugging">Tips for rapid
   development and debugging</h3>
 
   <p>If you are developing plugins for Edge Microgateway, you may find that support for rapid
-  development is limited. Apigee plans to add pluggable debugging and other features in the future
-  to help with this.</p>
+  development is limited.</p>
 
   <p>For now, here are some tips:</p>
 
@@ -500,18 +680,31 @@ oauth:
     </li>
   </ul>
 
-  <h3 id=
-  "testinganddebuggingquestions-canireusekeysecretcombinationsbetweeninstancesofedgemicrogateway">
-  Can I reuse key/secret combinations between instances of Edge Microgateway?</h3>
 
-  <p>As long as the organization and environment are same for the Microgateway instances, you can
-  reuse the key/secret pair that get generated during configuration.</p>
 
-  <h3 id=
-  "testinganddebuggingquestions-whataretheedgemicrogatewaytpsbydefaultwhatarehardwarerequirementsrequiredforamicrogatewayinstance">
-  What are the Edge Microgateway TPS by default &amp; what are Hardware Requirements required for a
-  Microgateway instance</h3>
 
-  <p>Please refer to <a href=
-  "https://community.apigee.com/questions/40062/what-are-the-microgateway-tps-by-default-what-are.html">
-  this post</a> in the Apigee Community. </p>{% endblock %}
+
+
+
+<h2 id="businessandlicensingquestions">Business and licensing</h2>
+
+  <h3 class="hide-from-toc" id=
+  "businessandlicensingquestions-whatistherelationshipbetweenapigee127andedgemicrogatewaysupportmodels">
+  What is the relationship between Apigee-127 and Edge Microgateway support models?</h3>
+
+<p><a href="https://github.com/apigee-127">Apigee-127</a> is an open source software project that is supported in the open source model. That
+  is, you can raise issues in the GitHub project and make a pull request if you attempt to fix
+  something. Apigee-127 does not require or include any Software Licenses Agreements with
+  Apigee.</p>
+
+  <p>Edge Microgateway, on the other hand, is an Enterprise product that is supported by Apigee for
+  Apigee customers. That is, Apigee customers can create support tickets, feature requests, and bug
+  reports using the <a href="https://apigee.com/about/support/portal">Apigee Support
+  portal</a>.</p>
+
+  <p>Note: Edge Microgateway is not in any way based on Apigee-127. They are completely different
+  projects with different goals. The only similarity is that both are implemented in Node.js. You
+  must not assume any other commonality.</p>
+
+
+{% endblock %}

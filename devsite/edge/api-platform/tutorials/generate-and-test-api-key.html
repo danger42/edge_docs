@@ -1,0 +1,380 @@
+  {% extends "_base.html" %} {% block title %}Part 2: Generate and test an API key{% endblock %} {% block body %}
+
+  <p><span style="color:#ff0000;">Refactored and redirected to <a href=
+  "/api-platform/tutorials/secure-calls-your-api-through-api-key-validation.html">Secure an API by
+  requiring API keys</a>.</span></p>
+
+  <p>A <em>developer</em> builds an <em>app</em> that makes requests to your <em>APIs</em> to
+  access your backend services. To control access to your APIs, you can require the developer to
+  pass an API key on every request. If the key is missing or invalid, the request fails.</p>
+
+  <p><em>Publishing</em> is the process of making your APIs available to app developers for
+  consumption. Publishing APIs can be broadly defined by the following tasks:</p>
+
+  <ol>
+    <li>Create the API products on Apigee Edge that bundle your APIs.</li>
+
+    <li>Register app developers on Edge. Only a registered app developer can register an app.</li>
+
+    <li>Developers register apps on Edge to access API products. In response, the developer
+    receives an API key. Now that the developer has an API key, they can make requests to your
+    APIs.</li>
+  </ol>
+
+  <p>For more, see <a href="/api-platform/publish/publishing-overview.html">Introduction to
+  publishing</a>.</p>
+
+  <p>The following table defines some of the terms used to register apps and generate keys:</p>
+
+  <table>
+    <colgroup>
+      <col width="33%">
+      <col width="67%">
+    </colgroup>
+
+    <thead>
+      <tr>
+        <th>Term</th>
+
+        <th>Definition</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td><strong>API product</strong></td>
+
+        <td>A bundle of API proxies combined with a service plan that sets limits on access to
+        those APIs. API products are the central mechanism that Apigee Edge uses for authorization
+        and access control to your APIs.</td>
+      </tr>
+    </tbody>
+
+    <tbody>
+      <tr>
+        <td><strong>Developer</strong></td>
+
+        <td>The API consumer. Developers write apps that make requests to your APIs.</td>
+      </tr>
+
+      <tr>
+        <td><strong>App</strong></td>
+
+        <td>A client-side app that a developer registers to access an API product. Registering the
+        app with the API product generates the API key for accessing the APIs in that product.</td>
+      </tr>
+    </tbody>
+
+    <tbody>
+      <tr>
+        <td><strong>API key</strong></td>
+
+        <td>A string with authorization information that a client-side app uses to access the
+        resources exposed by the API product. The API key is generated when a registered app is
+        associated with an API product.</td>
+      </tr>
+    </tbody>
+  </table><br>
+
+  <h2 id="prerequisitesforthistutorial">Prerequisites for this tutorial</h2>
+
+  <p>This tutorial assumes that you have completed the first tutorial, where you create an API
+  proxy to access the Yahoo weather API. If you have not yet completed the first tutorial, see
+  <a href="/api-platform/tutorials/secure-calls-your-api-through-api-key-validation.html">Secure an
+  API by requiring API keys</a>.</p>
+
+  <h2 id="createproduct"><a name="step5" id="step5"></a>Step 1: Create an API product</h2>
+
+  <ol>
+    <li>In the management UI, click the <strong>Publish</strong> tab, then
+    <strong>Products</strong>.</li>
+
+    <li>Click <strong>(+) Product</strong>.</li>
+
+    <li>Enter or select the following in the Add Product dialog fields:
+
+      <table>
+        <colgroup>
+          <col width="33%">
+          <col width="67%">
+        </colgroup>
+
+        <thead>
+          <tr>
+            <th>Field</th>
+
+            <th>Value</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr>
+            <td>Name</td>
+
+            <td>Free API Product</td>
+          </tr>
+
+          <tr>
+            <td>Display Name</td>
+
+            <td>Free API Product</td>
+          </tr>
+        </tbody>
+
+        <tbody>
+          <tr>
+            <td>Description</td>
+
+            <td>Free API Product</td>
+          </tr>
+        </tbody>
+
+        <tbody>
+          <tr>
+            <td>Environment</td>
+
+            <td>test</td>
+          </tr>
+        </tbody>
+
+        <tbody>
+          <tr>
+            <td>Access</td>
+
+            <td>Internal only</td>
+          </tr>
+        </tbody>
+
+        <tbody>
+          <tr>
+            <td>Key approval type</td>
+
+            <td>Automatic<br>
+            (the API key is automatically approved after it has been generated)</td>
+          </tr>
+        </tbody>
+
+        <tbody>
+          <tr>
+            <td>Quota</td>
+
+            <td>10 requests per 1 hour<br>
+            (limits the number of requests to 10 per hour)</td>
+          </tr>
+
+          <tr>
+            <td>Allowed OAuth Scopes</td>
+
+            <td>leave blank</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p>The filled-in dialog should look like this:</p>
+
+      <p><img alt="" src="/api-platform/images/weatherApiKeyNewProduct_v2.png"></p>
+    </li>
+
+    <li>In the Resources section, choose:
+
+      <ul>
+        <li><strong>API Proxy</strong>: <em>weatherapikey</em></li>
+
+        <li><strong>Revision</strong>: 1</li>
+
+        <li><strong>Resource Path</strong>: /forecastrss**<br>
+        <br>
+        The <strong>Resource Path</strong> specifies the resource URIs that the product allows
+        an app to access. In this example, an app can only access the <em>/forecastrss</em>
+        resource on the <em>weatherapikey</em> proxy through this API product. Trying to use this
+        API product to access any other resource on the <em>weatherapiproxy</em> proxy, or on
+        any other proxy, is forbidden.<br>
+        <br>
+        Wildcard characters are allowed for the <strong>Resource Path</strong>. The wildcard "/**"
+        indicates that all sub-URIs are included, meaning a resource in the form
+        <em>/forecastrss/foo/bar</em>. The wildcard "/" indicates that only URIs one level down are
+        included.  See <a href="/api-platform/publish/create-api-products.html">Create API
+        products</a> for more.<br>
+        <br>
+        Note that the <strong>Resource Path</strong> dropdown list shows all of the conditional
+        flows defined on the specified API proxy. An API proxy's conditional flow defines the
+        logic, or processing steps, associated with a resource path. An API product controls access
+        to those resource paths.<br>
+        <img alt="" src="/api-platform/images/weatherApiKeyNewProduct2_v2.png"></li>
+      </ul>
+    </li>
+
+    <li>Click <strong>Import Resource</strong>. The resource path is added, and the
+    <em>weatherapikey</em> API proxy is automatically added to the <strong>API Proxies for
+    Product</strong> section.</li>
+
+    <li>Click <strong>Save</strong>. Your new product is listed on the Products page.</li>
+  </ol>
+
+  <p><strong>Learn more:</strong></p>
+
+  <ul>
+    <li><a href="/api-platform/publish/create-api-products.html">Create API products</a></li>
+  </ul>
+
+  <h2 id="registerdev"><a name="step4" id="step4"></a>Step 2: Register a developer</h2>
+
+  <p>To generate an API key, you register an app and associate it with an API product. However, you
+  can't register an app without first registering the developer of the app.</p>
+
+  <aside class="note"><b>Note:</b> If you have a public API product that developers can sign up for
+  through a portal, developers can register themselves. However, for the purposes of the tutorial,
+  you don't have a developer portal. Instead, register a developer directly in the Edge management
+  UI. See <a href="/api-platform/publish/drupal/what-developer-portal.html">What is a developer
+  portal?</a> for more.</aside>
+
+  <ol>
+    <li>In the management UI, click the <strong>Publish</strong> tab, then
+    <strong>Developers</strong>.</li>
+
+    <li>Click <strong>(+) Developer</strong>.</li>
+
+    <li>In the New Developer dialog, enter the following values:
+
+      <ul>
+        <li><strong>First Name</strong>: <span style=
+        "font-family:courier new,courier,monospace;">Jane</span></li>
+
+        <li><strong>Last Name</strong>: <span style=
+        "font-family:courier new,courier,monospace;">Tutorial</span></li>
+
+        <li><strong>Email address</strong>: <span style=
+        "font-family:courier new,courier,monospace;">janetutorial@example.com</span></li>
+
+        <li><strong>Username</strong>: <span style=
+        "font-family:courier new,courier,monospace;">jtutorial</span></li>
+      </ul>
+    </li>
+
+    <li>Click <strong>Save</strong>. The new developer appears in the list of developers on the
+    Developers page.</li>
+  </ol>
+
+  <p><strong>Learn more:</strong></p>
+
+  <ul>
+    <li><a href="/api-platform/publish/adding-developers-your-api-product.html">Managing app
+    developers</a></li>
+  </ul>
+
+  <h2 id="registerapp"><a name="step6" id="step6"></a>Step 3: Register the app</h2>
+
+  <p>Now that you have an API product and a developer, you can register an app with the API
+  product. Registering the app generates the API key for the API products associated with the app.
+  You can then distribute the key to app developers so they can access the features in the API
+  products from the app.</p>
+
+  <aside class="note"><b>Note:</b> If you have a public API product that developers can sign up for
+  through a portal, developers can register apps on the portal. However, for the purposes of the
+  tutorial, register an app directly in the Edge management UI. See <a href=
+  "/api-platform/publish/drupal/what-developer-portal.html">What is a developer portal?</a> for
+  more.</aside>
+
+  <ol>
+    <li>In the API Platform UI, click the <strong>Publish</strong> tab, then <strong>Developer
+    Apps</strong>.</li>
+
+    <li>Click <strong>(+) Developer App</strong>.</li>
+
+    <li>In the Add an App dialog, enter the following values:
+
+      <ul>
+        <li><strong>Display Name</strong>: <span style=
+        "font-family:courier new,courier,monospace;">Weather API Key App</span></li>
+
+        <li><strong>Developer</strong>: <span style=
+        "font-family:courier new,courier,monospace;">Jane Tutorial
+        (janetutorial@example.com)</span></li>
+
+        <li><strong>Callback URL</strong>: leave blank</li>
+      </ul>
+    </li>
+
+    <li>Associate the app with a product:
+
+      <ol style="list-style: lower-alpha outside">
+        <li>In the <strong>Products</strong> section, click <strong>+ Product</strong>.</li>
+
+        <li>Select <em>Free API Product</em>.</li>
+
+        <li>Click the <strong>check mark</strong> icon to accept the changes.</li>
+      </ol>
+    </li>
+
+    <li>Click <strong>Save.</strong> The new app appears in the list  of apps on the Developer
+    Apps page.</li>
+
+    <li>Select <span style="font-family:courier new,courier,monospace;">Weather API Key App</span>
+    in the list of apps. This opens the details page for the app.</li>
+
+    <li>Because you selected <strong>Key Approval Type: Automatic</strong> when you created the API
+    product, the API key is automatically approved and you can view it immediately. (If you had
+    selected <strong>Approval Type: Manual</strong>, you would need to click
+    <strong>Approve</strong> in the Actions column for Free API Product to approve the API
+    key.)</li>
+
+    <li>In the Products section, next to the entry for <span style=
+    "font-family:courier new,courier,monospace;">Free API Product</span>, click
+    <strong>Show</strong> in the <strong>Consumer Key</strong> and <strong>Consumer Secret</strong>
+    columns to display the generated keys.<br>
+      <img alt="" src="/api-platform/images/weatherApiKeyConsumerKeys_v24.png">
+
+      <p>The Consumer Key is another name for the API key and is the only key an app needs to
+      access the <span style="font-family:courier new,courier,monospace;">forecast</span> resource
+      through your API proxy . The Consumer Secret is needed (along with the Consumer Key) in
+      securing an API through OAuth 2.0. See, for example, <a href=
+      "/api-platform/security/oauth/understanding-default-oauth-20-configuration.html">OAuth 2.0:
+      Configuring a new API proxy</a>.</p>
+    </li>
+  </ol>
+
+  <p><strong>Learn more:</strong></p>
+
+  <ul>
+    <li><a href="/api-platform/publish/creating-apps-surface-your-api.html">Register apps and
+    manage API keys</a>.</li>
+  </ul>
+
+  <h2 id="usekey"><a name="step7" id="step7"></a>Step 4: Use the API key in a request</h2>
+
+  <p>To ensure that the VerifyAPIKey policy is working correctly, you need to test it by making a
+  call to the API proxy with a valid API key. You can request the API proxy in a browser, from the
+  Trace page of the API proxy, from the Apigee Console, or by using cURL. The URL to request is in
+  the form:</p>
+  <pre class="prettyprint">
+http://{org-name}-test.apigee.net/v1/weatherapikey/forecastrss?w=12797282&amp;apikey=IEYRtW2cb7A5Gs54A1wKElECBL65GVls
+</pre>
+
+  <p>Substitute your Apigee organization name for <span style=
+  "font-family:courier new,courier,monospace;">{org-name} <span style=
+  "font-family:arial,helvetica,sans-serif;">and the correct <span style=
+  "font-family:courier new,courier,monospace;">apikey</span> value.</span></span></p>
+
+  <p>Look for the following content in the response:</p>
+  <pre class="prettyprint">
+&lt;rss xmlns:yweather="http://xml.weather.yahoo.com/ns/rss/1.0" xmlns:geo="http://www.w3.org/2003/01/geo/wgs84_pos#" version="2.0"&gt; 
+&lt;channel&gt; &lt;title&gt;Yahoo! Weather - Palo Alto, CA&lt;/title&gt; 
+&lt;link&gt;http://us.rd.yahoo.com/dailynews/rss/weather/Palo_Alto__CA/*http://weather.yahoo.com/forecast/USCA1093_f.html&lt;/link&gt; 
+&lt;description&gt;Yahoo! Weather for Palo Alto, CA&lt;/description&gt; &lt;language&gt;en-us&lt;/language&gt;
+</pre>
+
+  <p><span style="font-family:courier new,courier,monospace;"><span style=
+  "font-family:arial,helvetica,sans-serif;">If you omit the API key from the request, or specify an
+  invalid key value, you will receive an error response in the form:</span></span></p>
+  <pre class="prettyprint">
+{"fault":{"faultstring":"Failed to resolve API Key variable null","detail":{"errorcode":"steps.oauth.v2.FailedToResolveAPIKey"}}}
+</pre>
+
+  <h2 id="step5wheretonext">Step 5: Where to next?</h2>
+
+  <p>Now that you have made a request to the API by using a query parameter to pass the api key,
+  modify the API to pass the key as a header.</p>Continue on to <a href=
+  "/api-platform/tutorials/secure-calls-your-api-through-api-key-validation.html">Secure an API by
+  requiring API keys</a>.
+
+  {% endblock %}

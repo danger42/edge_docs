@@ -1,77 +1,317 @@
-{% extends "private-cloud/v4.18.05/_base.html" %}
+{% extends "private-cloud/v4.19.01/_base.html" %}
 {% block title %}Installation topologies{% endblock %}
 {% block body %}
 
-  <p>This section describes the Edge installation topologies, meaning the node configurations
-    supported by Edge.</p>
+  <p>This section describes the Edge installation topologies (i.e., the node configurations
+    supported by Edge).</p>
 
-  <h2 id="allinoneinstallation">All-in-one Installation (1-host)</h2>
+<section class="expandable">
+  <h3 class="showalways">Introductory video</h3>
+  <p>The following video will give you a quick introduction to the Apigee components in an
+  installation:</p>
 
-  <p>A single host runs all Edge components. Note that this configuration is only to be used for
-  getting started with Edge or for initial prototyping. It is not to be used as a deployment or
-  production environment.</p>
+  <iframe class="devsite-embedded-youtube-video" data-video-id="mWxCz09o_1g"
+    data-autohide="1" data-showinfo="0" frameborder="0" allowfullscreen="" width="560"
+    height="315">
+  </iframe>
+</section>
+
+  <p>The following table gives you an overview of the configurations<sup>*</sup>:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Topology</th>
+        <th>Nodes</th>
+        <th>Installation Instructions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="alt">
+        <td colspan="3"><strong>Non-production Topologies</strong></td>
+      </tr>
+      <tr>
+        <td><a href="#allinoneinstallation">All&#8209;in&#8209;One&nbsp;(1&#8209;node)</a></td>
+        <td>
+          <ul>
+            <li><strong>Node 1:</strong> Cassandra, Edge UI, Management Server, Message Processor, OpenLDAP,
+              Postgres Server, Qpid Server, Router, Zookeeper</li>
+            </ul>
+        </td>
+        <td><a href="install-edge-components-node#installedgecomponents-allinoneinstallation">All-in-one installation</a></td>
+      </tr>
+      <tr>
+        <td><a href="#standaloneinstallation2host">2&#8209;node&nbsp;(standalone)</a></td>
+        <td>
+          <ul>
+            <li><strong>Node 1:</strong> Cassandra, Edge UI, Management Server, Message Processor, Router, OpenLDAP,
+              Zookeeper</li>
+            <li><strong>Node 2:</strong> Postgres Server, Qpid Server</li>
+          </ul>
+        </td>
+        <td><a href="install-edge-components-node#installedgecomponents-2hoststandaloneinstallation">2-node standalone installation</a></td>
+      </tr>
+      <tr>
+        <td><a href="#5hostclusteredinstallation">5-node</a></td>
+        <td>
+          <ul>
+            <li><strong>Node 1:</strong> Cassandra, Edge UI, Management Server, OpenLDAP,  Zookeeper</li>
+            <li><strong>Nodes 2 &amp; 3:</strong> Cassandra, Message Processor, Router, Zookeeper</li>
+            <li><strong>Nodes 4 &amp; 5:</strong> Postgres Server, Qpid Server</li>
+          </ul>
+        </td>
+        <td><a href="install-edge-components-node#installedgecomponents-5hostclusteredinstallation">5-node installation</a></td>
+      </tr>
+      <tr>
+        <td colspan="3" class="alt"><strong>Production topologies</strong></td>
+      </tr>
+      <tr>
+        <td colspan="3" class="alt">Single Data Center (9 or 13 nodes per DC)</td>
+      </tr>
+      <tr>
+        <td><a href="#9hostclusteredinstallation">9-node</a></td>
+        <td>
+          <ul>
+            <li><strong>Node 1:</strong> Cassandra, Edge UI, Management Server, OpenLDAP, Zookeeper</li>
+            <li><strong>Nodes 2 &amp; 3:</strong> Cassandra, Zookeeper</li>
+            <li><strong>Nodes 4 &amp; 5:</strong> Message Processor, Router</li>
+            <li><strong>Nodes 6 &amp; 7:</strong> Qpid Server</li>
+            <li><strong>Nodes 8 &amp; 9:</strong> Postgres Server</li>
+          </ul>
+        </td>
+        <td><a href="install-edge-components-node#installedgecomponents-9hostclusteredinstallation">9-node clustered installation</a></td>
+      </tr>
+      <tr>
+        <td><a href="#13hostclusteredinstallation">13-node</a></td>
+        <td>
+          <ul>
+            <li><strong>Nodes 1, 2 &amp; 3:</strong> Cassandra, Zookeeper</li>
+            <li><strong>Nodes 4 &amp; 5:</strong> OpenLDAP</li>
+            <li><strong>Nodes 6 &amp; 7:</strong> Edge UI, Management Server</li>
+            <li><strong>Nodes 8 &amp; 9:</strong> Postgres Server</li>
+            <li><strong>Nodes 10 &amp; 11:</strong> Message Processor, Router</li>
+            <li><strong>Nodes 12 &amp; 13:</strong> Qpid Server</li>
+          </ul>
+        </td>
+        <td><a href="install-edge-components-node#installedgecomponents-13hostclusteredinstallation">13-node clustered installation</a></td>
+      </tr>
+      <tr>
+        <td colspan="3" class="alt">Multiple Data Centers (6 nodes per DC)</td>
+      </tr>
+      <tr>
+        <td><a href="#12hostclusteredinstallation">12-node</a></td>
+        <td>Two data centers, each with 6 nodes, each consisting of the following:
+          <ul>
+            <li><strong>Nodes 1 &amp; 7:</strong> Cassandra, Edge UI, Management Server OpenLDAP, Zookeeper</li>
+            <li><strong>Nodes 2 &amp; 3, 8 &amp; 9:</strong> Cassandra, Message Processor, Router, Zookeeper</li>
+            <li><strong>Nodes 4 &amp; 5, 10 &amp; 11:</strong> Qpid Server</li>
+            <li><strong>Node 6 &amp; 12:</strong> Postgres master (Data Center 1) and Postgres standby (Data Center 2)</li>
+          </ul>
+        </td>
+        <td><a href="install-edge-components-node#installedgecomponents-12hostclusteredinstallation">12-node clustered installation</a></td>
+      </tr>
+      <tr>
+        <td colspan="3"><sup>* These configurations do not include the {{portal_1st_use}}. For more
+          information, see <a href="portal-overview">Portal overview</a>.</sup></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>For {{opdk}}, to plan out custom topology requirements, please contact your Sales Rep or
+  Account Executive to engage with Apigee Edge Professional Services and Customer Success.
+  Performance varies by use case, so we recommend setting up a performance environment to analyze
+  and tune your performance before rolling changes out to your production environment.</p>
+
+  <h2 id="allinoneinstallation">All-in-one Installation (1-node)</h2>
+
+  <p>A single node runs all Edge components.</p>
 
   <p><img alt="" src="/private-cloud/images/1-host.png"></p>
 
-  <h2 id="standaloneinstallation2host">Standalone installation (2-host)</h2>
+  <p>The following videos introduce you to the requirements and process for installing a single-node
+  Edge installation:</p>
 
-  <p>In this scenario, a single host runs Gateway standalone servers and associated components:
+  <div class="ds-selector-tabs">
+    <section>
+      <h3><span class="two-line-tab">S26E07: Installation Requirements</span></h3>
+      <iframe class="devsite-embedded-youtube-video" data-video-id="om2tYHRYY50"
+        data-autohide="1" data-showinfo="0" frameborder="0" allowfullscreen="" width="560"
+        height="315">
+      </iframe>
+    </section>
+    <section>
+      <h3><span class="two-line-tab">S26E08: Install on a Single Node</span></h3>
+      <iframe class="devsite-embedded-youtube-video" data-video-id="k8T0emV30TU"
+        data-autohide="1" data-showinfo="0" frameborder="0" allowfullscreen="" width="560"
+        height="315">
+      </iframe>
+    </section>
+  </div>
+
+  {{topologies_info_intro}}
+  <ul>
+    <li>Apigee recommends this topology be used only for non-production or development
+      installations, as this configuration is not optimal for performance.</li>
+    <li>This topology should not be used for performance testing.</li>
+    <li>This topology does not support high availability.</li>
+    <li>You cannot install Monetization Services on an AIO configuration.</li>
+    <li><section class="expandable">
+      <p class="showalways">View sample configuration file for this topology</p>
+      <pre class="prettyprint">{% include "private-cloud/v4.19.01/config_files/aio-silent-config" %}</pre>
+      </section>
+    </li>
+  </ul>
+
+  <p>For installation information, see
+  <a href="install-edge-components-node#installedgecomponents-allinoneinstallation">All-in-one installation</a>.</p>
+
+  <h2 id="standaloneinstallation2host">Standalone installation (2-node)</h2>
+
+  <p>In this scenario, a single node runs Gateway standalone servers and associated components:
   Apigee Management Server, Apache ZooKeeper, Apache Cassandra, OpenLDAP, Edge UI, Apigee
-  Router, and Apigee Message Processor. The other host runs Analytics standalone components: Qpid
+  Router, and Apigee Message Processor. The other node runs Analytics standalone components: Qpid
   Server and Postgres Server.</p>
 
   <p><img alt="" src="/private-cloud/images/2-host.png"></p>
 
-  <h2 id="5hostclusteredinstallation">5-host clustered installation</h2>
+  {{topologies_info_intro}}
+  <ul>
+    <li>Apigee recommends this topology be used only for non-production or development
+      installations, as this configuration is not optimal for performance.</li>
+    <li>This topology should not be used for performance testing.</li>
+    <li>This topology does not support high availability.</li>
+  </ul>
 
-  <p>In this scenario, three hosts run ZooKeeper and Cassandra clusters. One of those three hosts
-  also runs the Apigee Management Server, OpenLDAP, and Edge UI. Two of those three hosts also run
-  Apigee Router + Message Processor. Two hosts run Apigee Analytics.</p>
+  <p>For installation information, see
+  <a href="install-edge-components-node#installedgecomponents-2hoststandaloneinstallation">2-node standalone installation</a>.</p>
 
-  <aside class="note"><strong>Note:</strong> This scenario combines cluster and Gateway components to reduce
-  the number of servers used. To achieve optimal performance, the cluster can also be deployed on
-  three different servers. This scenario also introduces a master-standby replication between two
-  Postgres nodes if analytics statistics are mission critical.</aside>
+  <h2 id="5hostclusteredinstallation">5-node clustered installation</h2>
+
+  <p>In a 5-node topology, three nodes run ZooKeeper and Cassandra clusters. One of those three nodes
+  also runs the Apigee Management Server, OpenLDAP, and Edge UI. Two of those three nodes also run
+  Apigee Router and Message Processor. Two nodes run Apigee Analytics.</p>
+
+  <aside class="note"><h3 class="hide-from-toc">NOTE</h3>This scenario combines cluster and Gateway
+    components to reduce the number of servers used.
+    <p>To achieve optimal performance, the cluster can also be deployed on
+    three different servers. This scenario also introduces a master-standby replication between two
+    Postgres nodes if analytics statistics are mission critical.</p>
+  </aside>
 
   <p><img alt="" src="/private-cloud/images/5-host.png"></p>
 
-  <h2 id="9hostclusteredinstallation">9-host clustered installation</h2>
+  {{topologies_info_intro}}
+  <ul>
+    <li>Apigee recommends this topology be used only for non-production or development
+      installations, as this configuration is not optimal for performance.</li>
+    <li>This topology limits the ability to scale the deployment for future expansion needs. Only
+      Routers and Message Processors can be expanded easily in this topology, as described in
+      <a href="adding-router-or-message-processor-node">Adding a Router or Message Processor
+      node</a>.</li>
+    <li>This topology should not be used for performance testing.</li>
+    <li>This topology does not support high availability.</li>
+  </ul>
 
-  <p>This scenario is similar to five-host clustered installation but has different Analytics
+  <p>For installation information, see
+  <a href="install-edge-components-node#installedgecomponents-5hostclusteredinstallation">5-node installation</a>.</p>
+
+
+  <h2 id="9hostclusteredinstallation">9-node clustered installation</h2>
+
+  <p>This scenario is similar to 5-node clustered installation but has different Analytics
   components setup to achieve performance high availability.</p>
 
-  <aside class="note"><strong>Note:</strong> This scenario introduces a master-standby replication
-  between two Postgres nodes if Analytics statistics are mission critical.</aside>
+  <aside class="note">
+    <h3 class="hide-from-toc">NOTE</h3>This scenario introduces a master-standby replication between two Postgres nodes if
+    Analytics statistics are mission critical.
+  </aside>
 
   <p><img alt="" src="/private-cloud/images/9-host.png"></p>
 
-  <h2 id="13hostclusteredinstallation">13-host clustered installation</h2>
+  {{topologies_info_intro}}
 
-  <p>This scenario is an enhancement of nine-host clustered installation covering separate data
+  <ul>
+    <li>Apigee recommends this topology be used only for non-production or development
+      installations, as this configuration is not optimal for performance.</li>
+    <li>You can expand this topology to support high availability, as described in
+      <a href="adding-data-center">Adding a data center</a>.</li>
+    <li>In this topology, Routers and Message Processors are hosted on the same nodes and may result
+      in “noisy neighbor” problems.</li>
+    <li>This topology is limited to a 3-node Cassandra setup with a quorum of two. As a result,
+      your ability to take a node out for maintenance is limited.</li>
+  </ul>
+
+  <p>For installation information, see
+  <a href="install-edge-components-node#installedgecomponents-9hostclusteredinstallation">9-node clustered installation</a>.</p>
+
+  <h2 id="13hostclusteredinstallation">13-node clustered installation</h2>
+
+  <p>This scenario is an enhancement of 9-node clustered installation covering separate data
   zones for data and Apigee servers in one datacenter setup. Here LDAP is installed as an
   independent separate node.</p>
 
-  <aside class="note"><strong>Note:</strong> This scenario uses master-master OpenLDAP replication
-  and master-standby Postgres replication in one datacenter setup.</aside>
+  <aside class="note">
+    <h3 class="hide-from-toc">NOTE</h3>This scenario uses master-master OpenLDAP replication and master-standby Postgres
+    replication in one datacenter setup.
+  </aside>
 
   <p><img alt="" src="/private-cloud/images/13-host.png"></p>
 
-  <h2 id="12hostclusteredinstallation">12-host clustered installation</h2>
+  {{topologies_info_intro}}
+
+  <ul>
+    <li>Apigee recommends this configuration as a minimum topology for production setups with the
+      documented hardware specifications. For more information, see
+      <a href="installation-requirements#hardwarerequirements">Hardware requirements</a>.</li>
+    <li>You can expand this topology to support high availability, as described in
+      <a href="adding-data-center">Adding a data center</a>.</li>
+    <li>In this topology, Routers and Message Processors are hosted on the same nodes and may result
+      in “noisy neighbor” problems.</li>
+    <li>This topology is limited to a 3-node Cassandra setup with a quorum of two. As a result,
+      your ability to take a node out for maintenance is limited.</li>
+ </ul>
+
+  <p>For installation information, see
+  <a href="install-edge-components-node#installedgecomponents-13hostclusteredinstallation">13-node clustered installation</a>.</p>
+
+  <h2 id="12hostclusteredinstallation">12-node clustered installation</h2>
 
   <p>This scenario covers disaster recovery and analytics high availability across two
-  datacenters.</p>
+  data centers.</p>
 
-  <aside class="note"><strong>Note:</strong> This scenario uses master-master OpenLDAP replication
-  and master-standby Postgres replication (across two datacenters).</aside>
+  <aside class="note">
+  <h3 class="hide-from-toc">NOTE</h3>This scenario uses master-master OpenLDAP replication and master-standby Postgres
+  replication (across two data centers).
+  </aside>
 
-  <p><img alt="" src="/private-cloud/images/12-host.png"></p>
+  <p><img alt="" width="75%" src="/private-cloud/images/12-host.png"></p>
+
+  {{topologies_info_intro}}
+
+  <ul>
+    <li>Apigee considers this topology adequate for production purposes. However, since every
+      installation has its own unique requirements and challenges, please contact your Sales
+      Rep or Account Executive to engage with Apigee Edge Professional Services and Customer
+      Success.</li>
+    <li>In this topology, Routers and Message Processors are hosted on the same nodes and may result
+      in “noisy neighbor” problems.</li>
+  </ul>
+
+  <p>For installation information, see
+  <a href="install-edge-components-node#installedgecomponents-12hostclusteredinstallation">12-node clustered installation</a>.</p>
 
   <h2 id="installingmonetizationservices">Installing Monetization Services</h2>
 
-  <p>Monetization Services runs within any existing Apigee Edge setup. In this scenario, you
-  install Monetization Services the Apigee Management Server and Message Processor. To install
+  <p>Monetization Services runs within any existing Apigee Edge setup, except the All-in-One (AiO)
+  configuration.</p>
+
+  <p>To install Monetization, you install Monetization Services, the Apigee Management Server, and
+  the Message Processor. To install
   Monetization on Edge where the Edge installation has multiple Postgres nodes, the Postgres nodes
   must be configured in Master/Standby mode. You cannot install Monetization on Edge if you have
   multiple Postgres master nodes.</p>
+
+  <p>For more information, see <a href="installing-monetization-services">Installing
+  Monetization Services</a>.</p>
 
 {% endblock %}

@@ -1,0 +1,237 @@
+{% extends "_base.html" %}
+{% block title %}Using OAuth2 to access the management API{% endblock %}
+{% block body %}
+
+<p>Apigee Edge lets you make management API calls that are authenticated with OAuth2 tokens.
+Support for OAuth2 is enabled by default on Edge for the Cloud accounts. If you are using Edge
+for the Private Cloud, you cannot use OAuth2 without
+first <a href="enabling-saml-authentication-edge">setting up SAML</a>.</p>
+
+<h2>How OAuth2 works (with the Apigee management API)</h2>
+
+<p>Calls to the Apigee management API require authentication so that we can be sure that you are who
+you say you are. To authenticate you, we require an OAuth2 access token be sent with your request
+to access the API.</p>
+
+<p>For example, if you wanted to get details about an organization on Edge, you would send a request to
+a URL like the following:</p>
+
+<pre class="prettyprint">https://api.enterprise.apigee.com/v1/organizations/ahamilton-eval</pre>
+
+<p>But you can't just send that request without telling us who you are. Otherwise, <em>anyone</em>
+could see your org's details.</p>
+
+<p>This is where OAuth2 comes in: to authenticate you, we need you to send us an <em>access token</em>
+in that request, too. The access token tells us who you are so we can be sure that you're allowed to
+see the details of the organization.</p>
+
+<p>Fortunately, you can get a token by sending your credentials to the Edge OAuth2 service. The
+service responds with access and refresh tokens.</p>
+
+<h3>OAuth2 flow: The initial request</h3>
+<p>The following image shows the OAuth2 flow when you access the management API for the first
+time:</p>
+
+
+<figure>
+  <img src="/api-platform/images/management-api/oauth-first-request.png" alt="OAuth flow: First request">
+  <figcaption style="text-align: right;"><strong>Figure 1:</strong> OAuth Flow: First request</figcaption>
+</figure>
+
+<p>As <strong>Figure 1</strong> shows, when you make your initial request to the management API:</p>
+<ol>
+  <li>You request an access token. You can do this with the
+    <a href="management-api-tokens">management API</a>, {{acurl}}, or {{get_token}}. For example:
+    <pre class="devsite-terminal prettyprint">get_token
+Enter username:
+<code class="devsite-terminal">ahamilton@apigee.com</code>
+Enter the password for user 'ahamilton@apigee.com'
+<code class="devsite-terminal">mypassw0rd</code>
+Enter the six-digit code if 'ahamilton@apigee.com' is MFA enabled or press ENTER:
+<code class="devsite-terminal">123456</code></pre>
+  </li>
+  <li>The Edge OAuth2 service responds with an access token, and prints it to <code>stdout</code>;
+  for example:
+    <pre class="prettyprint">
+Dy42bGciOiJSUzI1NiJ9.eyJqdGkiOiJhM2YwNjA5ZC1lZTIxLTQ1YjAtOGQyMi04MTQ0MTYxNjNhNTMiLCJz
+AJpdGUiLCJhcHByb3ZhbHMubWUiLCJvYXV0aC5hcHByb3ZhbHMiXSwiY2xpZW50X2lkIjoiZWRnZWNsaSIsIm
+NjbGkiLCJhenAiOiJlZGdlY2xpIiwiZ3JhbnRfdHlwZSI6InBhc3N3b3JkIiwidXNlcl9pZCI6IjJkMWU3NDI
+GzQyMC1kYzgxLTQzMDQtOTM4ZS1hOGNmNmVlODZhNzkiLCJzY29wZSI6WyJzY2ltLm1lIiwib3BlbmlkIiwic
+ENC05MzhlLWE4Y2Y2ZWU4NmE3OSIsIm9yaWdpbiI6InVzZXJncmlkIiwidXNlcl9uYW1lIjoiZGFuZ2VyNDI0
+RI6ImUyNTM2NWQyIiwiaWF0IjoxNTI4OTE2NDA5LCJleHAiOjE1Mjg5MTgyMDksImlzcyI6Imh0dHBzOi8vbG
+420iLCJlbWFpbCI6ImRhbmdlcjQyNDJAeWFob28uY29tIiwiYXV0aF90aW1lIjoxNTI4OTE2NDA5LCJhbCI6M
+2lLmNvbSIsInppZCI6InVhYSIsImF1ZCI6WyJlZGdlY2xpIiwic2NpbSIsIm9wZW5pZCIsInBhc3N3b3JkIiw</pre>
+    <p>The <code>acurl</code> and <code>get_token</code> utilities silently save the access and
+    refresh tokens to <code>~/.sso-cli</code> (The refresh token is not written to
+    <code>stdout</code>.) If you use the management API to get the tokens, you need to save them for
+    later use yourself.</p>
+  </li>
+  <li>You send a request to the management API with the access token. <code>acurl</code> attaches
+    the token automatically; for example:
+    <pre class="devsite-terminal prettyprint">acurl https://api.enterprise.apigee.com/v1/organizations/ahamilton-eval</pre>
+    <p>If you use another HTTP client, you be sure to add the access token; for example:</p>
+    <pre class="devsite-terminal">curl -v https://api.enterprise.apigee.com/v1/organizations/ahamilton-eval \
+  -H <strong>"Authorization: Bearer <var>ACCESS_TOKEN</var>"</strong></pre>
+  </li>
+  <li>The management API executes your request and typically returns a response with data.</li>
+</ol>
+
+<h3>OAuth2 flow: Subsequent requests</h3>
+
+<p>On subsequent requests, you will not need to exchange your credentials for a token. Instead,
+you can just include the access token you already have, as long as it hasn't expired yet:</p>
+
+
+<figure>
+  <img src="/api-platform/images/management-api/oauth-subsequent-requests.png" alt="OAuth flow: Subsequent requests">
+  <figcaption style="text-align: right;"><strong>Figure 2:</strong> OAuth Flow: Subsequent requests</figcaption>
+</figure>
+
+<p>As <strong>Figure 2</strong> shows, when you already have an access token:</p>
+<ol>
+  <li>You send a request to the management API with the access token. <code>acurl</code> attaches
+    the token automatically. If you use other tools, you need to add the token manually.</li>
+  <li>The management API executes your request and typically returns a response with data.</li>
+</ol>
+
+<h3>OAuth2 flow: When your access token expires</h3>
+
+<p>When an access token expires (after 30 minutes), you can use the refresh token to get a new
+access token:</p>
+
+
+<figure>
+  <img src="/api-platform/images/management-api/oauth-refresh-token.png" alt="OAuth flow: Getting a new access token">
+  <figcaption style="text-align: right;"><strong>Figure 3:</strong> OAuth Flow: Getting a new access token</figcaption>
+</figure>
+
+<p>As <strong>Figure 3</strong> shows, when your access token has expired:</p>
+<ol>
+  <li>You send a request to the management API, but your access token has expired.</li>
+  <li>The management API rejects your request as unauthorized.</li>
+  <li>You send a refresh token to the Edge OAuth2 service. If you are using {{acurl}}, this is done
+    automatically for you.</li>
+  <li>The Edge OAuth2 service responds with a new access token.</li>
+  <li>You send a request to the management API with the new access token.</li>
+  <li>The management API executes your request and typically returns a response with data.</li>
+</ol>
+
+<h2>Get the tokens</h2>
+
+  <p>To get an access token that you can send to the management API, you can use the following
+  Apigee utilities, in addition to a utility such as <code>curl</code>:</p>
+  <ul>
+    <li><a href="using-gettoken">get_token utility</a>: Exchanges your Apigee credentials for access
+      and refresh tokens.</li>
+    <li><a href="using-acurl">acurl utility</a>: A <code>curl</code> wrapper that exchanges
+      your Apigee credentials for the tokens, passes the access token in requests, and automatically
+      refreshes the access token when it expires.</li>
+    <li><a href="management-api-tokens">Token endpoints in the management API</a>: Exchange your
+      Apigee credentials for the access and refresh tokens via a call to the management API.</li>
+  </ul>
+
+  <p>All of these utilities exchange your Apigee account credentials (email address and
+  password) for an access token. These tokens are good for 30 minutes.</p>
+
+  <p>These utilities also send you a <em>refresh token</em>, which you can use to
+  exchange for a new access token when your access token expires. A refresh token is good for 24
+  hours. So, after 24.5 hours, you will need to submit your credentials again for new tokens.</p>
+
+<h2 id="access-api">Access the management API with OAuth2</h2>
+
+<p>To access the management API, you send a request to an API endpoint and include the access token.
+You can do this with any HTTP client, including a command-line utility such as <code>curl</code>,
+a browser-based UI such as Postman, or an Apigee utility like {{acurl}}.</p>
+
+<p>Accessing the management API with <code>acurl</code> and with <code>curl</code> are described in
+the sections that follow.</p>
+
+  <h3>Use acurl</h3>
+
+  <p>To access the management API with <code>acurl</code>, your initial request must include your
+  credentials. The Edge OAuth2 service responds with the access and refresh tokens. <code>acurl</code>
+  saves the tokens locally.</p>
+
+  <p>On subsequent requests, <code>acurl</code> uses the saved tokens in <code>~/.sso-cli</code> so
+  that you don't have to include your credentials again until the tokens expire.</p>
+
+  <p>The following example shows an initial <code>acurl</code> request that gets details for the
+  "ahamilton-eval" organization:</p>
+
+    <pre class="devsite-terminal prettyprint">acurl https://api.enterprise.apigee.com/v1/organizations/ahamilton-eval \
+  -u ahamilton@apigee.com
+Enter the password for user 'ahamilton@apigee.com'
+<code class="devsite-terminal">mypassw0rd</code>
+{
+  &quot;createdAt&quot; : 1491854501264,
+  &quot;createdBy&quot; : &quot;noreply_iops@apigee.com&quot;,
+  &quot;displayName&quot; : &quot;ahamilton&quot;,
+  &quot;environments&quot; : [ &quot;prod&quot;, &quot;test&quot; ],
+  &quot;lastModifiedAt&quot; : 1491854501264,
+  &quot;lastModifiedBy&quot; : &quot;noreply_iops@apigee.com&quot;,
+  &quot;name&quot; : &quot;ahamilton&quot;,
+  &quot;properties&quot; : {
+    &quot;property&quot; : [ {
+      &quot;name&quot; : &quot;features.isSmbOrganization&quot;,
+      &quot;value&quot; : &quot;false&quot;
+    }, {
+      &quot;name&quot; : &quot;features.isCpsEnabled&quot;,
+      &quot;value&quot; : &quot;true&quot;
+    } ]
+  },
+  &quot;type&quot; : &quot;trial&quot;
+}
+
+<code class="devsite-terminal">acurl https://api.enterprise.apigee.com/v1/o/ahamilton-eval/apis/helloworld/revisions/1/policies</code>
+
+[ "SOAP-Message-Validation-1", "Spike-Arrest-1", "XML-to-JSON-1" ]</pre>
+
+  <p>In addition to getting details about the organization, this example also shows a second request
+  that gets a list of policies within the "helloworld" API proxy. The second request uses the
+  shortening "o" for "organizations" in the URL.</p>
+
+  <p>Notice that <code>acurl</code> automatically passes the access token on the second request (you
+  do not need to pass your user credentials once <code>acurl</code> stores the OAuth2 tokens). It
+  gets the token from <code>~/.sso-cli</code>.</p>
+
+  <p>For more information, see <a href="using-acurl">Using acurl to access the management API</a>.</p>
+
+  <h3>Use curl</h3>
+
+  <p>You can use <code>curl</code> to access the management API. To do this, you must first get the
+  access and refresh tokens. You can get these using a utility such as {{get_token}} or the
+  <a href="management-api-tokens">management API.</a>.</p>
+
+  <p>After you have successfully saved your access token, you pass it in the
+  <code>Authorization</code> header of your calls to the management API, as the following example
+  shows:</p>
+
+  <pre class="devsite-terminal">curl -v https://api.enterprise.apigee.com/v1/organizations/ahamilton-eval \
+  -H <strong>"Authorization: Bearer <var>ACCESS_TOKEN</var>"</strong></pre>
+
+<h2>Token expiration</h2>
+  <p>Tokens have the following durations:</p>
+  <ul>
+    <li>Access tokens expire in 1799 seconds (approximately 30 minutes)</li>
+    <li>Refresh tokens expire in 84600 seconds (approximately 24 hours)</li>
+  </ul>
+
+  <p>Once your access token expires, you can use the refresh token to get a new access token without
+  having to submit your credentials again.</p>
+
+  <p>How you refresh your access token depends on which tool you are using:</p>
+
+  <ul>
+    <li>{{acurl}}: No action necessary. <code>acurl</code> automatically refreshes the access token
+      when you send a request that contains an outdated one.</li>
+    <li>{{get_token}}: Call <code>get_token</code> to refresh the access token.</li>
+    <li><a href="management-api-tokens#refresh">Management API</a>: Send a request that includes:
+      <ul>
+        <li>Refresh token</li>
+        <li><code>grant_type</code> form parameter set to "refresh_token"</li>
+      </ul>
+    </li>
+  </ul>
+
+
+{% endblock %}

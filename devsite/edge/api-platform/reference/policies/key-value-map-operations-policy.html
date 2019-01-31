@@ -1,4 +1,4 @@
-  {% extends "_base.html" %} {% block title %}Key Value Map Operations policy{% endblock %} {% block body %} <img src="/api-platform/images/icon_policy_key-value-map-operations.jpg">
+  {% extends "_base.html" %} {% block title %}KeyValueMapOperations policy{% endblock %} {% block body %} <img src="/api-platform/images/icon_policy_key-value-map-operations.jpg">
 
   <h3>What</h3>
 
@@ -530,11 +530,16 @@
   <p>Be sure to specify the name of the KVM with the <code>mapIdentifier</code> attribute on the
   parent element.</p>
 
+  <p>You can include multiple <code>Get</code> blocks in the policy to retrieve multiple items
+  from a KVM.</p>
+
   <aside class="note"><b>Note:</b> Don't add PUT and GET operations in the same policy, because the
   PUT automatically resets the cache expiration, which doesn't allow the GET operation to read from
   a cache with a desired expiry time. See the <a href=
   "#ExclusiveCache_ExpiryTimeInSecsElement"><code>ExpiryTimeInSecs</code></a> element for more
   information.</aside>
+
+<p><strong>Get a single item from a KVM</strong></p>
   <pre class="prettyprint">
 &lt;Get assignTo="myvar" index="1"&gt;         
    &lt;Key&gt;             
@@ -542,6 +547,62 @@
    &lt;/Key&gt;     
 &lt;/Get&gt;
 </pre>
+
+<p><strong>Get multiple items from a KVM</strong></p>
+<p>In the following example, assume a KVM with the following keys and values. In addition
+to storing a running list of the most popular movies of all time, the KVM stores
+the director name for all major films.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th width="30%">Key</th>
+      <th>Value</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>top_movies</td>
+      <td>Princess Bride,The Godfather,Citizen Kane</td>
+    </tr>
+    <tr>
+      <td>Citizen Kane</td>
+      <td>Orson Welles</td>
+    </tr>
+    <tr>
+      <td>Princess Bride</td>
+      <td>Rob Reiner</td>
+    </tr>
+    <tr>
+      <td>The Godfather</td>
+      <td>Francis Ford Coppola</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Here's a KVM policy configuration we can use to retrieve the current most popular movie
+and the name of its director.</p>
+
+<pre class="prettyprint">
+&lt;Get assignTo="top.movie.pick" index="1"&gt;
+   &lt;Key&gt;
+      &lt;Parameter&gt;top_movies&lt;/Parameter&gt;
+   &lt;/Key&gt;
+&lt;/Get&gt;
+&lt;Get assignTo="movie.director"&gt;
+   &lt;Key&gt;
+      &lt;Parameter ref="top.movie.pick"/&gt;
+   &lt;/Key&gt;
+&lt;/Get&gt;
+</pre>
+
+<p>When the API proxy is called, Edge creates the following
+  variables that you can use in the API proxy flow:</p>
+
+<ul>
+<li><code><strong>top.movie.pick</strong>=Princess Bride</code></li>
+<li><code><strong>movie.director</strong>=Rob Reiner</code></li>
+</ul>
 
   <table class="columns">
     <tbody>
@@ -1088,7 +1149,7 @@
     </tbody>
   </table>
 
-  <h2 id="errorcodes">Error codes</h2>
+  <h2 id="errorcodes">Error reference</h2>
 
   <p>Errors returned from Edge policies follow a consistent format as described in the <a href=
   "/api-platform/reference/policies/error-code-reference.html">Error code reference</a>.</p>

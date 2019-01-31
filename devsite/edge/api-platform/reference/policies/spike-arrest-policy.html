@@ -1,17 +1,15 @@
-  {% extends "_base.html" %} {% block title %}Spike Arrest policy{% endblock %} {% block body %}
+  {% extends "_base.html" %} {% block title %}SpikeArrest policy{% endblock %} {% block body %}
   <img src="/api-platform/images/icon_policy_spike-arrest.jpg">
 
-  <h3>What</h3>
-
-  <p>The Spike Arrest policy protects against traffic spikes. It throttles the number of requests
+  <p>The Spike Arrest policy protects against traffic spikes with the {{sa_rate}} element. This
+  element throttles the number of requests
   processed by an API proxy and sent to a backend, protecting against performance lags and
-  downtime. See the <code><a href="#rate">&lt;Rate&gt;</a></code> element for a more detailed
-  behavior description. See also "<a href="#Howitworks">How spike arrest works</a>",
+  downtime. See also "<a href="#Howitworks">How spike arrest works</a>",
   below. </p>
 
   <aside class="key-point"><b>Tip:</b> Need help deciding which rate limiting policy to use? See
   <a href=
-  "/api-platform/develop/comparing-quota-spike-arrest-and-concurrent-rate-limit-policies.html">Comparing
+  "/api-platform/develop/comparing-quota-spike-arrest-and-concurrent-rate-limit-policies">Comparing
   Quota, Spike Arrest, and Concurrent Rate Limit Policies</a>.</aside><!--<div class="video">
         <p>Watch this video for an introduction to the Spike Arrest policy.</p>
         <div class="collapse" id="demo">
@@ -118,7 +116,9 @@
 </pre>
 
       <p>Setting rate with a <code>variable</code> in the request. The variable value must be in
-      the form of {int}pm or {int}ps.</p>
+      the form of {int}pm or {int}ps. For example:</p>
+
+      <pre class="devsite-terminal">curl http://myorg-myenv.apigee.net/price -H 'rate:30ps'</pre>
     </section>
 
     <section>
@@ -236,16 +236,16 @@
     </tbody>
   </table>
 
-  <h2 id="identifier">&lt;Identifier&gt; element</h2>
+  <h2 id="identifier">{{sa_identifier}} element</h2>
 
-  <p>Use the <code>&lt;Identifier&gt;</code> element to uniquely identify and apply spike
+  <p>Uniquely identifies and applies spike
   arrest against individual apps or developers. You can use a variety of variables to indicate a
   unique developer or app, whether you're using custom variables or predefined variables, such as
   those available with the <a href=
   "/api-platform/reference/policies/verify-api-key-policy.html">Verify API Key policy</a>. See also
   the <a href="/api-platform/reference/variables-reference.html">Variables reference</a>.</p>
 
-  <p>Use in conjunction with <code>&lt;MessageWeight&gt;</code> for more fine-grained
+  <p>Use in conjunction with {{sa_messageweight_link}} for more fine-grained
   control over request throttling.</p>
 
   <p>If you don't use this element, all calls made to the API proxy are counted for spike
@@ -308,9 +308,9 @@
     </tbody>
   </table>
 
-  <h2 id="messageweight">&lt;MessageWeight&gt; element</h2>
+  <h2 id="messageweight">{{sa_messageweight}} element</h2>
 
-  <p>Use in conjunction with <code>&lt;Identifier&gt;</code> to further throttle requests by
+  <p>Use in conjunction with {{sa_identifier_link}} to further throttle requests by
   specific clients or apps.</p>
 
   <p>Specifies the weighting defined for each message. Message weight is used to modify the impact
@@ -375,10 +375,10 @@
 
   <h2 id="useeffectivecount">&lt;UseEffectiveCount&gt; element</h2>
 
-  <p>The <code>&lt;UseEffectiveCount&gt;</code> element instructs Edge to automatically distribute
+  <p>Instructs Edge to automatically distribute
   your Spike Arrest counts across message processors (MPs) when using auto-scaling groups.</p>
 
-  <p>The following example sets <code>&lt;UseEffectiveCount&gt;</code> to true:</p>
+  <p>The following example sets {{sa_useeffectivecount}} to true:</p>
   <pre class="prettyprint">
 &lt;SpikeArrest name='SA1'&gt;
   &lt;Rate&gt;40ps&lt;/Rate&gt;
@@ -386,7 +386,7 @@
 &lt;/SpikeArrest&gt;
 </pre>
 
-  <p>The <code>&lt;UseEffectiveCount&gt;</code> element is optional. The default value is false
+  <p>The {{sa_useeffectivecount}} element is optional. The default value is false
   when the element is omitted from your Spike Arrest policy.</p>
 
   <table class="columns">
@@ -452,107 +452,32 @@
     </tbody>
   </table>
 
-  <p>When <code>&lt;UseEffectiveCount&gt;</code> is set to true, an MP's spike rate limit is the
-  <code>&lt;Rate&gt;</code> divided by the current number of MPs. The aggregate limit is the value
-  of <code>&lt;Rate&gt;</code>. When MPs are dynamically added (or removed), their individual spike
+  <p>When {{sa_useeffectivecount}} is set to true, an MP's spike rate limit is the
+  {{sa_rate_link}} divided by the current number of MPs. The aggregate limit is the value
+  of {{sa_rate}}. When MPs are dynamically added (or removed), their individual spike
   rate limits will increase (or decrease), but the aggregate limit will stay the same.</p>
 
-  <p>When <code>&lt;UseEffectiveCount&gt;</code> is set to false (or omitted, as this is the
-  default value), each MP's spike rate limit is simply the value of its <code>&lt;Rate&gt;</code>.
+  <p>When {{sa_useeffectivecount}} is set to false (or omitted, as this is the
+  default value), each MP's spike rate limit is simply the value of its {{sa_rate}}.
   The aggregate limit is the sum of the rates of all the MPs. When MPs are added (or removed),
   their individual spike rate limits will stay the same, but the aggregate limit will increase (or
   decrease).</p>
 
-  <p>The following table shows the effect of <code>&lt;UseEffectiveCount&gt;</code> on the
+  <p>The following table shows the effect of {{sa_useeffectivecount}} on the
   effective rate limit of each MP:</p>
 
-  <table>
-    <tbody>
-      <tr>
-        <th> </th>
 
-        <th colspan="6" scope="col" style="text-align: center;">Value of
-        <code>&lt;UseEffectiveCount&gt;</code></th>
-      </tr>
-
-      <tr>
-        <th> </th>
-
-        <th colspan="3" scope="col" style="text-align: center;">false</th>
-
-        <th colspan="3" scope="col" style="text-align: center;">true</th>
-      </tr>
-
-      <tr>
-        <th># of MPs</th>
-
-        <td style="text-align: center;">8</td>
-
-        <td style="text-align: center;">4</td>
-
-        <td style="text-align: center;">2</td>
-
-        <td style="text-align: center;">8</td>
-
-        <td style="text-align: center;">4</td>
-
-        <td style="text-align: center;">2</td>
-      </tr>
-
-      <tr>
-        <th>Value of <code>&lt;Rate&gt;</code></th>
-
-        <td style="text-align: center;">10</td>
-
-        <td style="text-align: center;">10</td>
-
-        <td style="text-align: center;">10</td>
-
-        <td colspan="3" style="text-align: center;">40</td>
-      </tr>
-
-      <tr>
-        <th>Effective Rate per MP</th>
-
-        <td style="text-align: center;">10</td>
-
-        <td style="text-align: center;">10</td>
-
-        <td style="text-align: center;">10</td>
-
-        <td style="text-align: center;">5</td>
-
-        <td style="text-align: center;">10</td>
-
-        <td style="text-align: center;">20</td>
-      </tr>
-
-      <tr>
-        <th>Aggregate Limit</th>
-
-        <td style="text-align: center;">80</td>
-
-        <td style="text-align: center;">40</td>
-
-        <td style="text-align: center;">20</td>
-
-        <td colspan="3" style="text-align: center;">40<sup>*</sup></td>
-      </tr>
-    </tbody>
-  </table>
-
-  <p><sup>*</sup> Same as <code>&lt;Rate&gt;</code>.</p>
+  <p><img src="/api-platform/images/policies/useeffectivecount-table.png" width="75%"/></p>
 
   <p>In this example, notice that when the number of MPs is decreased from 4 to 2, and
-  <code>&lt;UseEffectiveCount&gt;</code> is false, the effective rate per MP stays the same (at
-  10). But when <code>&lt;UseEffectiveCount&gt;</code> is true, the effective rate per MP goes from
+  {{sa_useeffectivecount}} is false, the effective rate per MP stays the same (at
+  10). But when {{sa_useeffectivecount}} is true, the effective rate per MP goes from
   10 to 20 when the number of MPs is decreased from 4 to 2.</p>
 
-  <p><b>TIP:</b> When you set <code>&lt;UseEffectiveCount&gt;</code> to true, set
-  <code>&lt;Rate&gt;</code> to your target aggregate limit.</p>
-  <hr>
+  <aside class="key-point"><h3 class="hide-from-toc">TIP</h3>When you set
+  {{sa_useeffectivecount}} to "true", set {{sa_rate}} to your target aggregate limit.</aside>
 
-  <h2 id="howspikearrestworks"><a id="Howitworks" name="Howitworks"></a>How Spike Arrest works</h2>
+  <h2 id="howspikearrestworks">How Spike Arrest works</h2>
 
   <p>Think of Spike Arrest as a way to generally protect against traffic spikes rather than as a
   way to limit traffic to a specific number of requests. Your APIs and backend can handle a certain
@@ -592,8 +517,8 @@
   <h3 id="howspikearrestworks-theresmore1requestnumberofmessageprocessors">There's more: 1 request
   * number of message processors</h3>
 
-  <p>By default, Spike Arrest is not distributed (unless you enable <a href=
-  "#useeffectivecount">&lt;UseEffectiveCount&gt;</a>): request counts are not synchronized
+  <p>By default, Spike Arrest is not distributed (unless you enable {{sa_useeffectivecount_link}}):
+  request counts are not synchronized
   across MPs. With more than one message processor, especially those with a round-robin
   configuration, each handles its own Spike Arrest throttling independently. With one message
   processor, a 30pm rate smooths traffic to 1 request every 2 seconds (60 / 30). With two message
@@ -634,8 +559,7 @@
 
   <p>When a Spike Arrest policy executes, the following Flow variable is populated.</p>
 
-  <p>For more information about Flow variables, see <a href=
-  "/api-platform/reference/variables-reference.html">Variables reference</a>.</p>
+  <p>For more information about Flow variables, see {{variables_reference}}.</p>
 
   <table>
     <thead>

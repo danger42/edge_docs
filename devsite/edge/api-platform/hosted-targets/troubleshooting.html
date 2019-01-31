@@ -1,0 +1,40 @@
+{% extends "_base.html" %} {% block title %}Hosted Targets troubleshooting{% endblock %} {% block body %}
+
+{{ hosted_targets_availability }}
+
+   <h2>Build/Deploy failed due to missing package.json</h2>
+
+<p>A <code>package.json</code> file is required in the root directory of your Node.js app. Any attempt to
+     create/deploy a proxy without a <code>package.json</code> will fail at build time.</p>
+
+   <h2>Receiving 502 Bad Gateway From Proxy</h2>
+
+   <p>A "502 Bad Gateway" error can occur when the process fails to start. To debug this check the runtime logs and
+     look for error messages when starting. A common error is a missing or invalid start command in
+     the <code>package.json</code>. At a minimum the <code>package.json</code> should
+     specify <code>"start": "node ."</code> in the <code>scripts</code> property. For example:</p>
+
+<pre class="prettyprint">
+{
+  "name": "hello-world",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+   "start": "node ."
+  },
+  "author": "",
+  "license": "",
+  "description": "Hello World Application",
+  "dependencies": {
+  }
+}</pre>
+
+   <h2>Proxy Hangs and Returns 504 Gateway Timeout</h2>
+
+   <p>A "504 Gateway Timeout" error can occur when the Hosted Targets target app does not respond within a timeout limit.
+     Check to ensure that your application is listening on the port set in the environment variable <code>PORT</code>.
+     You can access this variable with <code>process.env.PORT</code> in your application.
+     Otherwise you can check the runtime logs for any other error messages. See also <a href="/api-platform/hosted-targets/hosted-targets-reference#environment-variables-set-in-the-application-runtime">Environment
+     variables set in the application runtime</a>.</p>
+
+{% endblock %}

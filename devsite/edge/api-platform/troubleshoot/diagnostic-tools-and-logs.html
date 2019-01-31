@@ -1,0 +1,319 @@
+  {% extends "_base.html" %} {% block title %}Diagnostic tools and logs{% endblock %} {% block body %}
+
+  <p>This topic discusses network tools, JVM tools, and diagnostic logs that you can use to
+  troubleshoot network and JVM-related issues on Apigee Edge.</p>
+
+  <h2 id="tcpippacketsniffertcpdumputility">TCP/IP packet sniffer (tcpdump) utility</h2>
+
+  <p>The <strong>tcpdump</strong> tool is a command-line packet sniffer tool that allows you to
+  capture or filter TCP/IP packets that are received or transferred over a network. It is available
+  on Linux/Unix based operating systems.  You can install this utility using yum as
+  follows:</p>
+  <pre class="prettyprint">
+yum install tcpdump
+</pre>
+
+  <p> The tcpdump tool is useful for troubleshooting network or SSL related issues.  For
+  example:</p>
+
+  <ul>
+    <li>502 Bad Gateway Errors (caused due to EOF Exception)</li>
+
+    <li>503 Service Unavailable Errors</li>
+
+    <li>SSL Handshake Failures</li>
+  </ul>
+
+  <p>To troubleshoot any of these problems, you must first determine the pair of components between
+  which the error occurred.  In the case of Edge, it can be one of the following pairs:</p>
+
+  <ul>
+    <li>Client app and Router</li>
+
+    <li>Router and Message Processor</li>
+
+    <li>Message Processor and Backend server</li>
+  </ul>
+
+  <p>Once you identify the troublesome pair of components, you can capture the network packets
+  using tcpdump on one or both of these components.</p>
+
+  <h3 id=
+  "tcpippacketsniffertcpdumputility-capturingpacketssenttoreceivedfromaspecifichostusingtcpdump">
+  Capturing packets sent to/received from a specific host using tcpdump</h3>
+
+  <p>Use the following tcpdump command to capture all of the packets sent to or received from a
+  specified host (IP address) and save the information in the specified file:</p>
+  <pre class="prettyprint">
+tcpdump -i any -s 0 host &lt;IP address&gt; -w &lt;File name&gt;
+</pre>
+
+  <p>Where:</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <td width="106"><strong>Parameter</strong></td>
+
+        <td width="899"><strong>Description</strong></td>
+      </tr>
+
+      <tr>
+        <td>-i</td>
+
+        <td>(interface) specifies the interface from which the packets should be captured. Using
+        the value of &#8220;any&#8221; allows to capture packets from all interfaces.</td>
+      </tr>
+
+      <tr>
+        <td>-s</td>
+
+        <td>(snarf/snaplen) specifies the amount of each packet to capture. Using the value of 0
+        (zero) allows you to capture the entire packet.</td>
+      </tr>
+
+      <tr>
+        <td>IP address</td>
+
+        <td>is the ip address of the host for which we want to capture the packets</td>
+      </tr>
+
+      <tr>
+        <td>File Name</td>
+
+        <td>is the name of the file to which tcpdump has to be written to</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="tcpippacketsniffertcpdumputility-example">Example</h3>
+
+  <p>Let&#8217;s say you want to capture the packets between the Message Processor and Backend
+  Server:</p>
+
+  <ol>
+    <li>Log in to the Message Processor machine.</li>
+
+    <li>Determine the IP address of the Backend Server (assume it is 22.22.22.22) for which we want
+    to capture the packets.</li>
+  </ol>
+
+  <p>Use the following command to capture the network packets for a host with a specific IP
+  address:</p>
+  <pre class="prettyprint">
+tcpdump -i any -s 0 host 22.22.22.22 -w rmp-123.pcap
+</pre>
+
+  <p>If the backend server resolves to multiple IP addresses, then use the hostname of the backend
+  server in  the tcpdump command as shown below:</p>
+  <pre class="prettyprint">
+tcpdump -i any -s 0 host &lt;Hostname&gt; -w rmp-123.pcap
+</pre>
+
+  <p>If there are multiple backend servers with different IP addresses (22.22.22.22, 33.33.33.33
+  and 44.44.44.44), then use the tcpdump command below:</p>
+  <pre class="prettyprint">
+tcpdump -i any -s 0 host 22.22.22.22 or host 33.33.33.33 or host 44.44.44.44 -w rmp-123.pcap
+</pre>
+
+  <h3 id="tcpippacketsniffertcpdumputility-analyzingtcpdumps">Analyzing tcpdumps</h3>
+
+  <p>You can view or analyze tcpdumps using the tcpdump command or the GUI based tool <a href=
+  "https://www.wireshark.org/">Wireshark</a>.</p>
+
+  <h3 id="tcpippacketsniffertcpdumputility-references">References</h3>
+
+  <ul>
+    <li><a href=
+    "https://www.google.com/url?q=https://linux.die.net/man/8/tcpdump&amp;sa=D&amp;ust=1518037574623000&amp;usg=AFQjCNHV60fl3UaYXG-GDp_iIkEtDfY83Q">
+    tcpdump man page</a></li>
+
+    <li><a href=
+    "https://www.google.com/url?q=https://www.tecmint.com/12-tcpdump-commands-a-network-sniffer-tool/&amp;sa=D&amp;ust=1518037574623000&amp;usg=AFQjCNHJHkdDkvou3ijOTmzP1CbGUIm3hw">
+    TCPdump commands - A Network Sniffer Tool</a></li>
+
+    <li><a href="https://www.wireshark.org/">Wireshark</a></li>
+  </ul>
+
+  <h2 id="heapdumps">Heap dumps</h2>
+
+  <p>Heap dumps are a snapshot of the memory of a Java process.  They contain the
+   information about the Java objects and classes in the heap at the moment the heap dump is
+  collected. They are usually pretty large in size ranging anywhere between few 100MBs to few
+  GBs.</p>
+
+  <p>Heap dump is very useful when a Java process such as Message Processor shows:</p>
+
+  <ul>
+    <li>High Memory Usage</li>
+
+    <li>OutofMemoryError</li>
+  </ul>
+
+  <h3 id="heapdumps-generatingheapdumpforajavaprocess">Generating Heap dump for a Java process</h3>
+
+  <p>Java provides a utility called <strong>jmap</strong>, which allows you to generate the memory
+  statistics or heap dumps of a running Java process.</p>
+
+  <p>Use the following jmap command to generate the heap dump of a Java process:</p>
+  <pre class="prettyprint">
+sudo -u apigee &lt;JAVA_HOME&gt;/bin/jmap -dump:live,format=b,file=&lt;filename&gt; &lt;pid&gt;
+</pre>
+
+  <p>Where:</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <td width="136"><strong>Parameter</strong></td>
+
+        <td width="572"><strong>Description</strong></td>
+      </tr>
+
+      <tr>
+        <td>JAVA_HOME</td>
+
+        <td>Is the installation directory of Java</td>
+      </tr>
+
+      <tr>
+        <td>filename</td>
+
+        <td>Is the file name to which the heap dump will be written</td>
+      </tr>
+
+      <tr>
+        <td>pid</td>
+
+        <td>Is the process id of the Java application whose head dump has to be captured</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="heapdumps-example">Example</h3>
+
+  <p>Let&#8217;s say the Message Processor mp-east has high memory usage or is throwing
+  OutOfMemory Errors.  Determine the process id of the Message Processor using ps command on
+  Unix operating system.  Let&#8217;s say it is 24569. </p>
+
+  <p>Run the jmap utility as follows to generate the heap dump:</p>
+  <pre class="prettyprint">
+sudo -u apigee &lt;JAVA_HOME&gt;/bin/jmap -dump:live,format=b,file=mp-east-heapdump.bin 24569
+</pre>
+
+  <h3 id="heapdumps-analyzingheapdumps">Analyzing Heap Dumps</h3>
+
+  <p>Heap Dumps can be analysed using Eclipse MAT (Memory Analyzer Tool) to determine the
+  potential memory leaks or which Java objects are leading to high memory usage.</p>
+
+  <h3 id="heapdumps-references">References</h3>
+
+  <p><a href=
+  "https://www.google.com/url?q=https://blogs.oracle.com/luzmestre/how-to-collect-a-heap-dump&amp;sa=D&amp;ust=1518037574628000&amp;usg=AFQjCNFfKQ9mRAZLRuBrwJiSyolKhHitgQ">
+  How to collect a heap dump</a></p>
+
+  <p><a href=
+  "https://www.google.com/url?q=https://docs.oracle.com/javase/8/docs/technotes/guides/troubleshoot/tooldescr014.html&amp;sa=D&amp;ust=1518037574629000&amp;usg=AFQjCNGx9oybyfXpF6F-sER24UOnJV3vpA">
+  jmap utility</a></p>
+
+  <p><a href=
+  "https://www.google.com/url?q=https://docs.oracle.com/javase/8/docs/technotes/tools/unix/jmap.html&amp;sa=D&amp;ust=1518037574629000&amp;usg=AFQjCNFQYZQ0bwjhYmZZtNdFrDfNa9S3JA">
+  jmap man page</a></p>
+
+  <p><a href=
+  "https://www.google.com/url?q=http://www.eclipse.org/mat/&amp;sa=D&amp;ust=1518037574629000&amp;usg=AFQjCNELLNXHAygSitTJQO3YIQp5agEeug">
+  Memory Analyzer Tool (MAT)</a></p>
+  <hr>
+
+  <h2 id="threaddumps">Thread dumps</h2>
+
+  <p>A thread dump is a snapshot of the state of all the threads of a running Java process. The
+  state of each thread is presented with the contents of its stack, referred to as a stack trace.
+  Some of the threads will be part of the Java application that is running, while others will be
+  JVM internal threads.</p>
+
+  <p>A thread dump reveals information about each of the application&#8217;s threads activities.
+   This information can be very useful to:</p>
+
+  <ul>
+    <li>Diagnose problems such as CPU spikes, slow response times, or unresponsive Java
+    applications</li>
+
+    <li>Optimize application and JVM performance</li>
+  </ul>
+
+  <h3 id="threaddumps-generatingthreaddumps">Generating Thread Dumps</h3>
+
+  <p>The thread dump for a Java process can be generated using the jstack utility as shown
+  below:</p>
+  <pre class="prettyprint">
+&lt;JAVA_HOME&gt;/bin/jstack -l &lt;pid&gt; &gt; &lt;filename&gt;
+</pre>
+
+  <p>Where:</p>
+
+  <table width="721">
+    <tbody>
+      <tr>
+        <td width="122"><strong>Parameter</strong></td>
+
+        <td width="608"><strong>Description</strong></td>
+      </tr>
+
+      <tr>
+        <td>JAVA_HOME</td>
+
+        <td>Is the installation directory of Java.</td>
+      </tr>
+
+      <tr>
+        <td>pid</td>
+
+        <td>Is the process id of the Java application whose thread dump you want to capture.</td>
+      </tr>
+
+      <tr>
+        <td>filename</td>
+
+        <td>Is the file name to which the thread dump will be written.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="threaddumps-example">Example</h3>
+
+  <p>To generate a thread dump for the process ID 37320 on Message Processor
+  <strong>mp-east</strong>, use the following command:</p>
+  <pre class="prettyprint">
+&lt;JAVA_HOME&gt;/bin/jstack -l 37320 &gt; /opt/apigee/edge-message-processor/mp-east-threadDump.txt
+</pre>
+
+  <p>As per the above example, thread dump of the process would be saved to the
+   /opt/apigee/edge-message-processor/mp-east-threadDump.txt file.</p>
+
+  <h3 id="threaddumps-analyzingthreaddumps">Analyzing Thread Dumps</h3>
+
+  <p>You can view thread dumps in any text editor such as vi (Linux), notepad (Windows).
+   Refer to <a href=
+  "https://www.google.com/url?q=https://docs.oracle.com/javase/8/docs/technotes/guides/troubleshoot/tooldescr019.html%23BABBEFFC&amp;sa=D&amp;ust=1518037574634000&amp;usg=AFQjCNEBSj8WSlDeN0D0bBiemx1UC28-Hg">
+  Thread Dump</a> for details on different sections of Thread Dump and how to interpret the
+  information.</p>
+
+  <aside class="key-point"><b>Tip:</b> Use top <strong>-h</strong> output along with thread dump to
+  troubleshoot high CPU usage issues.</aside>
+
+  <h3 id="threaddumps-references">References</h3>
+
+  <ul>
+    <li><a href=
+    "https://www.google.com/url?q=https://docs.oracle.com/javase/8/docs/technotes/guides/troubleshoot/tooldescr016.html&amp;sa=D&amp;ust=1518037574635000&amp;usg=AFQjCNGM-SqrsFf8BCw1I927HtZwanMJDw">
+    jstack utility</a></li>
+
+    <li><a href=
+    "https://www.google.com/url?q=https://blogs.oracle.com/jiechen/analysis-against-jvm-thread-dump-cpu-high-usage-issue&amp;sa=D&amp;ust=1518037574635000&amp;usg=AFQjCNGYv3n7Zu_vQ_DUBTxL3ca1HgC3tw">
+    Analyzing Thread Dump: CPU High Usage Issue</a></li>
+
+    <li><a href=
+    "https://www.google.com/url?q=https://dzone.com/articles/how-analyze-java-thread-dumps&amp;sa=D&amp;ust=1518037574635000&amp;usg=AFQjCNFkZeBObjIS1NuqwRqJnDnIaZflkQ">
+    How to Analyze Java Thread Dumps</a></li>
+  </ul>{% endblock %}

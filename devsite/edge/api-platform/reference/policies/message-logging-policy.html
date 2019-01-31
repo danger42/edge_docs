@@ -1,4 +1,4 @@
-  {% extends "_base.html" %} {% block title %}Message Logging policy{% endblock %} {% block body %}
+  {% extends "_base.html" %} {% block title %}MessageLogging policy{% endblock %} {% block body %}
   <img src="/api-platform/images/icon_policy_message-logging.jpg">
 
   <h3>What</h3>
@@ -11,22 +11,7 @@
   Private Cloud deployments. It's not available in Edge cloud. However, Syslog is available in both
   Edge Cloud and Edge for Private Cloud.</aside>
 
-  <h3>Watch a quick how-to video </h3>
 
-  <div class="video">
-    <p><strong>Video:</strong> Check out this short video on using the Message Logging policy
-    from the Four Minute Video For Developers (4MV4D) series.</p>
-
-    <div style="text-align: left; margin:15px">
-      <iframe allowfullscreen="" frameborder="0" height="480" src=
-      "https://www.youtube.com/embed/R2HO3XsC9ZU?list=PLIXjuPlujxxxe3iTmLtgfIBgpMo7iD7fk" width=
-      "854"></iframe>
-
-      <p><a href=
-      "https://www.youtube.com/embed/R2HO3XsC9ZU?list=PLIXjuPlujxxxe3iTmLtgfIBgpMo7iD7fk">4MV4D
-      PostClientFlow</a>.</p>
-    </div>
-  </div>
 
   <h3 id="samples">Samples</h3><!-- Begin tab list -->
   <!-- End tab list --><!-- Begin tabbed region -->
@@ -367,6 +352,10 @@
 
           <p>If set to false (default), the message is not prepended with those fixed
           characters.</p>
+
+          <aside class="note"><b>Note: </b>Becasue of <a href="/release/notes/18120400-apigee-edge-public-cloud-release-notes-ui#knownissues">Known Issue 68722102</a>,
+            if you set <code>&lt;FormatMessage&gt;false&lt;/FormatMessage&gt;</code>, the log message still
+            includes the priority score and the date.</aside>
         </td>
       </tr>
 
@@ -387,9 +376,8 @@
 
           <p>You can configure the <span style=
           "font-family:courier new,courier,monospace;">&lt;SSLInfo&gt;</span> tag the same as you
-          can on a TargetEndpoint, including enabling two-way TLS/SSL, as described in <a href=
-          "/api-platform/reference/policies/api-proxy-configuration-reference.html">API proxy
-          configuration reference</a>. Only the <strong>TCP</strong> protocol is
+          can on a TargetEndpoint, including enabling two-way TLS/SSL, as described in
+          {{apiproxy_reference}}. Only the <strong>TCP</strong> protocol is
           supported.</p>
 
           <aside class="warning"><b>Warning:</b> TLS/SSL on the syslog server must be configured
@@ -429,9 +417,7 @@
   <p>When attaching a Message Logging policy to an API proxy flow, consider placing it in the
   ProxyEndpoint response, in a special flow called PostClientFlow. The PostClientFlow executes
   after the response is sent to the requesting client, which ensures that all metrics are available
-  for logging. For details on using PostClientFlow, see <a href=
-  "/api-platform/reference/policies/api-proxy-configuration-reference.html">API proxy configuration
-  reference</a>.</p>
+  for logging. For details on using PostClientFlow, see {{apiproxy_reference}}.</p>
 
   <aside class="note"><b>Note:</b> It's important to note that the <strong>response</strong> flow
   variable is not available in the PostClientFlow once processing enters the error state. Instead,
@@ -576,11 +562,9 @@ yy/MM/dd'T'HH:mm:ss.sssZ
 
   <h4>Edge for Private Cloud 4.16.01 and later</h4>
 
-  <p>By default, message logs are located in the following location on Message
-  Processors: </p>
-  <pre class="prettyprint">
-/opt/apigee/var/log/messagelogging/{org}/{environment}/{api_proxy_name}/{revision}/{logging_policy_name}/
-</pre>
+  <p>By default, Private Cloud message logs are located in the following directory on Message
+  Processor nodes:</p>
+  <pre class="prettyprint">/opt/apigee/var/log/edge-message-processor/messagelogging/<var>org_name</var>/<var>environment</var>/<var>api_proxy_name</var>/<var>revision</var>/<var>logging_policy_name</var>/</pre>
 
   <p>You can change the default log location by modifying properties in the
   message-logging.properties file on the Message Processors:</p>
@@ -691,7 +675,7 @@ yy/MM/dd'T'HH:mm:ss.sssZ
 </pre>
 
   <p>A common default value can be specified for all the unresolved variables by setting the
-  <code>defaultVariableValue</code> attribute on the the <code>Message</code> element:</p>
+  <code>defaultVariableValue</code> attribute on the <code>Message</code> element:</p>
   <pre class="prettyprint">
 &lt;Message defaultVariableValue="unknown"&gt;This is a test message. id = {request.header.id}&lt;/Message&gt;
 </pre>

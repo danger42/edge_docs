@@ -1,0 +1,78 @@
+{% extends "_base.html" %}
+{% block title %}Slow backend{% endblock %}
+{% block body %}
+
+<p>Backend systems run the services that API Proxies access. In other words, they are the
+fundamental reason for the very existence of APIs and the API Management Proxy layer.</p>
+
+<p>Any API request that is routed via the Edge platform traverses a typical path before it hits the backend:
+
+<ul>
+  <li>The request originates from a client which could be anything from a browser to an app.</li>
+  <li>The request is then received by the Edge gateway.</li>
+  <li>It is processed within the gateway. As a part of this processing, the request passes onto a
+    number of distributed components.</li>
+  <li>The gateway then routes the request to the backend that responds to the request.</li>
+  <li>The response from the backend then traverses back the exact reverse path via the Edge gateway
+    back to the client.</li>
+</ul>
+
+<p><img src="/api-platform/images/antipatterns/client-edge-backend.png"/></p>
+
+<p>In effect, the performance of API requests routed via Edge is dependent on both Edge and the
+backend systems. In this antipattern, we will focus on the impact on API requests due to badly
+performing backend systems.</p>
+
+<h2>Antipattern</h2>
+
+<p>Let us consider the case of a problematic backend. These are the possibilities:</p>
+
+<li><a href="#slow">Inadequately sized backend</a></li>
+<li><a href="#inad">Slow backend</a></li>
+
+<h3 id="inad">Inadequately sized backend</h3>
+
+<p>The challenge in exposing the services on these backend systems via APIs is that they are
+accessible to a large number of end users. From a business perspective, this is a desirable
+challenge, but something that needs to be dealt with.</p>
+
+<p>Many times backend systems are not prepared for this extra demand on their services and are
+consequently under sized or are not tuned for efficient response.</p>
+
+<p>The problem with an "inadequately sized" backend is that if there is a spike in API requests,
+then it will stress the resources like CPU, Load and Memory on the backend systems. This would
+eventually cause API requests to fail.</p>
+
+<h3 id="slow">Slow backend</h3>
+
+<p>The problem with an improperly tuned backend is that it would be very slow to respond to any
+requests coming to it, thereby leading to increased latencies, premature timeouts and a compromised
+customer experience.</p>
+
+<p>The Edge platform offers a few tunable options to circumvent and manage the slow backend. But
+these options have limitations.</p>
+
+<h2>Impact</h2>
+
+<ul>
+  <li>In the case of an inadequately sized backend, increase in traffic could lead to failed
+    requests.</li>
+  <li>In the case of a slow backend, the latency of requests will increase.</li>
+</ul>
+
+<h2>Best practice</h2>
+
+<ul>
+  <li>Use caching to store the responses to improve the API response times and reduce the load on
+    the backend server.</li>
+  <li>Resolve the underlying problem in the slow backend servers.</li>
+</ul>
+
+<h2>Further reading</h2>
+
+<ul>
+  <li><a href="/api-services/content/cache-internals">Edge caching internals</a></li>
+</ul>
+
+
+{% endblock %}

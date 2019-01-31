@@ -1,0 +1,285 @@
+  {% extends "_base.html" %} {% block title %}Proxy a SOAP service{% endblock %} {% block body %}
+
+  <div class="tutorial-container">
+    <div class="tutorial-learn">
+      <p><strong>What you'll learn</strong></p>
+
+      <p>Through this tutorial, you'll learn to:</p>
+
+      <ul>
+        <li>Generate an Edge API proxy from a WSDL file.</li>
+
+        <li>Know the difference between a RESTful SOAP proxy type and a pass-through SOAP
+        proxy.</li>
+      </ul>
+    </div>
+
+    <div class="tutorial-section">
+      <p>In this tutorial, you'll learn how to put an Edge API proxy in front of a SOAP-based web
+      service.</p>
+
+      <p>This tutorial illustrates how to generate a new RESTful API in front of your SOAP-based
+      service. Though it's not described in detail here, you can also generate a pass-through proxy
+      that accepts a SOAP payload and passes it to the backend service.</p>
+    </div>
+
+    <div class="tutorial-section">
+      <h2 id="whatyoullneed">What you'll need</h2>
+
+      <ul>
+        <li>An Apigee Edge account. If you don't have one yet, you can sign up with the directions
+        at <a href="/api-platform/get-started/creating-apigee-edge-account.html">Creating an Apigee
+        Edge account</a>.</li>
+      </ul>
+    </div>
+
+    <div class="tutorial-section">
+      <h2 id="creatingtheproxy">Creating the proxy</h2>
+
+      <p>Here, you'll have Edge generate the proxy that will sit in front of a SOAP service.</p>
+
+      <div class="tutorial-sidebar">
+        <p><strong>RESTful API or SOAP Pass-through?</strong></p>
+
+        <p>The <em>REST-SOAP-REST</em> proxy type generates a new RESTful API with a translation
+        layer to SOAP. Clients call it as they would other RESTful services, passing the query
+        parameters needed by the backend service. Edge translates this into the SOAP payload
+        expected by the service.</p>
+
+        <p>In contrast, with a <em>pass-through proxy</em>, clients simply pass in a SOAP payload.
+        This is a way to have SOAP service calls benefit from Edge management features.</p>
+      </div>
+
+      <ol>
+        <li>Go to the Edge management UI for the organization you'll be working in. For Edge cloud,
+        go to <a href="https://enterprise.apigee.com">https://enterprise.apigee.com</a>, log in,
+        and select the organization you want to work in.</li>
+
+        <li>On the main menu, click <strong>APIs &gt; API Proxies</strong>, then click the
+        <strong>+ API Proxy</strong> button.</li>
+
+        <li>In the Build a Proxy wizard, select <strong>SOAP service</strong>.</li>
+
+        <li>Click <strong>Next</strong>.</li>
+
+        <li>In the Details page, fill out these fields:<br>
+          <br>
+
+          <table>
+            <thead>
+              <tr>
+                <th width="111">In this field</th>
+
+                <th width="1182">do this</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr>
+                <td><strong>WSDL</strong></td>
+
+                <td>
+                  <p>Select: <strong>Example URL</strong></p>
+
+                  <p>Then select:<br>
+                  <strong>...delayedstockquote.asmx?WSDL</strong></p>
+
+                  <p>Click: <strong>Validate</strong></p>
+
+                  <p>Apigee Edge gets the WSDL file and reads it to discover the list of operations
+                  the SOAP service supports.</p>
+                </td>
+              </tr>
+
+              <tr>
+                <td><strong>Proxy Name</strong></td>
+
+                <td>
+                  <p>Enter: <code>delayedstockquote</code></p>
+
+                  <p>This is name for the proxy you're creating.</p>
+                </td>
+              </tr>
+
+              <tr>
+                <td><strong>Proxy Base Path</strong> and <strong>Description</strong></td>
+
+                <td>Leave as is.</td>
+              </tr>
+            </tbody>
+          </table>
+        </li>
+
+        <li>Click <strong>Next</strong>.</li>
+
+        <li>In the WSDL page, make these selections:
+
+          <table>
+            <thead>
+              <tr>
+                <th>In this field</th>
+
+                <th>do this</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr>
+                <td><strong>API Proxy Type</strong></td>
+
+                <td>
+                  <p>Select: <strong>REST to SOAP to REST</strong></p>
+
+                  <p>Once you select the proxy type, Edge displays the list of operations for which
+                  it will generate REST API paths, as shown here. This list gives you a chance to
+                  select from among the operations found in the WSDL (in case you have a particular
+                  set you're looking for). Notice that the table also displays resources that a
+                  REST client can use to call the backend SOAP service.</p>
+
+                  <p>For now, just leave the first set of operations selected.</p>
+                </td>
+              </tr>
+
+              <tr>
+                <td><strong>Port Type: DelayedStockQuoteSoap</strong></td>
+
+                <td>Select all three WSDL operations. Leave other settings as is.</td>
+              </tr>
+            </tbody>
+          </table><br>
+          <!-- weather WSDL screen <img alt="" src="/images/tutorial-soap-wizard-wsdl.png" style="font-size: 12px; width: 700px; height: 419px;" />==&gt;<img alt="" src="/images/tutorial-soap-wizard-wsdl-stock.png" style="width: 700px; height: 367px; border-width: 1px; border-style: solid; margin-top: 15px; margin-bottom: 15px;" />-->
+        </li>
+
+        <li>Click <strong>Next</strong>.</li>
+
+        <li>In the Security page, select <strong>Pass through (none)</strong>.</li>
+
+        <li>Click <strong>Next</strong>.</li>
+
+        <li>Accept the Virtual Host defaults, and click <strong>Next</strong>.</li>
+
+        <li>In the Build page, accept the defaults and click <strong>Build and Deploy</strong> to
+        have Edge start generating the proxy.
+
+          <p>Edge generates a RESTful API proxy. From the WSDL, it determines the service's
+          supported operations, input parameters, and so on. Edge suggests which HTTP method to use
+          for each operation. Typically, Edge translates operations into GET requests, which have
+          the advantage of being cacheable. Edge also sets up the backend target endpoint, which
+          can vary per SOAP operation.</p>
+
+          <p>Unless you're customizing the new proxy (and you aren't in this tutorial), that's all
+          there is to it. You can move on to testing the new proxy.</p>
+        </li>
+      </ol>
+
+      <aside class="note"><b>Note:</b> If you'd chosen the pass-through SOAP type, Edge would have
+      displayed a list of operations with the SOAP payloads that clients would be expected to
+      pass.</aside>
+    </div>
+
+    <div class="tutorial-section">
+      <h2 id="testingtheproxy">Testing the proxy</h2>
+
+      <p>To try out the proxy you've created, open a command prompt and use cURL. Type the command
+      below, where:</p>
+
+      <ul>
+        <li>ORG is the name of the Edge organization in which you created the proxy.</li>
+
+        <li>ENV is the environment the proxy is deployed to.</li>
+
+        <li>DOMAIN corresponds to the Edge instance you're using.</li>
+      </ul>
+      <pre class="prettyprint">
+curl "https://{ORG}-{ENV}.{DOMAIN}/delayedstockquote/quote?StockSymbol=GOOG&amp;LicenseKey=0"
+</pre>
+
+      <p>For example, if your organization is <code>docfood</code>, environment is
+      <code>test</code>, and you're using the Edge enterprise cloud, you'd run a command like
+      this:</p>
+      <pre class="prettyprint">
+curl "https://docfood-test.apigee.net/delayedstockquote/quote?StockSymbol=GOOG&amp;LicenseKey=0"
+</pre>
+
+      <aside class="note"><b>Note:</b> The <code>LicenseKey</code> query parameter value is a
+      dummy/test value for the service.</aside>
+
+      <p>If you entered <code>GOOG</code> for the StockSymbol query parameter, you should get
+      the current price for Alphabet Inc. Class C stock. For example:</p>
+      <pre class="prettyprint">
+{  
+   "GetQuoteResponse":{  
+      "GetQuoteResult":{  
+         "StockSymbol":"GOOG",
+         "LastTradeAmount":819.55,
+         "LastTradeDateTime":"2017-02-13T14:33:00",
+         "StockChange":5.88,
+         "OpenAmount":816.0,
+         "DayHigh":820.96,
+         "DayLow":815.49,
+         "StockVolume":785064,
+         "PrevCls":813.67,
+         "ChangePercent":"+0.72%",
+         "FiftyTwoWeekRange":"663.28 - 841.95",
+         "EarnPerShare":27.88,
+         "PE":29.4,
+         "CompanyName":"Alphabet Inc.",
+         "QuoteError":false
+      }
+   }
+}
+</pre>
+    </div>
+
+    <div class="tutorial-section">
+      <h2 id="gettheautogeneratedopenapispecification">Get the auto-generated OpenAPI
+      Specification</h2>
+
+      <p>When you proxy a SOAP service using "REST to SOAP to REST," Edge automatically generates
+      an <a href="https://openapis.org/" target="_blank">OpenAPI Specification</a>. You can use the
+      OpenAPI Spec to generate API documentation for the API.</p>
+
+      <p>To get the OpenAPI Spec, simply visit this URL:</p>
+      <pre class="prettyprint">
+curl https://{ORG}-{ENV}.{DOMAIN}/delayedstockquote<strong>/openapi.json</strong>
+</pre>
+    </div>
+
+    <div class="tutorial-section">
+      <h2 id="extracredithowdoyoufindoutwhichresourceverbandqueryparameterstouse">Extra credit: How
+      do you find out which resource, verb, and query parameters to use?</h2>
+
+      <p>In the test API call, you used a specific resource and query parameters in your cURL call
+      to the backend SOAP service. But how would you find that out on your own?</p>
+
+      <h3 id="extracredithowdoyoufindoutwhichresourceverbandqueryparameterstouse-resourceandverb">
+      Resource and verb</h3>
+
+      <p>In the API proxy wizard when you were creating the proxy, you saw how the SOAP operations
+      would map to API verbs and resources. But if you didn't write those down, here's how you'd
+      find out after the proxy is created.</p>
+
+      <p>On the API proxy's <strong>Develop</strong> tab, in the left Navigator pane you'll see a
+      list of flows under the Proxy Endpoints. Click the flow you're interested in. For example,
+      the <strong>GetQuote</strong> flow is a good candidate. Then view the XML in the Code pane,
+      which shows the resource path and verb for the flow in the &lt;Condition&gt; element:
+      <code>/quote</code> and <code>GET</code>.</p>
+
+      <p><img alt="" src="/api-platform/images/tutorial_soap_flow.png"></p>
+
+      <h3 id="extracredithowdoyoufindoutwhichresourceverbandqueryparameterstouse-queryparameters">
+      Query parameters</h3>
+
+      <p>With the <strong>GetQuote</strong> flow selected, click the first policy in the graphical
+      flow view. It should be an Extract Variables policy that captures query parameters that are
+      expected to be passed: <code>StockSymbol</code> and <code>LicenseKey</code>. (If you do a web
+      search for the SOAP service, it tells you what to pass for the LicenseKey.)</p>
+
+      <p><img alt="" src="/api-platform/images/tutorial_soap_query_params.png"></p>
+
+      <p>The captured query parameters are saved as variables and used by the next policy to
+      construct the SOAP message.</p>
+    </div>
+  </div>
+
+  {% endblock %}

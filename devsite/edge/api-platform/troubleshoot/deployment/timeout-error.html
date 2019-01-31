@@ -1,0 +1,347 @@
+  {% extends "_base.html" %} {% block title %}Timeout error{% endblock %} {% block body %}
+
+<aside class="note">Was this troubleshooting playbook helpful? Please let us know
+  by clicking <a href="" class="google-feedback"
+   data-p="1636213" data-b="docsite" data-context="troubleshooting-feedback">
+  Send Feedback
+</a>.</aside>
+
+  <h2 id="symptom">Symptom</h2>
+
+  <p>Deployment of API proxy revisions through the Edge UI or management API fails with a timeout
+  error.</p>
+
+  <h2 id="errormessages">Error Messages</h2>
+  <pre class="prettyprint">
+Click to change deployment status. 
+The revision is deployed and traffic can flow, but flow may be impaired. 
+Error: Call timed out; either server is down or server is not reachable
+</pre>
+
+ 
+  <h2 id="possiblecauses">Possible Causes</h2>
+
+  <p>The typical causes for this issue are:</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <td><strong>Cause</strong></td>
+
+        <td><strong>Details</strong></td>
+
+        <td><strong>For</strong></td>
+      </tr>
+
+      <tr>
+        <td><a href="#networkconnectivity">Network Connectivity Issue</a></td>
+
+        <td>Communication failure between Management Server and Message Processor due to network
+        connectivity issues or firewall rules.</td>
+
+        <td>Private Cloud Users only</td>
+      </tr>
+
+      <tr>
+        <td><a href="#largeapiproxybundle">Large API Proxy Bundle</a></td>
+
+        <td>Message Processor may take a long time to activate if the API proxy bundle is large in
+        size, leading to RPC timeouts.</td>
+
+        <td>Private and Public Cloud Users</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="network-connectivity-issue"><a id="networkconnectivity" name=
+  "networkconnectivity"></a>Network Connectivity Issue</h2>
+
+  <p><strong>Note:</strong> Only Edge Private Cloud users can perform the following steps. If you
+  are on Edge Public Cloud, contact <a href="https://support.apigee.com">Apigee Support</a>.</p>
+
+  <h3 id="networkconnectivityissue-diagnosis">Diagnosis</h3>
+
+  <ol>
+    <li>Get the deployment status for the specific API that shows the error by using the following
+    management API call:
+      <pre class="prettyprint">
+curl -v http://&lt;management-server-IPaddress&gt;:&lt;port#&gt;/organizations/&lt;orgname&gt;/environments/&lt;envname&gt;/apis/&lt;apiname&gt;/deployments -u &lt;username&gt;
+</pre>
+
+      <p>Sample output showing the error:</p>
+      <pre class="prettyprint">
+{ 
+                "error": "Call timed out; either server is down or server is not reachable", 
+                "status": "error", 
+                "type": [ 
+                "message-processor" 
+                ], 
+                "uUID": "ebbc1078-cbde-4a00-a7db-66a3c1b2b748" 
+                }, 
+                { 
+                "status": "deployed", 
+                "type": [ 
+                "message-processor" 
+                ], 
+                "uUID": "204e2b7e-52f7-46d9-b458-20f9bfb51e6d" 
+                }, 
+                { 
+                "status": "deployed", 
+                "type": [ 
+                "router" 
+                ], 
+                "uUID": "967e63c6-ee95-47c0-9608-f4a32638fb1e" 
+                }, 
+                { 
+                "status": "deployed", 
+                "type": [ 
+                "router" 
+                ], 
+                "state" : "error"
+                } 
+</pre>
+
+      <p>The above sample output shows that the error occurred on one of the Message Processors
+      having the UUID "<code>ebbc1078-cbde-4a00-a7db-66a3c1b2b748</code>".</p>
+    </li>
+
+    <li>Based on the deployment status output for your API proxy, login to each of the Message
+    Processors with the corresponding UUID that showed the error and perform the following steps:
+
+      <ol>
+        <li>Check if the Message Processor is listening on the port 4528:
+          <pre class="prettyprint">
+netstat -an | grep LISTEN | grep 4528
+</pre>
+
+          <p>If the Message Processor is not listening on port 4528, then restart the Message
+          Processor:</p>
+          <pre class="prettyprint">
+/opt/apigee/apigee-service/bin/apigee-service edge-message-processor restart
+</pre>
+        </li>
+
+        <li>Re-check the deployment status of the API proxy by using the management API call shown
+        in step #1 above. If there no errors, then that indicates the issue is resolved.</li>
+      </ol>
+    </li>
+
+    <li>If the problem persists, test the connectivity from Management Server to the Message
+    Processor on port 4528 using the following steps:
+
+      <ol>
+        <li>If telnet is available, then use telnet:
+          <pre class="prettyprint">
+telnet &lt;MessageProcessor_IP&gt; 4528
+</pre>
+        </li>
+
+        <li>If telnet is not available, use netcat to check the connectivity as follows:
+          <pre class="prettyprint">
+nc -vz &lt;MessageProcessor_IP&gt; 4528
+</pre>
+        </li>
+
+        <li>If you get the response "Connection Refused" or "Connection timed out", then engage
+        your network operations team.</li>
+      </ol>
+    </li>
+
+    <li>Test the connectivity from the Message Processor to the Management Server on port 4526
+    using the following steps:
+
+      <ol>
+        <li>If telnet is available, then use telnet:
+          <pre class="prettyprint">
+telnet &lt;management-server-IP&gt; 4526
+</pre>
+        </li>
+
+        <li>If telnet is not available, use netcat to check the connectivity as follows:
+          <pre class="prettyprint">
+nc -vz &lt;management-server-IP&gt; 4526 
+</pre>
+        </li>
+
+        <li>If you get the response "Connection Refused" or "Connection timed out", engage your
+        network operations team.</li>
+      </ol>
+    </li>
+
+    <li>Work with your network operations team and do the following:
+
+      <ol>
+        <li>Ensure RPC protocol is allowed on both the Management Server and Message
+        Processor.</li>
+
+        <li>Remove any firewall restrictions or security rules setup between the Management Servers
+        and Message Processors to allow connectivity to port 4526 on the management server, and
+        connectivity from Management Server to Message Processors on port 4528.</li>
+      </ol>
+    </li>
+
+    <li>Re-check the deployment status (refer to step #1 above). If you don't see any errors, then
+    it indicates the error is resolved.</li>
+
+    <li>If the issue persists, check if there is network issue on the Message Processor. If there's
+    a network issue, restarting the specific Message Processor that shows the timeout error (as per
+    the deployment status output) may fix the issue:
+      <pre class="prettyprint">
+/opt/apigee/apigee-service/bin/apigee-service edge-message-processor restart
+</pre>
+    </li>
+
+    <li>If the problem still persists, then check the Management Server logs at:
+    (<code>/opt/apigee/var/log/edge-management-server/logs/system.log</code>).
+
+      <p><strong>Sample Call timed out error from Management Server Log</strong></p>
+      <pre class="prettyprint">
+2016-05-17 09:29:56,448 org:myorg env:prod qtp281969267-360792 ERROR DISTRIBUTION - RemoteServicesConfigEventHandler.configureServers() : exception for server with uuid <strong>e1381db7-d83b-4752-ae04-2de33f07e555</strong> : cause = RPC Error 504: Call timed out communication error = true 
+        com.apigee.rpc.RPCException: Call timed out 
+        at com.apigee.rpc.impl.AbstractCallerImpl.handleTimeout(AbstractCallerImpl.java:64) ~[rpc-1.0.0.jar:na] 
+        at com.apigee.rpc.impl.RPCMachineImpl$OutgoingCall.handleTimeout(RPCMachineImpl.java:483) ~[rpc-1.0.0.jar:na] 
+        at com.apigee.rpc.impl.RPCMachineImpl$OutgoingCall.access$000(RPCMachineImpl.java:402) ~[rpc-1.0.0.jar:na] 
+        at com.apigee.rpc.impl.RPCMachineImpl$OutgoingCall$1.run(RPCMachineImpl.java:437) ~[rpc-1.0.0.jar:na] 
+        at io.netty.util.HashedWheelTimer$HashedWheelTimeout.expire(HashedWheelTimer.java:532) ~[netty-all-4.0.0.CR1.jar:na] 
+        at io.netty.util.HashedWheelTimer$Worker.notifyExpiredTimeouts(HashedWheelTimer.java:430) ~[netty-all-4.0.0.CR1.jar:na] 
+        at io.netty.util.HashedWheelTimer$Worker.run(HashedWheelTimer.java:371) ~[netty-all-4.0.0.CR1.jar:na] 
+        at java.lang.Thread.run(Thread.java:745) ~[na:1.7.0_79] 
+        
+</pre>
+
+      <p>If you observe a similar error as shown in the above example, then increase the RPC
+      timeout on the Management Server so that if there's any network slowdown then it should give
+      time for Management Server to connect to the Message Processor.</p>
+    </li>
+  </ol>
+
+  <h3 id="networkconnectivityissue-resolution">Resolution</h3>
+
+  <p><strong>Note:</strong> Only Edge Private Cloud users can perform the following steps. If you
+  are on Edge Public Cloud, contact <a href="https://support.apigee.com">Apigee Support</a>.</p>
+
+  <ol>
+    <li>Perform the following steps to increase the RPC timeout:
+
+      <ol>
+        <li>Create the file
+        <code>/opt/apigee/customer/application/management-server.properties</code> the Management
+        Server machine, if it does not already exist.</li>
+
+        <li>Add the following line into this file:
+          <pre class="prettyprint">
+conf_cluster_rpc.connect.timeout=&lt;time in seconds&gt;
+</pre>
+
+          <p>The default RPC timeout value is 10 and it is recommended to increase it to 40
+          seconds. Set it as follows:</p>
+          <pre class="prettyprint">
+conf_cluster_rpc.connect.timeout=40
+</pre>
+        </li>
+
+        <li>Ensure this file is owned by apigee:
+          <pre class="prettyprint">
+chown apigee:apigee /opt/apigee/customer/application/management-server.properties
+</pre>
+        </li>
+
+        <li>Restart the Management Server:
+          <pre class="prettyprint">
+/opt/apigee/apigee-service/bin/apigee-service edge-management-server restart
+</pre>
+        </li>
+
+        <li>If you have more than one Management Server, repeat the above steps on all the
+        Management Servers.</li>
+
+        <li>Deploy the API proxy in the Edge UI or by using the Edge management API call. If the
+        API proxy gets deployed without any issues, then that indicates the issue is resolved.</li>
+      </ol>
+    </li>
+
+    <li>If the problem persists, then collect <a href=
+    "https://docs.google.com/document/d/19b8MqMH9PSwqIK4Uj6gELLA8nNZeNaczROBi5Bpq7mg/edit#heading=h.a71av9yi88eq">
+      tcpdump</a> command from the Management Server and Message Processor. Enable the tcpdump
+      command on each of the servers and then initiate the deployment of the API Proxy from the UI
+      or using the management API:
+
+      <ol>
+        <li>Run the below tcpdump command from the Management Server:
+          <pre class="prettyprint">
+tcpdump -i any -s 0 host &lt;message-processor-IP address&gt; -w &lt;File name&gt;
+</pre>
+        </li>
+
+        <li>Run the below tcpdump command from the Message Processor:
+          <pre class="prettyprint">
+tcpdump -i any -s 0 host &lt;management-server-IP address&gt; -w &lt;File name&gt;
+</pre>
+        </li>
+
+        <li>Contact <a href="https://support.apigee.com">Apigee Support</a> to get assistance on
+        analyzing the tcpdumps and to troubleshoot the problem further.</li>
+      </ol>
+    </li>
+  </ol>
+
+  <h2 id="large-api-proxy-bundle"><a id="largeapiproxybundle" name="largeapiproxybundle"></a>Large
+  API Proxy Bundle</h2>
+
+  <h3 id="largeapiproxybundle-diagnosis">Diagnosis</h3>
+
+  <ol>
+    <li>Check the size of the API proxy bundle for which the deployment error is being
+    observed.</li>
+
+    <li>If the size is reasonably large (10MB or higher), then it's very likely that Message
+    Processor may need more time to activate the API proxy.</li>
+
+    <li>If the API Proxy bundle size is greater than 15 MB, then proceed to <a href=
+    "https://docs.google.com/document/d/1Up7eEsdakw2LT3yvwH0KiIzkTynZhxJiaRm-v-yCPyw/edit#heading=h.42ir7en1rq7w">
+    API Proxy Bundle larger than 15MB</a>.</li>
+  </ol>
+
+  <h3 id="largeapiproxybundle-resolution">Resolution</h3>
+
+  <p><strong>Note:</strong> Only Edge Private Cloud users can perform the following steps. If you
+  are on Edge Public Cloud, contact <a href="https://support.apigee.com">Apigee Support</a>.</p>
+
+  <p>Increase the RPC timeout on the Management Server so that Message Processor has enough time to
+  activate large API proxy bundles. Perform the following steps to increase the RPC timeout
+  value:</p>
+
+  <ol>
+    <li>Create the <code>/opt/apigee/customer/application/management-server.properties</code> file
+    on the Management Server machine, if it does not already exist.</li>
+
+    <li>Add the following line to this file:
+      <pre class="prettyprint">
+conf_cluster_rpc.connect.timeout=&lt;time in seconds&gt;
+</pre>
+
+      <p>The default RPC timeout value is 10 and it is recommended to increase it to 40 seconds.
+      Set it as follows:</p>
+      <pre class="prettyprint">
+conf_cluster_rpc.connect.timeout=40
+</pre>
+    </li>
+
+    <li>Ensure this file is owned by apigee:
+      <pre class="prettyprint">
+chown apigee:apigee /opt/apigee/customer/application/management-server.properties
+</pre>
+    </li>
+
+    <li>Restart the Management Server:
+      <pre class="prettyprint">
+/opt/apigee/apigee-service/bin/apigee-service edge-management-server restart
+</pre>
+    </li>
+
+    <li>If you have more than one Management Server, repeat the above steps on all the Management
+    Servers.</li>
+  </ol>
+
+  <p>If the problem persists, contact <a href="https://support.apigee.com">Apigee Support</a> for
+  further assistance.</p>{% endblock %}

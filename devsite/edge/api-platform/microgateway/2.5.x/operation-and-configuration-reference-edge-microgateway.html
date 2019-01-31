@@ -1,14 +1,35 @@
-  {% extends "_base.html" %} {% block title %}Operation and configuration reference for Edge
-  Microgateway{% endblock %} {% block body %}
+{% extends "_base.html" %}
+{% block title %}Operation and configuration reference for Edge Microgateway{% endblock %}
+{% block body %}
 
   <p style="text-align: right;"><em>Edge Microgateway v. 2.5.x</em></p>
 
-  <h2 id="overview">Overview</h2>
-
   <p>This topic discusses how to manage and configure Edge Microgateway.</p>
 
-  <h2 id="makingconfigurationchanges"><a id="Making configuration changes" name=
-  "Making%20configuration%20changes"></a>Making configuration changes</h2>
+<h2 id="upgradingedgemicrogateway">Upgrading Edge Microgateway if you have an internet connection</h2>
+
+<ol>
+  <li>Execute the following <code>npm</code> command to upgrade to the latest version of Edge
+    Microgateway:
+    <pre class="prettyprint devsite-terminal">npm upgrade edgemicro -g</pre>
+    <p>To upgrade to a specific version of Edge Microgateway, you need to specify the <strong>version
+    number</strong> in the upgrade command. <strong>If you do not specify the version number, the
+    latest version will be installed.</strong> For example, to upgrade to version 2.5.26, use the
+    following command:</p>
+    <pre class="prettyprint devsite-terminal">npm upgrade edgemicro@2.5.26 -g</pre>
+  </li>
+  <li>Check the version number. For example, if you installed version 2.5.26:
+    <pre class="prettyprint devsite-terminal">edgemicro --version
+current nodejs version is v8.9.0
+current edgemicro version is 2.5.26
+    </pre>
+  </li>
+  <li>Finally, upgrade to the latest version of the <strong>edgemicro-auth</strong> proxy:
+    <pre class="prettyprint devsite-terminal">edgemicro upgradeauth -o <var>org_name</var> -e <var>env_name</var> -u <var>username</var></pre>
+  </li>
+</ol>
+
+  <h2 id="makingconfigurationchanges">Making configuration changes</h2>
 
   <p>The configuration files you need to know about include:</p>
 
@@ -27,79 +48,61 @@
 
   <p>When you install Edge Microgateway, a default system configuration file is placed here:</p>
 
-  <p><code><strong>[prefix]/lib/node_modules/edgemicro/config/default.yaml</strong></code></p>
+  <pre><var>prefix</var>/lib/node_modules/edgemicro/config/default.yaml</pre>
 
-  <p>where <code>[prefix]</code> is the <code>npm</code> prefix directory. See <a href=
+  <p>Where <var>prefix</var> is the <code>npm</code> prefix directory. See <a href=
   "/api-platform/microgateway/2.5.x/installing-edge-microgateway.html#whereisedgemicrogatewayinstalled">
   Where is Edge Microgateway installed</a> if you can't locate this directory.</p>
 
   <p>If you change the system config file, you must reinitialize, reconfigure, and restart Edge
   Microgateway:</p>
 
-  <ol>
-    <li>Call <code>edgemicro init</code></li>
-
-    <li>Call <code>edgemicro configure [params]</code></li>
-
-    <li>Call <code>edgemicro start [params]</code></li>
-  </ol>
+  <pre class="prettyprint devsite-terminal">edgemicro init
+<code class="devsite-terminal">edgemicro configure [params]</code>
+<code class="devsite-terminal">edgemicro start [params]</code></pre>
 
   <h3 id=
   "makingconfigurationchanges-defaultconfigfilefornewlyinitializededgemicrogatewayinstances">
   Default config file for newly initialized Edge Microgateway instances</h3>
 
-  <p>When you run <code><strong>edgemicro init</strong></code>, the system config file (described
-  above), <code>default.yaml</code>, is placed in this directory: ~<code>/.edgemicro</code></p>
+  <p>When you run <code>edgemicro init</code>, the system config file (described
+  above), <code>default.yaml</code>, is placed in the <code>~/.edgemicro</code> directory.</p>
 
-  <p>If you change the config file in ~<code>/.edgemicro</code>, you must reconfigure and restart
+  <p>If you change the config file in <code>~/.edgemicro</code>, you must reconfigure and restart
   Edge Microgateway:</p>
 
-  <ol>
-    <li><code>edgemicro stop</code></li>
-
-    <li><code>edgemicro configure</code> <code>[params]</code></li>
-
-    <li><code>edgemicro start</code> <code>[params]</code></li>
-  </ol>
+  <pre class="prettyprint devsite-terminal">edgemicro stop
+<code class="devsite-terminal">edgemicro configure [params]</code>
+<code class="devsite-terminal">edgemicro start [params]</code></pre>
 
   <h3 id="makingconfigurationchanges-dynamicconfigurationfileforrunninginstances">Dynamic
   configuration file for running instances</h3>
 
   <p>When you run <code><strong>edgemicro configure [params]</strong></code>, a dynamic
-  configuration file is created in ~<code>/.edgemicro</code>. The file is named according to this
-  pattern: <code>[org]-[env]-config.yaml</code>, where <code>org</code> and <code>env</code> are
+  configuration file is created in <code>~/.edgemicro</code>. The file is named according to this
+  pattern: <code><var>org</var>-<var>env</var>-config.yaml</code>, where <var>org</var> and
+  <var>env</var> are
   your Apigee Edge organization and environment names. You can use this file to make configuration
   changes, and then reload them with zero-downtime. For example, if you add and configure a plugin,
-  you can reload the configuration without incurring any downtime, as explained below. </p>
+  you can reload the configuration without incurring any downtime, as explained below.</p>
 
   <p><strong>If Edge Microgateway is running (zero-downtime option):</strong></p>
 
   <ol>
     <li>Reload the Edge Microgateway configuration:
-      <pre class="prettyprint">
-<strong>edgemicro reload -o [org] -e [env] -k [key] -s [secret]</strong>
-</pre>
-
+      <pre class="prettyprint devsite-terminal">edgemicro reload -o <var>org_name</var> -e <var>env_name</var> -k <var>key</var> -s <var>secret</var></pre>
       <p>Where:</p>
-
       <ul>
-        <li><strong><code>org</code></strong> is your Edge organization name (you must be an org
-        administrator).</li>
-
-        <li><strong><code>env</code></strong> is an environment in your org (such as test or
-        prod).</li>
-
-        <li><code><strong>key</strong></code> is the key returned previously by the configure
-        command.</li>
-
-        <li><code><strong>secret</strong></code> is the key returned previously by the configure
-        command.</li>
+        <li><var>org_name</var> is your Edge organization name (you must be an organization
+          administrator).</li>
+        <li><var>env_name</var> is an environment in your org (such as "test" or
+          "prod").</li>
+        <li><var>key</var> is the key returned previously by the configure command.</li>
+        <li><var>secret</var> is the key returned previously by the configure command.</li>
       </ul>
-
-      <p><strong>Example</strong></p>
-      <pre class="prettyprint">
-<strong>edgemicro reload -o docs -e test -k 701e70ee718ce6dc188016b3c39177d64a88754d615c74e1f78b6181d000723 -s 05c14356e42ed136b8dd35cf8a18531ff52d7299134677e30ef4e34ab0cc824</strong>
-</pre>
+      <p>For example</p>
+      <pre class="prettyprint devsite-terminal">edgemicro reload -o docs -e test -k 701e70ee718ce6dc188...78b6181d000723 \
+  -s 05c14356e42ed1...4e34ab0cc824</pre>
     </li>
   </ol>
 
@@ -107,36 +110,24 @@
 
   <ol>
     <li>Restart Edge Microgateway:
-      <pre class="prettyprint">
-<strong>edgemicro start -o [org] -e [env] -k [key] -s [secret]</strong>
-</pre>
-
+      <pre class="prettyprint devsite-terminal">edgemicro start -o <var>org_name</var> -e <var>env_name</var> -k <var>key</var> -s <var>secret</var></pre>
       <p>Where:</p>
-
       <ul>
-        <li><strong><code>org</code></strong> is your Edge organization name (you must be an org
-        administrator).</li>
-
-        <li><strong><code>env</code></strong> is an environment in your org (such as test or
-        prod).</li>
-
-        <li><code><strong>key</strong></code> is the key returned previously by the configure
-        command.</li>
-
-        <li><code><strong>secret</strong></code> is the key returned previously by the configure
-        command.</li>
+        <li><var>org_name</var> is your Edge organization name (you must be an organization
+          administrator).</li>
+        <li><var>env_name</var> is an environment in your organization (such as "test" or
+          "prod").</li>
+        <li><var>key</var> is the key returned previously by the configure command.</li>
+        <li><var>secret</var> is the key returned previously by the configure command.</li>
       </ul>
-
-      <p><strong>Example</strong></p>
-      <pre class="prettyprint">
-<strong>edgemicro start -o docs -e test -k 701e70ee718ce6dc188016b3c39177d64a88754d615c74e1f78b6181d000723 -s </strong><strong>05c14356e42ed136b8dd35cf8a18531ff52d7299134677e30ef4e34ab0cc824</strong>
-</pre>
+      <p>For example:</p>
+      <pre class="prettyprint devsite-terminal">edgemicro start -o docs -e test -k 701e70ee718ce...b6181d000723 \
+  -s 05c1435...e34ab0cc824</pre>
     </li>
   </ol>
 
   <p>Here is an example config file. For details about configuration file settings, see <a href=
-  "#Edge%20Microgateway%20configuration%20reference">Edge Microgateway configuration
-  reference</a>.</p>
+  "#edgemicrogatewayconfigurationreference">Edge Microgateway configuration reference</a>.</p>
   <pre class="prettyprint">
 edge_config:
   bootstrap: &gt;-
@@ -210,27 +201,25 @@ https://localhost:8000/myapi
 
   <ol>
     <li>Generate or obtain an SSL certificate and key using the <a href=
-    "https://www.openssl.org">openssl</a> utility or whichever method you prefer. </li>
+    "https://www.openssl.org">openssl</a> utility or whichever method you prefer.</li>
 
     <li>Add the <code>edgemicro:ssl</code> attribute to the <a href=
-    "#Making%20configuration%20changes">Edge Microgateway configuration file</a>. For a complete
+    "#makingconfigurationchanges">Edge Microgateway configuration file</a>. For a complete
     list of options, see the table below. For example:<br>
-      <pre class="prettyprint">
- edgemicro:
-     ssl:
-         key: &lt;absolute path to the SSL key file&gt;
-         cert: &lt;absolute path to the SSL cert file&gt;
-         passphrase: admin123 #option added in v2.2.2
-             rejectUnauthorized: true #option added in v2.2.2
-         requestCert: true 
-</pre>
+      <pre class="prettyprint">edgemicro:
+  ssl:
+   key: &lt;absolute path to the SSL key file&gt;
+   cert: &lt;absolute path to the SSL cert file&gt;
+   passphrase: admin123 #option added in v2.2.2
+   rejectUnauthorized: true #option added in v2.2.2
+   requestCert: true</pre>
 
-      <aside class="note"><b>Note:</b> The key specified in the referenced SSL key file
+      <aside class="note">The key specified in the referenced SSL key file
       <strong>must not be encrypted</strong>.</aside>
     </li>
 
-    <li>Restart Edge Microgateway. Follow the steps outlined in <a href=
-    "#Making%20configuration%20changes">Making configuration changes</a> depending on which
+    <li>Restart Edge Microgateway. Follow the steps outlined in
+    <a href="#makingconfigurationchanges">Making configuration changes</a> depending on which
     configuration file you edited: the default file or the runtime config file. </li>
   </ol>
 
@@ -338,36 +327,39 @@ edgemicro:
 
   <p>This example provides settings that will be applied to all hosts:</p>
   <pre class="prettyprint">
-targets:
-   ssl:
-     client:
-       key: /Users/jdoe/nodecellar/twowayssl/ssl/client.key
-       cert: /Users/jdoe/nodecellar/twowayssl/ssl/ca.crt
-       passphrase: admin123
-       rejectUnauthorized: true
+edgemicro:
+  targets:
+     ssl:
+       client:
+         key: /Users/jdoe/nodecellar/twowayssl/ssl/client.key
+         cert: /Users/jdoe/nodecellar/twowayssl/ssl/ca.crt
+         passphrase: admin123
+         rejectUnauthorized: true
 </pre>
 
   <p>In this example, the settings are applied only to the specified host:</p>
   <pre class="prettyprint">
-targets:
-   host: 'myserver.example.com'
-   ssl:
-     client:
-       key: /Users/myname/twowayssl/ssl/client.key
-       cert: /Users/myname/twowayssl/ssl/ca.crt
-       passphrase: admin123
-       rejectUnauthorized: true
+edgemicro:
+  targets:
+     - host: 'myserver.example.com'
+       ssl:
+         client:
+           key: /Users/myname/twowayssl/ssl/client.key
+           cert: /Users/myname/twowayssl/ssl/ca.crt
+           passphrase: admin123
+           rejectUnauthorized: true
 </pre>
 
   <p>Here is an example for TLS:</p>
   <pre class="prettyprint">
-targets:
-   host: 'myserver.example.com'
-   tls:
-     client:
-       pfx: /Users/myname/twowayssl/ssl/client.pfx
-       passphrase: admin123
-       rejectUnauthorized: true
+edgemicro:
+  targets:
+     - host: 'myserver.example.com'
+       tls:
+         client:
+           pfx: /Users/myname/twowayssl/ssl/client.pfx
+           passphrase: admin123
+           rejectUnauthorized: true
 </pre>
 
   <p>Here is a list of all of the supported client options:</p>
@@ -460,48 +452,44 @@ authUri: https://myorg-myenv.apigee.net/edgemicro-auth
   a service that uses LDAP to verify identity.</p>
 
   <aside class="note">
-    <b>Note:</b> <strong>Important</strong>: If you change the auth service URI, you also need to
+    <strong>Important</strong>: If you change the auth service URI, you also need to
     configure these attributes in your Edge Microgateway config file:
 
     <ul>
       <li><code>edgeconfig:verify_api_key_url</code> - Set this URL to point to the API key
       endpoint on your custom auth service. In the default edgemicro-auth proxy, this URL is:
-      <code>https://myorg-myenv.apigee.net/edgemicro-auth/publicKey.</code></li>
+      <code>https://myorg-myenv.apigee.net/edgemicro-auth/publicKey</code>.</li>
 
       <li><code>edgeconfig:products</code> - Set this URL to point to the products endpoint on your
       custom auth service. In the default edgemicro-auth proxy, this URL is:
-      <code>https://myorg-myenv.apigee.net/edgemicro-auth/products.</code></li>
+      <code>https://myorg-myenv.apigee.net/edgemicro-auth/products</code>.</li>
     </ul>
   </aside>
 
-  <aside class="note"><b>Note:</b> <strong>Important:</strong> If you override the default auth
+  <aside class="note"><strong>Important:</strong> If you override the default auth
   proxy, the new proxy or service must return a response format that is identical to the default
   <code>edgemicro-auth</code> proxy.</aside>
 
-  <h2 id="managinglogfiles"><a id="Managing log files" name="Managing%20log%20files"></a>Managing
-  log files</h2>
+  <h2 id="managinglogfiles">Managing log files</h2>
 
   <p>Edge Microgateway logs information about each request and response. Log files provide useful
   information for debugging and troubleshooting.</p>
 
-  <aside class="note"><b>Note:</b> This section describes the built-in log utility for Edge
+  <aside class="note">This section describes the built-in log utility for Edge
   Microgateway. If you need to use a third-party logging module, like Bunyan or Winston, you can
   write a custom plugin. For details, check out this blog: <a href=
   "https://apigee.com/about/blog/developer/tutorial-adding-logger-plugin-apigee-edge-microgateway">Tutorial:
   Adding a Logger Plugin to Apigee Edge Microgateway</a>.</aside>
 
-  <h3 id="managinglogfiles-wherelogfilesarestored"><a id="Where log files are stored" name=
-  "Where%20log%20files%20are%20stored"></a>Where log files are stored</h3>
+  <h3 id="managinglogfiles-wherelogfilesarestored">Where log files are stored</h3>
 
   <p>By default, log files are stored in <code>/var/tmp</code>.</p>
 
-  <h3 id="managinglogfiles-howtochangethedefaultlogfiledirectory"><a id=
-  "How to change the default log file director" name=
-  "How%20to%20change%20the%20default%20log%20file%20director"></a>How to change the default log
+  <h3 id="managinglogfiles-howtochangethedefaultlogfiledirectory">How to change the default log
   file directory</h3>
 
   <p>The directory where log files are stored is specified in the Edge Microgateway configuration
-  file. See also <a href="#Making%20configuration%20changes">Making configuration
+  file. See also <a href="#makingconfigurationchanges">Making configuration
   changes</a>.</p>
   <pre class="prettyprint">
 edgemicro:
@@ -525,7 +513,7 @@ edgemicro:
   <pre class="prettyprint">
 edgemicro:
   logging:
-    to_console: true  
+    to_console: true
 </pre>
 
   <p>With this setting, logs will be sent to standard out. Currently, you cannot send logs to both
@@ -537,11 +525,10 @@ edgemicro:
   <strong>error</strong>. The info level is recommended. It logs all API requests and responses,
   and it is the default.</p>
 
-  <h3 id="managinglogfiles-howtochangelogintervals"><a id="log-intervals" name=
-  "log-intervals"></a>How to change log intervals</h3>
+  <h3 id="managinglogfiles-howtochangelogintervals">How to change log intervals</h3>
 
   <p>You can configure these intervals in the Edge Microgateway config file. See also <a href=
-  "#Making%20configuration%20changes">Making configuration changes</a>.</p>
+  "#makingconfigurationchanges">Making configuration changes</a>.</p>
 
   <p>The configurable attributes are:</p>
 
@@ -565,12 +552,10 @@ edgemicro:
     rotate_interval: 24</strong>
 </pre>
 
-  <p><strong>Note:</strong> Archived log files are not compressed. When the interval starts, a new
-  log file is created with a new timestamp. </p>
+  <aside class="note">Archived log files are not compressed. When the interval starts, a new
+  log file is created with a new timestamp. </aside>
 
-  <h3 id="managinglogfiles-goodlogfilemaintenancepractices"><a id=
-  "Good log file maintenance practices" name="Good%20log%20file%20maintenance%20practices"></a>Good
-  log file maintenance practices</h3>
+  <h3 id="managinglogfiles-goodlogfilemaintenancepractices">Good log file maintenance practices</h3>
 
   <p>As log file data accumulates over time, Apigee recommends that you adopt the following
   practices:</p>
@@ -578,8 +563,8 @@ edgemicro:
   <ul>
     <li>Because log files can become quite large, be sure that the log file directory has
     sufficient space. See the following sections <a href=
-    "#Where%20log%20files%20are%20stored">Where log files are stored</a> and <a href=
-    "#How%20to%20change%20the%20default%20log%20file%20director">How to change the default log file
+    "#managinglogfiles-wherelogfilesarestored">Where log files are stored</a> and <a href=
+    "#managinglogfiles-howtochangethedefaultlogfiledirectory">How to change the default log file
     directory</a>.</li>
 
     <li>Either delete or move log files to a separate archive directory at least once a week.</li>
@@ -623,7 +608,7 @@ edgemicro-mymachine-local-mtqzntgndmxodaymq-out.log
 
   <p><code>DEBUG=* edgemicro start -o docs -e test -k abc123 -s xyz456</code></p>
 
-  <p><strong>Note:</strong> On Windows, use <code>SET DEBUG=*</code></p>
+  <aside class="note">On Windows, use <code>SET DEBUG=*</code></aside>
 
   <h3 id="managinglogfiles-contentsoftheapilogfile">Contents of the "api" log file</h3>
 
@@ -772,22 +757,20 @@ edgemicro-mymachine-local-MTQzNjIxOTk0NzY0Nw-api.log
   <h3 id="managinglogfiles-logfileschedule">Log file schedule</h3>
 
   <p>Log files are rotated on the interval specified by the <strong>rotate_interval</strong>
-  <a href="#log-intervals">configuration attribute</a>. Entries will continue being added to the
+  <a href="#managinglogfiles-howtochangelogintervals">configuration attribute</a>. Entries will continue being added to the
   same log file until the rotation interval expires. However, each time Edge Microgateway is
   restarted it receives a new UID and creates a new set of log files with this UID. See also
-  <a href="#Good%20log%20file%20maintenance%20practices">Good log file maintenance
+  <a href="#managinglogfiles-goodlogfilemaintenancepractices">Good log file maintenance
   practices</a>.</p>
 
-  <h2 id="edgemicrogatewayconfigurationreference"><a id="Edge Microgateway configuration reference"
-  name="Edge%20Microgateway%20configuration%20reference"></a>Edge Microgateway configuration
-  reference</h2>
+  <h2 id="edgemicrogatewayconfigurationreference">Edge Microgateway configuration reference</h2>
 
   <h3 id="edgemicrogatewayconfigurationreference-locationoftheconfigurationfile">Location of the
   configuration file</h3>
 
   <p>The configurations attributes described in this section are located in the Edge Microgateway
-  configuration file. See also <a href="#Making%20configuration%20changes">Making configuration
-  changes</a>. </p>
+  configuration file. See also <a href="#makingconfigurationchanges">Making configuration
+  changes</a>.</p>
 
   <h3 id="edgemicrogatewayconfigurationreference-edge_configattributes">edge_config attributes</h3>
 
@@ -799,14 +782,14 @@ edgemicro-mymachine-local-MTQzNjIxOTk0NzY0Nw-api.log
     Microgateway-specific service running on Apigee Edge. Edge Microgateway uses this service to
     communicate with Apigee Edge. This URL is returned when you execute the command to generate the
     public/private key pair: <strong><code>edgemicro genkeys</code></strong>. See the <a href=
-    "/api-platform/microgateway/2.5.x/setting-and-configuring-edge-microgateway.html">Setting up
+    "/api-platform/microgateway/2.5.x/setting-and-configuring-edge-microgateway">Setting up
     and configuring Edge Microgateway</a> for details.</li>
 
     <li><strong>jwt_public_key</strong>: (default: none) A URL that points to the Edge Microgateway
     proxy that is deployed on Apigee Edge. This proxy serves as an authentication endpoint for
     issuing signed access tokens to clients. This URL is returned when you execute the command to
     deploy the proxy: <strong>edgemicro configure</strong>. See the <a href=
-    "/api-platform/microgateway/2.5.x/setting-and-configuring-edge-microgateway.html">Setting up
+    "/api-platform/microgateway/2.5.x/setting-and-configuring-edge-microgateway">Setting up
     and configuring Edge Microgateway</a> for details.</li>
   </ul>
 
@@ -929,7 +912,7 @@ edgemicro-mymachine-local-MTQzNjIxOTk0NzY0Nw-api.log
 
   <p>These settings configure how client authentication is enforced by Edge Microgateway.</p>
 
-  <aside class="note"><b>Note:</b> You can find the steps for obtaining and using access tokens in
+  <aside class="note">You can find the steps for obtaining and using access tokens in
   the <a href=
   "/api-platform/microgateway/2.5.x/setting-and-configuring-edge-microgateway.html">Setting up and
   configuring Edge Microgateway</a>.</aside>
@@ -951,7 +934,7 @@ edgemicro-mymachine-local-MTQzNjIxOTk0NzY0Nw-api.log
     parameter used to pass an API key to Edge Microgateway. See also <a href="#usinganapikey">Using
     an API key</a>.</li>
 
-    <li><strong>keepAuthHeader</strong>: (default: false) If set to true, the Authorization header
+    <li><strong>keep-authorization-header</strong>: (default: false) If set to true, the Authorization header
     sent in the request is passed on to the target (it is preserved). </li>
 
     <li><strong>allowOAuthOnly</strong> -- If set to true, every API must carry an Authorization
@@ -963,7 +946,7 @@ edgemicro-mymachine-local-MTQzNjIxOTk0NzY0Nw-api.log
       <strong>x-api-key</strong> header (or a custom location) with an API Key.Allows you to permit
       only the API key security model (while maintaining backward compatibility). (Added 2.4.x)
 
-      <aside class="note"><b>Note:</b> Do not set both <strong>allowOAuthOnly</strong> and
+      <aside class="note">Do not set both <strong>allowOAuthOnly</strong> and
       <strong>allowAPIKeyOnly</strong> to true. The default setting is both flags are set to false
       (for backward compatibility).</aside>
     </li>
@@ -1029,17 +1012,76 @@ analytics:
   mask_request_path: 'string_to_mask'
 </pre>
 
+<h2 id="segregatinganalyticspaths">Segregating API calls in Edge Analytics</h2>
+
+  <p>You can configure the analytics plugin to segregate a specific API path so that it appears as
+    a separate proxy in the Edge Analytics dashboards. For example, you can
+    segregate a health check API in the dashboard to avoid confusing it with actual API proxy calls. In the
+Analytics dashboard, segregated proxies follow this naming pattern:</p>
+
+ <pre>edgemicro_<var>proxyname</var>-health</pre>
+
+<p>The following image shows two segregated proxies in the Analytics dashboard: <code>edgemicro_hello-health</code> and
+  <code>edgemicro_mock-health</code>:</p>
+
+<p><img src="/api-platform/images/edgemicro-health-ax.png" class="screenshot" /></p>
+
+
+    <p>Use these
+parameters to segregate relative and absolute paths in the Analytics dashboard as separate proxies:</p>
+
+
+<ul>
+    <li><strong>relativePath</strong> (Optional): Specifies a relative path to segregate in the
+      Analytics dashboard. For example, if you specify <code>/healthcheck</code>, all API calls that contain the path
+      <code>/healthcheck</code> will appear in the dashboard as <code>edgemicro_<var>proxyname</var>-health</code>. Note that this flag ignores the proxy basepath.
+      To segregate based on a full path, including basepath, use the <code>proxyPath</code> flag.</li>
+
+    <li><strong>proxyPath</strong> (Optional): Specifies a full API proxy path, including the proxy
+      basepath, to segregate in the analytics dashboard. For example, if you specify <code>/mocktarget/healthcheck</code>,
+      where <code>/mocktarget</code>
+      is the proxy basepath, all API calls with the path <code>/mocktarget/healthcheck</code> will
+      appear in the dashboard as <code>edgemicro_<var>proxyname</var>-health</code>.</li>
+
+  </ul>
+
+<p>For example, in the following configuration any API path that contains <code>/healthcheck</code> will
+  be segregated by the analytics plugin. This means, <code>/foo/healthcheck</code> and <code>/foo/bar/healthcheck</code>
+  will be segregated as a separate proxy called <code>edgemicro_<var>proxyname</var>-health</code> in the analytics dashboard.</p>
+
+<pre class="prettyprint">
+analytics:
+  uri: >-
+    https://xx/edgemicro/ax/org/docs/environment/test
+  bufferSize: 100
+  batchSize: 50
+  flushInterval: 500
+  relativePath: /healthcheck</pre>
+
+<p>In the following configuration any API with the proxy path <code>/mocktarget/healthcheck</code> will
+  be will be segregated as a separate proxy called <code>edgemicro_<var>proxyname</var>-health</code> in
+  the analytics dashboard.</p>
+
+<pre class="prettyprint">
+analytics:
+  uri: >-
+    https://xx/edgemicro/ax/org/docs/environment/test
+  bufferSize: 100
+  batchSize: 50
+  flushInterval: 500
+  proxyPath: /mocktarget/healthcheck</pre>
+
   <h2 id="settingupedgemicrogatewaybehindacompanyfirewall">Setting up Edge Microgateway behind a
   company firewall</h2>
 
   <p><em>Supported v2.4.x</em></p>
 
-  <p dir="ltr">If Edge Microgateway is installed behind a firewall, the gateway may not be able to
+  <p>If Edge Microgateway is installed behind a firewall, the gateway may not be able to
   communicate with Apigee Edge. In this case, there are two options you can consider:</p>
 
-  <p dir="ltr"><strong>Option 1:</strong></p>
+  <p><strong>Option 1:</strong></p>
 
-  <p dir="ltr">The first option is to set the edgemicro: proxy_tunnel option to true in the
+  <p>The first option is to set the edgemicro: proxy_tunnel option to true in the
   microgateway config file:</p>
   <pre class="prettyprint">
 edge_config:
@@ -1048,13 +1090,13 @@ edge_config:
     proxy_tunnel: true
 </pre>
 
-  <p dir="ltr">When <strong>proxy_tunnel</strong> is <strong>true</strong>, Edge Microgateway uses
+  <p>When <strong>proxy_tunnel</strong> is <strong>true</strong>, Edge Microgateway uses
   the HTTP <strong>CONNECT</strong> method to tunnel HTTP requests over a single TCP connection.
   (The same is true if the environment variables for configuring the proxy are TLS enabled).</p>
 
-  <p dir="ltr"><strong>Option 2:</strong></p>
+  <p><strong>Option 2:</strong></p>
 
-  <p dir="ltr">The second option is to specify a proxy and set proxy_tunnel to false in the
+  <p>The second option is to specify a proxy and set proxy_tunnel to false in the
   microgateway config file. For example:</p>
   <pre class="prettyprint">
 edge_config:
@@ -1062,17 +1104,17 @@ edge_config:
      proxy_tunnel: false
 </pre>
 
-  <p dir="ltr">In this case, you can set the following variables to control the hosts for each HTTP
+  <p>In this case, you can set the following variables to control the hosts for each HTTP
   proxy that you wish to use, or which hosts should not handle Edge Microgateway proxies:
   <strong>HTTP_PROXY</strong>, <strong>HTTPS_PROXY</strong>, and <strong>NO_PROXY</strong>.</p>
 
-  <p dir="ltr">You can set <strong>NO_PROXY</strong> as a comma delimited list of domains that Edge
+  <p>You can set <strong>NO_PROXY</strong> as a comma delimited list of domains that Edge
   Microgateway should not proxy to. For example:</p>
   <pre class="prettyprint">
 export NO_PROXY='localhost,localhost:8080'
 </pre>
 
-  <p dir="ltr">Set <strong>HTTP_PROXY</strong> and <strong>HTTPS_PROXY</strong> to the HTTP proxy
+  <p>Set <strong>HTTP_PROXY</strong> and <strong>HTTPS_PROXY</strong> to the HTTP proxy
   endpoint Edge Microgateway can send messages to it. For example:</p>
   <pre class="prettyprint">
 export HTTP_PROXY='http://localhost:3786'
@@ -1080,184 +1122,166 @@ export HTTP_PROXY='http://localhost:3786'
 export HTTPS_PROXY='https://localhost:3786'
 </pre>
 
-  <p dir="ltr">For more information on these variables, see:</p>
-
-  <p dir="ltr"><a href=
-  "https://www.npmjs.com/package/request#controlling-proxy-behaviour-using-environment-variables">https://www.npmjs.com/package/request#controlling-proxy-behaviour-using-environment-variables</a></p><br>
+  <p>For more information on these variables, see <a href=
+  "https://www.npmjs.com/package/request#controlling-proxy-behaviour-using-environment-variables" class="external">https://www.npmjs.com/package/request#controlling-proxy-behaviour-using-environment-variables</a></p>
 
 
   <h4>See also</h4>
 
   <p><a href=
-  "https://community.apigee.com/questions/15352/how-to-setup-micro-gateway-behind-company-firewall.html">
+  "https://community.apigee.com/questions/15352/how-to-setup-micro-gateway-behind-company-firewall.html" class="external">
   How to set up Edge Microgateway behind a company firewall</a> on the Apigee Community.</p>
 
   <h2 id="usingwildcardsinmicrogatewayawareproxies">Using wildcards in Microgateway-aware
   proxies</h2>
 
-  <p dir="ltr">You can use one or more "*" wildcards in the base path of an
+  <p>You can use one or more "*" wildcards in the base path of an
   <strong>edgemicro_*</strong> (Microgateway-aware) proxy. For example, a base path of
   <strong>/team/*/members</strong> allows clients to call
   <strong>https://[host]/team/blue/members</strong> and
   <strong>https://[host]/team/green/members</strong> without you needing to create new API proxies
   to support new teams. Note that <code>/**/</code> is not supported.</p>
 
-  <p dir="ltr"><strong>Important:</strong> Apigee does NOT support using a wildcard "*" as the
+  <p><strong>Important:</strong> Apigee does NOT support using a wildcard "*" as the
   first element of a base path. For example, this is NOT supported: <code>/*/</code> search.</p>
 
-  <h2 dir="ltr" id="rotatingjwtkeys">Rotating JWT keys</h2>
+  <h2 id="rotatingjwtkeys">Rotating JWT keys</h2>
 
-  <p dir="ltr">At some time after you initially generate a JWT, you might need to change the
+  <p>At some time after you initially generate a JWT, you might need to change the
   public/private key pair stored in the Edge encrypted KVM. This process of generating a new key
   pair is called key rotation.</p>
 
-  <h3 dir="ltr" id="rotatingjwtkeys-howedgemicrogatewayusesjwt">How Edge Microgateway uses JWT</h3>
+  <h3 id="rotatingjwtkeys-howedgemicrogatewayusesjwt">How Edge Microgateway uses JWT</h3>
 
-  <p dir="ltr">JSON Web Token (JWT) is a token standard described in <a href=
-  "https://tools.ietf.org/html/rfc7519">RFC7519</a>. JWT provides a way to sign a set of claims,
+  <p>JSON Web Token (JWT) is a token standard described in <a href=
+  "https://tools.ietf.org/html/rfc7519" class="external">RFC7519</a>. JWT provides a way to sign a set of claims,
   which can be verified reliably by the recipient of the JWT.</p>
 
-  <p dir="ltr">Edge Microgateway uses JWTs as bearer tokens for OAuth security. When you generate
+  <p>Edge Microgateway uses JWTs as bearer tokens for OAuth security. When you generate
   an OAuth token for Edge Microgateway, you receive back a JWT. You can then use the JWT in the
   Authorization header of API calls. For example:</p>
-  <pre class="prettyprint">
-curl -i http://localhost:8000/hello -H "Authorization: Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IjEifQ.eyJhcGlfcHJvZHVjdF9saXN0IjpbIkVkZ2VNaWNyb1Rlc3RQcm9kdWN0Il0sImF1ZGllbmNlIjoibWljcm9nYXRld2F5IiwianRpIjoiZjk0NjFhNmYtMGM5Yi00Zjc2LTlhZDQtZmUyMGU0ZmJhYzc2IiwiaXNzIjoiaHR0cHM6Ly9kb2NzLXRlc3QuYXBpZ2VlLm5ldC9lZGdlbWljcm8tYXV0aC90b2tlbiIsImFjY2Vzc190b2tlbiI6ImRqOVhCbjdFbUdxcmdhOUlpZnNIb3Rod2NUWjIiLjbGllbnRfaWQiOiIwV3pDcjhaT21aRXFyQWpSUGxJcGc4QjJ1VEpzcWVwSyIsIm5iZiI6MTUwNjYzMjg3NCwiaWF0IjoxNTA2NjMyODc0LCJhcHBsaWNhdGlvbl9uYW1lIjoiNTgxYzc1MmUtYWE0My00YjhlLThkNDItODk2ZTNmMWY2ZGYyIiwic2NvcGVzIjpbIiJdLCJleHAiOjE1MDY2MzMxNzR9.IzE37mwk0ymQ1mqeB-MiH6fu79qwvyjyyBNnZyl2o8oion6pkMwGixAcmWzGo4ElKYBtf3_5uCbSyQ70GJBQydbMTHyL4yqJEf6Mt_cBvgfysKi09naBiAayiwHxdWODm6D60sGNKPAlcsgwZWZGzVAGZdqxRCNGbRYT4zmjiJ82r33Yw9Jk8METzow53CwJgaycPW3Zo-VmoCOVX0b47i2Kd_YMPRBgEtkXYyBIAWHI_64m55-miRggUOJVRCG1UqaZi2T-h8vJjuaFuUtcv69aGKaZH-i4R_0eMhdCBrZ-iSWAebSgTbX01POrVfvdC7U6OKRIxqE-dXDefZEA"
-</pre>
+  <pre class="prettyprint devsite-terminal">curl -i http://localhost:8000/hello -H "Authorization: Bearer eyJhbGciOiJ..dXDefZEA"</pre>
 
-  <h3 dir="ltr" id="rotatingjwtkeys-generatinganewjwt">Generating a new JWT</h3>
+  <h3 id="rotatingjwtkeys-generatinganewjwt">Generating a new JWT</h3>
 
-  <p dir="ltr">You can generate a JWT for Edge Microgateway using the "edgemicro token" command or
-  an API. For example, using the command:</p>
-  <pre class="prettyprint">
-edgemicro token get -o docs -e test -i G0IAeU864EtBo99NvUbn6Z4CBwVcS2 -s uzHTbwNWvoSmOy
-</pre>
+  <p>You can generate a JWT for Edge Microgateway using the <code>edgemicro token</code> command or
+  an API. For example:</p>
+  <pre class="prettyprint devsite-terminal">edgemicro token get -o docs -e test -i G0IAeU864EtBo99NvUbn6Z4CBwVcS2 -s uzHTbwNWvoSmOy</pre>
 
-  <p dir="ltr">This command asks Apigee Edge to generate a JWT that can then be used to verify API
-  calls.  The -i and -s parameters are the consumer ID and secret values from a developer app
+  <p>This command asks Apigee Edge to generate a JWT that can then be used to verify API
+  calls. The <code>-i</code> and <code>-s</code> parameters are the consumer ID and secret values from a developer app
   in your Apigee Edge organization.</p>
 
-  <p dir="ltr">Or, using the API:</p>
-  <pre class="prettyprint">
-curl -i -X POST "http://[org]-[env].apigee.net/edgemicro-auth/token" -d '{ "client_id": "your consumer key", "client_secret": "your consumer secret", "grant_type": "client_credentials" }' -H "Content-Type: application/json"
-</pre>
-
-  <p dir="ltr">Where:</p>
-
+  <p>Or, you can also generate a JWT using the management API:</p>
+  <pre class="prettyprint devsite-terminal">curl -i -X POST "http://<var>org</var>-<var>env</var>.apigee.net/edgemicro-auth/token" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "<var>client_id</var>": "your consumer key",
+    "<var>client_secret</var>": "your consumer secret",
+    "grant_type": "client_credentials"
+  }'</pre>
+  <p>Where:</p>
   <ul>
-    <li dir="ltr">
-      <p dir="ltr">org is your Edge organization name (you must be an org administrator).</p>
-    </li>
-
-    <li dir="ltr">
-      <p dir="ltr">env is an environment in your org (such as test or prod).</p>
-    </li>
-
-    <li dir="ltr">
-      <p dir="ltr">client_id is the Consumer ID in the Developer App you created previously.</p>
-    </li>
-
-    <li dir="ltr">
-      <p dir="ltr">client_secret is the Consumer Secret in the Developer App you created
-      previously.</p>
-    </li>
+    <li><var>org</var> is your Edge organization name (you must be an org administrator).</li>
+    <li><var>env</var> is an environment in your org (such as "test" or "prod").</li>
+    <li><var>client_id</var> is the Consumer ID in the Developer App you created previously.</li>
+    <li><var>client_secret</var> is the Consumer Secret in the Developer App you created
+      previously.</li>
   </ul>
 
-  <h3 dir="ltr" id="rotatingjwtkeys-whatiskeyrotation">What is key rotation?</h3>
+  <h3 id="rotatingjwtkeys-whatiskeyrotation">What is key rotation?</h3>
 
-  <p dir="ltr">At some time after you initially generate a JWT, you might need to change the
+  <p>At some time after you initially generate a JWT, you might need to change the
   public/private key pair stored in the Edge encrypted KVM. This process of generating a new key
   pair is called key rotation. When you rotate keys, a new private/public key pair is generated and
   stored in the "microgateway" KVM in your Apigee Edge organization/environment. In addition, the
   old public key is retained along with it's original key ID value.</p>
 
-  <p dir="ltr">To generate a JWT, Edge uses information stored in the encrypted KVM. A
-  "microgateway" KVM was created and populated with keys when you initially set up (configured)
+  <p>To generate a JWT, Edge uses information stored in the encrypted KVM. A
+    KVM called <code>microgateway</code>was created and populated with keys when you initially set up (configured)
   Edge Microgateway. The keys in the KVM are used to sign and encrypt a JWT.</p>
 
-  <p dir="ltr">Let's describe each of the keys stored in the KVM:</p>
+  <p>The KVM keys include:</p>
 
   <ul>
-    <li dir="ltr">
-      <p dir="ltr">private_key - The latest (most recently created) RSA private key used to sign
+    <li>
+      <p><b>private_key</b> - The latest (most recently created) RSA private key used to sign
       JWTs.</p>
     </li>
 
-    <li dir="ltr">
-      <p dir="ltr">public_key - The latest (most recently created) certificate used to verify JWTs
+    <li>
+      <p><b>public_key</b> - The latest (most recently created) certificate used to verify JWTs
       signed with the private_key.</p>
     </li>
 
-    <li dir="ltr">
-      <p dir="ltr">private_key_kid - The latest (most recently created) private key ID. This key ID
+    <li>
+      <p><b>private_key_kid</b> - The latest (most recently created) private key ID. This key ID
       is associated with the private_key value and is used to support key rotation.</p>
     </li>
 
-    <li dir="ltr">
-      <p dir="ltr">public_key1_kid - The latest (most recently created) public key ID. This key is
+    <li>
+      <p><b>public_key1_kid</b> - The latest (most recently created) public key ID. This key is
       associated with the public_key1 value and is used to support key rotation.  This value
       is the same as the private key kid.</p>
     </li>
 
-    <li dir="ltr">
-      <p dir="ltr">public_key1 - The latest (most recently created) public key.</p>
+    <li>
+      <p><b>public_key1</b> - The latest (most recently created) public key.</p>
     </li>
   </ul>
 
-  <p dir="ltr">When you perform key rotation, existing key values are replaced in the map and new
+  <p>When you perform key rotation, existing key values are replaced in the map and new
   keys are added to retain the old public keys. For example:</p>
 
   <ul>
-    <li dir="ltr">
-      <p dir="ltr">public_key2_kid - The old public key ID. This key is associated with the
+    <li>
+      <p><b>public_key2_kid</b> - The old public key ID. This key is associated with the
       public_key2 value and is used to support key rotation.  </p>
     </li>
 
-    <li dir="ltr">
-      <p dir="ltr">public_key2 - The old public key.</p>
+    <li>
+      <p><b>public_key2</b> - The old public key.</p>
     </li>
   </ul>
 
-  <p dir="ltr">JWTs presented for verification will be verified using the new public key. If
+  <p>JWTs presented for verification will be verified using the new public key. If
   verification fails, then the old public key will be used, until it expires (after 30 minutes). In
   this way, you can "rotate" keys without immediately disrupting API traffic.</p>
 
-  <h3 dir="ltr" id="rotatingjwtkeys-howtodokeyrotation">How to do key rotation</h3>
+  <h3 id="rotatingjwtkeys-howtodokeyrotation">How to do key rotation</h3>
 
-  <p dir="ltr">To rotate JWT keys, do the following steps.</p>
+<p>This section explains how to perform a key rotation.</p>
 
-  <p dir="ltr">Note: If you configured your current Edge Micro instance before version 2.5.2, you
-  must perform two extra setup steps (steps 1 and 2 below). You'll only need to do these extra
-  steps once.</p>If you configured your Edge Micro instance before version 2.5.2, then you must run
-  the following upgrade command. This command upgrades the encrypted KVM where the public/private
-  keys are stored on Apigee Edge. (For more information on this command, see <a href="">Upgrading
-  the KVM</a>.)
-  <pre class="prettyprint">
-upgradekvm -o org -e env -u username
-</pre>
+<h4>If you configured your Edge Microgateway instance before version 2.5.2</h4>
 
-  <p>If you configured your Edge Micro instance before version 2.5.2, then you must also run the
-  following upgrade command. This command upgrades the edgemicro-oauth proxy that was deployed to
+  <p>If you configured your Edge Microgateway instance before version 2.5.2, then you must run
+    the following two commands to upgrade the KVM and the authentication policy:</p>
+  <pre class="prettyprint devsite-terminal">upgradekvm -o org -e env -u username</pre>
+
+<p>For more information on this command, see <a href="/api-platform/troubleshoot/apigee-edge-troubleshooting">Upgrading
+  the KVM</a>.</p>
+
+<p>The next command upgrades the <b>edgemicro-oauth</b> proxy that was deployed to
   your Apigee org when you configured Edge Microgateway. This proxy provides services required to
-  generate tokens. (For more information on this command, see <a href="">Upgrading the
-  edgemicro-auth proxy</a>.)</p>
-  <pre class="prettyprint">
-upgradeauth -o org -e env -u username
-</pre>
+  generate tokens. </p>
+  <pre class="prettyprint devsite-terminal">upgradeauth -o org -e env -u username</pre>
 
-  Add the following line to your ~/.edgemicro/org-env-config.yaml file, where you must
-  specify the same organization and environment that you configured the microgateway to use:<br>
-  <pre class="prettyprint">
-jwk_public_keys: 'https://org-env.apigee.net/edgemicro-auth/jwkPublicKeys'
-</pre>
+<p>For more information on this command, see <a href="/api-platform/microgateway/2.5.x/cli-reference-edge-microgateway#upgrading-the-edgemicro-auth-proxy">Upgrading the
+  edgemicro-auth proxy</a>.</p>
+
+<h4>Rotating the keys</h4>
+
+<p>Add the following line to your <code>~/.edgemicro/org-env-config.yaml</code> file, where you must
+  specify the same organization and environment that you configured the microgateway to use:</p>
+
+  <pre class="prettyprint">jwk_public_keys: 'https://org-env.apigee.net/edgemicro-auth/jwkPublicKeys'</pre>
 
   <p>Run the key rotation command to rotate the keys. (For more information on this command, see
-  <a href="">Rotating keys</a>.)</p>
-  <pre class="prettyprint">
-edgemicro rotatekey -o org -e env -u username -k kid_value
-</pre>
+  <a href="/api-platform/microgateway/2.5.x/cli-reference-edge-microgateway#rotating-keys">Rotating keys</a>.)</p>
+  <pre class="prettyprint devsite-terminal">edgemicro rotatekey -o org -e env -u username -k kid_value</pre>
 
   <p>For example:</p>
-  <pre class="prettyprint">
+  <pre class="prettyprint devsite-terminal">
 edgemicro rotatekey -o jdoe -e test -u jdoe@google.com -k 2
 current nodejs version is v6.9.1
 current edgemicro version is 2.5.7
@@ -1270,19 +1294,18 @@ Extract new public key
 Key Rotation successfully completed!
 </pre>
 
-  <p dir="ltr">The -k parameter specifies a Key ID (kid). This ID is used to match a specific key.
+<p>The <code>-k</code> parameter specifies a Key ID (kid). This ID is used to match a specific key.
   Edge Microgateway uses this value to choose among a set of keys during key rotation. For more
-  information, see Section <a href="https://tools.ietf.org/html/rfc7517#section-4.5">4.5 of the
+  information, see Section <a href="https://tools.ietf.org/html/rfc7517#section-4.5" class="external">4.5 of the
   JSON Web Key specification</a>.</p>
 
-  <p dir="ltr">After key rotation, Edge returns multiple keys to Edge Microgateway. Note in the
+  <p>After key rotation, Edge returns multiple keys to Edge Microgateway. Note in the
   following example, each key has a unique "kid" (Key ID) value. The microgateway then uses these
   keys to validate authorization tokens. If the token validation fails, the microgateway looks to
-  see if there is an older key in the key set and tries that key.</p>Note: The format of the
-  returned keys is JSON Web Key (JWK). You can read about this format in <a href=
-  "https://tools.ietf.org/html/rfc7517">RFC 7517</a>.
-  <pre class="prettyprint">
-{
+  see if there is an older key in the key set and tries that key. The format of the
+  returned keys is JSON Web Key (JWK). You can read about this format in <a href="https://tools.ietf.org/html/rfc7517" class="external">RFC 7517</a>.</p>
+
+  <pre class="prettyprint">{
   "keys": [
     {
       "kty": "RSA",
@@ -1297,55 +1320,47 @@ Key Rotation successfully completed!
       "kid": "1"
     }
   ]
-}
-</pre>
+}</pre>
 
-  <h2 dir="ltr" id="filteringdownloadedproxies">Filtering downloaded proxies</h2>
+  <h2 id="filteringdownloadedproxies">Filtering downloaded proxies</h2>
 
-  <p dir="ltr">By default, Edge Microgateway downloads all of the proxies in your Edge organization
+  <p>By default, Edge Microgateway downloads all of the proxies in your Edge organization
   that start with the naming prefix "edgemicro_". You can change this default to download proxies
   whose names match a pattern.</p>
 
   <ol>
-    <li dir="ltr">
-      <p dir="ltr">Open your Edge Micro config file:  ~/.edgemicro/org-env-config.yaml.</p>
-
-      <p dir="ltr">Add the proxyPattern element under edge_config. For example, the following
-      pattern will download proxies such as edgemicro_foo, edgemicro_fast, and edgemicro_first.</p>
+    <li>Open your Edge Micro config file:  <code>~/.edgemicro/org-env-config.yaml</code></li>
+    <li>Add the proxyPattern element under edge_config. For example, the following pattern will
+      download proxies such as edgemicro_foo, edgemicro_fast, and edgemicro_first.
+      <pre class="prettyprint">edge_config:
+&#8230;
+proxyPattern: edgemicro_f*</pre>
     </li>
   </ol>
-  <pre class="prettyprint">
-edge_config:
-   &#8230;
-   proxyPattern: edgemicro_f*
-</pre>
 
-  <h2 dir="ltr" id="specifyingproductswithoutapiproxies">Specifying products without API
-  Proxies</h2>In Apigee Edge, you can create an API product that does not contain any API proxies.
+  <h2 id="specifyingproductswithoutapiproxies">Specifying products without API proxies</h2>
+
+  <p>In Apigee Edge, you can create an API product that does not contain any API proxies.
   This product configuration allows an API key associated with that product to work for with any
   proxy deployed in your organization. As of version 2.5.4, Edge Microgateway supports this product
-  configuration.<br>
-  <br>
+  configuration.</p>
 
-  <h2 id="debuggingandtroubleshooting"><a id="debugging" name="debugging"></a>Debugging and
-  Troubleshooting</h2>
+  <h2 id="debuggingandtroubleshooting">Debugging and troubleshooting</h2>
 
   <h3 id="debuggingandtroubleshooting-connectingtoadebugger">Connecting to a debugger</h3>
 
   <p>You can run Edge Microgateway with a debugger, such as <a href=
-  "https://www.npmjs.com/package/node-inspector">node-inspector</a>. This is useful for
-  troubleshooting and debugging custom plugins. </p>
+  "https://www.npmjs.com/package/node-inspector" class="external">node-inspector</a>. This is useful for
+  troubleshooting and debugging custom plugins.</p>
 
   <ol>
     <li>Restart Edge Microgateway in debug mode. To do this, add <code>DEBUG=*</code> to the
-    beginning of the start command. For example:<br>
-      <br>
-      <code>DEBUG=* edgemicro start -o  myorg -e test -k
+    beginning of the <code>start</code> command. For example:
+      <pre>DEBUG=* edgemicro start -o  myorg -e test -k
       db4e9e8a95aa7fabfdeacbb1169d0a8cbe42bec19c6b98129e02 -s
-      6e56af7c1b26dfe93dae78a735c8afc9796b077d105ae5618ce7ed</code><br>
-       
+      6e56af7c1b26dfe93dae78a735c8afc9796b077d105ae5618ce7ed</pre>
 
-      <p><strong>Note:</strong> On Windows, use <code>SET DEBUG=*</code></p>
+      <aside class="note">On Windows, use <code>SET DEBUG=*</code></aside>
     </li>
 
     <li>Start your debugger and set it to listen on the port number for the debugging process.</li>
@@ -1360,10 +1375,9 @@ edge_config:
   <h3 id="debuggingandtroubleshooting-checkinglogfiles">Checking log files</h3>
 
   <p>If you're having problems, be sure to examine the log files for execution details and error
-  information. For details, see <a href="#Managing%20log%20files">Managing log files</a>.</p>
+  information. For details, see <a href="#managinglogfiles">Managing log files</a>.</p>
 
-  <h2 id="usingapikeysecurity"><a id="Using API Key security" name=
-  "Using%20API%20Key%20security"></a>Using API Key security</h2>
+  <h2 id="usingapikeysecurity">Using API key security</h2>
 
   <p>API keys provide a simple mechanism for authenticating clients making requests to Edge
   Microgateway. You can obtain an API key by copying the Consumer Key (also called Client ID) value
@@ -1375,64 +1389,71 @@ edge_config:
   the <code>Cache-Control: no-cache</code> header on incoming requests to Edge
   Microgateway.</p>
 
-  <h3 id="usingapikeysecurity-usingoauth2tokensecurity">Using OAuth2 token security</h3>
+  <h3 id="usinganapikey">Using an API key</h3>
 
-  <p>For details on using an OAuth token with proxy requests, see <a href=
-  "/api-platform/microgateway/2.5.x/setting-and-configuring-edge-microgateway.html#part4secureedgemicrogateway">
-  Secure Edge Microgateway</a>. </p>
+<p>You can pass the API key in an API request either as a query parameter or in a header. By default,
+  the header and query param name are both <code>x-api-key</code>.
 
-  <h3 id="usingapikeysecurity-usinganapikey"><a id="usinganapikey" name="usinganapikey"></a>Using
-  an API key</h3>
+<p>Query parameter example:</p>
 
-  <p>For details on using API keys with proxy requests, see <a href=
+<pre class="prettyprint devsite-terminal">curl http://localhost:8000/foobar?x-api-key=JG616Gjz7xs4t0dvpvVsGdI49G34xGsz</pre>
+
+<p>Header example:</p>
+
+<pre class="prettyprint devsite-terminal">curl http://localhost:8000/foobar -H "x-api-key:JG616Gjz7xs4t0dvpvVsGdI49G34xGsz"</pre>
+
+  <h3 id="usingapikeysecurity-configuringtheapikeyname">Configuring the API key name</h3>
+
+  <p>By default, <code>x-api-key</code> is the name used for both the API key header and query parameter.
+  You can change this default in the configuration file, as explained in <a href=
+  "#makingconfigurationchanges">Making configuration changes</a>. For example, to change the
+  name to <strong>apiKey</strong>:</p>
+  <pre class="prettyprint">oauth:
+  allowNoAuthorization: false
+  allowInvalidAuthorization: false
+  api-key-header: apiKey</pre>
+
+<p>In this example, both the query parameter and header name are changed to <code>apiKey</code>. The
+  name <code>x-api-key</code> will no longer work in either case. See also
+  <a href="#makingconfigurationchanges">Making configuration changes</a>.</p>
+
+<p>For example:</p>
+
+<pre class="devsite-terminal">curl http://localhost:8000/foobar -H "apiKey:JG616Gjz7xs4t0dvpvVsGdI49G34xGsz"</pre>
+
+<p>For more information about using API keys with proxy requests, see <a href=
   "/api-platform/microgateway/2.5.x/setting-and-configuring-edge-microgateway.html#part4secureedgemicrogateway">
   Secure Edge Microgateway</a>.</p>
 
-  <aside class="note">
-    <b>Note:</b> You can also pass the API key in a query parameter. For example, where
-    <code>[key]</code> is the API key, a string of letters and numbers:
-    <pre class="prettyprint">
-curl "http://localhost:8000/hello?"x-api-key=[key]"
-</pre>
-  </aside>
+<h3 id="usingapikeysecurity-usingoauth2tokensecurity">Using OAuth2 token security</h3>
 
-  <h3 id="usingapikeysecurity-configuringtheapikeyname"><a id="Configuring the API key name" name=
-  "Configuring%20the%20API%20key%20name"></a>Configuring the API key name</h3>
-
-  <p>By default, <code>x-api-key</code> is the name used for the API key header or query parameter.
-  You can change this default in the configuration file, as explained in <a href=
-  "#Making%20configuration%20changes">Making configuration changes</a>. For example, to change the
-  name to <strong>apiKey</strong>:</p>
-  <pre class="prettyprint">
-oauth:
- allowNoAuthorization: false
- allowInvalidAuthorization: false
- api-key-header: apiKey<span style="white-space: normal;">
-</span>
-</pre>
+  <p>For details on using an OAuth token with proxy requests, see <a href=
+  "/api-platform/microgateway/2.5.x/setting-and-configuring-edge-microgateway.html#part4secureedgemicrogateway">
+  Secure Edge Microgateway</a>.</p>
 
   <h2 id="forevermonitoring">Forever monitoring</h2>
 
-  <p><a href="https://www.npmjs.com/package/forever">Forever</a> is a Node.js tool that
+  <p><a href="https://www.npmjs.com/package/forever" class="external">Forever</a> is a Node.js tool that
   automatically restarts a Node.js app in case the process goes down or has an error. Edge
   Microgateway has a <strong>forever.json</strong> file that you can configure to control how many
   times and with what intervals Edge Microgateway should be restarted. This file configures a
   Forever service called <a href=
-  "https://www.npmjs.com/package/forever-monitor">forever-monitor</a>, which manages Forever
+  "https://www.npmjs.com/package/forever-monitor" class="external">forever-monitor</a>, which manages Forever
   programmatically.</p>
 
   <p>You can find the <strong>forever.json</strong> file in the Edge Microgateway root install
   directory. See <a href=
   "/api-platform/microgateway/2.5.x/installing-edge-microgateway.html#whereisedgemicrogatewayinstalled">
   Where is Edge Microgateway installed</a>. For details on the configuration options, refer to the
-  <a href="https://www.npmjs.com/package/forever-monitor">forever-monitor documentation</a>.</p>
+  <a href="https://www.npmjs.com/package/forever-monitor" class="external">forever-monitor documentation</a>.</p>
 
-  <p>You can also use the <code>edgemicro forever [package.json]</code> command to specify the
-  location of the <code>forever.json</code> file. Before the addition of this command, the config
-  file had to be in the Edge Microgateway root directory. For example:</p>
-  <pre class="prettyprint">
-edgemicro forever ~/mydir/forever.json
-</pre>
+<p>The <code>edgemicro forever</code> command includes flags that let you specify the location of
+  the <code>forever.json</code> file (the <code>-f</code> flag), and start/stop the Forever monitoring
+  process (the <code>-a</code> flag). For example:</p>
+
+  <pre class="devsite-terminal">edgemicro forever -f ~/mydir/forever.json -a start</pre>
+
+<p>For more information, see the <a href="/api-platform/microgateway/2.5.x/cli-reference-edge-microgateway#forevermonitoring">Forever monitoring</a> in the CLI reference.</p>
 
   <h2 id="specifyingaconfigfileendpoint">Specifying a config file endpoint</h2>
 
@@ -1442,10 +1463,393 @@ edgemicro forever ~/mydir/forever.json
   the <strong>-u</strong> flag.</p>
 
   <p>For example:</p>
-  <pre class="prettyprint">
+  <pre class="prettyprint devsite-terminal">
 edgemicro start -o jdoe -e test -u <strong>http://mylocalserver/mgconfig</strong> -k public_key -s secret_key
 </pre>
 
   <p>where the mgconfig endpoint returns the contents of your configuration file. This is the file
   that, by default, is located in <code>~/.edgemicro</code> and has the naming convention:
-  <code>org-env-config.yaml</code>.</p>{% endblock %}
+  <code>org-env-config.yaml</code>.</p>
+
+<h2>Disabling TCP connection data buffering</h2>
+
+<p>You can use the <code>nodelay</code> configuration attribute to disable data buffering for
+ TCP connections used by Edge Microgateway.</p>
+
+<p>By default TCP connections use the <a href="https://en.wikipedia.org/wiki/Nagle%27s_algorithm" class="external">Nagle
+  algorithm</a> to buffer data before sending it off. Setting <code>nodelay</code> to <code>true</code>,
+  disables this behavior (data will immediately fire off data each time
+  <code>socket.write()</code> is called). See also the <a href="https://nodejs.org/api/net.html#net_socket_setnodelay_nodelay" class="external">Node.js
+  documentation</a> for more details.</p>
+
+<p>To enable <code>nodelay</code>, edit the <a href="/api-platform/microgateway/2.5.x/operation-and-configuration-reference-edge-microgateway#makingconfigurationchanges">Edge Micro config file</a> as follows:</p>
+
+<pre>
+edgemicro:
+  <b>nodelay: true</b>
+  port: 8000
+  max_connections: 1000
+  config_change_poll_interval: 600
+  logging:
+    level: error
+    dir: /var/tmp
+    stats_log_interval: 60
+    rotate_interval: 24
+</pre>
+
+<h2>Running Edge Microgateway in standalone mode</h2>
+
+<p>You can run Edge Microgateway disconnected completely from any
+Apigee Edge dependency. This scenario, called standalone mode, lets you run and test Edge Microgateway
+without an Internet connection.</p>
+
+<p>In standalone mode, the following features do not work, as they require connection
+  to Apigee Edge:</p>
+
+<ul>
+  <li>OAuth and API key</li>
+  <li>Quota</li>
+  <li>Analytics</li>
+</ul>
+
+<p>On the other hand, custom plugins and spike arrest work normally, because they do not
+  require a connection to Apigee Edge. In addition, a new plugin called <code>extauth</code> lets you
+authorize API calls to the microgateway with a JWT while in standalone mode.</p>
+
+<h3>Configuring and starting the gateway</h3>
+
+<p><strong>To run Edge Microgateway in standalone mode:</strong></p>
+
+<ol>
+  <li>Be sure that you have Edge Microgateway version 2.5.25 or later installed. If not, you must
+    execute the following command to upgrade to the latest version:
+    <pre class="prettyprint devsite-terminal">npm install -g edgemicro</pre>
+    <p>If you need help, see <a href="installing-edge-microgateway.html">Installing Edge
+    Microgateway</a>.</p>
+  </li>
+  <li>Create a configuration file named as follows: <code>$HOME/.edgemicro/</code><var>org_name</var><code>-</code><var>env_name</var><code>-config.yaml</code>
+    <aside class="note">You can use any values you wish for <code>org_name</code> and <code>env_name</code> in the filename.
+      The org/env combination is simply a convention that allows Edge Microgateway to find the file when
+      it starts up.</aside>
+    <p>For example:</p>
+    <pre class="prettyprint devsite-terminal">vi $HOME/.edgemicro/foo-bar-config.yaml</pre>
+  </li>
+  <li>Paste the following code into the file:
+<pre>
+edgemicro:
+  port: 8000
+  max_connections: 1000
+  config_change_poll_interval: 600
+  logging:
+    level: error
+    dir: /var/tmp
+    stats_log_interval: 60
+    rotate_interval: 24
+  plugins:
+    sequence:
+      - extauth
+      - spikearrest
+headers:
+  x-forwarded-for: true
+  x-forwarded-host: true
+  x-request-id: true
+  x-response-time: true
+  via: true
+extauth:
+  publickey_url: https://www.googleapis.com/oauth2/v1/certs
+spikearrest:
+  timeUnit: second
+  allow: 10
+  buffersize: 0</pre>
+    <aside class="note">The config file contains a special, optional plugin called <b>extauth</b>. This plugin
+      verifies a valid JWT token passed to the microgateway. In a later step, you will learn how to
+      obtain and use the token. Also, note that the <b>spikearrest</b> plugin
+      is included because it does not rely on connectivity with Edge. The <code>quota</code>,
+      <code>oauth</code>, and <code>analytics</code> plugins are excluded, because they do rely on connectivity with Edge and
+      will not work in disconnected mode. Custom plugins are allowed, and will function
+      as expected.</aside>
+  </li>
+  <li>Export the following environment variable with the value "1":
+    <pre class="devsite-terminal">export EDGEMICRO_LOCAL=1</pre>
+  </li>
+  <li>Execute the following <code>start</code> command, where you provide values to instantiate the
+    local proxy:
+    <pre class="prettyprint devsite-terminal">edgemicro start -o <var>org_name</var> -e <var>environment_name</var> -a <var>local_proxy_name</var> \
+  -v <var>local_proxy_version</var> -t <var>target_url</var> -b <var>base_path</var></pre>
+    <p>Where:</p>
+    <ul>
+      <li><var>your_org</var> is the "org" name that you used in the configuration file name.</li>
+      <li><var>your_environment</var> is the "env" name that you used in the configuration file
+        name.</li>
+      <li><var>local_proxy_name</var> is the name of the local proxy that will be created. You can use
+        any name you want.</li>
+      <li><var>local_proxy_version</var> is the version number for the proxy.</li>
+      <li><var>target_url</var> is the URL for the target of the proxy. (The <em>target</em> is the
+        service that the proxy calls.)</li>
+      <li><var>base_path</var> is the base path of the proxy. This value must start with a forward
+        slash. For a root base path, specify just a forward slash; for example, "/".</li>
+    </ul>
+    <p>For example:</p>
+    <pre class="devsite-terminal prettyprint">edgemicro start -o local -e test -a proxy1 -v 1 -t http://mocktarget.apigee.net -b /</pre>
+  </li>
+  <li>Test the configuration.
+    <pre class="devsite-terminal">curl http://localhost:8000/echo  { "error" : "missing_authorization" }</pre>
+    <p>Because the <code>extauth</code> plugin is in the <code>foo-bar-config.yaml</code> file, you
+    get a "missing_authorization" error. This plugin validates a JWT that must be present in the Authorization
+    header of the API call. In the next section, you will obtain a JWT that will allow API calls
+    to go through without the error.</p>
+  </li>
+</ol>
+
+<h3>Example: Obtaining an authorization token</h3>
+
+<p>The following example shows how to obtain a JWT from the Edge Microgateway JWT endpoint on Apigee Edge (<code>edgemicro-auth/jwkPublicKeys</code>).
+  This endpoint is deployed when you perform a <a href="/api-platform/microgateway/2.5.x/setting-and-configuring-edge-microgateway#part1configureedgemicrogateway">standard setup and configuration</a> of Edge Microgateway.
+  To obtain the JWT from the Apigee endpoint, you must first do the standard Edge Microgateway setup, and
+  be connected to the Internet. The Apigee endpoint is used here for example purposes
+  only and is not required. You can use another JWT token endpoint if you wish. If you do, then you'll need to obtain the JWT using
+  the API provided for that endpoint. </p>
+
+<aside class="note">Including the <code>extauth</code> plugin in your microgateway configuration is optional, but if you
+  include it, you will be required
+  to provide a valid JWT token in the Authorization header for API calls. </aside>
+
+<p>The following steps explain how to get a token using the <code>edgemicro-auth/jwkPublicKeys</code> endpoint:.<p>
+
+
+
+<ol>
+   <li>You must perform a <a href="/api-platform/microgateway/2.5.x/setting-and-configuring-edge-microgateway#part1configureedgemicrogateway">standard
+     setup and configuration</a> of Edge Microgateway to deploy the <code>edgemicro-auth</code> proxy
+      to your organization/environment on Apigee Edge. If you did this step previously, you do not need to repeat it.</li>
+    <li>If you deployed Edge Microgateway to Apigee Cloud, you must be connected to the Internet so that you can obtain a JWT from this endpoint.</li>
+  <li>
+    Stop Edge Microgateway:
+
+<pre class="devsite-terminal">edgemicro stop</pre>
+  </li>
+  <li>In the configuration file you created previously (<code>$HOME/.edgemicro</code>/<var>org</var>-<var>env</var><code>-config.yaml</code>),
+    point the <code>extauth:publickey_url</code>
+    attribute to the <code>edgemicro-auth/jwkPublicKeys</code> endpoint in your Apigee Edge organization/environment. For example:
+<pre>
+extauth:
+  publickey_url: 'https://<var>your_org</var>-<var>your_env</var>.apigee.net/edgemicro-auth/jwkPublicKeys'</pre>
+  </li>
+
+  <li>
+    Restart Edge Microgateway as you did previously, using the org/env names you used in the config file name. For example:
+
+<pre class="devsite-terminal">
+edgemicro start -o foo -e bar -a proxy1 -v 1 -t http://mocktarget.apigee.net -b /</pre>
+  </li>
+  <li>
+    Get a JWT token from the authorization endpoint. Because you are using the <code>edgemicro-auth/jwkPublicKeys</code>
+    endpoint, you can use this CLI command:
+    <aside class="note">For this step, you will need an Internet connection. The following command fetches
+                  a token from Apigee Edge. To do this step, you must have a Apigee organization where
+      you performed a standard Edge Microgateway <a href="/api-platform/microgateway/2.5.x/setting-and-configuring-edge-microgateway">setup and configuration</a>.
+      After you do this step, you do not need to be connected to
+                  the Internet. The token will continue to work in standalone mode until it expires.</aside>
+  </li>
+</ol>
+
+<p>You can generate a JWT for Edge Microgateway using the <code>edgemicro token</code> command or
+  an API. For example:</p>
+  <pre class="prettyprint devsite-terminal">edgemicro token get -o <var>your_org</var> -e <var>your_env</var> \
+  -i G0IAeU864EtBo99NvUbn6Z4CBwVcS2 -s uzHTbwNWvoSmOy</pre>
+
+<p>Where:</p>
+<ul>
+  <li><var>your_org</var> is the name of your Apigee organization for which you previously
+    configured Edge Microgateway.</li>
+  <li><var>your_env</var> is an environment in the organization.</li>
+  <li>The <code>i</code> option specifies the Consumer Key from a developer app that has a product
+    that includes the <code>edgemicro-auth</code> proxy.</li>
+  <li>The <code>s</code> option specifies the Consumer Secret from a developer app that has a
+    product that includes the <code>edgemicro-auth</code> proxy.</li>
+</ul>
+
+  <p>This command asks Apigee Edge to generate a JWT that can then be used to verify API
+    calls.</p>
+
+See also <a href="/api-platform/microgateway/2.5.x/cli-reference-edge-microgateway#generate-a-token">Generate a token</a>.
+
+<h3>Test the standalone configuration</h3>
+<p> To test the configuration, call the API with the token added in the Authorization header as follows:</p>
+
+<pre class="devsite-terminal">curl http://localhost:8000/echo -H "Authorization: Bearer <var>your_token</var></pre>
+
+<p>Example:</p>
+
+<pre class="devsite-terminal">curl http://localhost:8000/echo -H "Authorization: Bearer eyJraWQiOiIxIiwidHlwIjo...iryF3kwcDWNv7OQ"</pre>
+
+<p>Example output:</p>
+
+<pre>
+{
+   "headers":{
+      "user-agent":"curl/7.54.0",
+      "accept":"*/*",
+      "x-api-key":"DvUdLlFwG9AvGGpEgfnNGwtvaXIlUUvP",
+      "client_received_start_timestamp":"1535134472699",
+      "x-authorization-claims":"eyJhdDbiO...M1OTE5MTA1NDkifQ==",
+      "target_sent_start_timestamp":"1535134472702",
+      "x-request-id":"678e3080-a7ae-11e8-a70f-87ae30db3896.8cc81cb0-a7c9-11e8-a70f-87ae30db3896",
+      "x-forwarded-proto":"http",
+      "x-forwarded-host":"localhost:8000",
+      "host":"mocktarget.apigee.net",
+      "x-cloud-trace-context":"e2ac4fa0112c2d76237e5473714f1c85/1746478453618419513",
+      "via":"1.1 localhost, 1.1 google",
+      "x-forwarded-for":"::1, 216.98.205.223, 35.227.194.212",
+      "connection":"Keep-Alive"
+   },
+   "method":"GET",
+   "url":"/",
+   "body":""
+}</pre>
+
+
+
+
+<h2>Using local proxy mode</h2>
+<p>In local proxy mode, Edge Microgateway does not require a
+<a href="/api-platform/microgateway/2.5.x/setting-and-configuring-edge-microgateway#part2createentitiesonapigeeedge-1createanedgemicrogatewayawareapiproxyonedge">microgateway-aware</a> proxy
+to be deployed on Apigee Edge. Instead, you configure a "local proxy" by providing
+a local proxy name, basepath, and target URL when you
+start the microgateway. API calls to the microgateway are then sent to the target
+URL of the local proxy. In all other respects, local proxy mode works exactly the same as running
+Edge Microgateway in its normal mode. Authentication works the same, as do spike
+arrest and quota enforcement, custom plugins, and so on.</p>
+
+<aside class="note">The two important differences between local mode and regular Edge Microgateway
+configuration are: (1) in local mode, you do not need to create a microgateway-aware
+proxy on Apigee Edge and (2) when you create an API product on Edge, you must add only one proxy to it,
+the <code>edgemicro-auth</code> proxy. You do not need to add any other proxies to the product.</aside>
+
+<h3 id="usecaseandexample">Use case and example</h3>
+
+<p>Local proxy mode is useful when you only need to associate one single proxy with an Edge Microgateway
+instance. For example, you can inject Edge Microgateway into Kubernetes as a sidecar proxy, where a
+microgateway and a service each run in a single pod, and where the microgateway manages traffic to
+and from its companion service. The following figure illustrates this architecture where Edge
+Microgateway functions as a sidecar proxy in a Kubernetes cluster. Each microgateway instance talks
+only to a single endpoint on its companion service:</p>
+
+<p><img src="/api-platform/images/em-k8s-arch.png" alt="Edgemicro as Sidecar" /></p>
+
+<p>A benefit of this style of architecture is that Edge Microgateway provides API
+management for individual services deployed to a container environment, such as
+a Kubernetes cluster.</p>
+
+<h3 id="configuringlocalproxymode">Configuring local proxy mode</h3>
+
+<p>To configure Edge Microgateway to run in local proxy mode, follow these steps:</p>
+
+<ol>
+  <li>Be sure that you have Edge Microgateway version 2.5.25 or later installed. If not, you must
+    execute the following command to upgrade to the latest version:
+    <pre class="devsite-terminal prettyprint">npm install -g edgemicro</pre>
+    <p>If you need help, see <a href="/api-platform/microgateway/2.5.x/installing-edge-microgateway.html">Installing Edge
+    Microgateway</a>.</p>
+  </li>
+  <li>Run <code>edgemicro init</code> to set up your local configuration environment, exactly
+    as you would in a typical Edge Microgateway setup. See also
+    <a href="/api-platform/microgateway/2.5.x/setting-and-configuring-edge-microgateway#part1configureedgemicrogateway">Configure Edge Microgateway</a>.
+  </li>
+  <li>Run <code>edgemicro configure</code>, as you would in a typical Edge Microgateway setup
+    procedure. For example:
+    <pre class="prettyprint devsite-terminal">edgemicro configure -o <var>your_org</var> -e <var>your_env</var> -u <var>your_apigee_username</var></pre>
+    <p>This command deploys the <strong>edgemicro-auth</strong> policy to Edge and returns a key
+    and secret that you will need to start the microgateway. If you need help, see
+    <a href="/api-platform/microgateway/2.5.x/setting-and-configuring-edge-microgateway#part1configureedgemicrogateway">Configure Edge Microgateway</a>.</p>
+  </li>
+  <li>On Apigee Edge, create an API product and with the following mandatory configuration
+    requirements (you can manage all other configurations as you wish):
+    <ul>
+      <li>You <strong>must</strong> add the <strong>edgemicro-auth</strong> proxy to the product. This proxy
+        was deployed automatically when you ran <code>edgemicro configure</code>.</li>
+      <li>You <strong>must</strong> provide a resource path. Apigee recommends adding this path to
+        the product: <code>/**</code>. To learn more, see <a href="/api-platform/publish/create-api-products#resourcebehavior">Configuring the behavior of the resource path</a>. See also <a href="/api-platform/publish/create-api-products">Create API
+        products</a> in the Edge documentation.</li>
+    </ul>
+  </li>
+  <li><p>On Apigee Edge, create a developer, or you can use an existing developer if you
+    wish. For help, see <a href="/api-platform/publish/adding-developers-your-api-product#addingdevelopersusingtheedgemanagementui">Adding developers using the Edge management UI</a>.</p></li>
+  <li>On Apigee Edge, create a developer app. You <strong>must</strong> add the API product you
+    just created to the app. For help, see <a href="/api-platform/publish/creating-apps-surface-your-api#registeringanappintheedgemanagementui">Registering an app in the Edge
+    management UI</a>.</li>
+  <li>On the machine where Edge Microgateway is installed, export the following
+    environment variable with the value "1".
+    <pre class="devsite-terminal">export EDGEMICRO_LOCAL_PROXY=1</pre>
+  </li>
+  <li>Execute the following <code>start</code> command:
+    <pre class="prettyprint devsite-terminal">edgemicro start -o <var>your_org</var> -e <var>your_environment</var> -k <var>your_key</var> -s <var>your_secret</var> \
+    -a <var>local_proxy_name</var> -v <var>local_proxy_version</var> -t <var>target_url</var> -b <var>base_path</var></pre>
+    <p>Where:</p>
+    <ul>
+      <li><var>your_org</var> is your Apigee organization.</li>
+      <li><var>your_environment</var> is an environment in your organization.</li>
+      <li><var>your_key</var> is the key that was returned when you ran
+        <code>edgemicro configure</code>.</li>
+      <li><var>your_secret</var> is the secret that was returned when you ran
+        <code>edgemicro configure</code>.</li>
+      <li><var>local_proxy_name</var> is the name of the local proxy that will be created.</li>
+      <li><var>local_proxy_version</var> is the version number for the proxy.</li>
+      <li><var>target_url</var> is the URL for the target of the proxy (the service the proxy will
+        call).</li>
+      <li><var>base_path</var> is the base path of the proxy. This value must start with a forward
+        slash. For a root base path, specify just a forward slash; for example, "/".</li>
+    </ul>
+    <p>For example:</p>
+    <pre class="prettyprint devsite-terminal">edgemicro start -o your_org -e test -k 7eb6aae644cbc09035a...d2eae46a6c095f \
+  -s e16e7b1f5d5e24df...ec29d409a2df853163a -a proxy1 -v 1 \
+  -t http://mocktarget.apigee.net -b /echo</pre>
+  </li>
+</ol>
+
+
+<h3 id="testingtheconfiguration">Testing the configuration</h3>
+
+<p>You can test the local proxy configuration by calling the proxy endpoint. For example,
+if you specified a basepath of <code>/echo</code>, you can call the proxy as follows:</p>
+
+<pre class="devsite-terminal prettyprint">curl  http://localhost:8000/echo
+{
+  "error" : "missing_authorization",
+  "error_description" : "Missing Authorization header"
+}</pre>
+
+<p>This initial API call produced an error because you did not provide a valid API key. You can find the key
+in the Developer app you created previously. Open the app in the Edge UI, copy
+the Consumer Key, and use that key as follows:</p>
+
+<pre class="prettyprint devsite-terminal">curl  http://localhost:8000/echo -H 'x-api-key:<var>your_api_key</var>'</pre>
+
+<p>For example:</p>
+<pre class="prettyprint devsite-terminal">curl  http://localhost:8000/echo -H "x-api-key:DvUdLlFwG9AvGGpEgfnNGwtvaXIlUUvP"</pre>
+
+<p>Example output:</p>
+
+<pre class="prettyprint">{
+  "headers":{
+    "user-agent":"curl/7.54.0",
+    "accept":"*/*",
+    "x-api-key":"DvUdLlFwG9AvGGpEgfnNGwtvaXIlUUvP",
+    "client_received_start_timestamp":"1535134472699",
+    "x-authorization-claims":"eyJhdWQiOi...TQ0YmUtOWNlOS05YzM1OTE5MTA1NDkifQ==",
+    "target_sent_start_timestamp":"1535134472702",
+    "x-request-id":"678e3080-a7ae-11e8-a70f-87ae30db3896.8cc81cb0-a7c9-11e8-a70f-87ae30db3896",
+    "x-forwarded-proto":"http",
+    "x-forwarded-host":"localhost:8000",
+    "host":"mocktarget.apigee.net",
+    "x-cloud-trace-context":"e2ac4fa0112c2d76237e5473714f1c85/1746478453618419513",
+    "via":"1.1 localhost, 1.1 google",
+    "x-forwarded-for":"::1, 216.98.205.223, 35.227.194.212",
+    "connection":"Keep-Alive"
+  },
+  "method":"GET",
+  "url":"/",
+  "body":""
+}</pre>
+
+{% endblock %}

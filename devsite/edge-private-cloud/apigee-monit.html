@@ -1,0 +1,817 @@
+{% extends "private-cloud/v4.19.01/_base.html" %}
+{% block title %}Self healing with apigee-monit{% endblock %}
+{% block body %}
+
+<p>{{opdk}} includes {{am}}, a tool based on the open source
+<a href="https://mmonit.com" class="external">monit utility</a>. {{am}} periodically polls Edge
+services; if a service is unavailable, then {{am}} attempts to restart it.</p>
+
+<p>To use {{am}}, you must <a href="#install">install it manually</a>. It is not part of the
+standard installation.</p>
+
+<aside class="warning"><strong>WARNING</strong><p>{{am}} attempts to restart a
+  component <em>every time</em> the component fails a check. A component fails a check when it is
+  disabled, but also when you purposefully stop it, such as during an upgrade, installation, or any
+  task that requires you to stop a component.</p>
+
+  <p>As a result, you <strong>must <a href="#stop">stop monitoring the component</a></strong> before
+  executing any procedure that requires you to install, upgrade, stop, or restart a component.</p>
+</aside>
+
+<p>By default, {{am}} checks the status of Edge services every 60 seconds.</p>
+
+<h2>Quick start</h2>
+
+  <p>The following table shows you how to get up and running with {{am}} right away:</p>
+
+  <table class="green">
+    <tbody>
+      <tr>
+        <th width="5%">&nbsp;</th>
+        <td class="alt"><a href="#install">Install {{am}}</a></td>
+      </tr>
+      <tr>
+        <td></td>
+        <td>
+          <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-monit install
+<code class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-monit configure</code>
+<code class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-monit start</code></pre>
+          <p>This installs {{am}} and starts monitoring all components on the node by default.</p>
+        </td>
+      </tr>
+      <tr>
+        <th>&nbsp;</th>
+        <td class="alt"><a href="#stop">Stop monitoring components</a></td>
+      </tr>
+      <tr>
+        <td></td>
+        <td>
+          <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-monit unmonitor -c <var>component_name</var></pre>
+          <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-monit unmonitor -c all</pre>
+        </td>
+      </tr>
+      <tr>
+        <th>&nbsp;</th>
+        <td class="alt"><a href="#stop">Start monitoring components</a></td>
+      </tr>
+      <tr>
+        <td></td>
+        <td>
+          <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-monit monitor -c <var>component_name</var></pre>
+          <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-monit monitor -c all</pre>
+        </td>
+      </tr>
+      <tr>
+        <th>&nbsp;</th>
+        <td class="alt"><a href="#status">Get summary status information</a></td>
+      </tr>
+      <tr>
+        <td></td>
+        <td>
+          <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-monit report</pre>
+          <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-monit summary</pre>
+        </td>
+      </tr>
+      <tr>
+        <th>&nbsp;</th>
+        <td class="alt"><a href="#logs">Look at the {{am}} log files</a></td>
+      </tr>
+      <tr>
+        <td></td>
+        <td>
+          <pre class="devsite-terminal">cat /opt/apigee/var/log/apigee-monit/apigee-monit.log</pre>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>Each of these topics and others are described in detail in the sections that follow.</p>
+
+<h2>About apigee-monit</h2>
+
+<p>{{am}} helps ensure that all components on a node stay up and running. It does this by
+providing a variety of services, including:</p>
+
+<ul>
+  <li>Restarting failed services</li>
+  <li>Displaying summary information</li>
+  <li>Logging monitoring status</li>
+  <li>Sending notifications</li>
+  <li>Monitoring non-Edge services</li>
+</ul>
+
+<p>Apigee recommends that you monitor {{am}} to ensure that it is running. For more information,
+see <a href="#hawtch">Monitor apigee-monit</a>.</p>
+
+<h3>apigee-monit architecture</h3>
+<p>During your {{opdk}} installation and configuration, you optionally install a separate instance
+of {{am}} on each node in your cluster. These separate {{am}} instances operate independently of one
+another: they do not communicate the status of their components to the other nodes, nor do they
+communicate failures of the monitoring utility itself to any central service.</p>
+
+<p>The following image shows the {{am}} architecture in a 5-node cluster:</p>
+
+<figure>
+  <img src="/private-cloud/images/monit-arch.png" class="screenshot" width="85%"/>
+  <figcaption><strong>Figure 1: A separate instance of {{am}} runs in isolation on each node in a
+  cluster</strong></figcaption>
+</figure>
+
+<h3 id="supported">Supported platforms</h3>
+<p>{{am}} is not supported on all platforms that {{opdk}} version 4.19.01 is supported on, as the
+following table shows:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Supported</th>
+        <th>Not Supported</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>
+          <ul>
+            <li>CentOS/RHEL: 7.4, 7.5, 7.6</li>
+            <li>Oracle Linux: 7.3, 7.4, 7.5</li>
+          </ul>
+        </td>
+        <td>
+          <ul>
+            <li>CentOS/RHEL: 6.9*</li>
+            <li>Oracle Linux: 6.9*</li>
+            <li>Amazon Linux: 1
+          </ul>
+        </td>
+      </tr>
+      <tr>
+        <td colspan="2" class="alt">* While not technically supported, you can install and use
+          {{am}} on CentOS/RHEL/Oracle version 6.9 as described in
+          <a href="#install-unsupported">Install apigee-monit on an unsupported platform</a>.</td>
+      </tr>
+    </tbody>
+  </table>
+
+<h3>Component configurations</h3>
+
+<p>{{am}} uses <em>component configurations</em> to determine which components to monitor, which
+aspects of the component to check, and what action to take in the event of a failure.</p>
+
+<aside class="objective"><strong>TERMINOLOGY</strong><p>A
+<em>component configuration</em> specifies the service to check and the action to take in the event
+of a failure. Component configurations can also define how often to check a service and the number
+of times to retry a service before triggering a failure response.</p></aside>
+
+<p>By default, {{am}} monitors all Edge components on a node using their pre-defined component
+configurations. To view the default settings, you can look at the {{am}} component configuration
+files. You cannot change the default component configurations.</p>
+
+<p>{{am}} checks different aspects of a component, depending on which component it is checking. The
+following table lists what {{am}} checks for each component and shows you where the component
+configuration is for each component. Note that some components are defined in a single configuration
+file, which others have their own configurations.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Component</th>
+        <th>Configuration location</th>
+        <th>What is monitored</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Management Server</td>
+        <td><code>/opt/apigee/edge-management-server/monit/default.conf</code></td>
+        <td rowspan="5">{{am}} checks:
+          <ul>
+            <li>Specified port(s) are open and accepting requests</li>
+            <li>Specified protocol(s) are supported</li>
+            <li>Status of the response</li>
+          </ul>
+          <p>In addition, for these components {{am}}:</p>
+          <ul>
+            <li>Requires multiple failures within a given number of cycles before taking action</li>
+            <li>Sets a custom request path</li>
+          </ul>
+        </td>
+      </tr>
+      <tr>
+        <td>Message&nbsp;Processor</td>
+        <td><code>/opt/apigee/edge-message-processor/monit/default.conf</code></td>
+      </tr>
+      <tr>
+        <td>Postgres Server</td>
+        <td><code>/opt/apigee/edge-postgres-server/monit/default.conf</code></td>
+      </tr>
+      <tr>
+        <td>Qpid Server</td>
+        <td><code>/opt/apigee/edge-qpid-server/monit/default.conf</code></td>
+      </tr>
+      <tr>
+        <td>Router</td>
+        <td><code>/opt/apigee/edge-router/monit/default.conf</code></td>
+      </tr>
+      <tr>
+        <td>Cassandra<br/>
+          Edge UI<br/>
+          OpenLDAP<br/>
+          Postgres<br/>
+          Qpid<br/>
+          Zookeeper
+        </td>
+        <td><code>/opt/apigee/data/apigee-monit/monit.conf</code></td>
+        <td>{{am}} checks:
+          <ul>
+            <li>Service is running</li>
+          </ul>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+<p>The following example shows the default component configuration for the <code>edge-router</code>
+component:</p>
+
+<pre class="prettyprint">check host edge-router with address localhost
+  restart program = "/opt/apigee/apigee-service/bin/apigee-service edge-router monitrestart"
+  if failed host 10.1.1.0 port 8081 and protocol http
+    and request "/v1/servers/self/uuid"
+    with timeout 15 seconds
+    for 2 times within 3 cycles
+  then restart
+
+  if failed port 15999 and protocol http
+    and request "/v1/servers/self"
+    and status &lt; 600
+    with timeout 15 seconds
+    for 2 times within 3 cycles
+  then restart</pre>
+
+<p>The following example shows the default configuration for the <code>edge-ui</code> component:</p>
+
+<pre class="prettyprint">check process edge-ui
+ with pidfile /opt/apigee/var/run/edge-ui/edge-ui.pid
+ start program = "/opt/apigee/apigee-service/bin/apigee-service edge-ui start" with timeout 55 seconds
+ stop program = "/opt/apigee/apigee-service/bin/apigee-service edge-ui stop"</pre>
+
+<p>You cannot change the default component configurations for any {{opdk}} component. You can,
+however, add your own component configurations for external services, such as your target endpoint
+or the <code>httpd</code> service. For more information, see
+<a href="#comp">Non-Apigee component configurations</a>.</p>
+
+<p>By default, {{am}} monitors all components on a node on which it is running. You can enable or
+disable it for all components or for individual components. For more information, see:</p>
+
+<ul>
+  <li><a href="#stop">Stop and start monitoring a component</a></li>
+  <li><a href="#stop-start-and-disable-apigee-monit">Stop, start, and disable {{am}}</a></li>
+</ul>
+
+<h2 id="install">Install apigee-monit</h2>
+
+<p>{{am}} is not installed by default; you can install it manually after upgrading or installing
+version 4.19.01 or later of {{opdk}}.</p>
+
+<p>This section describes how to install {{am}} on the
+<a href="#supported">supported platforms</a> as well as version 6.9 of CentOS/RHEL/Oracle Linux,
+which are unsupported.</p>
+
+<p>For information on <em>uninstalling</em> {{am}}, see
+<a href="#uninstall">Uninstall {{am}}</a>.</p>
+
+<h3 id="install-supported">Install apigee-monit on a supported platform</h3>
+
+<p>This section describes how to install {{am}} on a <a href="#supported">supported platform</a>.</p>
+
+<p><strong>To install {{am}} on a <a href="#supported">supported</a> platform:</strong></p>
+
+<ol>
+  <li>Install {{am}} with the following command:
+    <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-monit install</pre>
+  </li>
+  <li>Configure {{am}} with the following command:
+    <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-monit configure</pre>
+  </li>
+  <li>Start {{am}} with the following command:
+    <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-monit start</pre>
+  </li>
+  <li>Repeat this procedure on each node in your cluster.</li>
+</ol>
+
+<h3 id="install-unsupported">Install apigee-monit on an unsupported platform</h3>
+
+<p>{{am}} is not supported on version 6.9 of CentOS/RHEL/Oracle Linux, but this section describes
+how you can install it.</p>
+
+<p><strong>To install {{am}} on version 6.9 of CentOS/RHEL/Oracle Linux:</strong></p>
+
+<ol>
+  <li>Install the Extra Packages for Enterprise Linux repository (or <em>EPEL</em> for short):
+    <pre class="devsite-terminal">sudo yum install epel-release</pre>
+  <li>Disable EPEL:
+    <pre class="devsite-terminal">yum-config-manager --disable epel</pre>
+  </li>
+  <li><em>Temporarily</em> enable EPEL and install <code>monit</code>:
+    <pre class="devsite-terminal">yum --enablerepo=epel install monit</pre>
+    <p>Note that the EPEL repo must be disabled after installing <code>monit</code>; the
+    <code>enablerepo</code> option only enables the specified repo for the current command.</p>
+  </li>
+  <li>Install {{am}}:
+    <pre class="devsite-terminal">apigee-service apigee-monit install
+<code class="devsite-terminal">apigee-service apigee-monit configure</code>
+<code class="devsite-terminal">apigee-service apigee-monit start</code></pre>
+  </li>
+  <li>Confirm that EPEL is disabled after installing {{am}}:
+    <pre class="devsite-terminal">yum repolist all | grep epel/x86_64
+!epel/x86_64                  Extra Packages for Enterprise Linu <strong>disabled</strong></pre>
+    <p>This example shows that the EPEL repo is disabled. However, if it is not disabled, you must
+    disable it:</p>
+    <pre class="devsite-terminal">sudo yum-config-manager --disable epel</pre>
+  </li>
+</ol>
+
+<h2 id="stop">Stop and start monitoring components</h2>
+
+<p>When a service stops for any reason, {{am}} attempts to restart the service.</p>
+
+<p>This can cause a problem if you want to <em>purposefully</em> stop a component. For example, you might
+want to stop a component when you need to back it up or upgrade it.
+If {{am}} restarts the service during the backup or upgrade, your maintenance procedure can be
+disrupted, possibly causing it to fail.</p>
+
+<aside class="key-point"><strong>TIP</strong><p>To prevent {{am}} from causing failures
+during a planned outage, stop monitoring the component with the <code>stop-component</code> option
+when you perform the following operations:</p>
+  <ul>
+    <li>Stop a component</li>
+    <li>Install or upgrade a component</li>
+    <li>Restart a component</li>
+  </ul>
+</aside>
+
+<p>The following sections show the options for stopping the monitoring of components.</p>
+
+  <h3>Stop a component and unmonitor it</h3>
+    <p>To stop a component and unmonitor it, execute the following command:</p>
+    <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-monit stop-component -c <var>component_name</var></pre>
+    <var>component_name</var> can be one of the following:
+    {% dynamic include "/includes/___opdk-component-list" %}
+    <p>Note that "all" is not a valid option for <code>stop-component</code>. You can stop and
+    unmonitor only one component at a time with <code>stop-component</code>.</p>
+    <p>To re-start the component and resume monitoring, execute the following command:</p>
+    <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-monit start-component -c <var>component_name</var></pre>
+    <p>Note that "all" is not a valid option for <code>start-component</code>.</p>
+    <p>For instructions on how to stop and unmonitor all components, see
+    <a href="#unmonall">Stop all components and unmonitor them</a>.</p>
+  <h3>Unmonitor a component (but don't stop it)</h3>
+    <p>To unmonitor a component (but don't stop it), execute the following command:</p>
+    <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-monit unmonitor -c <var>component_name</var></pre>
+    <var>component_name</var> can be one of the following:
+    {% dynamic include "/includes/___opdk-component-list" %}
+    <p>To resume monitoring the component, execute the following command:</p>
+    <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-monit monitor -c <var>component_name</var></pre>
+
+  <h3>Unmonitor all components (but don't stop them)</h3>
+    <p>To unmonitor all components (but don't stop them), execute the following command:</p>
+    <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-monit unmonitor -c all</pre>
+    <p>To resume monitoring all components, execute the following command:</p>
+    <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-monit monitor -c all</pre>
+
+  <h3 id="unmonall">Stop all components and unmonitor them</h3>
+    <p>To stop all components and unmonitor them, execute the following commands:</p>
+    <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-monit unmonitor -c all
+<code class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-all stop</code></pre>
+    <p>To re-start all components and resume monitoring, execute the following commands:</p>
+    <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-all start
+<code class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-monit monitor -c all</code></pre>
+
+<p>To stop monitoring all components, you can also disable {{am}}, as described in
+<a href="#disable">Stop, start, and disable apigee-monit</a>.</p>
+
+<h2 id="disable">Stop, start, and disable apigee-monit</h2>
+<p>As with any service, you can stop and start {{am}} using the <code>apigee-service</code>
+command. In addition, {{am}} supports the <code>unmonitor</code> command, which lets you
+temporarily stop monitoring components.</p>
+
+<h3>Stop apigee-monit</h3>
+
+<aside class="note"><strong>NOTE</strong>If you use <code>cron</code> to
+watch {{am}}, you must disable it before stopping {{am}}, as described in
+<a href="#hawtch">Monitor {{am}}</a>.</aside>
+
+<p>To stop {{am}}, use the following command:</p>
+<pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-monit stop</pre>
+
+<h3>Start apigee-monit</h3>
+
+<p>To start {{am}}, use the following command:</p>
+<pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-monit start</pre>
+
+<h3>Disable apigee-monit</h3>
+
+<p>You can suspend monitoring all components on the node by using the following command:</p>
+<pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-monit unmonitor -c all</pre>
+
+<p>Alternatively, you can permanently disable {{am}} by uninstalling it from the node, as described
+in <a href="#uninstall">Uninstall {{am}}</a>.</p>
+
+<h3 id="uninstall">Uninstall apigee-monit</h3>
+
+<p><strong>To uninstall {{am}}:</strong></p>
+<ol>
+  <!--
+  <li><var>Do something with cron -- missing an "rm"???</var>
+    <pre class="devsite-terminal">sudo /etc/cron.d/apigee-monit.cron</pre>
+  </li>
+  -->
+  <li>If you set up a <a href="#hawtch"><code>cron</code> job to monitor {{am}}</a>, remove the
+    <code>cron</code> job before uninstalling {{am}}:
+    <pre class="devsite-terminal">sudo rm /etc/cron.d/apigee-monit.cron</pre>
+  </li>
+  <li>Stop {{am}} with the following command:
+    <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-monit stop</pre>
+  </li>
+  <li>Uninstall {{am}} with the following command:
+    <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-monit uninstall</pre>
+  </li>
+  <li>Repeat this procedure on each node in your cluster.</li>
+</ol>
+
+<h2>Monitor a newly installed component</h2>
+
+<p>If you install a new component on a node that is running {{am}}, you can begin monitoring it
+by executing {{am}}'s <code>restart</code> command. This generates a new monit.conf file that will
+include the new component in its component configurations.</p>
+
+<p>The following example restarts {{am}}:</p>
+<pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-monit restart</pre>
+
+
+<h2>Customize apigee-monit</h2>
+
+<p>You can customize various {{am}} settings, including:</p>
+<ol>
+  <li><a href="#control">Default {{am}} control settings</a></li>
+  <li><a href="#global">Global configuration settings</a></li>
+  <li><a href="#comp">Non-Apigee component configurations</a></li>
+</ol>
+
+<h3 id="control">Default apigee-monit control settings</h3>
+
+<p>You can customize the default {{am}} control settings such as the frequency of status checks and
+the locations of the {{am}} files. You do this by editing a properties file using the
+<a href="how-configure-edge">code with config</a> technique. Properties files will persist even
+after you upgrade {{opdk}}.</p>
+
+<p>The following table describes the default {{am}} control settings that you can customize:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Property</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!--
+      Removed. While this will work, it's duplicative of setting it in apigee-monit.cron, plus
+      if you change it with this, you'd need to copy the cron.d directory again anyway.
+      <tr>
+        <td><code>conf_monit_cron_duration</code></td>
+        <td>The frequency that <code>cron</code> will check that {{am}} is running. The default
+          value is <code>*/2 * * * *"</code>, which is once every 2 minutes.
+          <p>This is not enabled by default. To set up monitoring of the {{am}} process, see
+          <a href="#hawtch">Monitor apigee-monit</a>.</p>
+        </td>
+      </tr>
+      -->
+      <tr>
+        <td><code>conf_monit_httpd_port</code></td>
+        <td>The <code>httpd</code> daemon's port. {{am}} uses <code>httpd</code> for its dashboard
+          app and to enable reports/summaries. The default value is 2812.
+        </td>
+      </tr>
+      <tr>
+        <td><code>conf_monit_httpd_allow</code></td>
+        <td>Constraints on requests to the <code>httpd</code> daemon. {{am}} uses
+          <code>httpd</code> to run its dashboard app and enable reports/summaries. This value must
+          point to the localhost (the host that <code>httpd</code> is running on.
+          <p>To require that requests include a username and password, use the following syntax:</p>
+          <pre class="devsite-terminal">conf_monit_httpd_allow=allow <var>username</var>:"<var>password</var>"\nallow 127.0.0.1</pre>
+          <p>When adding a username and password, insert a "\n" between each constraint. Do not
+          insert actual newlines or carriage returns in the value.</p>
+        </td>
+      </tr>
+      <tr>
+        <td><code>conf_monit_monit_datadir</code></td>
+        <td>The directory in which event details are stored.</td>
+      </tr>
+      <tr>
+        <td><code>conf_monit_monit_delay_time</code></td>
+        <td>The amount of time that {{am}} waits after it is first loaded into memory before it
+        runs. This affects {{am}} the first process check only.</td>
+      </tr>
+      <tr>
+        <td><code>conf_monit_monit_logdir</code></td>
+        <td>The location of the {{am}} log file.</td>
+      </tr>
+      <tr>
+        <td><code>conf_monit_monit_retry_time</code></td>
+        <td>The frequency at which {{am}} attempts to check each process; the default is 60
+          seconds.</td>
+      </tr>
+      <tr>
+        <td><code>conf_monit_monit_rundir</code></td>
+        <td>The location of the PID and state files, which {{am}} uses for checking processes.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- add 2 new config settings  for httpd -->
+
+<p><strong>To customize the default {{am}} control settings:</strong></p>
+<ol>
+  <li>Edit the following file:
+    <pre>/opt/apigee/customer/application/monit.properties</pre>
+    <p>If the file does not exist, create it and set the owner to the "apigee" user:</p>
+    <pre class="devsite-terminal">chown apigee:apigee /opt/apigee/customer/application/monit.properties</pre>
+    <p>Note that if the file already exists, there may be additional configuration properties defined
+    in it beyond what is listed in the table above. You should not modify properties other than
+    those listed above.</p>
+  </li>
+  <li><p>Set or replace property values with your new values.</p>
+    <p>For example, to change the location of the log file to <code>/tmp</code>, add or edit the
+    following property:
+    <pre>conf_monit_monit_logdir=/tmp/apigee-monit.log</pre>
+  </li>
+  <li>Save your changes to the <code>monit.properties</code> file.</li>
+  <!--
+  <li>Stop am with the following command:
+    <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-monit stop</pre>
+  </li>
+  -->
+  <li>Re-configure {{am}} with the following command:
+    <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-monit configure</pre>
+  </li>
+  <li>Reload {{am}} with the following command:
+    <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-monit reload</pre>
+    <p>If you cannot restart {{am}}, check the log file for errors as described in
+    <a href="#logs">Access {{am}} log files</a>.</p>
+  </li>
+  <li>Repeat this procedure for each node in your cluster.</li>
+</ol>
+
+<h3 id="global">Global configuration settings</h3>
+<p>You can define global configuration settings for {{am}}; for example, you can add email
+notifications for alerts. You do this by creating a configuration file in the
+<code>/opt/apigee/data/apigee-monit</code> directory and then restarting {{am}}.</p>
+
+<p><strong>To define global configuration settings for {{am}}:</strong></p>
+
+<ol>
+  <li>Create a new component configuration file in the following location:
+    <pre>/opt/apigee/data/apigee-monit/<var>filename</var>.conf</pre>
+    <p>Where <var>filename</var> can be any valid file name, <em>except</em> "monit".</p>
+  </li>
+  <li>Change the owner of the new configuration file to the "apigee" user, as the following example
+    shows:
+    <pre class="devsite-terminal">chown apigee:apigee /opt/apigee/data/apigee-monit/my-mail-config.conf</pre>
+  <li>Add your global configuration settings to the new file. The following example configures a
+    mail server and sets the alert recipients:
+    <pre>SET MAILSERVER smtp.gmail.com PORT 465
+  USERNAME "example-admin@gmail.com" PASSWORD "<var>PASSWORD</var>"
+  USING SSL, WITH TIMEOUT 15 SECONDS
+
+SET MAIL-FORMAT {
+  from: edge-alerts@example.com
+  subject: Monit Alert -- Service: $SERVICE $EVENT on $HOST
+}
+SET ALERT fred@example.com
+SET ALERT nancy@example.com</pre>
+    <p>For a complete list of global configuration options, see the
+    <a href="https://mmonit.com/monit/documentation/monit.html" class="external">monit documentation</a>.</p>
+  </li>
+  <li>Save your changes to the component configuration file.</li>
+  <li>Reload {{am}} with the following command:
+    <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-monit reload</pre>
+    <p>If {{am}} does not restart, check the log file for errors as described in
+    <a href="#logs">Access {{am}} log files</a>.</p>
+  </li>
+  <li>Repeat this procedure for each node in your cluster.</li>
+</ol>
+
+
+<h3 id="comp">Non-Apigee component configurations</h3>
+
+<p>You can add your own configurations to {{am}} so that it will check services that are not part of
+{{opdk}}. For example, you can use {{am}} to check that your APIs are running by sending requests to
+your target endpoint.</p>
+
+<p><strong>To add a non-Apigee component configuration:</strong></p>
+<ol>
+  <li>Create a new component configuration file in the following location:
+    <pre>/opt/apigee/data/apigee-monit/<var>filename</var>.conf</pre>
+    <p>Where <var>filename</var> can be any valid file name, <em>except</em> "monit".</p>
+    <p>You can create as many component configuration files as necessary. For example, you can
+    create a separate configuration file for each non-Apigee component that you want to monitor on the
+    node.</p>
+  </li>
+  <li>Change the owner of the new configuration file to the "apigee" user, as the following example
+    shows:
+    <pre class="devsite-terminal">chown apigee:apigee /opt/apigee/data/apigee-monit/my-config.conf</pre>
+  <li>Add your custom configurations to the new file. The following example checks the target
+    endpoint on the local server:
+    <pre class="prettyprint">CHECK HOST localhost_validate_test WITH ADDRESS localhost
+  IF FAILED
+    PORT 15999
+    PROTOCOL http
+    REQUEST "/validate__test"
+    CONTENT = "Server Ready"
+    FOR 2 times WITHIN 3 cycles
+  THEN alert</pre>
+    <p>For a complete list of possible configuration settings, see the
+    <a href="https://mmonit.com/monit/documentation/monit.html" class="external">monit documentation</a>.</p>
+  </li>
+  <li>Save your changes to the configuration file.
+  <!--
+    <aside class="warning"><h3 class="hide-from-toc">WARNING</h3>These settings will be overwritten
+    when you upgrade or install a new {{opdk}} patch or release. As a result, be sure to back
+    up your custom configuration files and restore them once your back up or installation is
+    complete.</aside>
+  -->
+  </li>
+  <li>Reload {{am}} with the following command:
+    <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-monit reload</pre>
+    <p>If {{am}} does not restart, check the log file for errors as described in
+    <a href="#logs">Access {{am}} log files</a>.</p>
+  </li>
+  <li>Repeat this procedure for each node in your cluster.</li>
+</ol>
+
+<p>Note that this is for non-Edge components only. You cannot customize the component configurations
+for Edge components.</p>
+
+
+<h2 id="logs">Access apigee-monit log files</h2>
+<p>{{am}} logs all activity, including events, restarts, configuration changes, and alerts in a log
+file.</p>
+
+<p>The default location of the log file is:
+<pre>/opt/apigee/var/log/apigee-monit/apigee-monit.log</pre>
+
+<p>You can change the default location by <a href="#control">customizing the {{am}} control
+settings</a>.</p>
+
+<p>Log file entries have the following form:</p>
+<pre class="prettyprint">'edge-message-processor' trying to restart
+[UTC Dec 14 16:20:42] info     : 'edge-message-processor' trying to restart
+'edge-message-processor' restart: '/opt/apigee/apigee-service/bin/apigee-service edge-message-processor monitrestart'</pre>
+
+<p>You cannot customize the format of the {{am}} log file entries.</p>
+
+<h2 id="status">View aggregated status with apigee-monit</h2>
+
+<p>{{am}} includes the following commands that give you aggregated status information about the
+components on a node:</p>
+
+  <table class="green">
+    <thead>
+      <tr>
+        <th>Command</th>
+        <th>Usage</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="alt"><a href="#report"><code>report</code></a></td>
+        <td><pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-monit report</pre></td>
+      </tr>
+      <tr>
+        <td class="alt"><a href="#summary"><code>summary</code></a></td>
+        <td><pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-monit summary</pre></td>
+      </tr>
+    </tbody>
+  </table>
+
+<p>Each of these commands is explained in more detail in the sections that follow.</p>
+
+<h3 id="report">report</h3>
+<p>The <code>report</code> command gives you a rolled-up summary of how many components are up,
+down, currently being initialized, or are currently <a href="#stop">unmonitored</a> on a node. The
+following example invokes the <code>report</code> command:</p>
+
+<pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-monit report</pre>
+
+<p>The following example shows <code>report</code> output on an AIO (all-in-one)
+configuration:</p>
+
+<pre class="devsite-terminal prettyprint">/opt/apigee/apigee-service/bin/apigee-service apigee-monit report
+up:            11 (100.0%)
+down:           0 (0.0%)
+initialising:   0 (0.0%)
+unmonitored:    1 (8.3%)
+total:         12 services</pre>
+
+<p>In this example, 11 of the 12 services are reported by {{am}} as being up. One service is not
+currently being monitored.</p>
+
+<p>You may get a <code>Connection refused</code> error when you first execute the
+<code>report</code> command. In this case, wait for the duration of the
+<code>conf_monit_monit_delay_time</code> property, and then try again.</p>
+
+<h3 id="report">summary</h3>
+<p>The <code>summary</code> command lists each component and provides its status. The following
+example invokes the <code>summary</code> command:</p>
+
+<pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-monit summary</pre>
+
+<p>The following example shows <code>summary</code> output on an AIO (all-in-one)
+configuration:</p>
+
+<pre class="devsite-terminal prettyprint">/opt/apigee/apigee-service/bin/apigee-service apigee-monit summary
+Monit 5.25.1 uptime: 4h 20m
+ Service Name                     Status                      Type
+ <var>host_name</var>                        OK                          System
+ apigee-zookeeper                 OK                          Process
+ apigee-cassandra                 OK                          Process
+ apigee-openldap                  OK                          Process
+ apigee-qpidd                     OK                          Process
+ apigee-postgresql                OK                          Process
+ edge-ui                          OK                          Process
+ edge-qpid-server                 OK                          Remote Host
+ edge-postgres-server             OK                          Remote Host
+ edge-management-server           OK                          Remote Host
+ edge-router                      OK                          Remote Host
+ edge-message-processor           OK                          Remote Host</pre>
+
+<p>If you get a <code>Connection refused</code> error when you first execute the
+<code>summary</code> command, try waiting the duration of the
+<code>conf_monit_monit_delay_time</code> property, and then try again.</p>
+
+<!-- <p><var>QUESTION: If new UE is installed, does {{am}} include it?</var></p> -->
+
+<h2 id="hawtch">Monitor apigee-monit</h2>
+<p>It is best practice to regularly check that {{am}} is running on each node.</p>
+
+<p>To check that {{am}} is running, use the following command:</p>
+<pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-monit monitor_monit</pre>
+
+<p>Apigee recommends that you issue this command periodically on each node that is running {{am}}.
+One way to do this is with a utility such as <code>cron</code> that executes scheduled tasks at
+pre-defined intervals.</p>
+
+<p><strong>To use <code>cron</code> to monitor {{am}}:</strong></p>
+<ol>
+  <li>Add <code>cron</code> support by copying the <code>apigee-monit.cron</code>
+    directory to the <code>/etc/cron.d</code> directory, as the following example shows:
+    <pre class="devsite-terminal">cp /opt/apigee/apigee-monit/cron/apigee-monit.cron /etc/cron.d/</pre>
+  </li>
+  <li>Open the <code>apigee-monit.cron</code> file to edit it.
+    <p>The <code>apigee-monit.cron</code> file defines the <code>cron</code> job to execute
+    as well as the frequency at which to execute that job. The following example shows the default
+    values:</p>
+    <pre># Cron entry to check if monit process is running. If not start it
+*/2 * * * * root /opt/apigee/apigee-service/bin/apigee-service apigee-monit monitor_monit</pre>
+    <p>This file uses the following syntax, in which the first five fields define the time at which
+    {{am}} executes its action:</p>
+    <pre><var>min hour day_of_month month day_of_week task_to_execute</var></pre>
+    <p>For example, the default execution time is <code>*/2 * * * *</code>, which instructs
+    <code>cron</code> to check the {{am}} process every 2 minutes.</p>
+    <p>You cannot execute a <code>cron</code> job more frequently than once per minute.</p>
+    <p>For more information on using <code>cron</code>, see your server OS's documentation or man
+    pages.</p>
+  </li>
+  <li>Change the <code>cron</code> settings to match your organization's policies. For example, to
+    change the execution frequency to every 5 minutes, set the job definition to the following:
+    <pre>*/5 * * * * root /opt/apigee/apigee-service/bin/apigee-service apigee-monit monitor_monit</pre>
+  </li>
+  <li>Save the <code>apigee-monit.cron</code> file.</li>
+  <li>Repeat this procedure for each node in your cluster.</li>
+</ol>
+
+<p>If <code>cron</code> does not begin watching {{am}}, check that:</p>
+<ul>
+  <li>There is a blank line after the <code>cron</code> job definition.</li>
+  <li>There is only one <code>cron</code> job defined in the file. (Commented lines do not
+    count.)</li>
+</ul>
+
+<p>If you want to stop or temporarily disable {{am}}, you must disable this <code>cron</code> job,
+too, otherwise <code>cron</code> will restart {{am}}.</p>
+
+<p><strong>To disable <code>cron</code>, do one of the following:</strong></p>
+<ul>
+  <li>Delete the <code>/etc/cron.d/apigee-monit.cron</code> file:
+    <pre class="devsite-terminal">sudo rm /etc/cron.d/apigee-monit.cron</pre>
+    <p>You will have to re-copy it if you
+    later want to re-enable <code>cron</code> to watch {{am}}.
+    <p><strong>OR</strong></p>
+  </li>
+  <li>Edit the <code>/etc/cron.d/apigee-monit.cron</code> file and comment out the job
+    definition by adding a "#" to the beginning of the line; for example:
+    <pre># 10 * * * * root /opt/apigee/apigee-service/bin/apigee-service apigee-monit monitor_monit</pre>
+  </li>
+</ul>
+
+{% endblock %}

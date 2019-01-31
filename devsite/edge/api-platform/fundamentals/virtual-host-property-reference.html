@@ -36,11 +36,17 @@
         &lt;TrustStore&gt;ref://<var>truststoreRef</var>&lt;/TrustStore&gt;
         &lt;IgnoreValidationErrors&gt;<var>trueFalse</var>&lt;/IgnoreValidationErrors&gt;
     &lt;/SSLInfo&gt;
+    &lt;PropagateTLSInformation&gt;
+        &lt;!-- PropagateTLSInformation is Alpha in the Cloud only --&gt;
+        &lt;ConnectionProperties&gt;<var>trueFalse</var>&lt;/ConnectionProperties&gt;
+        &lt;ClientProperties&gt;<var>trueFalse</var>&lt;/ClientProperties&gt;
+    &lt;/PropagateTLSInformation&gt;
     &lt;Properties&gt;
         &lt;Property name="proxy_read_timeout"&gt;<var>timeout</var>&lt;/Property&gt;
         &lt;Property name="keepalive_timeout"&gt;<var>timeout</var>&lt;/Property&gt;
         &lt;Property name="proxy_request_buffering"&gt;<var>onOff</var>&lt;/Property&gt;
         &lt;Property name="proxy_buffering"&gt;<var>onOff</var>&lt;/Property&gt;
+        &lt;!-- ssl_protocols is Private Cloud only --&gt;
         &lt;Property name="ssl_protocols"&gt;<var>protocolList</var>&lt;/Property&gt;
         &lt;Property name="ssl_ciphers"&gt;<var>cipherList</var>&lt;/Property&gt;
     &lt;/Properties&gt;
@@ -167,7 +173,10 @@
         <td>Overrides the URL displayed by the Edge UI for an API proxy deployed to the virtual
         host. Useful when you have an external load balancer in front of the Edge Routers. See
         <a href="/api-platform/system-administration/creating-virtual-host.html">Configuring TLS
-        access to an API for the Private Cloud</a> for more.</td>
+        access to an API for the Private Cloud</a> for more.
+        <p>The value of <code>BaseUrl</code> must include the protocol (i.e., "http://" or
+        "https://").</p>
+        </td>
 
         <td>None</td>
 
@@ -191,7 +200,7 @@
         <td>No</td>
       </tr>
 
-      <tr>
+      <tr class="alt">
         <td><strong>HostAliases</strong></td>
 
         <td colspan="3"> </td>
@@ -219,6 +228,17 @@
           virtual host, but not for multiple ports. If you want multiple ports, create multiple
           virtual host definitions with different ports.</p>
 
+          <p>You can include the "*" wildcard character in the host alias. The "*" wildcard character can
+            only be at the start (preceding the first ".") of the host alias, and cannot be mixed with other characters.
+            For example <code>*.example.com</code>. The TLS cert for the virtual host must have a
+            matching wildcard in the CN name of the cert. For example, <code>*.example.com</code>.
+            Using a wild card in a virtual host alias lets
+            API proxies handle calls addressed to multiple subdomains such as
+            <code>alpha.example.com</code>, <code>beta.example.com</code>, or
+            <code>live.example.com</code>. Using a wild card alias also helps you use fewer virtual
+            hosts per environment to stay within <a href="/api-platform/reference/limits">product
+            limits</a>, since a virtual host with a wild card counts as only one virtual host.</p>
+
           <p><strong>For Cloud</strong>: If you have an existing virtual host that uses a port other
             than 443, you cannot add or remove a host alias.</p>
 
@@ -232,7 +252,7 @@
         <td>Yes</td>
       </tr>
 
-      <tr>
+      <tr class="alt">
         <td><strong>Interfaces</strong></td>
 
         <td colspan="3"><strong>Available for Edge for Private Cloud only.</strong></td>
@@ -260,7 +280,7 @@
         <td>All interfaces</td>
       </tr>
 
-      <tr>
+      <tr class="alt">
         <td><strong>RetryOptions</strong></td>
 
         <td colspan="3"><strong>Available for Edge Cloud and for Private Cloud 4.18.01 and
@@ -331,7 +351,7 @@
         </td>
       </tr>
 
-      <tr>
+      <tr class="alt">
         <td><strong>ListenOptions</strong></td>
 
         <td colspan="3"><strong>Available for Private Cloud 4.18.01 and later and for Edge
@@ -369,7 +389,7 @@
         </td>
       </tr>
 
-      <tr>
+      <tr class="alt">
         <td><strong>SSLInfo</strong></td>
 
         <td colspan="3"> </td>
@@ -462,6 +482,10 @@
 
           <p>This option is valid when configuring TLS for Target Servers and Target Endpoints, and
           when configuring virtual hosts that use 2-way TLS.</p>
+
+          <p>When used with a target endpoint/target server, if the backend system uses SNI and returns a cert
+          with a subject Distinguished Name (DN) that does not match the hostname, there is no way
+          to ignore the error and the connection fails.</p>
         </td>
 
         <td>false</td>
@@ -514,7 +538,43 @@
         <td>No</td>
       </tr>
 
+      <tr class="alt">
+        <td><strong>PropagateTLSInformation</strong></td>
+
+        <td colspan="3"><strong>Available in Alpha for Edge Cloud only.</strong></td>
+      </tr>
+
       <tr>
+        <td>ConnectionProperties</td>
+
+        <td>
+          <p>Enables the capture of TLS connection information by Edge.
+          This information is then available as flow variables in an API proxy.
+          See <a href="/api-platform/system-administration/tls-vars">Accessing TLS connection information in an API proxy</a>
+          for more.</p>
+        </td>
+
+        <td>false</td>
+
+        <td>No</td>
+      </tr>
+
+      <tr>
+        <td>ClientProperties</td>
+
+        <td>
+          <p>Enables the capture of client cert details captured by Edge in two-way TLS.
+          This information is then available as flow variables in an API proxy.
+          See <a href="/api-platform/system-administration/tls-vars">Accessing TLS connection information in an API proxy</a>
+          for more.</p>
+        </td>
+
+        <td>false</td>
+
+        <td>No</td>
+      </tr>
+
+      <tr class="alt">
         <td><strong>Properties</strong></td>
 
         <td colspan="3"><strong>Available for Edge Cloud and for Private Cloud 4.17.01 and

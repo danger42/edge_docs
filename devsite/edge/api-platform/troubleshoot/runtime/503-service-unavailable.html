@@ -1,0 +1,343 @@
+  {% extends "_base.html" %} {% block title %}503 Service Unavailable{% endblock %} {% block body %}
+
+<aside class="note">Was this troubleshooting playbook helpful? Please let us know
+  by clicking <a href="" class="google-feedback"
+   data-p="1636213" data-b="docsite" data-context="troubleshooting-feedback">
+  Send Feedback
+</a>.</aside>
+
+  <h2 id="symptom">Symptom</h2>
+
+  <p>The client application receives an HTTP response status
+    <strong>503</strong> with the message <strong>Service Unavailable</strong> following
+an API proxy call.</p>
+
+  <h2 id="error-messages">Error messages</h2>
+
+<p>You can see one of the following error messages:</p>
+
+  <pre class="prettyprint">
+HTTP/1.1 503 Service Unavailable
+</pre>
+
+  <pre class="prettyprint">
+HTTP/1.1 503 Service Unavailable: Back-end server is at capacity
+</pre>
+
+  <p>You can also see this error message in the HTTP response:</p>
+
+  <pre class="prettyprint">
+{
+   "fault": {
+      "faultstring": "The Service is temporarily unavailable", 
+      "detail": {
+           "errorcode": "messaging.adaptors.http.flow.ServiceUnavailable"
+       }
+    }
+}
+</pre>
+
+  <h2 id="northbound-and-southbound-connection">Possible causes</h2>
+
+  <p>The HTTP status code 503 means that the server is currently unavailable. On Apigee Edge,
+    this problem can occur either at the <a href="https://docs.apigee.com/api-platform/troubleshoot/runtime/503-service-unavailable.html#determiningthesourceoftheproblem-understandingnorthboundandsouthboundconnections">incoming (northbound)</a>
+    or <a href="https://docs.apigee.com/api-platform/troubleshoot/runtime/503-service-unavailable.html#determiningthesourceoftheproblem-understandingnorthboundandsouthboundconnections">outgoing (southbound)</a> connection.
+    Most often, the error occurs because a server is too busy or is
+    down for some reason, such as for
+    temporarily maintenance. It can also occur if the <a href="#SSLHandshakeFailures">TLS/SSL handshake fails</a>
+    between the client and the server.</p>
+
+  <p>Possible causes for the <strong>503 Service Unavailable</strong> response are:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th><strong>Cause</strong></th>
+
+        <th><strong>Description</strong></th>
+
+        <th><strong>Who can perform the troubleshooting steps</strong></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><a href="#overloadedserver">Overloaded Server</a></td>
+
+        <td>The server is overloaded and cannot handle any new incoming client requests.</td>
+
+        <td>Private and Public Cloud users</td>
+      </tr>
+
+      <tr>
+        <td><a href="#connectionerrors">Connection Errors</a></td>
+
+        <td>Network or connectivity issues prevent the client from connecting to the server.</td>
+
+        <td>Private Cloud users only</td>
+      </tr>
+
+      <tr>
+        <td><a href="#SSLHandshakeFailures">SSL Handshake Failures </a></td>
+
+        <td>
+          <div>
+            The TLS/SSL handshake failed between the client and server. (Troubleshooting for this class of
+            problem is covered in a separate topic.)
+          </div>
+        </td>
+
+        <td>Private and Public Cloud users</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="overloaded-server"><a id="overloadedserver" name="overloadedserver"></a>Overloaded
+  server</h2>
+
+<aside class="note">The steps in this section are primarily for Edge Private Cloud users; however,
+some steps can be performed by Edge Public Cloud users, as indicated.</aside>
+
+  <p>The following error can occur when the server is overloaded or cannot handle any
+  more requests:</p>
+  <pre class="prettyprint">
+HTTP/1.1 503 Service Unavailable: Back-end server is at capacity
+</pre>
+
+  <h3 id="overloadedserver-diagnosis">Diagnosis</h3>
+
+
+  <p>To diagose this issue, try to determine if the error occurs on
+  the incoming (northbound) or outgoing (southbound) connection. To learn how to make
+    this determination, see <a href="#determinesourceofproblem">Determining the source of the problem</a>.</p>
+
+     <p>If the error is on the incoming (northbound) connection:</p>
+
+    <ul>
+      <li><strong>Private Cloud users</strong>: Check if the Average Load/CPU/Memory usage is high on
+      the Edge Router.</li>
+
+      <li><strong>Public Cloud users</strong>: You do not have access to the Edge Router. Contact
+      <a href="https://support.apigee.com/">Apigee Support</a> for assistance.</li>
+    </ul>
+
+  <p>If the error is on the outgoing (southbound) connection:</p>
+
+  <ul>
+    <li><strong>All users</strong>: Check if the Average Load/CPU/Memory usage is high on the
+    backend server.</li>
+    </li>
+  </ul>
+
+  <h3 id="resolution">Resolution</h3>
+
+  <p>If the <strong>Edge Router</strong> is overloaded:</p>
+
+  <ul>
+    <li><strong>Private Cloud users</strong>: Restart the Edge Router and then monitor its usage to
+    see if the problem is resolved. If the problem persists, contact <a href=
+    "https://support.apigee.com/">Apigee Support</a> for assistance.</li>
+
+    <li><strong>Public Cloud users</strong>: You do not have access to the Edge Router. Contact
+    <a href="https://support.apigee.com/">Apigee support</a> for assistance.</li>
+  </ul>
+
+  <p>If the <strong>backend service</strong> is overloaded:</p>
+
+  <ul>
+    <li><strong>All users</strong>: Restart the appropriate backend server and then monitor it to
+    see if the problem is resolved.</li>
+
+    <li><strong>All users</strong>: If the problem persists, check if you need to increase the
+    capacity of the appropriate backend server(s) and/or fix any issue with the backend
+    server(s).</li>
+  </ul>
+
+<p>Were these troubleshooting steps helpful? Please <a href="" class="google-feedback"
+   data-p="1636213" data-b="docsite" data-context="troubleshooting-feedback">
+  send feedback</a> to let us know.</p>
+
+  <h2 id="connection-errors"><a id="connectionerrors" name="connectionerrors"></a>Connection
+  errors</h2>
+
+<aside class="note">The steps in this section are for Edge Private Cloud users only.</aside>
+
+  <p>A connection error happens when an Apigee Edge Message Processor attempts to connect to a backend
+  server and one of these problems occurs:</p>
+
+  <ul>
+    <li>The Message Processor is unable to connect within the preset connection timeout period. (Default: 3 seconds)</li>
+
+    or
+
+    <li>The backend server refuses the connection.</li>
+  </ul>
+
+  <h3 id="steps-to-diagnose">Diagnosis</h3>
+
+  <ol>
+    <li>Check the Message Processor log (<code>/opt/apigee/var/log/edge-message-processor/logs/system.log</code>)
+      for any of the following errors:
+
+      <ol>
+        <li>
+          An <strong>onConnectTimeout</strong> error indicates that the Message Processor was unable to
+          connect to the backend server within the preset connection timeout period.
+          <pre class="prettyprint">
+2016-06-23 09:11:49,314 org:myorg env:prod api:Employees rev:1 messageid:mo-96cf6757a-9401-21-1 NIOThread@2 ERROR HTTP.CLIENT - HTTPClient$Context.onTimeout() : ClientChannel[C:]@10 useCount=1 bytesRead=0 bytesWritten=0 age=3001ms lastIO=3001ms .onConnectTimeout connectAddress=www.abc.com/11.11.11.11:80 resolvedAddress=www.abc.com/11.11.11.11 
+2016-06-23 09:11:49,333 org:myorg env:prod api:Employees rev:1 messageid:mo-96cf6757a-9401-21-1 NIOThread@2 ERROR ADAPTORS.HTTP.FLOW - RequestWriteListener.onTimeout() : RequestWriteListener.onTimeout(HTTPRequest@6b393600)
+</pre>
+        </li>
+
+        <li>
+          A <strong>java.net.ConnectException: Connection refused</strong> error indicates the connection
+          was refused by the backend server.
+          <pre class="prettyprint">
+14:40:16.531 +0530      
+2016-06-17 09:10:16,531 org:myorg env:prod api:www.abc.com rev:1 rrt07eadn-22739-40983870-15 NIOThread@2 ERROR HTTP.CLIENT - HTTPClient$Context.onConnectFailure() : connect to www.abc.com:11.11.11.11:443 failed with exception {} 
+java.net.ConnectException: Connection refused 
+at sun.nio.ch.SocketChannelImpl.checkConnect(Native Method) ~[na:1.7.0_75] 
+at sun.nio.ch.SocketChannelImpl.finishConnect(SocketChannelImpl.java:739) ~[na:1.7.0_75] 
+at com.apigee.nio.ClientChannel.finishConnect(ClientChannel.java:121) ~[nio-1.0.0.jar:na] 
+at com.apigee.nio.handlers.NIOThread.run(NIOThread.java:108) ~[nio-1.0.0.jar:na]
+</pre>
+        </li>
+      </ol>
+    </li>
+
+    <li>Check if you are able to connect to the specific backend server directly from each of the
+      Message Processors using the <code>telnet</code> command:
+
+      <ol>
+        <li>If the backend server resolves to a single IP address, then use the following command:
+          <pre class="devsite-terminal">telnet <var>BackendServer-IPaddress</var> 443
+</pre>
+        </li>
+
+        <li>If the backend server resolves to multiple IP addresses, then use the hostname of
+          the backend server in the <code>telnet</code> command as shown below:
+          <pre class="devsite-terminal">telnet <var>BackendServer-HostName</var> 443
+</pre>
+        </li>
+      </ol>
+    </li>
+
+    <li>If you are able to connect to the backend server, then you might see a message like <code>Connected
+      to <var>backend-server</var></code>. If you are unable to connect to the backend server, this might be
+    because the Message Processors' IP addresses are not whitelisted on the specific backend
+    server.</li>
+  </ol>
+
+  <h3 id="resolution">Resolution</h3>
+
+  <p>Whitelist the Message Processors' IP addresses on the specific backend server to allow
+  traffic from the Edge Message Processors to your backend server. For example, On Linux, you could use
+  <strong>iptables</strong> to whitelist or allow the traffic from the Message Processor's IP addresses
+  on the backend server.</p>
+
+  <p>If the problem persists, work with your Network administrator to determine and fix the
+  issue. If you need any further assistance from Apigee, contact <a href=
+  "https://support.apigee.com">Apigee Support</a>.</p>
+
+<p>Were these troubleshooting steps helpful? Please <a href="" class="google-feedback"
+   data-p="1636213" data-b="docsite" data-context="troubleshooting-feedback">
+  send feedback</a> to let us know.</p>
+
+  <h2 id="sslhandshakefailures"><a id="SSLHandshakeFailures" name="SSLHandshakeFailures"></a>SSL
+  Handshake Failures </h2>
+
+  <div>
+    An entire troubleshooting playbook is devoted to TLS/SSL handshake errors. See <a href=
+    "/api-platform/troubleshoot/runtime/ssl-handshake-failures.html">SSL Handshake Failures</a>.
+  </div>
+
+  <h2 id="determiningthesourceoftheproblem"><a id="determinesourceofproblem" name=
+  "determinesourceofproblem"></a>Determining the source of the problem</h2>
+
+  <p>Certain types of errors can occur either on the incoming (northbound) or outgoing (southbound)
+    connection. An incoming (northbound) error occurs between the client application and Edge. An
+    outgoing (southbound) error occurs between Edge and the backend target server. To diagnose these
+    kinds of problems, your first job is to figure out whether the error occurs on the northbound or
+    southbound connection.</p>
+
+  <h3 id="determiningthesourceoftheproblem-understandingnorthboundandsouthboundconnections">
+  Understanding northbound and southbound connections</h3>
+
+  <p>In Edge, you can encounter a 503 Service Unavailable error on either the incoming or outgoing connection:</p>
+
+  <ul>
+    <li><strong>Incoming</strong> (or northbound) connection - The connection between the client
+    application and the Edge Router. The Router is the component of Apigee Edge that handles
+    incoming requests made to the system.
+     </li>
+
+    <li><strong>Outgoing</strong> (or southbound) connection - The connection between the Edge
+    Message Processor and the backend server. The Message Processor is a component of Apigee Edge
+    that proxies API requests to backend target servers.</li>
+  </ul>
+
+  <p>If you are an Edge Public Cloud user, you are probably unaware of internal components such as
+  the Router or the Message Processor. These internal components are not visible or accessible to
+  Public Cloud users. Where possible, we provide alternative ways to investigate the problem that
+  do not require direct access to these components.</p>
+
+  <p>The following figure illustrates northbound and southbound connections for Apigee
+  Edge.</p>
+
+  <p><img alt="" src="/api-platform/images/IMG-3-4d.png"></p>
+
+  <h3 id=
+  "determine-whether-the-503-service-unavailable-error-occurred-at-northbound-or-southbound-connection">
+  Determining where the 503 Service Unavailable error occurred</h3>
+
+  <p>Use one of the following procedures to determine if the 503 Service Unavailable error occurred
+  at the northbound or southbound connection.</p>
+
+  <h4 id="procedure-1-using-ui-trace">Procedure 1: Using UI Trace (For all users)</h4>
+
+  <p>This procedure can be performed by Public or Private Cloud users:</p>
+
+  <ol>
+    <li>If the issue is still active, enable the UI trace for the affected API.</li>
+
+    <li>If the UI trace for the failing API request shows that the 503 Service Unavailable error
+    occurs during the target request flow or is sent by the backend server, then the issue is
+    <strong>southbound</strong> (that is, between the Message Processor and the backend
+    server).</li>
+
+    <li>If you don't get the trace for the specific API call, then the issue is
+    <strong>northbound</strong>, between the client application and the Router.</li>
+  </ol>
+
+ <h4 id="procedure-2-using-api-monitoring">Procedure 2: Using API Monitoring (For Apigee
+Cloud users only)</h4>
+  <p>If you are a Private Cloud user, skip this procedure.</p>
+
+<p><a href="/api-monitoring">API Monitoring</a> enables you to isolate problem areas quickly to diagnose error, performance, and latency issues and their source,
+  such as developer apps, API proxies, backend targets, or the API platform.</p>
+
+<p><a href="/api-monitoring/sample-scenarios">Step through a sample scenario</a> that demonstrates how to troubleshoot 5xx issues with your APIs using API Monitoring.
+For example, you may want to set up an alert to be notified when the number of <code>messaging.adaptors.http.flow.ServiceUnavailable</code> faults exceeds a particular threshold.</p>
+
+
+  <h4 id="procedure-3-using-nginx-access-logs">Procedure 3: Using Nginx Access Logs (For Apigee
+  Private Cloud users only)</h4>
+
+  <p>If you are a Public Cloud user, skip this procedure.</p>
+
+  <p>If the issue has happened in the past or if the issue is intermittent and you are unable to
+  capture the trace, then perform the following steps:</p>
+
+  <ol>
+    <li>Check the Nginx access logs (<code>/opt/apigee/var/log/edge-router/nginx/ <var>org</var>-<var>env</var>.<var>port</var>_access_log</code> ).</li>
+
+    <li>Search if there are any 503 Errors for specific API proxy.</li>
+
+    <li>If you can identify any 503 Errors for the specific API at the specific time, then the
+    issue occurred at the <strong>southbound</strong> connection (between the Message Processor and
+    the backend server).</li>
+
+    <li>If not, then the issue occurred at the <strong>northbound</strong> connection (between
+    the client application and the Router).</li>
+  </ol>
+
+{% endblock %}

@@ -1,0 +1,162 @@
+  {% extends "_base.html" %} {% block title %}Configuring Virtual Hosts FAQ{% endblock %} {% block body %}
+
+  <p>Edge Cloud customers can now create, modify, and delete virtual hosts. Previously, these
+  actions had to be performed by <a href=
+  "https://community.apigee.com/content/apigee-customer-support">Apigee Support</a>.</p>
+
+  <h2 id="whocanconfigureavirtualhostinedgecloud">Who can configure a virtual host in Edge
+  Cloud?</h2>
+
+  <p>Only a Cloud customer with a paid account can create, modify, and delete a virtual host. The
+  user creating the virtual host must be in the role of <em>organization administrator</em>, or in
+  a custom role with permissions to modify a virtual host. Users in other roles do not have
+  authorization to create virtual hosts.</p>
+
+  <p>The custom role requires GET, PUT and DELETE permissions on <code>/environments/*/virtualhosts</code>,
+  or any of its parent resources.
+  See <a href="/api-platform/system-administration/managing-roles-api">Creating roles with the API</a> for more.</p>
+
+  <aside class="note"><b>Note:</b> Free and trial accounts cannot create or modify virtual hosts
+  and are limited to the virtual hosts created for them at Edge registration time. For more
+  information on Edge pricing plans, see <a href=
+  "https://apigee.com/api-management/#/pricing">https://apigee.com/api-management/#/pricing</a>.</aside>
+
+  <h2 id="whatifihaveanexistingvirtualhostcreatedbyapigee">What if I have an existing virtual host
+  created by Apigee?</h2>
+
+  <p>Existing Edge Cloud customers already have virtual hosts created by Apigee. You can now modify
+    those virtual hosts.</p>
+
+  <p>However, review the requirements for modifying a virtual host at <a href=
+  "/api-platform/fundamentals/configuring-virtual-hosts-cloud.html">Configuring virtual hosts for
+  the Cloud</a> before you make any changes. For example, if your existing virtual host is
+  configured to use a port other than 443, you cannot change the port number or the TLS setting.
+  That means you cannot change the TLS setting from enabled to disabled,
+  or from disabled to enabled.  </p>
+
+  <h2 id="istlsisrequiredonallnewvirtualhostsinthecloud">Is TLS is required on all new virtual
+  hosts in the Cloud? </h2>
+
+  <p>To create a virtual host, you <strong>must</strong> enable TLS on the virtual host. That means
+  you must first create a keystore with the TLS cert and key before creating the virtual host.</p>
+
+  <p>You must have a cert signed by a trusted entity, such as Symantec or VeriSign.
+  You cannot use a self-signed cert.</p>
+
+  <p>See <a href="/api-platform/fundamentals/configuring-virtual-hosts-cloud.html">Configuring
+  virtual hosts for the Cloud</a> for more. </p>
+
+  <h2 id="caniupdatethetlscertusedbyavirtualhost">Can I update the TLS cert used by a virtual
+  host?</h2>
+
+  <p>If you have a virtual host with an expiring TLS cert, then you can update the virtual host to
+  use a different keystore that contains a valid cert.</p>
+
+  <aside class="warning"><b>Warning:</b> However, that virtual host must be configured to use a
+  <strong>reference</strong> to the keystore, and not the keystore name itself. If your virtual
+  hosts currently uses a keystore name, then you must contact <a href=
+  "https://community.apigee.com/content/apigee-customer-support">Apigee Support</a> to restart
+  the Edge Routers to complete the conversion of the virtual host to use a reference. </aside>
+
+  <h2 id="whatisareference">What is a reference?</h2>
+
+  <p>A reference is a variable that contains the name of the keystore. To change the keystore used
+  by a virtual host, you update the reference variable, not the virtual host itself.</p>
+
+  <p>Older virtual hosts on Apigee Edge might not be configured to use references. In this case,
+  you <strong>must</strong> request <a href=
+  "https://community.apigee.com/content/apigee-customer-support">Apigee Support</a> to update the
+  virtual host to use a reference. <strong>Do not update a virtual host yourself to change it to
+  use a reference.</strong></p>
+
+  <h2 id="howdoidetermineifmyvirtualhostusesareference">How do I determine if my virtual host uses
+  a reference?</h2>
+
+  <p>To see information about a specific virtual host, use the <a href=
+  "/management/apis/get/organizations/{org_name}/environments/{env_name}/virtualhosts/{virtualhost_name}">
+  Get Virtual Host</a> API:</p>
+  <pre class="prettyprint">
+$ curl -X GET -H "accept:application/xml" \
+https://api.enterprise.apigee.com/v1/o/{<em><strong>org_name</strong></em>}/e/{<em><strong>env_name</strong></em>}/virtualhosts/{<em><strong>vhost_name</strong></em>} \
+-u <em><strong>orgAdminEmail:pWord</strong></em>
+</pre>
+
+  <p>where <strong><span style=
+  "font-family:courier new,courier,monospace;"><em>vhost_name</em></span></strong> is the name of
+  the virtual host. For example, you can specify the <strong><span style=
+  "font-family:courier new,courier,monospace;"><em>vhost_name</em></span></strong> as "secure" to
+  see the configuration of the default secure virtual host:</p>
+  <pre class="prettyprint">
+&lt;VirtualHost name="secure"&gt;
+    &lt;HostAliases&gt;
+        &lt;HostAlias&gt;<em><strong>orgname</strong></em>-prod.apigee.net&lt;/HostAlias&gt;
+    &lt;/HostAliases&gt;
+    &lt;Interfaces/&gt;
+    &lt;Port&gt;443&lt;/Port&gt;
+    &lt;Properties/&gt;
+    &lt;SSLInfo&gt;
+        &lt;ClientAuthEnabled&gt;false&lt;/ClientAuthEnabled&gt;
+        &lt;Enabled&gt;true&lt;/Enabled&gt;
+        &lt;KeyAlias&gt;freetrial&lt;/KeyAlias&gt;
+<strong>        &lt;KeyStore&gt;ref://freetrial&lt;/KeyStore&gt;</strong>
+        &lt;IgnoreValidationErrors&gt;false&lt;/IgnoreValidationErrors&gt;
+    &lt;/SSLInfo&gt;
+&lt;/VirtualHost&gt;
+</pre>
+
+  <p>Notice that in this example, the value of the <span style=
+  "font-family:courier new,courier,monospace;">&lt;KeyStore&gt;</span> element in the response
+  begins with <strong>ref://</strong>. That prefix signifies that the keystore use a reference.</p>
+
+  <p>If the value of the <span style=
+  "font-family: &quot;courier new&quot;, courier, monospace;">&lt;KeyStore&gt;</span> element
+  is a string literal, then it does not use a reference. For example:</p>
+  <pre class="prettyprint">
+<strong>        &lt;KeyStore&gt;mykeystore&lt;/KeyStore&gt;</strong>
+</pre>
+
+  <p><strong>Do not update a virtual host yourself to change it to use a
+  reference.</strong> You <strong>must</strong> request <a href=
+  "https://community.apigee.com/content/apigee-customer-support">Apigee Support</a> to update
+  the virtual host to use a reference.  After Apigee updates the virtual host to use a
+  reference, you can then change the keystore by updating the reference varialbe. </p>
+
+  <p>See <a href="/api-platform/fundamentals/configuring-virtual-hosts-cloud.html">Configuring
+  virtual hosts for the Cloud</a> for more. </p>
+
+  <h2 id="howdoicreateavirtualhost">How do I create a virtual host?</h2>
+
+  <p>Use the following procedure to create the virtual host:</p>
+
+  <ol>
+    <li>Create a DNS entry and CNAME record for your publicly facing domain that points to
+    <span style="font-family:courier new,courier,monospace;">[org]-[environment].apigee.net</span>.
+    See "About host aliases and DNS names" at <a href=
+    "/api-platform/fundamentals/virtual-hosts.html">About virtual hosts</a> for more.</li>
+
+    <li>Create and configure a keystore by using the procedure as described in <a href=
+    "/api-platform/system-administration/creating-keystores-and-truststore-cloud-using-edge-ui.html">
+    Creating keystores and truststore using the Edge UI</a>. </li>
+
+    <li>Upload your cert and key to the keystore. </li>
+
+    <li>Create a reference to the keystore as described in <a href=
+    "/api-platform/fundamentals/configuring-virtual-hosts-cloud.html">Configuring virtual hosts for
+    the Cloud</a>.</li>
+
+    <li>Create the virtual host by using the <a href=
+    "/management/apis/post/organizations/{org_name}/environments/{env_name}/virtualhosts">Create a
+    Virtual Host</a> API as described in <a href=
+    "/api-platform/fundamentals/configuring-virtual-hosts-cloud.html">Configuring virtual hosts for
+    the Cloud</a>. Make sure to specify the correct keystore reference.</li>
+
+    <li>If you have any existing API proxies, add the virtual host to the <span style=
+    "font-family:courier new,courier,monospace;">&lt;HTTPConnection&gt;</span> element in the
+    ProxyEndpoint. The virtual host is added automatically to all new API proxies. See
+    <strong><em>Updating an API proxy after creating a virtual host</em></strong> in <a href=
+    "/api-platform/fundamentals/virtual-hosts.html">About virtual hosts</a>.</li>
+  </ol>
+
+  
+
+  {% endblock %}

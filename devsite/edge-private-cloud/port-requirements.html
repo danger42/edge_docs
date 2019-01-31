@@ -1,0 +1,566 @@
+{% extends "private-cloud/v4.19.01/_base.html" %}
+{% block title %}Port requirements{% endblock %}
+{% block body %}
+
+  <p>The need to manage the firewall goes beyond just the virtual hosts; both VM and physical host
+  firewalls must allow traffic for the ports required by the components to communicate with each
+  other.</p>
+
+  <h2>Port diagrams</h2>
+
+  <p>The following images show the port requirements for both a single data center and multiple
+  data center configuration:</p>
+
+  <div class="ds-selector-tabs">
+    <section>
+      <h3>Single Data Center</h3>
+        <p>The following image shows the port requirements for each Edge component in a single data
+        center configuration:</p>
+
+        <p><img alt="Port requirements for each Edge component in a single data center configuration"
+        width="100%" src="/private-cloud/images/arch-ports-main.png"></p>
+
+        <p><strong>Notes on this diagram:</strong></p>
+
+        <ul>
+          <li>The ports prefixed by "M" are ports used to manage the component and must be open on the
+            component for access by the Management Server.</li>
+          <li>The Edge UI requires access to the Router, on the ports exposed by API proxies, to support
+            the <strong>Send</strong> button in the trace tool.</li>
+          <li>Access to JMX ports can be configured to require a username/password. See
+            <a href="how-monitor">How to Monitor</a> for more information.</li>
+          <li>You can optionally configure TLS/SSL access for certain connections, which can use
+            different ports. See <a href="/api-platform/system-administration/ssl">TLS/SSL</a> for
+            more.</li>
+          <li>You can configure the Management Server and Edge UI to send emails through an external SMTP
+            server. If you do, you must ensure that the Management Server and UI can access the necessary
+            port on the SMTP server (not shown). For non-TLS SMTP, the port number is typically 25. For
+            TLS-enabled SMTP, it is often 465, but check with your SMTP provider.</li>
+        </ul>
+    </section>
+    <section>
+      <h3>Multiple Data Centers</h3>
+      <p>If you install the <a href="installation-topologies#12hostclusteredinstallation">12-node
+      clustered configuration with two data centers</a>, ensure that the nodes in the two data centers
+      can communicate over the ports shown below:</p>
+
+      <p><img alt="Port requirements for each node in a 12-node clustered configuration" width="100%"
+      src="/private-cloud/images/12-node-port-requirements.png"></p>
+
+      <p><strong>Note that:</strong></p>
+        <ul>
+          <li>All Management Servers must be able to access all Cassandra nodes in all other data
+            centers.</li>
+          <li>All Message Processors in all data centers must all be able to access each other over
+            port 4528.</li>
+          <li>The Management Server must be able to access all Message Processors over port 8082.</li>
+          <li>All Management Servers and all Qpid nodes must be able to access Postgres in all other
+            data centers.</li>
+          <li><strong>For security reasons</strong>, other than the ports shown above and any others
+            required by your own network requirements, no other ports should be open between data
+            centers.</li>
+        </ul>
+    </section>
+  </div>
+
+  <h2>Port details</h2>
+
+  <p>The table below describes the ports that need to be opened in firewalls, by Edge component:</p>
+
+<div id="filter1">
+  <devsite-select>
+    <select>
+      <option>Filter by port #</option>
+      <option value="*22*">22</option>
+      <option value="*80*">80</option>
+      <option value="*443*">443</option>
+      {% for x in range(1099,1104,1) %}
+        <option>{{x}}</option>
+      {% endfor %}
+      <option>2181</option>
+      <option>2888</option>
+      <option>3888</option>
+      {% for x in range(4526,4531,1) %}
+        <option>{{x}}</option>
+      {% endfor %}
+      <option>5432</option>
+      <option>5636</option>
+      <option>5672</option>
+      <option>7000</option>
+      <option>7199</option>
+      {% for x in range(8080,8085,1) %}
+        <option>{{x}}</option>
+      {% endfor %}
+      <option>8443</option>
+      <option>9000</option>
+      <option>9042</option>
+      <option>9160</option>
+      <option>10389</option>
+      <option>15999</option>
+      <option>59001</option>
+      <option>59002</option>
+      <option value="&mdash;&mdash;ALL&mdash;&mdash;"></option>
+    </select>
+  </devsite-select>
+</div>
+
+<div id="table-div-id">
+<devsite-filter select-el-container-id="filter1">
+  <table>
+    <thead>
+      <tr>
+        <th>Component</th>
+        <th>Port</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody class="list">
+      <tr>
+        <td class="column1-class">Standard&nbsp;HTTP&nbsp;ports</td>
+        <td>80, 443<!-- 80,443 --></td>
+        <td>HTTP plus any other ports you use for virtual hosts</td>
+      </tr>
+      <tr>
+        <td class="column1-class" rowspan="2">Cassandra</td>
+        <td>7000,&nbsp;9042,&nbsp;9160<!--7000,7199,9042,9160 --></td>
+        <td>Apache Cassandra ports for communication between Cassandra nodes and for access by
+          other Edge components.</td>
+      </tr>
+      <tr>
+        <td>7199<!--7000,7199,9042,9160 --></td>
+        <td>JMX port. Must be open for access by the Management Server.</td>
+      </tr>
+      <tr>
+        <td class="column1-class">LDAP</td>
+        <td>10389<!-- 10389 --></td>
+        <td>OpenLDAP</td>
+      </tr>
+      <tr>
+        <td class="column1-class" rowspan="4">Management Server</td>
+        <td>1099<!-- 1099,4526,5636,8080 --></td>
+        <td>JMX port</td>
+      </tr>
+      <tr>
+        <td>4526<!-- 1099,4526,5636,8080 --></td>
+        <td>Port for distributed cache and management calls. This port is configurable.</td>
+      </tr>
+      <tr>
+        <td>5636<!-- 1099,4526,5636,8080 --></td>
+        <td>Port for monetization commit notifications.</td>
+      </tr>
+      <tr>
+        <td>8080<!-- 1099,4526,5636,8080 --></td>
+        <td>Port for Edge management API calls. These components require access to port 8080 on
+          the Management Server: Router, Message Processor, UI, Postgres, and Qpid.</td>
+      </tr>
+      <tr>
+        <td class="column1-class">Management UI</td>
+        <td>9000<!-- 9000 --></td>
+        <td>Port for browser access to management UI</td>
+      </tr>
+      <tr>
+        <td class="column1-class" rowspan="5">Message Processor</td>
+        <td>1101<!-- 1101,4528,8082,8443,8998 --></td>
+        <td>JMX port</td>
+      </tr>
+      <tr>
+        <td>4528<!-- 1101,4528,8082,8443,8998 --></td>
+        <td>For distributed cache and management calls between Message Processors, and for
+          communication from the Router and Management Server.
+          <p>A Message Processor must open port 4528 as its management port. If you have multiple
+          Message Processors, they must all be able to access each other over port 4528 (indicated by
+          the loop arrow in the diagram above for port 4528 on the Message Processor). If you have
+          multiple data centers, the port must be accessible from all Message Processors in all data
+          centers.</p>
+        </td>
+      </tr>
+      <tr>
+        <td>8082<!-- 1101,4528,8082,8443,8998 --></td>
+        <td>
+          <p>Default management port for Message Processor and must be open on the component for
+          access by the Management Server.</p>
+          <p>If you configure TLS/SSL between the Router and Message Processor, used by the Router
+          to make health checks on the Message Processor.</p>
+          <p>Port 8082 on the Message Processor only has to be open for access by the Router when you
+          configure TLS/SSL between the Router and Message Processor. If you do not configure TLS/SSL
+          between the Router and Message Processor, the default configuration, port 8082 still must
+          be open on the Message Processor to manage the component, but the Router does not require
+          access to it.</p>
+        </td>
+      </tr>
+      <tr>
+        <td>8443<!-- 1101,4528,8082,8443,8998 --></td>
+        <td>When TLS is enabled, you must open port 8443 on the Message Processor for the Router.
+          This is in addition to port 8082, which must also be open, whether or not TLS is
+          enabled.</td>
+      </tr>
+      <tr>
+        <td>8998<!-- 1101,4528,8082,8443,8998 --></td>
+        <td>Message Processor port for communications from Router</td>
+      </tr>
+      <tr>
+        <td class="column1-class" rowspan="5">Postgres</td>
+        <td>22<!-- 22,1103,4530,5432,8084 --></td>
+        <td>If configuring two Postgres nodes to use master-standby replication, you must open
+          port 22 on each node for SSH access.</td>
+      </tr>
+      <tr>
+        <td>1103<!-- 22,1103,4530,5432,8084 --></td>
+        <td>JMX port</td>
+      </tr>
+      <tr>
+        <td>4530<!-- 22,1103,4530,5432,8084 --></td>
+        <td>For distributed cache and management calls</td>
+      </tr>
+      <tr>
+        <td>5432<!-- 22,1103,4530,5432,8084 --></td>
+        <td>Used for communication from Qpid/Management Server to Postgres</td>
+      </tr>
+      <tr>
+        <td>8084<!-- 22,1103,4530,5432,8084 --></td>
+        <td>Default management port on Postgres server; must be open on the component for access
+          by the Management Server.</td>
+      </tr>
+      <tr>
+        <td class="column1-class" rowspan="4">Qpid</td>
+        <td>1102<!-- 1102,4529,5672,8083 --></td>
+        <td>JMX port</td>
+      </tr>
+      <tr>
+        <td>4529<!-- 1102,4529,5672,8083 --></td>
+        <td>For distributed cache and management calls</td>
+      </tr>
+      <tr>
+        <td>5672<!-- 1102,4529,5672,8083 --></td>
+        <td>Used for communications between Qpid nodes.</td>
+      </tr>
+      <tr>
+        <td>8083<!-- 1102,4529,5672,8083 --></td>
+        <td>Default management port on Qpid server and must be open on the component for
+          access by the Management Server.</td>
+      </tr>
+      <tr>
+        <td class="column1-class" rowspan="4">Router</td>
+        <td>4527<!-- 4527,8081,15999,59001 --></td>
+        <td>For distributed cache and management calls.
+          <p>A Router must open port 4527 as its management port. If you have multiple Routers, they
+          must all be able to access each other over port 4527 (indicated by the loop arrow in the
+          diagram above for port 4527 on the Router).</p>
+          <p>While it is not required, you can open port 4527 on the Router for access <em>by any
+          Message Processor</em>. Otherwise, you might see error messages in the Message Processor
+          log files.</td>
+      </tr>
+      <tr>
+        <td>8081<!-- 4527,8081,15999,59001 --></td>
+        <td>Default management port for Router and must be open on the component for access
+          by the Management Server.</td>
+      </tr>
+      <tr>
+        <td>15999<!-- 4527,8081,15999,59001 --></td>
+        <td>
+          <p>Health check port. A load balancer uses this port to determine if the Router is
+          available.</p>
+          <p>To get the status of a Router, the load balancer makes a request to port 15999 on the
+          Router:</p>
+          <pre class="devsite-terminal">curl -v http://<var>routerIP</var>:15999/v1/servers/self/reachable</pre>
+          <p>If the Router is reachable, the request returns HTTP 200.</p>
+        </td>
+      </tr>
+      <tr>
+        <td>59001<!-- 4527,8081,15999,59001 --></td>
+        <td>Port used for testing the Edge installation by the <code>apigee-validate</code> utility.
+          This utility requires access to port 59001 on the Router. See
+          <a href= "test-install">Test the install</a> for more on port 59001.</td>
+      </tr>
+      <tr>
+        <td class="column1-class">SmartDocs</td>
+        <td>59002<!-- 59002 --></td>
+        <td>The port on the Edge router where SmartDocs page requests are sent.</td>
+      </tr>
+      <tr>
+        <td class="column1-class" rowspan="2">ZooKeeper</td>
+        <td>2181<!-- 2181,2888,3888 --></td>
+        <td>Used by other components like Management Server, Router, Message Processor and so on</td>
+      </tr>
+      <tr>
+        <td>2888, 3888<!-- 2181,2888,3888 --></td>
+        <td>Used internally by ZooKeeper for ZooKeeper cluster (known as ZooKeeper ensemble)
+          communication</td>
+      </tr>
+    </tbody>
+  </table>
+</devsite-filter>
+</div>
+
+  <p>The next table shows the same ports, listed numerically, with the source and destination
+  components:</p>
+
+<div id="filter2">
+  <devsite-select>
+    <select>
+      <option>Filter by port #</option>
+      {% for x in range(1099,1104,1) %}
+        <option>{{x}}</option>
+      {% endfor %}
+      <option>2181</option>
+      <option>2888</option>
+      <option>3888</option>
+      {% for x in range(4526,4531,1) %}
+        <option>{{x}}</option>
+      {% endfor %}
+      <option>5432</option>
+      <option>5636</option>
+      <option>5672</option>
+      <option>7000</option>
+      <option>7199</option>
+      {% for x in range(8080,8085,1) %}
+        <option>{{x}}</option>
+      {% endfor %}
+      <option>8443</option>
+      <option>9000</option>
+      <option>9042</option>
+      <option>9160</option>
+      <option>10389</option>
+      <option>15999</option>
+      <option>59001</option>
+      <option>59002</option>
+      <option value="&mdash;&mdash;ALL&mdash;&mdash;"></option>
+    </select>
+  </devsite-select>
+</div>
+
+<div id="table-div-id">
+<devsite-filter select-el-container-id="filter2">
+  <table>
+    <thead>
+      <tr>
+        <th>Port Number</th>
+        <th>Purpose</th>
+        <th>Source&nbsp;Component</th>
+        <th>Destination&nbsp;Component</th>
+      </tr>
+    </thead>
+    <tbody class="list">
+      <tr>
+        <td><var>virtual_host_port</var></td>
+        <td>HTTP plus any other ports you use for virtual host API call traffic. Ports 80 and 443
+          are most commonly used; the Message Router can terminate TLS/SSL connections.</td>
+        <td>External&nbsp;client&nbsp;(or&nbsp;load&nbsp;balancer)</td>
+        <td>Listener on Message Router</td>
+      </tr>
+      <tr>
+        <td class="column1-class">1099&nbsp;through&nbsp;1103</td>
+        <td>JMX Management</td>
+        <td>JMX Client</td>
+        <td>Management&nbsp;Server&nbsp;(1099)<br/>
+          Message Processor (1101)<br/>
+          Qpid Server (1102)<br/>
+          Postgres Server (1103)
+        </td>
+      </tr>
+      <tr>
+        <td class="column1-class">2181</td>
+        <td>Zookeeper client communication</td>
+        <td>Management Server<br/>
+          Router<br/>
+          Message Processor<br/>
+          Qpid Server<br/>
+          Postgres Server
+        </td>
+        <td>Zookeeper</td>
+      </tr>
+      <tr>
+        <td class="column1-class">2888 and 3888</td>
+        <td>Zookeeper internode management</td>
+        <td>Zookeeper</td>
+        <td>Zookeeper</td>
+      </tr>
+      <tr>
+        <td class="column1-class">4526</td>
+        <td>RPC Management port</td>
+        <td>Management Server</td>
+        <td>Management Server</td>
+      </tr>
+      <tr>
+        <td class="column1-class">4527</td>
+        <td>RPC Management port for distributed cache and management calls, and for communications
+        between Routers</td>
+        <td>Management Server<br/>Router</td>
+        <td>Router</td>
+      </tr>
+      <tr>
+        <td class="column1-class">4528</td>
+        <td>For distributed cache calls between Message Processors, and for communication
+          from the Router</td>
+        <td>Management Server<br/>
+          Router<br/>
+          Message Processor
+        </td>
+        <td>Message Processor</td>
+      </tr>
+      <tr>
+        <td class="column1-class">4529</td>
+        <td>RPC Management port for distributed cache and management calls</td>
+        <td>Management Server</td>
+        <td>Qpid Server</td>
+      </tr>
+      <tr>
+        <td class="column1-class">4530</td>
+        <td>RPC Management port for distributed cache and management calls</td>
+        <td>Management Server</td>
+        <td>Postgres Server</td>
+      </tr>
+      <tr>
+        <td class="column1-class">5432</td>
+        <td>Postgres client</td>
+        <td>Qpid Server</td>
+        <td>Postgres</td>
+      </tr>
+      <tr>
+        <td class="column1-class">5636</td>
+        <td>Monetization</td>
+        <td>External JMS component</td>
+        <td>Management Server</td>
+      </tr>
+      <tr>
+        <td class="column1-class">5672</td>
+        <td>
+          <p>Used for communications between Qpid nodes.</p>
+        </td>
+        <td>Qpid Server</td>
+        <td>Qpid Server</td>
+      </tr>
+      <tr>
+        <td class="column1-class">7000</td>
+        <td>Cassandra inter-node communications</td>
+        <td>Cassandra</td>
+        <td>Other Cassandra node</td>
+      </tr>
+      <tr>
+        <td class="column1-class">7199</td>
+        <td>JMX management. Must be open for access on the Cassandra node by the Management
+          Server.
+        </td>
+        <td>JMX client</td>
+        <td>Cassandra</td>
+      </tr>
+      <tr>
+        <td class="column1-class">8080</td>
+        <td>Management API port</td>
+        <td>Management API clients</td>
+        <td>Management Server</td>
+      </tr>
+      <tr>
+        <td class="column1-class">8081 through 8084</td>
+        <td>
+          <p>Component API ports, used for issuing API requests directly to individual components.
+          Each component opens a different port; the exact port used depends on the configuration
+          but must be open on the component for access by the Management Server</p>
+        </td>
+        <td>Management API clients</td>
+        <td>Router (8081)<br/>
+          Message Processor (8082)<br/>
+          Qpid Server (8083)<br/>
+          Postgres Server (8084)
+        </td>
+      </tr>
+      <tr>
+        <td class="column1-class">8443</td>
+        <td>Communication between Router and Message Processor when TLS is enabled</td>
+        <td>Router</td>
+        <td>Message Processor</td>
+      </tr>
+      <tr>
+        <td class="column1-class">8998</td>
+        <td>Communication between Router and Message Processor</td>
+        <td>Router</td>
+        <td>Message Processor</td>
+      </tr>
+      <tr>
+        <td class="column1-class">9000</td>
+        <td>Default Edge management UI port</td>
+        <td>Browser</td>
+        <td>Management UI Server</td>
+      </tr>
+      <tr>
+        <td class="column1-class">9042</td>
+        <td>CQL native transport</td>
+        <td>Router<br/>
+          Message Processor<br/>
+          Management Server
+        </td>
+        <td>Cassandra</td>
+      </tr>
+      <tr>
+        <td class="column1-class">9160</td>
+        <td>Cassandra thrift client</td>
+        <td>Router<br/>
+          Message Processor<br/>
+          Management Server
+        </td>
+        <td>Cassandra</td>
+      </tr>
+      <tr>
+        <td class="column1-class">10389</td>
+        <td>LDAP port</td>
+        <td>Management Server</td>
+        <td>OpenLDAP</td>
+      </tr>
+      <tr>
+        <td class="column1-class">15999</td>
+        <td>Health check port. A load balancer uses this port to determine if the Router is
+          available.</td>
+        <td>Load balancer</td>
+        <td>Router</td>
+      </tr>
+      <tr>
+        <td class="column1-class">59001</td>
+        <td>Port used by the <code>apigee-validate</code> utility to test the Edge installation</td>
+        <td>apigee-validate</td>
+        <td>Router</td>
+      </tr>
+      <tr>
+        <td class="column1-class">59002</td>
+        <td>The router port where SmartDocs page requests are sent</td>
+        <td>SmartDocs</td>
+        <td>Router</td>
+      </tr>
+    </tbody>
+  </table>
+</devsite-filter>
+</div>
+
+  <p>A Message Processor keeps a dedicated connection pool open to Cassandra, which is configured
+  to never timeout. When a firewall is between a Message Processor and Cassandra server, the
+  firewall can time out the connection. However, the Message Processor is not designed to
+  re-establish connections to Cassandra.</p>
+
+  <p>To prevent this situation, Apigee recommends that the Cassandra server, Message Processor, and
+  Routers be in the same subnet so that a firewall is not involved in the deployment of these
+  components.</p>
+
+  <p>If a firewall is between the Router and Message Processors, and has an idle TCP timeout set,
+  our recommendations is to do the following:</p>
+
+  <ol>
+    <li>Set <code>net.ipv4.tcp_keepalive_time = 1800</code> in sysctl settings on Linux OS, where
+      1800 should be lower than the firewall idle tcp timeout. This setting should keep the
+      connection in an established state so that the firewall does not disconnect the connection.</li>
+    <li>On all Message Processors, edit
+      <code>/opt/apigee/customer/application/message-processor.properties</code>
+      to add the following property. If the file does not exist, create it.
+      <pre>conf_system_cassandra.maxconnecttimeinmillis=-1</pre>
+    </li>
+    <li>Restart the Message Processor:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-message-processor restart</pre>
+    </li>
+    <li>On all Routers, edit <code>/opt/apigee/customer/application/router.properties</code>
+      to add the following property. If the file does not exist, create it.
+      <pre>conf_system_cassandra.maxconnecttimeinmillis=-1</pre>
+    </li>
+    <li>Restart the Router:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-router restart</pre>
+    </li>
+  </ol>
+
+{% endblock %}

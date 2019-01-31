@@ -1,0 +1,525 @@
+  {% extends "_base.html" %} {% block title %}500 Internal Server Error{% endblock %} {% block body %}
+
+<aside class="note">Was this troubleshooting playbook helpful? Please let us know
+  by clicking <a href="" class="google-feedback"
+   data-p="1636213" data-b="docsite" data-context="troubleshooting-feedback">
+  Send Feedback
+</a>.</aside>
+
+  <h2 id="symptom">Symptom</h2>
+
+  <p>The client application gets an HTTP status code of <strong>500</strong> with the message
+  <strong>"Internal Server Error"</strong> as a response for API calls. The 500 Internal Server
+  error could be caused by an error during the execution of any policy within Edge or by an error
+  on the target/backend server.</p>
+
+  <p>The HTTP status code 500 is a generic error response. It means that the server encountered an
+  unexpected condition that prevented it from fulfilling the request. This error is usually
+  returned by the server when no other error code is suitable.</p>
+
+  <h2 id="errormessages">Error Messages</h2>
+
+  <p>You may get the following error message:</p>
+  <pre class="prettyprint">
+HTTP/1.1 500 Internal Server Error
+</pre>
+
+  <p>In some cases, you may observe another error message which has more details. Here is a sample
+  error message:</p>
+  <pre class="prettyprint">
+{  
+   "fault":{  
+      "detail":{  
+         "errorcode":"steps.servicecallout.ExecutionFailed"
+      },
+      "faultstring":"Execution of ServiceCallout callWCSAuthServiceCallout failed. Reason: ResponseCode 400 is treated as error"
+   }
+}
+</pre>
+
+  <h2 id="possiblecauses">Possible Causes</h2>
+
+  <p>The 500 Internal Server Error could be thrown due to a number of different causes. In Edge,
+  the causes can be classified into two main categories based on where the error occurred:</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <td width="247"><strong>Cause</strong></td>
+
+        <td width="473"><strong>Details</strong></td>
+
+        <td width="473"><strong>Detailed Troubleshooting Steps are Provided For</strong></td>
+      </tr>
+
+      <tr>
+        <td><a href="#execution-error-in-an-edge-policy">Execution Error in an Edge Policy</a></td>
+
+        <td>A <a href="/api-platform/reference/policies/reference-overview-policy.html">Policy</a>
+        within the API proxy may fail for some reason.</td>
+
+        <td>Edge Private and Public Cloud users</td>
+      </tr>
+
+      <tr>
+        <td><a href="#error-in-the-backend-server">Error in the Backend Server</a></td>
+
+        <td>The backend server may fail for some reason.</td>
+
+        <td>Edge Private and Public Cloud users</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="execution-error-in-an-edge-policy"><strong><a id="executionerrorinpolicy" name=
+  "executionerrorinpolicy"></a>Execution Error in an Edge Policy</strong></h2>
+
+  <p>A <a href="/api-platform/reference/policies/reference-overview-policy.html">Policy</a> within
+  the API proxy may fail for some reason. This section explains how to troubleshoot the issue if
+  the 500 Internal Server Error occurs during the execution of a policy.</p>
+
+  <h3 id="executionerrorinanedgepolicy-diagnosis">Diagnosis</h3>
+
+  <aside class="note"><b>Note:</b> The 500 Internal Server error can arise due to many different
+  reasons. For example, a 500 error can occur when a policy executes or it can originate on the
+  backend target server. Because of this, we've provided below several general diagnostic steps to
+  help you identify and troubleshoot this type of issue. We also provide several examples that give
+  specific steps for resolving these errors, depending on the cause of the problem.</aside>
+
+  <h4>Diagnostic Steps for Private and Public Cloud Users</h4>
+
+  <p>If you have the trace UI session for the error, then:</p>
+
+  <ol>
+    <li>Verify that the error was caused by the execution of a policy. See <a href=
+    "#determiningsourceofproblem">Determining the source of the problem</a> for details.</li>
+
+    <li>If the error occurred during policy execution, continue.. If the error was caused by the
+    backend server, go to <a href="#errorinbackend">Error in the Backend Server</a>.</li>
+
+    <li>Select the API request that is failing with 500 Internal Server Error in the trace.</li>
+
+    <li>Examine the request and select the specific policy that has failed or the flow named
+    "Error" that is immediately following the failed policy in the trace.</li>
+
+    <li>Get more details about the error either by checking the "error" field under the Properties
+    section or the Error content.</li>
+
+    <li>Using the details you've collected about the error, try to determine its cause.</li>
+  </ol>
+
+  <h4>Diagnostic Steps for Private Cloud Users Only</h4>
+
+  <p>If you don't have the trace UI session, then:</p>
+
+  <ol>
+    <li>Verify that the error occurred during the execution of a policy. See <a href=
+    "#determiningsourceofproblem">Determining the source of the problem</a> for details.</li>
+
+    <li>If the error was caused by policy execution, continue. If the error occurred during policy
+    execution, continue. If the error was caused by the backend server, go to <a href=
+    "#errorinbackend">Error in the Backend Server</a>.</li>
+
+    <li>Use the Nginx access logs as explained in <a href="#determiningsourceofproblem">Determining
+    the source of the problem</a> to determine the failing policy in the API proxy and also the
+    unique request message id</li>
+
+    <li>Check the Message Processor logs
+    (<code>/opt/apigee/var/log/edge-message-processor/logs/system.log</code>) and search for the
+    unique request message id in it.</li>
+
+    <li>If you do find the unique request message ID, see if you can get more information about the
+    cause for the failure.</li>
+  </ol>
+
+  <h3 id="executionerrorinanedgepolicy-resolution">Resolution</h3>
+
+  <p>If you have determined the cause of the issue with the policy, try to correct the problem by
+  fixing the policy and redeploying the proxy.</p>
+
+  <p>The following examples illustrate how to determine the cause and resolution for different
+  types of issues.</p>
+
+  <p>If you need further assistance in troubleshooting 500 Internal Server Error or you suspect
+  that it's an issue within Edge, contact <a href="https://support.apigee.com/">Apigee
+  Support</a>.</p>
+
+  <h4><strong>Example 1: Failure in Service Callout policy due to an error in the backend
+  server</strong></h4>
+
+  <p>If the call to the backend server fails within the Service Callout policy with any error such
+  as 4XX or 5XX, then it will be treated as 500 Internal Server Error.</p>
+
+  <ol>
+    <li>Here's an example where the backend service fails with a 404 error within the Service
+    Callout policy. The following error message is sent to the end user:
+      <pre class="prettyprint">
+{ 
+"fault":
+     { "detail":
+           { "errorcode":"steps.servicecallout.ExecutionFailed"
+           },"faultstring":"Execution of ServiceCallout service_callout_v3_store_by_lat_lon
+ failed. Reason: ResponseCode 404 is treated as error"
+          }
+     } 
+}
+</pre>
+    </li>
+
+    <li>The following trace UI session shows 500 status code caused due to an error in Service
+    Callout policy:
+
+      <p><img alt="" src="/api-platform/images/TS-IMG-1-6.png"></p>
+    </li>
+
+    <li>In this example, the "error" property lists the reason for the Service Callout policy
+    failure as <strong>"ResponseCode 404 is treated as error".</strong> This error might occur if
+    the resource being accessed via the backend server URL in the Service Callout policy is not
+    available.</li>
+
+    <li>Check the availability of the resource on the backend server. It might not be available
+    temporarily/permanently or it might have been moved to a different location.</li>
+  </ol>
+
+  <h4><strong>Example 1 Resolution</strong></h4>
+
+  <ol>
+    <li>Check the availability of the resource on the backend server. It might not be available
+    temporarily/permanently or it might have been moved to a different location.</li>
+
+    <li>Fix the backend server URL in the Service Callout policy to point to a valid and existing
+    resource.</li>
+
+    <li>If the resource is only temporarily unavailable, then try making the API request once the
+    resource is available.</li>
+  </ol>
+
+  <h4><strong>Example 2: Failure in Extract Variables Policy</strong></h4>
+
+  <p>Let's now look at another example, where 500 Internal Server Error is caused due to an error
+  in the Extract Variables policy and see how to troubleshoot and resolve the issue.</p>
+
+  <ol>
+    <li>The following trace in UI session shows 500 status code due to an error in Extract
+    Variables policy:
+
+      <p><img alt="" src="/api-platform/images/TS-IMG-1-7.png"></p>
+    </li>
+
+    <li>Select the failing Extract Variables policy, scroll down and look at the <strong>"Error
+    Content"</strong> section for more details:<br>
+    <br>
+    <img alt="" src="/api-platform/images/TS-IMG-1-8.png"></li>
+
+    <li>The Error Content indicates that
+    the<strong>"serviceCallout.oamCookieValidationResponse"</strong> variable is not available in
+    the Extract Variables policy. As the name of the variable indicates, it should be holding the
+    response of the preceding Service Callout policy.</li>
+
+    <li>Select the Service Callout policy in the trace and you might find that the
+    "<strong>serviceCallout.oamCookieValidationResponse</strong>" variable was not set. This
+    indicates that the call to the backend service failed, resulting in an empty response
+    variable.</li>
+
+    <li>Though the Service Callout policy has failed, the execution of the policies after Service
+    Callout policy continue because the "continueOnError" flag in the Service Callout policy is set
+    to true, as shown below:<br>
+      <br>
+      <pre class="prettyprint">
+&lt;ServiceCallout async="false" continueOnError="true" enabled="true" name="Callout.OamCookieValidation"&gt; 
+  &lt;DisplayName&gt;Callout.OamCookieValidation&lt;/DisplayName&gt;    
+  &lt;Properties /&gt;    
+  &lt;Request clearPayload="true" variable="serviceCallout.oamCookieValidationRequest"&gt;       
+    &lt;IgnoreUnresolvedVariables&gt;false&lt;/IgnoreUnresolvedVariables&gt;    
+  &lt;/Request&gt;    
+  &lt;Response&gt;serviceCallout.oamCookieValidationResponse&lt;/Response&gt;    
+  &lt;HTTPTargetConnection&gt;       
+    &lt;Properties /&gt;       
+    &lt;URL&gt;http://{Url}&lt;/URL&gt;    
+  &lt;/HTTPTargetConnection&gt; 
+&lt;/ServiceCallout&gt;
+</pre>
+    </li>
+
+    <li>Note the unique message id <strong>"X-Apigee.Message-ID"</strong> for this specific API
+    request from the trace, as follows:
+
+      <ol>
+        <li>Select the "Analytics Data Recorded" phase from the request.</li>
+
+        <li>Scroll down and note the value of <strong>X-Apigee.Message-ID.</strong></li>
+      </ol>
+
+      <p><img alt="" src="/api-platform/images/TS-IMG-1-9b.png"></p>
+
+      <aside class="note"><b>Note:</b> The following steps can only be carried out by the
+      <strong>Edge Private Cloud users</strong>.</aside>
+    </li>
+
+    <li>View the Message Processor log
+    (<code>/opt/apigee/var/log/edge-message-processor/system.log</code>) and search for the unique
+    message id noted down in step #6. The following error message was observed for the specific API
+    request:
+      <pre class="prettyprint">
+2017-05-05 07:48:18,653 org:myorg env:prod api:myapi rev:834 messageid:rrt-04984fed9e5ad3551-c-wo-32168-77563  NIOThread@5 ERROR HTTP.CLIENT - HTTPClient$Context.onTimeout() : ClientChannel[C:]@149081 useCount=1 bytesRead=0 bytesWritten=0 age=3002ms lastIO=3002ms .onConnectTimeout connectAddress=mybackend.domain.com/XX.XX.XX.XX:443 resolvedAddress=mybackend.domain.com/XX.XX.XX.XX
+</pre>
+
+      <p>The above error indicates that the Service Callout policy failed due to a connection
+      timeout error while connecting to the backend server.</p>
+    </li>
+
+    <li>To determine the cause for the connection timeout error, executed the
+    <strong>telnet</strong> command to the backend server from the Message Processor(s). The telnet
+    command gave "Connection timed out" error as shown below:
+      <pre class="prettyprint">
+telnet mybackend.domain.com 443 
+Trying XX.XX.XX.XX... 
+telnet: connect to address XX.XX.XX.XX: Connection timed out
+</pre>
+
+      <p>Typically, this error is observed under the following circumstances:</p>
+
+      <ul>
+        <li>When the backend server is not configured to allow traffic from the Edge Message
+        Processors.</li>
+
+        <li>If the backend server is not listening on the specific port.</li>
+      </ul>
+
+      <p>In the above illustrated example, though the Extract Variables policy failed, the actual
+      cause was that Edge was unable to connect to the backend server in the Service Callout
+      policy. And the cause for this failure was that the backend end server was not configured to
+      allow traffic from the Edge Message Processors.</p>
+
+      <p>Your own Extract Variables policy will behave differently and may fail for a different
+      reason. You can troubleshoot the issue appropriately depending on the cause for failure of
+      your Extract Variables policy by checking the message in the <strong>error</strong>
+      property.</p>
+    </li>
+  </ol>
+
+  <h4><strong>Example 2 Resolution</strong></h4>
+
+  <ol>
+    <li>Fix the cause for error or failure in Extract Variables policy appropriately.</li>
+
+    <li>In the illustrated example above, the solution was to rectify the network configuration to
+    allow the traffic from Edge Message Processors to your backend server. This was done by
+    whitelisting the Message Processors' IP addresses on the specific backend server. For example,
+    On Linux, you could use <strong>iptables</strong> to whitelist or allow the traffic from
+    Message Processor's IP addresses on the backend server.</li>
+  </ol>
+
+  <h4><strong>Example 3: Failure in JavaCallout policy</strong></h4>
+
+  <p>Let's now look at one more example, where 500 Internal Server Error is caused due to an error
+  in Java Callout policy and see how to troubleshoot and resolve the issue.</p>
+
+  <ol>
+    <li>The following UI trace shows 500 status code due to an error in Java Callout Policy:
+
+      <p><img alt="" src="/api-platform/images/TS-IMG-1-12.png"></p>
+    </li>
+
+    <li>Select the Flow named <strong>"Error"</strong> followed by the failed Java Callout Policy
+    to get the error details as shown in the figure below:
+
+      <p><img alt="" src="/api-platform/images/TS-IMG-1-13.png"></p>
+    </li>
+
+    <li>In this example, the <strong>"error"</strong> property under the Properties section reveals
+    that the failure is due to expired password being used while connecting to the Oracle Database
+    from within the JavaCallout policy. Your own Java callout will behave differently and will
+    populate a different message in the <strong>error</strong> property.</li>
+
+    <li>Check the JavaCallout policy code and confirm the correct configuration that needs to be
+    used.</li>
+  </ol>
+
+  <h4><strong>Example 3 Resolution</strong></h4>
+
+  <p>Fix the Java callout code or configuration appropriately to avoid the runtime exception. In
+  the illustrated Java callout failure example above, one would need to use the correct password
+  for connecting to the Oracle database to resolve the issue.</p>
+
+  <h2 id="error-in-the-backend-server"><strong><a id="errorinbackend" name=
+  "errorinbackend"></a>Error in the Backend Server</strong></h2>
+
+  <p>A 500 Internal Server Error could also originate from the backend server. This section
+  explains how to troubleshoot the issue if the error comes from the backend server.</p>
+
+  <h3 id="errorinthebackendserver-diagnosis">Diagnosis</h3>
+
+  <h4>Diagnostic Steps for All Users</h4>
+
+  <p>The cause of other backend errors can vary widely. You will need to diagnose each situation
+  independently.</p>
+
+  <ol>
+    <li>Verify that the error was caused by the backend server. See <a href=
+    "#determiningsourceofproblem">Determining the source of the problem</a> for details.</li>
+
+    <li>If the error was caused by the backend server, continue. If the error occurred during
+    policy execution, go to <a href="#executionerrorinpolicy">Execution Error in Edge
+    Policy</a>.</li>
+
+    <li>Follow the steps below depending on whether or not you have access to a Trace session for
+    the failed API, or if the backend is a Node.js server:</li>
+  </ol>
+
+  <p><strong>If you do not have a Trace session for the failed API call</strong>:</p>
+
+  <ol>
+    <li>If the UI trace is not available for the failing request, then check the backend server
+    logs to get details about the error.</li>
+
+    <li>If possible, enable the debug mode on the backend server to get more details about the
+    error and the cause.</li>
+  </ol>
+
+  <p><strong>If you do have a Trace session for the failed API call</strong>:</p>
+
+  <p>If you have a Trace session, then the following steps will help you diagnose the problem.</p>
+
+  <ol>
+    <li>In the Trace tool, select the API request that has failed with 500 Internal Server
+    Error.</li>
+
+    <li>Select the <strong>"Response received from target server"</strong> phase from the failing
+    API request as shown in the figure below:
+
+      <p><img alt="" src="/api-platform/images/TS-IMG-1-14.png"></p>
+    </li>
+
+    <li>Check the <strong>"Response Content"</strong> section to get details about the error.
+
+      <p><img alt="" src="/api-platform/images/TS-IMG-1-15.png"></p>
+    </li>
+
+    <li>In this example, the Response Content which is a SOAP Envelope, shows the fault string as
+    <strong>"Not Authorized"</strong> message<strong>.</strong> The most likely cause for this
+    issue is that the proper credentials (username/password, access token, etc.) are not passed to
+    the backend server by the user. This issue can be fixed by passing the correct credentials to
+    the backend server.</li>
+  </ol>
+
+  <p><strong>If the backend is a Node.js server:</strong></p>
+
+  <ol>
+    <li>If the backend is a <strong>Node.js Backend Server</strong>, then check the Node.js logs
+    for the specific API Proxy in the Edge UI (<strong>both Public and Private Cloud users can
+    check the Node.js logs</strong>). If you are an <strong>Edge Private Cloud user</strong>, you
+    can also check your Message Processor logs
+    (<code>/opt/apigee/var/log/edge-message-processor/logs/system.log</code>) for more details
+    about the error.<br>
+      <br>
+
+      <p><strong>NodeJS Logs option in the Edge UI - Overview Tab of API Proxy</strong></p>
+
+      <p><img alt="" src="/api-platform/images/TS-IMG-1-16.png"></p>
+    </li>
+  </ol>
+
+  <h3 id="errorinthebackendserver-resolution"><strong>Resolution</strong></h3>
+
+  <ol>
+    <li>Once you've identified the cause of the error, fix the issue in your backend server.</li>
+
+    <li>If it's a Node.js backend server:
+
+      <ol>
+        <li>Check if the error is thrown from your custom code and fix the issue, if possible.</li>
+
+        <li>If the error is not thrown from your custom code or if you need assistance, contact
+        <a href="https://support.apigee.com/">Apigee Support</a>.</li>
+      </ol>
+    </li>
+  </ol>
+
+  <p>If you need further assistance in troubleshooting 500 Internal Server Error or you suspect
+  that it's an issue within Edge, contact <a href="https://support.apigee.com/">Apigee
+  Support</a>.</p>
+
+  <h2 id="determiningthesourceoftheproblem"><strong><a id="determiningsourceofproblem" name=
+  "determiningsourceofproblem"></a>Determining the source of the problem</strong></h2>
+
+  <p>Use one of the following procedures to determine if the 500 Internal Server Error was thrown
+  during the execution of a policy within the API proxy or by the backend server.</p>
+
+  <h3 id="determiningthesourceoftheproblem-usingtraceinui"><strong>Using Trace in UI</strong></h3>
+
+  <p><strong>Note:</strong> The steps in this section can be performed by both Public and
+  Private Cloud users.</p>
+
+  <ol>
+    <li>If the issue is still active, enable the trace in UI for the affected API.</li>
+
+    <li>Once you have captured the trace, select the API request that shows the response code as
+    500.</li>
+
+    <li>Navigate through all the phases of the failing API request and check which phase returns
+    the 500 Internal Server Error:
+
+      <ol>
+        <li>If the error is thrown during the execution of a policy, then proceed to <a href=
+        "#executionerrorinpolicy">Execution Error in an Edge Policy</a>.</li>
+
+        <li>If the backend server has responded with 500 Internal Server, then proceed to <a href=
+        "#errorinbackend">Error in the Backend Server</a>.</li>
+      </ol>
+    </li>
+  </ol>
+
+  <h3 id="determiningthesourceoftheproblem-usingapi-monitoring"><strong>Using API Monitoring</strong></h3>
+
+  <p><strong>Note:</strong> The steps in this section can be performed by Public Cloud users only.</p>
+
+<p><a href="/api-monitoring">API Monitoring</a> enables you to isolate problem areas quickly to diagnose error, performance, and latency issues and their source,
+  such as developer apps, API proxies, backend targets, or the API platform.</p>
+
+<p><a href="/api-monitoring/sample-scenarios">Step through a sample scenario</a> that demonstrates how to troubleshoot 5xx issues with your APIs using API Monitoring.
+For example, you may want to set up an alert to be notified when the number of 500 status codes or <code>steps.servicecallout.ExecutionFailed</code> faults exceeds a particular threshold.</p>
+
+
+  <h3 id="determiningthesourceoftheproblem-usingnginxaccesslogs"><strong>Using Nginx Access
+  Logs</strong></h3>
+
+  <p><strong>Note:</strong> The steps in this section are for Edge Private Cloud users
+  only. </p>
+
+  <p>You can also refer to Nginx Access logs to determine whether the 500 status code was thrown
+  during the execution of a policy within the API proxy or by the backend server. This is
+  particularly useful if the issue has occurred in the past or if the issue is intermittent and you
+  are unable to capture the trace in UI. Use the following steps to determine this information from
+  Nginx access logs:</p>
+
+  <ol>
+    <li>Check the Nginx access logs (<code>/opt/apigee/var/log/edge-router/nginx/ &lt;org&gt;~
+    &lt;env&gt;.&lt;port#&gt;_access_log</code> ).</li>
+
+    <li>Search if there are any 500 Errors for the specific API proxy at the specific
+    duration.</li>
+
+    <li>If there are any 500 Errors, then check if the error is a policy or a target server error,
+    as shown below:
+
+      <p><strong>Sample Entry showing a Policy Error</strong></p>
+
+      <p><strong><img alt="" src="/api-platform/images/TS-IMG-1-3.png"></strong></p>
+
+      <p><strong>Sample Entry showing a Target Server Error</strong></p>
+
+      <p><img alt="" src="/api-platform/images/TS-IMG-1-4.png"></p>
+    </li>
+
+    <li>Once you've identified whether it is a policy or target server error:
+
+      <ol>
+        <li>Proceed to <a href="#executionerrorinpolicy">Execution Error in an Edge Policy</a> if
+        it is a policy error.</li>
+
+        <li>Proceed to <a href="#errorinbackend">Error in Backend Server</a> if it is a target
+        server error.</li>
+      </ol>
+    </li>
+  </ol>{% endblock %}

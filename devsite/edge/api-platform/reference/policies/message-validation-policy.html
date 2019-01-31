@@ -1,26 +1,23 @@
 {% extends "_base.html" %}
-{% block title %}SOAP Message Validation policy{% endblock %}
+{% block title %}SOAPMessageValidation policy{% endblock %}
 {% block body %}
 
 <img src="/api-platform/images/icon_policy_mediation.jpg">
 
-  <h3>What</h3>
-
-  <p>Validates a message and rejects it if it does not conform to the specified requirements. Use
-  this policy to:</p>
+  <p>The SOAPMessageValidation policy does the following:</p>
 
   <ul>
-    <li>Validate any XML message against an XSD schema</li>
-    <li>Validate SOAP messages against a WSDL definition</li>
-    <li>Confirm that JSON or XML is well-formed</li>
+    <li>Validates any XML message against their XSD schemas</li>
+    <li>Validates SOAP messages against a WSDL definition</li>
+    <li>Determines well-formedness of JSON and XML messages</li>
   </ul>
 
-  <aside class="note"><strong>Note:</strong> While the name of this policy in the UI is
-  "SOAP Message Validation", the policy validates more than just SOAP messages. This section
-  refers to the policy as the "Message Validation policy".</aside>
+  <p>While the name of this policy in the UI is "SOAP Message Validation", the policy validates more
+  than just SOAP messages. This section refers to the policy as the "Message Validation policy".</p>
 
-  <p>Message Validation provides the following benefits:</p>
-
+<section class="expandable">
+  <h3 class="showalways">Benefits</h3>
+  <p>Message validation provides the following benefits:</p>
   <ul>
     <li><strong>Immediately informs</strong> app developers that are consuming your API if their
       requests are non-conformant or incomplete.</li>
@@ -34,493 +31,83 @@
       definition to eliminate validation errors, making well-understood XML schemas a key component
       of your API documentation.</li>
   </ul>
+</section>
 
-  <h3 id="videos">Videos</h3>
+  <h2 id="messagevalidation">{{messagevalidation}} element</h2>
 
-  <p>Watch the following videos to learn more about the Message Validation policy.</p>
+  <p>Defines the Message Validation policy.</p>
 
-  <table>
-    <thead>
-      <tr>
-        <th>Video</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td><a href="https://www.youtube.com/watch?v=VhaWHrrFMq8" target="_blank">Validate XML
-          request</a></td>
-        <td>Validate the XML request for an API using the Message Validation policy.</td>
-      </tr>
-      <tr>
-        <td><a href="https://www.youtube.com/watch?v=iO2CW6ymN7U" target="_blank">Validate JSON
-          request</a></td>
-        <td>Validate the JSON request for an API using the Message Validation policy.</td>
-      </tr>
-    </tbody>
-  </table>
+  {% setvar dvt_default_value %}"sampleObject"{% endsetvar %}
+  {% setvar dvt_required %}Optional{% endsetvar %}
+  {% setvar dvt_type %}String{% endsetvar %}
+  {% setvar dvt_parent %}{{mv_link}}{% endsetvar %}
+  {% setvar dvt_children %}None{% endsetvar %}
+  {% include "includes/_default_value_table.html" %}
 
-  <h3 id="samples">Samples</h3>
-
-  <p>The following examples show some of the ways in which you can use the Message Validation
-  policy:</p>
-
-  <div class="ds-selector-tabs">
-    <!-- EXAMPLE 1 -- VALIDATING XML REQUESTS ---------------------------------------->
-    <section>
-      <h3>XSD Validation</h3>
-        <p>You can use the Message Validation policy to validate an XML message request's payload
-        against an XSD schema.</p>
-        <ol>
-          <li>Create a new XSD <a href="/api-platform/develop/resource-files">resource file</a>. For
-            example, "note-schema.xsd":
-            <!-- NOTE TO REVIEWERS: An "includecode" directive inserts content from the specified path when the page is rendered -->
-            <pre class="prettyprint">{% includecode content_path="api-platform/reference/policies/examples/message-validation/note-schema.xsd" %}</pre>
-          </li>
-          <li>Add the SOAP Message Validation policy to your proxy endpoint's pre-flow:
-            <ol>
-              <!-- NOTE TO REVIEWERS: {variable_name} resolves to values from the _localvars.html file when the page is rendered -->
-              <li>Specify the location of your XSD resource file with the {{mv_resourceurl_link}}
-                element. For example:
-                <pre class="prettyprint">{% includecode content_path="api-platform/reference/policies/examples/message-validation/message-validation-example-1.xml" region_tag="resourceurl" adjust_indentation="auto"%}</pre>
-              </li>
-              <li>Remove the {{mv_soapmessage_link}} and {{mv_element_link}} elements from the
-              policy definition.</li>
-            </ol>
-            <p>Your policy definition should look like the following:</p>
-            <pre class="prettyprint">{% includecode content_path="api-platform/reference/policies/examples/message-validation/message-validation-example-1.xml" %}</pre>
-          </li>
-          <li>Send a <code>POST</code> request to your API proxy with your XML as the message
-            payload, as the following example shows:
-          <pre class="prettyprint devsite-terminal">{% htmlescape %}curl -v -X POST -H 'Content-Type: application/xml' http://my-test.apigee.net/v1/xsd-mock
-  -d '{% include "api-platform/reference/policies/examples/message-validation/note-payload.xml" %}{% endhtmlescape %}'</pre>
-            <p>Notice that the <code>Content-type</code> header is set to "application/xml".</p>
-            <p>You can also create a data file for the payload and reference it with a command
-            similar to the following:</p>
-            <pre class="prettyprint devsite-terminal">curl -v -X POST -H 'Content-type: application/xml' http://my-test.apigee.net/v1/xsd-mock
-  --data '@../examples/note-payload.xml'</pre>
-          </li>
-        </ol>
-        <p>You should receive an <code>HTTP 200</code> response. Depending on your target endpoint,
-        you might receive addditional details about the request. For example, if you use
-        <code>http://httpbin.org/post</code> as your target endpoint and specify <code>-v</code>
-        (verbose) output, the response should be similar to the following:</p>
-        <pre class="prettyprint">{% includecode content_path="api-platform/reference/policies/examples/message-validation/message-validation-output.txt" %}</pre>
-      <p>To verify that your XSD validation is working, try inserting another tag into the body of
-      your request. For example:</p>
-      <pre class="prettyprint devsite-terminal">curl -v -X POST -H 'Content-Type: application/xml' http://my-test.apigee.net/v1/xsd-mock
-  -d '{% include "api-platform/reference/policies/examples/message-validation/note-payload-bad.xml" %}'</pre>
-      <p>You should receive a validation error.</p>
-    </section>
-    <!-- EXAMPLE 2 ----- VALIDATING SOAP REQUESTS ---------------------------------------->
-    <section>
-      <h3>SOAP Validation</h3>
-        <p>You can use the Message Validation policy to validate a SOAP message request's payload
-        against a WSDL.</p>
-        <ol>
-          <li>Create a new WSDL <a href="/api-platform/develop/resource-files">resource file</a>.
-            For example, "example-wsdl.wsdl":
-            <section class="expandable">
-              <p class="showalways">View Full WSDL</p>
-              <pre class="prettyprint">{% includecode content_path="api-platform/reference/policies/examples/message-validation/example-wsdl.wsdl" %}</pre>
-            </section>
-          </li>
-          <li>Add the SOAP Message Validation policy to your proxy endpoint's pre-flow:
-            <ol>
-              <li>Set the {{mv_soapmessage_link}} element's <code>version</code> attribute to the
-                version of the SOAP protocol that you want to validate against. For example,
-                "1.1":
-                <pre class="prettyprint">{% includecode content_path="api-platform/reference/policies/examples/message-validation/message-validation-example-2.xml" region_tag="soapmessage" adjust_indentation="auto" %}</pre>
-              </li>
-              <li>Set the value of the {{mv_element_link}} element to the element that you want to
-                validate:
-                <pre class="prettyprint">{% includecode content_path="api-platform/reference/policies/examples/message-validation/message-validation-example-2.xml" region_tag="element" adjust_indentation="auto" %}</pre>
-                <p>{{element}} specifies the first child under the <code>&lt;Body&gt;</code> element
-                in the SOAP request's envelope.</p>
-                <p>Set the <code>namespace</code> attribute to the namespace for that child.</p>
-              </li>
-              <li>Specify the location of your WSDL resource file with the {{mv_resourceurl_link}}
-                element. For example:
-                <pre class="prettyprint">{% includecode content_path="api-platform/reference/policies/examples/message-validation/message-validation-example-2.xml" region_tag="resourceurl" adjust_indentation="auto" %}</pre>
-              </li>
-            </ol>
-            <p>Your policy definition should look like the following:</p>
-            <pre class="prettyprint">{% includecode content_path="api-platform/reference/policies/examples/message-validation/message-validation-example-2.xml" %}</pre>
-          </li>
-          <li>Send a <code>POST</code> request to your API proxy with the SOAP envelope as the
-            message payload, as the following example shows:
-          <pre class="prettyprint devsite-terminal">{% htmlescape %}curl -v -X POST -H 'Content-Type: application/xml' http://my-test.apigee.net/v1/xsd-mock
-  -d '{% include "api-platform/reference/policies/examples/message-validation/soap-payload.xml" %}{% endhtmlescape %}'</pre>
-            <p>Notice that the <code>Content-type</code> header is set to "application/xml".</p>
-            <p>You can also create a data file for the payload and reference it with a command
-            similar to the following:</p>
-            <pre class="prettyprint devsite-terminal">curl -v -X POST -H 'Content-type: application/xml' http://my-test.apigee.net/v1/xsd-mock
-  --data '@../examples/soap-payload.xml'</pre>
-          </li>
-        </ol>
-        <p>You should receive an <code>HTTP 200</code> response. Depending on your target endpoint,
-        you might receive addditional details about the request. For example, if you use
-        <code>http://httpbin.org/post</code> as your target endpoint, the response should be similar
-        to the following:</p>
-        <pre class="prettyprint">{% includecode content_path="api-platform/reference/policies/examples/message-validation/message-validation-output.txt" %}</pre>
-    </section>
-    <!-- EXAMPLE 3 -- CHECKING FOR WELL FORMEDNESS ---------------------------------------->
-    <section>
-      <h3><span class="two-line-tab">Well-formed XML/JSON</span></h3>
-        <p>You can use the Message Validation policy to confirm that a JSON or XML message payload
-        is well-formed (not the same as <em>validation</em>). The policy ensures that the structure
-        and content meets accepted standards, including:
-        <ul>
-          <li>There is a single root element</li>
-          <li>There are no illegal characters in the content</li>
-          <li>Objects and tags are properly nested</li>
-          <li>Beginning and ending tags match</li>
-        </ul>
-        <p>To check for a well-formed XML or JSON payload:</p>
-        <ol>
-          <li>Add the SOAP Message Validation policy to your proxy endpoint's pre-flow.</li>
-          <li>Remove the {{mv_resourceurl_link}}, {{mv_soapmessage_link}},
-            and {{mv_element_link}} elements from the policy definition.
-            <p>Your policy definition should look like the following:</p>
-            <pre class="prettyprint">{% includecode content_path="api-platform/reference/policies/examples/message-validation/message-validation-example-3.xml" %}</pre>
-      </li>
-          <li>Send a <code>POST</code> request to your API proxy, as the following example shows:
-          <pre class="prettyprint devsite-terminal">curl -v -X POST -H 'Content-Type: application/json' http://my-test.apigee.net/v1/xsd-mock
-  -d '{% include "api-platform/reference/policies/examples/message-validation/note-payload.json" %}'</pre>
-            <p>Notice that the <code>Content-type</code> header is set to "application/json".</p>
-            <p>To check an <em>XML file</em> for well-formedness, use XML as the message payload and
-            set <code>Content-type</code> to "application/xml".</p>
-          </li>
-        </ol>
-        <p>You should receive an <code>HTTP 200</code> response. When you send a message payload
-        that does not contain well-formed XML or JSON, you should receive a
-        <code>steps.messagevalidation.Failed</code> error.</p>
-    </section>
-  </div>
-
-  <h2 id="messagevalidation">{{messagevalidation}} element reference</h2>
-
-  <p>The {{messagevalidation}} element uses the following syntax:</p>
-
-  <pre class="prettyprint">&lt;MessageValidation
-  continueOnError="[false|true]"
-  enabled="[true|false]"
-  name="<var>policy_name</var>"&gt;
-
-    &lt;!-- All child elements are optional --&gt;
-
-    &lt;DisplayName&gt;<var>policy_display_name</var>&lt;/DisplayName&gt;
-
-    &lt;Element namespace="<var>element_namespace</var>"&gt;<var>element_to_validate</var>&lt;/Element&gt;
-
-    &lt;SOAPMessage version="[ 1.1 | 1.2 | 1.1/1.2 ]"/&gt;
-
-    &lt;Source&gt;<var>message_to_validate</var>&lt;/Source&gt;
-
-    &lt;ResourceURL&gt;<var>validation_WSDL_or_XSD</var>&lt;/ResourceURL&gt;
-
-&lt;/MessageValidation></pre>
-
-  <p>The {{messagevalidation}} element has the following child elements:</p>
-  <ul>
-    <li>{{displayname_link}}</li>
-    <li>{{mv_element_link}}</li>
-    <li>{{mv_soapmessage_link}}</li>
-    <li>{{mv_source_link}}</li>
-    <li>{{mv_resourceurl_link}}</li>
-  </ul>
-
-  <!-- Common to all policies -->
-  {% dynamic include /includes/___policies-common-attributes-v2 %}
-
-  <!-- this section is common to all policies -->
-  {% dynamic include /includes/___policies-displayname-v2 %}
-
-  <h2 id="element">{{element}} element</h2>
-
-  <p>Specifies the element in the message to validate. This is the first child under the
-  <code>&lt;Body&gt;</code> element in the SOAP request's envelope.</p>
-
-  <table>
-    <tr>
-      <td class="alt" width="120px"><strong>Default Value</strong></td>
-      <td>"sampleObject"</td>
-    </tr>
-    <tr>
-      <td class="alt" width="120px"><strong>Required?</strong></td>
-      <td>Optional</td>
-    </tr>
-    <tr>
-      <td class="alt" width="120px"><strong>Type</strong></td>
-      <td>String</td>
-    </tr>
-  </table>
-
-  <p>The {{element}} element uses the following syntax:</p>
+  <p>The {{mv_element}} element uses the following syntax:</p>
 
   <div class="ds-selector-tabs">
     <section>
       <h3>Syntax</h3>
       <pre class="prettyprint">...
-&lt;Element namespace="<var>element_namespace</var>"&gt;<var><var>element_to_validate</var></var>&lt;/Element&gt;
+  &lt;Element namespace="<var>element_namespace</var>"&gt;<var><var>element_to_validate</var></var>&lt;/Element&gt;
 ...</pre>
     </section>
     <section>
       <h3>Example 1</h3>
         <p>The following example defines a single element to be validated:</p>
-        <pre class="prettyprint">...
-{% includecode content_path="api-platform/reference/policies/examples/message-validation/message-validation-example-2.xml" region_tag="element" adjust_indentation="auto" %}
-...</pre>
-    </section>
-    <section>
-      <h3>Example 2</h3>
-        <p>You can specify more than one element to validate by adding multiple {{element}}
-        elements:</p>
-        <pre class="prettyprint">...
-&lt;Element namespace="https://example.com/gateway"&gt;getID&lt;/Element&gt;
-&lt;Element namespace="https://example.com/gateway"&gt;getDetails&lt;/Element&gt;
-...</pre>
-    </section>
-  </div>
+  {% setvar dvt_default_value %}"wsdl://<var>display_name</var>.wsdl"{% endsetvar %}
+  {% setvar dvt_required %}Optional{% endsetvar %}
+  {% setvar dvt_type %}String{% endsetvar %}
+  {% setvar dvt_parent %}{{mv_link}}{% endsetvar %}
+  {% setvar dvt_children %}None{% endsetvar %}
+  {% include "includes/_default_value_table.html" %}
 
-  <p>The {{element}} element has the following attributes:</p>
-
-  <table>
-    <tbody>
-      <tr>
-        <th>Attribute</th>
-        <th>Default</th>
-        <th>Required?</th>
-        <th>Description</th>
-      </tr>
-      <tr>
-        <td><code>namespace</code></td>
-        <td>"http://sample.com"</td>
-        <td>Optional</td>
-        <td>Defines the namespace of the element to be validated.</td>
-      </tr>
-    </tbody>
-  </table>
-
-
-  <h2 id="resourceurl">{{resourceurl}} element</h2>
-
-  <p>Identifies the XSD schema or WSDL definition to be used to validate the source message.</p>
-
-  <table>
-    <tr>
-      <td class="alt" width="120px"><strong>Default Value</strong></td>
-      <td>"wsdl://<var>display_name</var>.wsdl"</td>
-    </tr>
-    <tr>
-      <td class="alt" width="120px"><strong>Required?</strong></td>
-      <td>Optional</td>
-    </tr>
-    <tr>
-      <td class="alt" width="120px"><strong>Type</strong></td>
-      <td>String</td>
-    </tr>
-  </table>
-
-  <p>The {{resourceurl}} element uses the following syntax:</p>
+  <p>The {{mv_resourceurl}} element uses the following syntax:</p>
 
   <div class="ds-selector-tabs">
     <section>
       <h3>Syntax</h3>
       <pre class="prettyprint">...
-&lt;ResourceURL&gt;[wsdl|xsd]://<var>validation_WSDL_or_XSD</var>&lt;/ResourceURL&gt;
+  &lt;ResourceURL&gt;[wsdl|xsd]://<var>validation_WSDL_or_XSD</var>&lt;/ResourceURL&gt;
 ...</pre>
     </section>
     <section>
       <h3>Examples</h3>
       <p>For an XML file:</p>
-      <pre class="prettyprint">...
-{% includecode content_path="api-platform/reference/policies/examples/message-validation/message-validation-example-1.xml" region_tag="resourceurl" adjust_indentation="auto" %}
-...</pre>
-      <p>For a WSDL:</p>
-      <pre class="prettyprint">...
-{% includecode content_path="api-platform/reference/policies/examples/message-validation/message-validation-example-2.xml" region_tag="resourceurl" adjust_indentation="auto" %}
-...</pre>
-    </section>
-  </div>
+  {% setvar dvt_default_value %}n/a{% endsetvar %}
+  {% setvar dvt_required %}Optional{% endsetvar %}
+  {% setvar dvt_type %}n/a{% endsetvar %}
+  {% setvar dvt_parent %}{{mv_link}}{% endsetvar %}
+  {% setvar dvt_children %}None{% endsetvar %}
+  {% include "includes/_default_value_table.html" %}
 
-  <p>The value of {{resourceurl}} must point to a <a href="/api-platform/develop/resource-files">resource
-  file</a> in your API proxy. It cannot refer to external resources over HTTP or HTTPS.</p>
-
-  <p>If you do not specify a value for {{resourceurl}}, the message is checked for well-formed JSON
-  or XML if the <code>Content-type</code> header is "application/json" or "application/xml",
-  respectively.</p>
-
-  <p>The {{resourceurl}} element has no child elements or attributes.</p>
-
-  <h3 class="hide-from-toc">Using XSDs for validation</h3>
-
-  <p>If the XML payload that you validate with the Message Validation policy references
-  <em>another</em> schema, you must prefix the included XSD file with <code>xsd</code> in the
-  <code>schemaLocation</code> attribute.</p>
-
-  <p>The following example schema is comprised of multiple XSDs:</p>
-  <pre class="prettyprint">{% includecode content_path="api-platform/reference/policies/examples/message-validation/message-validation-multiple-schemas.xml" adjust_indentation="auto" %}</pre>
-
-  <aside class="note"><strong>Note:</strong> You can only include or import XSDs if they are
-  <a href="/api-platform/develop/resource-files">resource files</a> in your API Proxy. You cannot
-  include external XSD files.</aside>
-
-  <h3 class="hide-from-toc">Using WSDLs for validation</h3>
-
-  <p>A WSDL must define at least one schema. If it does not reference at least one schema, the
-  Message Validation policy fails.</p>
-
-  <p>The maximum import depth for a schema is 10. If you exceed that number of nested imports, the
-  Message Validation policy fails.</p>
-
-  <h2 id="soapmessage">{{soapmessage}} element</h2>
-
-  <p>Defines the SOAP version against which the Message Validation policy validates.</p>
-
-  <table>
-    <tr>
-      <td class="alt" width="120px"><strong>Default Value</strong></td>
-      <td>n/a</td>
-    </tr>
-    <tr>
-      <td class="alt" width="120px"><strong>Required?</strong></td>
-      <td>Optional</td>
-    </tr>
-    <tr>
-      <td class="alt" width="120px"><strong>Type</strong></td>
-      <td>n/a</td>
-    </tr>
-  </table>
-
-  <p>The {{soapmessage}} element uses the following syntax:</p>
+  <p>The {{mv_soapmessage}} element uses the following syntax:</p>
 
   <div class="ds-selector-tabs">
     <section>
       <h3>Syntax</h3>
       <pre class="prettyprint">...
-&lt;SOAPMessage version="[ 1.1 | 1.2 | 1.1/1.2 ]"/&gt;
+  &lt;SOAPMessage version="[ 1.1 | 1.2 | 1.1/1.2 ]"/&gt;
 ...</pre>
     </section>
     <section>
       <h3>Example</h3>
-      <pre class="prettyprint">...
-{% includecode content_path="api-platform/reference/policies/examples/message-validation/message-validation-example-2.xml" region_tag="soapmessage" adjust_indentation="auto" %}
-...</pre>
-    </section>
-  </div>
+  {% setvar dvt_default_value %}"request"{% endsetvar %}
+  {% setvar dvt_required %}Optional{% endsetvar %}
+  {% setvar dvt_type %}String{% endsetvar %}
+  {% setvar dvt_parent %}{{mv_link}}{% endsetvar %}
+  {% setvar dvt_children %}None{% endsetvar %}
+  {% include "includes/_default_value_table.html" %}
 
-  <p>The {{soapmessage}} element has the following attributes:</p>
-
-  <table>
-    <tbody>
-      <tr>
-        <th>Attribute</th>
-        <th>Default</th>
-        <th>Required?</th>
-        <th>Description</th>
-      </tr>
-      <tr>
-        <td><code>version</code></td>
-        <td>None</td>
-        <td>Optional</td>
-        <td>The SOAP version that this policy uses to validate SOAP messages.
-          <p>Valid values are:</p>
-          <ul>
-            <li>"1.1"</li>
-            <li>"1.2"</li>
-            <li>"1.1/1.2"</li>
-          </ul>
-        </td>
-      </tr>
-    </tbody>
-  </table>
-
-  <p>For more information, see
-  <a href="https://www.w3.org/2003/06/soap11-soap12.html" class="external">From SOAP/1.1 to SOAP
-  Version 1.2 in 9 points</a>.</p>
-
-  <h2 id="source">{{source}} element</h2>
-
-  <p>Identifies the source message to be validated. The value of this element is the name of the
-  message that you want to validate.</p>
-
-  <p>If you do not set {{source}}, this policy defaults to "message", which refers to the complete
-  request message (in a request flow) or response message (in a response flow), including any
-  payload. You can also explicitly set it to "request" or "response" to refer to the request or
-  response.</p>
-
-  <table>
-    <tr>
-      <td class="alt" width="120px"><strong>Default&nbsp;Value</strong></td>
-      <td>"request"</td>
-    </tr>
-    <tr>
-      <td class="alt" width="120px"><strong>Required?</strong></td>
-      <td>Optional</td>
-    </tr>
-    <tr>
-      <td class="alt" width="120px"><strong>Type</strong></td>
-      <td>String</td>
-    </tr>
-  </table>
-
-  <p>The {{source}} element uses the following syntax:</p>
+  <p>The {{mv_source}} element uses the following syntax:</p>
 
   <div class="ds-selector-tabs">
     <section>
       <h3>Syntax</h3>
       <pre class="prettyprint">...
-&lt;Source&gt;<var>message_to_validate</var>&lt;/Source&gt;
+  &lt;Source&gt;<var>message_to_validate</var>&lt;/Source&gt;
 ...</pre>
     </section>
     <section>
       <h3>Example</h3>
-      <pre class="prettyprint">...
-{% includecode content_path="api-platform/reference/policies/examples/message-validation/message-validation-example-1.xml" region_tag="source" adjust_indentation="auto" %}
-...</pre>
-    </section>
-  </div>
-
-  <p>In addition to "message", "request", and "response", you can set the value of
-  {{source}} to the name of any message in your flow. If you do this, though, you must create a
-  custom message with that name in your flow before this policy executes. Otherwise, you will get
-  an error.</p>
-
-  <p>If the value of {{source}} cannot be resolved in the message flow or resolves to a non-message
-  type, then one of the following occurs:</p>
-  <ul>
-    <li><em>If a null value:</em> Edge throws a
-      <code>steps.messagevalidation.SourceMessageNotAvailable</code> error.</li>
-    <li><em>If a non-message type:</em> Edge throws a
-      <code>steps.messagevalidation.NonMessageVariable</code> error.</li>
-  </ul>
-
-  <p>The {{source}} element has no attributes or child elements.</p>
-
-
-  <h2 id="errorcodes">Error codes</h2>
-
-  <p>Errors returned from Edge policies follow a consistent format as described in the <a href=
-  "/api-platform/reference/policies/error-code-reference">Error code reference</a>.</p>
-
-  <p>{% dynamic include /includes/___soap-message-validation-policy-error-codes %}</p>
-
-  <h2 id="schemas">Schemas</h2>
-
-  <p>Each policy type is defined by an XML schema (<code>.xsd</code>). For reference, <a href=
-  "https://github.com/apigee/api-platform-samples/tree/master/schemas/policy" class="external">policy schemas</a>
-  are available on GitHub.</p>
-
-  <h2 id="relatedtopics">Related topics</h2>
-
-  <ul>
-    <li><a href="/api-platform/reference/policies/xml-threat-protection-policy">XML Threat
-      Protection policy</a></li>
-    <li><a href="/api-platform/reference/policies/xml-json-policy">XML to JSON policy</a></li>
-    <li><a href="/api-platform/reference/policies/json-xml-policy">JSON to XML policy</a></li>
-    <li><a href="/api-platform/reference/policies/json-threat-protection-policy">JSON Threat
-      Protection policy</a></li>
-  </ul>
-
-{% endblock %}

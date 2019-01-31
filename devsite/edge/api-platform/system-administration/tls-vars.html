@@ -1,0 +1,205 @@
+  {% extends "_base.html" %} {% block title %}Accessing TLS connection information in an API proxy (Alpha){% endblock %} {% block body %}
+
+<p>Edge lets you create virtual hosts that support one-way and two-way TLS. With one way TLS,
+  the client issues a session request to a virtual host deployed on an Edge Router and the Router
+  responds with a cert which contains the virtual host's public key. For a signed cert, the client
+  can then make a request to the Certificate Authority (CA) to authenticate the certificate.</p>
+
+<p>In two-way TLS, both the client and Edge pass certs that are validated as part of a request:</p>
+
+<ul>
+
+<li>The Edge Router presents its certificate to the TLS client to authenticate itself. The client
+  then verifies the identity of the server prior to sending its cert to the server.
+<li>The TLS client presents its certificate to Edge to authenticate itself.</li>
+
+</ul>
+
+<p>See <a href="/api-platform/fundamentals/virtual-hosts">About virtual hosts</a> for more information.</p>
+
+<h2 id="capturing-tls-connection-information">Capturing TLS connection information</h2>
+
+<p>During a request to an API proxy through a virtual host that supports TLS, Edge can capture
+  information about the TLS connection. Your API proxy can then access that information through
+  flow variables to perform additional analysis and validation. </p>
+
+<aside class="note"><b>Note: </b>This feature is only available to paid orgs.</aside>
+
+<p>The type of TLS information captured by Edge depends on whether the virtual host supports
+  one-way or two-way TLS. For example, for one-way TLS, Edge can capture information about the
+  TLS cipher or TLS protocol used in the TLS connection. </p>
+
+<p>For two-way TLS, Edge can capture all of the same information as captured for one-way TLS,
+  and also capture information about the client's cert. For example, Edge can capture the SHA1 fingerprint
+  of the client cert and the client cert in the PEM format.  </p>
+
+<aside class="note"><b>Note: </b>Enabling the capture of TLS information can cause performance
+  degradation because of the extra information that Edge has to capture, store, and forward to
+  the API proxy.</aside>
+
+<h3 id="capturing-information-for-both-one-way-and-two-way-tls">Capturing information for both
+  one-way and two-way TLS</h3>
+
+<p>The following table lists the flow variables that contain TLS connection information captured
+  by Edge and available for access in the API proxy. This information is captured for both one-way
+  and two-way TLS by setting <code>&lt;ConnectionProperties&gt;</code> to true in the
+  virtual host definition:</p>
+
+<table>
+  <tr>
+   <th><strong>Flow variable</strong>
+   </th>
+   <th><strong>Description</strong>
+   </th>
+  </tr>
+  <tr>
+   <td><code>tls.cipher</code>
+   </td>
+   <td>The cipher used by the TLS connection.
+   </td>
+  </tr>
+  <tr>
+   <td><code>tls.protocol</code>
+   </td>
+   <td>The protocol used by the TLS connection.
+   </td>
+  </tr>
+  <tr>
+   <td><code>tls.server.name</code>
+   </td>
+   <td>The requested SNI server name.
+   </td>
+  </tr>
+  <tr>
+   <td><code>tls.session.id</code>
+   </td>
+    <td><p>The session identifier.</p>
+    <p>This flow variable is available when you set either  <code>&lt;ConnectionProperties&gt;</code>
+    or <code>&lt;ClientProperties&gt;</code> or to true.
+   </td>
+  </tr>
+</table>
+
+
+<h3 id="capturing-tls-info-two-way-tls">Capturing additional TLS information during two-way TLS</h3>
+
+<p>The following table lists the flow variables that contain client cert details captured by Edge
+  in two-way TLS. This information is captured for two-way TLS by setting
+  <code>&lt;ClientProperties&gt;</code> to true in the virtual host definition:</p>
+
+<table>
+  <tr>
+   <th><strong>Flow variable</strong>
+   </th>
+   <th><strong>Description</strong>
+   </th>
+  </tr>
+  <tr>
+   <td><code>tls.client.s.dn</code>
+   </td>
+   <td>The subject Distinguished Name (DN) of the client cert.
+   </td>
+  </tr>
+  <tr>
+   <td><code>tls.client.i.dn</code>
+   </td>
+   <td>The issuer Distinguished Name (DN) of the client cert.
+   </td>
+  </tr>
+  <tr>
+   <td><code>tls.client.raw.cert</code>
+   </td>
+   <td>The client cert in the PEM format.
+   </td>
+  </tr>
+  <tr>
+   <td><code>tls.client.cert.serial</code>
+   </td>
+   <td>The serial number of the client cert.
+   </td>
+  </tr>
+  <tr>
+   <td><code>tls.client.cert.fingerprint</code>
+   </td>
+   <td>The SHA1 fingerprint of the client cert.
+   </td>
+  </tr>
+  <tr>
+   <td><code>tls.session.id</code>
+   </td>
+    <td><p>The session identifier.</p>
+      <p>This flow variable is available when you set either
+        <code>&lt;ConnectionProperties&gt;</code> or <code>&lt;ClientProperties&gt;</code> to true.</p>
+   </td>
+  </tr>
+</table>
+
+
+<h2 id="configuring-vhost">Configuring a virtual host to capture TLS information</h2>
+
+<p>To configure the virtual host to capture TLS information, set the following properties
+  under <code>&lt;PropagateTLSInformation&gt;</code> to <code>true</code>:</p>
+
+<ul>
+  <li><code>&lt;ConnectionProperties&gt;</code>: Enable the capture of TLS connection information
+    for both one-way and two-way TLS. The default value is <code>false</code>.
+  <li><code>&lt;ClientProperties&gt;</code>: Enable the capture of additional information
+    for two-way TLS. The default value is <code>false</code>.</li>
+</ul>
+
+<p>For example, the following virtual host definition uses two-way TLS and enables the capturing of
+  both types of TLS information:</p>
+
+<pre class="prettyprint">&lt;VirtualHost name="secure">
+    ....
+    &lt;SSLInfo>
+        &lt;Enabled>true&lt;/Enabled>
+        # Enable two-way TLS.
+        &lt;ClientAuthEnabled>true&lt;/ClientAuthEnabled>
+        &lt;IgnoreValidationErrors>false&lt;/IgnoreValidationErrors>
+        &lt;KeyAlias>ks-alias&lt;/KeyAlias>
+        &lt;KeyStore>ref://ks-ref&lt;/KeyStore>
+        &lt;TrustStore>ref://ts-ref&lt;/TrustStore>
+    &lt;/SSLInfo>
+    <strong>&lt;PropagateTLSInformation&gt;
+        &lt;ConnectionProperties&gt;true&lt;/ConnectionProperties&gt;
+        &lt;ClientProperties&gt;true&lt;/ClientProperties&gt;
+    &lt;/PropagateTLSInformation&gt;</strong>
+&lt;/VirtualHost>
+</pre>
+
+<p>If you are passing a JSON body, set the properties as:</p>
+
+<pre class="prettyprint">
+  "propagateTLSInformation" : {
+    "connectionProperties" : true,
+    "clientProperties" : true
+  }
+</pre>
+
+<p>See <a href="/api-platform/fundamentals/virtual-host-property-reference">Virtual host property reference</a> for more.</p>
+
+<h3 id="setting-header-size-limits">Set header size limits</h3>
+
+<p>When you enable the capture of TLS information on a virtual host, Edge passes that information
+  using HTTP headers. You must therefore ensure that the header size limits are set appropriately
+  based on whether you are using Edge for the Cloud or Edge for the Private Cloud:</p>
+
+<ul>
+
+  <li><strong>Edge for the Cloud</strong>: Apigee sets the header sizes appropriately.
+
+  <li><strong>Edge for the Private Cloud</strong>: Feature not available.</li>
+
+</ul>
+
+<h2 id="accessing-the-flow-variables">Accessing the flow variables in an API proxy</h2>
+
+<p>From within your API proxy, you can access and inspect the TLS flow variables.
+  For example, you can use the <a href="/api-platform/reference/policies/assign-message-policy">AssignMessage</a>
+  policy to access them, access them in JavaScript with the JavaScript policy, or access them in Node.js code.</p>
+
+<p>For more, see <a href="/api-platform/fundamentals/introduction-flow-variables">Managing proxy
+  state with flow variables</a>.</p>
+
+{% endblock %}

@@ -1,5 +1,6 @@
-  {% extends "_base.html" %} {% block title %}Deploying proxies from the command line{% endblock %}
-  {% block body %}
+{% extends "_base.html" %}
+{% block title %}Deploying proxies from the command line{% endblock %}
+{% block body %}
 
   <p>This topic explains how to deploy a proxy from the command line. Apigee Edge provides two
   options for deploying from the command line. The first is to use an Apigee Edge deploy tool
@@ -12,7 +13,7 @@
   deploy your source files to the API Services environment that you choose.</p>
 
   <p>If you are working primarily in the management UI, see <a href=
-  "/api-platform/deploy/deploying-proxies-ui.html">Deploying proxies in the UI</a>.</p>
+  "/api-platform/deploy/deploying-proxies-ui">Deploying proxies in the UI</a>.</p>
 
   <p>{% dynamic include /includes/___proxy-bundle-size-limit-note %}</p>
 
@@ -20,27 +21,22 @@
 
   <p>The Apigee Edge Python deploy tool works with the Edge management API to import and deploy API
   proxies. The tool is available as part of the API Platform Samples distribution on GitHub. See
-  <a href="/api-platform/samples/using-samples.html">Using the sample API proxies</a>.</p>
+  <a href="/api-platform/samples/using-samples">Using the sample API proxies</a>.</p>
 
   <p>Use the Apigee Edge Python tool to import (upload) and deploy your API in one simple
   process.</p>
 
   <p>The deploy tool must be run from the base directory in the distribution of the API Platform
-  Samples distribution, where the base directory is the parent directory of the <span style=
-  "font-family:courier new,courier,monospace;">setup</span> and <span style=
-  "font-family:courier new,courier,monospace;">tools</span> directory.</p>
+  Samples distribution, where the base directory is the parent directory of the <code>setup</code>
+  and <code>tools</code> directory.</p>
 
   <p>In the following command, substitute the proxy name, your Edge username and password, the Edge
   organization and environment, and the path to the directory that contains the API proxy's
   "<code>apiproxy"</code> directory:</p>
-  <pre class="prettyprint">
-$python tools/deploy.py -n <em><strong>proxyname</strong></em> -u <strong><em>name</em></strong>:<strong><em>passW</em></strong> -o <strong><em>org</em></strong> -e <strong><em>env</em></strong> -d <strong><em>proxypath</em></strong> <span style="font-family: monospace;">-p /</span>
-</pre>
+  <pre class="devsite-terminal">python tools/deploy.py -n <var>proxyname</var> -u <var>name</var>:<var>passW</var> -o <var>org</var> -e <var>env</var> -d <var>proxypath</var> -p /</pre>
 
-  <p><span style="font-family:arial,helvetica,sans-serif;">For example:</span></p>
-  <pre class="prettyprint">
-$ python tools/deploy.py -n <strong>weatherapi</strong> -u <strong>me@myCo.com</strong>:<strong>foo</strong> -o <strong>myCo</strong> -e test -d <strong>weatherapi</strong> <span style="font-family: monospace;">-p /</span>
-</pre>
+  <p>For example:</p>
+  <pre class="devsite-terminal">python tools/deploy.py -n <strong>weatherapi</strong> -u <strong>me@myCo.com</strong>:<strong>foo</strong> -o <strong>myCo</strong> -e test -d <strong>weatherapi</strong> -p /</pre>
 
   <p>This command zips your files, pushes them to your organization on Apigee Edge, and deploys
   them to the specified environment.</p>
@@ -60,52 +56,38 @@ Environment: test
   State: deployed
 </pre>
 
-  <p>By default, the tool uploads the API proxy to <span style=
-  "font-family: 'courier new', courier, monospace;">https://api.enterprise.apigee.com</span>,
+  <p>By default, the tool uploads the API proxy to <code>https://api.enterprise.apigee.com</code>,
   corresponding to Edge in the cloud. You can also use this tool to upload the API proxy to an
-  on-premises version of Edge by specifying the <span style=
-  "font-family:courier new,courier,monospace;">-h</span> flag:</p>
-  <pre class="prettyprint">
-$ python tools/deploy.py -n weatherapi -u me@myCo.com:foo -o myCo -e test -d weatherapi -p / <strong>-h https://192.168.11.111:8080</strong>
-</pre>
+  on-premises version of Edge by specifying the <code>-h</code> flag:</p>
+  <pre class="devsite-terminal">python tools/deploy.py -n weatherapi -u me@myCo.com:foo -o myCo -e test -d weatherapi -p / <strong>-h https://192.168.11.111:8080</strong></pre>
 
   <p>In this example, you specify the IP address of the Edge management server. If you have created
-  a DNS record for the management server, you can specify a URL in the form <span style=
-  "font-family: 'courier new', courier, monospace;">https://ms_URL:8080.</span></p>
+  a DNS record for the management server, you can specify a URL in the following form:</p>
+  <pre class="prettyprint">https://<var>ms_URL</var>:8080</pre>
 
   <p>The complete list of flags for the command are:</p>
 
   <ul>
     <li><code>-n</code>: The name of your API proxy.</li>
-
     <li><code>-u</code>: The username and password for your account in an organization in Apigee
-    Edge.</li>
-
+      Edge.</li>
     <li><code>-o</code>: The name of the organization in which you have an account.</li>
-
     <li><code>-e</code>: The environment to which the API proxy should be deployed
-    (<code>test</code> or <code>prod</code>).</li>
-
+      (<code>test</code> or <code>prod</code>).</li>
     <li><code>-d</code>: The path to the directory containing your API proxy files. Your API proxy
-    files must be stored under a directory named "<span style=
-    "font-family:courier new,courier,monospace;">apiproxy</span>". This value is the path of the
-    directory that contains the "<span style=
-    "font-family:courier new,courier,monospace;">apiproxy</span>" directory, and not to the path to
-    the "<span style="font-family:courier new,courier,monospace;">apiproxy</span>" directory
-    itself.</li>
-
+      files must be stored under a directory named "apiproxy". This value is the path of the
+      directory that contains the "apiproxy" directory, and not to the path to
+      the "apiproxy" directory itself.</li>
     <li><code>-p</code>: The URI path used as a pattern match to route incoming message to this API
-    proxy deployment. In most cases, you can set this value to '/', unless you have advanced
-    deployment and routing requirements. The primary path used for API proxy routing is defined in
-    the API proxy's ProxyEndpoint configuration file.</li>
-
-    <li><code>-h</code>: The Edge URL. By default, the URL is <span style=
-    "font-family: 'courier new', courier, monospace;">https://api.enterprise.apigee.com</span>,
-    corresponding to Edge in the cloud. For an on-premises deployment, use the URL of the Edge
-    management server and port 8080, as in: <span style=
-    "font-family: 'courier new', courier, monospace;">https://ms_URL:8080</span>. Or, use the IP
-    address of the management server, as in <span style=
-    "font-family: 'courier new', courier, monospace;">https://192.168.11.111:8080</span>. </li>
+      proxy deployment. In most cases, you can set this value to '/', unless you have advanced
+      deployment and routing requirements. The primary path used for API proxy routing is defined in
+      the API proxy's ProxyEndpoint configuration file.</li>
+    <li><code>-h</code>: The Edge URL. By default, the URL is <code>https://api.enterprise.apigee.com</code>,
+      corresponding to Edge in the cloud. For an on-premises deployment, use the URL of the Edge
+      management server and port 8080, as in:
+    <pre class="prettyprint">https://<var>ms_URL</var>:8080</pre>
+      <p>Or, use the IP address of the management server, as in <code>https://192.168.11.111:8080</code>.</p>
+    </li>
   </ul>
 
   <h2 id="configuringandrunningadeployshellscript">Configuring and running a deploy shell
@@ -113,7 +95,7 @@ $ python tools/deploy.py -n weatherapi -u me@myCo.com:foo -o myCo -e test -d wea
 
   <aside class="note"><b>Note:</b> The shell script described in this section is included with the
   API Platform Samples distribution. For information on downloading the samples distribution, see
-  <a href="/api-platform/samples/using-samples.html">Using the sample API proxies</a>. This section
+  <a href="/api-platform/samples/using-samples">Using the sample API proxies</a>. This section
   assumes that you have obtained the shell script.</aside>
 
   <p>The easiest approach is to run the deploy script provided with the sample API proxy. The shell
@@ -140,11 +122,13 @@ Enter your password for user Your USERNAME on enterprise.apigee.com in the Apige
 
   <p>it means that you need to modify the <code>/setup/setenv.sh</code> file in the
   platform samples distribution. For instructions, refer to the README or to <a href=
-  "/api-platform/reference/apis/api-reference-getting-started.html">API reference getting
+  "/api-platform/reference/apis/api-reference-getting-started">API reference getting
   started</a>.</p>
 
   <p>On success, the deploy tool ZIPs up the files under <code>/apiproxy,</code> imports
   the package to your organization on Apigee Edge, and then deploys the API proxy to the 'test'
   environment.</p>
 
-  <p>Your API proxy is ready to be invoked.</p>{% endblock %}
+  <p>Your API proxy is ready to be invoked.</p>
+
+{% endblock %}
