@@ -1,0 +1,66 @@
+{% extends "_base.html" %}
+{% block title %}message flow variable{% endblock %}
+{% block body %}
+
+  <p>Values of the {{message_object}} flow variable and its properties depends on the point within
+  the API Proxy Flow in which it is accessed. It is available in all contexts, whereas some objects,
+  such as {{request_object}} or {{response_object}} are not.</p>
+
+  <h2 id="messagevariables-usesformessagevariables">Use cases</h2>
+
+  <p>The principal use case for the {{message_object}} flow variable is when your proxy enters the
+  error flow: the {{request_object}} and {{response_object}} flow variables are out of scope.</p>
+
+  <p>For example, in the error flow, the <code>response</code> object is not available. You will not
+  be able to set response headers on the <code>response</code> object with the {{javascript_policy}}
+  if you are in the error flow. Instead, you can use one of the following:</p>
+  <ul>
+    <li>{{error_object}}</li>
+    <li>{{message_object}}</li>
+  </ul>
+  <p>Both of these objects are available in the error flow, and can be used to set response
+  headers from within a JavaScript policy or be accessed in other policies that can use flow
+  variables.</p>
+
+  <p>You can use the {{assign_message_policy}} to assign values, such as headers,
+  to the <strong>response</strong> object. Assign Message automatically handles the switch in
+  context from request/response flow to error flow.</p>
+
+  <p>Another use case for the {{message_object}} variable is to log response data in the
+  PostClientFlow with the {{message_logging_policy}}. If you use the <code>message</code> object,
+  you can seamlessly log response information following both success and error conditions in the
+  proxy.</p>
+
+  <h2>Examples</h2>
+
+  <p>In an error flow, you can set a response header from a {{javascript_policy}} using either
+  {{error_object}} or {{message_object}}. For example:</p>
+  <pre class="prettyprint">context.setVariable('error.header.FOO-1', 'error_header');</pre>
+  <p><strong>OR</strong></p>
+  <pre class="prettyprint">context.setVariable('message.header.FOO-2', 'message_header');</pre>
+
+  <p>The following expression, however, will <em>not</em> work:</p>
+  <pre class="prettyprint">context.setVariable('response.header.FOO-3', 'response_header');</pre>
+
+  <p>In this case, the {{response_object}} variable is out of scope in the
+  error flow. (Note that, in a trace, this is visually indicated by variables shown with an equals
+  sign with a slash through it.)</p>
+
+  <p>To set response headers for both success and error flows in a single policy, you
+  can use {{message_object}} inside a {{javascript_policy}}. For example:</p>
+  <pre class="prettyprint">&lt;faultrules&gt;
+  &lt;faultrule name="invalid_key_rule"&gt;
+    &lt;step&gt;
+      &lt;name&gt;SetResponseHeaders&lt;/name&gt;
+    &lt;/step&gt;
+    &lt;condition&gt;(fault.name = "InvalidApiKey")&lt;/condition&gt;
+  &lt;/faultrule&gt;
+&lt;/faultrules&gt;</pre>
+
+  <p>In the policy, code like the following sets the error/response header in any flow context:</p>
+  <pre class="prettyprint">context.setVariable('message.header.FOO-1', 'the header value');</pre>
+
+  <p>You can reuse this same policy on the normal ProxyResponse flow and it will succeed because
+  <code>message</code> is available from all contexts.</p>
+
+{% endblock %}

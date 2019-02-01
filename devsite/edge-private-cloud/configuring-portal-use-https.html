@@ -1,4 +1,4 @@
-{% extends "private-cloud/v4.18.05/_base.html" %}
+{% extends "private-cloud/v4.19.01/_base.html" %}
 {% block title %}Use HTTPS with the portal{% endblock %}
 {% block body %}
 
@@ -26,7 +26,12 @@
     <li>Obtain your TLS key and certificate. For this example, the cert is in a file named
       server.crt and the key is in server.key.</li>
     <li>Upload your cert and key to the portal server to
-      <code>/opt/apigee/customer/nginx/ssl</code>.</li>
+      <code>/opt/apigee/customer/nginx/ssl</code>.
+      <blockquote>If the directory does not exist, create it and change the owner to the "apigee"
+      user:
+      <pre class="devsite-terminal">mkdir /opt/apigee/customer/nginx/ssl
+<code pre class="devsite-terminal">chown apigee:apigee /opt/apigee/customer/nginx/ssl</code></pre></blockquote>
+    </li>
     <li>Change the owner of the cert and key to the "apigee" user:<br>
       <pre class="devsite-terminal">chown apigee:apigee /opt/apigee/customer/nginx/ssl/server.crt
 <code pre class="devsite-terminal">chown apigee:apigee /opt/apigee/customer/nginx/ssl/server.key</code></pre>
@@ -34,12 +39,9 @@
     <li>Open <code>/opt/apigee/customer/application/drupal-devportal.properties</code> in an editor.
       If the file and directory do not exist, create them.</li>
     <li>Set the following properties in <code>drupal-devportal.properties</code>:
-      <pre class="prettyprint">conf_devportal_ssl_block=ssl on;
-ssl_certificate <strong>/opt/apigee/customer/nginx/ssl/server.crt</strong>;
-<strong>ssl_certificate_key /opt/apigee/customer/nginx/ssl/server.key</strong>;
+      <pre class="prettyprint">conf_devportal_ssl_block=ssl on; ssl_certificate <strong>/opt/apigee/customer/nginx/ssl/server.crt</strong>; <strong>ssl_certificate_key /opt/apigee/customer/nginx/ssl/server.key</strong>;
 conf_devportal_http_https_redirect=
-conf_devportal_fastcgi_https=fastcgi_param
-HTTPS on; fastcgi_param HTTP_SCHEME https;</pre>
+conf_devportal_fastcgi_https=fastcgi_param HTTPS on; fastcgi_param HTTP_SCHEME https;</pre>
       <p>Set <code>conf_devportal_ssl_block</code> to the path to the cert and key files. You are
       not required to modify the other properties.</p>
     </li>

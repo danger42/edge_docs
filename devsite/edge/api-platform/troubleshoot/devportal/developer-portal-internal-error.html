@@ -1,0 +1,204 @@
+  {% extends "_base.html" %} {% block title %}Developer Portal Internal Error{% endblock %} {% block body %}
+
+<aside class="note">Was this troubleshooting playbook helpful? Please let us know
+  by clicking <a href="" class="google-feedback"
+   data-p="1636213" data-b="docsite" data-context="troubleshooting-feedback">
+  Send Feedback
+</a>.</aside>
+
+  <h2 id="symptom">Symptom</h2>
+
+  <p>Error encountered when making a live API request using SmartDocs from the developer
+  portal.</p>
+
+  <h2 id="errormessages">Error Messages</h2>
+
+  <p>The common error seen on Developer Portal is &#8220;<strong>An internal error has occurred.
+  Please retry your request</strong>&#8221;.</p>
+
+  <h2 id="possiblecauses">Possible Causes</h2>
+
+  <p>This error can occur when Developer Portal fails to get a response from the backend (smartdocs
+  proxy or the actual endpoint).</p>
+
+  <h2 id="diagnosis">Diagnosis</h2>
+
+  <p><a href=
+  "https://www.google.com/url?q=https://developer.chrome.com/devtools&amp;sa=D&amp;ust=1518476979156000&amp;usg=AFQjCNGJtCz8zBCNBOfxa_rF6CP7F3eyPg">
+  Enable &#8220;Developer tools&#8221;</a> in your browser and check the network tab to
+  identify the actual error.            </p>
+
+  <p>Common errors and their typical causes are listed in the following table:</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <td colspan="1" rowspan="1">
+          <p><strong>Error</strong></p>
+        </td>
+
+        <td colspan="1" rowspan="1">
+          <p><strong>Typical Cause(s)</strong></p>
+        </td>
+      </tr>
+
+      <tr>
+        <td colspan="1" rowspan="1">
+          <p>ERR_NAME_NOT_RESOLVED</p>
+        </td>
+
+        <td colspan="1" rowspan="1">
+          <p><a href="#smartdocsmisconfigured">SmartDocs proxy misconfigured or network firewall
+          restrictions</a></p>
+        </td>
+      </tr>
+
+      <tr>
+        <td colspan="1" rowspan="1">
+          <p>Mixed Content</p>
+        </td>
+
+        <td colspan="1" rowspan="1">
+          <p><a href="#portalconfigured">Portal configured over HTTPs, SmartDocs request over
+          HTTP</a></p>
+        </td>
+      </tr>
+
+      <tr>
+        <td colspan="1" rowspan="1">
+          <p>500 - Internal Server Error</p>
+        </td>
+
+        <td colspan="1" rowspan="1">
+          <ul>
+            <li><a href="#smartdocsreturnsexception">SmartDocs proxy returns error</a></li>
+
+            <li><a href="#mpunabletocall">Edge Message Processors unable to call published API
+            endpoint</a></li>
+          </ul>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>Let&#8217;s go through each of these causes one by one and steps to resolve the issue.</p>
+
+  <h2 id="smartdocsproxymisconfiguredornetworkfirewallrestrictions"><a id="smartdocsmisconfigured"
+  name="smartdocsmisconfigured"></a>SmartDocs proxy misconfigured or network firewall
+  restrictions</h2>
+
+  <p>The&#8220;<strong>ERR_NAME_NOT_RESOLVED</strong>&#8221; message  indicates that the
+  smartdocs proxy url is misconfigured or the network from which the portal is being accessed is
+  unable to make a call to the smartdocs proxy URL due to firewall restrictions. The smartdocs
+  proxy must be accessible from the internet or from the internal network (for internal APIs).</p>
+
+  <p><img alt="" src="/api-platform/images/Portal-Img-9.png"></p>
+
+  <h3 id="smartdocsproxymisconfiguredornetworkfirewallrestrictions-resolution">Resolution</h3>
+
+  <p>Ensure that the smartdocs proxy can be accessed from all required networks by deploying
+   the smartdocs proxy to a <a href="">virtual host</a> on Edge with a hostname that is
+  accessible from internet.</p>
+
+  <h2 id="portalconfiguredoverhttpssmartdocsrequestoverhttp"><a id="portalconfigured" name=
+  "portalconfigured"></a>Portal configured over HTTPS, SmartDocs request over HTTP</h2>
+
+  <p>The &#8220;<strong>Mixed Content</strong>&#8221; error indicates that smartdocs proxy is
+  being called over HTTP from a page loaded over HTTPS.</p>
+
+  <p><img alt="" src="/api-platform/images/Portal-Img-2.png"></p>
+
+  <h3 id="portalconfiguredoverhttpssmartdocsrequestoverhttp-resolution">Resolution</h3>
+
+  <p>Expose smartdocs proxy over https to resolve the issue. You can do so by deploying the
+  smartdocs proxy to include a <a href="">virtual host</a> configured to use TLS/SSL
+  (typically the &#8220;secure&#8221; virtual host).</p>
+
+  <h2 id="smartdocsproxyreturninganexception"><a id="smartdocsreturnsexception" name=
+  "smartdocsreturnsexception"></a>SmartDocs proxy returning an exception</h2>
+
+  <p>The <strong>500 - Internal Server Error</strong> message can be caused by an issue with
+  the &#8220;smartdocs&#8221; proxy. In this case, you notice that the smartdocs proxy returns this
+  error.</p>
+
+  <h3 id="smartdocsproxyreturninganexception-diagnosis">Diagnosis</h3>
+
+  <p>Use the Trace tool to diagnose errors with the &#8220;smartdocs&#8221; proxy, as described
+  below. For more information, see <a href="">Using the Trace tool</a>.</p>
+
+  <ol start="1">
+    <li>Enable trace for the &#8220;<strong>smartdocs</strong>&#8221; Proxy in
+    the &#8220;<strong>VALIDATE</strong>&#8221; org to locate the specific policy that is
+    returning the 500 Internal Server Error.</li>
+  </ol>
+
+  <p><img alt="" src="/api-platform/images/Portal-Img-4.png"></p>
+
+  <ol start="2">
+    <li>Select the specific policy in the trace to identify the cause of the error.</li>
+  </ol>
+
+  <h3 id="smartdocsproxyreturninganexception-resolution">Resolution</h3>
+
+  <p>Fix the error identified. If you need assistance, contact <a href=
+  "https://www.google.com/url?q=http://support.apigee.com/&amp;sa=D&amp;ust=1518476979165000&amp;usg=AFQjCNEf0dC58yPbwblU3orMmYPzzl9idg">
+  Apigee Support</a>.</p>
+
+  <h2 id="edgemessageprocessorsunabletocallpublishedapiendpoint"><a id="mpunabletocall" name=
+  "mpunabletocall"></a>Edge Message Processors unable to call published API endpoint</h2>
+
+  <p>500 - Internal Server Error can also occur when the Message Processors belonging to the
+  org hosting the Smartdocs proxy are unable to call the API endpoint.</p>
+
+  <h3 id="edgemessageprocessorsunabletocallpublishedapiendpoint-diagnosis">Diagnosis</h3>
+
+  <p>Use the Trace tool to diagnose errors with the &#8220;smartdocs&#8221; proxy, as described
+  below. For more information, see <a href="">Using the Trace tool</a>.</p>
+
+  <ol start="1">
+    <li>Enable <strong>trace</strong> for the &#8220;<strong>smartdocs</strong>&#8221;
+    proxy in the &#8220;<strong>VALIDATE</strong>&#8221; org to locate the specific policy
+    that is returning the 500 Internal Server Error.</li>
+  </ol>
+
+  <p><img alt="" src="/api-platform/images/Portal-Img-10.png"></p>
+
+  <ol start="2">
+    <li>In the sample UI trace shown above, it is seen that the JavaScript policy
+    &#8220;<strong>BuildTargetAPIRequest</strong>&#8221; is failing to execute the target URL.</li>
+  </ol>
+
+  <ol start="3">
+    <li>Obtain the target URL from the JavaScript policy
+    &#8220;<strong>BuildTargetAPIRequest</strong>&#8221;.</li>
+  </ol>
+
+  <ol start="4">
+    <li>Make a direct call to the URL from the Message Processor nodes associated with
+    &#8220;<strong>VALIDATE</strong>&#8221; org as shown below:
+      <pre class="prettyprint">
+curl -v &lt;target URL&gt;
+</pre>
+    </li>
+  </ol>
+
+  <ol start="5">
+    <li>Correct any observed error.</li>
+  </ol>
+
+  <h3 id="edgemessageprocessorsunabletocallpublishedapiendpoint-resolution">Resolution</h3>
+
+  <ol start="1">
+    <li>Ensure that APIs published on Developer Portal can be invoked from Message Processors
+    associated with the &#8220;<strong>VALIDATE</strong>&#8221; org and correct any errors
+    encountered.</li>
+  </ol>
+
+  <ol start="2">
+    <li>If you are able to execute the API call directly from the Message Processor, it&#8217;s
+    very likely that you should be able to execute the API through SmartDocs as well.</li>
+  </ol>
+
+  <ol start="3">
+    <li>Execute the API call through SmartDocs and check if the issue is fixed.</li>
+  </ol>{% endblock %}

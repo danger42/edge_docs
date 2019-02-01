@@ -1,0 +1,178 @@
+{% extends "_base.html" %}
+{% block title %}Custom variable not visible to analytics custom reports{% endblock %}
+{% block body %}
+
+<aside class="note">Was this troubleshooting playbook helpful? Please let us know
+  by clicking <a href="" class="google-feedback"
+   data-p="1636213" data-b="docsite" data-context="troubleshooting-feedback">
+  Send Feedback
+</a>.</aside>
+
+<!-- Overview: Description, Errors, and Causes -->
+
+<h3 id="description">Symptom</h3>
+<p>The custom variable created using the
+<a href="/api-services/reference/statistics-collector-policy">Statistics Collector policy</a> is
+not visible under Custom Dimensions in the Analytics Custom Reports in the Edge UI.</p>
+
+<h3 id="diagnosis">Error messages</h3>
+<p>No errors are observed.</p>
+
+<h3 id="resolution">Possible causes</h3>
+<p>The following table lists possible causes of this issue:</p>
+<table>
+  <tbody>
+    <tr>
+      <th>Cause</th>
+      <th>For</th>
+    </tr>
+    <tr>
+      <td><a href="#standards">Custom Variable not adhering to the standard guidelines</a></td>
+      <td>Edge Private and Public Cloud users</td>
+    </tr>
+    <tr>
+      <td><a href="#notraffic">No traffic on API Proxy implementing the Statistics Collector policy</a></td>
+      <td>Edge Private and Public Cloud users</td>
+    </tr>
+    <tr>
+      <td><a href="#notpushed">Custom variable not pushed to Postgres Server</a></td>
+      <td>Edge Private Cloud users</td>
+    </tr>
+  </tbody>
+</table>
+<p>Click a link in the table to see possible resolutions to that cause.</p>
+
+<!-- Specific Cause/Resolution -->
+<h2 id="standards">Custom Variable not adhering to the standard guidelines</h2>
+
+<h3 id="standards-diagnosis">Diagnosis</h3>
+<p>If the custom variable name used in the Statistics Collector policy does not
+adhere to the standard guidelines (see below), then it will not appear in the
+Custom Reports.</p>
+
+<p>
+The code snippet below shows that the variable name "TLS version" has a space,
+so it will not appear under the Custom Dimension in the Custom Report.
+</p>
+
+<p><img src="/troubleshoot/images/variable-name-space.png"/></p>
+
+<h3 id="standards-resolution">Resolution</h3>
+<p>Custom variable names used in the Statistics Collector policy within the API
+proxy should adhere to the following guidelines:</p>
+
+<ul>
+  <li>Names can include [a-z][0-9] and '_'.</li>
+  <li>Names cannot include spaces. For example, in the code sample shown above, the variable name
+    should be changed to "TLS_version" or "tls_version".</li>
+  <li>Case is ignored.</li>
+  <li>Reserved keywords listed in the table at the following link are not
+    permitted. For example, "user" is not permitted. For more information, see
+    <a href="https://www.postgresql.org/docs/8.1/static/sql-keywords-appendix.html" class="external">SQL Key Words</a>.
+  </li>
+</ul>
+
+<p>If the problem persists, then proceed to
+<a href="#notraffic">No traffic on API Proxy implementing the Statistics Collector policy</a>.</p>
+
+
+<!-- Specific Cause/Resolution -->
+<h2 id="notraffic">No traffic on API Proxy implementing the Statistics Collector policy</h2>
+
+<h3 id="notraffic-diagnosis">Diagnosis</h3>
+<p>If there is no traffic on the API proxy that implements the Statistics Collector
+policy, then the custom variable will not appear in the Custom Reports.</p>
+
+<h3 id="notraffic-resolution">Resolution</h3>
+
+<p>Make some calls to the API proxy that implements the Statistics Collector
+policy.</p>
+
+<p>Wait for some time and check if the custom variable(s) appears in the custom dimensions in
+Custom Report.</p>
+
+<p>If the problem persists, then proceed to <a href="#notpushed">Custom Variable not pushed to
+Postgres Server</a>.</p>
+
+
+<!-- Specific Cause/Resolution -->
+<h2 id="notpushed">Custom variable not pushed to Postgres Server</h2>
+
+<aside class="note"><strong>NOTE:</strong> The instructions in this section can be performed
+by Private Cloud customers only.</aside>
+
+<h3 id="notpushed-diagnosis">Diagnosis</h3>
+
+<p>When a custom variable is created in the API proxy and API calls are made, the
+variable first gets stored in-memory on the Message Processor. The Message
+Processor then sends the information about the new variable to ZooKeeper, which
+in turn sends it to the Postgres server to add it as a column in the Postgres
+database.</p>
+
+<p>At times, the notification from ZooKeeper may not reach the Postgres server due to network
+issues. Because of this error, the custom variable might not appear in the
+Custom Report.</p>
+
+<p><strong>To identify where the custom variable is missing:</strong></p>
+
+<ol>
+  <li>Generate the ZooKeeper tree using the following command:
+    <pre class="prettyprint">/opt/apigee/apigee-zookeeper/contrib/zk-tree.sh > zktree-output.txt</pre>
+  <li>Search for the custom variable in the ZooKeeper tree output.</li>
+  <li>If the custom variable exists in the ZooKeeper tree, then execute the
+    following commands to check if the custom variable is added to the Postgres
+    database:
+    <ol>
+      <li>On the Postgres node, log in to PostgresSQL:
+        <pre class="prettyprint">psql -h /opt/apigee/var/run/apigee-postgresql -U apigee apigee</pre>
+      <li>Run the following SQL query:
+        <pre class="prettyprint">select column_name, data_type, character_maximum_length from INFORMATION_SCHEMA.COLUMNS
+  where table_name = '<var>orgname</var>.<var>envname</var>.fact';</pre>
+      </li>
+    </ol>
+  </li>
+  <li>Very likely you will see that custom variable column will be missing in the
+  fact table which is the reason for it not to appear in the Custom Dimensions.</li>
+</ol>
+
+<h3 id="notpushed-resolution">Resolution</h3>
+
+<h4>Solution #1: Restart the Postgres Server</h4>
+
+<ol>
+  <li>Restart the Postgres Server to force it to read all information relevant to
+    Analytics from Zookeeper:
+    <pre class="prettyprint">/opt/apigee/apigee-service/bin/apigee-service edge-postgres-server restart</pre>
+    <p>If the problem persists, apply Solution #2.</p>
+  </li>
+</ol>
+
+<h4>Solution #2: Enable the property forceonboard </h4>
+<p>Enable the <strong>forceonboard</strong> property using the below steps:</p>
+
+<ol>
+  <li>Create <code>/opt/apigee/customer/application/postgres-server.properties</code> file on
+    the Postgres server machine, if it does not already exist.
+  </li>
+  <li>Add the following line to this file:
+    <pre class="prettyprint">conf_pg-agent_forceonboard=true</pre>
+  </li>
+  <li>Ensure this file is owned by Apigee by using the following command:
+    <pre class="prettyprint">chown apigee:apigee /opt/apigee/customer/application/postgres-server.properties</pre>
+  </li>
+  <li>Restart the Postgres server:
+    <pre class="prettyprint">/opt/apigee/apigee-service/bin/apigee-service edge-postgres-server restart</pre>
+  </li>
+  <li>If you have more than one Postgres server, repeat the steps above on all the
+    Postgres servers.</li>
+  <li>Undeploy and deploy your API proxy that uses the Statistics Collector
+    policy.</li>
+  <li>Run the API calls.</li>
+  <li>Check if the custom variable(s) appear in the custom dimensions in Custom
+  Report.</li>
+</ol>
+
+<p>If the problem persists, contact {{support}}.</p>
+
+
+{% endblock %}

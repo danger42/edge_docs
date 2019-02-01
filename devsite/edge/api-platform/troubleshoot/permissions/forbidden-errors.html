@@ -1,0 +1,174 @@
+  {% extends "_base.html" %} {% block title %}Forbidden Errors{% endblock %} {% block body %}
+
+<aside class="note">Was this troubleshooting playbook helpful? Please let us know
+  by clicking <a href="" class="google-feedback"
+   data-p="1636213" data-b="docsite" data-context="troubleshooting-feedback">
+  Send Feedback
+</a>.</aside>
+
+  <h2 id="errortext">Error text</h2>
+  <pre class="prettyprint">
+Forbidden. [Description] 
+</pre>
+
+  <p>where <code>[Description]</code> is a string that describes the cause of the error.</p>
+
+  <h2 id="example">Example</h2>
+  <pre class="prettyprint">
+Forbidden. You don't have permissions to access this resource. 
+</pre>
+
+  <p>You typically see <strong>Forbidden</strong> error messages when making API calls. One common
+  cause is when an organization administrator, or other type of user, makes a call to an Edge
+  management API that requires system administrator credentials.</p>
+
+  <p>For example, to use the Edge management API to create a user on Edge in the Cloud, you make a
+  POST request to <span style=
+  "font-family:courier new,courier,monospace;">https://api.enterprise.apigee.com/v1/users</span>.
+  However, if you pass credentials for any user other than the sys admin, the call returns HTTP 403
+  Forbidden error, as shown below:</p>
+  <pre class="prettyprint">
+&gt; POST /v1/users HTTP/1.1
+&gt; Host: api.enterprise.apigee.com
+&gt; User-Agent: curl/7.54.0
+&gt; Accept: */*
+&gt; Content-Type:application/xml
+&gt; Content-Length: 162
+&gt;
+* upload completely sent off: 162 out of 162 bytes
+&lt; HTTP/1.1 403 Forbidden
+</pre>
+
+  <aside class="note"><b>Note:</b> <strong>Forbidden</strong> errors in the Edge UI, those
+  typically caused by the return of an HTTP 403 response code, typically appear as
+  <strong>Insufficient permissions</strong> errors. The troubleshooting steps for the two errors
+  are similar. See <a href=
+  "/api-platform/troubleshoot/permissions/insufficient-permissions-errors.html">Insufficient
+  Permissions Errors</a> for more.</aside>
+
+  <h2 id="whatthiserrormeans">What this error means</h2>
+
+  <p>Every user in an Edge organization is assigned to a role, where roles are essentially
+  CRUD-based permission sets. CRUD means "create, read, update, delete". For example, a user may be
+  given a role that permits them to read, or "get", details about an entity, but not permission to
+  "update" or "delete" it.</p>
+
+  <p>The <strong>Forbidden</strong> error typically means that the role assigned to the user does
+  not have permissions to perform the requested operation.</p>
+
+  <p>See <a href="/api-platform/system-administration/understanding-roles.html">Assigning roles</a>
+  for more.</p>
+
+  <h2 id="troubleshooting">Troubleshooting</h2>
+
+  <h3 id="troubleshooting-generaltroubleshootingsteps">General troubleshooting steps</h3>
+
+  <p>Although you may need expert help from Apigee to resolve this error, you can try the following
+  general troubleshooting steps before contacting support or posting to the Apigee Community.</p>
+
+  <h4>Are you a new customer who just created your first organization?</h4>
+
+  <p>For new users to Apigee who are creating their first organization, it can take Apigee several
+  hours to complete the creation process. If you see <strong>Forbidden</strong> errors in a new
+  organization, wait a few hours and try again.</p>
+
+  <h4>Check to see if another user recently changed permissions</h4>
+
+  <p>In the Edge UI, select <strong>Admin &gt; Organization History</strong> to see if there were
+  any recent changes to permissions. Look for permissions that were recently created or
+  removed:</p>
+
+  <p><img alt="" src="/api-platform/images/org_history_v2.png"></p>
+
+  <h4>Are you making an API call that requires sys admin credentials?</h4>
+
+  <p>Several Edge management APIs require you to pass sys admin credentials, such as the following
+  APIs:</p>
+
+  <ul>
+    <li><a href="/management/apis/post/organizations">Create an organization</a></li>
+
+    <li><a href="/management/apis/delete/organizations/{org_name}">Delete an organization</a></li>
+  </ul>
+
+  <p>If you are a Cloud customer, Apigee acts as the sys admin. Therefore, if you need to perform
+  an action that requires sys admin permissions, you must contact <a href=
+  "https://support.apigee.com/">Apigee Support</a>.</p>
+
+  <p>If you run into the <strong>Forbidden</strong> error when making an Edge management API call,
+  check the <a href="/api-platform/reference/apis/api-reference-getting-started.html">API reference
+  getting started</a> to determine the requirements for calling the API.</p>
+
+  <h4>Are you creating or editing a role to give it access to a protected resource?</h4>
+
+  <p>Edge lets you create custom roles to control user access to protected resources. For example,
+  you can create roles to control access to APIs, products, and reports. See <a href=
+  "/api-platform/system-administration/understanding-roles.html">Assigning roles</a> for more.</p>
+
+  <p>However, only a sys admin can create roles that specify permissions for the following
+  resources:</p>
+
+  <ul>
+    <li><code>/environments</code></li>
+
+    <li><code>/environments/*</code></li>
+
+    <li><code>/environments/*/keystores/*/aliases/*/key</code></li>
+
+    <li><code>/environments/*/pods</code></li>
+
+    <li><code>/environments/*/servers</code></li>
+
+    <li><code>/pods</code></li>
+
+    <li><code>/rebuildindex</code></li>
+
+    <li><code>/userroles/devadmin</code></li>
+
+    <li><code>/userroles/devadmin/permissions</code></li>
+
+    <li><code>/userroles/devadmin/permissions/*</code></li>
+
+    <li><code>/userroles/devadmin/users</code></li>
+
+    <li><code>/userroles/devadmin/users/*</code></li>
+
+    <li><code>/users/*/status</code></li>
+
+    <li><code>/users</code></li>
+
+    <li><code>/users/*</code></li>
+  </ul>
+
+  <p>If you attempt to create a role that assigns permissions to these resources, you will get a
+  <strong>Forbidden</strong> error.</p>
+
+  <h4>For Cloud customers, check the Apigee status page for outages</h4>
+
+  <p><strong>Forbidden</strong> errors can occur when there is an outage in Edge for the Cloud. Use
+  the following URL to check the current Edge status to see if there is an outage:</p>
+
+  <p><a href="https://status.apigee.com/">https://status.apigee.com/</a></p>
+
+  <h3 id="troubleshooting-areyouusingaversionofedgecloudthatincludescustomersupport">Are you using
+  a version of Edge Cloud that includes customer support?</h3>
+
+  <p>Although you may need to contact Apigee support to resolve this error, you might first try the
+  steps described above in <a href="#troubleshooting-generaltroubleshootingsteps">General
+  troubleshooting steps</a>. If you need Apigee help, please see <a href=
+  "/troubleshoot/what-include-if-you-contact-tech-support-or-community.html">What to include if you
+  contact Tech Support or the Community</a>. </p>
+
+  <h3 id="troubleshooting-areyouusingedgeprivatecloud">Are you using Edge Private cloud?</h3>
+
+  <p>In a Private Cloud installation, you define a sys admin. If you need to perform an operation
+  that requires the sys admin credentials, such as creating an organization, then you must work
+  with the Edge sys admin.</p>
+
+  <h3 id="troubleshooting-areyouusingafreeevaluationversionofapigeeedge">Are you using a free
+  evaluation version of Apigee Edge?</h3>
+
+  <p>Although you may need to post your issue to the <a href=
+  "https://community.apigee.com/index.html">Apigee Community</a> to resolve this error, you
+  might first try the steps described above in <a href=
+  "#troubleshooting-generaltroubleshootingsteps">General troubleshooting steps</a>. </p>{% endblock %}

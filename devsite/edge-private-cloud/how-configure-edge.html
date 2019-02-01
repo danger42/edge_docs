@@ -1,4 +1,4 @@
-{% extends "private-cloud/v4.18.05/_base.html" %}
+{% extends "private-cloud/v4.19.01/_base.html" %}
 {% block title %}How to configure Edge{% endblock %}
 {% block body %}
 
@@ -8,8 +8,8 @@
   <code>.properties</code> files require you to restart the affected Edge component.</p>
 
   <p>Apigee refers to the technique of editing <code>.properties</code> files as <em>code with
-  config</em>. Essentially, code with config is a key/value lookup tool based on settings in
-  the <code>.properties</code> files. In code with config, the keys are referred to as
+  config</em> (sometimes abbreviated as CwC). Essentially, code with config is a key/value lookup
+  tool based on settings in <code>.properties</code> files. In code with config, the keys are referred to as
   <em>tokens</em>. Therefore, to configure Edge, you set tokens in <code>.properties</code>
   files.</p>
 
@@ -22,205 +22,217 @@
   product, lets the installation team override those settings based on the installation topology,
   and then lets customers override any properties they choose.</p>
 
-  <p>If you think of it as a hierarchy, then the settings are arranges as follows with customer
+  <p>If you think of it as a hierarchy, then the settings are arranged as follows, with customer
   settings having the highest priority to override any settings from the installer team or
   Apigee:</p>
 
   <ol>
     <li>Customer</li>
     <li>Installer</li>
-    <li>Apigee</li>
+    <li>Component</li>
   </ol>
 
-  <h2 id="howtousepropertiesfiles">How to use .properties files</h2>
 
-  <p>As a customer, you can only modify the <code>.properties</code> files in the
-  <code>/opt/apigee/customer/application</code> directory. Each component has its own
-  <code>.properties</code> file in that directory. For example, <code>router.properties</code>
-  and <code>management-server.properties</code>.</p>
+  <h2 id="determiningthecurrentvalueofatoken">Determine the current value of a token</h2>
 
-  <aside class="note"><strong>Note:</strong> If you have not set any properties for a component, the
-  <code>/opt/apigee/customer/application</code>
-  directory might not contain a <code>.properties</code> file for the component.
-  In that case, create one. The only requirement on a <code>.properties</code> file is that it must be
-  accessible, or readable, by the "apigee" user.</aside>
+  <p>Before you set a new value for a token in a <code>.properties</code> file,
+  you should first determine its <em>current</em> value by using the following command:</p>
 
-  <p>For example, to create a <code>.properties</code> file:</p>
+  <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service <var>component_name</var> configure -search <var>token</var></pre>
 
-  <ol>
-    <li>Create the file in an editor as any user.</li>
-    <li>Use <code>chown</code> to change the owner of the file to "apigee:apigee" or, if you changed
-      the user running the Edge service from the "apigee" user, chown the file to the user who
-      is running the Edge service.</li>
-  </ol>
+  <p>Where <var>component_name</var> is the name of the component, and <var>token</var> is the token
+  to inspect.</p>
 
-  <p>To set a property for a component, edit the corresponding <code>.properties</code> file to set
-  a token, and then restart the component:</p>
+  <p>This command searches the hierarchy of the component's <code>.properties</code> files to
+  determine the current value of the token.</p>
 
-  <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service <var>component</var> restart</pre>
+  <p>The following example checks the current value of the <code>conf_http_HTTPRequest.line.limit</code>
+  token for the Router:</p>
 
-  <p>For example, after editing <code>router.properties</code>, restart the Router:</p>
+  <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-router configure -search conf_http_HTTPRequest.line.limit</pre>
 
-  <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-router restart</pre>
+  <p>You should see output that looks like the following:</p>
 
-  <p>When you upgrade Edge, the <code>.properties</code> files in the
-  <code>/opt/apigee/customer/application</code> directory are read. That means the upgrade will
-  retain any properties that you set on the component.</p>
+  <pre class="prettyprint">Found key conf_http_HTTPRequest.line.limit, with value, 4k, in /opt/apigee/edge-router/token/default.properties</pre>
+
+  <p>If the token's value starts with a <code>#</code>, it has been commented out and you must use
+  special syntax to change it. For more information, see
+  <a href="settingatokenthatiscurrentlycommentedout">Set a token that is currently commented out</a>.</p>
+
+  <p>If you do not know the entire name of the token, use a tool such as <code>grep</code> to search
+  by the property name or key word. For more information, see <a href="#locatingatoken">Locate a
+  token</a>.</p>
+
 
   <h2 id="locationofpropertiesfiles">Location of .properties files</h2>
 
-  <p>There are three top-level directories for <code>.properties</code> files for Edge
-  components: installation, owner, and customers. The default locations are shown in the following
-  table:</p>
+  <p>There are three top-level directories for <code>.properties</code> files for Edge components:
+  customers, installation, and component. The following table shows the default locations
+  for these files:</p>
 
-  <aside class="caution"><strong>Caution</strong>: Edge customers can only modify the <code>.properties</code> files
-  under <code>/opt/apigee/customer</code>. While you can view files under the component and
-  installation directories, do not modify any files.</aside>
+  <aside class="caution"><strong>Caution</strong>: Edge customers can only modify the
+  <code>.properties</code> files under <code>/opt/apigee/customer/application</code>. While you can
+  view files under the component and installation directories, do not modify any files.</aside>
 
   <table>
     <thead>
       <tr>
         <th>Owner</th>
-        <th>Default Token Root Directory</th>
+        <th>Customer Editable?</th>
+        <th>Filename or Directory</th>
       </tr>
     </thead>
     <tbody>
       <tr>
-        <td>Component</td>
-        <td><pre>/opt/apigee/<var>component_name</var>/conf</pre>
-          <p>Where <var>component_name</var> identifies the component. Possible values
-          include:</p>
-          {% dynamic include "/includes/___opdk-component-list" %}
+        <td>Customer</td>
+        <td style="text-align: center;">{{yes}}</td>
+        <td><pre>/opt/apigee/customer/application/<var>filename</var>.properties</pre>
+          <p>Where <var>filename</var> can be one of the following:</p>
+          <ul>
+            <li><code>cassandra</code> (Cassandra)</li>
+            <li><code>management-server</code> (Management Server)</li>
+            <li><code>message-processor</code> (Message Processor)</li>
+            <li><code>monit</code> ({{am}})</li>
+            <li><code>openldap</code> (OpenLDAP)</li>
+            <li><code>postgres-server</code> (Postgres Server)</li>
+            <li><code>postgressql</code> (PostgreSQL Database)</li>
+            <li><code>qpid-server</code> (Qpid Server)</li>
+            <li><code>qpidd</code> (Qpidd)</li>
+            <li><code>router</code> (Router)</li>
+            <li><code>ui</code> (Edge UI)</li>
+            <li><code>zookeeper</code> (Zookeeper)</li>
+          </ul>
         </td>
       </tr>
       <tr>
         <td>Installation</td>
+        <td style="text-align: center;">{{no}}</td>
         <td><pre>/opt/apigee/token</pre></td>
       </tr>
       <tr>
-        <td>Customer</td>
-        <td><pre>/opt/apigee/customer</pre></td>
+        <td>Component</td>
+        <td style="text-align: center;">{{no}}</td>
+        <td><pre>/opt/apigee/<var>component_name</var>/conf</pre>
+          <p>Where <var>component_name</var> identifies the component. Possible values include:</p>
+          {% dynamic include "/includes/___opdk-component-list" %}
+        </td>
       </tr>
     </tbody>
   </table>
 
-  <h2 id="determiningthecurrentvalueofatoken">Determine the current value of a token</h2>
+  <h2 id="howtousepropertiesfiles">Set a token value</h2>
 
-  <p>Before you set a token in the <code>.properties</code> file for the component,
-  you can first determine its current value by using the following command:</p>
+  <p>You can only modify the <code>.properties</code> files in the
+  <code>/opt/apigee/customer/application</code> directory. Each component has its own
+  <code>.properties</code> file in that directory. For example, <code>router.properties</code>
+  and <code>management-server.properties</code>. For a complete list of properties files,
+  see <a href="#locationofpropertiesfiles">Location of .properties files</a>.</p>
 
-  <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service <var>component_name</var> configure -search <var>token</var></pre>
+  <aside class="note"><strong>Note:</strong> If you have not set any properties for a component, the
+  <code>/opt/apigee/customer/application</code> directory might not contain a
+  <code>.properties</code> file for the component. In that case, create one.</aside>
 
-  <p>Where <var>component_name</var> is the name of the  component, and
-  <var>token</var> is the token to inspect.</p>
-
-  <p>This command searches the hierarchy of <code>.properties</code> files to determine the
-  current value of the token.</p>
-
-  <p>For example, to check the current value of the <code>conf_http_HTTPRequest.line.limit</code>
-  token for the Router:</p>
-
-  <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-router configure -search conf_http_HTTPRequest.line.limit</pre>
-
-  <p>You should see output in the form:</p>
-
-  <pre class="prettyprint">Found key conf_http_HTTPRequest.line.limit, with value, 4k, in /opt/apigee/edge-router/token/default.properties</pre>
-
-  <h2 id="settingtokensinpropertiesfiles">Set tokens in .properties files</h2>
-
-  <p>To override the value of a token:</p>
+  <p><strong>To create a <code>.properties</code> file:</strong></p>
 
   <ol>
-    <li>Edit the <code>.properties</code> file for the component to set the token value. If the file
-      does not exist, then create it.</li>
-    <li>Restart the component.</li>
-    <li>Check the token value.</li>
+    <li>Create a new text file in an editor. The file name must match the list shown in the
+      table above for customer files.</li>
+    <li>Change the owner of the file to "apigee:apigee", as the following example shows:
+      <pre class="devsite-terminal">chown apigee:apigee /opt/apigee/customers/application/router.properties</pre>
+      <p>If you changed the user that runs the Edge service from the "apigee" user, use
+      <code>chown</code> to change the ownership to the user which is running the Edge
+      service.</p>
+    </li>
   </ol>
 
-  <p>For example, to set the request line limit for the Edge Router:</p>
+  <p>When you upgrade Edge, the <code>.properties</code> files in the
+  <code>/opt/apigee/customer/application</code> directory are read. That means the upgrade will
+  retain any properties that you set on the component.</p>
 
+  <p><strong>To set the value of a token:</strong></p>
   <ol>
-    <li>Edit the <code>/opt/apigee/customer/application/router.properties</code> file to set the
-      <code>conf_http_HTTPRequest.line.limit</code> token:
-      <pre>conf_http_HTTPRequest.line.limit=8k</pre>
+    <li>Edit the component's <code>.properties</code> file.</li>
+    <li>Add or change the value of the token. The following example sets the value of the
+      <code>conf_http_HTTPRequest.line.limit</code> property to "10k":
+      <pre>conf_http_HTTPRequest.line.limit=10k</pre>
+      <p>If the token takes multiple values, separate each value with a comma, as the following
+      example shows:</p>
+      <pre>conf_security_rbac.restricted.resources=/environments,/environments/*,/environments/*/virtualhosts,/environments/*/virtualhosts/*,/pods,/environments/*/servers,/rebuildindex,/users/*/status,/myuri/*</pre>
+      <p>To add a new value to a list such as this, you typically append the new value to the end
+      of the list.</p>
     </li>
-    <li>Restart the Edge Router:
+    <li>Restart the component:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service <var>component_name</var> restart</pre>
+      <p>Where <var>component_name</var> is one of the following:</p>
+      {% dynamic include "/includes/___opdk-component-list" %}
+      <p>For example, after editing <code>router.properties</code>, restart the Router:</p>
       <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-router restart</pre>
     </li>
-    <li>Check the value of the token:
+    <li>(Optional) Check that the token value is set to your new value by using the
+      <code>configure -search</code> option. For example:
       <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-router configure -search conf_http_HTTPRequest.line.limit</pre>
+      <p>For more information about <code>configure -search</code>, see
+      <a href="#determiningthecurrentvalueofatoken">Determine the current value of a token</a>.</p>
     </li>
   </ol>
-
-  <h2 id="settingatokenthattakesmultiplevalues">Set a token that takes multiple values</h2>
-
-  <p>Some tokens take a comma separated list of values. For example, the
-  <code>conf_security_rbac.restricted.resources</code> token takes a list of URIs restricted so that
-  only the sysadmin can call them. To see the value of <code>conf_security_rbac.restricted.resources</code>:</p>
-
-  <pre class="devsite-terminal">cd /opt/apigee/edge-management-server
-<code class="devsite-terminal">grep -ri "conf_security_rbac.restricted.resources" *</code></pre>
-
-  <p>The output contains the following:</p>
-
-  <pre class="prettyprint"><strong>token/default.properties:conf_security_rbac.restricted.resources</strong>=/environments,/environments/*,/environments/*/virtualhosts,/environments/*/virtualhosts/*,/pods,/environments/*/servers,/rebuildindex,/users/*/status</pre>
-
-  <p>To set a token that takes a list of values, append any new values to the current value of the
-  token in the <code>.properties</code> file.
-  Therefore, to add the URI <code>/myuri/*</code> to <code>conf_security_rbac.restricted.resources</code>,
-  edit the <code>/opt/apigee/customer/application/management-server.properties</code> file as shown
-  below:</p>
-
-  <pre class="prettyprint">conf_security_rbac.restricted.resources=/environments,/environments/*,/environments/*/virtualhosts,/environments/*/virtualhosts/*,/pods,/environments/*/servers,/rebuildindex,/users/*/status,<strong>/myuri/*</strong></pre>
 
   <h2 id="locatingatoken">Locate a token</h2>
 
   <p>In most cases, the tokens you need to set are identified in this guide. However, if you need
-  to determine the token used to override a property, perform a <code>grep</code> in the
-  <code>source</code> folder of the component.</p>
+  to override the value of an existing token whose full name or location you are unsure of, use
+  <code>grep</code> to search the component's <code>source</code> directory.</p>
 
   <p>For example, if you know that in a previous release of Edge you set the
-  <code>session.maxAge</code> property and want to know the token value used to set it, then
-  <code>grep</code> for the property in the <code>/opt/apigee/edge-ui/source</code> directory:</p>
+  <code>session.maxAge</code> <em>property</em> and want to know the token value used to set it,
+  then <code>grep</code> for the property in the <code>/opt/apigee/edge-ui/source</code>
+  directory:</p>
 
   <pre class="devsite-terminal">grep -ri "session.maxAge" /opt/apigee/edge-ui/source</pre>
 
-  <p>You should see a result in the form:</p>
+  <p>You should see a result in the following form:</p>
+  <pre>/opt/apigee/<var>component_name</var>/source/conf/application.conf:<var>property_name</var>={T}<var>token_name</var>{/T}</pre>
+
+  <p>The following example shows the value of the UI's <code>session.maxAge</code> token:</p>
   <pre>/opt/apigee/edge-ui/source/conf/application.conf:session.maxAge=<strong>{T}conf_application_session.maxage{/T}</strong></pre>
 
-  <p>The string between the <strong>{T}{/T}</strong> tags is the token that you set in
-  the <code>.properties</code> file.</p>
+  <p>The string between the <strong>{T}{/T}</strong> tags is the name of the token that you can set
+  in the UI's <code>.properties</code> file.</p>
 
   <h2 id="settingatokenthatiscurrentlycommentedout">Set a token that is currently commented out</h2>
 
   <p>Some tokens are commented out in the Edge configuration files. If you try to set a token that
-  is commented out, the setting is ignored.</p>
+  is commented out in an install or component configuration file, your setting is ignored.</p>
 
-  <p>To set a token that is commented out, you use a special syntax, in the form:</p>
+  <!-- Does this mean if it's commented out in a config file elsewhere, setting it in the customer
+  dir won't work? -->
+  <!-- But don't customer files supercede component/installer settings? If so, then why would the
+  customer setting be ignored? -->
 
-  <pre class="prettyprint">conf/<var>file.extension</var>+<var>propertyName</var>=<var>propertyValue</var></pre>
+  <p>To set the value of a token that is commented out in an Edge configuration file, use special
+  syntax in the following form:</p>
 
-  <p>For example, you want to set the property named <code>HTTPClient.proxy.host</code> on the Message
-  Processor. You then <code>grep</code> for the property to determine its token:</p>
+  <pre class="prettyprint">conf/<var>filename</var>+<var>propertyName</var>=<var>propertyValue</var></pre>
 
-  <pre class="devsite-terminal">cd /opt/apigee/edge-message-processor
-<code class="devsite-terminal">grep -ri "HTTPClient.proxy.host" *</code></pre>
+  <p>For example, to set the property named <code>HTTPClient.proxy.host</code> on the Message
+  Processor, first <code>grep</code> for the property to determine its token:</p>
 
-  <p>The <code>grep</code> command returns results in the form that includes the token value. Notice
-  how the property name is commented out, as indicated by the <strong>#</strong> prefix on the
-  property name:</p>
+  <pre class="devsite-terminal">grep -ri /opt/apigee/edge-message-processor/ -e "HTTPClient.proxy.host"</pre>
 
-  <pre class="prettyprint">source/conf/http.properties:<strong>#HTTPClient.proxy.host</strong>={T}conf_http_HTTPClient.proxy.host{/T}
+  <p>The <code>grep</code> command returns results that include the token name. Notice
+  how the property name is commented out, as indicated by the <strong>#</strong> prefix:</p>
+
+  <pre class="prettyprint">source/conf/http.properties:<strong>#</strong>HTTPClient.proxy.host={T}conf_http_HTTPClient.proxy.host{/T}
 token/default.properties:conf_http_HTTPClient.proxy.host=
 conf/http.properties:<strong>#HTTPClient.proxy.host=</strong></pre>
 
-  <p>To set the property, edit <code>/opt/apigee/customer/application/message-processor.properties</code>
-  to set the property as:</p>
+  <p>To set the value of this property, edit
+  <code>/opt/apigee/customer/application/message-processor.properties</code>, but use a special
+  syntax, as the following example shows:</p>
 
   <pre class="prettyprint">conf/http.properties+HTTPClient.proxy.host=myhost.name.com</pre>
 
-  <p>Notice how the property name is prefixed by <code>conf/http.properties+</code>, the location
-  and name of the configuration file containing the property followed by "+".</p>
+  <p>In this case, you must prefix the property name with <code>conf/http.properties+</code>. This
+  is the location and name of the configuration file containing the property followed by "+".</p>
 
   <p>After you restart the Message Processor, examine the file
   <code>/opt/apigee/edge-message-processor/conf/http.properties</code>:</p>
@@ -230,5 +242,39 @@ conf/http.properties:<strong>#HTTPClient.proxy.host=</strong></pre>
   <p>At the end of the file, you will see the property set, in the form:</p>
 
   <pre class="prettyprint">conf/http.properties:HTTPClient.proxy.host=myhost.name.com</pre>
+<!--
+  <h2>Properties file syntax</h2>
+  <p>The following table describes some of the notation used in .properties files:</p>
 
+  <table>
+    <thead>
+      <tr>
+        <th>Notation</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>+</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>#</td>
+        <td>Comment.</td>
+      </tr>
+      <tr>
+        <td>"</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>,</td>
+        <td>The separator used when defining a token value that takes more than one value.</td>
+      </tr>
+      <tr>
+        <td>{T}{/T}</td>
+        <td>Wrappers around the token value in an Edge configuration file.</td>
+      </tr>
+    </tbody>
+  </table>
+-->
 {% endblock %}

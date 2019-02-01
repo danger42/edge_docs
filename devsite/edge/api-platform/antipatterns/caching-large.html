@@ -1,0 +1,69 @@
+{% extends "_base.html" %}
+{% block title %}Storing data greater than 512kb size in cache{% endblock %}
+{% block body %}
+
+<p>Apigee Edge provides the ability to store data in a cache at runtime for persistence and faster
+retrieval.</p>
+
+<ul>
+  <li>The data is initially stored in the Message Processor’s in-memory cache, referred to as <em>L1
+    cache</em>.</li>
+  <li>The L1 cache is limited by the amount of memory reserved for it as a percentage of the JVM
+    memory.</li>
+  <li>The cached entries are later persisted in <em>L2 cache</em>, which is accessible to all Message
+    Processors. More details can be found in the section below.</li>
+  <li>The L2 cache does not have any hard limit on the number of cache entries, however the maximum
+    <em>size</em> of the entry that can be cached is restricted to 512kb. The cache size of 512kb is the
+    recommended size for optimal performance.</li>
+</ul>
+
+<h2>Antipattern</h2>
+
+<p>This particular antipattern talks about the implications of exceeding the current cache size
+restrictions within the Apigee Edge platform.</p>
+
+
+<p>When data &gt; 512kb is cached, the consequences are as follows:</p>
+<ul>
+  <li>API requests executed for the first time on each of the Message Processors need to get the
+    data independently from the original source (policy or a target server), as entries &gt; 512kb
+    are not available in L2 cache.</li>
+  <li>Storing larger data (&gt; 512kb) in L1 cache tends to put more stress on the platform
+    resources. It results in the L1 cache memory being filled up faster and hence lesser space being
+    available for other data. As a consequence, one will not be able to cache the data as
+    aggressively as one would like to.</li>
+  <li>Cached entries from the Message Processors will be removed when the limit on the number of
+    entries is reached. This causes the data to be fetched from the original source again on the
+    respective Message Processors.</li>
+</ul>
+
+<p><img src="/api-platform/images/antipatterns/512cache.png"/></p>
+
+<h2>Impact</h2>
+
+<ul>
+  <li>Data of size &gt; 512kb will not be stored in L2/persistent cache.</li>
+  <li>More frequent calls to the original source (either a policy or a target server) leads to
+    increased latencies for the API requests.</li>
+</ul>
+
+<h2>Best practice</h2>
+
+<ul>
+  <li>It is preferred to store data of size &lt; 512kb in cache to get optimum performance.</li>
+  <li>If there’s a need to store data &gt; 512kb, then consider:
+    <ul>
+      <li>Using any appropriate database for storing large data
+        <p><strong>OR</strong></p>
+      </li>
+      <li>Compressing the data</li>
+    </ul>
+  </li>
+</ul>
+
+<h2>Further reading</h2>
+<ul>
+  <li><a href="/api-services/content/cache-internals">Cache internals</a></li>
+</ul>
+
+{% endblock %}

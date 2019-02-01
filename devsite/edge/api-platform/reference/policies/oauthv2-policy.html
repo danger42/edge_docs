@@ -658,37 +658,46 @@ context.setVariable("request.header.Authorization","Basic "+CryptoJS.enc.Base64.
   system generated value plus the <code>&lt;ExpiresIn&gt;</code> value. If
   <code>&lt;ExpiresIn&gt;</code> is set to <strong>-1</strong>, the token or code is given an
   infinite lifetime. If <code>&lt;ExpiresIn&gt;</code> is not specified, the system applies a
-  default value configured at the system level. Contact <a href=
-  "https://apigee.com/about/support/portal" target="_blank">Apigee Support</a> for more
-  information about default system settings for a Cloud-based installation.</p>
-
-  <aside class="note"><b>Private Cloud:</b> For an Edge for Private Cloud installation, the default
-  value is set by the <span style=
-  "font-family:courier new,courier,monospace;">oauth_auth_code_expiry_time_in_millis</span> property
-  in the <span style=
-  "font-family:courier new,courier,monospace;">&lt;install_dir&gt;/apigee/conf/apigee/message_processor/keymanagement.properties</span>
-  file. If you change that value, you must restart the Message Processor.</aside>
-
-  <aside class="note"><b>Note:</b> By default, expired access tokens are purged from the Apigee
-  Edge system automatically 180 days after expiration. See also <a href="#purge">Purging access
-  tokens</a></aside>
+  default value configured at the system level.</p>
 
   <p>The expiry time can also be set at runtime using either a hard-coded, default value or by
   referencing a flow variable. For example, you can store a token expiration value in a key value
   map, retrieve it, assign it to a variable, and reference it in the policy.  For example,
-  <code>kvm.oauth.expires_in</code>. </p>
+  <code>kvm.oauth.expires_in</code>.</p>
 
-  <p>The following stanza specifies a flow variable and a default value as well. Note that the flow
-  variable value takes precedence over the specified default value.</p>
+{{ limit_cps_caching }}
 
-<aside class="note">Edge does not support a way to force the expiration of a token after it has been created.
-If you need to force token expiration (for example, based on a condition), a possible solution is
-described in <a href="https://community.apigee.com/questions/1994/is-there-a-way-to-update-expiry-time-of-an-existin.html">this Apigee Community post</a>.</aside>
+<p>The following stanza specifies a flow variable and a default value as well. Note that the flow
+variable value takes precedence over the specified default value.</p>
+
   <pre class="prettyprint">
 &lt;ExpiresIn ref="kvm.oauth.expires_in"&gt;
     3600000 &lt;!--default value in milliseconds--&gt;
 &lt;/ExpiresIn&gt;
 </pre>
+
+<p>Edge does not support a way to force the expiration of a token after it has been created.
+If you need to force token expiration (for example, based on a condition), a possible solution is
+described in <a href="https://community.apigee.com/questions/1994/is-there-a-way-to-update-expiry-time-of-an-existin.html">
+this Apigee Community post</a>.</p>
+
+<p> By default, expired access tokens are purged from the Apigee
+Edge system automatically 180 days after expiration. See also <a href="#purge">Purging access
+tokens</a></p>
+
+  <p><strong>Private Cloud:</strong> For an Edge for Private Cloud installation, the default
+  value is set by the <code>conf_keymanagement_oauth_auth_code_expiry_time_in_millis</code> property.
+    To set this property:</p>
+  <ol>
+    <li>Open the <code>message-processor.properties</code> file in an editor. If the file does not exist, create it:
+      <pre class="devsite-terminal">vi /opt/apigee/customer/application/message-processor.properties</pre></li>
+    <li>Set the property as desired:
+      <pre class="prettyprint">conf_keymanagement_oauth_auth_code_expiry_time_in_millis=3600000</pre></li>
+    <li>Make sure the properties file is owned by the "apigee" user:
+      <pre class="devsite-terminal">chown apigee:apigee /opt/apigee/customer/application/message-processor.properties</pre></li>
+    <li>Restart the Message Processor.
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-message-processor restart</pre></li>
+</ol>
 
   <table>
     <tbody>
@@ -1125,7 +1134,7 @@ described in <a href="https://community.apigee.com/questions/1994/is-there-a-way
             "/api-platform/security/oauth/access-tokens.html">Requesting access tokens and
             authorization codes</a>.</li>
 
-            <li><code>RefreshAccessToken</code> - Exchange a new access token for a refresh token.
+            <li><code>RefreshAccessToken</code> - Exchange a refresh token for a new access token.
             See also <a href="/api-platform/security/oauth/access-tokens.html">Requesting access
             tokens and authorization codes</a>.</li>
 
@@ -1427,6 +1436,20 @@ curl -u email:password -X PUT -H "Content-type:application/xml" http://host:port
     3600000 &lt;!--default value in milliseconds--&gt;
 &lt;/RefreshTokenExpiresIn&gt;
 </pre>
+
+  <p><strong>Private Cloud:</strong> For an Edge for Private Cloud installation, the default
+  value is set by the <code>conf_keymanagement_oauth_refresh_token_expiry_time_in_millis</code> property.
+    To set this property:</p>
+  <ol>
+    <li>Open the <code>message-processor.properties</code> file in an editor. If the file does not exist, create it:
+      <pre class="devsite-terminal">vi /opt/apigee/customer/application/message-processor.properties</pre></li>
+    <li>Set the property as desired:
+      <pre class="prettyprint">conf_keymanagement_oauth_refresh_token_expiry_time_in_millis=3600000</pre></li>
+    <li>Make sure the properties file is owned by the "apigee" user:
+      <pre class="devsite-terminal">chown apigee:apigee /opt/apigee/customer/application/message-processor.properties</pre></li>
+    <li>Restart the Message Processor.
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-message-processor restart</pre></li>
+</ol>
 
   <table>
     <tbody>

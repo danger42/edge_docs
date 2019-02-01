@@ -1,10 +1,9 @@
-{% extends "_base.html" %} {% block title %}About message templates{% endblock %} {% block body %}
+{% extends "_base.html" %} {% block title %}Message templates{% endblock %} {% block body %}
 
-<p>
-This topic discusses how to use message templates in API proxies.
-</p>
+<p>This topic discusses how to use message templates in API proxies and provides a function
+reference.</p>
+
 <h2 id="what-is-a-message-template">What is a message template?</h2>
-
 
 <p>
 A <strong>message template</strong> permits you to perform <strong>variable string substitution</strong> in certain policy and TargetEndpoint elements. This feature, where supported, lets you populate strings dynamically when a proxy executes.
@@ -15,15 +14,10 @@ You can include any combination of flow variable references and literal text in 
 <p>
 See also <a href="#where-can-you-use-message-templates">Where can you use message templates?</a>
 </p>
-<h3 id="example">Example</h3>
+<h3 id="example1">Example</h3>
 
 
-<p>
-	For example, the Assign Message policy lets you use a message template within in the <code>&lt;Payload&gt;</code> element:<br>
-
-</p>
-
-
+<p>For example, the Assign Message policy lets you use a message template within in the <code>&lt;Payload&gt;</code> element:</p>
 
 <pre class="prettyprint">&lt;AssignMessage name="set-dynamic-content">
   &lt;AssignTo createNew="false" type="response">&lt;/AssignTo>
@@ -42,7 +36,7 @@ In the above example, the value of flow variable <code>user.name</code> (in curl
   then the resulting message output in the payload will be: <code>You entered an invalid username: jdoe</code>.
   If the variable cannot be resolved, then an empty string is output.
 </p>
-<h3 id="example">Example</h3>
+<h3 id="example2">Example</h3>
 
 
 <p>
@@ -93,7 +87,7 @@ In the AssignMessage policy, the following elements in the <code>&lt;Set&gt;</co
 <li>ReasonPhrase</li></ul>
 
 <p>
-Again, note that flow variables in a message template must be enclosed in curly braces.
+Again, note that flow variables in a message template <strong>must be enclosed in curly braces</strong>.
 </p>
 <p>
 When this policy executes:
@@ -103,7 +97,7 @@ When this policy executes:
 <li>The Payload includes a mix of literal text and variables (the <code>client_id</code> is populated dynamically).
 <li>The StatusCode and ReasonPhrase only include literal text; however, these elements also support message templating if you wish to use it. </li></ul>
 
-<h3 id="example">Example</h3>
+<h3 id="example3">Example</h3>
 
 
 <p>
@@ -142,31 +136,38 @@ Message templates are supported in several <strong>policies </strong>as well as 
 
 
 <table>
+  <thead>
   <tr>
-   <td><strong>Policy</strong>
-   </td>
-   <td><strong>Elements and child-elements that support message templates</strong>
-   </td>
+   <th><strong>Policy</strong>
+   </th>
+   <th><strong>Elements and child-elements that support message templates</strong>
+   </th>
   </tr>
+  </thead>
+  <tbody>
   <tr>
-   <td>Assign Message
-   </td>
-	  <td><code>&lt;Set&gt;</code> elements: Payload, ContentType, Verb, Version, Path, StatusCode, ReasonPhrase, Headers, QueryParams, FormParams
+   <td>{{assign_message_policy}}</td>
+	  <td>{{am_set_link}} child elements: Payload, ContentType, Verb, Version, Path, StatusCode, ReasonPhrase, Headers, QueryParams, FormParams
    <p>
-	   <code>&lt;Add&gt;</code> elements: Headers, QueryParams, FormParams
+	   {{am_add_link}} child elements: Headers, QueryParams, FormParams
+   <p>
+	   {{am_assignvariable_link}} child element: {{am_assignvariable_template_link}}
    </td>
   </tr>
   <tr>
-   <td>Extract Variables
-   </td>
+   <td>{{extension_callout_policy}}</td>
+	  <td><a href="/api-platform/reference/policies/extension-callout-policy#input_element"><code>
+      &lt;Input&gt;</code></a></td>
+  </tr>
+  <tr>
+   <td>{{extract_variables_policy}}</td>
 	  <td><code>&lt;JsonPath&gt;</code>
       <aside class="note">Message template is <strong>not</strong> accepted for <code>&lt;XMLPath&gt;</code>.</aside>
 </td>
   </tr>
   <tr>
-   <td>GenerateJWT
-<p>
-VerifyJWT
+   <td>{{generate_jwt_policy}}<br/>
+{{verify_jwt_policy}}
    </td>
    <td><code>&lt;AdditionalClaims&gt;&lt;Claim&gt;</code>
 <p>
@@ -176,38 +177,39 @@ VerifyJWT
    </td>
   </tr>
   <tr>
-   <td>LDAP
+   <td>{{ldap_policy}}
    </td>
 	  <td><code>&lt;SearchQuery&gt;</code></td>
   </tr>
   <tr>
-   <td>Message Logger
+   <td>{{message_logging_policy}}
    </td>
 	  <td><code>&lt;Syslog&gt;&lt;Message&gt;</code>
     <p><code>&lt;File&gt;&lt;Message&gt;</code></td>
   </tr>
   <tr>
-   <td>Raise Fault
+   <td>{{raise_fault_policy}}
    </td>
 	  <td><code>&lt;Set&gt;</code> elements: Payload, ContentType, Verb, Version, Path, StatusCode, ReasonPhrase, Headers, QueryParams, FormParams
 		  <p><code>&lt;Add&gt;</code> elements: Headers, QueryParams, FormParams
    </td>
   </tr>
   <tr>
-   <td>SAML Assertion
+   <td>{{saml_assertion_policy}}
    </td>
 	  <td><code> &lt;Template&gt;</code>
 <p>
 	* Only when the policy signature is <code>&lt;GenerateSAMLAssertion&gt;</code></td>
   </tr>
   <tr>
-   <td>Service Callout
+   <td>{{service_callout_policy}}
    </td>
 	  <td><code>&lt;Set&gt;</code> elements: Payload, ContentType, Verb, Version, Path, StatusCode, ReasonPhrase, /Headers, QueryParams, FormParams
 	    <p><code>&lt;Add&gt;</code> elements: Headers, QueryParams, FormParams
 		  <p><code>&lt;HTTPTargetConnection&gt;/&lt;URL&gt;</code>: Note that the first part of the string must be http or https.
    </td>
   </tr>
+  </tbody>
 </table>
 
 
@@ -216,12 +218,15 @@ VerifyJWT
 
 
 <table>
+  <thead>
   <tr>
-   <td><strong>HTTPTargetConnection elements</strong>
-   </td>
-   <td><strong>Child-elements that support message templates</strong>
-   </td>
+   <th><strong>HTTPTargetConnection elements</strong>
+   </th>
+   <th><strong>Child-elements that support message templates</strong>
+   </th>
   </tr>
+  </thead>
+  <tbody>
   <tr>
    <td>SSLInfo
    </td>
@@ -234,6 +239,13 @@ VerifyJWT
    <td>ApiProxy, ProxyEndpoint
    </td>
   </tr>
+  <tr>
+   <td>Path
+   </td>
+   <td>N/A
+   </td>
+  </tr>
+  </tbody>
 </table>
 
 
@@ -310,6 +322,7 @@ In Edge versions <strong>before Cloud release 16.08.17</strong>, you could <stro
 <p>
 Although Apigee recommends that you use the newer curly-brace syntax, the older syntax still works.
 </p>
+
 <h2 id="using-message-template-functions">Using message template functions</h2>
 
 
@@ -317,7 +330,7 @@ Although Apigee recommends that you use the newer curly-brace syntax, the older 
 Edge provides a set of functions that you can use within message templates to escape, encode, hash, and format string variables.
 </p>
 <p>
-The message template functions are described in detail in <a href="/api-platform/reference/message-template-functions.html">Message template function reference</a>.
+The message template functions are described in detail in <a href="#functionref">Message template function reference</a>.
 </p>
 <h3 id="example-tolowercase">Example: toLowerCase()</h3>
 
@@ -450,7 +463,1041 @@ The function escapes the embedded quotes, resulting in valid JSON, which is exac
 }</pre>
 
 
-<p>
-For more information on these and other message template functions, see <a href="/api-platform/reference/message-template-functions.html">Message template function reference</a>.
+
+<p>A <a href="/api-platform/reference/message-template-intro.html">message
+  template</a> is a dynamic string substitution feature that you can use in certain policies and
+  in TargetEndpoint definitions. Message template <b>functions</b> let you perform useful operations
+  such as hashing, string manipulation, character escaping, and others within a message template.
 </p>
+<p>For example, in the following AssignMessage policy, the function <code>toLowerCase()</code> is used in a
+  message template:</p>
+
+  <pre class="prettyprint">&lt;AssignMessage name="AM-Set-Custom-Response">
+    &lt;AssignTo createNew="false" type="response"/>
+    &lt;IgnoreUnresolvedVariables>true&lt;/IgnoreUnresolvedVariables>
+    &lt;Set>
+       &lt;Headers>
+         &lt;Header name="x-h1">Test header: {Hello, toLowerCase(user.name)}&lt;/Header>
+       &lt;/Headers>
+    &lt;/Set>
+&lt;/AssignMessage></pre>
+
+<p>This topic describes the message template functions, their arguments, and outputs. This topic assumes
+that you are familiar with <a href="/api-platform/reference/message-template-intro.html">message
+  templates</a> and the contexts in which they are used.</p>
+<p>
+<aside class="note">It is not possible to nest function calls. For example, you cannot do:
+</p>
+
+
+
+<pre class="prettyprint">{substring({timeFormat("yyyy-MM-dd", "1494390266")}, 0, 4)}
+</pre></aside>
+
+
+<h2 id="hash-functions">Hash functions</h2>
+
+
+<p>
+Compute a hash value and return the string representation of that hash.
+</p>
+<h3 id="hexadecimal-hash-functions">Hexadecimal hash functions</h3>
+
+
+<p>
+Compute a hash value and return the string representation of that hash as a hexadecimal number.
+</p>
+<h4 id="hash-syntax">Syntax</h4>
+
+
+
+<table>
+  <thead>
+  <tr>
+   <th><strong>Function</strong>
+   </th>
+   <th><strong>Description</strong>
+   </th>
+  </tr>
+  </thead>
+  <tbody>
+  <tr>
+   <td><code>md5Hex(string)</code>
+   </td>
+   <td>Computes an MD5 hash expressed as a hexadecimal number.
+   </td>
+  </tr>
+  <tr>
+   <td><code>sha1Hex(string)</code>
+   </td>
+   <td>Computes a SHA1 hash expressed as a hexadecimal number.
+   </td>
+  </tr>
+  <tr>
+   <td><code>sha256Hex(string)</code>
+   </td>
+   <td>Computes a SHA256 hash expressed as a hexadecimal number.
+   </td>
+  </tr>
+  <tr>
+   <td><code>sha384Hex(string)</code>
+   </td>
+   <td>Computes a SHA384 hash expressed as a hexadecimal number.
+   </td>
+  </tr>
+  <tr>
+   <td><code>sha512Hex(string)</code>
+   </td>
+   <td>Computes a SHA512 hash expressed as a hexadecimal number.
+   </td>
+  </tr>
+  </tbody>
+</table>
+
+
+<h4 id="hash-arguments">Arguments</h4>
+
+
+<p>
+<strong>string</strong> - The Hash functions take a single string argument upon
+  which the hash algorithm is computed. The argument can be a literal string or a string flow variable.
+</p>
+<h4 id="hash-examples">Examples</h4>
+
+
+<p>
+Function call:
+</p>
+
+
+
+<pre class="prettyprint">sha256Hex('abc')
+</pre>
+
+
+<p>
+Result:
+</p>
+
+
+
+<pre class="prettyprint">ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad
+</pre>
+
+
+<p>
+Function call:
+</p>
+
+
+
+<pre class="prettyprint">var str = 'abc';
+sha256Hex(str)
+</pre>
+
+
+<p>
+Result:
+</p>
+
+
+
+<pre class="prettyprint">ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad
+</pre>
+
+
+<h3>Base64 hash functions </h3>
+
+
+<p>
+Compute a hash value and return the string representation of that hash as a Base64 encoded value.
+</p>
+<h4 id="base64-syntax">Syntax</h4>
+
+
+
+<table>
+  <thead>
+  <tr>
+   <th><strong>Function</strong>
+   </th>
+   <th><strong>Description</strong>
+   </th>
+  </tr>
+  </thead>
+  <tbody>
+  <tr>
+   <td><code>md5Base64(string)</code>
+   </td>
+   <td>Computes an MD5 hash expressed as a Base64 encoded value.
+   </td>
+  </tr>
+  <tr>
+   <td><code>sha1Base64(string)</code>
+   </td>
+   <td>Computes a SHA1 hash expressed as a Base64 encoded value.
+   </td>
+  </tr>
+  <tr>
+   <td><code>sha256Base64(string)</code>
+   </td>
+   <td>Computes a SHA256 hash expressed as a Base64 encoded value.
+   </td>
+  </tr>
+  <tr>
+   <td><code>sha384Base64(string)</code>
+   </td>
+   <td>Computes a SHA384 hash expressed as a Base64 encoded valuer.
+   </td>
+  </tr>
+  <tr>
+   <td><code>sha512Base64(string)</code>
+   </td>
+   <td>Computes a SHA512 hash expressed as a Base64 encoded value.
+   </td>
+  </tr>
+  </tbody>
+</table>
+
+
+<h4 id="base65-arguments">Arguments</h4>
+
+
+<p>
+<strong>string</strong> - The Hash functions take a single string argument<strong> </strong>upon
+  which the hash algorithm is computed. The argument can be a literal string or a string flow variable.
+</p>
+<h4 id="base64-examples">Examples</h4>
+
+
+<p>
+Function call:
+</p>
+
+
+
+<pre class="prettyprint">sha256Base64('abc')
+</pre>
+
+
+<p>
+Result:
+</p>
+
+
+
+<pre class="prettyprint">OghSaGiHHx1fTv3y8SKdZYAoGHcqBUpKjNJyGDJ11T215Acw1orz3N2L/NlbwelxZ5R2kuPHuNDb1ZzttKplCg==
+</pre>
+
+
+<p>
+Function call:
+</p>
+
+
+
+<pre class="prettyprint">var str = 'abc';
+sha256Base64(str)
+</pre>
+
+
+<p>
+Result:
+</p>
+
+
+
+<pre class="prettyprint">OghSaGiHHx1fTv3y8SKdZYAoGHcqBUpKjNJyGDJ11T215Acw1orz3N2L/NlbwelxZ5R2kuPHuNDb1ZzttKplCg==
+</pre>
+
+
+<h2 id="string-functions">String functions</h2>
+
+
+<p>
+Perform operations on strings within a message template.
+</p>
+
+<h3>Base64 encoding functions</h3>
+
+<p>Encode and decode strings using the Base64 encoding scheme.</p>
+
+<h4 id="syntax">Syntax</h4>
+
+<table>
+  <thead>
+  <tr>
+   <th><strong>Function</strong>
+   </th>
+   <th><strong>Description</strong>
+   </th>
+  </tr>
+  </thead>
+  <tbody>
+  <tr>
+   <td><code>encodeBase64(string)</code>
+   </td>
+    <td>Encodes a string using Base64 encoding. For example: <code>encodeBase64(<var>value</var>)</code>, when <var>value</var> holds
+     <code>abc</code>, the function returns the string: <code>YWJj</code>
+   </td>
+  </tr>
+  <tr>
+   <td><code>decodeBase64(string)</code>
+   </td>
+    <td>Decodes a Base64 encoded string. For example: <code>decodeBase64(<var>value</var>)</code> when <var>value</var> holds
+      <code>aGVsbG8sIHdvcmxk</code>, the function returns the string <code>hello, world</code>.
+   </td>
+  </tr>
+  </tbody>
+</table>
+
+
+<h4>Arguments</h4>
+
+<p>
+<strong>string</strong> - The string to encode or decode. Can be a literal string or a string flow variable.
+</p>
+<h4 id="example">Example</h4>
+
+<pre class="prettyprint">&lt;AssignMessage name="AM-Set-Custom-Response">
+    &lt;AssignTo createNew="false" type="response"/>
+    &lt;IgnoreUnresolvedVariables>true&lt;/IgnoreUnresolvedVariables>
+    &lt;Set>
+       &lt;Headers>
+         &lt;Header name="x-h1">Hello, {decodeBase64('d29ybGQK')}&lt;/Header>
+       &lt;/Headers>
+    &lt;/Set>
+&lt;/AssignMessage></pre>
+
+
+<h3 id="case-conversion-functions">Case conversion functions</h3>
+
+
+<p>
+Convert a string to all uppercase or all lowercase letters.
+</p>
+<h4 id="string-function-syntax">Syntax</h4>
+
+
+
+<table>
+  <thead>
+  <tr>
+   <th><strong>Function</strong>
+   </th>
+   <th><strong>Description</strong>
+   </th>
+  </tr>
+  </thead>
+  <tbody>
+  <tr>
+   <td><code>toUpperCase(string)</code>
+   </td>
+   <td>Convert a string to uppercase.
+   </td>
+  </tr>
+  <tr>
+   <td><code>toLowerCase(string)</code>
+   </td>
+   <td>Convert a string to lowercase.
+   </td>
+  </tr>
+  <tr>
+   <td><code>encodeBase64(string)</code>
+   </td>
+    <td>Encodes a string using Base64 encoding. For example: <code>encodeBase64(<var>value</var>)</code>, when <var>value</var> holds
+     <code>abc</code>, the function returns the string: <code>YWJj</code>
+   </td>
+  </tr>
+  <tr>
+   <td><code>decodeBase64(string)</code>
+   </td>
+    <td>Decodes a Base64 encoded string. For example: <code>decodeBase64(value)</var> when value holds
+      <code>aGVsbG8sIHdvcmxk</code>, the function returns the string <code>hello, world</code>.
+   </td>
+  </tr>
+  </tbody>
+</table>
+
+
+<h4><br>
+Arguments</h4>
+
+
+<p>
+<strong>string</strong> - The string to convert. Can be a literal string or a string flow variable.
+</p>
+<h4 id="string-function-example">Example</h4>
+
+
+
+
+
+<pre class="prettyprint">&lt;AssignMessage name="AM-Set-Custom-Response">
+    &lt;AssignTo createNew="false" type="response"/>
+    &lt;IgnoreUnresolvedVariables>true&lt;/IgnoreUnresolvedVariables>
+    &lt;Set>
+       &lt;Headers>
+         &lt;Header name="x-h1">Hello, {toLowerCase(user.name)}&lt;/Header>
+       &lt;/Headers>
+    &lt;/Set>
+&lt;/AssignMessage></pre>
+
+
+<h3 id="substring-function">Substring function</h3>
+
+
+<p>
+Replaces characters between the starting and ending index with the specified string.
+</p>
+<h4 id="substring-function-syntax">Syntax</h4>
+
+
+
+
+
+<pre class="prettyprint">substring(str, start_index, end_index)
+</pre>
+
+
+<h4 id="substring-function-arguments">Arguments</h4>
+
+<ul>
+
+<li><strong>str</strong> - A literal string or string flow variable.
+<li><strong>start_index</strong> - The starting index into the string. Character replacement begins here.
+<li><strong>end_index</strong> - (Optional) The ending index into the string. If not supplied, the replacement occurs between the starting index and the end of the string.</li></ul>
+
+<h4 id="substring-function-examples">Examples</h4>
+
+
+<p>
+For the following examples, suppose that these flow variables exist:
+</p>
+
+<table>
+  <thead>
+  <tr>
+   <th><strong>Variable name</strong>
+   </th>
+   <th><strong>Value</strong>
+   </th>
+  </tr>
+  </thead>
+  <tbody>
+  <tr>
+   <td><code>alpha</code>
+   </td>
+   <td>ABCDEFGHIJKLMNOPQRSTUVWXYZ
+   </td>
+  </tr>
+  <tr>
+   <td><code>seven</code>
+   </td>
+   <td>7
+   </td>
+  </tr>
+  </tbody>
+</table>
+
+
+<p>
+<br>
+Here are results of function calls that use these variables:<br>
+
+</p>
+
+<table>
+  <thead>
+  <tr>
+   <th><strong>Message template expression</strong>
+   </th>
+   <th><strong>Result</strong>
+   </th>
+  </tr>
+  </thead>
+  <tbody>
+  <tr>
+   <td><code>{substring(alpha, 22)}</code>
+   </td>
+   <td><code>WXYZ</code>
+   </td>
+  </tr>
+  <tr>
+   <td><code>hello {substring(alpha, 22)}</code>
+   </td>
+   <td><code>hello WXYZ</code>
+   </td>
+  </tr>
+  <tr>
+   <td><code>{substring(alpha, -4)}</code>
+   </td>
+   <td><code>WXYZ </code>
+   </td>
+  </tr>
+  <tr>
+   <td><code>{substring(alpha, -8, -4)}</code>
+   </td>
+   <td><code>STUV</code>
+   </td>
+  </tr>
+  <tr>
+   <td><code>{substring(alpha, 0, 10)}</code>
+   </td>
+   <td><code>ABCDEFGHIJ</code>
+   </td>
+  </tr>
+  <tr>
+   <td><code>{substring(alpha, 0, seven)}</code>
+   </td>
+   <td><code>ABCDEFG</code>
+   </td>
+  </tr>
+  </tbody>
+</table>
+
+
+<h3 id="replace-all-function">Replace All function</h3>
+
+
+<p>
+Applies a regular expression to a string and for any matches, replaces the match with a replacement value.
+</p>
+<h4 id="reaplace-all-syntax">Syntax</h4>
+
+
+
+
+
+<pre class="prettyprint">replaceAll(string, regex, value)
+</pre>
+
+
+<h4 id="reaplace-all-arguments">Arguments</h4>
+
+<ul>
+
+<li><strong>string</strong> - A literal string or string flow variable in which to make replacements.
+<li><strong>regex</strong> - A regular expression.
+<li><strong>value</strong> - The value to replace all regex matches within the string.</li></ul>
+
+<h4 id="reaplace-all-examples">Examples</h4>
+
+
+<p>
+For the following examples, suppose these flow variables exist:<br>
+
+</p>
+
+<table>
+  <thead>
+  <tr>
+   <th><strong>Variable name</strong>
+   </th>
+   <th><strong>Value</strong>
+   </th>
+  </tr>
+  </thead>
+  <tbody>
+  <tr>
+   <td><code>header</code>
+   </td>
+   <td><code>Bearer ABCDEFGHIJKLMNOPQRSTUVWXYZ-9993 </code>
+   </td>
+  </tr>
+  <tr>
+   <td><code>regex1</code>
+   </td>
+   <td><code>"^Bearer "</code>
+   </td>
+  </tr>
+  <tr>
+   <td><code>replacement</code>
+   </td>
+   <td><code>"TOKEN: "</code>
+   </td>
+  </tr>
+  </tbody>
+</table>
+
+
+<p>
+Here are results of function calls that use these variables:<br>
+
+</p>
+
+<table>
+  <thead>
+  <tr>
+   <th><strong>Message template expression</strong>
+   </th>
+   <th><strong>Result</strong>
+   </th>
+  </tr>
+  </thead>
+  <tbody>
+  <tr>
+   <td><code>{replaceAll(header, "9993", '')}</code>
+   </td>
+   <td><code>Bearer ABCDEFGHIJKLMNOPQRSTUVWXYZ-</code>
+   </td>
+  </tr>
+  <tr>
+   <td><code>{replaceAll(header, regex1, '')}</code>
+   </td>
+   <td><code>ABCDEFGHIJKLMNOPQRSTUVWXYZ-9993</code>
+   </td>
+  </tr>
+  <tr>
+   <td><code>{replaceAll(header, regex1, replacement)}</code>
+   </td>
+   <td><code>TOKEN: ABCDEFGHIJKLMNOPQRSTUVWXYZ-9993</code>
+   </td>
+  </tr>
+  </tbody>
+</table>
+
+
+<h3 id="replace-first-function">Replace First function</h3>
+
+
+<p>
+Replaces only the first occurrence of the specified regular expression match in the string.
+</p>
+<h4 id="replace-first-syntax">Syntax</h4>
+
+
+
+
+
+<pre class="prettyprint">replaceFirst(string, regex, value)
+</pre>
+
+
+<h4 id="replace-first-arguments">Arguments</h4>
+
+<ul>
+
+<li><strong>string</strong> - A literal string or string flow variable in which to make replacements.
+<li><strong>regex</strong> - A regular expression.
+<li><strong>value</strong> - The value to replace regex matches within the string.</li></ul>
+
+
+<h2 id="character-escape-and-encoding-functions">Character escape and encoding functions</h2>
+
+
+<p>
+Functions that escape or encode special characters in a string.
+</p>
+<h3 id="character-escape-encoding-syntax">Syntax</h3>
+
+
+
+<table>
+  <thead>
+  <tr>
+   <th><strong>Function</strong>
+   </th>
+   <th><strong>Description</strong>
+   </th>
+  </tr>
+  </thead>
+  <tbody>
+  <tr>
+   <td>escapeJSON(string)
+   </td>
+   <td>Backslash-escapes double-quotes.
+   </td>
+  </tr>
+  <tr>
+   <td>escapeXML(string)
+   </td>
+   <td>Replaces angle brackets, apostrophe, double-quote and ampersands with the respective XML entities. Use for XML 1.0 documents.
+<p>
+     <aside class="note">Use escapeXML for XML1.0 documents and escapeXML11 for XML 1.1 documents.</aside>
+   </td>
+  </tr>
+  <tr>
+   <td>escapeXML11(string)
+   </td>
+   <td>Works the same way as escapeXML, but for XML v1.1 entities. See Usage notes below.
+   </td>
+  </tr>
+  <tr>
+   <td>encodeHTML(string)
+   </td>
+   <td>Encodes apostrophe, angle brackets, and ampersand.
+   </td>
+  </tr>
+  </tbody>
+</table>
+
+<h3 id="character-escape-encoding-arguments">Arguments</h3>
+
+
+<p>
+<strong>string</strong> - The string to escape. Can be a literal string or a string flow variable.
+</p>
+<h3 id="character-escape-encoding-usage-notes">Usage notes</h3>
+
+
+<p>
+XML 1.1 can represent certain control characters, but it cannot represent the null byte or unpaired Unicode surrogate codepoints, even after escaping. The escapeXML11() function removes characters that do not fit in the following ranges:
+</p>
+
+
+
+<pre class="prettyprint">[#x1-#xD7FF] | [#xE000-#xFFFD] | [#x10000-#x10FFFF]
+</pre>
+
+
+<p>
+  The <code>escapeXML11()</code> function escapes characters in the following ranges:
+</p>
+
+
+
+<pre class="prettyprint">[#x1-#x8] | [#xB-#xC] | [#xE-#x1F] | [#x7F-#x84] | [#x86-#x9F]
+</pre>
+
+
+<h3 id="character-escape-encoding-examples">Examples</h3>
+
+
+<p>
+Assume a flow variable called <strong>food</strong> exists with this value: <strong><code>"bread" & "butter"</code></strong>. Then, the function:
+
+
+
+
+<pre class="prettyprint">{escapeHTML(food)}
+</pre>
+
+
+<p>
+results in:
+</p>
+
+
+
+<code>&amp;quot;bread&amp;quot; &amp;amp; &amp;quot;butter&amp;quot;</code>
+
+
+<h2 id="time-format-functions">Time format functions</h2>
+
+<p>
+Return a string representation of the time, formatted in the local time zone, or in UTC.
+</p>
+<h3 id="time-format-syntax">Syntax</h3>
+
+<table>
+  <thead>
+  <tr>
+   <th><strong>Function</strong>
+   </th>
+   <th><strong>Description</strong>
+   </th>
+  </tr>
+  </thead>
+  <tbody>
+  <tr>
+   <td><code>timeFormat(format, str)</code>
+   </td>
+   <td>Returns the date formatted in the local time zone.
+   </td>
+  </tr>
+  <tr>
+   <td><code>timeFormatMS(format, str)</code>
+   </td>
+   <td>Returns the date formatted in the local time zone.
+   </td>
+  </tr>
+  <tr>
+   <td><code>timeFormatUTC(format, str)</code>
+   </td>
+   <td>Returns the date formatted in UTC.
+   </td>
+  </tr>
+  <tr>
+   <td><code>timeFormatUTCMs(format, str)</code>
+   </td>
+   <td>Returns the date formatted in UTC.
+   </td>
+  </tr>
+  </tbody>
+</table>
+
+
+<h3 id="time-format-arguments">Arguments</h3>
+
+<ul>
+
+<li><strong>format</strong> - A date/time format string. Can be a literal string or a string variable.
+<li><strong>str</strong> - A string or string flow variable containing a time value. The value can be in seconds-since-epoch or milliseconds-since-epoch for timeFormatMs.</li></ul>
+
+<h3 id="time-format-examples">Examples</h3>
+
+
+<p>
+Assume the following values and assume the local timezone is Pacific:
+</p><ul>
+
+<li><code>epoch_time_ms = 1494390266000</code>
+<li><code>epoch_time = 1494390266</code>
+<li><code>fmt1 = yyyy-MM-dd</code>
+<li><code>fmt2 = yyyy-MM-dd HH-mm-ss</code>
+<li><code>fmt3 = yyyyMMddHHmmss</code></li></ul>
+
+<p>
+The functions return the following results:
+</p><ul>
+
+<table>
+  <thead>
+    <tr>
+      <th width="300">Function</th>
+      <th width="219">Output</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>timeFormatMs(fmt1,epoch_time_ms)</code></td>
+      <td><code>2017-05-09</code></td>
+    </tr>
+    <tr>
+      <td><code>timeFormat(fmt1,epoch_time)</code></td>
+      <td><code>2017-05-09</code></td>
+    </tr>
+    <tr>
+      <td><code>timeFormat(fmt2,epoch_time)</code></td>
+      <td><code>2017-05-09 21:24:26</code></td>
+    </tr>
+    <tr>
+      <td><code>timeFormat(fmt3,epoch_time)</code></td>
+      <td><code>20170509212426</code></td>
+    </tr>
+    <tr>
+      <td><code>timeFormatUTC(fmt1,epoch_time)</code></td>
+      <td><code>2017-05-10</code></td>
+    </tr>
+    <tr>
+      <td><code>timeFormatUTC(fmt2,epoch_time)</code></td>
+      <td><code>2017-05-10 04:24:26</code></td>
+    </tr>
+    <tr>
+      <td><code>timeFormatUTC(fmt3,epoch_time)</code></td>
+      <td><code>20170510042426</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="other-functions">Other functions</h2>
+
+
+<h3 id="create-uuid-function">Create UUID function</h3>
+
+
+<p>
+Generates and returns a UUID.
+</p>
+<h4 id="create-uuid-syntax">Syntax</h4>
+
+
+
+
+
+<pre class="prettyprint">createUuid()
+</pre>
+
+
+<h4 id="create-uuid-arguments">Arguments</h4>
+
+
+<p>
+None.
+</p>
+<h4 id="example">Example</h4>
+
+
+<p>
+{<code>createUuid()}</code>
+</p>
+<p>
+Sample result:
+</p>
+
+
+
+<pre class="prettyprint">ec3ca9be-d1e1-4ef4-aee4-4a58f3130db8
+</pre>
+
+
+<h3 id="random-long-generator-function">Random Long Generator function</h3>
+
+
+<p>
+Returns a random long integer.
+</p>
+<h4 id="random-long-generator-syntax">Syntax</h4>
+
+
+
+
+
+<pre class="prettyprint">randomLong(args)
+</pre>
+
+
+<h4 id="random-long-generator-arguments">Arguments</h4>
+
+<ul>
+
+<li>If no arguments are specified, the function returns a random long integer, as computed by the Java SecureRandom class.
+<li>If one argument is present, it is treated as the minimum value of the computation.
+<li>If a second argument is present, it is treated as the maximum value of the computation.</li></ul>
+
+<h4 id="random-long-generator-example">Example</h4>
+
+
+
+
+
+<pre class="prettyprint">{random()}
+</pre>
+
+
+<p>
+results in something like this:
+</p>
+
+
+
+<pre class="prettyprint">5211338197474042880
+</pre>
+
+
+<h3 id="regex-text-generator">Regex text generator</h3>
+
+
+<p>
+Generate a text string that matches a given regular expression.
+</p>
+<h4 id="regex-text-generator-syntax">Syntax</h4>
+
+
+
+
+
+<pre class="prettyprint">xeger(regex)
+</pre>
+
+
+<h4 id="regex-text-generator-argument">Argument</h4>
+
+
+<p>
+<strong>regex</strong> - A regular expression.
+</p>
+<h4 id="regex-text-generator-example">Example</h4>
+
+
+<p>
+This example generates a seven digit string with no zeros:
+</p>
+
+
+
+<pre class="prettyprint">xeger( '[1-9]{7}' )
+</pre>
+
+
+<p>
+Example result:
+</p>
+
+
+
+<pre class="prettyprint">9857253
+</pre>
+
+
+<h3 id="json-path-function">JSON Path function</h3>
+
+
+<p>
+Applies a JSON Path expression to a JSON variable.
+</p>
+<h4 id="json-path-syntax">Syntax</h4>
+
+
+
+
+
+<pre class="prettyprint">jsonPath(json-path, json-var)
+</pre>
+
+
+<h4 id="arguments">Arguments</h4>
+
+
+<p>
+<strong>json-path</strong> - A JSON Path expression.
+</p>
+<p>
+<strong>json-var</strong> - A flow variable or string containing JSON.
+</p>
+<p>
+<aside class="note">The function returns an empty string if the expression does not match.</aside>
+</p>
+<h4 id="json-path-example">Example</h4>
+
+
+<p>
+If this is the message template:
+</p>
+
+
+
+<pre class="prettyprint">The address is {jsonPath($.results[?(@.name == 'Mae West')].address.line1, the_json_variable)}
+</pre>
+
+
+<p>
+and <code>the_json_variable</code> contains:
+</p>
+
+
+
+<pre class="prettyprint">{
+      "results" : [
+        {
+          "address" : {
+            "line1" : "18250 142ND AV NE",
+            "city" : "Woodinville",
+            "state" : "Washington",
+            "zip" : "98072"
+          },
+          "name" : "Fred Meyer"
+        },
+        {
+          "address" : {
+            "line1" : "1060 West Addison Street",
+            "city" : "Chicago",
+            "state" : "Illinois",
+            "zip" : "60613"
+          },
+          "name" : "Mae West"
+        }
+      ]
+    } </pre>
+
+
+<p>
+The result of the function is:
+</p>
+
+
+
+<pre class="prettyprint">The address is 1060 West Addison Street</pre>
+
 {% endblock %}

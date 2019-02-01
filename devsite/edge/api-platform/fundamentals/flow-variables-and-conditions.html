@@ -1,345 +1,1358 @@
-  {% extends "_base.html" %} {% block title %}Flow variables and conditions{% endblock %} {% block body %}
+{% extends "_base.html" %}
+{% block title %}Conditions with flow variables{% endblock %}
+{% block body %}
 
-  <p>Conditional statements are a common control structure in all programming languages. Like a
-  programming language, API proxy configuration supports conditional statements for Flows,
-  Policies, Steps, and RouteRules. By defining conditional statements, you define dynamic behavior
-  for your API. This dynamic behavior lets you do things like converting XML into JSON only for
-  mobile devices, or routing to a backend URL based on the content type or HTTP verb of the request
-  message.</p>
+  <p><em>Conditional statements</em> are a common control structure in all programming languages.
+  Like a programming language, Edge's API proxy configuration supports conditional statements for
+  Flows, Policies, Steps, and RouteRules.</p>
+
+  <p>By defining conditional statements, you define dynamic behavior
+  for your API. This dynamic behavior lets you do things like convert XML into JSON only for
+  mobile devices, or route to a backend URL based on the content type of the request message.</p>
 
   <p>This topic shows you how to use conditions to dynamically apply API management features at
   runtime, without writing any code.</p>
 
-  <div class="video">
-    <p><strong>Video:</strong> Watch a short video to learn more about flow variables and
-    conditions.</p>
-
-    <div style="text-align: left; margin:15px">
-      <iframe allowfullscreen="" frameborder="0" height="480" src=
-      "https://www.youtube.com/embed/lmU95q7Z-iM" width="560"></iframe>
+  <section class="expandable">
+    <h3 class="showalways hide-from-toc">Videos</h3>
+    <div class="ds-selector-tabs">
+      <section>
+        <h3>Video 1</h3>
+          <div class="video">
+            <p><strong>Video:</strong> Watch a short video to learn more about conditional flows.</p>
+            <div style="text-align: left; margin:15px">
+              <iframe allowfullscreen="" frameborder="0" height="480" src=
+              "https://www.youtube.com/embed/H3dbycHbPpA" width="560"></iframe>
+            </div>
+          </div>
+      </section>
+      <section>
+        <h3>Video 2</h3>
+        <div class="video">
+          <p>To learn more about flow variables and conditions, watch the following video:</p>
+          <div style="text-align: left; margin:15px">
+            <iframe allowfullscreen="" frameborder="0" height="480" src=
+            "https://www.youtube.com/embed/lmU95q7Z-iM" width="560"></iframe>
+          </div>
+        </div>
+      </section>
     </div>
-  </div>
+  </section>
 
-  <h2 id="configuringconditionalstatements">Configuring conditional statements</h2>
+  <h2>Why use conditions?</h2>
+  <p>You can use conditions to implement conditional behavior to control the following:</p>
 
-  <p>Conditional behavior is implemented in API proxies by using a combination of <i>conditions</i>
-  and <i>variables</i>. A conditional statement is created using a Condition element. The following
-  is an empty condition:</p>
+  <ul>
+    <li>Policy execution</li>
+    <li>Flow execution</li>
+    <li>Target endpoint route selection</li>
+  </ul>
+
+  <p>Conditions can also be used to define API proxy conditional flows to backend API resources, as
+  described in <a href="#conditionalflows-to-backend">Map conditional flows to backend API
+  resources</a>.</p>
+
+  <h2>Where you can use conditions</h2>
+  <p>The {{condition}} element can be a child of the following in your API proxy's flows:</p>
+  <ul>
+    <li>{{flow}}: Condition applies to all steps in a single flow:
+      <pre>{{flows}}
+  {{flow}}
+    <strong>{{condition}}</strong>
+    {{step}}
+      {{name}}</pre>
+    </li>
+    <li>{{step}}: Condition applies to the current step only:
+        <pre>{{flows}}
+  {{flow}}
+    {{step}}
+      <strong>{{condition}}</strong>
+      {{name}}</pre>
+    </li>
+  </ul>
+
+  <h2 id="configuringconditionalstatements">Create a conditional flow</h2>
+
+  <p>To use conditions, you typically add a {{condition_link}} element to the Conditional
+  Flow. A <em>Conditional Flow</em> is an optional flow in between the PreFlow and PostFlow in your
+  API proxy. You can create one Conditional Flow for the request segment, and one for the
+  response segment.</p>
+
+  <p>After you create a Conditional Flow, you add a condition and one or more steps that are
+  executed based on whether that condition is true or false.</p>
+
+  <p>The following example shows the request segment of a ProxyEndpoint configuration. In the
+  PreFlow, the policy always executes. In the Conditional Flow, the policy executes only if
+  the request is a "GET":</p>
+
+  <p><img src="/api-platform/images/flows/simple-proxyendpoint-flow-diagram.png" class="screenshot"/></p>
+
+  <p>Note that it is possible to add conditions to flows other than the Conditional Flow, but
+  adding it to the Conditional Flow is the default.</p>
+
+  <p><strong>To add a new Conditional Flow to your API proxy:</strong></p>
+
+  <ol>
+    <li>Open the {{mgmt_ui}} in a browser and log in.</li>
+    <li>Click <strong>API Proxies</strong> in the main window and select a proxy.</li>
+    <li><p>Click the <strong>Develop</strong> tab:</p>
+      <p><img class="screenshot" src="/api-platform/images/DevelopTab_v1.png"/></p>
+      <p>Edge displays the API Proxy Editor.</p>
+    </li>
+    <li>In the Navigator, choose one of the following scopes in which to execute the condition:
+      <ul>
+        <li>Proxy Endpoint</li>
+        <li>Target Endpoint</li>
+      </ul>
+    </li>
+    <li>Click the <span class="material-icons" data-tooltip="Add New Flow">add_box</span> next to
+      the "default" label for the chosen endpoint:
+      <p><img src="/api-platform/images/flows/add-conditional-flow-nav.png"/></p>
+      <p>The <strong>New Conditional Flow</strong> dialog appears:</p>
+      <p><img src="/api-platform/images/flows/create-new-conditional-flow.png"/></p>
+      <p>This is the dialog for ProxyEndpoint conditions. For TargetEndpoint conditions, you cannot
+      choose the Condition Type.</p>
+    </li>
+    <li>Define your new Conditional Flow by filling out the following fields:
+      <table>
+        <thead>
+          <tr>
+            <th>Field</th>
+            <th>Required?</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Flow Name</strong></td>
+            <td>Required</td>
+            <td>Enter a name for the Conditional Flow. The name must not contain spaces or special
+              characters.</td>
+          </tr>
+          <tr>
+            <td><strong>Description</strong></td>
+            <td>Optional</td>
+            <td>Describes the Conditional Flow. This description is for your use only and is not
+              externally visible.</td>
+          </tr>
+          <tr>
+            <td><strong>Condition&nbsp;Type</strong>&nbsp;(ProxyEndpoint&nbsp;only)</td>
+            <td>Required</td>
+            <td>Select one of the following options:
+              <ul>
+                <li><strong>Custom</strong>: Specifies that your conditional statement will be a free form
+                  string.</li>
+                <li><strong>Path</strong>: Select this option to use a path suffix condition.</li>
+                <li><strong>Path and Verb</strong>: Select this option to use a condition that requires both a
+                  path suffix match and an HTTP verb match.</li>
+              </ul>
+            </td>
+          </tr>
+          <tr>
+            <td><strong>Condition</strong></td>
+            <td>Required</td>
+            <td>Defines the conditional statement.
+              <p>For example:</p>
+              <pre class="prettyprint">&lt;Condition&gt;request.verb = "GET"&lt;/Condition&gt;</pre>
+            </td>
+          </tr>
+          <tr>
+            <td><strong>Path</strong> (ProxyEndpoint only)</td>
+            <td>Required</td>
+            <td>Defines a path suffix to match against.</td>
+          </tr>
+          <tr>
+            <td><strong>Verb</strong> (ProxyEndpoint only)</td>
+            <td>Required</td>
+            <td>Specifies which HTTP verb is required by the conditional statement.</td>
+          </tr>
+          <tr>
+            <td><strong>Optional Target URL</strong></td>
+            <td>Optional</td>
+            <td>Specifies a URL that the ProxyEndpoint will use to bypass any TargetEndpoint
+              configuration. For more information, see
+              <a href="/api-platform/fundamentals/understanding-routes">Understanding routes</a>.</td>
+          </tr>
+        </tbody>
+      </table>
+    </li>
+    <li>Click the <strong>Add</strong> button.
+      <p>The new flow is added to your endpoint and it appears in the Navigator menu.</p>
+    </li>
+    <li>To see the XML configuration for the new conditional flow, select your flow in the
+      Navigator. You will see a configuration similar to the following:
+  <pre class="prettyprint">&lt;ProxyEndpoint name="default"&gt;
+  &lt;PreFlow name="PreFlow"&gt;
+    &lt;Request/&gt;
+    &lt;Response/&gt;
+  &lt;/PreFlow&gt;
+  <strong>&lt;Flows&gt;
+    &lt;Flow name="Flow-1"&gt;
+      &lt;Request/&gt;
+      &lt;Response/&gt;
+      &lt;Condition&gt;(proxy.pathsuffix MatchesPath "/**") and (request.verb = "GET")&lt;/Condition&gt;
+    &lt;/Flow&gt;
+  &lt;/Flows&gt;</strong>
+  &lt;PostFlow name="PostFlow"&gt;
+    &lt;Request/&gt;
+    &lt;Response/&gt;
+  &lt;/PostFlow&gt;
+&lt;/ProxyEndpoint&gt;</pre>
+    </li>
+  </ol>
+
+  <h3>Flow segment Navigator icons</h3>
+
+  <p>Edge labels all flows in the Navigator with an icon that gives you a quick idea of
+  what conditions, if any, apply to that flow. When you add a new Conditional Flow to your API
+  proxy, Edge adds an icon representing that flow as well.</p>
+
+  <p>The following table describes the Navigator icons for the flow segments:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Icon</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><img src="/api-platform/images/flows/conditional-flow-icon-ALL.png"/></td>
+        <td><strong>Path match only</strong><br/>
+          There are no HTTP verb conditions on the flow segment. The steps in this flow
+          execute regardless of the request's HTTP verb.</td>
+      </tr>
+      <tr>
+        <td><img src="/api-platform/images/flows/conditional-flow-icon-COND.png"/></td>
+        <td><strong>Custom condition</strong><br/>
+          The conditional statement is a custom statement. The flow will execute only if the
+          custom condition evaluates to true.</td>
+      </tr>
+      <tr>
+        <td><img src="/api-platform/images/flows/conditional-flow-icon-DELETE.png"/></td>
+        <td><strong>DELETE requests</strong><br/>
+          The flow executes only if the HTTP verb for the request is <code>DELETE</code>.</td>
+      </tr>
+      <tr>
+        <td><img src="/api-platform/images/flows/conditional-flow-icon-GET.png"/></td>
+        <td><strong>GET requests</strong><br/>
+          The flow segment will execute only if the HTTP verb for the request is
+          <code>GET</code>.</td>
+      </tr>
+      <tr>
+        <td><img src="/api-platform/images/flows/conditional-flow-icon-POST.png"/></td>
+        <td><strong>POST requests</strong><br/>
+          The flow segment will execute only if the HTTP verb for the request is
+          <code>POST</code>.</td>
+      </tr>
+      <tr>
+        <td><img src="/api-platform/images/flows/conditional-flow-icon-PUT.png"/></td>
+        <td><strong>PUT requests</strong><br/>
+          The flow segment will execute only if the HTTP verb for the request is
+          <code>PUT</code>.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Examples</h2>
+
+  <p>This section provides examples of using conditions with flows.</p>
+
+  <h3 id="whereyoucanuseconditionalstatements-policyexecution">Policy execution</h3>
+
+  <p>Using conditional statements, you can control the enforcement of policies. A common use case
+  is conditional transformation of response messages, based on HTTP header or message content.</p>
+
+  <p>For example, to conditionally transform XML to JSON based on the <code>Accept</code>
+  header:</p>
   <pre class="prettyprint">
-&lt;Condition&gt;&lt;/Condition&gt;
+&lt;Step&gt;
+  &lt;Condition&gt;request.header.accept = "application/json"&lt;/Condition&gt;
+  &lt;Name&gt;XMLToJSON&lt;/Name&gt;
+&lt;/Step&gt;
 </pre>
 
-  <p>To create a conditional statement, you add a conditional operator and a variable to create the
-  following structure:</p>
+  <h3 id="whereyoucanuseconditionalstatements-flowexecution">Flow execution</h3>
+
+  <p>Using conditional statements, you can control the execution of named flows in ProxyEndpoints
+  and TargetEndpoints. Note that only 'named' flows can be executed conditionally. Preflows and
+  postflows (both request and response) on ProxyEndpoints and TargetEndpoints execute for every
+  transaction, and thus provide unconditional 'failsafe' capabilities.</p>
+
+  <p>For example, to execute a conditional request flow based on the HTTP verb of the request
+  message, and conditional response flow based on a (potential) HTTP status code representing an
+  error:</p>
+
+  <pre class="prettyprint">&lt;Flows&gt;
+  &lt;Flow name="GetRequests"&gt;
+    &lt;Condition&gt;request.verb = "GET"&lt;/Condition&gt;
+    &lt;Request&gt;
+      &lt;Step&gt;
+        &lt;Condition&gt;request.path MatchesPath "/statuses/**"&lt;/Condition&gt;
+        &lt;Name&gt;StatusesRequestPolicy&lt;/Name&gt;
+      &lt;/Step&gt;
+    &lt;/Request&gt;
+    &lt;Response&gt;
+      &lt;Step&gt;
+        &lt;Condition&gt;(response.status.code = 503) or (response.status.code = 400)&lt;/Condition&gt;
+        &lt;Name&gt;MaintenancePolicy&lt;/Name&gt;
+      &lt;/Step&gt;
+    &lt;/Response&gt;
+  &lt;/Flow&gt;
+&lt;/Flows&gt;</pre>
+
+  <h3 id="whereyoucanuseconditionalstatements-targetendpointrouteselection">Target endpoint route
+  selection</h3>
+
+  <p>Using conditional statements, you can control the target endpoint invoked by proxy endpoint
+  configuration. A route rule forwards a request to a particular target endpoint. When more than
+  one target endpoint is available, the route rule is evaluated for its condition and, if true, the
+  request is forwarded to the named target endpoint.</p>
+
+  <p>For example, to conditionally route messages to designated target endpoints based on
+  <code>Content-Type</code>:</p>
   <pre class="prettyprint">
-&lt;Condition&gt;{variable.name}{operator}{"value"}&lt;/Condition&gt;
+&lt;RouteRule name="default"&gt;
+<span style=
+"color:#0000ff;"> &lt;!--this routing executes if the header indicates that this is an XML call. If true, the call is routed to the endpoint XMLTargetEndpoint--&gt;</span>
+  &lt;Condition&gt;request.header.Content-Type = "text/xml"&lt;/Condition&gt;
+  &lt;TargetEndpoint&gt;XmlTargetEndpoint&lt;/TargetEndpoint&gt;
+&lt;/RouteRule&gt;
 </pre>
 
-  <p>Supported conditional operators include <code>=</code> (equals), <code>!=</code> (not equal),
-  and <code>&gt;</code> (greater than). For readability, you can also write the conditionals as
-  text: <code>equals</code>, <code>notequals</code>, <code>greaterthan</code>.</p>
+  <h2 id="variables">Flow variables</h2>
 
-  <p>When working with URI paths you can use <code>~/</code> or <code>MatchesPath</code>. You can
-  also match JavaRegex regular expressions with the ~~ operator.</p>
+  <p>Conditions do their work by evaluating <em>flow variables</em> (conceptually like
+  objects) and the <em>properties</em> of those objects.</p>
 
-  <aside class="note">
-    <b>Note:</b> For an example of the ~~ operator, see the following Apigee Community thread:
-
-    <p><a href=
-    "https://community.apigee.com/questions/4284/how-do-you-override-at-the-end-of-the-url-when-you.html">
-    https://community.apigee.com/questions/4284/how-do-you-override-at-the-end-of-the-url-when-you.html</a></p>
-  </aside>
-
-  <p>Conditions are used to define API proxy conditional flows to backend API resources, described
-  in <a href="/api-platform/fundamentals/uri-based-configurations.html">Mapping conditional flows
-  to backend API resources</a>. For a complete list of conditionals, see <a href=
-  "/api-platform/reference/conditions-reference.html">Conditions reference</a>.</p>
-
-  <h2 id="variables">Variables</h2>
-
-  <p>Conditions do their work by evaluating the values of <i>variables</i>. A variable is a
-  property of an HTTP transaction executed by an API proxy, or a property of an API proxy
-  configuration itself. Whenever an API proxy gets a request from an app, Apigee Edge populates a
-  long list of variables that are associated with things like system time, the app's network
+  <p>Whenever an API proxy gets a request from an app, Apigee Edge populates a
+  set of variables that are associated with things like system time, the app's network
   information, HTTP headers on messages, the API proxy configuration, policy executions and so on.
-  This creates a rich context that you can use to set up conditional statements.</p>
+  This creates a rich context that you can use in your conditional statements.</p>
 
-  <p>Variables always use a dotted notation. For example, HTTP headers on the request message are
-  available as variables called <code>request.header.{header_name}</code>. So to evaluate the
-  Content-type header, you could use the variable <code>request.header.Content-type</code>. For
-  example <code>request.header.Content-type = "application/json"</code> indicates that the content
-  type of the request should be JSON.</p>
+  <p>For more information, see:</p>
+  <ul>
+    <li><a href="/api-platform/fundamentals/introduction-flow-variables#whatareflowvariables">
+      What are flow variables?</a></li>
+    <li><a href="/api-platform/fundamentals/introduction-flow-variables#understandingflowvariablescope">
+      Understanding flow variable scope</a></li>
+    <li><a href="/api-platform/fundamentals/flow-configurations">Configuring flows</a></li>
+    <li>{{variables_reference}}</li>
+  </ul>
 
-  <p> Imagine that you need to create a conditional statement that will cause a policy to be
-  enforced only when a request message is a GET. To create a condition that evaluates the HTTP verb
+  <p>Imagine that you need to create a conditional statement that will cause a policy to be
+  enforced only when a request message is a <code>GET</code>. To create a condition that evaluates the HTTP verb
   of a request, you create the conditional statement below. The variable in this condition is
   <code>request.verb</code>. The value of the variable is <code>GET</code>. The operator is
   <code>=</code>.</p>
-  <pre class="prettyprint">
-&lt;Condition&gt;request.verb = "GET"&lt;/Condition&gt;
-</pre>You could also use:
-  <pre class="prettyprint">
-&lt;Condition&gt;request.verb equals "GET"&lt;/Condition&gt;
-</pre>
 
-  <p>Edge uses such a statement to evaluate conditions. The example above evaluates to true if the
-  HTTP verb associated with the request is GET. If the HTTP verb associated with the request is
-  POST, then the statement evaluates to false.</p>
+  <pre class="prettyprint">&lt;Condition&gt;request.verb = "GET"&lt;/Condition&gt;</pre>
 
-  <aside class="note"><b>Note:</b> Edge automatically stores all HTTP headers and query parameters
-  as variables that can be accessed using <code>request.header.</code> and
-  <code>request.queryparam.</code> variable prefixes.</aside>
+  <p>This example evaluates to true and the policy in this step is executed if the HTTP verb
+  associated with the request is "GET". If the HTTP verb associated with the request is "POST", then
+  the statement evaluates to false and the policy is not executed.</p>
+
+  <aside class="note"><h3 class="hide-from-toc">NOTE</h3>Edge automatically stores all HTTP headers
+  and query parameters as variables that can be accessed using the {{request_object}}.</aside>
 
   <p>To enable dynamic behavior, you can attach Conditions to Flows, Steps, and RouteRules.</p>
 
-  <p>When you attach a condition to a Flow, you create a 'conditional Flow'. Conditional Flows
+  <p>When you attach a condition to a Flow, you create a <em>conditional Flow</em>. Conditional Flows
   execute only when the condition evaluates to true. You can attach as many Policies as you want to
   a conditional Flow. A conditional Flow enables you to craft highly specialized processing rules
   for request or response messages that meet certain criteria.</p>
 
-  <p>For example, to create a Flow that executes only when the request verb is a GET:</p>
-  <pre class="prettyprint">
-&lt;Flows&gt;
-  &lt;Flow name="ExecuteForGETs"&gt;
-  &lt;Condition&gt;request.verb="GET"&lt;/Condition&gt;
-  &lt;/Flow&gt;
-&lt;/Flows&gt;
-</pre>
+  <p>For example, to create a Flow that executes only when the request verb is a
+  <code>GET</code>:</p>
 
-  <p>To create one Flow for GETs and another for POSTs:</p>
   <pre class="prettyprint">
-&lt;Flows&gt;
-  &lt;Flow name="ExecuteForGETs"&gt;
-  &lt;Condition&gt;request.verb="GET"&lt;/Condition&gt;
-  &lt;/Flow&gt;
-  &lt;Flow name="ExecuteForPOSTs"&gt;
-  &lt;Condition&gt;request.verb="POST"&lt;/Condition&gt;
-  &lt;/Flow&gt;
-&lt;/Flows&gt;
-</pre>
+  {% include "api-platform/fundamentals/examples/conditions/get-only-execution.xml" %}
+  </pre>
+
+  <p>To create one Flow for <code>GET</code> requests, and another for <code>POST</code>
+  requests:</p>
+  <pre class="prettyprint">
+  {% include "api-platform/fundamentals/examples/conditions/get-and-post-conditions.xml" %}
+  </pre>
 
   <p>As shown in the example below, you can apply the condition to the Policy Step itself. The
-  following Condition causes the VerifyApiKey Policy to be enforced only if a request message is a
-  POST.</p>
+  following Condition causes the {{verify_api_key_policy}} to be enforced only if a request message
+  is a <code>POST</code>.</p>
+
   <pre class="prettyprint">
-&lt;PreFlow name="PreFlow"&gt;
-    &lt;Request&gt;
-        &lt;Step&gt;
-            &lt;Condition&gt;request.verb equals "POST"&lt;/Condition&gt;
-            &lt;Name&gt;VerifyApiKey&lt;/Name&gt;
-        &lt;/Step&gt;
-    &lt;/Request&gt;
-&lt;/PreFlow&gt;
-</pre>
+  {% include "api-platform/fundamentals/examples/conditions/policy-step.xml" %}
+  </pre>
 
-  <p>Once you have defined such conditional Flows, you can attach Policies to them, enabling an API
-  proxy to enforce one set of policies for GET requests, and another set of policies for POST
-  requests.</p>
+  <p>After you defined such conditional Flows, you can attach policies to them. For example, you
+  can enable an API proxy to enforce one set of policies for <code>GET</code> requests, and another
+  set of policies for <code>POST</code> requests.</p>
 
-  <p>For comprehensive references, see:</p>
+  <p>For comprehensive reference information, see the following resources:</p>
 
   <ul>
-    <li><a href="/api-platform/reference/variables-reference.html">Variables reference</a></li>
-
-    <li><a href="/api-platform/reference/conditions-reference.html">Conditions reference</a></li>
-
-    <li><a href="/api-platform/reference/conditions-reference.html#operators">Operators</a></li>
+    <li>{{variables_reference}}</li>
+    <li>{{conditions_reference}}</li>
   </ul>
 
-  <h3 id="variables-conditionallyconvertingapayloadfromxmltojson">Conditionally converting a
-  payload from XML to JSON</h3>
+  <h3 id="configuringconditionalbehavior-testingtheconditionalflow">Test the conditional
+  flow</h3>
 
-  <p>Let's use a specific example in which you need to transform response message from XML to JSON
-  only for mobile devices. First, create the policy that will convert the XML-formatted response
-  from the Weather API into JSON:</p>
+  <p>In this sample request, the HTTP <code>User-Agent</code> header is set to
+  <code>Mozilla</code>, causing the conditional statement to evaluate to true and the conditional
+  flow <code>Convert-for-devices</code> to execute.</p>
+  <pre class="devsite-terminal">curl -H "User-Agent:Mozilla" http://<var>org_name</var>-test.apigee.net/weather/forecastrss?w=12797282</pre>
+
+  <p>Or, to pretty print where Python is available:</p>
+  <pre class="devsite-terminal">curl -H "User-Agent:Mozilla" http://<var>org_name</var>-test.apigee.net/weather/forecastrss?w=12797282 | python -m json.tool</pre>
+
+  <p>Sample Response:</p>
+  <pre class="prettyprint">...
+"yweather_forecast": [
+  {
+    "code": "11",
+    "date": "12 Dec 2012",
+    "day": "Wed",
+    "high": "55",
+    "low": "36",
+    "text": "Showers"
+  },
+  {
+    "code": "32",
+    "date": "13 Dec 2012",
+    "day": "Thu",
+    "high": "56",
+    "low": "38",
+    "text": "Sunny"
+  }
+]
+...</pre>
+
+  <p>A request submitted without the <code>User-Agent</code> header, or with a different value than
+  <code>Mozilla</code>, will result in an XML-formatted response.</p>
+
+  <pre class="devsite-terminal">curl http://<var>org_name</var>-test.apigee.net/weather/forecastrss?w=12797282</pre>
+
+  <p>The unmodified XML response is returned, as the following example shows:</p>
+
+  <pre class="prettyprint">&lt;yweather:forecast day="Wed" date="12 Dec 2012" low="36" high="55" text="Showers" code="11" /&gt; &lt;yweather:forecast day="Thu" date="13 Dec 2012" low="38" high="56" text="Sunny" code="32" /&gt;</pre>
+
+  <h2 id="patternmatching">Pattern matching with conditionals</h2>
+
+  <p>This section describes how to use the following pattern matching operators in conditional
+  statements:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Operator</th>
+        <th>Alternative Operator</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><a href="#matches"><code>Matches</code></a></td>
+        <td><code>~</code></td>
+        <td>Simple pattern matching</td>
+      </tr>
+      <tr>
+        <td><a href="#javaregex"><code>JavaRegex</code></a></td>
+        <td><code>~~</code></td>
+        <td>Finer control over matching</td>
+      </tr>
+      <tr>
+        <td><a href="#matchespath"><code>MatchesPath</code></a></td>
+        <td><code>~/</code></td>
+        <td>Path fragment matching</td>
+      </tr>
+    </tbody>
+  </table>
+
+    <aside class="objective">
+      <h3 class="hide-from-toc">Further Reading</h3>
+      <ul>
+        <li>{{conditions_reference}}</li>
+        <li>The <a href="https://github.com/apigee/api-platform-samples/tree/master/sample-proxies/condition-pattern-matching"
+          class="external">"condition-pattern-matching proxy"</a> in our api-platform-samples repository
+          in GitHub</li>
+      </ul>
+    </aside>
+
+  <h3 id="matches">Matches</h3>
+
+  <p>Let's look at the <code>Matches</code> or <code>~</code> conditional operator first. These two operators are the
+  same -- the English version, <code>Matches</code>, is considered to be a more readable option.</p>
+
+  <aside class="success"><h3 class="hide-from-toc">SUMMARY</h3>The <code>Matches</code> operator
+  gives you two possiblities. Either match the string literally, or do a wildcard match with
+  "*". As you might expect, the wildcard matches zero or more characters.</aside>
+
+  <p>The following XML shows a Step condition. It executes the SomePolicy policy when the condition
+  evaluates to true. In this example, we test properties of the {{proxy_object}} variable, which
+  stores the path suffix of the request.</p>
+
+  <p>Note, however, that you can test
+  the value of any flow variable that contains a string. So, in this case, if the base path of the
+  incoming request is "/animals", and the request is "/animals/cat", then the
+  path suffix is the literal string "/cat".</p>
+
+  <pre class="prettyprint">{% include "api-platform/fundamentals/examples/conditions/somepolicy-step-condition.xml" %}</pre>
+
+  <p>The following table shows how this matching works (where <var>{basepath}</var> =
+  "http://ahamilton-test.apigee.net"):</p>
+
+  <table class="green">
+    <thead>
+      <tr>
+        <th></th>
+        <th>Condition/API Calls</th>
+        <th>Match?</th>
+        <th>Explanation</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="alt" >
+        <td width="15%"><strong>Condition</strong></td>
+        <td colspan="4"><code>&lt;Condition&gt;(proxy.pathsuffix Matches "/cat")&lt;/Condition&gt;</code></td>
+      </tr>
+      <tr>
+        <td rowspan="2" class="alt" width="15%"><strong>Your API Calls</strong></td>
+        <td>&nbsp;&nbsp;"<var>{basepath}</var>/matchtest<strong>/cat</strong>"</td>
+        <td><span class="compare-yes"></span></td>
+        <td>The proxy path suffix matches "/cat" exactly.</td>
+      </tr>
+      <tr>
+        <td>&nbsp;&nbsp;"<var>{basepath}</var>/matchtest<strong>/bat</strong>"</td>
+        <td><span class="compare-no"></span></td>
+        <td>It will not execute if the suffix is "/bat" or "/dog" or "/" or anything else other
+          than "/cat".</td>
+      </tr>
+      <tr>
+        <td colspan="4"><hr/></td>
+      </tr>
+      <tr class="alt" >
+        <td class="alt" width="15%"><strong>Condition</strong></td>
+        <td colspan="4"><code>&lt;Condition&gt;(proxy.pathsuffix Matches "/*at")&lt;/Condition&gt;</code></td>
+      </tr>
+      <tr>
+        <td rowspan="3" class="alt" width="15%"><strong>Your API Calls</strong></td>
+        <td>&nbsp;&nbsp;"<var>{basepath}</var>/matchtest<strong>/cat</strong>"</td>
+        <td><span class="compare-yes"></span></td>
+        <td>The wildcard matches any character, and "/cat" is a match.</td>
+      </tr>
+      <tr>
+        <td>&nbsp;&nbsp;"<var>{basepath}</var>/matchtest<strong>/bat</strong>"</td>
+        <td><span class="compare-yes"></span></td>
+        <td>The wildcard matches any character, "/bat" is a match.</td>
+      </tr>
+      <tr>
+        <td>&nbsp;&nbsp;"<var>{basepath}</var>/matchtest<strong>/owl</strong>"</td>
+        <td><span class="compare-no"></span></td>
+        <td>Although the wildcard matches the "o", the letters "wl" are not matched.</td>
+      </tr>
+      <tr>
+        <td colspan="4"><hr/></td>
+      </tr>
+      <tr class="alt" >
+        <td class="alt" width="15%"><strong>Condition</strong></td>
+        <td colspan="4"><code>&lt;Condition&gt;(proxy.pathsuffix Matches "/cat*")&lt;/Condition&gt;</code></td>
+      </tr>
+      <tr>
+        <td rowspan="4" class="alt" width="15%"><strong>Your API Calls</strong></td>
+        <td>&nbsp;&nbsp;"<var>{basepath}</var>/matchtest<strong>/cat</strong>"</td>
+        <td><span class="compare-yes"></span></td>
+        <td>The wildcard matches zero or more of any characters.</td>
+      </tr>
+      <tr>
+        <td>&nbsp;&nbsp;"<var>{basepath}</var>/matchtest<strong>/bat</strong>"</td>
+        <td><span class="compare-no"></span></td>
+        <td>"/bat" is not a match.</td>
+      </tr>
+      <tr>
+        <td>&nbsp;&nbsp;"<var>{basepath}</var>/matchtest<strong>/cat123</strong>"</td>
+        <td><span class="compare-yes"></span></td>
+        <td>The wildcard matches zero or more of any characters, therefore "123" produces a
+          match.</td>
+      </tr>
+      <tr>
+        <td>&nbsp;&nbsp;"<var>{basepath}</var>/matchtest<strong>/cat/bird/mouse</strong>"</td>
+        <td><span class="compare-yes"></span></td>
+        <td>The wildcard matches zero or more of any characters, so "/bird/mouse"
+          produces a match. Note how an expression like this can get you into trouble because it
+          matches everything after the literal characters!</td>
+      </tr>
+      <tr>
+        <td colspan="4"><hr/></td>
+      </tr>
+      <tr class="alt" >
+        <td class="alt" width="15%"><strong>Condition</strong></td>
+        <td colspan="4"><code>&lt;Condition&gt;(proxy.pathsuffix Matches "/*At")&lt;/Condition&gt;</code></td>
+      </tr>
+      <tr>
+        <td rowspan="2" class="alt" width="15%"><strong>Your API Calls</strong></td>
+        <td>&nbsp;&nbsp;"<var>{basepath}</var>/matchtest<strong>/cat</strong>"</td>
+        <td><span class="compare-no"></span></td>
+        <td>The wildcard matches any letter (regardless of case), but the lowercase "a" does not
+          match "A".</td>
+      </tr>
+      <tr>
+        <td>&nbsp;&nbsp;"<var>{basepath}</var>/matchtest<strong>/bAt</strong>"</td>
+        <td><span class="compare-yes"></span></td>
+        <td>The case matches.</td>
+      </tr>
+      <tr>
+        <td colspan="4"><hr/></td>
+      </tr>
+      <tr class="alt" >
+        <td class="alt" width="15%"><strong>Condition</strong></td>
+        <td colspan="4"><code>&lt;Condition&gt;(proxy.pathsuffix Matches "/c%*at")&lt;/Condition&gt;</code>
+        <p>Use the percent "%" character to escape reserved characters.</p></td>
+      </tr>
+      <tr>
+        <td rowspan="2" class="alt" width="15%"><strong>Your API Calls</strong></td>
+        <td>&nbsp;&nbsp;"<var>{basepath}</var>/matchtest<strong>/cat</strong>"</td>
+        <td><span class="compare-no"></span></td>
+        <td>The <code>Matches</code> operator is looking for the literal string "c*at".</td>
+      </tr>
+      <tr>
+        <td>&nbsp;&nbsp;"<var>{basepath}</var>/matchtest<strong>/c*at</strong>"</td>
+        <td><span class="compare-yes"></span></td>
+        <td>This path, although a bit unusual, matches.</td>
+      </tr>
+    </tbody>
+  </table>
+
+
+  <h3 id="javaregex"><code>JavaRegex</code> (<code>~~</code>)</h3>
+
+  <p>As you can see, the "Matches" operator is great for simple situations. But you can use another
+  operator, the "JavaRegex" or "~~" operator. These two are the same operator, except JavaRegex is
+  considered to be more readable. It's called JavaRegex because it allows regular expression
+  pattern matching, and Edge follows the same rules as the classes in the <a href=
+  "https://docs.oracle.com/javase/7/docs/api/java/util/regex/Pattern.html">java.util.regex
+  package</a> in the Java language. The way the JavaRegex operator works is very different from the
+  Matches operator, so it's important not to confuse the two!</p>
+
+  <aside class="note"><h3 class="hide-from-toc">NOTE</h3>If you're used to doing regex in Perl
+    scripts, the JavaRegex operator in Edge tests the <em>entire</em> subject string.
+    <p>For
+    example, if the subject is "abc" and the regex is "[a-z]" , there is no match because "[a-z]"
+    matches exactly ONE alpha character. The expression "[a-z]+" would work, as would "[a-z]{3}".
+    This matching differs from the usual application of regular expressions in tools like Perl or
+    grep or Apache's mod_rewrite.</p>
+
+    <p>JavaRegex uses <code>java.util.regex.Pattern.matches(str)</code>,
+    which returns "true" if the entire string (str) matches the pattern. The regex in
+    Perl or mod_rewrite are applied to "any" part of the string. They return "true" if the pattern
+    matches anywhere. See the example <a href="#arbitrary">Matching arbitrary strings with
+    JavaRegex</a>.</p>
+  </aside>
+
+  <p>This section is not intended to be a detailed introduction to
+  regular expressions. The main intent is to illustrate a few simple examples, and highlight the
+  difference between the Matches and JavaRegex operators. If you'd like to know more about regular
+  expressions, many resources exist for you to explore.</p>
+
+  <aside class="success"><h3 class="hide-from-toc">SUMMARY</h3>The <code>JavaRegex</code> operator
+  lets you use regular expression syntax in conditional statements.</aside>
+
+  <p>The following code shows a Step condition:</p>
+
   <pre class="prettyprint">
-&lt;XMLToJSON name="ConvertToJSON"&gt;
-  &lt;Options&gt;
-  &lt;/Options&gt;
-  &lt;OutputVariable&gt;response&lt;/OutputVariable&gt;
-  &lt;Source&gt;response&lt;/Source&gt;
-&lt;/XMLToJSON&gt;
-</pre>
+  {% include "api-platform/fundamentals/examples/conditions/javaregex-step.xml" %}
+  </pre>
 
-  <p>The policy configuration above tells the API proxy to take the response message, perform a
-  conversion from XML to JSON with default settings, and then write the result to the new response
-  message. (If you are converting a <i>request</i> message from XML to JSON, you simply set both of
-  these values to <code>request</code>.)</p>
+  <p>This expression executes the SomePolicy policy if the condition
+  evalutes to true. In this example, we test the <code>pathsuffix</code> property of {{proxy_object}},
+  which stores the path suffix of the request. Note, however, you can test the
+  value of any flow variable that contains a string. So, in this case, if the base path of the
+  incoming request is "/animals", and the request is "/animals/cat", then the
+  path suffix is the literal string "/cat".
 
-  <aside class="key-point"><b>Tip:</b> The XMLToJSON policy type defines a set of reasonable
-  defaults, which means that you only need to add configuration elements to craft XML into specific
-  JSON structures. For instruction, refer to <a href=
-  "/api-platform/reference/policies/xml-json-policy.html">XML to JSON policy</a></aside>
+  <table class="green">
+    <thead>
+      <tr>
+        <th></th>
+        <th>Condition/API Calls</th>
+        <th>Match?</th>
+        <th>Explanation</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="alt">
+        <td width="15%"><strong>Condition</strong></td>
+        <td colspan="3"><code>&lt;Condition&gt;(proxy.pathsuffix JavaRegex "/cat")&lt;/Condition&gt;</code>
+        </td>
+      </tr>
+      <tr>
+        <td rowspan="1" class="alt" width="15%"><strong>Your API Call</strong></td>
+        <td>&nbsp;&nbsp;"<var>{basepath}</var>/matchtest<strong>/cat</strong>"</td>
+        <td><span class="compare-yes"></span></td>
+        <td>Yes, because the proxy path suffix matches "/cat" exactly. It will not execute if the
+          suffix is "/bat" or "/dog" or anything else.</td>
+      </tr>
+      <tr class="alt">
+        <td width="15%"><strong>Condition</strong></td>
+        <td colspan="3"><code>&lt;Condition&gt;(proxy.pathsuffix JavaRegex "/c*t")&lt;/Condition&gt;</code>
+          <p>The "*" quantifier matches zero or more of the preceding character.</p>
+        </td>
+      </tr>
+      <tr>
+        <td rowspan="2" class="alt" width="15%"><strong>Your API Calls</strong></td>
+        <td>&nbsp;&nbsp;"<var>{basepath}</var>/matchtest<strong>/ccccct</strong>"</td>
+        <td><span class="compare-yes"></span></td>
+        <td>The wildcard matches zero or more of the preceding character.</td>
+      </tr>
+      <tr>
+        <td>&nbsp;&nbsp;"<var>{basepath}</var>/matchtest<strong>/cat</strong>"</td>
+        <td><span class="compare-no"></span></td>
+        <td>The "*" quantifier matches zero or more of the <em>preceding</em> character, which
+          is a "c".</td>
+      </tr>
+      <tr>
+        <td colspan="4"><hr/></td>
+      </tr>
+      <tr class="alt">
+        <td class="alt" width="15%"><strong>Condition</strong></td>
+        <td colspan="3"><code>&lt;Condition&gt;(proxy.pathsuffix JavaRegex "/ca?t")&lt;/Condition&gt;</code>
+          <p>The "?" quantifier matches the preceding character once, or not at all.</p>
+        </td>
+      </tr>
+      <tr>
+        <td rowspan="3" class="alt" width="15%"><strong>Your API Calls</strong></td>
+        <td>&nbsp;&nbsp;"<var>{basepath}</var>/matchtest<strong>/cat</strong>"</td>
+        <td><span class="compare-yes"></span></td>
+        <td>The "?" quantifier matches zero or one occurrance of the <em>preceding</em>
+          character, which is an "a".</td>
+      </tr>
+      <tr>
+        <td>&nbsp;&nbsp;"<var>{basepath}</var>/matchtest<strong>/ct</strong>"</td>
+        <td><span class="compare-yes"></span></td>
+        <td>The "?" quantifier matches one <em>or none</em> of the preceding character. In this
+          case, there is no "a" character, so the condition evaluates to true.</td>
+      </tr>
+      <tr>
+        <td>&nbsp;&nbsp;"<var>{basepath}</var>/matchtest<strong>/caat</strong>"</td>
+        <td><span class="compare-no"></span></td>
+        <td>The "?" quantifier matches <em>one</em> of the preceding characters, which is an
+          "a".</td>
+      </tr>
+      <tr>
+        <td colspan="4"><hr/></td>
+      </tr>
+      <tr class="alt">
+        <td class="alt" width="15%"><strong>Condition</strong></td>
+        <td colspan="3"><code>&lt;Condition&gt;(proxy.pathsuffix JavaRegex "/[cbr]at")&lt;/Condition&gt;</code>
+          <p>Use the "[abc]" or "grouping" style of regex expression to match the characters
+          "a", "b", or "c".</p>
+        </td>
+      </tr>
+      <tr>
+        <td rowspan="4" class="alt" width="15%"><strong>Your API Calls</strong></td>
+        <td>&nbsp;&nbsp;"<var>{basepath}</var>/matchtest<strong>/cat</strong>"</td>
+        <td><span class="compare-yes"></span></td>
+        <td>We're using regular expressions here, and the "[cbr]" expression matches a "c", "b",
+          <em>or</em>"r".</td>
+      </tr>
+      <tr>
+        <td>&nbsp;&nbsp;"<var>{basepath}</var>/matchtest<strong>/bat</strong>"</td>
+        <td><span class="compare-yes"></span></td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>&nbsp;&nbsp;"<var>{basepath}</var>/matchtest<strong>/rat</strong>"</td>
+        <td><span class="compare-yes"></span></td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>&nbsp;&nbsp;"<var>{basepath}</var>/matchtest<strong>/matte</strong>"</td>
+        <td><span class="compare-no"></span></td>
+        <td></td>
+      </tr>
+      <tr>
+        <td colspan="4"><hr/></td>
+      </tr>
+      <tr class="alt">
+        <td class="alt" width="15%"><strong>Condition</strong></td>
+        <td colspan="3"><code>&lt;Condition&gt;(proxy.pathsuffix JavaRegex "/ca?t")&lt;/Condition&gt;</code>
+          <p>The following calls illustrate that the JavaRegex operator is case sensitive.</p>
+        </td>
+      </tr>
+      <tr>
+        <td rowspan="2" class="alt" width="15%"><strong>Your API Calls</strong></td>
+        <td>&nbsp;&nbsp;"<var>{basepath}</var>/matchtest<strong>/cat</strong>"</td>
+        <td><span class="compare-yes"></span></td>
+        <td>The regex matches zero or one of the preceding character, which is "a".</td>
+      </tr>
+      <tr>
+        <td>&nbsp;&nbsp;"<var>{basepath}</var>/matchtest<strong>/cAt</strong>"</td>
+        <td><span class="compare-no"></span></td>
+        <td>The capital "A" does not match lowercase "a".</td>
+      </tr>
+    </tbody>
+  </table>
 
-  <p>Since you want to convert responses from XML to JSON, you need to configure a conditional
-  response Flow to perform the conversion. For example, to convert all responses from XML to JSON
-  before they are returned to the client app, configure the following ProxyEndpoint response
-  Flow.</p>
+  <h3 id="matchespath">MatchesPath</h3>
+
+  <p>The <code>MatchesPath</code> operator can also be specified like this "~/". It looks a little
+  bit like the <code>Matches</code> (<code>~</code>) and the <code>JavaRegex</code>
+  (<code>~~</code>) operators. But <code>MatchesPath</code> is entirely different.</p>
+
+  <p>Just remember that this operator looks at a path as a series of parts. Therefore, if the path
+  is: "/animals/cats/wild", you can think of the path as consisting of the parts
+  "/animals", "/cats", and "/wild".</p>
+
+  <p>The <code>MatchesPath</code> operator lets you use two wildcard notations:
+  <ul>
+    <li><strong>A single asterisk (*):</strong> Matches one path element.</li>
+    <li><strong>A double asterisk (**):</strong> Matches one or many path elements.</li>
+  </ul>
+
+  <p>Let's look at an example. In this example, we test the <code>pathsuffix</code> property of the
+  {{proxy_object}} flow variable, where Edge stores the path suffix of the request. Note, however,
+  you can test the value of any flow variable that contains a string.</p>
+
   <pre class="prettyprint">
-&lt;Flows&gt;
-  &lt;Flow name="Convert-for-devices"&gt;
-    &lt;Response&gt;
-      &lt;Step&gt;&lt;Name&gt;ConvertToJSON&lt;/Name&gt;&lt;/Step&gt;
-    &lt;/Response&gt;
-  &lt;/Flow&gt;
-&lt;/Flows&gt;
-</pre>
+    {% include "api-platform/fundamentals/examples/conditions/path-suffix-preflow.xml" %}
+  </pre>
 
-  <p>When you invoke the API using the standard request, the response is formatted in JSON.</p>
+  <table class="green">
+    <thead>
+      <tr>
+        <th></th>
+        <th>Condition/API Calls</th>
+        <th>Match?</th>
+        <th>Explanation</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="alt">
+        <td width="15%"><strong>Condition</strong></td>
+        <td colspan="3"><code>&lt;Condition&gt;(proxy.pathsuffix MatchesPath "/animals/*")&lt;/Condition&gt;</code>
+          <p>A single asterisk matches one path element only.</p>
+        </td>
+      </tr>
+      <tr>
+        <td rowspan="4" class="alt" width="15%"><strong>Your API Calls</strong></td>
+        <td>&nbsp;&nbsp;"<var>{basepath}</var>/matchtest<strong>/animals</strong>"</td>
+        <td><span class="compare-no"></span></td>
+        <td>The condition requires another path element after "/animals", as specified by
+          "/*".</td>
+      </tr>
+      <tr>
+        <td>&nbsp;&nbsp;"<var>{basepath}</var>/matchtest<strong>/animals/</strong>"</td>
+        <td><span class="compare-yes"></span></td>
+        <td>The path does have another path element (the part after the final trailing slash),
+          but it's just empty.</td>
+      </tr>
+      <tr>
+        <td>&nbsp;&nbsp;"<var>{basepath}</var>/matchtest<strong>/animals/cats</strong>"</td>
+        <td><span class="compare-yes"></span></td>
+        <td>The path clearly has an element ("/cats") that comes after
+          "/animals".</td>
+      </tr>
+      <tr>
+        <td>&nbsp;&nbsp;"<var>{basepath}</var>/matchtest<strong>/animals/cats/wild</strong>"</td>
+        <td><span class="compare-no"></span></td>
+        <td>The single asterisk only matches one path element, and this API has more
+          than one element after "/animals".</td>
+      </tr>
+      <tr>
+        <td colspan="4"><hr/></td>
+      </tr>
+      <tr class="alt">
+        <td width="15%"><strong>Condition</strong></td>
+        <td colspan="3"><code>&lt;Condition&gt;(proxy.pathsuffix MatchesPath "/animals/**")&lt;/Condition&gt;</code>
+          <p>Note the double asterisk, which matches one or more path elements (it must match
+          <em>at least</em> one).</p>
+        </td>
+      </tr>
+      <tr>
+        <td rowspan="4" class="alt" width="15%"><strong>Your API Calls</strong></td>
+        <td>&nbsp;&nbsp;"<var>{basepath}</var>/matchtest<strong>/animals</strong>"</td>
+        <td><span class="compare-no"></span></td>
+        <td>The condition requires at least one following path element specified by
+          "/**".</td>
+      </tr>
+      <tr>
+        <td>&nbsp;&nbsp;"<var>{basepath}</var>/matchtest<strong>/animals/</strong>"</td>
+        <td><span class="compare-yes"></span></td>
+        <td>The path does have another path element (the part after "/animals/"), but it's
+          just empty.</td>
+      </tr>
+      <tr>
+        <td>&nbsp;&nbsp;"<var>{basepath}</var>/matchtest<strong>/animals/cats</strong>"</td>
+        <td><span class="compare-yes"></span></td>
+        <td>The path has at least one element that comes after "/animals/".</td>
+      </tr>
+      <tr>
+        <td>&nbsp;&nbsp;"<var>{basepath}</var>/matchtest<strong>/animals/cats/wild</strong>"</td>
+        <td><span class="compare-yes"></span></td>
+        <td>The path has more than one element that comes after "/animals/".</td>
+      </tr>
+      <tr>
+        <td colspan="4"><hr/></td>
+      </tr>
+      <tr class="alt">
+        <td width="15%"><strong>Condition</strong></td>
+        <td colspan="3"><code>&lt;Condition&gt;(proxy.pathsuffix MatchesPath "/animals/*/wild/**")&lt;/Condition&gt;</code>
+          <p>Note the combination of single and double asterisks.</p>
+        </td>
+      </tr>
+      <tr>
+        <td rowspan="1" class="alt" width="15%"><strong>Your API Calls</strong></td>
+        <td>&nbsp;&nbsp;"<var>{basepath}</var>/matchtest<strong>/animals/cats/wild/</strong>"<br/>
+          &nbsp;&nbsp;"<var>{basepath}</var>/matchtest<strong>/animals/dogs/wild/austrailian</strong>"<br/>
+          &nbsp;&nbsp;"<var>{basepath}</var>/matchtest<strong>/animals/birds/wild/american/finches</strong>"</td>
+        <td><span class="compare-yes"></span></td>
+        <td>All of these requests will match.</td>
+      </tr>
+    </tbody>
+  </table>
 
-  <p>However, your goal is to only convert Weather reports into JSON <i>when the requesting client
-  is a mobile device</i>. To enable such dynamic behavior, you must add a conditional statement to
-  the Flow.</p>
+  <p>For another example of the <code>~~</code> operator, see <a href=
+    "https://community.apigee.com/questions/4284/how-do-you-override-at-the-end-of-the-url-when-you.html" class="external">
+    How to match regardless [of] a trailing '/'</a>.</p>
 
-  <h2 id="configuringconditionalbehavior">Configuring conditional behavior</h2>
+  <h3 id="api-resources">API resources</h3>
+
+  <p>RESTful services are collections of API resources. An <em>API resource</em> is a URI path
+  fragment that identifies some entity that developers can access by calling your API. For example,
+  if your service provides weather reports and weather forecasts, your backend service might define
+  two API resources:</p>
+
+  <ul>
+    <li>http://mygreatweatherforecast.com<strong>/reports</strong></li>
+    <li>http://mygreatweatherforecast.com<strong>/forecasts</strong></li>
+  </ul>
+
+
+  <p>When you create an API proxy (as shown in the {{gs_tutorial}}), you create an
+  <em>alias base URL</em> that maps to your backend service. For example:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Backend base URL</th>
+        <th>New/equivalant API proxy URL</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>http://mygreatweatherforecast.com</td>
+        <td>http://<var>your_org</var>-<var>environment</var>.apigee.net/mygreatweatherforecast</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>At this point you can make API calls to your backend using either the alias or the true base
+  URL. But when you use the API proxy URL, things start to get interesting.</p>
+
+  <p>In addition to API analytics that Edge starts to collect when you use the API proxy, proxies
+  also let you define conditional flows that map to the resources on your backend. In essence, "If
+  a GET call comes in to the /reports resource, Edge should do something."</p>
+
+  <p>The following image shows the behavior difference between two URLs that ultimately access the
+  same backend. One is the un-proxied resource URL, the other is an Edge API proxy with a
+  conditional flow to the same backend resource. We'll describe conditional flows in more detail
+  below.</p>
+
+  <p><img alt="" src="/api-platform/images/resource_conditional_flow3.png"></p>
+
+  <section class="expandable">
+    <h3 class="showalways hide-from-toc">Further Reading</h3>
+    <aside class="objective">
+      <ul>
+        <li>For best practices on API resource path design, see
+          <a href="https://pages.apigee.com/web-api-design-register.html?int_source=docs&int_medium=website&int_campaign=ebook&int_content=web-api-design-missing-link">Web API Design: The Missing Link</a></li>
+        <li>
+          <p>Check out this short video for an introduction to the relationship between your RESTful
+          backend resources and Edge proxy resources, or conditional flows.</p>
+          <div class="video">
+            <iframe allowfullscreen="" frameborder="0" height="281" mozallowfullscreen="" src=
+            "https://player.vimeo.com/video/116021624" webkitallowfullscreen="" width="500"></iframe>
+          </div>
+        </li>
+        <li>{{gs_tutorial}}</li>
+      </ul>
+    </aside>
+  </section>
+
+  <h4 id="proxies-to-backend">How API proxies map to specific backend resources</h4>
+
+  <p>With an API proxy URL mapped to the base URL of the backend service (when you create the
+  proxy), you can add conditional flows to specific resources, such as the "/reports"
+  and "/forecasts" resources mentioned earlier.</p>
+
+  <p>Let's say you wanted to have Edge <em>do something</em> when calls come in to the
+  "/reports" or "/forecasts" resources. At this point you're not telling Edge
+  <em>what</em> to do, just that it should be listening for calls to those resources. You do this
+  with conditions. In your Edge API proxy, you can create conditional flows for
+  "/reports" and "/forecasts".</p>
+
+  <p>For conceptual purposes, the following API proxy XML shows what those conditions might look
+  like:</p>
+
+  <pre class="prettyprint">
+  {% include "api-platform/fundamentals/examples/conditions/proxy-map.xml" %}
+  </pre>
+
+  <p>Those conditions say, <em>When a <code>GET</code> request comes in with "/reports" and
+  "/forecasts" in the URL, Edge will do whatever you (the API developer) tell it to,
+  through the policies you attach to those flows.</em></p>
+
+  <p>Here's an example that tells Edge what to do when a condition is met. In the following API
+  proxy XML, when a <code>GET</code> request is sent to
+  "https://yourorg-test.apigee.net/mygreatweatherforecast/reports", Edge executes
+  the "XML-to-JSON-1" policy in the response.</p>
+
+  <pre class="prettyprint">
+  {% include "api-platform/fundamentals/examples/conditions/get-reports.xml" %}
+  </pre>
+
+  <p>In addition to those optional conditional flows, each API proxy also comes with two default
+  flows:</p>
+  <ol>
+    <li>A {{preflow}} executed <em>before</em> your conditional flows</li>
+    <li>A {{postflow}} executed <em>after</em> your conditional flows</li>
+  </ol>
+
+  <p>Those are useful for
+  executing policies when <em>any</em> call is made to an API proxy. For example, if you want to
+  verify an app's API key with every call, regardless of the backend resource being accessed, you
+  could put a {{verify_api_key_policy}} on the {{preflow}}. For more on flows, see
+  <a href="/api-platform/fundamentals/flow-configurations">Configuring flows</a>.</p>
+
+  <aside class="note"><h3 class="hide-from-toc">NOTE</h3>For a discussion of best practices when
+  designing your base URLs and resources, see <a href=
+  "https://blog.apigee.com/detail/restful_api_design_nouns_are_good_verbs_are_bad/" class="external">RESTful API
+  Design: nouns are good, verbs are bad</a>.</aside>
+
+  <h4 id="change">Change your paths to backend resources</h4>
+
+  <p>You can use conditional route rules to change the proxy endpoints to a different path/verb
+  combination that your developers use. You might do this when one or more of your proxy
+  endpoints:</p>
+
+  <ul>
+    <li>Has usability/consistency issues that you do not want to expose externally</li>
+    <li>No longer exists</li>
+    <li>Is overloaded</li>
+  </ul>
+
+  <p>For example, consider the following configuration:</p>
+  <ul>
+    <li><strong>Your API base path:</strong> "https://mydomain/myservice"</li>
+    <li><strong>API proxy URL:</strong> "<var>proxy_basepath</var>/reports"
+      <p>For example, "https://ahamilton-eval-prod.apigee.net/reports"</p>
+    </li>
+    <li><strong>Backend resource path:</strong> "https://mydomain/myservice/reports"</li>
+  </ul>
+
+  <p>In this example, when a developer using your API sends a request to
+  "https://ahamilton-eval-prod.apigee.net/reports", Edge sends a request to
+  "https://mydomain/myservice/reports".</p>
+
+  <p>In addition, you can define any number of arbitrary API resource paths that map to API
+  resources.</p>
+
+  <h4 id="conditionalflows-to-backend">Apply management and monitoring with conditional flows</h4>
+
+  <p>Defining conditional flows to backend resources in an API proxy is completely optional.
+  However, those conditional flows give you the ability to apply fine-grained management and
+  monitoring.</p>
+
+  <p>You will be able to:</p>
+
+  <ul>
+    <li>Apply management in a way that reflects the semantics of your API model</li>
+    <li>Apply policies and scripted behavior to individual resource paths (URIs)</li>
+    <li>Collect fine-grained metrics for Analytics Services</li>
+  </ul>
+
+  <p>For example, imagine that you need to apply different types of logic to your backend
+  "/developers" and "/apps" resources.</p>
+
+  <p>To do so, you add two conditional flows in your API proxy: "/developers" and
+  "/apps".</p>
+
+  <p>In the <strong>Develop</strong> view of the API proxy editor's <strong>Navigator</strong> pane,
+  click the <span class="material-icons">add_box</span> next to default in the Proxy
+  Endpoints.</p>
+
+  <p><img class="screenshot" width="40%" src="/api-platform/images/add_conditional_flow_icon.png"></p>
+
+  <p>In the <strong>New Conditional Flow</strong> view, you'd enter the following key
+  configurations:</p>
+
+  <ul>
+    <li><strong>Flow name</strong>: Developers</li>
+    <li><strong>Condition Type</strong>: Path</li>
+    <li><strong>Path</strong>: "/developers"</li>
+  </ul>
+
+  <p><img class="screenshot" width="80%" src="/api-platform/images/add_conditional_flow_developers.png"></p>
+
+  <p>The condition will be triggered (and policies will be executed) if a call is sent to the proxy
+  with "/developers" at the end of the URI.</p>
+
+  <p>Now, add a conditional flow for "/apps", and assume you want the condition to be triggered on
+  both the URI and the <code>POST</code> verb in a request. The configuration involves setting the
+  following:</p>
+
+  <ul>
+    <li><strong>Flow Name</strong>: Apps</li>
+    <li><strong>Condition Type</strong>: Path and Verb</li>
+    <li><strong>Path</strong>: "/apps"</li>
+    <li><strong>Verb</strong>: <code>POST</code></li>
+  </ul>
+
+  <p><img class="screenshot" width="80%" src="/api-platform/images/add_conditional_flow_apps.png"></p>
+
+  <p>The condition will be triggered (and policies will be executed) if a call is sent to the proxy
+  with "/apps" at the end of the URI and a <code>POST</code> verb.</p>
+
+  <p>In the <strong>Navigator</strong> pane, you'll see new flows for <strong>Apps</strong> and
+  <strong>Developers</strong>.</p>
+
+  <p><img class="screenshot" width="40%" src="/api-platform/images/add_conditional_flow_navigator_apps_developers.png"></p>
+
+  <p>Select one of the flows to view the conditional flow configuration in the API proxy editor
+  code view:</p>
+  <pre class="prettyprint">&lt;Flow name="Apps"&gt;
+    &lt;Description&gt;Developer apps registered in Developer Services&lt;/Description&gt;
+    &lt;Request/&gt;
+    &lt;Response/&gt;
+    &lt;Condition&gt;(proxy.pathsuffix MatchesPath "/apps") and (request.verb = "POST")&lt;/Condition&gt;
+&lt;/Flow&gt;</pre>
+
+  <p>As you can see, API resources are simply conditional Flows that evaluate the URI path of the
+  inbound request. (The proxy.pathsuffix variable identifies the URI of the request that follows
+  the BasePath configured in the ProxyEndpoint configuration.)</p>
+
+  <p>Each API resource that you define is implemented by a conditional Flow in the API proxy. (See
+  <a href="/api-platform/fundamentals/flow-configurations">Configuring flows</a>.)</p>
+
+  <p>Once you deploy the API proxy to the test environment, the following request:</p>
+
+  <pre class="prettyprint">http://<var>org_name</var>-test.apigee.net/<var>proxy_path</var>/apps</pre>
+
+  <p>will cause the condition to evaluate to true, and this flow, along with any associated
+  policies, will execute.</p>
+
+  <p>The following example condition uses a Java regular expression to recognize calls made to the
+  "/apps" resource with or without a trailing forward slash ("/apps" or
+  "/apps/**"):</p>
+
+  <pre class="prettyprint">&lt;Condition&gt;(proxy.pathsuffix JavaRegex "/apps(/?)") and (request.verb = "POST")&lt;/Condition&gt;</pre>
+
+  <p>For more about this type of condition, see <a href=
+  "https://community.apigee.com/questions/4284/how-do-you-override-at-the-end-of-the-url-when-you.html"
+  class="external">How to match regardless ...</a> in the {{community}}.</p>
+
+  <h2 id="modelinghierarchicaluris">Modeling hierarchical URIs</h2>
+
+  <p>In some cases, you will have hierarchical API resources. For example, the Developer Services
+  API provides a method for listing all apps that belong to a developer. The URI path is:</p>
+  <pre class="prettyprint">/developers/<var>developer_email</var>/apps</pre>
+
+  <p>You may have resources where a unique ID is generated for each entity in a collection, which
+  is sometimes annotated as follows:</p>
+  <pre class="prettyprint">/genus/:id/species</pre>
+
+  <p>This path applies equally to the following two URIs:</p>
+  <pre class="prettyprint">/genus/18904/species
+/genus/17908/species</pre>
+
+  <p>To represent this structure in an API resource, you can use wildcards. For example:</p>
+  <pre class="prettyprint">/developers/*/apps
+/developers/*example.com/apps
+/genus/*/species</pre>
+
+  <p>will resolve these hierarchical URIs as API resources appropriately.</p>In some cases,
+  especially for deeply hierarchical APIs, you may simply want to resolve everything below a
+  certain URI fragment. To do so, use a double asterisk wildcard in your resource defintiion. For
+  example, if you define the following API resource:</p>
+
+  <pre class="prettyprint">/developers/**</pre>
+
+  <p>That API resource will resolve the following URI paths:</p>
+  <pre class="prettyprint">
+/developers/<var>developer_email</var>/apps
+/developers/<var>developer_email</var>/keys
+/developers/<var>developer_email</var>/apps/<var>app_id</var>/keys</pre>
+
+  <p>Here's what the conditional flow condition would look like in the API proxy definition:</p>
+  <pre class="prettyprint">&lt;Condition&gt;(proxy.pathsuffix MatchesPath "/developers/**") and (request.verb = "POST")&lt;/Condition&gt;</pre>
+
+  <h2 id="examples">Examples</h2>
+
+  <p>This section provides some in-depth explanations of simple examples as well as a series of
+  quick examples that you can copy into your flows.</p>
+
+  <h3 id="configuringconditionalbehavior">Convert message based on HTTP headers</h3>
 
   <p>The following example shows a single conditional flow named <code>Convert-for-devices</code>,
-  configured in the ProxyEndpoint response Flow. Add the Condition as an element to the entity to
-  which the condition applies. In this example, the condition is a component of the Flow.
-  Therefore, the Flow will execute whenever the statement evaluates to true.</p>
-  <pre class="prettyprint">
-&lt;Flows&gt;
-  &lt;Flow name="Convert-for-devices"&gt;
-  &lt;Condition&gt;(request.header.User-Agent = "Mozilla")&lt;/Condition&gt;
-    &lt;Response&gt;
-      &lt;Step&gt;&lt;Name&gt;ConvertToJSON&lt;/Name&gt;&lt;/Step&gt;
-    &lt;/Response&gt;
-  &lt;/Flow&gt;
-&lt;/Flows&gt;
-</pre>
+  configured in the ProxyEndpoint response flow. Add the {{condition}} to the entity to
+  which the condition applies. In this example, the condition is a component of the flow.
+  Therefore, the flow will execute whenever the statement evaluates to true.</p>
+
+  <pre class="prettyprint">{% include "api-platform/fundamentals/examples/conditions/single-conditional-flow.xml" %}</pre>
 
   <p>For each request received from an app, Edge stores the values of all HTTP headers present as
   variables. If the request contains an HTTP header called <code>User-Agent</code>, that header and
   its value are stored as a variable called <code>request.header.User-Agent</code>.</p>
 
   <p>Given the ProxyEndpoint configuration above, Edge checks the value of the
-  <code>request.header.User-Agent</code> variable to see whether the condition evaluates to
-  true.</p>
+  <code>request.header.User-Agent</code> property to see whether the condition evaluates to
+  true:</p>
 
-  <p>If the condition does evaluate to true, that is, the value of the variable
-  <code>request.header.User-Agent</code> equals <code>Mozilla</code>, then the conditional Flow
-  executes and the XMLtoJSON policy called <code>ConvertToJSON</code> is enforced. If not, the Flow
-  is not executed, and the XML response is returned unmodified (in XML format) to the requesting
-  app.</p>
+  <ul>
+    <li>If the condition <em>does</em> evaluate to true, that is, the value of the variable
+      <code>request.header.User-Agent</code> equals "Mozilla", then the conditional Flow
+      executes and the {{xml_to_json_policy}} policy called "ConvertToJSON" is enforced.</li>
+    <li>If the condition <em>does not</em> evaluate to true, the Flow is not executed, and the XML
+      response is returned unmodified (in XML format) to the requesting app.</li>
+  </ul>
 
-  <h3 id="configuringconditionalbehavior-testingtheconditionalflow">Testing the conditional
-  flow</h3>
+  <h3 id="xmltojson">Transform response based on device type</h3>
 
-  <p>In this sample request, the HTTP <code>User-Agent</code> header is set to
-  <code>Mozilla</code>, causing the conditional statement to evaluate to true and the conditional
-  flow <code>Convert-for-devices</code> to execute.</p>
-  <pre class="prettyprint">
-$ curl -H "User-Agent:Mozilla" http://{org_name}-test.apigee.net/weather/forecastrss?w=12797282
-</pre>
+  <p>Let's use a specific example in which you need to transform response message from XML to
+  JSON&mdash;but only for mobile devices. First, add an {{xml_to_json_policy}} that will convert the
+  XML-formatted response from the Weather API into JSON:</p>
 
-  <p>or, to pretty print where Python is available:</p>
-  <pre class="prettyprint">
-$ curl -H "User-Agent:Mozilla" http://{org_name}-test.apigee.net/weather/forecastrss?w=12797282 | python -mjson.tool
-</pre>
+  <pre class="prettyprint">{% include "api-platform/fundamentals/examples/conditions/conditional-transform.xml" %}</pre>
 
-  <p>Sample Response:</p>
-  <pre class="prettyprint">
-. . .
+  <p>The policy configuration above tells the API proxy to take the response message, perform a
+  conversion from XML to JSON with default settings, and then write the result to the new response
+  message. (If you are converting a <em>request</em> message from XML to JSON, you simply set both of
+  these values to "request".)</p>
 
-"yweather_forecast": [
-         {
-              "code": "11", 
-              "date": "12 Dec 2012", 
-              "day": "Wed", 
-              "high": "55", 
-              "low": "36", 
-              "text": "Showers" 
-          }, 
-          {
-              "code": "32", 
-              "date": "13 Dec 2012", 
-              "day": "Thu", 
-              "high": "56", 
-              "low": "38", 
-              "text": "Sunny"
-          }
-      ]
-  }
+  <aside class="key-point"><h3 class="hide-from-toc">TIP</h3>The XML to JSON policy type defines a
+  set of reasonable
+  defaults, which means that you only need to add configuration elements to craft XML into specific
+  JSON structures.</aside>
 
-. . .
-</pre>
+  <p>Since you want to convert responses from XML to JSON, you need to configure a conditional
+  response Flow to perform the conversion. For example, to convert all responses from XML to JSON
+  before they are returned to the client app, configure the following ProxyEndpoint response
+  Flow.</p>
 
-  <p>A request submitted without the <code>User-Agent</code> header, or with a different value than
-  <code>Mozilla</code>, will result in an XML-formatted response.</p>
-  <pre class="prettyprint">
-$ curl http://{org_name}-test.apigee.net/weather/forecastrss?w=12797282
-</pre>
+  <pre class="prettyprint">{% include "api-platform/fundamentals/examples/conditions/simple-convert.xml" %}</pre>
 
-  <p>The unmodified XML response is returned.</p>
+  <p>When you invoke the API using the standard request, the response is formatted in JSON.</p>
 
-  <p>Sample Response:</p>
-  <pre class="prettyprint">
-&lt;yweather:forecast day="Wed" date="12 Dec 2012" low="36" high="55" text="Showers" code="11" /&gt; &lt;yweather:forecast day="Thu" date="13 Dec 2012" low="38" high="56" text="Sunny" code="32" /&gt;
-</pre>
-
-  <h2 id="sampleconditions"><a name="using_conditions" id="using_conditions"></a>Sample
-  conditions</h2>
+  <p>However, your goal is to only convert Weather reports into JSON <em>when the requesting client
+  is a mobile device</em>. To enable such dynamic behavior, you must add a conditional statement to
+  the Flow.</p>
 
   <h3 id="sampleconditions-conditionattachedtorouterule">Condition attached to RouteRule</h3>
+  <p>The following example shows a condition attached to a RouteRule:</p>
   <pre class="prettyprint">
-&lt;RouteRule name="default"&gt;
-<span style=
-"color:#0000ff;"> &lt;!--this routing executes if the header indicates that this is an XML call. If true, the call is routed to the endpoint XMLTargetEndpoint--&gt;</span>
-  &lt;Condition&gt;request.header.content-type = "text/xml"&lt;/Condition&gt;
-  &lt;TargetEndpoint&gt;XmlTargetEndpoint&lt;/TargetEndpoint&gt;
-&lt;/RouteRule&gt;
-</pre>
+  {% include "api-platform/fundamentals/examples/conditions/routerule-condition.xml" %}
+  </pre>
 
-  <h3 id="sampleconditions-conditionattachedtoapolicy">Condition attached to a policy</h3>
+  <h3 id="sampleconditions-conditionattachedtoapolicy" class="hide-from-toc">Condition attached to a policy</h3>
+  <p>The following example shows a condition attached to a policy:</p>
   <pre class="prettyprint">
-&lt;Step&gt;
-<span style="color:#0000ff;">&lt;!--the policy </span><span style=
-"color: rgb(0, 0, 255);">MaintenancePolicy only </span><span style=
-"color: rgb(0, 0, 255);">executes if the response status code is exactly 503</span><span style=
-"color: rgb(0, 0, 255);">--&gt;</span>
-  &lt;Condition&gt;response.status.code = 503&lt;/Condition&gt;
-  &lt;Name&gt;MaintenancePolicy&lt;/Name&gt;
-&lt;/Step&gt;
-</pre>
+  {% include "api-platform/fundamentals/examples/conditions/policy-condition.xml" %}
+  </pre>
 
-  <h3 id="sampleconditions-conditionalflow">Conditional Flow</h3>
+  <h3 id="sampleconditions-conditionalflow" class="hide-from-toc">Conditional Flow</h3>
+  <p>The following example shows a conditional flow:</p>
   <pre class="prettyprint">
-<span style=
-"color: rgb(0, 0, 255);">&lt;!-- this entire flow is executed only if the request verb is a GET--</span><span style="color: rgb(0, 0, 255);">&gt;
-</span>&lt;Flow name="GetRequests"&gt;
-  &lt;Condition&gt;request.verb="GET"&lt;/Condition&gt;
-  &lt;Request&gt;
-    &lt;Step&gt;
-<span style=
-"color: rgb(0, 0, 255);">&lt;!-- this policy only executes if request path includes a term like statues--</span><span style="color: rgb(0, 0, 255);">&gt;
-</span>&lt;Condition&gt;request.path ~ "/statuses/**"&lt;/Condition&gt;
-      &lt;Name&gt;StatusesRequestPolicy&lt;/Name&gt;
-    &lt;/Step&gt;
-  &lt;/Request&gt;
-  &lt;Response&gt;
-    &lt;Step&gt;
-<span style=
-"color: rgb(0, 0, 255);">&lt;!-- this condition has multiple expressions. The policy executes if the response code status is exactly 503 or 400--</span><span style="color: rgb(0, 0, 255);">&gt;
-</span>&lt;Condition&gt;(response.status.code = 503) or (response.status.code = 400)&lt;/Condition&gt;
-      &lt;Name&gt;MaintenancePolicy&lt;/Name&gt;
-    &lt;/Step&gt;
-  &lt;/Response&gt;
-&lt;/Flow&gt;
-</pre>
+  {% include "api-platform/fundamentals/examples/conditions/get-flow.xml" %}
+  </pre>
 
-  <h3 id="sampleconditions-sampleoperatorsinconditions"><a name="operators" id=
-  "operators"></a>Sample operators in conditions</h3>
+  <h3 id="sampleconditions-sampleoperatorsinconditions">Sample operators in conditions</h3>
 
   <p>Here are some examples of operators used to create conditions:</p>
 
   <ul>
     <li><code>request.header.content-type = "text/xml"</code></li>
-
     <li><code>request.header.content-length &lt; 4096 &amp;&amp; request.verb = "PUT"</code></li>
-
     <li><code>response.status.code = 404 || response.status.code = 500</code></li>
-
     <li><code>request.uri MatchesPath "/*/statuses/**"</code></li>
-
     <li><code>request.queryparam.q0 NotEquals 10</code></li>
-  </ul>{% endblock %}
+  </ul>
+
+  <h3 id="examples-apracticalexampleignoreattheendofapath" class="hide-from-toc">A practical example: Ignore "/" at the
+  end of a path</h3>
+
+  <p>Edge developers commonly want to handle both of these path suffixes: "<code>/cat</code>" and
+  "<code>/cat/</code>". This is because some users or clients might call your API with the extra
+  slash on the end of the path, and you need to be able to handle that in your conditional
+  statements. This exact use case <a href=
+  "https://community.apigee.com/questions/4284/how-do-you-override-at-the-end-of-the-url-when-you.html" class="external">
+  has been discussed on the Apigee Community</a>.</p>
+
+  <p>If you prefer, you can achieve this without using Regex like this:</p>
+  <pre class="prettyprint">
+  {% include "api-platform/fundamentals/examples/conditions/preflow-no-regex.xml" %}
+  </pre>
+
+  <p>This is a good option. It is clear and readable.</p>
+
+  <p>You can do the same thing with Regex, however, like this. The parentheses are used to group
+  the regex part of the statement, but they are not required.</p>
+
+  <pre class="prettyprint">&lt;Condition&gt;(proxy.pathsuffix JavaRegex "/cat(/?)"&lt;/Condition&gt;</pre>
+
+  <p><strong>API Calls:</strong></p>
+
+  <p><code>GET http://artomatic-test.apigee.net/matchtest/cat<br>
+  or </code><br>
+  <code>GET http://artomatic-test.apigee.net/matchtest/cat</code>/</p>
+
+  <p>Does the policy execute? Yes. Note that in a regular expression, the "<code>?</code>"
+  character means: match zero or one of the preceding character. Therefore, both
+  "<code>/cat</code>" and "<code>/cat/</code>" are matches.</p>
+
+  <p>API Call:</p>
+  <pre>GET http://artomatic-test.apigee.net/matchtest/cat/spotted</pre>
+
+  <p>Does the policy execute? No. The regular expression matches zero or only one occurance of the
+  preceding character, and nothing else is allowed.</p>
+
+  <h3 id="examples-matchingarbitrarystringswithjavaregex" class="hide-from-toc"><a id="arbitrary" name=
+  "arbitrary"></a>Matching arbitrary strings with JavaRegex</h3>
+
+  <p>In all of the examples in this topic, we show how to match one of the properties of the
+  {{proxy_object}} flow variable: <code>pathsuffix</code>.
+  It's good to know that you can do pattern matching on any arbitrary string or
+  flow variable's property, whether or not it's a built-in property like
+  <code>proxy.pathsuffix</code>.</p>
+
+  <p>For example, if you have a condition that tests an arbitrary string, perhaps a string returned
+  in a backend payload or a string returned from an authentication server lookup, you can use
+  matching operators to test it.
+
+  If you use JavaRegex, the regular expression will be compared
+  against the entire subject string. If the subject is "abc" and the regular expression is "[a-z]",
+  there is no match, because "[a-z]" matches exactly <em>one</em> alpha character. The
+  expression "[a-z]+" works, as does "[a-z]*" and "[a-z]{3}.</p>
+
+  <p>Let's look at a concrete example. Suppose the authentication server returns a list of roles as
+  a comma-delimted string: "editor, author, guest".</p>
+
+  <p>To test the presence of the editor role, this construction will not work, because "editor" is
+  only part of the entire string.</p>
+
+  <pre>&lt;Condition&gt;returned_roles ~~ "editor"&lt;/Condition&gt;</pre>
+
+  <p>However, this construction will work:</p>
+
+  <pre>&lt;Condition&gt;returned_roles ~~ ".*\beditor\b.*")&lt;/Condition&gt;</pre>
+
+  <p>It works because it takes into account word breaks and any other parts of the string with the
+  ".*" prefix and suffix.</p>
+
+  <p>In this example, you can also test for "editor" with the Matches operator:</p>
+
+  <pre>&lt;Condition&gt;returned_roles ~~ "*editor*")&lt;/Condition&gt;</pre>
+
+  <p>However, in cases where you need more precision, JavaRegex is often a better choice. </p>
+
+
+{% endblock %}

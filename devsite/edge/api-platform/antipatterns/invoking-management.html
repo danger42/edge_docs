@@ -1,0 +1,119 @@
+{% extends "_base.html" %}
+{% block title %}Invoking Management API calls from an API Proxy{% endblock %}
+{% block body %}
+
+<p>Edge has a powerful utility called “management APIs” which offers services such as:</p>
+<ul>
+  <li>Deploying or undeploying API Proxies</li>
+  <li>Configuring virtual hosts, keystores and truststores, etc.</li>
+  <li>Creating, deleting and/or updating entities such as KeyValueMaps, API Products, Developer
+    Apps, Developers, Consumer Keys, etc.</li>
+  <li>Retrieving information about these entities</li>
+</ul>
+
+<p>These services are made accessible through a component called <em>Management Server</em> in the
+Apigee Edge platform. These services can be invoked easily with the help of simple management API
+calls.</p>
+
+<p>Sometimes we may need to use one or more of these services from API Proxies at runtime. This is
+because the entities such as KeyValueMaps, OAuth Access Tokens, API Products, Developer Apps,
+Developers, Consumer Keys, etc. contain useful information in the form of key-value pairs, custom
+attributes or as part of its profile.</p>
+
+<p>For instance, you can store the following information in KeyValueMap to make it more secure and
+accessible at runtime:</p>
+
+<ul>
+  <li>Back-end target URLs</li>
+  <li>Environment properties</li>
+  <li>Security credentials of backend or third party systems</li>
+</ul>
+
+<p>Similarly, you may want to get the list of API Products or developer’s email address at runtime.
+This information will be available as part of the Developer Apps profile.</p>
+
+<p>All this information can be effectively used at runtime to enable dynamic behaviour in policies
+or custom code within Apigee Edge.</p>
+
+<h2>Antipattern</h2>
+
+<p>The management APIs are preferred and useful for administrative tasks and should not be used for
+performing any runtime logic in API Proxies flow. This is because:</p>
+
+<ul>
+  <li>Using management APIs to access information about the entities such as KeyValueMaps, OAuth
+    Access Tokens or for any other purpose from API Proxies leads to dependency on Management
+    Servers.</li>
+  <li>Management Servers are not a part of Edge runtime component and therefore, they may not be
+    highly available.</li>
+  <li>Management Servers also may not be provisioned within the same network or data center and may
+    therefore introduce network latencies at runtime.</li>
+  <li>The entries in the management servers are cached for longer period of time, so we may not be
+    able to see the latest data immediately in the API Proxies if we perform writes and reads in a
+      short period of time.</li>
+  <li>Increases network hops at runtime.</li>
+</ul>
+
+<p>In the code sample below, the management API call is made via the custom JavaScript code to
+retrieve the information from the KeyValueMap:</p>
+
+<pre class="prettyprint">var response = httpClient.send('https://api.enterprise.apigee.com/v1/o/<var>org_name</var>/e/<var>env_name</var>/keyvaluemaps/<var>kvm_name</var>');
+response.waitForComplete();</pre>
+
+<p>If the management server is unavailable, then the JavaScript code invoking the management API
+call fails. This subsequently causes the API request to fail.</p>
+
+
+<h2>Impact</h2>
+
+<ul>
+  <li>Introduces additional dependency on Management Servers during runtime. Any failure in
+    Management servers will affect the API calls.</li>
+  <li>User credentials for management APIs need to be stored either locally or in some secure store
+    such as Encrypted KVM.</li>
+  <li>Performance implications owing to invoking the management service over the network.</li>
+  <li>May not see the updated values immediately due to longer cache expiration in management
+    servers.</li>
+</ul>
+
+<h2>Best practice</h2>
+
+<p>There are more effective ways of retrieving information from entities such as KeyValueMaps, API
+Products, DeveloperApps, Developers, Consumer Keys, etc. at runtime. Here are a few examples:</p>
+
+<ul>
+  <li>Use a {{kvm_operations_policy}} to access information from KeyValueMaps. Here’s sample code
+    that shows how to retrieve information from the KeyValueMap:
+    <pre class="prettyprint">{% includecode content_path="api-platform/antipatterns/examples/2-6.xml" html_escape="True" %}</pre>
+  </li>
+  <li>To access information about API Products, Developer Apps, Developers, Consumer Keys, etc.
+    in the API Proxy, you can do either of the following:
+    <ul>
+      <li>If your API Proxy flow has a {{verify_api_key_policy}}, then you can access the information
+        using the flow variables populated as part of this policy. Here is sample code that shows
+        how to retrieve the name and created_by information of a Developer App using JavaScript:
+        <pre class="prettyprint">{% includecode content_path="api-platform/antipatterns/examples/2-7.xml" html_escape="True" %}</pre>
+      </li>
+      <li>If your API Proxy flow doesn’t have a VerifyAPIKey policy, then you can access the
+        profiles of API Products, Developer Apps, etc. using the Access Entity and Extract Variables
+        policies:
+        <ol>
+          <li>Retrieve the profile of DeveloperApp with the {{access_entity_policy}}:
+            <pre class="prettyprint">{% includecode content_path="api-platform/antipatterns/examples/2-8.xml" html_escape="True" %}</pre>
+          <li>Extract the <code>appId</code> from DeveloperApp with the {{extract_variables_policy}}:
+            <pre class="prettyprint">{% includecode content_path="api-platform/antipatterns/examples/2-9.xml" html_escape="True" %}</pre>
+        </ol>
+      </li>
+    </ul>
+  </li>
+</ul>
+
+
+<h2>Further reading</h2>
+<ul>
+  <li>{{kvm_operations_policy}}</li>
+  <li>{{verify_api_key_policy}}</li>
+  <li>{{access_entity_policy}}</li>
+</ul>
+
+{% endblock %}

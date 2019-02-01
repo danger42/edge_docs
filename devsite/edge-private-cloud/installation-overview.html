@@ -1,4 +1,4 @@
-{% extends "private-cloud/v4.18.05/_base.html" %}
+{% extends "private-cloud/v4.19.01/_base.html" %}
 {% block title %}Edge Installation Overview{% endblock %}
 {% block body %}
 
@@ -21,8 +21,8 @@
       <a href="installation-topologies">Installation Topologies</a> for more.</li>
     <li>On each node in your selected topology, install the Edge <code>apigee-setup</code> utility:
       <ul>
-        <li>Download the Edge <code>bootstrap_4.18.05.sh</code> file to
-          <code>/tmp/bootstrap_4.18.05.sh</code>.</li>
+        <li>Download the Edge <code>bootstrap_{{cur_version}}.sh</code> file to
+          <code>/tmp/bootstrap_{{cur_version}}.sh</code>.</li>
         <li>Install the Edge <code>apigee-service</code> utility and dependencies.</li>
         <li>Install the Edge <code>apigee-setup</code> utility and dependencies.
           <p>See <a href="install-edge-apigee-setup-utility">Install the Edge apigee-setup utility</a>
@@ -85,7 +85,7 @@
   <h3 id="creating-sudo-user">Creating a user with full sudo access to "apigee" user</h3>
 
   <aside class="note"><strong>Note:</strong> You cannot perform this step until after you have run
-  <code>bootstrap_4.18.05.sh</code> file to create the "apigee" user.</aside>
+  <code>bootstrap_{{cur_version}}.sh</code> file to create the "apigee" user.</aside>
 
   <p>To configure a user to have full sudo access to the "apigee" user, use the "visudo" command to
   edit the sudoers file to add:</p>
@@ -124,9 +124,9 @@
   <ol>
     <li>Tasks performed by root:
       <ol>
-        <li>Download and run the <code>bootstrap_4.18.05.sh</code> file:
-          <pre class="devsite-terminal">curl https://software.apigee.com/bootstrap_4.18.05.sh -o /tmp/bootstrap_4.18.05.sh
-<code class="devsite-terminal">sudo bash /tmp/bootstrap_4.18.05.sh apigeeuser=<var>uName</var> apigeepassword=<var>pWord</var></code></pre>
+        <li>Download and run the <code>bootstrap_{{cur_version}}.sh</code> file:
+          <pre class="devsite-terminal">curl https://software.apigee.com/bootstrap_{{cur_version}}.sh -o /tmp/bootstrap_{{cur_version}}.sh
+<code class="devsite-terminal">sudo bash /tmp/bootstrap_{{cur_version}}.sh apigeeuser=<var>uName</var> apigeepassword=<var>pWord</var></code></pre>
           <p>This step installs the <code>apigee-service</code> utility and creates the "apigee"
           user.</p>
       </li>
@@ -364,6 +364,10 @@
         <td>PostgreSQL database</td>
         <td><code>/opt/apigee/var/log/apigee-postgresql</code></td>
       </tr>
+      <tr>
+        <td>{{am}}</td>
+        <td><code>/opt/apigee/var/log/apigee-monit</code></td>
+      </tr>
     </tbody>
   </table>
 
@@ -417,6 +421,10 @@
         <td>PostgreSQL database</td>
         <td><code>/opt/apigee/data/apigee-postgres/pgdata</code></td>
       </tr>
+      <tr>
+        <td>{{am}}</td>
+        <td><code>/opt/apigee/data/apigee-monit</code></td>
+      </tr>
     </tbody>
   </table>
 
@@ -461,6 +469,11 @@
 
   <p>See <a href="how-configure-edge">How to configure Edge</a> for more information on
   Edge configuration.</p>
+
+  <h3 id="monit">Install apigee-monit on the node</h3>
+  <p>After you have completed installing components on a node, you can optionally add the {{am}}
+  utility. {{am}} will monitor the components on the node and attempt to restart them if they fail.
+  For more information, see <a href="apigee-monit">Self healing with apigee-monit</a>.</p>
 
   <h3 id="invoke-components">Invoking commands on Edge components</h3>
 
@@ -508,5 +521,16 @@
     <li><code>backup, restore</code></li>
     <li><code>install, uninstall</code></li>
   </ul>
+
+  <h2>Enable system check on install</h2>
+
+  <p>The Edge installation configuration file supports the following property:</p>
+
+  <pre class="prettyprint">ENABLE_SYSTEM_CHECK=y</pre>
+
+  <p>If you set this property to "y", the installer checks that the system meets the CPU and
+  memory requirements for the component being installed. The default value is "n" to disable the
+  check.</p>
+
 
 {% endblock %}

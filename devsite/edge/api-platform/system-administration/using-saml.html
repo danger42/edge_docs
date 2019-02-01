@@ -1,0 +1,183 @@
+{% extends "_base.html" %}
+{% block title %}Access the management API with SAML{% endblock %}
+{% block body %}
+
+  <p>SAML supports a single sign-on (SSO) environment. By using SAML with Edge, you can support SSO
+  for the Edge UI and API in addition to any other services that you provide and that also support
+  SAML.</p>
+
+  <p><strong>Prerequisite:</strong> You must <a href="saml-overview">enable SAML</a> for at least
+  one organization before you can use it to access the management API.</p>
+
+
+<h2>Differences between SAML and OAuth2</h2>
+
+  <p>Once SAML is set up, using it is very similar to using <a href="using-oauth2">OAuth2 to access
+  the management API</a>. When you call the management API, you include an OAuth2 access token in
+  your request.</p>
+
+  <p>The key differences between SAML and OAuth2 when accessing the management API are in the way
+  you get tokens. With SAML, you must include the following when getting your passcode and
+  tokens:</p>
+  <ol>
+    <li><strong>Zones:</strong> Reference your zone name when getting your tokens</li>
+    <li><strong>Initial passcode:</strong> Include a one-time passcode (when generating the initial
+    access token)</li>
+  </ol>
+
+  <p>The endpoints for the management API calls are the same for both SAML and OAuth2.</p>
+
+  <p>To get access tokens with SAML, you can either use the {{get_token}} utility or the management
+  API. Each of these approaches is described in the sections that follow.</p>
+
+<h2>Get access tokens with get_token</h2>
+
+  <p>You can use the {{get_token}} utility to exchange your credentials for OAuth2 access and
+  refresh tokens that you use with SAML.</p>
+
+  {{curl_blurb}}
+
+  <p><strong>To get an access token with get_token:</strong></p>
+
+  <ol>
+    <li>Set the <code>SSO_LOGIN_URL</code> environment variable to your login URL. The login URL has
+      the following form:
+      <pre class="prettyprint">https://<var>zoneName</var>.login.apigee.com</pre>
+      <p>For example, for a zone named "acme", set <code>SSO_LOGIN_URL</code> to "https://acme.login.apigee.net",
+      as the following example shows:</p>
+      <pre class="devsite-terminal">export SSO_LOGIN_URL=https://acme.login.apigee.com</pre>
+    </li>
+    <li>In a browser, go to the following URL to obtain a one-time passcode:
+      <pre class="prettyprint">https://<var>zoneName</var>.login.apigee.com/passcode</pre>
+      <p>For example, for a zone named "acme", go to the following URL:</p>
+      <pre class="prettyprint">https://acme.login.apigee.com/passcode</pre>
+      <p>If you are not currently logged in by your identity provider, you will be prompted to log
+      in.</p>
+      <p>This URL returns a one-time passcode that remains valid until you refresh that URL to
+      obtain a new passcode, or you use the passcode with <code>get_token</code> to generate an
+      access token.</p>
+    </li>
+    <li>Invoke <code>get_token</code> to obtain the OAuth2 access token:
+      <pre class="devsite-terminal">get_token</pre>
+      <p>You are prompted to enter the one-time passcode that you obtained in the previous step:</p>
+      <pre class="prettyprint">One Time Code ( Get one at https://acme.login.apigee.com/passcode )
+Enter the passcode if SAML is enabled or press ENTER:</pre>
+      <p>Enter the passcode. The <code>get_token</code> utility obtains the OAuth2 tokens,
+      prints the access token to <code>stdout</code>, and writes the access and refresh tokens
+      to <code>~/.sso-cli</code>.</p>
+    </li>
+    <li>Call the management API and pass the access token in the <code>Authorization: Bearer</code>
+      header, as the following example shows:
+      <pre class="devsite-terminal">curl <strong>-H "Authorization: Bearer <var>ACCESS_TOKEN</var>"</strong>
+  https://api.enterprise.apigee.com/v1/organizations/ahamilton-eval</pre>
+      <p>You got the value of the access token from <code>~/.sso-cli</code>.</p>
+      <p>This example gets details about the given organization. For a complete list of management
+      API endpoints, see {{apiref}}.</p>
+    </li>
+  </ol>
+
+  <p>When your access token expires, you can call <code>get_token</code> again to get a new access
+  token. You will not be prompted for a new passcode until the refresh token expires..</p>
+
+  <p>When the refresh token expires, <code>get_token</code> prompts you for a new passcode. You must
+  generate a new passcode before you can generate a new OAuth access token.</p>
+
+  <h2 id="refresh">Get access tokens with the management API</h2>
+
+  <p>You can use the management API to get access tokens that you use with SAML. To authenticate
+  yourself with the management API, you use a passcode on your initial request to get an access
+  token, and again to get a refresh token.</p>
+
+  <p>To get an access token with the management API:</p>
+
+  <ol>
+    <li>In a browser, go to the following URL to obtain a one-time passcode:
+      <pre class="prettyprint">https://<var>zoneName</var>.login.apigee.com/passcode</pre>
+      <p>For example, for a zone named "acme", go to the following URL:</p>
+      <pre class="prettyprint">https://acme.login.apigee.com/passcode</pre>
+      <p>The passcode essentially acts as your credentials to get your tokens.</p>
+      <p>If you are not currently logged in by your identity provider, you will be prompted to log
+      in.</p>
+      <p>This URL returns a one-time passcode that remains valid until you refresh that URL to
+      obtain a new passcode, or you use the passcode with <code>get_token</code> to generate an
+      access token.</p>
+    </li>
+    <li>Send a request to the management API, as the following example shows:
+      <pre class="devsite-terminal">curl -H "Content-Type: application/x-www-form-urlencoded;charset=utf-8" \
+      -H "accept: application/json;charset=utf-8" \
+      -H "Authorization: Basic ZWRnZWNsaTplZGdlY2xpc2VjcmV0" -X POST \
+      https://<var>zoneName</var>.login.apigee.com/oauth/token -s \
+      -d 'grant_type=password&amp;response_type=token<strong>&amp;passcode=<var>passcode</var></strong>'</pre>
+      <p>The <var>passcode</var> acts as your credentials for authorization.</p>
+      <p>Where:</p>
+      <ul>
+        <li>The body of the request contains the following:
+          <ul>
+            <li><code>grant_type</code> is "password"</li>
+            <li><code>response_type</code> is "token"</li>
+          </ul>
+        </li>
+        <li><code>passcode</code> is the passcode you got in the previous step</li>
+        <li>The <code>Authorization</code> header is "Basic ZWRnZWNsaTplZGdlY2xpc2VjcmV0" (use this
+          exact value)</li>
+        <li>The request type is <code>POST</code></li>
+      </ul>
+      <p>The call prints the access and refresh tokens to the screen.</p>
+    </li>
+  </ol>
+
+  <p><strong>To refresh your access token:</strong></p>
+  <ol>
+    <li>In a browser, go to the following URL to obtain a one-time passcode:
+      <pre class="prettyprint">https://<var>zoneName</var>.login.apigee.com/passcode</pre>
+      <p>For example, for a zone named "acme", go to the following URL:</p>
+      <pre class="prettyprint">https://acme.login.apigee.com/passcode</pre>
+      <p>The passcode essentially acts as your credentials to get your tokens.</p>
+    </li>
+    <li>Submit a request to <code>https://<var>zoneName</var>.login.apigee.com/oauth/token</code>,
+      as the following example shows:
+      <pre class="devsite-terminal">curl -H "Content-Type:application/x-www-form-urlencoded;charset=utf-8" \
+  -H "Accept: application/json;charset=utf-8" \
+  -H "Authorization: Basic ZWRnZWNsaTplZGdlY2xpc2VjcmV0" -X POST \
+  https://<var>zoneName</var>.login.apigee.com/oauth/token \
+  -d 'grant_type=refresh_token&amp;refresh_token=<var>REFRESH_TOKEN</var>'</pre>
+      <p>Where:</p>
+      <ul>
+        <li>The body of the request contains the following:
+          <ul>
+            <li><code>grant_type</code> is "refresh_token"</li>
+            <li><code>refresh_token</code> is the value of the refresh token (if you used
+            {{get_token}}, then the refresh token is in <code>~/.sso-cli</code></li>
+          </ul>
+        </li>
+        <li>The <code>Authorization</code> header is "Basic ZWRnZWNsaTplZGdlY2xpc2VjcmV0" (use this
+          exact value)</li>
+        <li>The request type is <code>POST</code></li>
+      </ul>
+    </li>
+  </ol>
+
+<h2>Access the management API with SAML</h2>
+
+  <p>You can use tools such as <code>curl</code> or the Apigee convenience utility {{acurl}} to
+  access the management API.</p>
+
+  <p>With <code>curl</code>, you call the management API and pass the access token in the
+  <code>Authorization: Bearer</code> header, as the following example shows:</p>
+
+  <pre class="devsite-terminal">curl <strong>-H "Authorization: Bearer <var>ACCESS_TOKEN</var>"</strong>
+  https://api.enterprise.apigee.com/v1/organizations/ahamilton-eval</pre>
+
+  <p>With <code>acurl</code>, you do not need to specify the <code>Authorization</code> header once
+  you have called {{get_token}} and saved the tokens locally. For example:</p>
+
+  <pre class="devsite-terminal">acurl https://api.enterprise.apigee.com/v1/organizations/ahamilton-eval</pre>
+
+  <p>These examples call a management API endpoint that gets details about the given organization.
+  For a complete list of management API endpoints, see {{apiref}}.</p>
+
+  <p>For additional methods of calling the API, including ways to ensure that your token remains
+  fresh, see <a href="using-oauth2#access-api">Access the management API with OAuth2</a>.</p>
+
+
+{% endblock %}

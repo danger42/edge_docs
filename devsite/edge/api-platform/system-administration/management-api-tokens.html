@@ -1,0 +1,167 @@
+{% extends "_base.html" %}
+{% block title %}Using the management API to get OAuth2 tokens{% endblock %}
+{% block body %}
+
+  <p>You can use the management API to exchange your credentials for an access and refresh token
+  that you then use to call the management API in your
+  <a href="using-oauth2-security-apigee-edge-management-api">OAuth</a> workflows.</p>
+
+  <p>In addition to the techniques described in this section, you can also use the {{acurl}} and
+  {{get_token}} utilities to get OAuth2 tokens.</p>
+
+  <h3>Path</h3>
+  <pre class="prettyprint">POST https://login.apigee.com/oauth/token</pre>
+
+  <h3>Request headers</h3>
+  <table>
+    <tbody>
+      <tr>
+        <th>Parameter</th>
+        <th>Value</th>
+      </tr>
+      <tr>
+        <td><code>Content-Type</code></td>
+        <td>"application/x-www-form-urlencoded"</td>
+      </tr>
+      <tr>
+        <td><code>Accept</code></td>
+        <td>"application/json;charset=utf-8"</td>
+      </tr>
+      <tr>
+        <td><code>Authorization</code></td>
+        <td><p>"Basic ZWRnZWNsaTplZGdlY2xpc2VjcmV0"</p>
+          <aside class="note"><h3 class="hide-from-toc">NOTE</h3>
+            <p>Use this value exactly as shown here. It is a hard-coded value that the API requires
+            in the Authorization header.</p>
+          </aside>
+          <p>You can export this value to an environment variable so that you can reuse it in these
+          management API calls. For example:</p>
+          <pre class="devsite-terminal">export CLIENT_AUTH=ZWRnZWNsaTplZGdlY2xpc2VjcmV0</pre>
+          <pre class="devsite-terminal">curl ... -H "Authorization: Basic <strong>$CLIENT_AUTH"</strong> ...</pre>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Form parameters</h3>
+  <table>
+    <tbody>
+      <tr>
+        <th>Parameter</th>
+        <th>Required?</th>
+        <th>Value</th>
+      </tr>
+      <tr>
+        <td><code>username</code></td>
+        <td><strong>Required</strong></td>
+        <td>The email address associated with your Apigee account. Do not pass your username.</td>
+      </tr>
+      <tr>
+        <td><code>password</code></td>
+        <td><strong>Required</strong></td>
+        <td>The password for your Apigee account.</td>
+      </tr>
+      <tr>
+        <td><code>grant_type</code></td>
+        <td><strong>Required</strong></td>
+        <td><p>Determines whether you get a new access token or refresh the existing token. Valid
+          values are:</p>
+          <ul>
+            <li>"password": Get a new access token. When <code>grant_type</code> is "password",
+              you must include your Apigee credentials in the request.</li>
+            <li>"refresh_token": Send a refresh token to get a new access token. When
+              <code>grant_type</code> is "refresh_token", you are not required to include your
+              credentials in the request.</li>
+          </ul>
+        </td>
+      </tr>
+      <tr>
+        <td><code>refresh_token</code></td>
+        <td>Optional</td>
+        <td>The token you pass to get a new access token when the current access token has
+          expired. This parameter is required when <code>grant_type</code> is "refresh_token".</td>
+      </tr>
+      <tr>
+        <td><code>mfa_token</code></td>
+        <td>Optional</td>
+        <td>A valid multi-factor authentication (MFA) code for your account. Required only if you have
+          <a href="/api-platform/system-administration/enable-two-factor-auth-your-apigee-account">MFA enabled</a>.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Examples</h3>
+
+
+  {{curl_blurb}}
+
+  <div class="ds-selector-tabs">
+    <section>
+      <h3><span class="two-line-tab">Get a new access token</span></h3>
+      <blockquote>
+        <p>To get a new access token, set the <code>grant_type</code> to "password":</p>
+        <pre class="devsite-terminal prettyprint">curl -H "Content-Type:application/x-www-form-urlencoded;charset=utf-8" \
+      -H "Accept: application/json;charset=utf-8" \
+      -H "Authorization: Basic ZWRnZWNsaTplZGdlY2xpc2VjcmV0" \
+      -X POST https://login.apigee.com/oauth/token \
+      -d 'username=ahamilton@example.com&amp;password=mypassw0rd&amp;<strong>grant_type=password</strong>'</pre>
+      </blockquote>
+    </section>
+    <section>
+      <h3><span class="two-line-tab">Get a new access token with MFA</span></h3>
+      <blockquote>
+        <p>To get a new access token with MFA (multi-factor authentication) enabled,
+        <a href="/api-platform/system-administration/enable-two-factor-auth-your-apigee-account#logginginwithtwofactorauth">get the MFA code</a>
+        and then set the <code>mfa_token</code> parameter to its value:</p>
+        <pre class="devsite-terminal prettyprint">curl -H "Content-Type:application/x-www-form-urlencoded;charset=utf-8" \
+  -H "Accept: application/json;charset=utf-8" \
+  -H "Authorization: Basic ZWRnZWNsaTplZGdlY2xpc2VjcmV0" \
+  -X POST https://login.apigee.com/oauth/token?<strong>mfa_token=424242</strong> \
+  -d 'username=ahamilton@example.com&amp;password=mypassw0rd&amp;grant_type=password'</pre>
+      </blockquote>
+    </section>
+    <section>
+      <h3 id="refresh"><span class="two-line-tab">Refresh an access token</span></h3>
+      <blockquote>
+        <p>To refresh an access token, set <code>grant_type</code> to "refresh_token" and add your
+        existing refresh token as a form parameter:</p>
+        <pre class="devsite-terminal prettyprint">curl -H "Content-Type:application/x-www-form-urlencoded;charset=utf-8"
+  -H "Accept: application/json;charset=utf-8" \
+  -H "Authorization: Basic ZWRnZWNsaTplZGdlY2xpc2VjcmV0" \
+  -X POST https://login.apigee.com/oauth/token \
+  -d '<strong>grant_type=refresh_token</strong>&amp;<strong>refresh_token=<var>YOUR_REFRESH_TOKEN</var></strong>'</pre>
+        <p>Note that you do not need to pass your credentials when refreshing your access token.</p>
+      </blockquote>
+    </section>
+  </div>
+
+  <h3>Responses</h3>
+
+  <p>On success, you will get back an access token, refresh token, and related information. For
+  example:</p>
+  <pre class="prettyprint">{
+  &quot;access_token&quot;: &quot;eyJhbGciOiJSUzI1NiJ9.eyJqdGkiOimYyD8IP2IyYS1jNmNiLTQ4NTgtYjZkMS1mZjkyNGFkYTk1YWUiLCJzdWIiOiI0X0KLSNjZlNjM0ZC0zZjlhLTRiNYmFjNi1kYjE2M2M5OGEzOGYiLCJzY29wZSI6WyJzYbmlkIiwicGFzc3dvcmQud3JpdGUiLCJhcHByb3ZhbHMubWUiLCJvYXV0aC5hcHByb3ZhbHMiXSwiY2xpZW50X2lkIjoiZWRnZWNsaSIsImNpZCI6ImVkZ2VjbGkiLCJhenAiOiJlZGdlY2xpIiwiZ3JhbnRfdHlwZSI6InBhc3N3b3JkIiwidXNlcl9pZCI6IjQ2NmU2MzRkLTNmOWEtNGI0MS1iYWM2LWRiMTYzYzk4YTM4ZiIsIm9yaWdpbiI6InVzZXJncmlkIiwidXNlcl9uYW1lIjoid3dpdG1hbkBhcGlnZWUuY29tIiwiZW1haWwiOiJ3d2l0bWFuQGFwaWdlZS5jb20iLCJhdXRoX3RpbWUiOjE0NzMyNjU4NzcsImFsIjoyLCJyZXZfc2lnIjoiZTc0ZGY0M2QiLCJpYXQiOjE0NzMyNjU4NzcsImV4cCI6MTQ3MzI2NzY3NywiaXNzIjoiaHR0cHM6Ly9sb2dpbi5hcGlnZWUuY29tL29hdXRoL3Rva2VuIiwiemlkIjoidWFhIiwi2ltLm1lIiwib3BlYXVkIjpbImVkZ2VjbGkiLCJzY2ltIiwib3BlbmlkIiwicGFzc3dvcmQiLCJhcHByb3ZhbHMiLCJvYXV0aCJdfQ.AFuevkeGGUGSPED8leyEKaT-xg1xk_VEiKJLEpipVvQBXIqEc9wqcpm-ZuoatA9DhjASRuFSRaHH8Fasx_vBxEBsUNhRY-GTMw7_8fv4yRMOb2AO3WUl_NWwPkC8XRSI1zCMbAZicojsJ1n3OSP487Mu9dl9ByX5A_QfHV2_cj4l9-SD7u6vOdfdbBxbNMAQkfZLrVIEU8myF2dhKnNeMiuoHSHANsQFcx0_BFA1HnSUnVi4RYj1FlTs9SbcPnS1d7t7eVdxWz_q2OFVXNIBMELAvvM0WhXPYTW3Osve3UvvUs6ekGs-K-RCPSok-4-NJbdCDpZQQTgqHsrf77NTsw&quot;,
+  &quot;token_type&quot;: &quot;bearer&quot;,
+  &quot;refresh_token&quot;: &quot;eyJhbGciOiJSUzI1NiJ9.eyJqdGkiOiJmZTIIMZWI0ZS00YzFmLTRjOTEtYmY5Mi1mMzZLEMzNjZhMDctciIsInN1YiI6IjQ2NmU2MzRkLTNmOWEtNGI0MS1iY17LLWRiMTYzYzk4YTM4ZiIsInNjb3BlIjpbInNjaW0ubWUiLCJvcGVuaWQiLCJwYXNzd29yZC53cml0ZSIsImFwcHJvdmFscy5tZSIsIm9hdXRoLmFwcHJvdmFscyJdLCJpYXQiOjE0NzMyNjU4NzcsImV4cCI6MTQ3NsaSIsImNsaWVudF9pZCI6ImVkZ2VjbGkiLCJpc3MiOiJodHRwczovL2xvZ2luLmFwaWdlZS5jb20vb2F1dGgvdG9rZW4iLCJ6aWQiOiJ1YWEiLCJncmFudF90eXBlIjoicGFzc3dvcmQiLCJ1c2VyX25hbWUiOiJ3d2l0bWFuQGFwaWdlZS5jbMzM1MDQ3NywiY2lkIjoiZWRnZW20iLCJvcmlnaW4iOiJ1c2VyZ3JpZCIsInVzZXJfaWQiOiI0NjZlNjM0ZC0zZjlhLTRiNDEtYmFjNi1kYjE2M2M5OGEzOGYiLCJhbCI6MiwicmV2X3NpZyI6ImU3NGRmNDNkIiwiYXVkIjpbImVkZ2VjbGkiLCJzY2ltIiwib3BlbmlkIiwicGFzc3dvcmQiLCJhcHByb3ZhbHMiLCJvYXV0aCJdfQ.kBP5AkbRS7Tnp-5VAfTLVfkUbUer4gFEU6A7g202KTKiXbqTwPSmOIGFTK12XevVPQYmAaSMFAnempWKfY7sjaY7HC7q3mGl53_A18cnkKhtNq15wCnyMom_bX_MYLW1RQPFytJ6akSJ-JkoPFU0x_FQg1JIvub1A8eqQxcR0KP-QRCxYAS4HTjH80vDIxHNt1tg7clmpa3RlHri0dlPVVsSpTXXhkpXRg5QbiWMrpkACSV22c0x0KiNu7vx5A520VOCO7hQ7IzmVIcSWcRqI97L7WdCjH_q4105bs2qmW73670MC0UGiJ9t5B1S1cxwqpUEd-NAuCsY8SVn6eWzbA&quot;,
+  &quot;expires_in&quot;: 1799,
+  &quot;scope&quot;: &quot;scim.me openid password.write approvals.me oauth.approvals&quot;,
+  &quot;jti&quot;: &quot;9bf2cb2a-c6cb-4858-b6d1-ff924ada95ae&quot;
+}</pre>
+
+  <p>Save the response values:</p>
+  <ul>
+    <li>Use the <code>access_token</code> in calls to the management API
+    <li>Use the <code>refresh_token</code> when your access token expires and you need to
+      refresh it</li>
+  </ul>
+
+  <p>If you get a response like the following:</p>
+  <pre class="prettyprint">{
+  "error": "unauthorized",
+  "error_description": "Bad credentials"
+}</pre>
+
+  <p>Be sure that you used the exact string given above ("ZWRnZWNsaTplZGdlY2xpc2VjcmV0") for the
+  <code>Authorization</code> header in your request.</p>
+
+{% endblock %}

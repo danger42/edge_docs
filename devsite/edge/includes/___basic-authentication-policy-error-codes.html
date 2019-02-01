@@ -5,51 +5,44 @@
   </head>
   <body>
 
-  <p>This section describes the error messages and flow variables that are set when this policy
-  triggers an error. This information is important to know if you are developing fault rules to
-  handle errors. To learn more, see <a href=
-  "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html">What you need to know
+  <p>This section describes the fault codes and error messages that are returned and fault variables that are set by Edge when this policy triggers an error. This information is important to know if you are developing fault rules to
+  handle errors. To learn more, see <a href="/api-platform/fundamentals/what-you-need-know-about-policy-errors.html">What you need to know
   about policy errors</a> and <a href="/api-platform/fundamentals/fault-handling.html">Handling
   faults</a>.</p>
-
-  <h3>Error code prefix</h3>
-
-  <p><code>steps.basicauthentication</code> <span style="font-size: 10pt">(<a href=
-  "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html#aboutthedefaultpolicyerrorresponse">What's
-  this?</a>)</span></p>
 
   <h3>Runtime errors</h3>
 
   <p>These errors can occur when the policy executes.</p>
+        <aside class="key-point">Use <u><a href="/api-monitoring">API Monitoring</a></u> to investigate fault codes and diagnose issues faster.</aside>
 
   <table>
     <thead>
       <tr>
-        <th scope="col" width="271">Error name</th>
-
+        <th scope="col" width="271">Fault code</th>
         <th scope="col" width="58">HTTP status</th>
-
         <th scope="col" width="379">Cause</th>
+        <th scope="col" width="63">Fix</th>
       </tr>
     </thead>
 
     <tbody>
       <tr>
-        <td><code>UnresolvedVariable</code></td>
-
-        <td>500</td>
-
-        <td>The required source variables for the decode or encode are not present. This error can
-        only occur if <code>IgnoreUnresolvedVariables</code> is false.</td>
-      </tr>
-
-      <tr>
-        <td><code>InvalidBasicAuthenticationSource</code></td>
+        <td><code>steps.basicauthentication.InvalidBasicAuthenticationSource</code></td>
 
         <td>500</td>
 
         <td>On a decode when the incoming Base64 encoded string does not contain a valid value or
         the header is malformed (e.g., does not start with "Basic").</td>
+        <td><a href="/api-platform/troubleshoot/policies/runtime/basic-authentication-runtime-errors#invalidbasicauthenticationsource"><i class="material-icons" data-tooltip="Troubleshoot this error.">build</i></a></td>
+      </tr>
+      <tr>
+        <td><code>steps.basicauthentication.UnresolvedVariable</code></td>
+
+        <td>500</td>
+
+        <td>The required source variables for the decode or encode are not present. This error can
+        only occur if <code>IgnoreUnresolvedVariables</code> is false.</td>
+        <td><a href="/api-platform/troubleshoot/policies/runtime/basic-authentication-runtime-errors#unresolvedvariable"><i class="material-icons" data-tooltip="Troubleshoot this error.">build</i></a></td>
       </tr>
     </tbody>
   </table>
@@ -62,8 +55,8 @@
     <thead>
       <tr>
         <th scope="col" width="274">Error name</th>
-
         <th scope="col" width="921">Occurs when</th>
+        <th scope="col" width="63">Fix</th>
       </tr>
     </thead>
 
@@ -71,29 +64,29 @@
       <tr>
         <td><code>UserNameRequired</code></td>
 
-        <td>The <code>&lt;User&gt;</code> element must be present for the named operation. See the
-        fault string.</td>
+        <td>The <code>&lt;User&gt;</code> element must be present for the named operation. </td>
+        <td><a href="/api-platform/troubleshoot/policies/deployment/basic-authentication-deployment-errors#usernamerequired"><i class="material-icons" data-tooltip="Troubleshoot this error.">build</i></a></td>
       </tr>
 
       <tr>
         <td><code>PasswordRequired</code></td>
 
-        <td>The <code>&lt;Password&gt;</code> element must be present for the named operation. See
-        the fault string.</td>
+        <td>The <code>&lt;Password&gt;</code> element must be present for the named operation. </td>
+        <td><a href="/api-platform/troubleshoot/policies/deployment/basic-authentication-deployment-errors#passwordrequired"><i class="material-icons" data-tooltip="Troubleshoot this error.">build</i></a></td>
       </tr>
 
       <tr>
         <td><code>AssignToRequired</code></td>
 
-        <td>The <code>&lt;AssignTo&gt;</code> element must be present for the named operation. See
-        the fault string.</td>
+        <td>The <code>&lt;AssignTo&gt;</code> element must be present for the named operation. </td>
+        <td><a href="/api-platform/troubleshoot/policies/deployment/basic-authentication-deployment-errors#assigntorequired"><i class="material-icons" data-tooltip="Troubleshoot this error.">build</i></a></td>
       </tr>
 
       <tr>
         <td><code>SourceRequired</code></td>
 
-        <td>The <code>&lt;Source&gt;</code> element must be present for the named operation. See
-        the fault string.</td>
+        <td>The <code>&lt;Source&gt;</code> element must be present for the named operation. </td>
+        <td><a href="/api-platform/troubleshoot/policies/deployment/basic-authentication-deployment-errors#sourcerequired"><i class="material-icons" data-tooltip="Troubleshoot this error.">build</i></a></td>
       </tr>
     </tbody>
   </table>
@@ -107,9 +100,7 @@
   <table>
     <tbody>
       <tr>
-        <th width="324">Variables set <code><span style="font-size: 10pt">(<a href=
-        "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html">Learn
-        more</a>)</span></code></th>
+        <th width="324">Variables</th>
 
         <th width="428">Where</th>
 
@@ -117,22 +108,18 @@
       </tr>
 
       <tr>
-        <td width="324"><code>[prefix].[policy_name].failed</code></td>
+        <td><code>fault.name="<var>fault_name</var>"</code></td>
 
-        <td width="428">The <code>[prefix]</code> is
-        <code><strong>BasicAuthentication</strong>.</code><br>
-        The <code>[policy_name]</code> is the name of the policy that threw the error.</td>
+        <td><var>fault_name</var> is the name of the fault, as listed in the <a href="#runtime-errors">Runtime errors</a> table above. The fault name is the last part of the fault code.</td>
+
+        <td><code>fault.name Matches "UnresolvedVariable"</code></td>
+      </tr>
+      <tr>
+        <td width="324"><code>BasicAuthentication.<var>policy_name</var>.failed</code></td>
+
+        <td width="428"><var>policy_name</var> is the user-specified name of the policy that threw the fault.</td>
 
         <td width="428"><code>BasicAuthentication.BA-Authenticate.failed = true</code></td>
-      </tr>
-
-      <tr>
-        <td><code>fault.[error_name]</code></td>
-
-        <td><code>[error_name]</code> = The specific error name to check for as listed in the table
-        above.</td>
-
-        <td><code>fault.name = "UnresolvedVariable"</code></td>
       </tr>
     </tbody>
   </table>

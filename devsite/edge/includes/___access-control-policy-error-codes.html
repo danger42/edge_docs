@@ -1,109 +1,60 @@
 <!DOCTYPE html>
 <html devsite>
   <head>
-    <title>Access Control Policy Error Codes</title>
+    <title>Access Control Policy Fault Codes</title>
   </head>
   <body>
 
-  <p>This section describes the error messages and flow variables that are set when this policy
-  triggers an error. This information is important to know if you are developing fault rules to
-  handle errors. To learn more, see <a href=
-  "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html">What you need to know
+  <p>This section describes the fault codes and error messages that are returned and fault variables that are set by Edge when this policy triggers an error.
+    This information is important to know if you are developing fault rules to
+  handle faults. To learn more, see <a href="/api-platform/fundamentals/what-you-need-know-about-policy-errors.html">What you need to know
   about policy errors</a> and <a href="/api-platform/fundamentals/fault-handling.html">Handling
   faults</a>.</p>
 
-  <h3>Error code prefix</h3>
-
-  <p><code>steps.accesscontrol</code> <span style="font-size: 10pt">(<a href=
-  "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html#aboutthedefaultpolicyerrorresponse">What's
-  this?</a>)</span></p>
-
-  <h3>Runtime errors</h3>api-services/content/access-control-policy-error-codes
+  <h3>Runtime errors</h3>
 
   <p>These errors can occur when the policy executes.</p>
+    <aside class="key-point">Use <u><a href="/api-monitoring">API Monitoring</a></u> to investigate fault codes and diagnose issues faster.</aside>
 
   <table>
     <thead>
       <tr>
-        <th scope="col" width="310">Error name</th>
+        <th scope="col" width="277">Fault code</th>
 
-        <th scope="col" width="67">HTTP status</th>
+        <th scope="col" width="49">HTTP status</th>
 
-        <th scope="col" width="326">Cause</th>
+        <th scope="col" width="863">Cause</th>
+        <th scope="col" width="63">Fix</th>
       </tr>
     </thead>
 
     <tbody>
       <tr>
-        <td><code>ClientIpExtractionFailed</code></td>
-
-        <td> </td>
-
-        <td>See fault string.</td>
-      </tr>
-
-      <tr>
-        <td><code>IPDeniedAccess</code></td>
+        <td><code>steps.accesscontrol.IPDeniedAccess</code></td>
 
         <td>403</td>
 
-        <td>See fault string.</td>
+        <td>The client IP address, or an IP address passed as part of the X-Forwarded-For HTTP header
+          in the API request, matches an IP address specified in the <code>&lt;SourceAddress&gt;</code> element within
+          the <code>&lt;MatchRule&gt;</code> element of the Access Control Policy, and the <code>action</code> attribute of the
+          <code>&lt;MatchRule&gt;</code> element is set to <code>DENY</code>.</td>
+
+        <td><a href="/api-platform/troubleshoot/policies/runtime/access-control-runtime-errors#ipdeniedaccess">
+          <i class="material-icons" title="Troubleshoot this error.">build</i></a></td>
       </tr>
     </tbody>
   </table>
 
-  <h3>Deployment errors</h3>
-
-  <p>These errors can occur when you deploy a proxy containing this policy.</p>
-
-  <table>
-    <thead>
-      <tr>
-        <th scope="col" width="308">Error name</th>
-
-        <th scope="col" width="315">Cause</th>
-      </tr>
-    </thead>
-
-    <tbody>
-      <tr>
-        <td><code>InvalidIPAddress</code></td>
-
-        <td>See fault string.</td>
-      </tr>
-
-      <tr>
-        <td><code>InvalidIPv4Address</code></td>
-
-        <td>See fault string.</td>
-      </tr>
-
-      <tr>
-        <td><code>InvalidIPv6Address</code></td>
-
-        <td>See fault string.</td>
-      </tr>
-
-      <tr>
-        <td><code>InvalidRulePattern</code></td>
-
-        <td>See fault string.</td>
-      </tr>
-    </tbody>
-  </table>
 
   <h3>Fault variables</h3>
 
   <p>These variables are set when a runtime error occurs. For more information, see <a href=
-  "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html">What you need to know
-  about policy errors</a>.</p>
+  "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html#variablesspecifictopolicyerrors">Variables specific to policy errors</a>.</p>
 
   <table>
     <tbody>
       <tr>
-        <th width="324">Variables set <code><span style="font-size: 10pt">(<a href=
-        "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html">Learn
-        more</a>)</span></code></th>
+        <th width="324">Variables</th>
 
         <th width="428">Where</th>
 
@@ -111,30 +62,27 @@
       </tr>
 
       <tr>
-        <td width="324"><code>[prefix].[policy_name].failed</code></td>
+        <td><code>fault.name="<var>fault_name</var>"</code></td>
 
-        <td width="428">The <code>[prefix]</code> is <code><strong>acl</strong>.</code><br>
-        The <code>[policy_name]</code> is the name of the policy that threw the error.</td>
+        <td><var>fault_name</var> is the name of the fault, as listed in the <a href="#runtime-errors">Runtime errors</a> table above. The fault name is the last part of the fault code.</td>
+
+        <td><code>fault.name Matches "IPDeniedAccess"</code></td>
+      </tr>
+      <tr>
+        <td width="324"><code>acl.<var>policy_name</var>.failed</code></td>
+
+        <td width="428"><var>policy_name</var> is the user-specified name of the policy that threw the fault.</td>
 
         <td width="428"><code>acl.AC-AllowAccess.failed = true</code></td>
-      </tr>
-
-      <tr>
-        <td><code>fault.[error_name]</code></td>
-
-        <td><code>[error_name]</code> = The specific error name to check for as listed in the table
-        above.</td>
-
-        <td><code>fault.name = "IPDeniedAccess"</code></td>
       </tr>
     </tbody>
   </table>
 
-  <h3>Example error response</h3>
+  <h3>Example fault response</h3>
 
-  <aside class="note"><b>Note:</b> For error handling, the best practice is to trap the
-  <code>errorcode</code> part of the error response. Do not rely on the text in the
-  <code>faultstring</code>, because it could change.</aside>
+  <aside class="note"><b>Note:</b> For fault handling, the best practice is to trap the
+  <code>errorcode</code> part of the fault response. Do not rely on the text in the
+  <code>faultstring</code> because it could change.</aside>
   <pre class="prettyprint">
 {
    "fault":{

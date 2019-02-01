@@ -1,0 +1,332 @@
+{% extends "private-cloud/v4.19.01/_base.html" %}
+{% block title %}Configuring TLS for the New Edge experience{% endblock %}
+{% block body %}
+
+
+<p>By default, you access the <a href="/private-cloud/v4.19.01/new-edge-experience-private-cloud">New Edge experience</a>
+  over HTTP by using the IP address or DNS name of the New Edge experience node and port 3001. For example:</p>
+
+<pre class="prettyprint">http://<var>newue_IP</var>:3001</pre>
+
+<p>Alternatively, you can configure TLS access to the New Edge experience so that
+you can access it in the form:</p>
+
+<pre class="prettyprint">https://<var>newue_IP</var>:3001</pre>
+
+<aside class="note"><b>Note: </b>The New Edge experience uses the same port for
+HTTPS and HTTP. That means you cannot access the New Edge experience using both
+HTTP and HTTPS concurrently.</aside>
+
+
+<h2>TLS requirements</h2>
+
+<p>The New Edge experience only supports TLS v1.2. If you enable TLS on the New Edge experience,
+  users must connect to the New Edge experience using a browser compatible with TLS v1.2.</p>
+
+
+<h2 id="tls-props">TLS configuration properties</h2>
+
+<p>Execute the following command to configure TLS for the New Edge experience:</p>
+
+<pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-management-ui configure-ssl -f <var>configFile</var></pre>
+
+<p>Where <var>configFile</var> is the config file that you used to install the
+  New Edge experience. </p>
+
+<p>Before you execute this command, you must edit the config file to set
+the necessary properties that control TLS. The following table describes the
+  properties that you use to configure TLS for the New Edge experience: </p>
+
+<table>
+    <thead>
+  <tr>
+   <th>Property</th>
+   <th>Description</th>
+   <th>Required?</th>
+  </tr>
+    </thead>
+    <tbody>
+  <tr>
+   <td><code>MANAGEMENT_UI_SCHEME</code>
+   </td>
+   <td><p>Sets the protocol, "http" or "https", used to access the New Edge experience.
+   The default value is "http". Set it to "https" to enable TLS:</p>
+
+     <pre class="prettyprint">MANAGEMENT_UI_SCHEME=https</pre>
+   </td>
+   <td>Yes
+   </td>
+  </tr>
+  <tr>
+   <td><code>MANAGEMENT_UI_TLS_OFFLOAD</code>
+   </td>
+   <td><p>If "n", specifies that TLS requests to the New Edge experience are terminated
+   at the New Edge experience. You must set <code>MANAGEMENT_UI_TLS_KEY_FILE</code> and <code>MANAGEMENT_UI_TLS_CERT_FILE.</code></p>
+   
+   <p>If "y", specifies that TLS requests to the New Edge experience are terminated on
+a load balancer, and that the load balancer then forwards the request to the New Edge experience by using HTTP.</p>
+
+<p>If you terminate TLS on the load balancer, the New Edge experience still needs to
+be aware that the original request came in over TLS. For example, some cookies have a Secure flag set. </p>
+
+<p>You must set <code>MANAGEMENT_UI_SCHEME</code> to "https" or else <code>MANAGEMENT_UI_TLS_OFFLOAD</code> is ignored:</p>
+
+<pre class="prettyprint">MANAGEMENT_UI_SCHEME=https
+MANAGEMENT_UI_TLS_OFFLOAD=y</pre>
+
+
+   </td>
+   <td>Yes
+   </td>
+  </tr>
+  <tr>
+   <td><code>MANAGEMENT_UI_TLS_KEY_FILE</code>
+<p>
+<code>MANAGEMENT_UI_TLS_CERT_FILE</code>
+   </td>
+   <td>If <code>MANAGEMENT_UI_TLS_OFFLOAD=n</code>, specifies the absolute path
+   to the TLS key and cert files. The files must be formatted as PEM files with
+   no passphrase, and must be owned by the "apigee" user. 
+<p>
+The recommended location for these files is:
+<p>
+<pre class="prettyprint">/opt/apigee/customer/application/edge-management-ui</pre>
+
+<p>If that directory does not exist, create it.
+
+<p>If <code>MANAGEMENT_UI_TLS_OFFLOAD=y</code>, then omit <code>MANAGEMENT_UI_TLS_KEY_FILE</code>
+  and <code>MANAGEMENT_UI_TLS_CERT_FILE.</code> They are ignored because requests to the
+  New Edge experience come in over HTTP.</p>
+   </td>
+   <td>Yes if <code>MANAGEMENT_UI_TLS_OFFLOAD=n</code>
+   </td>
+  </tr>
+  <tr>
+   <td><code>MANAGEMENT_UI_PUBLIC_URIS</code>
+   </td>
+   <td><p>If <code>MANAGEMENT_UI_TLS_OFFLOAD=n</code>, specifies the URL of the New Edge experience. </p>
+
+     <p>Set this property based on other properties in the config file. For example:</p>
+
+     <pre>MANAGEMENT_UI_PUBLIC_URIS=<var>$MANAGEMENT_UI_SCHEME://$MANAGEMENT_UI_IP:$MANAGEMENT_UI_PORT</var></pre>
+
+     <p>Where:</p>
+
+     <ul>
+       <li><var>MANAGEMENT_UI_SCHEME</var> specifies the protocol, "http" or "https", as described above.</li>
+       <li><var>MANAGEMENT_UI_IP</var> specifies the IP address or DNS name of the New Edge experience.</li>
+       <li><var>MANAGEMENT_UI_PORT</var> specifies the port used by the New Edge experience.</li>
+     </ul>
+
+     <p>See <a href="installing-new-unified-experience">Installing the New Edge Experience</a>
+     for more on these properties.</p>
+
+     <p>If <code>MANAGEMENT_UI_TLS_OFFLOAD=y</code>:
+     <ul>
+       <li><code>MANAGEMENT_UI_IP</code> specifies the IP address or DNS name of the <em>load balancer</em>,
+      <em>not</em> of the New Edge experience.</li>
+       <li>The load balancer and the New UE <em>must</em> use the same port number for requests, for example 3001.
+      Use <code>MANAGEMENT_UI_PORT</code> to specify the port number on the load balancer and on the New UE.</li>
+     </ul>
+
+   </td>
+    <td><p>Yes</p>
+   </td>
+  </tr>
+  <tr>
+   <td><code>SHOEHORN_SCHEME</code>
+   </td>
+    <td><p>Before you <a href="installing-new-unified-experience">install the New Edge experience</a>,
+      you first install the base Edge UI, called <em>shoehorn</em>. The installation config file uses
+      the following property to specify the protocol, "http", used to access the base Edge UI:</p>
+   
+   <pre class="prettyprint">SHOEHORN_SCHEME=http</pre>
+   
+   <p>The base Edge UI does not support TLS, so even when you enable TLS on the New Edge experience,
+this property must still be set to "http".</p> 
+   </td>
+   <td>Yes and set to "http"
+   </td>
+  </tr>
+</table>
+
+
+
+<h2>Configure TLS</h2>
+
+<p>To configure TLS access to the New Edge experience:</p>
+
+<ol>
+
+<li><p>Generate the TLS cert and key as PEM files with no passphrase. For example:</p>
+
+<pre class="prettyprint">mykey.pem
+mycert.pem</pre>
+
+  <p>There are many ways to generate a TLS cert and key. For example, you can execute the following
+    command to generate an unsigned cert and key:</p>
+
+  <pre class="devsite-terminal">openssl req -x509 -newkey rsa:4096 -keyout mykey.pem -out mycert.pem -days 365 -nodes -subj '/CN=localhost'</pre>
+
+  <aside class="note"><b>Note: </b>You do not typically use an unsigned cert and key in a production environment.</aside>
+
+
+</li>
+
+<li>Copy the key and cert files to the <code>/opt/apigee/customer/application/edge-management-ui</code> directory.
+If that directory does not exist, create it.</li>
+
+<li><p>Make sure the cert and key are owned by the "apigee" user:</p>
+
+<pre class="devsite-terminal">chown apigee:apigee /opt/apigee/customer/application/edge-management-ui/*.pem</pre></li>
+ 
+<li><p>Edit the config file that you used to install the New Edge experience to
+  set the following <a href="#tls-props">TLS properties</a>:</p>
+
+<aside class="note"><b>Note: </b>When enabling TLS, you must pass the complete config file that you
+used to install the New Edge experience.</aside>
+
+<pre># Set to https to enable TLS.
+MANAGEMENT_UI_SCHEME=https 
+# Do NOT terminate TLS on a load balancer.
+MANAGEMENT_UI_TLS_OFFLOAD=n
+
+# Specify the key and cert. 
+MANAGEMENT_UI_TLS_KEY_FILE=/opt/apigee/customer/application/edge-management-ui/mykey.pem
+MANAGEMENT_UI_TLS_CERT_FILE=/opt/apigee/customer/application/edge-management-ui/mycert.pem
+
+# Leave these properties set to the same values as when you installed the New Edge experience:
+MANAGEMENT_UI_PUBLIC_URIS=$MANAGEMENT_UI_SCHEME://$MANAGEMENT_UI_IP:$MANAGEMENT_UI_PORT
+SHOEHORN_SCHEME=http</pre>
+</li>
+
+<li><p>Execute the following command to configure TLS:</p>
+
+<pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-management-ui configure-ssl -f <var>configFile</var></pre>
+
+<p>Where <var>configFile</var> is the name of the config file.</p>
+
+<p>The script restarts the New Edge experience. </p>
+
+  </li>
+
+<li><p>Run the following commands to setup and restart shoehorn:</p>
+
+<pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-ui setup -f <var>configFile</var>
+<code class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-ui restart</code></pre>
+
+  <p>After the restart, the New Edge experience supports access over HTTPS.
+    If you cannot log in to the New Edge experience after enabling TLS, clear the
+    browser cache and try logging in again.</p>
+</li>
+</ol>
+
+
+
+<h2>Configure the New Edge experience when TLS terminates on the load balancer</h2>
+
+<p>If you have a load balancer that forwards requests to the New Edge experience, you might
+choose to terminate the TLS connection on the load balancer, and then have the
+  load balancer forward requests to the New Edge experience over HTTP:</p>
+
+<img alt="Terminate TLS on load balancer" src="/private-cloud/images/tls_new_ue_lb.png" width="600">
+
+<p>This configuration is supported
+but you need to configure the load balancer and the New Edge experience accordingly.</p>
+
+<p>To configure the New Edge experience when TLS terminates on the load balancer:</p>
+
+<ol>
+
+<li><p>Edit the config file that you used to install the New Edge experience to
+set the following <a href="#tls-props">TLS properties</a>:</p>
+
+  <aside class="note"><b>Note: </b>When enabling TLS, you must pass the complete config file that you
+used to install the New Edge experience.</aside>
+
+<pre># Set to https to enable TLS
+MANAGEMENT_UI_SCHEME=https
+# Terminate TLS on a load balancer
+MANAGEMENT_UI_TLS_OFFLOAD=y
+# Set to the IP address or DNS name of the load balancer.
+MANAGEMENT_UI_IP=<var>LB_IP_DNS</var>
+# Set to the port number for the load balancer and New Edge experience.
+# The load balancer and the New Edge experience must use the same port number.
+MANAGEMENT_UI_IP=3001
+
+# Leave these properties set to the same values as when you installed the New Edge experience:
+MANAGEMENT_UI_PUBLIC_URIS=$MANAGEMENT_UI_SCHEME://$MANAGEMENT_UI_IP:$MANAGEMENT_UI_PORT
+SHOEHORN_SCHEME=http
+</pre>
+
+  <p>If you set <code>MANAGEMENT_UI_TLS_OFFLOAD=y</code>, omit <code>MANAGEMENT_UI_TLS_KEY_FILE</code>
+and <code>MANAGEMENT_UI_TLS_CERT_FILE.</code> They are ignored because requests to the New Edge experience come in over HTTP. </p>
+</li>
+
+<li><p>Execute the following command to configure TLS:</p>
+
+<pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-management-ui configure-ssl -f <var>configFile</var></pre>
+
+<p>Where <var>configFile</var> is the name of the config file.</p>
+
+  <p>The script restarts the New Edge experience.</p>
+
+</li>
+
+  <li><p>Run the following commands to setup and restart shoehorn:</p>
+
+<pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-ui setup -f <var>configFile</var>
+<code class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-ui restart</code></pre>
+
+  <p>After the restart, the New Edge experience supports access over HTTPS.
+    If you cannot log in to the New Edge experience after enabling TLS, clear the
+    browser cache and try logging in again.</p>
+</li>
+</ol>
+
+
+
+<h2>Disable TLS on the New Edge experience</h2>
+
+<p>To disable TLS on the New Edge experience:</p>
+
+<ol>
+
+<li><p>Edit the config file that you used to install the New Edge experience to set
+the following <a href="#tls-props">TLS property</a>:</p>
+
+<aside class="note"><b>Note: </b>When disabling TLS, you must pass the complete config file that you
+used to install the New Edge experience.</aside>
+
+<pre>
+# Set to http to disable TLS.
+MANAGEMENT_UI_SCHEME=http
+
+# <strong>Only if you had terminated TLS on a load balancer</strong>,
+# reset to the IP address or DNS name of the New Edge experience.
+MANAGEMENT_UI_IP=<var>newue_IP_DNS</var>
+</pre>
+</li>
+
+<li><p>Execute the following command to disable TLS:</p>
+
+<pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-management-ui configure-ssl -f <var>configFile</var></pre>
+
+<p>Where <var>configFile</var> is the name of the config file.</p>
+
+  <p>The script restarts the New Edge experience.</p>
+</li>
+
+<li><p>Run the following commands to setup and restart shoehorn:</p>
+
+<pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-ui setup -f <var>configFile</var>
+<code class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-ui restart</code></pre>
+
+  <p>You can now access the New Edge experience over HTTP.
+    If you cannot log in to the New Edge experience after disabling TLS, clear the
+    browser cache and try logging in again.</p>
+</li>
+</ol>
+
+
+{% endblock %}

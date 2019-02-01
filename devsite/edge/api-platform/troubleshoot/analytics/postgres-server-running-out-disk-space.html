@@ -1,0 +1,168 @@
+  {% extends "_base.html" %} {% block title %}Postgres server running out of disk space{% endblock %} {% block body %} <!-- Overview: Description, Errors, and Causes -->
+
+<aside class="note">Was this troubleshooting playbook helpful? Please let us know
+  by clicking <a href="" class="google-feedback"
+   data-p="1636213" data-b="docsite" data-context="troubleshooting-feedback">
+  Send Feedback
+</a>.</aside>
+
+  <h2 id="description">Symptom</h2>
+
+  <p>The Postgres Server containing the Analytics data has run out of disk space.</p>
+
+  <p>In the following example, you can see that the /u01 has filled up 90% (176GB/207GB) of the
+  disk space.</p>
+  <pre class="prettyprint">
+/u01/app/apigee/data/apigee-postrgresql/pgdata/base/
+$df -g
+
+Filesystem Size User Avail Use% Mounted on
+/dev/mapper/sysvg-syslv09 207G 176G 176G 21G 90% /u01
+</pre>
+
+  <h2 id="diagnosis">Error messages</h2>
+
+  <p>You may not observe any error message unless the disk space is completely filled on the
+  Postgres Server.</p>
+
+  <h2 id="resolution">Possible causes</h2>
+
+  <p>The following table lists possible causes of this issue:</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <th width="196">Cause</th>
+
+        <th width="232">For</th>
+      </tr>
+
+      <tr>
+        <td><a href="#inadequate">Inadequate disk space</a></td>
+
+        <td>Edge Private Cloud users</td>
+      </tr>
+
+      <tr>
+        <td><a href="#pruning">Lack of Analytics data pruning</a></td>
+
+        <td>Edge Private Cloud users</td>
+      </tr>
+    </tbody>
+  </table><!-- Specific Cause/Resolution -->
+
+  <h2 id="inadequate">Inadequate disk space</h2>
+
+  <h3 id="inadequate-diagnosis">Diagnosis</h3>
+
+  <p>One of the typical causes for disk space errors on Postgres Servers is that you don't have
+  adequate disk space to store the large volumes of analytics data. The steps provided below will
+  help you to determine if you have enough disk space or not and take appropriate action to address
+  the issue.</p>
+
+  <ol>
+    <li>Determine the rate of incoming API traffic to Edge by referring to the Analytics Proxy
+    Performance Dashboard.
+
+      <p><strong>Sample Proxy Performance showing average TPS</strong></p>
+
+      <p><img src="/api-platform/images/sample-proxy-perf.png"></p>
+    </li>
+
+    <li>Consider the following scenario:
+
+      <ol>
+        <li>The incoming API traffic for your org is 22 TPS (transactions per second).
+
+          <ol>
+            <li>This means that the API traffic is 1,900,800 transactions per day (22 * 60 * 60 *
+            24).</li>
+
+            <li>Note each transaction/message in Analytics is 1.5K bytes in size.</li>
+
+            <li>Therefore, each day generates 2.7GB of Analytics data (1,900,800 * 1.5 K).</li>
+          </ol>
+        </li>
+
+        <li>You have a requirement to retain 30 days worth of Analytics data on your Postgres
+        Servers for reference.
+
+          <ol>
+            <li>The total data generated for 30 days = 81GB (2.7GB * 30)</li>
+          </ol>
+        </li>
+
+        <li>Therefore, to store 30 days worth of Analytics data at traffic rate of 22 TPS, you need
+        to have 150 GB of disk space.
+
+          <ol>
+            <li>81GB (Analytics data) + 50GB (other data such as logs, etc) + 20GB (additional
+            buffer space) = 150GB.</li>
+          </ol>
+        </li>
+      </ol>
+    </li>
+
+    <li>If you have less disk space on the system i.e, less than 150 GB of space (as per the
+    example scenario above), then you don't have adequate disk space to store the Analytics
+    data.</li>
+  </ol>
+
+  <h3 id="inadequate-resolution">Resolution</h3>
+
+  <p>Add adequate disk space to the Postgres Server machine.</p><!-- Specific Cause/Resolution -->
+
+  <h2 id="pruning">Lack of Analytics data pruning</h2>
+
+  <h3 id="pruning-diagnosis">Diagnosis</h3>
+
+  <p>With the increase in API traffic to Edge, the amount of analytics data getting stored in the
+  Postgres database will also increase. The amount of analytics data that can be stored in Postgres
+  database is limited by the amount of disk space available on the system.</p>
+
+  <p>Therefore, you cannot continue to keep storing additional analytics data on the Postgres
+  database without taking one of the following actions:</p>
+
+  <ol>
+    <li>
+      <strong>Add more disk space.</strong>
+
+      <p>This is not a scalable option as we can't keep adding more disk space as it it limited and
+      expensive.</p>
+    </li>
+
+    <li>
+      <strong>Prune the data beyond the required retention interval.</strong>
+
+      <p>This is a preferred solution as you can ensure that the data that is no longer required is
+      being removed at regular intervals of time.</p>
+    </li>
+  </ol>
+
+  <p>If you don't prune the data at regular intervals manually or by using a cron job, then the
+  amount of analytics data continually increases and can eventually lead to your running out of
+  disk space on the system.</p>
+
+  <h3 id="pruning-resolution">Resolution</h3>
+
+  <p><strong>To prune the data that is beyond your required retention interval:</strong></p>
+
+  <ol>
+    <li>Determine the retention interval, that is the duration for which you want to retain the
+    Analytics data in the Postgres Database.
+
+      <p>For example, you want to retain 60 days worth of Analytics data.</p>
+    </li>
+
+    <li>Run the following command to prune data for a specific organization and environment:
+      <pre class="prettyprint">
+/opt/apigee/apigee-service/bin/apigee-service apigee-postgresql pg-data-purge
+  <var>org</var> <var>env</var> <var>num_days_to_purge_back_from_current_date</var>
+</pre>
+    </li>
+
+    <li>For more information, see <a href="/private-cloud/latest/recurring-analytics-services-maintenance-tasks">Pruning Analytics data</a>.</li>
+  </ol>
+
+  <p>If the problem persists, contact {{support}}.</p>
+{% endblock %}

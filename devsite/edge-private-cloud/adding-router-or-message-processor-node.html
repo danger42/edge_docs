@@ -1,4 +1,4 @@
-{% extends "private-cloud/v4.18.05/_base.html" %}
+{% extends "private-cloud/v4.19.01/_base.html" %}
 {% block title %}Adding a Router or Message Processor node{% endblock %}
 {% block body %}
 
@@ -16,14 +16,18 @@
 
     <li>At the command prompt, run the <code>apigee-setup.sh</code> script:
       <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/setup.sh -p r -f <var>configFile</var></pre>
-      <p>The <code>-p r</code> option specifies to install the Router. See <a href=
-      "install-edge-components-node">Install Edge components on a node</a> for information on
+      <p>The <code>-p r</code> option specifies to install the Router. See
+      <a href="install-edge-components-node">Install Edge components on a node</a> for information on
       creating a <var>configFile</var>.</p>
     </li>
     <li>When the installation completes, the script displays the UUID of the Router.  If you
       need to determine the UUID later, use the following cURL command on the host where you
       installed the Router:
       <pre class="devsite-terminal">curl http://<var>router_IP</var>:8081/v1/servers/self</pre>
+    </li>
+    <li>If you are using Cassandra authentication, enable the Router to connect to Cassandra:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-router store_cassandra_credentials -u <var>username</var> -p <var>password</var></pre>
+      <p>For more information, see <a href="enable-cassandra-authentication">Enable Cassandra authentication</a>.</p>
     </li>
     <li>To check the configuration, you can run the following <code>curl</code> command:
       <pre class="devsite-terminal">curl -v -u <var>adminEmail:pword</var> "http://<var>ms_IP</var>:8080/v1/servers?pod=<var>pod_name</var>"</pre>
@@ -83,11 +87,16 @@
       Processors associated with the organization and environment, including the Message Processor
       that you just added.</p>
     </li>
+    <li>If you are using Cassandra authentication, enable the Message Processor to connect to
+      Cassandra:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-message-processor store_cassandra_credentials -u <var>username</var> -p <var>password</var></pre>
+      <p>For more information, see <a href="enable-cassandra-authentication">Enable Cassandra authentication</a>.</p>
+    </li>
   </ol>
 
   <h2 id="addbotharouterandamessageprocessor">Add both a Router and a Message Processor</h2>
 
-  <p>After you install Edge on the node, us the following procedure to add a router and Message
+  <p>After you install Edge on the node, use the following procedure to add a router and Message
   Processor at the same time:</p>
 
   <ol>

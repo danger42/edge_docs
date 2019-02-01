@@ -1,0 +1,420 @@
+  {% extends "_base.html" %} {% block title %}Troubleshooting OpenLDAP Problems{% endblock %} {% block body %}
+
+<aside class="note">Was this troubleshooting playbook helpful? Please let us know
+  by clicking <a href="" class="google-feedback"
+   data-p="1636213" data-b="docsite" data-context="troubleshooting-feedback">
+  Send Feedback
+</a>.</aside>
+
+  <p>This section provides information and guidance on troubleshooting OpenLDAP problems.</p>
+
+  <aside class="note"><b>Note:</b> This troubleshooting topic is for Edge Private Cloud users
+  only.</aside>
+
+  <h2 id="smtpisdisabledandusersneedtoresetpassword">SMTP is disabled and users need to reset
+  password</h2>
+
+  <h3 id="smtpisdisabledandusersneedtoresetpassword-symptom">Symptom</h3>
+
+  <p>When SMTP is not set up on the Edge UI, new users added to Edge need a way to set a
+  password.</p>
+
+  <h3 id="smtpisdisabledandusersneedtoresetpassword-errormessages">Error Messages</h3>
+  <pre class="prettyprint">
+Unknown username and password combination.
+</pre>
+
+  <p><img alt="" src="/api-platform/images/ldap-img-2.png"></p>
+
+  <h3 id="smtpisdisabledandusersneedtoresetpassword-possiblecauses">Possible Causes</h3>
+
+  <p>New users are unable to get an email from the &#8220;Forgot your password?&#8221; link to set
+  a password because SMTP is not set up.</p>
+
+  <h3 id="smtpisdisabledandusersneedtoresetpassword-resolution">Resolution</h3>
+
+  <p>You can address this issue in one of the following ways:</p>
+
+  <h3 id="smtpisdisabledandusersneedtoresetpassword-solution1configuresmtpserver">Solution #1:
+  Configure SMTP Server</h3>
+
+  <p>Configure the SMTP Server to set a new password for the user using the instructions provided
+  in the <a href="/private-cloud/latest/configuring-edge-smtp-server">documentation</a>.</p>
+
+  <h3 id="smtpisdisabledandusersneedtoresetpassword-solution2usingldap">Solution #2: Using
+  LDAP</h3>
+
+  <p>If you are unable to configure the SMTP server, then use the below LDAP commands to set the
+  new password for a user:</p>
+
+  <ol>
+    <li>An existing org admin needs to add the specific user via the Edge UI as shown below:
+
+      <p><img alt="" src="/api-platform/images/ldap-img-1.png"></p>
+    </li>
+
+    <li>Use the <strong>ldapsearch</strong> command to find the user&#8217;s distinguished name
+    (dn) and redirect the output to a file:
+      <pre class="prettyprint">
+ldapsearch -w Secret123 -D "cn=manager,dc=apigee,dc=com" -b "dc=apigee,dc=com" -LLL -h localhost -p 10389 &gt; ldap.txt
+</pre>
+
+      <p>Here is an example of a dn entry for a user, along with the attributes for the user:</p>
+      <pre class="prettyprint">
+dn:uid=f7a4a4a5-7c43-4168-a47e-6e9a1417cc29,ou=users,ou=global,dc=apigee,dc=com
+mail: apigee_validator@apigee.com
+userPassword:: e1NTSEF9b0FrMFFXVmFjbWRxM1BVaFZzMnllWGZMdkNvNjMwNTJlUDZYN3c9PQ=
+ =
+uid: f7a4a4a5-7c43-4168-a47e-6e9a1417cc29
+objectClass: inetOrgPerson
+sn: Validator
+cn: apigee
+</pre>
+    </li>
+
+    <li>Open the <strong>ldap.txt</strong> file and find the dn of the new user that has been added
+    based on the new user's email attribute.</li>
+
+    <li>Execute the <strong>ldappassword</strong> command to add a password for the new user
+    using its dn. In this example, you are setting the user's password to Apigee123:
+      <pre class="prettyprint">
+ldappasswd -h localhost -p 10389 -D "cn=manager,dc=apigee,dc=com" -W -s Apigee123
+"uid=f7a4a4a5-7c43-4168-a47e-6e9a1417cc29,ou=users,ou=global,dc=apigee,dc=com"
+</pre>
+    </li>
+
+    <li>Log in to the Edge UI as the new user with the password defined in the previous step. The
+    user can set a new password once logged into the UI.</li>
+  </ol>
+
+  <h2 id="ldapisnotreplicating">LDAP is not Replicating</h2>
+
+  <h3 id="ldapisnotreplicating-symptom">Symptom</h3>
+
+  <p>Many Edge installations have multiple data centers, for example DC-1 and DC-2. When logging
+  into the Edge UI in DC-1 as an org admin you can view the list of users, but the same user list
+  does not appear in the Edge UI in DC-2.</p>
+
+  <h3 id="ldapisnotreplicating-errormessages">Error Messages</h3>
+
+  <p>No errors appear, the Edge UI simply does not show the list of users that should have been
+  replicated across all OpenLDAP servers.</p>
+
+  <h3 id="ldapisnotreplicating-possiblecauses">Possible Causes</h3>
+
+  <p>Typically the cause of this issue is a misconfigured OpenLDAP replication configuration, not
+  the installation itself. Also, replication may break if the network between the OpenLDAP servers
+  does not allow traffic on port 10389.</p>
+
+  <h3 id="ldapisnotreplicating-diagnosis">Diagnosis</h3>
+
+  <p>Use the following steps to diagnose the problem:</p>
+
+  <ol>
+    <li>Check if ldapsearch returns data from each OpenLDAP server:
+      <pre class="prettyprint">
+ldapsearch -W -D "cn=manager,dc=apigee,dc=com" -b "dc=apigee,dc=com" -LLL -h &lt;host-ip&gt; -p 10389
+</pre>
+    </li>
+
+    <li>Check if you can connect to each OpenLDAP node from the other OpenLDAP nodes on port 10389.
+    If telnet is installed, use the following command:
+      <pre class="prettyprint">
+telnet &lt;OpenLDAP_Peer_IP&gt; 10389
+</pre>
+    </li>
+
+    <li>
+      <div>
+        If telnet is not available, use netcat to check the connectivity as follows:
+      </div>
+
+      <div>
+        <br>
+        <pre class="prettyprint">
+nc -vz &lt;OpenLDAP_Peer_IP&gt; 10389
+</pre>
+      </div>
+
+    </li>
+
+    <li>Check the replication configuration in the following file:
+      <pre class="prettyprint">
+/opt/apigee/data/apigee-openldap/slapd.d/cn=config/olcDatabase={2}bdb.ldif
+</pre>
+
+      <p>The file should contain configuration like this:</p>
+      <pre class="prettyprint">
+olcSyncRepl: rid=001
+  provider=ldap://__OTHER_LDAP_SERVER__/
+  binddn="cn=manager,dc=apigee,dc=com"
+  bindmethod=simple
+  credentials=__LDAP_PASSWORD__
+  searchbase="dc=apigee,dc=com"
+  attrs="*,+"
+  type=refreshAndPersist
+  retry="60 1 300 12 7200 +"
+  timeout=1
+</pre>
+    </li>
+
+    <li>Also check the same file for the value of the olcMirrorMode attribute. It should be
+    set to the value TRUE:
+      <pre class="prettyprint">
+grep olcMirrorMode /opt/apigee/data/apigee-openldap/slapd.d/cn=config/olcDatabase={2}bdb.ldif
+</pre>
+    </li>
+
+    <li>Check for iptables and tcp wrapper rules. Please remove any rules that do not allow
+    the peer OpenLDAP servers to communicate with each other. Work with your network administrator
+    to set the rules appropriately.</li>
+
+    <li>Make sure the OpenLDAP system password is the same on each OpenLDAP node.</li>
+
+    <li>Check for hidden characters in the ldif configuration files that are being used to
+    configure N-Way OpenLDAP replication by running dos2unix against the ldif files that have been
+    created to update the configuration. Typically a ldif file that has bad characters would cause
+    the ldapmodify command to fail to run and so replication may not be set up. Remove any bad
+    characters and save the configuration files.</li>
+  </ol>
+
+  <p>If the problem persists, contact <a href=
+  "https://www.google.com/url?q=http://support.apigee.com&amp;sa=D&amp;ust=1518629613890000&amp;usg=AFQjCNEPrTCPBUlcox6Gpxo85h_knBFT3A">
+  Apigee Support</a> for assistance with setting up N-Way OpenLDAP replication.</p>
+
+  <h2 id="unabletostartopenldap">Unable to start OpenLDAP</h2>
+
+  <h3 id="unabletostartopenldap-symptom">Symptom</h3>
+
+  <p>OpenLDAP does not start.</p>
+
+  <h3 id="unabletostartopenldap-errormessages">Error Messages</h3>
+  <pre class="prettyprint">
+SLAPD Dead But Pid File Exists
+</pre>
+
+  <h3 id="unabletostartopenldap-possiblecauses">Possible Causes</h3>
+
+  <p>This issue is typically caused by a lock file that is left behind on the file system and needs
+  to be removed.</p>
+
+  <h3 id="unabletostartopenldap-diagnosis">Diagnosis</h3>
+
+  <p>Use the following steps to diagnose this issue:</p>
+
+  <ol>
+    <li>Check for an OpenLDAP slapd process lock or pid file in the following location:
+      <pre class="prettyprint">
+/opt/apigee/var/run/apigee-openldap/apigee-openldap.lock
+/opt/apigee/var/run/apigee-openldap/apigee-openldap.pid
+</pre>
+    </li>
+
+    <li>Delete the lock and pid file, if found, and try to restart openldap.
+      <pre class="prettyprint">
+rm /opt/apigee/var/run/apigee-openldap/apigee-openldap.lock
+Rm /opt/apigee/var/run/apigee-openldap/apigee-openldap.pid
+</pre>
+    </li>
+
+    <li>If the OpenLDAP slapd process starts, then skip the below steps.<br>
+     </li>
+
+    <li>If the OpenLDAP slapd process does not start, try running slapd in debug mode and look for
+    any errors:
+      <pre class="prettyprint">
+slapd -h ldap://:10389/ -u apigee -F /opt/apigee/data/apigee-openldap/slapd.d -d 255
+</pre>
+    </li>
+
+    <li>Errors may point to resource issues. Check memory and CPU utilization on the system.</li>
+
+    <li>Check the version of OpenLDAP and upgrade if it is old. Check for the supported versions of
+    OpenLDAP in our <a href="">Supported Software</a> document.
+      <pre class="prettyprint">
+slapd -V
+</pre>
+    </li>
+
+    <li>Use strace to troubleshoot slapd process, and to provide strace output to <a href=
+    "https://www.google.com/url?q=http://support.apigee.com&amp;sa=D&amp;ust=1518629613895000&amp;usg=AFQjCNFEU-kG99amSDgoilQTaxLIjlZXIw">
+      Apigee Support</a>:
+      <pre class="prettyprint">
+strace -tt -T -f -F -i -v -e read=all -s 8192 -e write=all -o /tmp/strace.out -p &lt;pid&gt;
+</pre>
+    </li>
+  </ol>
+  <hr>
+
+  <h2 id="openldapdatacorruption">OpenLDAP Data Corruption</h2>
+
+  <h3 id="openldapdatacorruption-symptom">Symptom</h3>
+
+  <p>Users are no longer able to run management calls or log in to the Edge UI. Using ldapsearch
+  utility to query the users may indicate the user exists in the LDAP datastore, or may identify
+  possible missing users or roles.</p>
+
+  <h3 id="openldapdatacorruption-errormessages">Error Messages</h3>
+  <pre class="prettyprint">
+Unknown username and password combination.
+</pre>
+
+  <h3 id="openldapdatacorruption-possiblecauses">Possible Causes</h3>
+
+  <p>Typically, this issue may be observed due to corruption of OpenLDAP data. Usually, OpenLDAP
+  data does not get corrupted. But in the rare case that it does, the corruption could be due to
+  system disk failure or disk space issues.</p>
+
+  <h3 id="openldapdatacorruption-diagnosis">Diagnosis</h3>
+
+  <ol>
+    <li>Check the disk space on the system having OpenLDAP installed using the below command:
+      <pre class="prettyprint">
+du -m /opt
+</pre>
+    </li>
+
+    <li>If you see the disk space used is very close to 100%, then that would indicate the cause
+    for this issue is your system running out of disk space.</li>
+  </ol>
+
+  <h3 id="openldapdatacorruption-resolution">Resolution</h3>
+
+  <p>If your system has run out of disk space or very near to running out of disk space, then add
+  more disk space to ensure you have sufficient disk space.</p>
+
+  <p>Once you have sufficient disk space use one of the below solutions to address the LDAP data
+  corruption issue:</p>
+
+  <ol>
+    <li>Restore the OpenLDAP data from the backup.</li>
+
+    <li>Clean up the OpenLDAP database.</li>
+  </ol>
+
+
+  <h3 id="openldapdatacorruption-solution1restoretheldapdatafromthebackup">Solution #1 Restore the
+  LDAP data from the backup</h3>
+
+  <p>On a working OpenLDAP node make a backup. The backup should be performed regularly. See
+  <a href="/private-cloud/latest/how-perform-restore">Apigee Private Cloud Operations Guide</a>
+  for best practices on backups:</p>
+  <pre class="prettyprint">
+slapcat -F /opt/apigee/data/apigee-openldap/slapdd -l /tmp/ldap-backup.ldif
+</pre>
+
+  <p>The following steps can be used to restore the OpenLDAP data from a good backup.</p>
+
+  <ol>
+    <li>Stop the OpenLDAP node for which the data needs to be restored:
+      <pre class="prettyprint">
+/opt/apigee/apigee-service/bin/apigee-service apigee-openldap stop
+</pre>
+    </li>
+
+    <li>Change directory to the OpenLDAP data directory:
+      <pre class="prettyprint">
+cd /opt/apigee/data/apigee-openldap
+</pre>
+    </li>
+
+    <li>Back up the existing OpenLDAP data using the move command:
+      <pre class="prettyprint">
+mv ldap ldap_orig
+</pre>
+    </li>
+
+    <li>Switch to the apigee user:
+      <pre class="prettyprint">
+su apigee
+</pre>
+    </li>
+
+    <li>From <code>/opt/apigee/data/apigee-openldap</code> directory, create a new OpenLDAP data
+    directory with the original name:
+      <pre class="prettyprint">
+mkdir ldap
+</pre>
+    </li>
+
+    <li>Take the backup of ldap_orig/DB_CONFIG subdirectory from step 3, and copy it to the
+    openldap directory.
+      <pre class="prettyprint">
+cp ldap_orig/DB_CONFIG ldap
+</pre>
+    </li>
+
+    <li>To restore data from backup taken with slapcat, use slapadd to import the ldif which
+    contains the good data:
+      <pre class="prettyprint">
+slapadd -F /opt/apigee/data/apigee-openldap/slapd.d -l /tmp/ldap-backup.ldif
+</pre>
+    </li>
+
+    <li>Start the OpenLDAP process:
+      <pre class="prettyprint">
+/opt/apigee/apigee-service/bin/apigee-service apigee-openldap start
+</pre>
+    </li>
+  </ol>
+
+  <h3 id="openldapdatacorruption-solution2cleanuptheldapdatabase">Solution #2 Cleanup the LDAP
+  database</h3>
+
+  <p>The following steps wipe out the OpenLDAP database to provide a fresh start. This solution can
+  be used if there is no data backup of the last state where the OpenLDAP data was working.</p>
+
+  <ol>
+    <li>Stop the OpenLDAP service:
+      <pre class="prettyprint">
+/opt/apigee/apigee-service/bin/apigee-service apigee-openldap stop
+</pre>
+    </li>
+
+    <li>Change directory to the OpenLDAP data directory:
+      <pre class="prettyprint">
+cd /opt/apigee/data/apigee-openldap
+</pre>
+    </li>
+
+    <li>Back up the existing OpenLDAP data using the move command:
+      <pre class="prettyprint">
+mv ldap ldap_orig
+</pre>
+    </li>
+
+    <li>Switch to the apigee user:
+      <pre class="prettyprint">
+su apigee
+</pre>
+    </li>
+
+    <li>Create a new OpenLDAP data directory with the original name:
+      <pre class="prettyprint">
+mkdir ldap
+</pre>
+    </li>
+
+    <li>Take the backup ldap_orig/DB_CONFIG subdirectory from step 3, and copy it to the openldap
+    directory:
+      <pre class="prettyprint">
+cp ldap_orig/DB_CONFIG ldap
+</pre>
+    </li>
+
+    <li>Restart the OpenLDAP process:
+      <pre class="prettyprint">
+/opt/apigee/apigee-service/bin/apigee-service apigee-openldap start
+</pre>
+    </li>
+
+    <li>Restart the Management Server to force a refresh of the connections to OpenLDAP:
+      <pre class="prettyprint">
+/opt/apigee/apigee-service/bin/apigee-service edge-management-server restart
+</pre>
+    </li>
+  </ol>
+
+  <p>If the problem persists, contact <a href=
+  "https://www.google.com/url?q=http://support.apigee.com&amp;sa=D&amp;ust=1518629613890000&amp;usg=AFQjCNEPrTCPBUlcox6Gpxo85h_knBFT3A">Apigee
+  Support</a> for further assistance.</p>{% endblock %}

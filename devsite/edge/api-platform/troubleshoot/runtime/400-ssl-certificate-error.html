@@ -1,0 +1,373 @@
+{% extends "_base.html" %} {% block title %}400 Bad Request - SSL Certificate Error{% endblock %} {% block body %}
+
+<aside class="note">Was this troubleshooting playbook helpful? Please let us know
+  by clicking <a href="" class="google-feedback"
+   data-p="1636213" data-b="docsite" data-context="troubleshooting-feedback">
+  Send Feedback
+</a>.</aside>
+
+
+<h2>Symptom</h2>
+
+
+<p>The client application receives an <strong>HTTP 400 - Bad request </strong>response with the
+  message "<strong>The SSL certificate error</strong>".  This error is typically sent by the Edge Router
+  in a two way TLS setup enabled for the incoming connection to Apigee Edge.</p>
+
+<h3>Error Message</h3>
+
+<p>The Client application gets the following response code:</p>
+
+<pre class="prettyprint">HTTP/1.1 400 Bad Request</pre>
+
+<p>Followed by the below HTML error page:</p>
+
+<pre class="prettyprint">&lt;html&gt;
+  &lt;head&gt;
+    &lt;title&gt;400 The SSL certificate error&lt;/title&gt;
+  &lt;/head&gt;
+  &lt;body bgcolor="white"&gt;
+    &lt;center&gt; &lt;h1&gt;400 Bad Request&lt;/h1&gt;
+    &lt;/center&gt;
+    &lt;center&gt;The SSL certificate error&lt;/center&gt;
+    &lt;hr&gt;
+    &lt;center&gt;nginx&lt;/center&gt;
+  &lt;/body&gt;
+&lt;/html&gt;</pre>
+
+
+<h2>Possible Causes</h2>
+
+<p>The possible causes for this issue are as follows:</p>
+
+<table>
+  <tr>
+   <td><strong>Cause</strong>
+   </td>
+   <td><strong>Description</strong>
+   </td>
+   <td><strong>Troubleshooting Instructions Applicable For</strong>
+   </td>
+  </tr>
+  <tr>
+   <td><a href="#exp-cert">Expired client certificate</a>
+   </td>
+   <td>The certificate sent by the client is expired.
+   </td>
+   <td>Edge Private and Public Cloud users
+   </td>
+  </tr>
+  <tr>
+   <td><a href="#incorrect-cert">Incorrect Certificate sent by Client</a>
+   </td>
+   <td>This error is thrown if the certificate sent by the client application does not match with the
+     certificate stored in the truststore of Edge's Router.
+   </td>
+   <td>Edge Private and Public Cloud users
+   </td>
+  </tr>
+  <tr>
+   <td><a href="#cert-not-found">Client Certificates not loaded in the Edge Router</a>
+   </td>
+   <td>This error is thrown if the client certificates uploaded to the truststore are not loaded on the Router.
+   </td>
+   <td>Edge Private Cloud users
+   </td>
+  </tr>
+</table>
+
+
+<h2 id="exp-cert">Cause: Expired Client Certificate</h2>
+
+<p>This issue typically happens for a <a href="/api-platform/system-administration/about-ssl#twowaytls">2-Way TLS</a>,
+  when the certificate sent by the client is expired. In a 2-way TLS, both client and server exchange
+  their public certificates to accomplish the handshake. The client validates the server certificate
+  and the server validates the client certificate. </p>
+
+<p>In Edge, 2-way TLS is implemented at <a href="/api-platform/fundamentals/configuring-virtual-hosts-cloud#definingavirtualhostfortwowaytls">virtual host</a>,
+  where the server certificate is added to the Keystore and the client certificate is added to truststores. </p>
+
+<p>During the TLS handshake if it is found that the client certificate is expired, then the server
+  will send <strong>400 - Bad request </strong> with the message "<strong>The SSL certificate error</strong>".</p>
+
+<h3>Diagnosis</h3>
+
+<ol>
+  <li><p>Log in to the Edge UI and view the specific Virtual Host configuration
+    (<strong>Environment Configuration -> Virtual Hosts</strong>) for which the API request is being
+    made, or use <a href="https://apidocs.apigee.com/management/apis/get/organizations/%7Borg_name%7D/environments/%7Benv_name%7D/virtualhosts/%7Bvirtualhost_name%7D">Get Virtual Host</a>
+    management API to get the definition of the specific Virtual Host. </p>
+
+    <p>Typically a virtual host for two-way TLS communication looks as follows:</p>
+
+<pre class="prettyprint">&lt;VirtualHost name="myTLSVHost"&gt;
+    &lt;HostAliases&gt;
+        &lt;HostAlias&gt;api.myCompany.com&lt;/HostAlias&gt;
+    &lt;/HostAliases&gt;
+    &lt;Port&gt;443&lt;/Port&gt;
+    &lt;SSLInfo&gt;
+        &lt;Enabled&gt;true&lt;/Enabled&gt;
+        &lt;ClientAuthEnabled&gt;true&lt;/ClientAuthEnabled&gt;
+        &lt;KeyStore&gt;ref://myKeystoreRef&lt;/KeyStore&gt;
+        &lt;KeyAlias&gt;myKeyAlias&lt;/KeyAlias&gt;
+        &lt;TrustStore&gt;ref://myTruststoreRef&lt;/TrustStore&gt;
+    &lt;/SSLInfo&gt;
+&lt;/VirtualHost&gt;
+</pre>
+</li>
+
+  <li><p>Determine the Truststore reference used in the Virtual Host. In the above example,
+    the Truststore reference name is <strong>myTruststoreRef.</strong></p></li>
+
+  <li>Determine the Truststore pointed to by the Truststore reference.
+  <ol>
+    <li>In the Edge UI navigate to <strong>APIs -> Environment Configurations.</strong></li>
+    <li>Select the <strong>References</strong> tab and search for the Truststore reference name.</li>
+    <li><p>Note down the name in the <strong>Reference</strong> column for the specific Truststore reference.
+      This will be your Truststore name.</p>
+
+      <p><img src="/api-platform/images/tstore_name.png"></p>
+
+      <p>In the above example, notice that <strong>myTruststoreRef</strong> has the reference
+        to <var>myTruststore</var>. Therefore, the Truststore name is <var>myTruststore</var>.</p></li>
+    </ol>
+    <li>In <strong>APIs -> Environment Configurations</strong> of the Edge UI, navigate to TLS Keystores and look
+      for the Truststore found in step # 3</li>
+
+    <li><p>Select the certificate under the specific Truststore (determined in step #3 above) as shown below:</p>
+
+        <p><img src="/api-platform/images/select-cert.png"></p>
+
+      <p>The certificate with alias <code>client-cert-markw</code> in the above example, shows that it's
+          expired.</p></li>
+
+    <li>Check if the certificate is expired for the certificate alias for your truststore.</li>
+
+    <li>If the certificate is not expired then move to <a href="#common-cause">Common Diagnosis Steps for the other Causes</a>.</li>
+  </ol>
+
+
+<h3>Resolution</h3>
+
+<p>Procure a new certificate and upload the certificate:</p>
+
+  <ol>
+    <li>Create a new truststore, for example  <strong>myNewTruststore.</strong></li>
+    <li>Upload the new certificate to the newly created truststore.</li>
+    <li><p>Modify the trustore reference used in the specific Virtual Host to point to the new
+      truststore using the steps given in
+      <a href="https://docs.apigee.com/api-platform/system-administration/working-references#modifyingareference">Modifying a reference</a>.</p>
+    <p>In the example described above, point the reference <strong>myTruststoreRef to myNewTruststore.</strong></p></li>
+</ol>
+
+
+<h3 id="common-cause">Common Diagnosis Steps for the Other Causes</h3>
+
+<ol>
+  <li>To investigate this issue, you will need to capture TCP/IP packets using the
+    <a href="/api-platform/troubleshoot/diagnostic-tools-and-logs#tcpippacketsniffertcpdumputility">tcpdump</a> tool.
+    <ol>
+      <li>If you are a <strong>Private Cloud</strong> user, then you can capture the TCP/IP packets on the
+        client application or Router.</li>
+
+      <li>If you are a <strong>Public Cloud</strong> user, then capture the TCP/IP packets on the client application.</li>
+
+      <li><p>Once you've decided where you would like to capture TCP/IP packets, use the following
+        <a href="/api-platform/troubleshoot/diagnostic-tools-and-logs#tcpippacketsniffertcpdumputility">tcpdump</a>
+        command to capture TCP/IP packets:</p>
+
+        <pre class="devsite-terminal">tcpdump -i any -s 0 host &lt;IP address> -w &lt;File name></pre>
+
+        <p><strong>Note:</strong> If you are taking the TCP/IP packets on the Router, then use the
+          public IP address of the client application in the <code>tcpdump</code> command.</p>
+
+        <p>If you are taking the TCP/IP packets on the client application, then use the public IP
+          address of the host name used in the Virtual Host in the <code>tcpdump</code> command.</p>
+
+        <p>Refer to <a href="/api-platform/troubleshoot/diagnostic-tools-and-logs#tcpippacketsniffertcpdumputility">tcpdump</a>
+          for more information about this tool and for other variants of this command.</p></li>
+      </ol>
+
+    <li>Analyze the TCP/IP packets collected using the
+      <a href="https://www.wireshark.org/" class="external">Wireshark tool</a> or similar tool with which you are familiar.</li>
+  </ol>
+
+
+<p>Here's the analysis of sample TCP/IP packets data using Wireshark tool:</p>
+
+  <ol>
+    <li>The Packet #30 in the tcpdump (image below) shows that the Client Application (source)
+      sent a <strong>"Client Hello" message to the Router (destination).</strong></li>
+
+    <li>Packet #34 shows that the Router acknowledges the Client Hello message from the client application.</li>
+
+    <li>The Router sends the "Server Hello" in packet #35 and then sends its certificate and also
+      requests the client application to send its certificate in packet #38.</li>
+
+    <li>In the packet #38, where Router sends <strong>"Certificate Request"</strong> packet, check the
+      "Distinguished Names" section which provides details about the client certificate, its chain
+      and certificate authorities that are accepted by the Router (server).</li>
+
+          <p><img src="/api-platform/images/packet38.png"></p>
+
+    <li><p>The client application sends its certificate in Packet # 41. Check the <strong>Certificate
+      Verify</strong> section in packet # 41 and determine the certificate that is sent by the client application.</p>
+
+    <p><img src="/api-platform/images/packet41.png"></p></li>
+
+    <li>Verify if the subject and the issuer of the certificate and its chain sent by the client
+      application (packet #41) matches with the accepted certificate and its chain from the Router
+      (packet #38). If there's a mismatch then that's the cause for this error.  Hence the Router
+      (Server) sends the Encrypted Alert (packet #57) followed by FIN, ACK (packet 58) to the
+      Client Application and eventually the connection is terminated.</li>
+
+    <li>The mismatch of the certificate and its chain can be caused by the scenarios described in
+      the following sections.</li>
+  </ol>
+
+
+<h2 id="incorrect-cert">Cause: Incorrect certificate sent by client</h2>
+
+<p>This typically happens if the subject/issuer of either the certificate and/or its chain sent by the
+  client application does not match the certificate and/or its chain stored in the truststore of the Router (Server).</p>
+
+
+<h3>Diagnosis</h3>
+
+<ol>
+  <li><p>Login to Edge UI and view the specific Virtual Host configuration
+    (<strong>Environment Configuration -> Virtual Hosts</strong>) for which the API request is being
+    made, or use the <a href="https://apidocs.apigee.com/management/apis/get/organizations/%7Borg_name%7D/environments/%7Benv_name%7D/virtualhosts/%7Bvirtualhost_name%7D">Get Virtual Host</a>
+    management API to get the definition of the specific Virtual Host. </p>
+
+    <p>Typically a virtual host for two-way TLS communication looks as follows:</p>
+
+    <pre class="prettyprint">    &lt;VirtualHost name="myTLSVHost">
+        &lt;HostAliases>
+            &lt;HostAlias>api.myCompany.com&lt;/HostAlias>
+        &lt;/HostAliases>
+        &lt;Port>443&lt;/Port>
+        &lt;SSLInfo>
+            &lt;Enabled>true&lt;/Enabled>
+            &lt;ClientAuthEnabled>true&lt;/ClientAuthEnabled>
+            &lt;KeyStore>ref://myKeystoreRef&lt;/KeyStore>
+            &lt;KeyAlias>myKeyAlias&lt;/KeyAlias>
+                &lt;TrustStore>ref://myCompanyTruststoreRef&lt;/TrustStore>
+        &lt;/SSLInfo>
+    &lt;/VirtualHost>
+</pre></li>
+
+  <li>Determine the Truststore reference used in the Virtual Host.
+
+  <p>In the above example, the Truststore reference name is <strong>myCompanyTruststoreRef.</strong></p></li>
+
+  <li>Determine the Truststore pointed by the Truststore reference.
+
+    <ol>
+      <li>In the Edge UI navigate to <strong>APIs -> Environment Configurations.</strong></li>
+      <li>Select the <strong>References</strong> tab and search for the Truststore reference name.</li>
+      <li><p>Note the name in the <strong>Reference</strong> column for the specific Truststore reference.
+        This will be your Truststore name.</p>
+
+      <p><img src="/api-platform/images/tstore_name2.png" width="" alt="alt_text" title="image_tooltip"></p>
+
+      <p>In the above example, notice that <strong>myCompanyTruststoreRef</strong> has the
+        reference to myCompanyTruststore. Therefore, the Truststore name is myCompanyTruststore.</p></li>
+    </ol></li>
+
+  <li>Get the certificates stored in the Truststore (determined in the previous step) using the following APIs:
+
+        <ol>
+          <li><p><a href="https://apidocs.apigee.com/management/apis/get/organizations/%7Borg_name%7D/environments/%7Benv_name%7D/keystores/%7Bkeystore_name%7D/certs">Get all certificates for a keystore or truststore</a>.</p>
+
+            <p>This API lists all the certificates in the specific Truststore.</p></li>
+
+        <li><p><a href="https://apidocs.apigee.com/management/apis/get/organizations/%7Borg_name%7D/environments/%7Benv_name%7D/keystores/%7Bkeystore_name%7D/certs/%7Bcert_name%7D">Get Cert Details from a Keystore or Truststore</a>.</p>
+
+          <p>This API returns information about a specific certificate in the specific Truststore.</p></li>
+      </ol>
+
+   <li>Check if the issuer and subject of each of certificate and its chain stored in
+          <strong>myCompanyTruststore</strong> matches with that of the certificate and its chain as
+          seen in the TCP/IP Packets (refer packet #38) above. If there's a mismatch then it indicates
+          that the certificates uploaded to the truststore are not being loaded in the Edge Router.
+          Move to <a href="#cert-not-found">Cause: Client Certificates not loaded in the Edge Router</a>.</li>
+
+   <li>If there was no mismatch found in Step #5, then that indicates that the client application did
+     not send the right Certificate and its chain.</li>
+      </ol>
+
+
+<h3>Resolution</h3>
+
+<p>Ensure that the correct certificate and its chain are sent by the client application to Edge.</p>
+
+
+
+<h2 id="cert-not-found">Cause: Client Certificates not loaded in the Edge Router</h2>
+
+<ol>
+  <li>If you are a <strong>Public Cloud</strong> user, contact <a href="https://support.apigee.com/" class="external">Apigee Support</a>.</li>
+  <li>If you are a <strong>Private Cloud</strong> user, follow the below instructions on each Router:
+
+    <ol>
+      <li>Check if the file <code>/opt/nginx/conf.d/OrgName_envName_vhostName-client.pem</code> exists
+        for the specific virtual host.  If the file does not exist, move to the
+        <a href=#not-loaded-resolution>Resolution</a> section below.</li>
+      <li>If the file exists, use the below <code>openssl</code> command to get the details of the
+        certificates that are available on the Edge Router:
+
+        <pre class="devsite-terminal">openssl -in &lt;OrgName_envName_vhostName-client.pem> -text -noout</pre></li>
+
+      <li>Check the issuer, subject and expiry date of the certificate. If any of these do not match
+        with what was observed in the Truststore in Edge UI or using the management APIs, then that's
+        the cause of the error.</li>
+      <li>It's possible that the Router did not reload the uploaded certificates.</li>
+    </ol>
+
+
+<h3 id="not-loaded-resolution">Resolution</h3>
+
+<p>Restart the Router to ensure the latest Certificates are loaded using the below step:</p>
+
+<pre class="devsite-terminal">apigee-service edge-router restart</pre>
+
+<p>Re-run the APIs and check the results. If the problem persists, go to
+
+<a href="#gather">Gather Diagnostic Information</a>.</p>
+
+
+<h2 id="gather">Gather Diagnostic Information</h2>
+
+
+<p>If the problem persists even after following the above instructions, please gather the following diagnostic information.
+  Contact and share the information you collect with <a href="https://support.apigee.com/" class="external">Apigee Support</a>:</p>
+
+<ol>
+  <li>If you are a Public Cloud user, then provide the following information:
+    <ol>
+      <li>Organization Name</li>
+      <li>Environment Name</li>
+      <li>API Proxy Name</li>
+      <li>Virtual Host Name</li>
+      <li>Host Alias Name</li>
+      <li>Complete curl command to reproduce the error</li>
+      <li>TCP/IP packets captured on the Client Application</li>
+    </ol>
+
+  <li>If you are a Private Cloud user, provide the following information:
+    <ol>
+      <li>Virtual Host Name and its definition using <a href="https://apidocs.apigee.com/management/apis/get/organizations/%7Borg_name%7D/environments/%7Benv_name%7D/virtualhosts/%7Bvirtualhost_name%7D">Get Virtual Host</a> management API</li>
+      <li>Host Alias Name</li>
+      <li>Complete Error Message observed</li>
+      <li>TCP/IP packets captured on the Client Application or Router.</li>
+      <li>Output of <a href="https://apidocs.apigee.com/management/apis/get/organizations/%7Borg_name%7D/environments/%7Benv_name%7D/keystores/%7Bkeystore_name%7D/certs">List the Certificates from the Keystore</a>
+        API and also the details of each Certificate obtained using <a href="https://apidocs.apigee.com/management/apis/get/organizations/%7Borg_name%7D/environments/%7Benv_name%7D/keystores/%7Bkeystore_name%7D/certs/%7Bcert_name%7D">this management API</a>.</li>
+    </ol>
+
+    <li>Details about what sections in this Playbook you have tried and any other insights that will
+      help us to fastrack resolution of this issue.</li>
+  </ol>
+
+
+{% endblock %}

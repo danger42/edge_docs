@@ -1,4 +1,4 @@
-{% extends "private-cloud/v4.18.05/_base.html" %}
+{% extends "private-cloud/v4.19.01/_base.html" %}
 {% block title %}Adding a data center{% endblock %}
 {% block body %}
 
@@ -6,8 +6,7 @@
   center.</p>
 
   <aside class="note"><b>Note:</b> If you require three or more data centers, please contact
-  your Sales Rep or Account Executive to engage with Apigee Edge Professional Services and Customer
-  Success.</aside>
+  your Sales Rep or Account Executive to engage with Apigee.</aside>
 
   <h2 id="considerationsbeforeaddingadatacenter">Considerations before adding a data center</h2>
 
@@ -98,7 +97,7 @@
     <li><strong>Port requirements</strong>
       <p>You must ensure that the necessary ports are open between the nodes in the two data centers.
       For a port diagram, see <a href="installation-requirements">Installation
-      Requirements</a>.</p>
+      requirements</a>.</p>
     </li>
   </ul>
 
@@ -113,8 +112,8 @@
   <h2 id="creatingtheconfigurationfiles">Creating the configuration files</h2>
 
   <p>Shown below are the silent configuration files for the two data centers, where each data
-  center has 6 nodes as shown in <a href="installation-topologies">Installation
-  Topologies</a>. Notice that the config file for dc-1 adds additional settings to:</p>
+  center has 6 nodes as shown in {{topologies}}. Notice that the config file for dc-1 adds
+  additional settings to:</p>
   <ul>
     <li>Configure OpenLDAP with replication across two OpenLDAP nodes.</li>
     <li>Add the new Cassandra and ZooKeeper nodes from dc-2 to the config file for dc-1.</li>
@@ -222,11 +221,16 @@ SMTPMAILFROM="My Company &lt;myco@company.com&gt;"
     </li>
     <li><strong>On dc-2</strong>, run the rebuild command on all Cassandra nodes, specifying the
       region name of dc-1:
-      <pre class="devsite-terminal">/opt/apigee/apigee-cassandra/bin/nodetool -h <var>cassIP</var> rebuild dc-1</pre>
+      <pre class="devsite-terminal">/opt/apigee/apigee-cassandra/bin/nodetool [-u <var>username</var> -pw <var>password</var>] -h <var>cassIP</var> rebuild dc-1</pre>
+      <p>You only need to pass your username and password if you
+      <a href="how-monitor#cassauthenable">enabled JMX authentication for Cassandra</a>.</p>
     </li>
     <li><strong>On dc-2</strong>, install the Management Server on the appropriate node:
       <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/setup.sh -p ms -f <var>configFile2</var></pre>
     </li>
+    <li><strong>On the Management Server node in dc-2</strong>, install <code>apigee-provision</code>,
+      which installs the <code>apigee-adminapi.sh</code> utility:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-provision install</pre></li>
     <li><strong>On dc-2</strong>, install the Routes and Message Processors on the appropriate nodes:
       <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/setup.sh -p rmp -f <var>configFile2</var></pre>
     </li>
@@ -259,8 +263,7 @@ PG_STANDBY=<var>IPorDNSofDC2Standby</var></pre>
           existing Postgres data:
           <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-postgresql stop
 <code class="devsite-terminal">rm -rf /opt/apigee/data/apigee-postgresql/</code></pre>
-          <aside class="note"><strong>Note</strong>: If necessary, you can backup this data before
-          deleting it.</aside>
+          <p>If necessary, you can backup this data before deleting it.</p>
         </li>
         <li>Configure the standby node in <strong>dc-2</strong>:
           <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-postgresql setup-replication-on-standby -f <var>configFile</var></pre>
@@ -349,6 +352,10 @@ PG_STANDBY=<var>IPorDNSofDC2Standby</var></pre>
               <pre class="devsite-terminal">apigee-adminapi.sh analytics groups qpid_server \
   add -g axgroup-001 -u "<var>UUID_1</var> <var>UUID_2</var>" --admin <var>adminEmail</var> \
   --pwd <var>adminPword</var> --host localhost</pre>
+              <aside class="note"><h3 class="hide-from-toc">NOTE</h3>You must
+                <var>space</var>-separate the UUIDs when adding Qpid servers to the analytics group.
+                <p>(This is unlike adding Qpid servers to the consumer group, in which you
+                comma-separate them.)</p></aside>
             </li>
             <li><strong>On the Management Server node of dc-1</strong>, add the Qpid nodes to the
               consumer group:
@@ -389,15 +396,15 @@ PG_STANDBY=<var>IPorDNSofDC2Standby</var></pre>
         <li>Execute the following CQL commands at the "cqlsh&gt;" prompt to set the replication
         levels for Cassandra keyspaces:
           <ol>
-            <li><pre class="devsite-terminal" data-terminal-prefix="cqlsh>">ALTER KEYSPACE "identityzone" WITH replication = { 'class': 'NetworkTopologyStrategy', 'dc-1': '3','dc-2': '3' }; </pre>
+            <li><pre class="devsite-terminal" data-terminal-prefix="cqlsh&gt; ">ALTER KEYSPACE "identityzone" WITH replication = { 'class': 'NetworkTopologyStrategy', 'dc-1': '3','dc-2': '3' }; </pre>
             </li>
-            <li><pre class="devsite-terminal" data-terminal-prefix="cqlsh>">ALTER KEYSPACE "system_traces" WITH replication = { 'class': 'NetworkTopologyStrategy', 'dc-1': '3','dc-2': '3' };</pre>
+            <li><pre class="devsite-terminal" data-terminal-prefix="cqlsh&gt; ">ALTER KEYSPACE "system_traces" WITH replication = { 'class': 'NetworkTopologyStrategy', 'dc-1': '3','dc-2': '3' };</pre>
             </li>
             <li>View the keyspaces by using the command:
-              <pre class="devsite-terminal" data-terminal-prefix="cqlsh>">select * from system.schema_keyspaces;</pre>
+              <pre class="devsite-terminal" data-terminal-prefix="cqlsh&gt; ">select * from system.schema_keyspaces;</pre>
             </li>
             <li>Exit <code>cqlsh</code>:
-              <pre class="devsite-terminal" data-terminal-prefix="cqlsh>">exit</pre>
+              <pre class="devsite-terminal" data-terminal-prefix="cqlsh&gt; ">exit</pre>
             </li>
           </ol>
         </li>
@@ -405,7 +412,9 @@ PG_STANDBY=<var>IPorDNSofDC2Standby</var></pre>
     </li>
     <li>Run the following <code>nodetool</code> command on all Cassandra nodes in dc-1 to free
       memory:
-      <pre class="devsite-terminal">/opt/apigee/apigee-cassandra/bin/nodetool -h <var>cassandraIP</var> cleanup</pre>
+      <pre class="devsite-terminal">/opt/apigee/apigee-cassandra/bin/nodetool [-u <var>username</var> -pw <var>password</var>] -h <var>cassandraIP</var> cleanup</pre>
+      <p>You only need to pass your username and password if you
+      <a href="how-monitor#cassauthenable">enabled JMX authentication for Cassandra</a>.</p>
     </li>
     <li>For each organization and for each environment that you want to support across data centers:
       <ol>
