@@ -1,12 +1,11 @@
-{% extends "private-cloud/v4.18.05/_base.html" %}
+{% extends "private-cloud/v4.19.01/_base.html" %}
 {% block title %}Install the portal{% endblock %}
 {% block body %}
 
-  <aside class="note"><strong>Note:</strong> Do not install the portal on the same servers as Apigee
-  Edge.</aside>
+  {{portal_note}}
 
   <p>Before you install {{portal_1st_use}}, ensure that:</p>
-  <ul>
+  <ol>
     <li>You install Postgres before installing the portal. You can either install Postgres as part
     of installing Edge, or install Postgres standalone for use by the portal.
       <ul>
@@ -19,31 +18,29 @@
     Enterprise Linux, CentOS, or Oracle. See the list of supported versions at
     <a href="/release/supported-software">Supported software and supported versions</a>. </li>
     <li>Yum is installed.</li>
-  </ul>
+  </ol>
+
+  <p>The installer only includes Drupal-contributed modules that are required by the
+  {{portal_1st_use}}. For information about installing other contributed modules, see
+  <a href="https://www.drupal.org/docs/7/extend" class="external">Extending Drupal 7</a>.</p>
 
   <h2 id="installationoverview">Installation overview</h2>
 
-  <aside class="note"><strong>Note:</strong> Do not install the portal on the same servers as Apigee
-  Edge.</aside>
+  {{portal_note}}
 
-  <p>After you install the <code>apigee-setup</code> utility on a node, use that utility to install
-  the portal on the node. The <code>apigee-setup</code> utility has the form:</p>
+  <p>To install the portal, you will perform the following steps. Each of these steps is described in
+  more detail in the sections that follow.</p>
 
-  <pre class="devsite-terminal">sudo /opt/apigee/apigee-setup/bin/setup.sh -p <var>component</var> -f <var>configFile</var></pre>
-
-  <p>Pass a configuration file to the <code>apigee-setup</code> utility that contains the
-  information about the installation. If the configuration file is missing any required
-  information, the <code>apigee-setup</code> utility prompts you to enter it on the command
-  line.</p>
-
-  <p>The only requirement is that the configuration file must be accessible or readable by the
-  "apigee" user.</p>
-
-  <p>For example, use the following command to install the portal:</p>
-  <pre class="devsite-terminal">sudo /opt/apigee/apigee-setup/bin/setup.sh -p dp -f <var>myConfig</var></pre>
-
-  <p>See <a href="install-edge-apigee-setup-utility">Install the Edge apigee-setup utility</a>
-  for more.</p>
+  <ol>
+    <li><a href="#1testyourconnectiontoapigeeedge">Test your connection</a></li>
+    <li><a href="#2removepre70versionsofphp">Remove pre-7.0 versions of PHP</a></li>
+    <li><a href="#3installpostgres">Install Postgres</a></li>
+    <li><a href="#4installtheportal">Install the portal</a></li>
+    <li><a href="#5ensurethattheupdatemanagermoduleisenabled">Ensure Update manager is enabled</a></li>
+    <li><a href="#6configuretheapachesolrsearchengineoptional">(Optional) Configure Apache Solr</a></li>
+    <li><a href="#7installsmartdocsoptional">(Optional) Install SmartDocs</a></li>
+    <li><a href="#8configurethejqueryupdatemodulefornoninternetinstallationsoptional">(Optional) Configure JQuery</a></li>
+  </ol>
 
   <h2 id="deprecationofthesmtpsslproperty">Deprecation of the SMTPSSL property</h2>
 
@@ -62,9 +59,10 @@
   as necessary for your configuration. Use the -f option to <code>setup.sh</code> to include this
   file.</p>
 
-  <aside class="note"><strong>Note:</strong> Do not set the <code>DEVPORTAL_ADMIN_USERNAME=admin</code>. The
-  <code>admin</code> user account is created by default. If specified, an error message is returned
-  prompting you to configure a different username.</aside>
+  <aside class="note"><h3 class="hide-from-toc">NOTE</h3> <p>Do not set
+  <code>DEVPORTAL_ADMIN_USERNAME=admin</code>. The <code>admin</code> user account is created by
+  default. If specified, an error message is returned prompting you to configure a different
+  username.</p></aside>
 
   <pre class="prettyprint">
 IP1=IPorDNSnameOfNode
@@ -214,10 +212,12 @@ php-xml</pre>
   <p>If you are not sure if PHP is installed on your server, use the following command:</p>
   <pre class="devsite-terminal">rpm -qa | grep -i php</pre>
 
+  <p>Note that the portal uses PHP version 4.18.01-0.0.49. This is not intended to match the
+  version number of {{opdk}}.</p>
+
   <h2 id="3installpostgres">3. Install Postgres</h2>
 
-  <aside class="note"><strong>Note:</strong> Do not install the portal on the same servers as Apigee
-  Edge.</aside>
+  {{portal_note}}
 
   <p>The portal requires Postgres to be installed before you can install the portal. You can either
   install Postgres as part of installing Edge, or install Postgres standalone for use by the
@@ -413,7 +413,7 @@ PG_PWD=postgres</pre>
       </tr>
       <tr>
         <td>
-          <p><a href="/api-platform/publish/drupal/customizing-theme">Customizing the theme</a></p>
+          <p><a href="/api-platform/publish/drupal/customizing-theme">Customizing&nbsp;the&nbsp;theme</a></p>
         </td>
         <td>
           <p>The theme defines the appearance of the portal, including colors, styling, and other
@@ -501,9 +501,47 @@ PG_PWD=postgres</pre>
           the server, which should work correctly without any other configuration on a basic
           setup.</p>
           <p>If you set up a load balancer or are getting incorrect URLs on your site for some
-          other reason, you can set $base_url in the Dev Portal <strong>settings.php</strong> file,
-          which by default is located in the
-          <strong>/opt/apigee/apigee-drupal/wwwroot/sites/default</strong> directory.</p>
+          other reason, you can set <code>$base_url</code> for Drupal by following these steps:</p>
+          <ol>
+            <li>Create the directory <code>/opt/apigee/data/apigee-drupal-devportal/sites/default/includes</code>
+              if it does not exist.</li>
+            <li>Create a file named <code>settings.php</code> in that directory.</li>
+            <li>Add the following to the <code>settings.php</code> file:
+              <pre class="prettyprint">/**
+* Base URL (optional).
+*
+* If Drupal is generating incorrect URLs on your site, which could
+* be in HTML headers (links to CSS and JS files) or visible links
+* on pages (such as in menus), uncomment the Base URL statement
+* below (remove the leading hash sign) and fill in the absolute URL
+* to your Drupal installation.
+*
+* You might also want to force users to use a given domain.
+* See the .htaccess file for more information.
+*
+* Examples:
+*   $base_url = 'http://www.example.com';
+*   $base_url = 'http://www.example.com:8888';
+*   $base_url = 'http://www.example.com/drupal';
+*   $base_url = 'https://www.example.com:8888/drupal';
+*
+* It is not allowed to have a trailing slash; Drupal will add it
+* for you.
+*/
+# $base_url = 'http://www.example.com/';  // NO trailing slash!
+$base_url = ‘http://www.example.com’;
+</pre>
+            <li>Change the last <code>$base_url</code> line to be the hostname of your site.</li>
+            <li>Save the file.</li>
+          </ol>
+          <p>Note that you can put any other settings from <code>/opt/apigee/data/apigee-drupal-devportal/
+          sites/default/default.settings.php</code> in this file.</p>
+          <p>For more information about the <code>$base_url</code> property, see the following:</p>
+          <ul>
+            <li><a href="https://codeburst.io/security-for-drupal-and-related-server-software-3c979b041595"
+              class="external">https://codeburst.io/security-for-drupal-and-related-server-software-3c979b041595</a></li>
+            <li><a href=" https://www.drupal.org/node/1992030" class="external">https://www.drupal.org/node/1992030</a></li>
+          </ul>
         </td>
       </tr>
       <tr>

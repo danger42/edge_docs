@@ -1,0 +1,136 @@
+{% extends "_base.html" %}
+{% block title %}Using Basic Authentication to access the Management API{% endblock %}
+{% block body %}
+
+  <p>You can use Basic Authentication to access the management API for your Edge for the Cloud
+  account. With Basic Authentication, you pass your credentials (your Apigee account's email address
+  and password) in each request to the management API.</p>
+
+  <p>Basic Authentication is the least secure of the supported authentication mechanisms. Your
+  credentials are not encrypted or hashed; they are Base64-encoded only. Instead of Basic
+  Authentication, Apigee recommends that you use <a href="using-oauth2">OAuth2</a> or
+  <a href="enabling-saml-authentication-edge">SAML</a> to access the management API.</p>
+
+  <aside class="warning"><h3 class="hide-from-toc">WARNING</h3> In the future, Apigee will deprecate Basic
+  Authentication as a means of authenticating to the management server.</aside>
+
+  <h2>Basic Authentication format</h2>
+
+  <p>You can pass your credentials as a Base64-encoded header or as parameters in an HTTP
+  client.</p>
+
+  <p>When you pass your credentials in the header, you must Base64-encode them. The following
+  is an example of an encoded HTTP Basic Authentication header:</p>
+  <pre class="prettyprint">Authorization: Basic YWhhbWlsdG9uQGFwaWdlZS5jb206bXlwYXNzdzByZAo</pre>
+
+  <p>With a client such as <code>curl</code>, you pass your credentials with the <code>-u</code>
+  option, as the following example shows:</p>
+  <pre class="devsite-terminal prettyprint">curl https://api.enterprise.apigee.com/v1/organizations/ahamilton-eval -u <var>email_address</var>:<var>password</var></pre>
+
+  <p><code>curl</code> encodes your email address and password and adds them to the request's
+  <code>Authorization</code> header for you.</p>
+
+  <p>If you omit your password, you will be prompted to enter it.</p>
+
+  <p>Note that you must use your Apigee account's email address and not your username in management
+  API calls.</p>
+
+<h2>Access the management API</h2>
+
+  <p>To access the management API with Basic Authentication, you can use a command line utility
+  such as <code>curl</code> or make a request directly in a browser.</p>
+
+  <h3>Access the management API in a browser</h3>
+
+  <p><strong>To access the management API in a browser:</strong></p>
+  <ol>
+    <li>Enter the URL of the management API endpoint you want to access; for example:
+      <pre class="prettyprint">https://api.enterprise.apigee.com/v1/organizations/ahamilton-eval</pre>
+      <p>The browser will challenge you with a login prompt:</p>
+      <p><img class="screenshot" src="/api-platform/images/management-api/basic-auth-challenge.png" alt="Basic Auth Challenge"></p>
+    </li>
+    <li><p>Enter your Apigee account's email address and password.</p>
+      <p>The browser displays the results; for example:</p>
+      <p><img class="screenshot" src="/api-platform/images/management-api/basic-auth-results.png" alt="Basic Auth Results"></p>
+    </li>
+  </ol>
+
+  <h3>Access the management API with curl</h3>
+
+  <p>To use <code>curl</code> to access the management API, you must manually set the
+  <code>Authorization</code> header in a request.</p>
+
+  <p><strong>To access the management API with <code>curl</code>:</strong></p>
+  <ol>
+    <li>Base64 encode your email address and password with a tool such as <code>base64</code>; for
+      example:
+      <pre class="devsite-terminal">echo ahamilton@apigee.com:mypassw0rd | base64</pre>
+      <p>The <code>base64</code> tool returns an encoded string:</p>
+      <pre class="prettyprint">YWhhbWlsdG9uQGFwaWdlZS5jb206bXlwYXNzdzByZAo=</pre>
+    </li>
+    <li>Trim any trailing "=" from the end of the encoded string.</li>
+    <li>Add the encoded string to the <code>Authorization</code> header in your management API
+      request, as the following example shows:
+      <pre class="devsite-terminal prettyprint">curl <strong>-H "Authorization: Basic YWhhbWlsdG9uQGFwaWdlZS5jb206bXlwYXNzdzByZAo"</strong> \
+  https://api.enterprise.apigee.com/v1/organizations/ahamilton-eval
+{
+  &quot;createdAt&quot; : 1491854501264,
+  &quot;createdBy&quot; : &quot;noreply_iops@apigee.com&quot;,
+  &quot;displayName&quot; : &quot;ahamilton&quot;,
+  &quot;environments&quot; : [ &quot;prod&quot;, &quot;test&quot; ],
+  &quot;lastModifiedAt&quot; : 1491854501264,
+  &quot;lastModifiedBy&quot; : &quot;noreply_iops@apigee.com&quot;,
+  &quot;name&quot; : &quot;ahamilton&quot;,
+  &quot;properties&quot; : {
+    &quot;property&quot; : [ {
+      &quot;name&quot; : &quot;features.isSmbOrganization&quot;,
+      &quot;value&quot; : &quot;false&quot;
+    }, {
+      &quot;name&quot; : &quot;features.isCpsEnabled&quot;,
+      &quot;value&quot; : &quot;true&quot;
+    } ]
+  },
+  &quot;type&quot; : &quot;trial&quot;
+}</pre>
+    </li>
+  </ol>
+
+  <p>This request gets details about the "ahamilton-eval" organization. For a complete list of
+  management API endpoints, see {{apiref}}.</p>
+
+  <p>You must include the <code>Authorization</code> header in every request.</p>
+
+  <aside class="key-point"><h3 class="hide-from-toc">TIP</h3>
+  <p>Alternatively, you can perform these steps in a single line, as the following example
+  shows:</p>
+  <pre class="devsite-terminal">auth=`echo "ahamilton@apigee.com:mypassw0rd" | base64 | sed s/=$*//g` && curl -v \
+  -H "Authorization: Basic $auth" \
+  https://api.enterprise.apigee.com/v1/organizations/ahamilton-eval</pre>
+  </aside>
+
+  <h2>Disable Basic Authentication</h2>
+
+  <p>You can disable Basic Authentication (as long as OAuth2 or SAML is enabled) by sending a
+  request to {{support}}.</p>
+
+  <h2>Scripting guidelines</h2>
+
+  <p>In some situations, it is not practical to collect the password when the script runs. For
+  example, you may need to run a cron job that fires when no administrators are present. In these
+  situations, you need to make the password available to the script without any human
+  intervention.</p>
+
+  <p>Follow these guidelines:</p>
+
+  <ol>
+    <li>Centralize credentials in a single file that is used as a source for the programs and
+      scripts that you write</li>
+    <li>Protect the credentials source file to the extent possible using file system security and
+      permissions</li>
+    <li>Create an automation client with highly restricted permissions on specific resources in
+      your organization.</li>
+  </ol>
+
+
+
+{% endblock %}

@@ -1,0 +1,548 @@
+{% extends "_base.html" %} {% block title %}404 Unable to identify proxy for host: &lt;virtual host name&gt; and url: &lt;path&gt;{% endblock %} {% block body %}
+
+<aside class="note">Was this troubleshooting playbook helpful? Please let us know
+  by clicking <a href="" class="google-feedback"
+   data-p="1636213" data-b="docsite" data-context="troubleshooting-feedback">
+  Send Feedback
+</a>.</aside>
+
+<h2 id="symptom">Symptom</h2>
+
+
+<p>
+The client application gets an HTTP status code of 404 with the message "Not Found" and the error message as <strong>"Unable to identify proxy for host: <virtual host> and url: <path>"</strong> as a response to the API calls.
+</p>
+<p>
+This error means that Edge could not find the API Proxy for the specified virtual host and path.
+</p>
+<h2 id="error-message">Error Message</h2>
+
+
+<p>
+You will get the following HTTP status code:
+</p>
+
+
+
+<pre class="prettyprint">HTTP/1.1 404 Not Found
+</pre>
+
+
+<p>
+You will also observe an error message something similar to the one shown below:
+</p>
+
+
+
+<pre class="prettyprint">
+{
+   "fault":{
+      "faultstring":"Unable to identify proxy for host: default and url: \/oauth2\/token",
+      "detail":{
+         "errorcode":"messaging.adaptors.http.flow.ApplicationNotFound"
+      }
+   }
+}
+</pre>
+
+
+<p>
+The above error message indicates that Edge could not find the API Proxy for the <strong>"default"</strong> virtual host and <strong>"/oauth2/token" </strong>path.
+</p>
+<h2 id="possible-causes">Possible Causes</h2>
+
+
+<p>
+Some of the possible causes for this error are listed below:
+</p>
+
+<table>
+  <tr>
+   <td><strong>Cause</strong>
+   </td>
+   <td><strong>Description</strong>
+   </td>
+   <td><strong>Troubleshooting Instructions Applicable for</strong>
+   </td>
+  </tr>
+  <tr>
+   <td><a href="#cause-api-proxy-not-associated-with-the-specific-virtual-host">API Proxy not associated with the specific VirtualHost</a>
+   </td>
+   <td>If the specific API Proxy is not configured to accept requests on the VirtualHost specified in the error message.
+   </td>
+   <td>Edge Public and Private Cloud Users
+   </td>
+  </tr>
+  <tr>
+   <td><a href="#cause-path-not-associated-with-any-api-proxy">Path not associated with any API Proxy</a>
+   </td>
+   <td>If the specific API Proxy is not configured to accept requests on the path specified in the error message.
+   </td>
+   <td>Edge Public and Private Cloud Users
+   </td>
+  </tr>
+  <tr>
+   <td><a href="#cause-api-proxy-not-deployed-in-an-environment">API Proxy not deployed in an environment</a>
+   </td>
+   <td>If the specific API Proxy is not deployed in the specific environment in which you are trying to make the API requests.
+   </td>
+   <td>Edge Public and Private Cloud Users
+   </td>
+  </tr>
+  <tr>
+   <td><a href="#cause-environment-not-loaded-on-the-message-processor-s">Environment not loaded on the Message Processor</a>
+   </td>
+   <td>If the specific environment (in which you are trying to make the API requests) has not been loaded on the Message Processor (s) due to an error.
+   </td>
+   <td>Edge Private Cloud Users
+   </td>
+  </tr>
+  <tr>
+   <td><a href="#cause-api-proxy-not-deployed-on-one-or-more-message-processors">API Proxy not deployed on one or more Message Processors</a>
+   </td>
+   <td>The API Proxy may not be deployed on one or more Message Processors due to missing event notification during deployment.
+   </td>
+   <td>Edge Private Cloud Users
+   </td>
+  </tr>
+</table>
+
+
+<h2 id="cause-api-proxy-not-associated-with-the-specific-virtual-host">Cause: API Proxy not associated with the specific Virtual Host</h2>
+
+
+<p>
+If the API Proxy is not configured to accept the requests for the specific Virtual Host, then we can get a  <strong>404 Not Found</strong> response with the error message <strong>"Unable to identify proxy for host: <virtual host> and url: <path>".</strong>
+</p>
+<h3 id="diagnosis"><em>Diagnosis</em></h3>
+
+<ol>
+
+<li>Check the Proxy Endpoint configuration for the API Proxy and see if the API Proxy is configured to accept the requests for the VirtualHost specified in the error. This is indicated by the <strong>VirtualHost</strong> element. Let's look at a sample Proxy Endpoint configuration to understand this.
+
+<strong>Sample Proxy Endpoint configuration showing that the API Proxy accepts requests on a secure VirtualHost</strong>
+
+<p><img alt="" src="/api-platform/images/TS-404-unable-id-proxy-host-1.png"></p>
+  </li>
+
+<li>Let's say the Virtual Hosts are defined in the specific environment as follows:
+
+<table>
+  <tr>
+   <td>
+<strong>Name</strong>
+
+   </td>
+   <td><strong>Port</strong>
+   </td>
+   <td><strong>Host Alias</strong>
+   </td>
+  </tr>
+  <tr>
+   <td>default
+   </td>
+   <td>80
+   </td>
+   <td>myorg-prod.apigee.net
+   </td>
+  </tr>
+  <tr>
+   <td>secure
+   </td>
+   <td>443
+   </td>
+   <td>myorg-prod.apigee.net
+   </td>
+  </tr>
+</table>
+
+  </li>
+
+<li>You make an API request to the <strong>default</strong> VirtualHost using the URL <code>http://myorg-prod.apigee.net/weather</code></li>
+<li>Since the Proxy Endpoint does not have <strong>"default"</strong> VirtualHost as shown in the example above, you get the 404 response code with the below error message:
+
+	<pre class="prettyprint">{"fault":{"faultstring":"Unable to identify proxy for host: default and url: \/weather","detail":{"errorcode":"messaging.adaptors.http.flow.ApplicationNotFound"}}}</pre>
+</li>
+
+	<li>Move to the <strong>Resolution</strong> section below to know how to address this issue.</li>
+
+<li>If the Proxy Endpoint is configured to accept the requests on the <strong>"default"</strong> VirtualHost, move to the next cause - <a href="https://docs.google.com/document/d/1R9U-CXu435OWhlXxkI2Px-lwQNJK8j6ZjwTfIiZVshs/edit#heading=h.2683it1n5frg">Path not associated with any API Proxy</a>.</li>
+</ol>
+
+<h3 id="resolution"><em>Resolution</em></h3>
+
+<ol>
+
+<li>Add the missing VirtualHost to the Proxy Endpoint configuration to address the issue.
+  <ol>
+    <li>In the Example shown above, you can add the default VirtualHost to the Proxy Endpoint configuration as follows:
+
+
+
+
+
+
+      <pre class="prettyprint">&lt;VirtualHost>default&lt;/VirtualHost>
+</pre>
+      <p>
+
+        <strong>Sample Proxy Endpoint configuration showing the "default" VirtualHost being added</strong></p>
+      <p><img alt="" src="/api-platform/images/TS-404-unable-id-proxy-host-2.png"></p>
+
+    </li>
+  </ol>
+<li>Alternatively, in the example referred to above, if you intended to use only the <strong>secure</strong> VirtualHost for this specific API Proxy, then make the API requests only to the <strong>secure </strong> VirtualHost using the https protocol:
+
+
+
+	<pre class="prettyprint">https://myorg-prod.apigee.net/weather</pre>
+  </li>
+</ol>
+
+
+
+<h2 id="cause-path-not-associated-with-any-api-proxy">Cause: Path not associated with any API Proxy</h2>
+
+
+<p>
+If the API Proxy is not configured to accept the requests for the specific path used in the API Request URL, then we can get <strong>404 Not Found</strong> response with the error message <strong>"Unable to identify proxy for host: <virtual host> and url: <path>".</strong>
+</p>
+<h3 id="diagnosis"><em>Diagnosis</em></h3>
+
+<ol>
+
+<li>Look at the Proxy Endpoint configuration for the specific API Proxy for which you intended to make the API requests.</li>
+<li>Check if the API Proxy is configured to accept the requests for the specific path indicated in the error message.  You can do this by following the below steps:</li>
+</ol>
+
+<h3 id="scenario-#1-path-does-not-match-the-basepath-of-the-api-proxy">Scenario #1: Path does not match the basepath of the API Proxy</h3>
+
+<ol>
+
+<li>If the <strong>path</strong> indicated in the error message is not same as the <strong>basepath</strong> of the specific API Proxy and/or it does not start with the <strong>basepath</strong>, then that could be the cause for the error.</li>
+<li>Let's take an example to explain this: </li>
+<ol>
+  <li>Basepath of the intended API Proxy is <strong>/weather</strong>
+  </li>
+  <li>API Request URL is <code>https://myorg-prod.apigee.net/climate</code>. This means that path used in the API request URL is <strong>/climate.</strong></li>
+  </ol>
+<li>In this example, the <strong>path</strong> is neither same as the <strong>basepath</strong> or does not start with the <strong>basepath</strong>. Hence you get the error:
+
+
+
+    <pre class="prettyprint">{
+   "fault":{
+      "faultstring":"Unable to identify proxy for host: secure and url: \/climate",
+      "detail":{
+         "errorcode":"messaging.adaptors.http.flow.ApplicationNotFound"
+      }
+   }
+}</pre>
+</li>
+</ol>
+
+
+
+<h3 id="resolution"><em>Resolution</em></h3>
+
+<ol>
+
+<li>Ensure the <strong>path</strong> used in your API request URL is same as the <strong>basepath</strong> of the specific API Proxy.
+<li>In the example above, the API Request URL should be as follows: <code>https://myorg-prod.apigee.net/weather</code></li></ol>
+
+<h3 id="scenario-#2-path-does-not-match-any-of-the-available-conditional-flows">Scenario #2: Path does not match any of the available Conditional Flows</h3>
+
+<ol>
+
+  <li>If the <strong>path</strong> used in the API Request URL starts with the <strong>basepath</strong>, then it's possible that the <strong>path suffix</strong> (i.e., the part that comes after the <strong>basepath</strong>) indicated in the error message does not match any of the conditional flows, then that could cause the 404 error.</li>
+  <li>Let's take an example to explain this:
+    <ol>
+      <li>Basepath of the intended API Proxy is <strong>/weather</strong>
+      </li>
+      <li>API Request URL is <code>https://myorg-prod.apigee.net/weather/Delhi</code>. This means that path used in the API request URL is <strong>/weather/Delhi.</strong>      </li>
+    </ol>
+  </li>
+  <li>In this example, the <strong>path</strong> starts with the basepath<strong> /weather</strong>.  In addition, it has <strong>path suffix</strong> which <strong>/Delhi</strong>.  </li>
+  <li>Now check if there are any Conditional flows in the Proxy Endpoint.  </li>
+  <li>If there are no Conditional flows or there are a few non Conditional flows, then move to next cause - <a href="#cause-api-proxy-not-deployed-in-an-environment">API Proxy not deployed in an environment</a>.  </li>
+  <li>If the Proxy Endpoint has got all the flows to be only Conditional flows, then check for the following:
+    <ol>
+      <li>If the conditions in all these Conditional flows check for a specific proxy.pathsuffix (i.e., the path after the basepath).
+      </li>
+      <li>And if the path suffix specified in the API Request URL does not match any of the conditions, then that's the cause for the error.</li>
+    </ol>
+  </li>
+  <li>Let's say we have two flows in the Proxy Endpoint and both of them are Conditional flows as shown below:
+
+  <pre class="prettyprint">&lt;Condition>(proxy.pathsuffix MatchesPath "/Bangalore") and (request.verb = "GET")&lt;/Condition>
+
+&lt;Condition>(proxy.pathsuffix MatchesPath "/Chennai") and (request.verb = "GET")&lt;/Condition>
+</pre>
+      </li>
+
+  <ol>
+    <li>In the example shown above, we have two Conditional flows, one that matches the <strong>proxy.pathsuffix </strong>(path after the basepath) to <strong>/Bangalore</strong> and the other one matches <strong>/Chennai</strong>.  But there's none that matches to <strong>/Delhi</strong> which is the path suffix passed in the API Request URL</li>
+    <li>This is the cause for the 404 error.  Hence you would get the error
+      <pre class="prettyprint">{
+   "fault":{
+      "faultstring":"Unable to identify proxy for host: secure and url: \/weather\/Delhi",
+      "detail":{
+         "errorcode":"messaging.adaptors.http.flow.ApplicationNotFound"
+      }
+   }
+}</pre>
+    </li>
+    </ol>
+  </ol>
+<h3 id="resolution"><em>Resolution</em></h3>
+
+<ol>
+
+<li>Ensure the path suffix matches at least one of the conditional flows in your proxy endpoint.</li>
+<li>In the example above, you can use of the following approaches to resolve the error:
+  <ol>
+    <li>If you want to execute any specific set of Policies for the path <strong>/Delhi</strong>, then add a separate flow with the required set of Policies and ensure there's a condition that matches the proxy.pathsuffix <strong>/Delhi</strong> as shown below:
+
+      <pre class="prettyprint">&lt;Condition>(proxy.pathsuffix MatchesPath "/Delhi") and (request.verb = "GET")&lt;/Condition>
+</pre>
+      </li>
+    <li>If you want to execute common set of Policies for the path /Delhi, then in the common Flow, ensure that there's a condition that allows generic proxy.pathsuffix.  That is it would allow any path after the basepath <strong>/weather</strong> as shown below
+		<pre class="prettyprint">&lt;Condition>(proxy.pathsuffix MatchesPath "/**") and (request.verb = "GET")&lt;/Condition></pre></li>
+    </ol>
+</li>
+</ol>
+<p>
+  If the Proxy Endpoint has the correct basepath and the path suffix specified in the API URL does match one of the conditional flows, then move to next cause - <a href="#cause-api-proxy-not-deployed-in-an-environment">API Proxy not deployed in an environment</a>.
+</p>
+<h2 id="cause-api-proxy-not-deployed-in-an-environment">Cause: API Proxy not deployed in an environment</h2>
+
+
+<h3 id="diagnosis"><em>Diagnosis</em></h3>
+
+<ol>
+
+<li>Determine the environment to which the host alias used in your API request URL exists. This can be done by checking the details of all virtual hosts in each of the environments of your organization in the Edge UI. <ol>
+
+ <li>For example, assume the following configuration:  <ol>
+
+   <li>If <strong><a href="http://myorg-test.apigee.net/weather">http://myorg-prod.apigee.net/weather</a> </strong>is your URL,<strong> </strong>then <strong>myorg-prod.apigee.net</strong> is the host alias.
+     <li>The host alias <strong>myorg-prod.apigee.net</strong> is configured as part of one of the virtual host(s) of in <strong>"prod"</strong> environment of your organization.</li>
+   </ol>
+ </li>
+ </ol>
+</li>
+<li>Check if the specific API Proxy is deployed in the specific environment determined in the step #1 above.   </li>
+<li>If the API Proxy is not deployed in the specific environment, then that's the cause for the 404 error.
+  <ol>
+    <li>So in the example used in step #1 above, let's say the API Proxy is not deployed in  the<strong>"prod"</strong> environment, then that's the cause for the error.       </li>
+    <li>Move to the Resolution section below.       </li>
+  </ol>
+</li>
+<li>If the API Proxy is deployed in the specific environment, then move to next cause - <a href="https://docs.google.com/document/d/1R9U-CXu435OWhlXxkI2Px-lwQNJK8j6ZjwTfIiZVshs/edit#heading=h.pr32yplgo91h">Environment not loaded on Message Processor(s)</a>.</li>
+</ol>
+
+<h3 id="resolution"><em>Resolution</em></h3>
+
+<ol>
+
+<li>Deploy the API Proxy in the specific environment in which you intend to make API requests.</li></ol>
+
+<h2 id="cause-environment-not-loaded-on-the-message-processor-s">Cause: Environment not loaded on the Message Processor(s)</h2>
+
+
+<p>
+(For Edge Private Cloud users only)
+</p>
+<h3 id="diagnosis"><em>Diagnosis</em></h3>
+
+<ol>
+
+<li>Log in to each of the Message Processor(s) and check if the specific environment  in which you are making the API request is loaded on the Message Processor using the following command:
+
+
+
+<pre class="prettyprint">curl -v 0:8082/v1/runtime/organizations/&lt;orgname&gt;/environments
+</pre>
+</li>
+<li>If the specific environment is listed as part of the above command, then move to next cause - <a href="#cause-api-proxy-not-deployed-on-one-or-more-message-processors">API Proxy not deployed on one or more Message Processors</a>.  </li>
+<li>If the specific environment is not listed, then check the <code>/opt/apigee/var/log/edge-message-processor/logs/system.log</code> and <code>/opt/apigee/var/log/edge-message-processor/logs/startupruntimeerrors.log</code> on Message Processors for any errors during loading of Environments.  </li>
+<li>There could be many different errors that could lead to failure of loading an environment on the Message Processor. Resolution depends on the error that occurred.</li>
+</ol>
+
+<h3 id="resolution"><em>Resolution</em></h3>
+
+
+<p>
+The Environment may not be loaded on Message Processor due to many reasons.  This section illustrates a couple of possible reasons that can lead to this issue and explains how to resolve the issue.
+</p><ol>
+
+<li>If you see one of the following errors in the Message Processor log, then it is caused due to an issue found with the certificates/keys that have been added to the specified keystore/truststore in the specified environment.
+<p>
+
+    <strong>Error #1: java.security.KeyStoreException: Cannot overwrite own certificate</strong>
+</p>
+
+
+
+<pre class="prettyprint">2018-01-30 12:04:38,248 pool-47-thread-4 ERROR MESSAGING.RUNTIME - AbstractConfigurator.propagateEvent() : Error while handling the update for the Configurator
+com.apigee.kernel.exceptions.spi.UncheckedException: Failed to add certificate : mycert in key store : mytruststore in environment : test
+at com.apigee.entities.configurators.KeyStore.setCertificateEntry(KeyStore.java:156) ~[config-entities-1.0.0.jar:na]
+at com.apigee.entities.configurators.KeyStore.handleUpdate(KeyStore.java:101) ~[config-entities-1.0.0.jar:na]
+at com.apigee.entities.AbstractConfigurator.propagateEvent(AbstractConfigurator.java:85) ~[config-entities-1.0.0.jar:na]
+at com.apigee.messaging.runtime.Environment.handleUpdate(Environment.java:238) [message-processor-1.0.0.jar:na]
+…
+Caused by: java.security.KeyStoreException: Cannot overwrite own certificate
+at com.sun.crypto.provider.JceKeyStore.engineSetCertificateEntry(JceKeyStore.java:355) ~[sunjce_provider.jar:1.8.0_151]
+at java.security.KeyStore.setCertificateEntry(KeyStore.java:1201) ~[na:1.8.0_151]
+at com.apigee.entities.configurators.KeyStore.setCertificateEntry(KeyStore.java:153) ~[config-entities-1.0.0.jar:na]
+</pre>
+
+
+<p>
+
+    <code>... 20 common frames omitted</code>
+</p>
+
+
+
+<pre class="prettyprint">2018-01-30 12:04:38,250 pool-47-thread-4 ERROR MESSAGING.RUNTIME - AbstractConfigurator.rollbackTransaction() : Error in processing the changes : Unknown resource type cert
+</pre>
+
+
+<p>
+
+    <strong>Error #2: java.security.KeyStoreException: Cannot overwrite secret key</strong>
+</p>
+
+
+
+<pre class="prettyprint">2017-11-01 03:28:47,560 pool-21-thread-7 ERROR MESSAGING.RUNTIME - AbstractConfigurator.propagateEvent() : Error while handling the update for the Configurator
+com.apigee.kernel.exceptions.spi.UncheckedException: Failed to add certificate : mstore in key store : myTruststore in environment : dev
+at com.apigee.entities.configurators.KeyStore.setCertificateEntry(KeyStore.java:156) ~[config-entities-1.0.0.jar:na]
+at com.apigee.entities.configurators.KeyStore.handleUpdate(KeyStore.java:101) ~[config-entities-1.0.0.jar:na]
+...
+Caused by: java.security.KeyStoreException: Cannot overwrite secret key
+at com.sun.crypto.provider.JceKeyStore.engineSetCertificateEntry(JceKeyStore.java:354) ~[sunjce_provider.jar:1.8.0_144]
+at java.security.KeyStore.setCertificateEntry(KeyStore.java:1201) ~[na:1.8.0_144]
+at com.apigee.entities.configurators.KeyStore.setCertificateEntry(KeyStore.java:153) ~[config-entities-1.0.0.jar:na]
+... 20 common frames omitted
+
+2017-11-01 03:28:47,562 pool-21-thread-7 ERROR MESSAGING.RUNTIME - AbstractConfigurator.rollbackTransaction() : Error in processing the changes : Unknown resource type cert</pre>
+</li>
+
+<li>Get the details of the keystore/truststore specified in the error message shown in the previous step by using the following  management API call:
+<p>
+
+    <pre  class="prettyprint">curl -v "http://&lt;management-IPaddress&gt;:8080/v1/organizations/&lt;org-name&gt;/environments/&lt;env-name&gt;/keystores/myTruststore" -u &lt;user&gt; </pre><br>
+<br>
+<strong>Example output:</strong></code><br>
+
+
+
+
+
+<pre class="prettyprint">{
+   "certs":[
+      "mycert",
+      "mycert-new"
+   ],
+   "keys":[
+      "mycert"
+   ],
+   "name":"myTruststore"
+}
+</pre>
+</li>
+<li>The example output shows that there are two certificates and a key in the truststore <strong>myTruststore</strong>.  The truststore generally does not contain a key.  If it does, it is better to have a single certificate and a single key.  </li>
+<li>Get the details about the two certificates using the following API:
+
+
+
+  <pre class="prettyprint">curl -s http://&lt;management-IPaddress>:8080/v1/runtime/organizations/&lt;org-name>/environments/&lt;env-name>/keystores/&lt;keystore-name>/certs/&lt;cert-name>
+</pre>
+  </li>
+<li>Check the expiry date of each of the certificates and determine the expired/older certificate.  </li>
+<li>Delete the expired or unwanted certificate from the truststore "myTruststore".</li>
+</ol>
+
+<p>If the problem still persists or if you see any error other than the ones mentioned in Step #1 above, go to <a href="#must-gather-diagnostic-information">Must Gather Diagnostic Information</a>.</p>
+
+
+<h2 id="cause-api-proxy-not-deployed-on-one-or-more-message-processors">Cause: API Proxy not deployed on one or more Message Processors</h2>
+
+
+<p>
+(For Edge Private Cloud users only)
+</p>
+<p>
+The API Proxy may not be deployed on one or more Message Processors. This issue occurs very rarely and happens mostly due to a missing event notification from the Management Server to Message Processor during the deployment of the specific API Proxy.  In this case also, you will not be able to create the trace session in the Edge UI.
+</p>
+<h3 id="diagnosis"><em>Diagnosis</em></h3>
+
+<ol>
+
+<li>Login to each of the Message Processors and check if the specific revision of the API Proxy is deployed or not using the following command:
+
+
+
+<pre class="prettyprint">curl -v 0:8082/v1/runtime/organizations/&lt;orgname>/environments/&lt;envname>/apis/&lt;apiname>/revisions
+</pre>
+</li>
+<li>If the specific revision of the API Proxy does not show up as the output of the command mentioned in Step #1 above, then restart the specific Message Processor as explained in the Resolution below.  </li>
+<li>Repeat the steps 1-2 for all the Message Processors.  </li>
+<li>If the specific revision of the API Proxy is deployed on all the Message Processors, then this is not the cause for this issue. Move to <a href="#must-gather-diagnostic-information">Must Gather Diagnostic Information</a>.</li>
+</ol>
+
+<h3 id="resolution"><em>Resolution</em></h3>
+
+<ol>
+
+<li>Restart the specific Message Processor(s) on which the specific revision of the API Proxy is not deployed.
+
+
+
+	<pre class="prettyprint">/opt/apigee/apigee-service/bin/apigee-service edge-message-processor restart</pre>
+</li></ol>
+
+
+  <h2 id="api-monitoring">Diagnose issues using API Monitoring</h2>
+
+  <p><strong>Note:</strong> The steps in this section can be performed by Public Cloud users only.</p>
+
+<p><a href="/api-monitoring">API Monitoring</a> enables you to isolate problem areas quickly to diagnose error, performance, and latency issues and their source,
+  such as developer apps, API proxies, backend targets, or the API platform.</p>
+
+<p><a href="/api-monitoring/sample-scenarios">Step through a sample scenario</a> that demonstrates how to troubleshoot issues with your APIs using API Monitoring.
+For example, you may want to set up an alert to be notified when the number of 404 status codes exceeds a particular threshold.</p>
+
+<h2 id="must-gather-diagnostic-information">Must Gather Diagnostic Information</h2>
+
+
+<p>
+If the problem persists even after following the above instructions, please gather the following diagnostic information. Contact and share this information with <a href="https://support.apigee.com/">Apigee Support</a>.
+</p>
+<ol>
+  <li>If you are a Public Cloud user, provide the following information:
+    <ol>
+      <li>Organization Name </li>
+      <li>Environment Name</li>
+      <li> API Proxy Name </li>
+      <li>Complete curl command to reproduce the error </li>
+    </ol>
+  </li>
+  <li>If you are a Private Cloud user, provide the following information:
+    <ol>
+      <li>Complete Error Message observed</li>
+      <li>Environment name</li>
+      <li>API Proxy bundle </li>
+	  <li>Message Processor logs <code>/opt/apigee/var/log/edge-message-processor/logs/system.log</code> </li>
+      <li>Output of the following commands on each of the Message Processors. </li>
+      <pre>
+      curl -v 0:8082/v1/runtime/organizations/&lt;orgname&gt;/environments
+      curl -v 0:8082/v1/runtime/organizations/&lt;orgname&gt;/environments/&lt;envname&gt;/apis/&lt;apiname&gt;/revisions
+      </pre>
+    </ol>
+  </li>
+  <li>Details about what sections in this Playbook you have tried and any other insights that will help us to fastrack resolution of this issue.</li>
+</ol>
+  {% endblock %}

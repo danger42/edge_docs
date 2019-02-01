@@ -1,0 +1,504 @@
+  {% extends "_base.html" %} {% block title %}Data not showing up on analytics dashboards{% endblock %} {% block body %}
+
+<aside class="note">Was this troubleshooting playbook helpful? Please let us know
+  by clicking <a href="" class="google-feedback"
+   data-p="1636213" data-b="docsite" data-context="troubleshooting-feedback">
+  Send Feedback
+</a>.</aside>
+
+  <h2 id="description">Symptom</h2>
+
+  <p>The analytics dashboards (Proxy Performance, Target Performance, etc.) are not showing any
+  data in the Edge UI. All the dashboards show the following message:</p>
+  <pre class="devsite-disable-click-to-copy">
+No traffic in the selected date range
+</pre>
+
+  <h2 id="diagnosis">Error messages</h2>
+
+  <p>This issue does not result in observable errors.</p>
+
+  <h2 id="resolution">Possible causes</h2>
+
+  <p>The following table lists possible causes of this issue:</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <th>Cause</th>
+
+        <th>For</th>
+      </tr>
+
+      <tr>
+        <td><a href="#no-api">No API Traffic for Organization-Environment</a></td>
+
+        <td>Edge Private Cloud users</td>
+      </tr>
+
+      <tr>
+        <td><a href="#data-available">Data available in Postgres Database, but not displaying in
+        UI</a></td>
+
+        <td>Edge Private Cloud users</td>
+      </tr>
+
+      <tr>
+        <td><a href="#analytics-data">Analytics Data not being pushed to Postgres Database</a></td>
+
+        <td>Edge Private Cloud users</td>
+      </tr>
+
+      <tr>
+        <td><a href="#incorrect-analytics">Incorrect Analytics Deployment</a></td>
+
+        <td>Private Cloud users</td>
+      </tr>
+
+      <tr>
+        <td><a href="#stale-analytics">Stale Analytics Server UUIDs</a></td>
+
+        <td>Edge Private Cloud users</td>
+      </tr>
+    </tbody>
+  </table><!-- Specific Cause/Resolution -->
+
+  <h2 id="no-api">No API Traffic for Organization-Environment</h2>
+
+  <h3 id="na-diagnosis">Diagnosis</h3>
+
+  <ol>
+    <li>Check if there is traffic for the API Proxies on the specific organization-environment for
+    the specific duration that you are trying to view the analytics data using one of the following
+    methods:
+
+      <ol>
+        <li>Enable the trace for any of your APIs that is currently being used by your users and
+        check if you are able to get any requests in the trace.
+
+          
+
+          <aside class="note"><b>Note:</b> <strong>NOTE:</strong> This technique will be useful
+          only if you want to check if there is traffic at this point in time rather than in the
+          past.</aside>
+
+          
+        </li>
+
+        <li>View the Nginx access logs
+        (<code>/opt/apigee/var/log/edge-router/nginx/logs/access.log)</code> and see if there any
+        new entries for API Proxies for the specific duration.</li>
+
+        <li>If you log information from API Proxies to a log server such as Syslog, Splunk, Loggly,
+        etc., then you can check if there are any entries in these log servers for API Proxies for
+        the specific duration.</li>
+      </ol>
+    </li>
+
+    <li>If there's no traffic (no API requests) for the specific duration, then analytics data is
+    not available. You will see "No traffic in the selected date range" in the analytics
+    dashboard.</li>
+  </ol>
+
+  <h3 id="na-resolution">Resolution</h3>
+
+  <ol>
+    <li>Make some calls to one or more API proxies in the specific organization-environment.</li>
+
+    <li>Wait for a few seconds, and then view the analytics dashboards in the Hour tab and see if
+    the data appears.</li>
+
+    <li>If the issue persists, then proceed to <a href="#data-available">Data available in Postgres
+    Database, but not displaying in UI</a>.</li>
+  </ol><!-- Specific Cause/Resolution -->
+
+  <h2 id="data-available">Data available in Postgres Database, but not displaying in UI</h2>
+
+  <h3 id="da-symptom">Symptom</h3>
+
+  <p>First, determine the availability of latest Analytics data in Postgres database.</p>
+
+  <p><strong>To check if the latest Analytics data is available in the Postgres Master
+  node:</strong></p>
+
+  <ol>
+    <li>Log in to each of the Postgres servers and run the following command to validate if you are
+    on the Master Postgres node:
+      <pre class="prettyprint">
+/opt/apigee/apigee-service/bin/apigee-service apigee-postgresql postgres-check-master
+</pre>
+    </li>
+
+    <li>On the Master Postgres node, log in to PostgresSQL:
+      <pre class="prettyprint">
+psql -h /opt/apigee/var/run/apigee-postgresql -U apigee apigee
+</pre>
+    </li>
+
+    <li>Check if the table exists for your org-env using the following SQL query in the Postgres
+    database:
+      <pre class="prettyprint">
+\d analytics."<var>orgname</var>.<var>envname</var>.fact"
+</pre>
+
+      <aside><strong>NOTE:</strong> Replace <var>orgname</var> and <var>envname</var> with your
+      organization and environment names.</aside>
+    </li>
+
+    <li>Check if the latest data is available in the Postgres database using the following SQL
+    query:
+      <pre class="prettyprint">
+select max(client_received_start_timestamp) from analytics."<var>orgname</var>.<var>envname</var>.fact";
+</pre>
+    </li>
+
+    <li>If the latest timestamp is very old (or null), then this indicates that data is not
+    available in the Postgres database. The likely cause for this issue would be that the data is
+    not pushed from the Qpid Server to the Postgres database. Proceed to <a href=
+    "#analytics-data">Analytics Data not being pushed to Postgres Database</a>.</li>
+
+    <li>If the latest data is available in the Postgres database on the Master node, then follow
+    the below steps to diagnose why the data is not displaying in the Edge UI.</li>
+  </ol>
+
+  <h3 id="da-diagnosis">Diagnosis</h3>
+
+  <ol>
+    <li>Enable <a class="external" href="https://developer.chrome.com/devtools">Developer Tools</a>
+    in your Chrome browser and get the API used from one of the analytics dashboards using the
+    below steps:
+
+      <ol>
+        <li>Select the Network tab from the Developer Tools.</li>
+
+        <li>Start Recording.</li>
+
+        <li>Reload the Analytics dashboard.</li>
+
+        <li>On the left hand panel in the Developer Tools, select the row having
+        <strong>"apiproxy?_optimized...".</strong></li>
+
+        <li>On the right hand panel in the Developer Tools, select the "Headers" tab and note the
+        "Request URL".</li>
+      </ol>
+    </li>
+
+    <li>Here's sample output from the Developer Tools:
+
+      <p><strong>Sample output showing the API used in Proxy Performance dashboard from Network Tab
+      of Developer Tools for Proxy Performance dashboard</strong></p>
+
+      <p><img src="/api-platform/images/proxyperf.png"></p>
+    </li>
+
+    <li>Run the management API call directly and check if you get the results. Here's a sample API
+    call for the Day tab in the Proxy Performance dashboard:
+      <pre class="prettyprint">
+curl -u <var>username</var>:<var>password</var>
+  "http://<var>management_server_IP_address</var>:8080/v1/organizations/
+  <var>org_name</var>/environments/<var>env_name</var>/stats/apiproxy?limit=14400&amp;
+  select=sum(message_count),sum(is_error),avg(total_response_time),
+  avg(target_response_time)&amp;sort=DESC&amp;sortby=sum(message_count),sum(is_error),
+  avg(total_response_time),avg(target_response_time)&amp;timeRange=08%2F9%2F2017+
+  18:00:00~08%2F10%2F2017+18:00:00&amp;timeUnit=hour&amp;tsAscending=true"
+</pre>
+    </li>
+
+    <li>If you see a successful response but without any data, then it indicates that the
+    Management Server is unable to fetch the data from the Postgres server due to network
+    connectivity issues.</li>
+
+    <li>Check if you are able to connect to the Postgres server from the Management Server:
+      <pre class="prettyprint">
+telnet <var>Postgres_server_IP_address</var> 5432
+</pre>
+    </li>
+
+    <li>If you are unable to connect to the Postgres server, check if there are any firewall
+    restrictions on port 5432.</li>
+
+    <li>If there are firewall restrictions, then that could be the cause for the Management Server
+    being unable to pull the data from the Postgres server.</li>
+  </ol>
+
+  <h3 id="da-resolution">Resolution</h3>
+
+  <ol>
+    <li>If there are firewall restrictions, then remove them so that the Management Server can
+    communicate with the Postgres server.</li>
+
+    <li>If there are no firewall restrictions, then this issue could be due to network glitch.</li>
+
+    <li>If there was any network glitch on the Management Server, then restarting it might fix the
+    issue.</li>
+
+    <li>Restart all the Management Servers one by one using the below command:
+      <pre class="prettyprint">
+/opt/apigee/apigee-service/bin/apigee-service edge-management-server restart
+</pre>
+    </li>
+
+    <li>Check if you are able to see the analytics data in the Edge UI.</li>
+  </ol>
+
+  <p>If you still don't see the data, contact &amp;123;&amp;123;support}}.</p>
+  <!-- Specific Cause/Resolution -->
+
+  <h2 id="analytics-data">Analytics Data not being pushed to Postgres Database</h2>
+
+  <h3 id="ad-diagnosis">Diagnosis</h3>
+
+  <p>If the data is not pushed from Qpid Server to Postgres Database as determined in <a href=
+  "#data-available">Data available in Postgres Database, but not shown up in UI</a>, then perform
+  the following steps:</p>
+
+  <ol>
+    <li>Check if each of the Qpid Server is up and running by executing the below command:
+      <pre class="prettyprint">
+/opt/apigee/bin/apigee-service edge-qpid-server status
+</pre>
+    </li>
+
+    <li>If any Qpid Server is down, then restart it. If not, jump to step #5.
+      <pre class="prettyprint">
+/opt/apigee/bin/apigee-service edge-qpid-server restart
+</pre>
+    </li>
+
+    <li>Wait for some time and then re-check if the latest data is available in Postgres database.
+
+      <ol>
+        <li>Log in to PostgresSQL:
+          <pre class="prettyprint">
+psql -h /opt/apigee/var/run/apigee-postgresql -U apigee apigee
+</pre>
+        </li>
+
+        <li>Run the below SQL query to check if the latest data is available:
+          <pre class="prettyprint">
+select max(client_received_start_timestamp) from analytics."<var>orgname</var>.<var>envname</var>.fact";
+</pre>
+        </li>
+      </ol>
+    </li>
+
+    <li>If the latest data is available, then skip the following steps and proceed to last step in
+    Resolution section. If the latest data is not available, then proceed with the following
+    steps.</li>
+
+    <li>Check if the messages from Qpid server queues are being pushed to Postgres database.
+
+      <ol>
+        <li>Execute the <code>qpid-stat -q command</code> and check the <em>msgIn</em> and
+        <em>msgOut</em> column values.</li>
+
+        <li>Here's a sample output that shows the msgIn and msgOut are not equal. This indicates
+        that messages are not being pushed from Qpid Server to Postgres Database.
+
+          <p><img src="/api-platform/images/msgin-msgout.png"></p>
+        </li>
+      </ol>
+    </li>
+
+    <li>If there's a mismatch in <em>msgIn</em> and <em>msgOut</em> columns, then check the Qpid
+    Server logs <code>/opt/apigee/var/log/edge-qpid-server/system.log</code> and see if there are
+    any errors.</li>
+
+    <li>You may see error messages such as <strong>"Probably PG is still down"</strong> or <strong>
+      "FATAL: sorry, too many clients already"</strong> as shown in the figure below:
+      <pre class="prettyprint">
+2017-07-28 09:56:39,896 ax-q-axgroup001-persistpool-thread-3
+  WARN c.a.a.d.c.ServerHandle - ServerHandle.logRetry() : Found the exception to be
+  retriable - . Error observed while trying to connect to
+  jdbc:postgresql://<var>PG_IP_address</var>:5432/apigee Initial referenced UUID when
+  execution started in this thread was a1ddf72f-ac77-49c0-a1fc-d0db6bf9991d
+  Probably PG is still down. PG set used - [a1ddf72f-ac77-49c0-a1fc-d0db6bf9991d]
+2017-07-28 09:56:39,896 ax-q-axgroup001-persistpool-thread-3
+  WARN c.a.a.d.c.ServerHandle - ServerHandle.logRetry() : Could not get JDBC Connection;
+  nested exception is org.postgresql.util.PSQLException: FATAL: sorry, too many clients already
+2017-07-28 09:56:53,617 pool-7-thread-1
+  WARN c.a.a.d.c.ServerHandle - ServerHandle.logRetry() : Found the exception to be
+  retriable - . Error observed while trying to connect to
+  jdbc:postgresql://<var>PG_IP_address</var>:5432/apigee
+  Initial referenced UUID when execution started in this thread was
+  a1ddf72f-ac77-49c0-a1fc-d0db6bf9991d Probably PG is still down. PG set used -
+  [a1ddf72f-ac77-49c0-a1fc-d0db6bf9991d]
+2017-07-28 09:56:53,617 pool-7-thread-1
+  WARN c.a.a.d.c.ServerHandle - ServerHandle.logRetry() : Could not get JDBC Connection;
+  nested exception is org.apache.commons.dbcp.SQLNestedException: Cannot create
+  PoolableConnectionFactory (FATAL: sorry, too many clients already)
+</pre>
+    </li>
+  </ol>
+
+  <p>This could happen if the Postgres Server is running too many SQL queries or the CPU running
+  high and hence unable to respond to Qpid Server.</p>
+
+  <h3 id="ad-resolution">Resolution</h3>
+
+  <ol>
+    <li>Restart the Postgres Server and PostgreSQL as shown below:
+      <pre class="devsite-disable-click-to-copy">
+/opt/apigee/bin/apigee-service edge-postgres-server restart
+</pre>
+      <pre class="devsite-disable-click-to-copy">
+/opt/apigee/bin/apigee-service apigee-postgresql restart
+</pre>
+    </li>
+
+    <li>This restart ensures that all the previous SQL queries are stopped and should allow new
+    connections to the Postgres database.</li>
+
+    <li>Reload the Analytics dashboards and check if the Analytics data is being displayed.</li>
+  </ol>
+
+  <p>If the problem persists, contact &amp;123;&amp;123;support}}.</p>
+  <!-- Specific Cause/Resolution -->
+
+  <h2 id="incorrect-analytics">Incorrect Analytics Deployment</h2>
+
+  <h3 id="ic-diagnosis">Diagnosis</h3>
+
+  <ol>
+    <li>Get the analytics deployment status by using the following API call:
+      <pre class="prettyprint">
+curl -u <var>user_email</var>:<var>password</var> http://<var>management_server_host</var>:<var>port</var>
+/v1/organizations/<var>orgname</var>/environments/<var>envname</var>/provisioning/axstatus
+</pre>
+    </li>
+
+    <li>Check the status of the Qpid and Postgres servers from the results of the API call.
+
+      <ol>
+        <li>If the status of Qpid and Postgres servers are shown as "SUCCESS", then it indicates
+        the analytics servers are wired properly. Proceed to <a href="#stale-analytics">Stale
+        Analytics Server UUIDs</a>.</li>
+
+        <li>If the status of Qpid/Postgres servers is shown as "UNKNOWN" or "FAILURE", then it
+        indicates an issue with the corresponding server.
+
+          <p>For example, the following scenario shows the status of the Postgres servers as
+          "UNKNOWN":</p>
+
+          <p><img src="/api-platform/images/qpid-status.png"></p>
+
+          <p>This may happen if there is a failure during the onboarding of analytics. This failure
+          prevents the messages from Management Servers reaching the Postgres servers.</p>
+        </li>
+      </ol>
+    </li>
+  </ol>
+
+  <h3 id="ic-resolution">Resolution</h3>
+
+  <p>This issue can be typically resolved by restarting the servers which showed the "FAILURE" or
+  "UNKNOWN".</p>
+
+  <ol>
+    <li>Restart each of the servers whose analytics wiring status indicated "FAILURE" or "UNKNOWN"
+    using the following command:
+      <pre class="prettyprint">
+/opt/apigee/apigee-service/bin/apigee-service <var>component</var> restart
+</pre>
+    </li>
+
+    <li>For example:
+
+      <ol>
+        <li>If you see the issue on Qpid Servers, then restart the Qpid Servers:
+          <pre class="prettyprint">
+/opt/apigee/apigee-service/bin/apigee-service edge-qpid-server restart
+</pre>
+        </li>
+
+        <li>If you see the issue on Postgres Servers, then restart both the Master and Slave
+        Postgres Server nodes:
+          <pre class="prettyprint">
+/opt/apigee/apigee-service/bin/apigee-service edge-postgres-server restart
+</pre>
+        </li>
+      </ol>
+    </li>
+
+    <li>In the example above, the "UNKNOWN" message is shown for the Postgres servers, so you need
+    to restart both the Master and Slave Postgres servers:
+      <pre class="prettyprint">
+/opt/apigee/apigee-service/bin/apigee-service edge-postgres-server restart
+</pre>
+    </li>
+  </ol><!-- Specific Cause/Resolution -->
+
+  <h2 id="stale-analytics">Stale Analytics Server UUIDs</h2>
+
+  <h3 id="sa-diagnosis">Diagnosis</h3>
+
+  <ol>
+    <li>Get the analytics configuration using the following API call:
+      <pre class="prettyprint">
+curl -u <var>user_email</var>:<var>password</var> http://<var>management-server-host</var>:<var>port</var>/v1/analytics/groups/ax
+</pre>
+
+      <p>Here's a sample output from the above API:</p>
+      <pre class="prettyprint">
+[ {
+  "name" : "axgroup001",
+  "properties" : {
+    "consumer-type" : "ax"
+  },
+  "scopes" : [ "myorg~prod", "myorg~test" ],
+  "uuids" : {
+    "aries-datastore" : [ ],
+    "postgres-server" : [ "6777...2db14" ],
+    "dw-server" : [ ],
+    "qpid-server" : [ "774e...fb23", "29f3...8c11" ]
+  },
+  "consumer-groups" : [ {
+    "name" : "consumer-group-001",
+    "consumers" : [ "774e...8c11" ],
+    "datastores" : [ "6777...db14" ],
+    "properties" : {
+    }
+  } ],
+  "data-processors" : {
+  }
+} ]
+</pre>
+    </li>
+
+    <li>Ensure the following information in the output is correct:
+
+      <ol>
+        <li>org-env names listed in the "scopes" element.</li>
+
+        <li>UUIDs of the Postgres servers and Qpid servers.
+
+          <ul>
+            <li>Get the Postgres Server UUIDs by running the following command on each of the
+            Postgres server nodes:
+              <pre class="prettyprint">
+curl 0:8084/v1/servers/self/uuid
+</pre>
+            </li>
+
+            <li>Get the Qpid Server UUIDs by running the following command on each of the Qpid
+            server nodes:
+              <pre class="prettyprint">
+curl 0:8083/v1/servers/self/uuid
+</pre>
+            </li>
+          </ul>
+        </li>
+      </ol>
+    </li>
+
+    <li>If all the information is correct, then proceed to <a href="#analytics-data">Analytics Data
+    not being pushed to Postgres Database</a>.</li>
+
+    <li>If the UUIDs of Postgres and/or Qpid servers are incorrect, then it could be possible that
+    the Management Servers are referring to stale UUIDs.</li>
+  </ol>
+
+  <h3 id="sa-resolution">Resolution</h3>
+
+  <p>To remove the stale UUIDs and add the correct UUIDs of the servers, contact <a href=
+  "https://support.apigee.com">Apigee Support</a>.</p>{% endblock %}

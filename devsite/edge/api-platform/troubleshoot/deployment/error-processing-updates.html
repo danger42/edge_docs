@@ -1,0 +1,198 @@
+  {% extends "_base.html" %} {% block title %}Error Processing Updates{% endblock %} {% block body %}
+
+<aside class="note">Was this troubleshooting playbook helpful? Please let us know
+  by clicking <a href="" class="google-feedback"
+   data-p="1636213" data-b="docsite" data-context="troubleshooting-feedback">
+  Send Feedback
+</a>.</aside>
+
+  <h2 id="symptom">Symptom</h2>
+
+  <p>Deployment of API proxy revisions via the Edge UI or Edge management API calls fails with the
+  error "<code>Unexpected error occurred while processing the updates</code>".</p>
+
+  <h2 id="errormessages">Error Messages</h2>
+  <pre class="prettyprint">
+Error in deployment for environment sit.
+
+The revision is deployed and traffic can flow, but flow may be impared. com.apigee.kernel.exceptions.spi.UncheckedException{ code = messaging.runtime.UpdateFailed, message = Unexpected error occurred while processing the updates, associated contexts = []}
+</pre>
+
+  <h2 id="possiblecauses">Possible Causes</h2>
+
+  <p>There could be many different causes for this error. Here are a few sample causes:</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <td><strong>Cause</strong></td>
+
+        <td><strong>Details</strong></td>
+
+        <td><strong>For</strong></td>
+      </tr>
+
+      <tr>
+        <td><a href="#out-of-memory">Out Of Memory</a></td>
+
+        <td>Message Processor ran out of Java heap space resulting in API proxy deployment
+        failure.</td>
+
+        <td>Private Cloud users</td>
+      </tr>
+
+      <tr>
+        <td><a href="#error-in-api-proxy-bundle">Error in API Proxy Bundle</a></td>
+
+        <td>API Proxy bundle has errors that can lead to API proxy deployment failure.</td>
+
+        <td>Private and Public Cloud users</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="commonstepstotryfirst">Common steps to try first</h2>
+
+  <ol>
+    <li>Check if there are any deployment errors or exception stack trace in the Message Processor
+    log
+    <strong><code>/opt/apigee/var/log/apigee/edge-message-processor/logs/system.log</code></strong></li>
+
+    <li>You usually see a stack trace that provides information on the cause for the deployment
+    error. Please read the stack trace thoroughly to understand the cause.</li>
+  </ol>
+
+  <h2 id="out-of-memory">Out Of Memory</h2>
+
+  <h3 id="outofmemory-diagnosis">Diagnosis</h3>
+
+  <p><strong>Note:</strong> Only Edge Private Cloud users can perform the following steps. If you
+  are on Edge Public Cloud, contact <a href="https://support.apigee.com">Apigee Support</a>.</p>
+
+  <ol>
+    <li>You may see exception similar to the one in the Message Processor log
+    <code>/opt/apigee/var/log/apigee/edge-message-processor/logs/system.log</code> as shown in the
+    figure below:
+      <pre class="prettyprint">
+Apigee-Main-4 ERROR BOOTSTRAP - RuntimeConfigurationServiceImpl.dispatchToListeners() : RuntimeConfigurationServiceImpl.dispatchToListeners : Error occurred while dispatching the request DeployEvent{organization=&#8216;myorg', application='person-credentials-api', applicationRevision='275', deploymentSpec=basepath=/;env=dev;, deploymentID=null} to com.apigee.application.bootstrap.listeners.MessageProcessorBootstrapListener@5db88cb8
+com.apigee.kernel.exceptions.spi.UncheckedException: Unexpected error occurred while processing the updates
+        at com.apigee.entities.AbstractConfigurator.throwUncheckedException(AbstractConfigurator.java:280) ~[config-entities-1.0.0.jar:na]
+        at com.apigee.messaging.configuration.MessageProcessorServiceImpl.configure(MessageProcessorServiceImpl.java:665) ~[message-processor-1.0.0.jar:na]
+        at com.apigee.application.bootstrap.listeners.MessageProcessorBootstrapListener.configureMessageProcessorService(MessageProcessorBootstrapListener.java:54) ~[application-bootstrap-1.0.0.jar:na]
+        at com.apigee.application.bootstrap.listeners.MessageProcessorBootstrapListener.deploy(MessageProcessorBootstrapListener.java:29) ~[application-bootstrap-1.0.0.jar:na]
+        &#8230;&lt;snipped&gt;
+        at com.apigee.application.bootstrap.proto.RuntimeConfig_ConfigRPCService_BlockingSkeleton$1.run(RuntimeConfig_ConfigRPCService_BlockingSkeleton.java:38) [application-bootstrap-1.0.0.jar:na]
+        at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:471) [na:1.7.0_75]
+        at java.util.concurrent.FutureTask.run(FutureTask.java:262) [na:1.7.0_75]
+        at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1145) [na:1.7.0_75]
+        at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:615) [na:1.7.0_75]
+        at java.lang.Thread.run(Thread.java:745) [na:1.7.0_75]
+<strong>Caused by: java.lang.OutOfMemoryError: Java heap space</strong>
+</pre>
+    </li>
+
+    <li>The message <strong>Caused by: java.lang.OutofMemoryError: Java Heap space</strong>
+    indicates that the Message Processor has run out of Java Heap space.</li>
+  </ol>
+
+  <h3 id="outofmemory-resolution">Resolution</h3>
+
+  <p><strong>Note:</strong> Only Edge Private Cloud users can perform the following steps. If you
+  are on Edge Public Cloud, contact <a href="https://support.apigee.com">Apigee Support</a>.</p>
+
+  <p>Increase the maximum Java Heap space on the Message Processors.</p>
+
+  <p>The maximum Java Heap space is controlled by the JVM property -Xmx. Here are the steps to
+  increase the Java Heap space on the Message Processors:</p>
+
+  <ol>
+    <li>Determine the amount of memory by which the Java heap space can be increased:
+
+      <ol>
+        <li>Check the current value set for max heap space, max_mem, in the file
+        <code>/opt/apigee/edge-message-processor/bin/setenv.sh</code></li>
+
+        <li>Get <strong>MemTotal</strong> (Total amount of usable RAM), <strong>MemFree</strong>
+        (amount of physical RAM left unused on the system) using <a href=
+        "https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/6/html/Deployment_Guide/s2-proc-meminfo.html">
+          /proc/meminfo</a> command on the system.
+
+          <ol>
+            <li>Ensure the above information includes the memory consumed by any other processes
+            such as Edge Router etc that exist on the same system.</li>
+
+            <li>Based on the above information, determine by how much the Java heap space can be
+            increased for Message Processor.</li>
+
+            <li>For example, the current max heap space on the Message Processor is 1024MB,
+            MemTotal is 8GB (8192MB), MemFree is 5GB (5120MB), then you can increase the max Java
+            heap space to 3GB (3072MB).</li>
+
+            <li>If assistance is needed in determining how much to increase the Java heap space,
+            contact <a href="https://support.apigee.com">Apigee Support</a>.</li>
+          </ol>
+        </li>
+      </ol>
+    </li>
+
+    <li>Create the following file, if it does not exist already:
+      <pre class="prettyprint">
+/opt/apigee/customer/application/message-processor.properties
+</pre>
+    </li>
+
+    <li>Add the following line in the file, with the increased heap setting (for example, 3072M):
+      <pre class="prettyprint">
+bin_setenv_max_mem=3072m
+</pre>
+    </li>
+
+    <li>Save the file.</li>
+
+    <li>Restart the Message Processor:
+      <pre class="prettyprint">
+/opt/apigee/apigee-service/bin/apigee-service edge-message-processor restart
+</pre>
+    </li>
+
+    <li>If you have more than one Message Processor, repeat the steps 3 through 6 on all the
+    Message Processors.</li>
+  </ol>
+
+  <p>If the problem persists, contact <a href="https://support.apigee.com">Apigee
+  Support</a><code>.</code></p>
+
+  <h2 id="error-in-api-proxy-bundle">Error in API proxy bundle</h2>
+
+  <p>If there are any errors in any of the policies used in the API proxy, then the deployment will
+  fail with the error "<code>Unexpected error occurred while processing the updates</code>".</p>
+
+  <p>For example, see this <a href=
+  "https://community.apigee.com/questions/29302/seeing-the-error-unexpected-error-occurred-while-p.html">
+  community post.</a></p>
+
+  <h3 id="errorinapiproxybundle-diagnosis">Diagnosis</h3>
+
+  <p><strong>Note:</strong> Only Edge Private Cloud users can perform the following steps. If you
+  are on Edge Public Cloud, contact <a href="https://support.apigee.com">Apigee Support</a>.</p>
+
+  <ol>
+    <li>Check the Message Processor logs for exceptions or errors related to the API proxy
+    deployment. The error should give you information on what should be changed in the API proxy
+    bundle to address the problem.</li>
+
+    <li>If no error messages show up on the Message Processor logs, check the diffs in the revision
+    history of the API proxy. If older revisions deploy without a problem then review what code
+    changes were made.</li>
+  </ol>
+
+  <h3 id="errorinapiproxybundle-resolution">Resolution</h3>
+
+  <ol>
+    <li>Make the necessary changes in the API proxy bundle to address the issue.</li>
+
+    <li>Revert any code changes to the API proxy that was problematic for the deployment.</li>
+  </ol>
+
+  <p>If the problem persists, contact <a href="https://support.apigee.com">Apigee Support</a> for
+  further assistance.</p>{% endblock %}

@@ -1,4 +1,4 @@
-  {% extends "private-cloud/v4.18.05/_base.html" %} {% block title %}Uploading API Traffic Data to
+  {% extends "private-cloud/v4.19.01/_base.html" %} {% block title %}Uploading API Traffic Data to
   Apigee - Beta Release{% endblock %} {% block body %}
 
   <p>All Edge for Private Cloud customers are required to submit to Apigee statistics about API
@@ -24,16 +24,9 @@
   "#manuallyuploadingdatatoapigee">Manually uploading data to Apigee</a></em> below for
   more.</aside>
 
-  <h2 id="accessingthedatauploadedbyapigeeanalyticscollector">Accessing the data uploaded by
-  apigee-analytics-collector</h2>
+  <h2 id="onboard_data_coll">Required: Contact Apigee Support before uploading data</h2>
 
-  <p>After uploading data with the <span style=
-  "font-family: &quot;courier new&quot;, courier, monospace;">apigee-analytics-collector</span> utility,
-  you can view it in <a href="https://360.apigee.com">Apigee 360</a>.</p>
-
-  <p>To view the data, log in to Apigee 360 and then select the <strong>Usage</strong> option. The
-  <strong>Usage</strong> page displays a usage graph and a table of usage data for each or your
-  Edge organizations.  </p>
+  <p>Before you can upload data to Apigee, you must contact {{support}} to complete the onboarding process.</p>
 
   <h2 id="installingapigeeanalyticscollector">Installing apigee-analytics-collector</h2>
 
@@ -559,16 +552,17 @@ curl -X GET -u <em><strong>apigee_mgmt_api_email:apigee_mgmt_api_password</stron
   management API call</a>. The timeRange contains URL-encoded characters.</p>
   <pre class="prettyprint">
 curl -X GET -u a<em><strong>pigee_mgmt_api_email:apigee_mgmt_api_password</strong></em> \
-"http://192.168.56.103:8080/v1/organizations/<strong>myOrg</strong>/environments/<strong>prod</strong>/stats/apiproxy?select=sum(message_count)&amp;<strong>timeRange=01%2F01%2F2018%2000%3A00~01%2F02%2F2018%2000%3A00</strong>"
+"http://192.168.56.103:8080/v1/organizations/<strong>myOrg</strong>/environments/<strong>prod</strong>/stats/apiproxy?select=sum(message_count)&amp;<strong>timeRange=01%2F01%2F2018%2000%3A00~01%2F02%2F2018%2000%3A00&amp;timeUnit=hour</strong>"
 </pre>
 
   <p>You should see a response in the form:</p>
   <pre class="prettyprint">
 {
   "environments" : [ {
-    "metrics" : [ {
-      "name" : "sum(message_count)",
-      "values": [
+    "dimensions" : [ {
+      "metrics" : [ {
+        "name" : "sum(message_count)",
+        "values": [
                 {
                   "timestamp": 1514847600000,
                   "value": "35.0"
@@ -669,6 +663,8 @@ curl -X GET -u a<em><strong>pigee_mgmt_api_email:apigee_mgmt_api_password</stron
             }
           ],
           "name" : "proxy1"
+      } ],
+    "name" : "prod"
   } ],
   "metaData" : {
     "errors" : [ ],

@@ -5,18 +5,11 @@
   </head>
   <body>
 
-  <p>This section describes the error messages and flow variables that are set when this policy
-  triggers an error. This information is important to know if you are developing fault rules for a
-  proxy. To learn more, see <a href=
-  "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html">What you need to know
+  <p>This section describes the fault codes and error messages that are returned and fault variables that are set by Edge when this policy triggers an error.
+    This information is important to know if you are developing fault rules to
+  handle faults. To learn more, see <a href="/api-platform/fundamentals/what-you-need-know-about-policy-errors.html">What you need to know
   about policy errors</a> and <a href="/api-platform/fundamentals/fault-handling.html">Handling
   faults</a>.</p>
-
-  <h3>Error code prefix</h3>
-
-  <p><code>steps.oauth.v2</code> <span style="font-size: 10pt">(<a href=
-  "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html#aboutthedefaultpolicyerrorresponse">What's
-  this?</a>)</span></p>
 
   <h3>Runtime errors</h3>
 
@@ -27,7 +20,7 @@
   <table>
     <thead>
       <tr>
-        <th scope="col" width="271">Error name</th>
+        <th scope="col" width="271">Fault code</th>
 
         <th scope="col" width="58">HTTP status</th>
 
@@ -37,55 +30,14 @@
 
     <tbody>
       <tr>
-        <td><code>invalid_access_token</code></td>
-
-        <td>500</td>
-
-        <td>The access token sent to the policy is invalid.</td>
-      </tr>
-
-      <tr>
-        <td><code>access_token_expired</code></td>
+        <td><code>steps.oauth.v2.access_token_expired</code></td>
 
         <td>500</td>
 
         <td>The access token sent to the policy is expired.</td>
       </tr>
-
-      <tr>
-        <td><code>invalid_refresh_token</code></td>
-
-        <td>500</td>
-
-        <td>The refresh token sent to the policy is invalid.</td>
-      </tr>
-
-      <tr>
-        <td><code>refresh_token_expired</code></td>
-
-        <td>500</td>
-
-        <td>The refresh token sent to the policy is expired.</td>
-      </tr>
-
-      <tr>
-        <td><code>invalid_client-invalid_client_id</code></td>
-
-        <td>500</td>
-
-        <td>The client ID sent to the policy is invalid.</td>
-      </tr>
-
-      <tr>
-        <td><code>invalid_request-authorization_code_invalid</code></td>
-
-        <td>500</td>
-
-        <td>The authorization code sent to the policy is invalid.</td>
-      </tr>
-
-      <tr>
-        <td><code>authorization_code_expired</code></td>
+       <tr>
+        <td><code>steps.oauth.v2.authorization_code_expired</code></td>
 
         <td>500</td>
 
@@ -93,7 +45,35 @@
       </tr>
 
       <tr>
-        <td><code>InvalidAPICallAsNoApiProductMatchFound</code></td>
+        <td><code>steps.oauth.v2.invalid_access_token</code></td>
+
+        <td>500</td>
+
+        <td>The access token sent to the policy is invalid.</td>
+      </tr>
+      <tr>
+        <td><code>steps.oauth.v2.invalid_client-invalid_client_id</code></td>
+
+        <td>500</td>
+
+        <td>The client ID sent to the policy is invalid.</td>
+      </tr>
+      <tr>
+        <td><code>steps.oauth.v2.invalid_refresh_token</code></td>
+
+        <td>500</td>
+
+        <td>The refresh token sent to the policy is invalid.</td>
+      </tr>
+      <tr>
+        <td><code>steps.oauth.v2.invalid_request-authorization_code_invalid</code></td>
+
+        <td>500</td>
+
+        <td>The authorization code sent to the policy is invalid.</td>
+      </tr>
+       <tr>
+        <td><code>steps.oauth.v2.InvalidAPICallAsNoApiProductMatchFound</code></td>
 
         <td>401</td>
 
@@ -101,6 +81,14 @@
         "https://community.apigee.com/articles/6831/oauth20-access-token-verification-throws-invalid-a.html">
         this Apigee Community post</a> for information about troubleshooting this error. </td>
       </tr>
+      <tr>
+        <td><code>steps.oauth.v2.refresh_token_expired</code></td>
+
+        <td>500</td>
+
+        <td>The refresh token sent to the policy is expired.</td>
+      </tr>
+
     </tbody>
   </table>
 
@@ -117,12 +105,11 @@
   "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html">What you need to know
   about policy errors</a>.</aside>
 
-  <table>
+
+   <table>
     <tbody>
       <tr>
-        <th width="324">Variables set <code><span style="font-size: 10pt">(<a href=
-        "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html">Learn
-        more</a>)</span></code></th>
+        <th width="324">Variables</th>
 
         <th width="428">Where</th>
 
@@ -130,46 +117,37 @@
       </tr>
 
       <tr>
-        <td width="324"><code>[prefix].[policy_name].failed</code></td>
+        <td><code>fault.name="<var>fault_name</var>"</code></td>
 
-        <td width="428">The <code>[prefix]</code> is <code><strong>oauthV2</strong>.</code><br>
-        The <code>[policy_name]</code> is the name of the policy that threw the error.</td>
+        <td><var>fault_name</var> is the name of the fault, as listed in the <a href="#runtime-errors">Runtime errors</a> table above. The fault name is the last part of the fault code.</td>
+
+        <td><code>fault.name Matches "IPDeniedAccess"</code></td>
+      </tr>
+
+      <tr>
+        <td width="324"><code>oauthV2.<var>policy_name</var>.failed</code></td>
+
+        <td width="428"><var>policy_name</var> is the user-specified name of the policy that threw the fault.</td>
 
         <td width="428"><code>oauthV2.GetTokenInfo.failed = true</code></td>
       </tr>
-
       <tr>
-        <td><code>[prefix].[policy_name].fault.name</code></td>
+        <td width="324"><code>oauthV2.<var>policy_name</var>.fault.name</code></td>
 
-        <td>The <code>[prefix]</code> is <code><strong>oauthV2</strong>.</code><br>
-        The <code>[policy_name]</code> is the name of the policy that threw the error.</td>
+        <td width="428"><var>policy_name</var> is the user-specified name of the policy that threw the fault.</td>
 
-        <td>
-          <p><code>oauthV2.GetTokenInfo.fault.name
-          = invalid_client-invalid_client_id</code></p>
-        </td>
+        <td width="428"><code>oauthV2.GetToKenInfo.fault.name = invalid_client-invalid_client_id</code></td>
+      </tr>
+      <tr>
+        <td width="324"><code>oauthV2.<var>policy_name</var>.fault.cause</code></td>
+
+        <td width="428"><var>policy_name</var> is the user-specified name of the policy that threw the fault.</td>
+
+        <td width="428"><code>oauthV2.GetTokenInfo.cause = ClientID is Invalid</code></td>
       </tr>
 
-      <tr>
-        <td><code>[prefix].[policy_name].fault.cause</code></td>
-
-        <td>The <code>[prefix]</code> is <code><strong>oauthV2</strong>.</code><br>
-        The <code>[policy_name]</code> is the name of the policy that threw the error.</td>
-
-        <td><code>oauthV2.GetTokenInfo.cause = ClientID is Invalid</code></td>
-      </tr>
-
-      <tr>
-        <td><code>fault.name = [error_name]</code></td>
-
-        <td><code>[error_name]</code> is the specific error name to check for as listed in the
-        table above.</td>
-
-        <td><code>fault.name = "invalid_client-invalid_client_id"</code></td>
-      </tr>
     </tbody>
   </table>
-
   <h3>Example error response</h3>
   <pre class="prettyprint">
 <span id="s-1">{  </span>

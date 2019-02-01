@@ -1,33 +1,32 @@
-  {% extends "_base.html" %} {% block title %}Hosted Targets overview (Beta){% endblock %} {% block body %}
+  {% extends "_base.html" %} {% block title %}Hosted Targets overview{% endblock %} {% block body %}
 
-<aside class="note">This is the Beta release of Hosted Targets. To learn more, see
-  <a href="https://cloud.google.com/terms/launch-stages">Google Cloud Platform Launch Stages</a>.</aside>
+{{ hosted_targets_availability }}
 
    <p>Hosted Targets lets you run Node.js applications in a native runtime
      environment hosted by Apigee. The goal of Hosted Targets is simple: allow you to deploy
      applications in a native, secure, scalable, and isolated environment where Edge API proxies can call them as target services.</p>
 
-   <p>For example, as shown below, an Edge API proxy calls a Node.js application that is
+   <p>As the following figure illustrates, an Edge API proxy calls a Node.js application that is
      deployed to the Hosted Targets environment. Note that the Hosted Targets environment is scoped
-     within an Apigee organization/environment.</p>
+     within an Apigee organization:environment.</p>
 
-   <p><img title="" src="/api-platform/images/HF-IMG-3.png" alt="" /></p>
+   <p><img title="" src="/api-platform/images/nodejs-hosted-targets-overview.png" alt="" /></p>
 
-   <p>As explained in the following sections, getting an Edge API proxy to talk to a properly built and deployed Hosted Targets application
-     requires a simple configuration in the proxy's Target Endpoint. </p>
+   <p>Getting an Edge API proxy to talk to a properly built and deployed Hosted Targets application
+     requires a simple configuration in the proxy's Target Endpoint. To get started, go to the <a href="/api-platform/hosted-targets/hosted-targets-tutorials">Hosted Targets tutorials</a>. </p>
 
    <h2>What application runtimes does Hosted Targets support?</h2>
 
-   <p>You can only deploy Node.js apps to Hosted Targets.</p>
+   <p>Currently, you can only deploy Node.js apps to Hosted Targets.</p>
 
 <h2>Installing Hosted Targets</h2>
 
-   <p>Hosted Targets Beta is available in all Edge Public Cloud orgs. You do not need to install
+   <p>Hosted Targets is available in all Edge Public Cloud orgs. You do not need to install
      anything to use Hosted Targets.</p>
 
-   <h2>Verifying that the Hosted Targets is enabled</h2>
+   <h2>Verifying that Hosted Targets is enabled</h2>
 
-   <p>To verify that your organization has
+   <p>If you would like to verify that your organization has
      Hosted Targets enabled, <a href="http://docs.apigee.com/management/apis/get/organizations/%257Borg_name%257D">get
      your organization details</a>&nbsp;and ensure that the <code>features.isEdgeFunctionsEnabled</code>
      property is set to true. The property is read-only.</p>
@@ -83,13 +82,19 @@
      running your application in Hosted Targets. For example, you might specifically choose to
      run a Node.js app in a v8.10.0 environment. </p>
 
-   <h3>In a nutshell</h3>
+<h3>Limits</h3>
+
+   <p>For usage limits on Hosted Targets, see <a href="/api-platform/reference/limits">Apigee product
+      limits</a>.</p>
+
+<h3>Basic steps to follow</h3>
 
    <p>If you are familiar with Edge proxy development, you only need to learn a few simple steps
      to use Hosted Targets successfully. Essentially, you create, deploy, and manage Edge proxies
-     for Hosted Targets <b>just as you do for any other Edge proxy</b>.</p>
+     for Hosted Targets <b>just as you do for any other Apigee Edge proxy</b>.</p>
 
-   <p>To use Hosted Targets, you need to do these tasks:</p>
+   <p>To use Hosted Targets, you need to do the following tasks. The <a href="./hosted-targets-tutorials">tutorials</a>
+walk through each of these tasks in detail.</p>
 
    <ul>
       <li>Develop and test your Node.js application locally.
@@ -100,72 +105,54 @@
         in the root directory of your application project. The manifest is a YAML file that specifies
         information needed to build and deploy the application.</li>
       <li>Add your application to the Edge proxy as
-        a <a href="/api-platform/develop/resource-files#resourcetype">hostedresource</a>
+        a <a href="/api-platform/develop/resource-files#resourcetypes">hosted</a> resource
         type.</li>
-      <li>In the proxy's Target Endpoint, add an empty &lt;HostedTarget/&gt;&nbsp;tag. This tag
+     <li>In the proxy's Target Endpoint, add an empty <code>&lt;HostedTarget/&gt;</code> tag. This tag
         tells Edge to deploy the Node.js application to the Hosted Targets environment. For
         example:</li>
 
-        <pre class="prettyprint">
-        &lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
-        &lt;TargetEndpoint name=&quot;default&quot;&gt;
-           &lt;PreFlow name=&quot;PreFlow&quot;&gt;
-              &lt;Request /&gt;
-              &lt;Response /&gt;
-           &lt;/PreFlow&gt;
-           &lt;PostFlow name=&quot;PostFlow&quot;&gt;
-              &lt;Request /&gt;
-              &lt;Response /&gt;
-           &lt;/PostFlow&gt;
-           &lt;Flows /&gt;
-           &lt;HostedTarget /&gt;
-        &lt;/TargetEndpoint&gt;</pre>
+<pre class="prettyprint">
+&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
+&lt;TargetEndpoint name=&quot;default&quot;&gt;
+   &lt;PreFlow name=&quot;PreFlow&quot;&gt;
+      &lt;Request /&gt;
+      &lt;Response /&gt;
+   &lt;/PreFlow&gt;
+   &lt;PostFlow name=&quot;PostFlow&quot;&gt;
+      &lt;Request /&gt;
+      &lt;Response /&gt;
+   &lt;/PostFlow&gt;
+   &lt;Flows /&gt;
+   <b>&lt;HostedTarget /&gt;</b>
+&lt;/TargetEndpoint&gt;</pre>
     </ul>
-
-   <p>We'll walk you through these tasks in <a href="./hosted-targets-tutorials">the tutorials</a></p>
 
    <h3>Scope of Hosted Targets applications</h3>
 
    <p>Hosted Targets applications are scoped to an Edge organization-environment. This scoping is
      the same as for any Edge proxy.</p>
 
-   <h3>How Hosted Targets differs from existing custom Node.js application support in Edge</h3>
-
-   <p>Apigee Edge has supported the use of Node.js applications in API proxies for
-     a long time. This section describes how this traditional support differs from a Hosted Targets
-     approach.</p>
-
-   <p>Traditional Edge <a href="https://docs.apigee.com/api-platform/nodejs/overview-nodejs-apigee-edge">Node.js support</a>
-     relies internally on an open-source bridge application (<a href="https://github.com/apigee/trireme">Trireme</a>)
-     and a JavaScript interpreter (<a href="https://en.wikipedia.org/wiki/Rhino_(JavaScript_engine)">Rhino</a>)
-     that allow Node.js code to execute in the Edge Java runtime environment.</p>
-
-   <p>There are several limitations associated with this approach. For example:</p>
-
-   <ul>
-      <li>Only an older version of Node.js (0.10.32) is supported.</li>
-      <li>There are subtle differences in behavior between the standard Node.js environment and the
-        Trireme/Rhino environment.</li>
-      <li>Debugging Node.js apps after they are deployed to Edge is difficult.</li>
-   </ul>
-
-   <p>Node.js apps deployed&nbsp;to Hosted Targets&nbsp;do not depend on any Apigee-specific
-     Node.js run-time technology. Your Node.js app will run in Hosted Targets exactly as it runs
-     in your local development environment.</p>
 
    <h3>Can Hosted Targets applications access proxy data?</h3>
 
    <p>Hosted Targets apps do not
      currently have access to the proxy runtime environment. This means that you can't access flow
-     variables, caches, and other entities directly from Hosted Targets applications.</p>
+     variables, caches, and other entities directly from Hosted Targets applications.
 
-   <aside class="note">Hosted Targets does not currently support <a href="http://docs.apigee.com/api-services/content/using-apigee-access">apigee-access</a>
-     for Node.js deployments.</aside>
+   <p>With embedded Node.js (the traditional, Trireme-based Node.js support in Edge), you can use
+     <a href="http://docs.apigee.com/api-services/content/using-apigee-access">apigee-access</a> to
+     access flow variables and other entities in Edge. However, Hosted Targets does not
+     support the <code>apigee-access</code> module for Node.js deployments.
+
+     See also
+     <a href="/api-platform/hosted-targets/hosted-targets-faq#is-it-possible-to-work-around-the-lack-of-apigee-access">Is it possible to work around the lack of apigee-access?</a></p>
 
    <h3>Migrating existing application code to Hosted Targets</h3>
 
-   <p>There is currently no automated migration path from traditional Node.js code to Hosted Targets. However, you can convert
-     existing application code to Hosted Targets manually. For an example,
-     see <a href="./hosted-targets-tutorials#migrating-an-existing-nodejs-proxy-to-a-hosted-targets-proxy">Migrating an existing Node.js proxy to a Hosted Targets proxy</a>.</p>
+   <p>There is currently no automated migration path from a traditional
+     <a href="/api-platform/nodejs/node-overview#about_embedded_nodejs">Trireme-based embedded Node.js application</a> to Hosted Targets.
+     However, you can convert existing application code to Hosted Targets manually. For an example,
+     see <a href="./hosted-targets-tutorials#migrating-an-existing-nodejs-proxy-to-a-hosted-targets-proxy">Migrating
+     an existing Node.js proxy to a Hosted Targets proxy</a>.</p>
 
 {% endblock %}

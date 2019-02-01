@@ -1,0 +1,288 @@
+{% extends "_base.html" %} {% block title %}Monetization Notifications not working{% endblock %}
+{% block body %}
+
+<aside class="note">Was this troubleshooting playbook helpful? Please let us know
+  by clicking <a href="" class="google-feedback"
+   data-p="1636213" data-b="docsite" data-context="troubleshooting-feedback">
+  Send Feedback
+</a>.</aside>
+
+<h2 id="symptom">Symptom</h2>
+
+
+<p>
+<a href="#about-monetization-event-notifications">Monetization Notifications</a> are not working and hence emails are not being sent to the subscribed users.
+</p>
+<h2 id="error-message">Error Message</h2>
+
+
+<p>
+The emails about Monetization notification to the subscribed people will not be sent. No error messages will be observed.
+</p>
+<h2 id="about-monetization-event-notifications">About Monetization event notifications</h2>
+
+
+<p>
+Monetization supports event notifications that enable you to:
+</p><ol>
+
+<li>Notify all developers about events such as new products, new versions of T&C's, or new rate plans.
+<li>Notify specific developers about events such as a billing document being published or when a percentage of their target number of transactions is reached (if they purchased an adjustable notification rate plan).
+<li>Notify an API provider about developer-related events, such as when a developer registers for an account or when a developer signs up for a rate plan.
+<li>More details on this on what type of notifications are there and how one can set it up can be found <a href="https://docs.apigee.com/api-platform/monetization/set-up-notifications">here</a>.</li></ol>
+
+<h2 id="prerequisites">Prerequisites</h2>
+
+
+<p>
+Be sure the following prerequisites have been met:
+</p><ol>
+
+<li><strong>Rate Plan Acceptance</strong>
+<p>
+
+    For the following Monetization notifications, check if the developers have accepted the corresponding rate plan :
+</p> <ol>
+
+ <li>New Rate Plan
+ <li>Revised Rate Plan
+ <li>Expired Rate Plan
+ <li>Renewed Rate Plan
+ <li>Rate Limit Exceeded
+ <li>Depleted Freemium Rate Plan
+  <p>
+
+    If the developer has not accepted the rate plan, then these notifications will not trigger for that specific developer.
+  </p>
+ </li>
+ </ol>
+</li>
+<li><strong>Job Scheduler should be run for the specific Notification</strong>
+  <p>
+
+    Monetization provides a job scheduler and a set of jobs that are pre-scheduled to run at pre-designated times. The job scheduler needs to be run for a specific notification. If it is not run, then the notifications will not be triggered.
+    </p>
+  <ol>
+    <li>Use the instructions provided in the following doc to see if the scheduled job for a specific notification has run:
+      <p>
+
+        <a href="https://docs.apigee.com/monetization/content/schedule-monetization-jobs">https://docs.apigee.com/monetization/content/schedule-monetization-jobs</a>
+        </p>
+      <p>
+
+        <strong>Note:</strong> You can always change the schedule based on your use case.
+      </p>
+      </li>
+
+    <li>If the scheduled job for the specific notification has already run and you are still not getting the notifications, then proceed to <a href="#possible-causes">Possible Causes</a> section to troubleshoot this issue further.
+    </li>
+    <li>If not, then wait till the scheduled job for the specific notification runs.</li>
+  </ol>
+  </li>
+</ol>
+
+<h2 id="possible-causes">Possible Causes</h2>
+
+
+<p>
+Some of the possible causes for this issue are:
+</p>
+
+<table>
+  <tr>
+   <th>Cause
+   </th>
+   <th>Description
+   </th>
+   <th>Troubleshooting Instructions Applicable For
+   </th>
+  </tr>
+  <tr>
+   <td><a href="#cause-1-smtp-configuration-incorrect">SMTP Configuration Incorrect</a>
+   </td>
+   <td>The SMTP configuration provided is not correct.
+   </td>
+   <td>Edge Private Cloud Users
+   </td>
+  </tr>
+  <tr>
+   <td>
+
+<p id="gdcalert1" ><a href="#heading=h.to36gtvq1fre">Notification job schedule</a></p></td>
+   <td>The notification job hasn't started.
+   </td>
+   <td>Edge Public Cloud and Private Cloud Users
+   </td>
+  </tr>
+</table>
+
+
+<h2 id="cause-1-smtp-configuration-incorrect">Cause 1: SMTP Configuration Incorrect</h2>
+
+
+<h3 id="diagnosis"><em>Diagnosis</em></h3>
+
+<ol>
+
+  <li>Check <code>/opt/apigee/edge-mint-management-server/conf/apix-mint.properties</code> file and verify if the following SMTP properties are set correctly.
+
+
+  <pre class="prettyprint">
+mint.notification.javaMail.properties={"mail.smtp.host": "smtp.gmail.com",
+"mail.smtp.port": "465", "mail.smtp.starttls.enable": "true", "mail.smtp.auth": "true", "mail.smtp.username": "blah@gmail.com", "mail.smtp.password": "blah" }
+</pre>
+  </li>
+
+  <li>Verify if the SMTP server and user settings are correct. If these settings are incorrect or not set,  proceed to Step #3. If this is correct, proceed to Step #4.</li>
+
+
+  <li>Update the SMTP server and user settings correctly by using the instructions in the following doc:
+  <p>
+
+    <a href="https://docs.apigee.com/private-cloud/latest/configuring-edge-smtp-server">https://docs.apigee.com/private-cloud/latest/configuring-edge-smtp-server</a>
+  </p>
+  </li>
+  <li>Re-check again if the Monetization notifications are now working. If not, please proceed to Step 5.</li>
+
+  <li>If the SMTP settings are correct, then run <a href="https://apidocs.apigee.com/monetize/apis/get/organizations/%7Borg_name%7D/notification-service-items">View notifications sent</a> API call to see the status of the notification sent. <ol>
+
+    <li>This API returns a JSON with all the notification that have been fired and the status of each of those.
+      <li>A sample JSON is provided below :
+
+
+
+        <pre class="prettyprint">{
+        "hasMoreItems" : false,
+        "notifications" : [ {
+        "fromAlias" : "No Reply",
+        "fromEmail" : "****@apigee.com",
+        "id" : "4e2d0d9a-69a4-4430-957d-02fa2a3cb581",
+        "notificationType" : "EMAIL",
+        "orgId" : "myorg",
+        "rawMessage" : "...",
+        "retryCount" : 0,
+        "retryStatuses" : [ {
+             "responseCode" : 0,
+             "responseMessage" : "{\"Headers\":null,\"Content : \":null,\"StatusCode\":\"0\"}",
+             "retriedAt" : 1518605291092,
+             "retryAttempt" : 0
+        } ],
+        "source" : "MailTo: [****@blah.com], Org: [myorg], EventType: [UPDATE_DEVELOPER]",
+        "status" : "FAILED",
+        "subject" : "Notification of developer changing company details",
+        "templateId" : "814315c8-d8ca-4b3e-90bb-a8366600e625",
+        "templateName" : "DEFAULT_UPDATE_DEVELOPER_TEMPLATE",
+        "templateParametersJSON" : "{\"developer.legalName\":\"\",\"developer.name\":\"John Smith\"}",
+        "toAlias" : "***@blah.com",
+        "toEmail" : "***@blah.com",
+        "unsubscribeURL" : "..."
+}
+</pre>
+
+
+        <p>
+
+          If you check the JSON, it shows the status as 'FAILED' for the above particular notification <strong>'Update Developer'</strong>.
+        </p>
+      </li>
+      </ol>
+  </li>
+  <li>This could possibly be caused because the SMTP server and port might not be reachable from the Management Server. Use the telnet command to check if you are able to connect to the specified SMTP server on the specified port.
+
+    <pre class="prettyprint">telnet &lt;SMTP-server-IP-address> &lt;SMTP-Port#>
+</pre>
+            <p>
+
+              If you get the error "Connection timed out" or "Connection refused" for the telnet output, then proceed to Resolution.
+            </p>
+  </li>
+</ol>
+<h3 id="resolution">Resolution</h3>
+
+<ol>
+
+<li>Work with your network administrator and ensure the SMTP server is able to accept connections from other machines and also the specific port is open to outside world for communication.
+<li>If the issue still persists, then proceed to the Must Gather Diagnostic Information with the </li></ol>
+
+<h2 id="cause-2-notification-job-schedule">Cause 2: Notification Job Schedule</h2>
+
+
+<p>
+The notification job hasn't started.
+</p>
+<h3 id="diagnosis"><em>Diagnosis</em></h3>
+
+<ol>
+
+<li>Run the following API call to view all currently scheduled monetization jobs.
+<p>
+
+    <a href="https://docs.apigee.com/monetize/apis/get/triggers">https://docs.apigee.com/monetize/apis/get/triggers</a><strong> </strong>
+</p>
+</li>
+<li>Check whether the notification condition is present and is enabled for the notification that is not working. If it is not present, proceed to Step #3 to create the notification condition and skip the rest of the steps.
+  <ol>
+    <li>If its present, then check whether its enabled to true. If not, then run the <a href="https://apidocs.apigee.com/monetize/apis/put/organizations/%7Borg_name%7D/notification-conditions/%7Bcondition_id%7D">Update a notification condition and action API</a> to update the notification condition.
+      <p>
+
+        OR
+      </p>
+    </li>
+    <li>Use the UI to update the notification condition using the process provided in the below doc:
+      <p>
+
+        <a href="https://docs.apigee.com/monetization/content/set-up-notification-templates#eventsui">https://docs.apigee.com/monetization/content/set-up-notification-templates#eventsui</a>
+      </p>
+    </li>
+    <li>Run the <a href="https://apidocs.apigee.com/monetize/apis/post/organizations/%7Borg_name%7D/notification-conditions">Create a notification condition and action API</a> call to create the appropriate notification condition and the corresponding action.
+          <ol>
+            <li>Once the notification condition is created, run the <a href="https://apidocs.apigee.com/monetize/apis/get/organizations/%7Borg_name%7D/notification-conditions">View all notification conditions and actions API</a> call to verify if the notification condition has been created.
+            </li>
+            <li>You can also reprocess the notification using <a href="https://docs.apigee.com/monetize/apis/post/organizations/%7Borg_name%7D/notification-service-items/%7Bnotification_id%7D/reprocess">Reprocess a notification API</a>.            </li>
+          </ol>
+    </li>
+    <li>This step is only applicable for <strong><em>Private Cloud users</em></strong>. If the notification condition is present from step #1 and the notification emails are still not coming, then check the management server log <code>/opt/apigee/var/log/edge-management-server/logs/system.log</code> and see if the notification condition has been triggered.
+
+
+
+      <pre class="prettyprint">grep "Executing Mint Scheduler" /opt/apigee/var/log/edge-management-server/logs/system.log | grep  -o  "Executing Mint Scheduler : \[.*\]" | grep -v "for org : \[null\]" |sort | uniq -c
+</pre>
+    </li>
+    <li>If the notification condition is triggered, and you are still not getting the notifications, then proceed to <a href="#must-gather-diagnostic-information">Must Gather Diagnostic Information</a> with information and output from above steps captured.</li>
+  </ol>
+</ol>
+
+<h3 id="resolution"><em>Resolution</em></h3>
+
+<ol>
+
+<li>Reprocess the notification using the <a href="https://docs.apigee.com/monetize/apis/post/organizations/%7Borg_name%7D/notification-service-items/%7Bnotification_id%7D/reprocess">Reprocess a notification API</a></li></ol>
+
+<h2 id="must-gather-diagnostic-information">Must Gather Diagnostic Information</h2>
+
+
+<p>
+If the problem persists even after following the above instructions, please contact <a href="https://support.apigee.com/">Apigee Support</a> and provide the following diagnostic information.<br>
+
+</p>
+<p>
+<strong>Public and Private Cloud</strong> users should provide the below information:
+</p><ol>
+
+<li>Organization Name
+<li>Environment Name
+<li>Monetization Notification condition that did not work
+<li>Details about what sections in this Playbook has been tried and any other insights that will help us to fastrack resolution of this issue.</li></ol>
+
+<p>
+In addition to the above information <strong>Private Cloud</strong> users should also provide the following information:
+</p>
+<ul>
+  <li>Management Server log
+    <br>
+    <br>
+    <code>/opt/apigee/var/log/edge-management-server/logs/system.log</code>
+  </li>
+</ul>
+
+{% endblock %}

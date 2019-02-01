@@ -1,17 +1,17 @@
-  {% extends "_base.html" %} {% block title %}Deploying proxies in the UI{% endblock %} {% block body %}
+{% extends "_base.html" %}
+{% block title %}Deploying proxies in the UI{% endblock %}
+{% block body %}
 
-  <p>All organizations in Apigee Edge, by default, have two environments: <span style=
-  "font-family: 'courier new', courier, monospace;">test</span> and <span style=
-  "font-family: 'courier new', courier, monospace;">prod</span>. The naming is arbitrary. These
+  <p>All organizations in Apigee Edge, by default, have two environments: <code>test</code> and
+  <code>prod</code>. The naming is arbitrary. These
   environments are merely designed to provide you with one area to work on and test API changes,
   and another area where APIs are exposed to apps.</p>
 
-  <aside class="note"><b>Note:</b> Depending on your role, you may not be able to deploy to all
-  environments. Users can only deploy to the <span style=
-  "font-family: 'courier new', courier, monospace;">test</span> environment. If you're an
-  administrator you can deploy to any environment.</aside>
+  <p>Depending on your role, you may not be able to deploy to all environments. Users can only
+  deploy to the <code>test</code> environment. If you're an administrator you can deploy to any
+  environment.</p>
 
-  <h2 id="deploymentoptions"><a name="system" id="system"></a>Deployment options</h2>
+  <h2 id="deploymentoptions">Deployment options</h2>
 
   <p>You can deploy proxies as revisions or versions. These are distinct concepts, as explained
   next.</p>
@@ -21,29 +21,43 @@
   <p>Each environment in an organization can only have one deployed revision of an API proxy. It is
   common to have a proxy revision in <code>prod</code> while another revision is
   in <code>test</code> as it's being tested or developed. For example, you could have
-  revision 1 deployed in <span style=
-  "font-family: 'courier new', courier, monospace;">test</span> and revision 20 deployed
-  in <span style="font-family: 'courier new', courier, monospace;">prod</span>. You can view
+  revision 1 deployed in <code>test</code> and revision 20 deployed
+  in <code>prod</code>. You can view
   deployment of all revisions on the Overview page of the API proxy editor.</p>
 
-  <p><img src="/api-platform/images/proxy_revisions.png"></p>
+  <p><img src="/api-platform/images/proxy_revisions.png" class="screenshot"></p>
 
   <p>When you create a new revision of an API proxy without changing its base path, then deploy it
   to an environment in which it's already deployed, the previous version is undeployed and the new
   revision is deployed in its place. Note that deployment through the management UI might impact
   inbound calls. To handle and transition inbound calls more gracefully during deployment, use the
   management API. See the section on seamless deployment in <a href=
-  "/api-platform/deploy/deploy-api-proxies-using-management-api.html">Deploy API proxies using the
+  "/api-platform/deploy/deploy-api-proxies-using-management-api">Deploy API proxies using the
   management API</a>.</p>
+
+  <p>The revisions feature in Apigee Edge is not designed to be used as a source control system.
+    Use your existing source code repository and software development life cycle (SDLC) processes
+    to manage changes to and retain history for your API proxies. Think of revisions in Edge as
+    a way to quickly view or deploy different revisions of an API proxy.
+    There is a limit of {{ limit_apiproxy_revisions_per_proxy }} API proxy revisions that can be
+    retained in history in Apigee Edge, as documented in the
+    <a href="/api-platform/reference/limits">Limits</a> topic. When you reach the limit, you should
+    <a href="/api-platform/fundamentals/download-api-proxies">back up</a> and delete older
+    revisions you no longer want to retain in history in Apigee Edge before creating new
+    revisions.</p>
 
   <h3 id="deploymentoptions-aboutversions">About versions</h3>
 
   <p>Edge supports multiple version deployments of a proxy in a single environment. Each version
   must have a different base path (for example <code>/v1</code> and <code>/v2</code>). </p>
 
-  <h2 id="deploying">Deploying and undeploying an API Proxy</h2>
+  <h2 id="deploying">Deploying and undeploying an API proxy</h2>
 
-  <p>{% dynamic include /includes/___proxy-bundle-size-limit-note %}</p>
+<aside class="note">
+<p><strong>Note</strong>: The size limit of an API proxy bundle is {{ limit_apiproxy_bundle }}.
+The size limit is {{ limit_apiproxy_bundle_hosted_targets }} for API proxies using
+  the <a href="/api-platform/hosted-targets/hosted-targets-overview">hosted targets</a> feature.</p>
+</aside>
 
   <p>To deploy (or undeploy) an API proxy in the management UI:</p>
 
@@ -64,4 +78,4 @@
   steps on an already deployed revision, indicated by a green dot next to the environment
   name.</aside>
 
-  {% endblock %}
+{% endblock %}

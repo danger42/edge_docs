@@ -1,0 +1,353 @@
+  {% extends "_base.html" %} {% block title %}Error Accessing Datastore{% endblock %} {% block body %}
+
+<aside class="note">Was this troubleshooting playbook helpful? Please let us know
+  by clicking <a href="" class="google-feedback"
+   data-p="1636213" data-b="docsite" data-context="troubleshooting-feedback">
+  Send Feedback
+</a>.</aside>
+
+  <h2 id="symptom">Symptom</h2>
+
+  <p>Deployment of API proxy revisions via the Edge UI or Edge management API call fail with the
+  error <code>"Error while accessing datastore"</code>.</p>
+
+  <h2 id="errormessages">Error Messages</h2>
+  <pre class="prettyprint">
+Error in deployment for environment qa.
+
+The revision is deployed, but traffic cannot flow. Error while accessing datastore;Please retry later
+</pre>
+
+  <h3 id="errormessages-possiblecauses">Possible Causes</h3>
+
+  <p>The typical causes for this issue are:</p>
+
+  <ol>
+    <li>
+      <table>
+        <tbody>
+          <tr>
+            <td width="332"><strong>Cause</strong></td>
+
+            <td width="566"><strong>Details</strong></td>
+
+            <td width="117"><strong>For</strong></td>
+          </tr>
+
+          <tr>
+            <td><a href="#connectivityissuebetweenmpandcassandra">Network Connectivity Issue
+            between Message Processor and Cassandra</a></td>
+
+            <td>Communication failure between the Message Processor and Cassandra due to network
+            connectivity issues or firewall rules.</td>
+
+            <td>Edge Private Cloud users</td>
+          </tr>
+
+          <tr>
+            <td><a href="#deploymenterrorsduetocassandra">Deployment errors due to Cassandra
+            restarts</a></td>
+
+            <td>Cassandra node(s) was unavailable because it was restarted as part of routine
+            maintenance.</td>
+
+            <td>Edge Private Cloud users</td>
+          </tr>
+
+          <tr>
+            <td><a href="#spikeinread">Spike in read request latency on Cassandra</a></td>
+
+            <td>If the Cassandra node(s) is performing a large number of concurrent reads, then it
+            may respond slowly due to spike in read request latency.</td>
+
+            <td>Edge Private Cloud users</td>
+          </tr>
+
+          <tr>
+            <td><a href="#bundlelargeer">API Proxy Bundle larger than 15MB</a></td>
+
+            <td>Cassandra has been configured to not allow API proxy bundles larger than 15MB in
+            size.</td>
+
+            <td>Edge Private Cloud users</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 id="network-connectivity-issue-between-message-processor-and-cassandra"><a id=
+      "connectivityissuebetweenmpandcassandra" name=
+      "connectivityissuebetweenmpandcassandra"></a>Network Connectivity Issue between Message
+      Processor and Cassandra</h2>
+
+      <h3 id="networkconnectivityissuebetweenmessageprocessorandcassandra-diagnosis">Diagnosis</h3>
+
+      <p><strong>Note:</strong> Only Edge Private Cloud users can perform the following steps. If
+      you are on Edge Public Cloud, contact <a href="https://support.apigee.com">Apigee
+      Support</a>.</p>
+
+      <ol>
+        <li>Undeploy and redeploy the API proxy. If there was a temporary connectivity issue
+        between the Message Processor and Cassandra, then the error might go away.
+
+          <p><strong>WARNING:</strong> Don't undeploy if the errors are seen in the Production
+          environment.</p>
+        </li>
+
+        <li>If the problem persists, then execute the below management AP call to check the
+        deployment status and check if there are any errors on any components:
+          <pre class="prettyprint">
+curl -u sysadmin@email.com https://management:8080/v1/o/&lt;org&gt;/apis/&lt;api&gt;/deployments
+</pre>
+
+          <p><strong>Sample deployment status output showing Error while accessing datastore on one
+          of the Message Processors</strong></p>
+          <pre class="prettyprint">
+{
+"environment" : [ {
+"aPIProxy" : [ {
+"name" : "simple-python",
+"revision" : [ {
+"configuration" : {
+"basePath" : "/",
+"steps" : [ ]
+},
+"name" : "1",
+"server" : [ {
+"status" : "deployed",
+"type" : [ "message-processor" ],
+"uUID" : "2acdd9b2-17de-4fbb-8827-8a2d4f3d7ada"
+}, {
+"error" : "Error while accessing datastore;Please retry later",
+"errorCode" : "datastore.ErrorWhileAccessingDataStore",
+"status" : "error",
+"type" : [ "message-processor" ],
+"uUID" : "42772085-ca67-49bf-a9f1-c04f2dc1fce3"
+} 
+"state" : "error"
+} 
+</pre>
+        </li>
+
+        <li>Restart the Message Processor(s) that show the deployment error. If there was a
+        temporary network issue, then the error should go away:
+          <pre class="prettyprint">
+/opt/apigee/apigee-service/bin/apigee-service edge-message-processor restart
+</pre>
+        </li>
+
+        <li>Repeat step #2 to see if the deployment succeeds on the Message Processor that was
+        restarted. If no errors found, then that indicates the issue is resolved.</li>
+
+        <li>Check if the message processor is able to connect to each Cassandra node on port 9042
+        and 9160:
+
+          <ol>
+            <li>If telnet is available, then use telnet:
+              <pre class="prettyprint">
+telnet &lt;Cassandra_IP&gt; 9042
+telnet &lt;Cassandra_IP&gt; 9160
+</pre>
+            </li>
+
+            <li>If telnet is not available, use netcat to check the connectivity as follows:
+              <pre class="prettyprint">
+nc -vz &lt;Cassandra_IP&gt; 9042
+nc -vz &lt;Cassandra_IP&gt; 9160
+</pre>
+            </li>
+
+            <li>If you get the response "Connection Refused" or "Connection timed out", then engage
+            your network operations team.</li>
+          </ol>
+        </li>
+
+        <li>If the problem persists, then check if each of the Cassandra nodes are listening on the
+        port 9042 and port 9160:
+          <pre class="prettyprint">
+netstat -an | grep LISTEN | grep 9042
+netstat -an | grep LISTEN | grep 9160
+</pre>
+        </li>
+
+        <li>If the Cassandra nodes are not listening on port 9042 or 9160, then restart the
+        specific Cassandra node(s):
+          <pre class="prettyprint">
+/opt/apigee/apigee-service/bin/apigee-service apigee-cassandra restart
+</pre>
+        </li>
+
+        <li>If the problem persists, then engage your network operations team.</li>
+      </ol>
+    </li>
+  </ol>
+
+  <h3 id="errormessages-resolution">Resolution</h3>
+
+  <p>Work with your network operations team and get the network connectivity issue fixed between
+  Message Processor and Cassandra.</p>
+
+  <h2 id="deployment-errors-due-to-cassandra-restarts"><a id="deploymenterrorsduetocassandra" name=
+  "deploymenterrorsduetocassandra"></a>Deployment errors due to Cassandra restarts</h2>
+
+  <p>Cassandra nodes are usually restarted periodically as part of routine maintenance. If API
+  proxies are deployed during the Cassandra maintenance work, then the deployments fail due to
+  inaccessibility to the Cassandra datastore.</p>
+
+  <p><strong>Note:</strong> Only Edge Private Cloud users can perform the following steps. If you
+  are on Edge Public Cloud, contact <a href="https://support.apigee.com">Apigee Support</a>.</p>
+
+  <h3 id="errormessages-diagnosis">Diagnosis</h3>
+
+  <ol>
+    <li>Check if the Cassandra nodes were restarted during the time of the deployment.This can be
+    done by checking the Cassandra log or most recent startup time logs of the Cassandra node:
+
+      <p><code>grep</code> "<code>shutdown</code>"
+      <code>/opt/apigee/var/log/apigee-cassandra/system.log</code></p>
+    </li>
+  </ol>
+
+  <h3 id="errormessages-resolution">Resolution</h3>
+
+  <ol>
+    <li>Ensure Cassandra is up and running.</li>
+
+    <li>Check if Message Processors are able to connect to Cassandra datastore on port 9042 and
+    9160.</li>
+  </ol>
+
+  <h2 id="spike-in-read-request-latency-on-cassandra"><a id="spikeinread" name=
+  "spikeinread"></a>Spike in read request latency on Cassandra</h2>
+
+  <p>A high number of reads on Cassandra is dependant on individual use cases and traffic patterns
+  on the proxies that contain policies that require read access from Cassandra.</p>
+
+  <p>For example, if a GET call to refresh_token grant type is called for OAuth policies, and the
+  refresh token is associated with many access tokens, then this may result in high amounts of
+  reads from Cassandra. This can cause increase in the read request latency on Cassandra.</p>
+
+  <h4><strong>Diagnosis</strong></h4>
+
+  <p><strong>Note:</strong> Only Edge Private Cloud users can perform the following steps. If you
+  are on Edge Public Cloud, contact <a href="https://support.apigee.com">Apigee Support</a>.</p>
+
+  <p><img alt="" src="/api-platform/images/IMG-5-2.png"></p>
+
+  <ol>
+    <li>If you have installed the Beta Monitoring dashboard, look at the Cassandra dashboard, and
+    review the "Read Requests" chart for the period of the problem. Also review the chart for "Read
+    Request Latencies".</li>
+
+    <li>Alternate tool to check the read requests and read latencies is the <code>nodetool
+    cfstats</code> command. See <a href=
+    "https://docs.datastax.com/en/cassandra/2.1/cassandra/tools/toolsCFstats.html">Cassandra
+    documentation</a> to get more details to use this command.</li>
+  </ol>
+
+  <h3 id="errormessages-resolution">Resolution</h3>
+
+  <p><strong>Note:</strong> Only Edge Private Cloud users can perform the following steps. If you
+  are on Edge Public Cloud, contact <a href="https://support.apigee.com">Apigee Support</a>.</p>
+
+  <ol>
+    <li>Try the deployment again once Cassandra performance is back to normal. Make sure the entire
+    Cassandra ring is normal.</li>
+
+    <li>(Optional) Do a rolling restart on Message Processors to be sure connectivity is
+    established.</li>
+
+    <li>For a long term solution, review the API traffic patterns that would possibly contribute to
+    higher reads in the Cassandra datastore. Contact <a href="https://support.apigee.com">Apigee
+    Support</a> for assistance in troubleshooting this issue.</li>
+
+    <li>If the existing Cassandra node(s) are not adequate to handle the incoming traffic, then
+    either increase the hardware capacity or the number of the Cassandra datastore nodes
+    appropriately.</li>
+  </ol>
+
+  <h2 id="api-proxy-bundle-larger-than-15mb"><a id="bundlelargeer" name="bundlelargeer"></a>API
+  Proxy Bundle larger than 15MB</h2>
+
+  <p>The size of API proxy bundles are restricted to 15MB on Cassandra. If the size of the API
+  proxy bundle is greater than 15 MB, then you will see "Error while accessing datastore" when you
+  attempt to deploy the API proxy.</p>
+
+  <h3 id="errormessages-diagnosis">Diagnosis</h3>
+
+  <p><strong>Note:</strong> Only Edge Private Cloud users can perform the following steps. If you
+  are on Edge Public Cloud, contact <a href="https://support.apigee.com">Apigee Support</a>.</p>
+
+  <ol>
+    <li>Check the Message Processor logs
+    (<code>/opt/apigee/var/log/edge-message-processor/logs/system.log</code>) and see if there are
+    any errors occurred during deployment of the specific API Proxy.</li>
+
+    <li>If you see an error similar to the one shown in the figure below, then the deployment error
+    is because the API proxy bundle size is &gt; 15 MB.
+      <pre class="prettyprint">
+2016-03-23 18:42:18,517 main ERROR DATASTORE.CASSANDRA - AstyanaxCassandraClient.fetchDynamicCompositeColumns() : Error while querying columnfamily : [api_proxy_revisions_r21, adevegowdat@v1-node-js] for rowkey:{}
+com.netflix.astyanax.connectionpool.exceptions.TransportException: TransportException: [host=None(0.0.0.0):0, latency=159(486), attempts=3]org.apache.thrift.transport.TTransportException: Frame size (20211500) larger than max length (16384000)!
+        at com.netflix.astyanax.thrift.ThriftConverter.ToConnectionPoolException(ThriftConverter.java:197) ~[astyanax-thrift-1.56.43.jar:na]
+        at com.netflix.astyanax.thrift.AbstractOperationImpl.execute(AbstractOperationImpl.java:65) ~[astyanax-thrift-1.56.43.jar:na]
+...&lt;snipped&gt;
+        Caused by: org.apache.thrift.transport.TTransportException: Frame size (20211500) larger than max length (16384000)!
+        at org.apache.thrift.transport.TFramedTransport.readFrame(TFramedTransport.java:137) ~[libthrift-0.9.1.jar:0.9.1]
+        at org.apache.thrift.transport.TFramedTransport.read(TFramedTransport.java:101) ~[libthrift-0.9.1.jar:0.9.1]
+        at org.apache.thrift.transport.TTransport.readAll(TTransport.java:84) ~[libthrift-0.9.1.jar:0.9.1]
+...&lt;snipped&gt;
+</pre>
+    </li>
+  </ol>
+
+  <h3 id="errormessages-resolution">Resolution</h3>
+
+  <p>The API proxy bundle will be large if there are too many resource files. Use the following
+  solutions to address this issue:</p>
+
+  <p><strong>Solution #1: Move resource files to the Environment or Organization level</strong></p>
+
+  <ol>
+    <li>Move any of the resource files, such as NodeJS Script files and modules, JavaScript files,
+    JAR files to the environment or organization level. For more information on resource files, see
+    the <a href="/api-platform/develop/resource-files.html">Edge documentation</a>.</li>
+
+    <li>Deploy the API proxy and see if the error goes away.</li>
+  </ol>
+
+  <p>If the problem persists or you cannot move the resource files to environment or organization
+  level for some reason, then apply solution #2.</p>
+
+  <p><strong>Solution #2: Increase the API proxy bundle size on Cassandra</strong></p>
+
+  <p><strong>Note:</strong> Only Edge Private Cloud users can perform the following steps. If you
+  are on Edge Public Cloud, contact <a href="https://support.apigee.com">Apigee Support</a>.</p>
+
+  <p>Follow these steps to increase the size of the Cassandra property <strong>thrift frame
+  transport size</strong>, that controls the maximum size of the API proxy bundle allowed in
+  Edge:</p>
+
+  <ol>
+    <li>Create the following file, if it does not exist:
+      <pre class="prettyprint">
+/opt/apigee/customer/application/cassandra.properties
+</pre>
+    </li>
+
+    <li>Add the following line to the file, replacing &lt;size&gt; with the size setting needed for
+    the large bundle:
+      <pre class="prettyprint">
+conf_cassandra_thrift_framed_transport_size_in_mb=&lt;size&gt;
+</pre>
+    </li>
+
+    <li>Restart Cassandra:
+      <pre class="prettyprint">
+/opt/apigee/apigee-service/bin/apigee-service edge-management-server restart
+</pre>
+    </li>
+
+    <li>Repeat the steps #1 through #3 on all Cassandra nodes in the cluster.</li>
+  </ol>
+
+  <p>If the problem persists, contact <a href="https://support.apigee.com">Apigee Support</a> for
+  further assistance.</p>{% endblock %}

@@ -1,0 +1,150 @@
+  {% extends "_base.html" %} {% block title %}Analytics reports timing out{% endblock %} {% block body %}
+
+<aside class="note">Was this troubleshooting playbook helpful? Please let us know
+  by clicking <a href="" class="google-feedback"
+   data-p="1636213" data-b="docsite" data-context="troubleshooting-feedback">
+  Send Feedback
+</a>.</aside>
+
+  <h2 id="description">Symptom</h2>
+
+  <p>The Analytics dashboards (Proxy Performance, Target Performance, Custom Reports, etc.) in the
+  Edge UI timeout.</p>
+
+  <h2 id="diagnosis">Error messages</h2>
+
+  <p>You see the following error message when the Analytics dashboards timeout:</p>
+  <pre class="prettyprint">
+The report timed out: Try again with a smaller date range or a larger aggregation interval.
+</pre>
+
+  <h2 id="resolution">Possible causes</h2>
+
+  <p>The following table lists possible causes of this issue:</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <th>Cause</th>
+
+        <th>For</th>
+      </tr>
+
+      <tr>
+        <td><a href="#hardware">Inadequate hardware configuration</a></td>
+
+        <td>Edge Private Cloud users</td>
+      </tr>
+
+      <tr>
+        <td><a href="#large">Large amount of Analytics data in Postgres Database</a></td>
+
+        <td>Edge Private Cloud users</td>
+      </tr>
+
+      <tr>
+        <td><a href="#time">Insufficient time to fetch Analytics data</a></td>
+
+        <td>Edge Private and Public Cloud users</td>
+      </tr>
+    </tbody>
+  </table><!-- Specific Cause/Resolution -->
+
+  <h2 id="hardware">Inadequate hardware configuration</h2>
+
+  <h3 id="hardware-diagnosis">Diagnosis</h3>
+
+  <p>If any of the Edge components are under capacity (if they have less CPU, RAM, or IOPS capacity
+  than required), then the Postgres Servers/Qpid Servers may run slowly causing Analytics
+  dashboards to timeout.</p>
+
+  <h3 id="hardware-resolution">Resolution</h3>
+
+  <p>Ensure that all the Edge components adhere to the minimum hardware requirements as described
+  in <a href="/private-cloud/latest/installation-requirements#hardwarerequirements">Hardware
+  Requirements</a>.</p><!-- Specific Cause/Resolution -->
+
+  <h2 id="large">Large amount of Analytics data in Postgres Database</h2>
+
+  <h3 id="large-diagnosis">Diagnosis</h3>
+
+  <ol>
+    <li>On the Postgres node, login to PostgresSQL:
+      <pre class="prettyprint">
+psql -h /opt/apigee/var/run/apigee-postgresql -U apigee apigee
+</pre>
+    </li>
+
+    <li>Check the duration for which the data is available in the Postgres Database using the
+    following SQL query:
+      <pre class="prettyprint">
+select min(client_received_start_timestamp), max(client_received_start_timestamp) from
+  analytics."<var>orgname</var>.<var>envname</var>.fact";
+</pre>
+    </li>
+
+    <li>Get the sizes of all the tables in the Postgres Database:
+      <pre class="prettyprint">
+SELECT relname as "Table",pg_size_pretty(pg_total_relation_size(relid)) As "Size",
+  pg_size_pretty(pg_total_relation_size(relid) - pg_relation_size(relid)) as "External Size"
+  FROM pg_catalog.pg_statio_user_tables ORDER BY pg_total_relation_size(relid) DESC;
+</pre>
+    </li>
+  </ol>
+
+  <p>Based on the output obtained in step #2 and #3, if you notice that either the duration for
+  which the data has been stored is long (longer than your retention interval) and/or the table
+  sizes are very large, then it indicates that you have large amounts of analytics data in the
+  Postgres database. This could be causing the Analytics dashboards to time out.</p>
+
+  <h3 id="large-resolution">Resolution</h3>
+
+  <p><strong>Prune the data that is beyond your required retention interval:</strong></p>
+
+  <ol>
+    <li>Determine the retention interval, that is the duration for which you want to retain the
+    Analytics data in the Postgres Database.
+
+      <p>For example, you want to retain 60 days worth of Analytics data.</p>
+    </li>
+
+    <li>Run the following command to prune data for a specific organization and environment:
+      <pre class="prettyprint">
+/opt/apigee/apigee-service/bin/apigee-service apigee-postgresql pg-data-purge
+    <var>org</var> <var>env</var> <var>num_days_to_purge_back_from_current_date</var>
+</pre>
+    </li>
+
+    <li>For more information, see <a href="/private-cloud/latest/recurring-analytics-services-maintenance-tasks">Pruning Analytics data</a>.</li>
+  </ol>
+
+  <p>If the problem persists, then proceed to <a href="#time">Insufficient time to fetch Analytics
+  data</a>.</p><!-- Specific Cause/Resolution -->
+
+  <h2 id="time">Insufficient time to fetch Analytics data</h2>
+
+  <h3 id="time-diagnosis">Diagnosis</h3>
+
+  <ol>
+    <li>Check if you are able to view the data in the Hour/Day Tab of Analytics dashboard (Proxy
+    Performance/Target Performance).</li>
+
+    <li>If you are able to view the data in the Hour tab alone or Hour and Day tabs, but are
+    getting report timeout errors only when attempting to view the Week or Custom tabs, then this
+    indicates that the volume of data that needs to be fetched from the Postgres database is very
+    large. This could be causing the Edge UI to time out.</li>
+  </ol>
+
+  <h3 id="time-resolution">Resolution</h3>
+
+  <p>The Edge UI has a default timeout of 120 seconds for fetching and displaying the Analytics
+  data. If the volume of Analytics data to be fetched is very large, then 120 seconds may not be
+  sufficient. Increase the Edge UI timeout value to 300 seconds by following the instructions in
+  <a href="/private-cloud/latest/set-timeout">Set
+  the timeout used by the Edge UI for Edge API management calls</a>.</p>
+
+  <p>Reload any of the Analytics dashboard and check if you are able to view the data for all the
+  tabs - Hour, Day, Week and Custom.</p>
+
+  <p>If the problem persists, contact <a href="https://support.apigee.com">Apigee
+  Support</a>.</p>{% endblock %}

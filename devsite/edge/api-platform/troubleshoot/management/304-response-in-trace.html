@@ -1,0 +1,103 @@
+{% extends "_base.html" %} {% block title %}HTTP 304 response in trace session{% endblock %}
+{% block body %}
+
+<aside class="note">Was this troubleshooting playbook helpful? Please let us know
+  by clicking <a href="" class="google-feedback"
+   data-p="1636213" data-b="docsite" data-context="troubleshooting-feedback">
+  Send Feedback
+</a>.</aside>
+
+<h2>Symptom</h2>
+
+<p>In Edge for the Private Cloud, when tracing an API in the Edge UI, you see
+an HTTP 304 response in the <strong>Status</strong> column of the trace window:</p>
+
+<p><img alt="" src="/api-platform/images/HTTP-304-trace.png"></p>
+
+<h2>Error messages</h2>
+
+<p>There are no error messages - the API proxy call actually returns a success
+response, such as an HTTP 200. However, the trace window in the Edge UI displays
+an HTTP 304 response and no trace data is collected.</p>
+
+<h2>Possible causes</h2>
+
+<p>In Edge for the Private Cloud, the Edge UI is attempting to trace an API proxy
+accessed by a private IP address. </p>
+
+<p>The trace tool in the Edge UI has the ability to send API request to any URL.
+In a deployment scenario where the Edge UI is co-hosted with other internal
+services, a malicious user might misuse the trace tool to make requests to
+services through a private IP address, such as localhost or 127.0.0.1.</p>
+
+<p>In a production environment, you typically leave the default as is to prevent
+users from being able to trace a private IP address.
+For example, that is how the public version of the <a href="https://enterprise.apigee.com" class="external">Edge UI</a>
+is deployed.</p>
+
+<p>However, for an internal development or testing environment, you can override
+this default to allow your API developers to trace any IP address.
+Typically, a development/testing environment is behind a firewall that does not
+allow public access.</p>
+
+<p><strong>Note: </strong>As a best practice, you should leave the default as is
+to prevent trace access to private IP addresses, even in a development/testing environment,
+unless you run into a situation where you have to enable it.</p>
+
+<h2>Cause: Attempting to access an API proxy through a private IP address</h2>
+
+<p>By default, the Edge UI for Edge for the Private Cloud prevents users from
+tracing API calls made through private IP addresses.
+The list of private IP addresses includes:</p>
+
+<ul>
+  <li>Loopback address (127.0.0.1 or localhost)
+  <li>Site-local addresses (For IPv4 - 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16)
+  <li>Any local address (any address resolving to localhost)</li>
+</ul>
+
+<p>For example, the following curl command makes a call to an API proxy by using
+an IP address of 127.0.0.1, which is considered to be a private IP address:</p>
+
+<pre  class="devsite-terminal">curl http://127.0.0.1:9001/myapiproxy</pre>
+
+<p>In the trace window for this call, you see an HTTP 304 response even if the curl command returned success.</p>
+
+<h3>Resolution</h3>
+
+<p>To enable the Edge UI to trace private IP addresses for Edge for the
+Private Cloud, set the following token in <code>ui.properties</code>:</p>
+
+<pre class="prettyprint">conf_apigee-base_apigee.feature.enabletraceforinternaladdresses="true"</pre>
+
+<p>To set this property:</p>
+
+<ol>
+ <li>Open the <code>ui.properties</code> file in an editor. If the file does 
+ not exist, create it.<br>
+    <pre class="devsite-terminal">vi /opt/apigee/customer/application/ui.properties</pre></li>
+
+  <li>Set the following properties to true:<br>
+    <pre class="devsite-terminal">conf_apigee-base_apigee.feature.enabletraceforinternaladdresses="true"</pre></li>
+
+  <li>Save your changes to <code>ui.properties</code>.</li>
+
+  <li>Make sure the properties file is owned by the 'apigee' user:<br>
+    <pre class="devsite-terminal">chown apigee:apigee /opt/apigee/customer/application/ui.properties</pre></li>
+
+  <li>Restart the Edge UI:<br>
+    <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-ui restart</pre></li>
+</ol>
+
+<p>The Edge UI can now access private IP addresses in the trace tool.</p>
+
+<p>To later disable the UI from tracing requests through private IP addresses,
+edit <code>ui.properties</code> to set the property to <code>false</code> and
+then restart the Edge UI.</p>
+
+<h2>Related documents (Optional)</h2>
+
+<p>For more, see <a href="/private-cloud/latest/allowing-trace-tool-access-local-ip-addresses">
+Allowing the Edge UI Access to Local IP Addresses</a>.</p>
+
+{% endblock %}
