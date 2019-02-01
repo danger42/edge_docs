@@ -1,0 +1,140 @@
+{% extends "_base.html" %}
+{% block title %}Using get_token{% endblock %}
+{% block body %}
+
+<p>The <code>get_token</code> utility lets you exchange your Apigee credentials for an access
+and refresh token that you can then use to access Apigee management APIs. Unlike <code>acurl</code>,
+<code>get_token</code> simply gets and stores tokens on your disk. It's up to you to add a valid
+token in your requests and get a new token when yours expires.</p>
+
+<p>You use access tokens to call the management API with the
+<a href="using-oauth2-security-apigee-edge-management-api">OAuth</a> or
+<a href="enabling-saml-authentication-edge">SAML</a> workflows.</p>
+
+<p><strong>Prerequisite:</strong> Before you can use <code>get_token</code>, you must
+<a href="auth-tools#install">install it</a>.</li>
+
+<h2>get_token syntax</h2>
+
+  <p>The <code>get_token</code> utility uses the following syntax:</p>
+
+  <pre class="prettyprint devsite-terminal">get_token -u <var>email_address[:password</var>] [-m <var>mfa_code</var>] [-p <var>passcode</var>]</pre>
+
+  <p>Where:</p>
+    <table>
+    <thead>
+      <tr>
+        <th>Element</th>
+        <th>Required?</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><var>email_address</var></td>
+        <td><strong>Required&nbsp;(first&nbsp;time&nbsp;only)</strong></td>
+        <td>The email address associated with your Apigee account. You must pass your email address
+          in the first time you call <code>get_token</code>. You will not need to pass your email
+          address in again until the access and refresh tokens have expired.</td>
+      </tr>
+      <tr>
+        <td><var>password</var></td>
+        <td>Optional</td>
+        <td>The password for your Apigee account. If you omit the password, you will be prompted to
+          enter it. If you do not want to use your password directly in the command, you can use a
+          one-time code passcode instead of your password.</td>
+      </tr>
+      <tr>
+        <td><var>passcode</var></td>
+        <td>Optional</td>
+        <td>A <a href="auth-tools#passcode">one-time passcode</a>, which you can use in place of a
+          password.</td>
+      </tr>
+      <tr>
+        <td><var>mfa_code</var></td>
+        <td>Optional</td>
+        <td>A temporary code that you must pass to <code>get_token</code> if you have enabled
+          <a href="/api-platform/system-administration/enable-two-factor-auth-your-apigee-account">multi-factor
+          authentication (MFA)</a>. If you do not have MFA enabled, you can omit this option.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>For example:</p>
+  <pre class="prettyprint devsite-terminal">get_token
+<code class="devsite-terminal">get_token -u ahamilton@apigee.com</code>
+<code class="devsite-terminal">get_token -u ahamilton@apigee.com -p 123456</code>
+<code class="devsite-terminal">get_token -u ahamilton@apigee.com -m 424242</code>
+<code class="devsite-terminal">get_token -u ahamilton@apigee.com:mypassw0rd -m 424242</code></pre>
+
+  <p>A successful call prints a valid access token to <code>stdout</code> and stores both the
+  access and refresh tokens in <code>~/.sso-cli</code>. You can use these tokens until they
+  expire, as described in <a href="auth-tools#expiration">Token expiration</a>.</p>
+
+  <p>After your first successful call to <code>get_token</code>, you do not need to include your
+  credentials until the tokens have expired.</p>
+
+  <h2>Call get_token for the first time</h2>
+
+  <p>If you don't specify any options, <code>get_token</code> will prompt you for your username
+  (email address), password or passcode, and a temporary multi-factor authentication (MFA) code on
+  your first call:</p>
+    <ul>
+      <li>To use a passcode instead of a password, press ENTER when prompted for a password.</li>
+      <li>If you don't use MFA, press ENTER when prompted for an MFA code.</li>
+    </ul>
+
+  <p>The following example calls <code>code</code> for the first time and uses an MFA code instead
+  of a password for authentication:</p>
+
+    <pre class="devsite-terminal prettyprint">get_token
+Enter username:
+<code class="devsite-terminal">ahamilton@apigee.com</code>
+Enter the password for user 'ahamilton@apigee.com'
+<code class="devsite-terminal">[enter]</code>
+Enter the six-digit code if 'ahamilton@apigee.com' is MFA enabled or press ENTER:
+<code class="devsite-terminal">123456</code>
+
+ey42bGciOiJSUzI1NiJ9.eyJqdGkiOiJhM2YwNjA5ZC1lZTIxLTQ1YjAtOGQyMi04MTQ0MTYxNjNhNTMiLCJzdWIiOiIyZDFl
+  &lt;snip&gt;
+VlLmNvbSIsInppZCI6InVhYSIsImF1ZCI6WyJlZGdlY2xpIiwic2NpbSIsIm9wZW5pZCIsInBhc3N3b3JkIiwiYXBwcm54242</pre>
+
+  <p>To skip entering a passcode, press ENTER when prompted for the passcode.</p>
+
+<h2 id="add-token">Add your access token to a request</h2>
+
+<p>After you have successfully called <code>get_token</code>, you can use the access token
+by passing it in the <code>Authorization</code> header of your calls to the management API. You can
+do this in different ways, including:</p>
+
+<ul>
+  <li>Copy the contents of the <code>get_token</code> response and insert it directly into your
+    header:
+    <pre class="devsite-terminal">curl -v https://api.enterprise.apigee.com/v1/organizations/danger4242-eval \
+  -H <strong>"Authorization: Bearer B42CnTIYPxr...88NI5Q"</strong></pre>
+  </li>
+  <li>Combine commands to get the token and add it to the header:
+    <pre class="devsite-terminal"><strong>token=`get_token`;</strong> curl -H <strong>"Authorization: Bearer $token"</strong> \
+  https://api.enterprise.apigee.com/v1/organizations/ahamilton-eval</pre>
+  </li>
+  <li>Call <code>get_token</code> within the <code>curl</code> call:
+    <pre class="devsite-terminal">curl -H <strong>"Authorization: Bearer `get_token`"</strong> \
+  https://api.enterprise.apigee.com/v1/organizations/ahamilton-eval</pre>
+    <p>Note that <code>get_token</code> is surrounded by backticks (rather than single quotes) so
+    that it is executed.</p>
+  </li>
+</ul>
+
+  <p>These sample requests get details about the "ahamilton-eval" organization. For a complete list
+  of management API endpoints, see {{apiref}}.</p>
+
+  <h2>Using get_token with both OAuth2 and SAML</h2>
+
+  <p>The {{get_token}} utility can be used in both the OAuth2 and SAML flows to get an access
+  token and to refresh it.</p>
+
+  <p>However, if you use both flows, you may need to use a separate machine or get new tokens
+  periodically. For more information, see <a href="sametime">Use OAuth2 and SAML <em>at the same
+  time</em></a>.</p>
+
+{% endblock %}

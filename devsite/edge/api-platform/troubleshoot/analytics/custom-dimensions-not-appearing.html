@@ -1,0 +1,228 @@
+{% extends "_base.html" %} {% block title %}Custom Dimensions not appearing when multiple axgroups have been configured{% endblock %} {% block body %}
+
+<aside class="note">Was this troubleshooting playbook helpful? Please let us know
+  by clicking <a href="" class="google-feedback"
+   data-p="1636213" data-b="docsite" data-context="troubleshooting-feedback">
+  Send Feedback
+</a>.</aside>
+
+<h2>Symptom</h2>
+
+
+<p>
+The custom variable created using the
+  <a href="/api-platform/reference/policies/statistics-collector-policy">Statistics Collector
+  policy</a> is not visible under Custom Dimensions in the Analytics Custom Reports in the
+  Edge UI.</p>
+
+<h2 id="error">Error Message</h2>
+
+<p>
+The edge-postgres-server system log will have the following error after a restart for each
+  organization/environment combination where the path is missing:
+</p>
+
+<pre class="prettyprint">
+KeeperErrorCode = NoNode for
+/organizations/&lt;ORG>/environments/&lt;ENV>/properties
+2018-03-29 16:14:48,980 pool-10-thread-2 ERROR ZOOKEEPER -
+ZooKeeperServiceImpl.getData() : Could not get data for path:
+/organizations/<ORG>/environments/<ENV>/properties, reason:
+KeeperErrorCode = NoNode for
+/organizations/<orgname>/environments/<environment>/properties
+</pre>
+
+<h2>Possible Causes</h2>
+
+<table>
+  <tr>
+   <th>Cause</th>
+   <th>Description</th>
+   <th>Troubleshooting Instructions Applicable For</th>
+  </tr>
+  <tr>
+   <td>Zookeeper properties path is missing for organization and environment combination.</td>
+   <td>When the ZooKeeper path <code>/organizations/<ORG>/environments/<ENV>/properties</code>
+   is missing, custom dimensions can not be created.</td>
+   <td>Edge Private Cloud Users</td>
+  </tr>
+</table>
+
+<h2>Cause: ZooKeeper properties path is missing for organization and environment combination</h2>
+
+<h3>Diagnosis</h3>
+
+<p>
+Analytics is enabled for an organization-environment combination through this
+<a href="https://apidocs.apigee.com/management/apis/post/organizations/%7Borg_name%7D/environments/%7Benv_name%7D/analytics/admin">
+API call</a>, which populates the <code>/organizations/<ORG>/environments/<ENV>/properties</code>
+in the ZooKeeper tree. When this API fails, the edge-postgres-server component cannot create
+custom dimensions, and the following error will appear in its system.log:
+</p>
+
+<pre class="prettyprint">
+KeeperErrorCode = NoNode for
+/organizations/example/environments/prod/properties
+2018-03-29 16:14:48,980 pool-10-thread-2 ERROR ZOOKEEPER -
+ZooKeeperServiceImpl.getData() : Could not get data for path:
+/organizations/example/environments/prod/properties, reason:
+KeeperErrorCode = NoNode for
+/organizations/digi/environments/sandbox/properties
+</pre>
+
+<p>
+Typically this happens when an organization was on-boarded at a time when more than one
+analytics group existed that used the same postgres-server UUIDs. To check how many analytics
+groups exist, run the following API call:
+</p>
+
+<pre class="devsite-terminal">
+curl -u username:password "http://<var>management-server-host</var>:8080/v1/analytics/groups/ax"
+</pre>
+
+<p>
+If this API returns multiple groups, then it is most likely the cause of the issue.
+In the following example, notice that two groups exist, differentiated by only a hyphen:
+<strong>axgroup-001</strong> and <strong>axgroup001</strong>
+</p>
+
+<pre class="prettyprint">[ {
+  "name" : "axgroup-001",
+  "properties" : {
+  },
+  "scopes" : [ "VALIDATE~test" ],
+  "uuids" : {
+    "qpid-server" : [ "94c96375-1ca7-412d-9eee-80fda94f6e07" ],
+    "postgres-server" : [ "8ee86b70-5b33-44b6-b2f8-1b0ec0ec8d77" ]
+  },
+  "consumer-groups" : [ {
+    "name" : "consumer-group-001",
+    "consumers" : [ "94c96375-1ca7-412d-9eee-80fda94f6e07" ],
+    "datastores" : [ "8ee86b70-5b33-44b6-b2f8-1b0ec0ec8d77" ],
+    "properties" : {
+    }
+  } ],
+  "data-processors" : {
+  }
+}, {
+  "name" : "axgroup001",
+  "properties" : {
+  },
+  "scopes" : [ "example~prod" ],
+  "uuids" : {
+    "qpid-server" : [ "94c96375-1ca7-412d-9eee-80fda94f6e07" ],
+    "postgres-server" : [ "8ee86b70-5b33-44b6-b2f8-1b0ec0ec8d77" ]
+  },
+  "consumer-groups" : [ {
+    "name" : "consumer-group-001",
+    "consumers" : [ "94c96375-1ca7-412d-9eee-80fda94f6e07" ],
+    "datastores" : [ "8ee86b70-5b33-44b6-b2f8-1b0ec0ec8d77" ],
+    "properties" : {
+    }
+  } ],
+  "data-processors" : {
+  }
+</pre>
+
+
+<p>
+Specifically, the issue is caused if the postgres-server UUID that is configured for each
+axgroup is the same. A quick way to determine this is to run the following:
+</p>
+
+<pre class="devsite-terminal">
+curl -u username:password "http://<var>management-server-host</var>:8080/v1/analytics/groups/ax"|grep -B7 "postgres-server"
+</pre>
+
+<p>
+The following sample output quickly compare the postgres-server UUIDs to determine
+they are the same:
+</p>
+
+<pre class="prettyprint">
+{  "name" : "axgroup-001",  "properties" : {  },  "scopes" : [ "VALIDATE~test" ],
+"uuids" : {    "qpid-server" : [ "94c96375-1ca7-412d-9eee-80fda94f6e07" ],
+<strong>"postgres-server" : [ "8ee86b70-5b33-44b6-b2f8-1b0ec0ec8d77" ]</strong>--
+"name" : "axgroup001",  "properties" : {  },  "scopes" : [ "myorg~prod" ],
+"uuids" : {    "qpid-server" : [ "94c96375-1ca7-412d-9eee-80fda94f6e07" ],
+"aries-datastore" : [ ],    <strong>"postgres-server" : [ "8ee86b70-5b33-44b6-b2f8-1b0ec0ec8d77" ]</strong>,
+</pre>
+
+<h3>Resolution</h3>
+
+
+<p>
+The same set of PostgreSQL servers cannot be assigned to two <strong>axgroups</strong>.
+The quickest way to resolution is to delete the postgres server information from one axgroup
+and assign all scopes (organization, environment combinations) to the other group. To do this,
+follow these steps:
+</p>
+
+<ol>
+<li>Remove the postgres server components from one of the two axgroups using the instructions
+  at <a href="/api-platform/troubleshoot/analytics/add-remove-postgres-nodes">
+  Adding and deleting analytics components in analytics groups</a>.
+  If you are seeing problems only with non-production scopes, then choose the axgroup which
+  does NOT have any production scope for this exercise. Otherwise, choose the axgroup with the
+  least number of scopes.</li>
+
+<li>Remove all scopes from the axgroup that no longer has any postgres servers, and those
+  for which you are seeing the custom dimension issue from their axgroup. Assuming
+  <code>axgroup-001</code> from the example above is the group you want to use, you would
+  have to use the following to remove the scope for the <strong>myorg</strong> organization,
+  and the <strong>prod</strong> environment:
+
+<pre class="devsite-terminal">
+curl -u username:password -X DELETE 'http://<var>management-server-host</var>:8080/v1/analytics/groups/ax/axgroup001/scopes?org=myorg&env=prod'
+</pre></li>
+
+<li>Follow the instructions to
+  <a href="https://apidocs.apigee.com/management/apis/post/organizations/%7Borg_name%7D/environments/%7Benv_name%7D/analytics/admin">
+    enable analytics for an environment</a>.</li>
+
+<li>Restart the edge-postgres-server component on the postgres master node, and all
+  edge-qpid-server components you may have installed, using the following commands:
+
+<pre class="devsite-terminal">
+ /opt/apigee/apigee-service/bin/apigee-service edge-postgres-server restart
+</pre>
+<pre class="devsite-terminal">
+ /opt/apigee/apigee-service/bin/apigee-service edge-qpid-server restart
+</pre></li>
+
+<li>Verify that the error provided in the <a href="#error">Error Message</a> section above
+  no longer occurs in the Postgres server's log file
+  <code>/opt/apigee/var/log/edge-postgres-server/logs/system.log</code>.</li>
+
+<li>Confirm if the custom dimensions show up in the Edge UI.</li>
+</ol>
+
+<p>
+If the problem persists, go to <a href="#diagnostics">Must Gather Diagnostic Information</a>.
+</p>
+<h2 id="diagnostics">Must Gather Diagnostic Information</h2>
+
+
+<p>
+If the problem persists even after following the previous instructions, please gather the
+following diagnostic information. Contact and share them to <a href="https://support.apigee.com/">
+Apigee Support</a>:
+</p>
+<ol>
+<li>The edge-postgres-server <code>/opt/apigee/var/log/edge-postgres-server/logs/system.log</code>
+  from the time of the latest restart.</li>
+
+<li>The output of the following Management API call:
+<pre class="devsite-terminal">
+curl -u username:password "http://<var>management-server-host</var>:8080/v1/analytics/groups/ax"
+</pre></li>
+
+<li>The output of the ZooKeeper tree obtained using the following command:
+<pre class="devsite-terminal">
+/opt/apigee/apigee-zookeeper/contrib/zk-tree.sh > zktree-output.txt
+</pre>
+</li>
+
+</ol>
+
+{% endblock %}

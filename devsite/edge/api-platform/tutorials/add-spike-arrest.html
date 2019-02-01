@@ -1,0 +1,129 @@
+{% extends "_base.html" %}
+{% block title %}Add the Spike Arrest policy to your API{% endblock %}
+{% block body %}
+
+  <p><strong>What you'll learn</strong></p>
+
+  <p>Through this tutorial, you'll learn to:</p>
+
+  <ul>
+    <li>Add a policy that affect the request and response.</li>
+    <li>See the effects of the policy.</li>
+  </ul>
+
+  <p><strong>What you'll need</strong></p>
+
+  <ul>
+    <li>An evaluation account with a proxy. If you don't have one yet, you can sign up for an
+      account and create a proxy with the directions in <a href="/api-platform/get-started/get-started">Get started with Apigee Edge</a>.</li>
+    <li><a href="https://curl.haxx.se/" class="external">curl</a> installed on your machine to
+      make API calls from the command line.</li>
+  </ul>
+
+  <h2 id="spikearrestpolicy">Add the Spike Arrest policy</h2>
+
+  <p>In this tutorial, you'll add and configure the Spike Arrest policy to guard the target service
+  against sudden traffic spikes that can be caused by an increase in usage, buggy clients, or
+  malicious attacks. When the number of requests exceeds the rate limit, the API returns an
+  HTTP 500 error for a request.</p>
+
+    <p>Add the Spike Arrest policy to an API proxy:</p>
+
+    <ol>
+      <li>In the editor for the new API proxy, click the <strong>Develop</strong> tab.<br>
+        (If you're not in the API proxy editor, select <strong>APIs &gt; API Proxies &gt;
+        helloworld_policies</strong> in the management UI menu.)<br>
+        <p><img alt="" src="/api-platform/images/DevelopTab_v1.png"></p>
+        <p>The API Proxy Editor lets you see the structure of your API proxy and configure its flow.
+        The editor presents a visual representation of your proxy's request and response message
+        flow as well as an editable display of the underlying XML that defines the proxy.</p>
+      </li>
+      <li>In the left Navigator pane, click <strong>PreFlow</strong> under <strong>Proxy
+        Endpoints &gt; default</strong>. (Other tutorials will cover the concept of
+        <em>flows</em>.)</li>
+      <li>Click the top <strong>+Step</strong> button, corresponding to the Request PreFlow. This
+        displays a categorized list of all the policies you can create.
+        <p><img alt="Click Step in Request PreFlow" src="/api-platform/images/SelectStep_v3.png"></p>
+      </li>
+      <li>Select <strong>Spike Arrest</strong> in the Traffic Management category. The New Policy
+        dialog appears:
+        <p><img alt="Create Spike Arrest policy" src="/api-platform/images/SpikeArrest_v1.png"></p>
+      </li>
+      <li>Leave the default names, and click <strong>Add</strong>. The new policy is attached to
+        the PreFlow flow of a request.</li>
+      <li>In the Navigator, ensure that <strong>PreFlow</strong> under <strong>Proxy Endpoints
+        &gt; default</strong> is still selected and note the following in the API Proxy Editor:
+        <ul>
+          <li>The new Spike Arrest-1 policy is added under <strong>Policies</strong> in the
+            Navigator in the left side of the API Proxy Editor.</li>
+          <li>The Spike Arrest-1 icon is added to the <strong>Designer view</strong> in
+            the top center of the API Proxy Editor, which is a visual representation of your
+            proxy's message flows.</li>
+          <li>The XML for the policy is displayed in the <strong>Code view</strong> in
+            the bottom center of the API Proxy Editor.</li>
+        </ul>
+        <p><img alt="View PreFlow with Spike Arrest policy" src="/api-platform/images/SpikeArrestInProxyEditorPreFlow_v2a.png"></p>
+      </li>
+      <li>In the Navigator, select <strong>Spike Arrest-1</strong> under Policies and note the
+        following in the API Proxy Editor:
+        <ul>
+          <li>The policy details are displayed in the <strong>Designer view</strong> in the top
+            center of the API Proxy Editor.</li>
+          <li>The XML for the policy is displayed in the <strong>Code view</strong> in the bottom
+            center of the API Proxy Editor.</li>
+          <li>The XML element and attribute values for the policy are displayed in the
+            <strong>Property Inspector</strong> in the right side of the API Proxy Editor.</li>
+        </ul>
+        <p><img src="/api-platform/images/SpikeArrestInProxyEditorPreFlow_v2b.png"></p>
+      </li>
+      <li>
+        <p>In the XML for the policy, change the value of the
+        <code><strong>&lt;Rate&gt;</strong></code> element to <strong>1pm</strong> (which
+        translates into roughly 2 requests allowed every 60 seconds in the cloud).</p>
+        <aside class="note"><strong>Note:</strong> The behavior of Spike Arrest involves a smoothing
+        algorithm across multiple message processors, which affects the actual behavior your see.
+        If you want more details, see the <a href="/api-platform/reference/policies/spike-arrest-policy#Howitworks">Spike Arrest
+        policy reference</a> topic.</aside>
+        <p>You can specify the rate as an integer value per minute (<code>pm</code>) or per
+        second (<code>ps</code>). This is a very low limit and is used only for this tutorial to
+        demonstrate the policy. Typically, you set it to a much higher limit.</p>
+        <p>Notice that the Rate value in the Property Inspector also changes to 1pm.
+        Alternatively, you can change the <strong>Rate</strong> value in the Property Inspector
+        and it will be reflected in the XML view.</p>
+      </li>
+      <li>Click <strong>Save</strong> to save the current revision with your changes.</li>
+      <li>
+        <p>Call the API again using <code>curl</code>, substituting your Apigee organization name for
+        <var>org_name</var>:</p>
+        <pre class="devsite-terminal">curl "http://<var>org_name</var>-test.apigee.net/hellopolicies"</pre>
+        <aside class="key-point"><h3>TIP</h3> Use a JSON prettifier such as the json.tool
+          Python library to make your output look better in a terminal.</aside>
+        <p>For example:</p>
+        <pre class="devsite-terminal">curl "http://ahamilty-eval-test.apigee.net/hellopolicies" | python -m json.tool</pre>
+        <p>Make sure the request succeeds and you see the same XML response as you did previously.
+        (You can also enter just the URL in a web browser.)</p>
+      </li>
+      <li>Execute the <code>curl</code> command (or refresh the browser window) two or three more
+        times within one minute, and notice that you get the following message because you exceeded the
+        rate limit of the policy:
+        <pre class="prettyprint">{
+"fault": {
+  "faultstring":"Spike arrest violation. Allowed rate : 1pm",
+  "detail": {
+    "errorcode":"policies.ratelimit.SpikeArrestViolation"}
+  }
+}</pre>
+        <p>If you try making more calls within a minute, you should continue to get the fault
+        message.</p>
+      </li>
+      <li>Edit your policy to set the &lt;<code><strong>Rate&gt;</strong></code> limit to
+        <strong>15pm</strong> (which translates into roughly 2 calls allowed every 4 seconds in the
+        cloud), and then save the API proxy.</li>
+      <li>Run the <code>curl</code> command or refresh the browser repeatedly (cURL is faster).
+        Notice that if you make one or two calls within 4-second intervals, your calls succeed. If you
+        make the calls quickly, more than two in within 4 seconds, you should get the fault. But after
+        each 4-second interval you can continue making calls, as opposed to being blocked out for an
+        entire minute (with the 1pm setting).</li>
+    </ol>
+
+  {% endblock %}

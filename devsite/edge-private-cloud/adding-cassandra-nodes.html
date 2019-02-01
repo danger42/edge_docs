@@ -1,4 +1,4 @@
-{% extends "private-cloud/v4.18.05/_base.html" %}
+{% extends "private-cloud/v4.19.01/_base.html" %}
 {% block title %}Adding Cassandra nodes{% endblock %}
 {% block body %}
 
@@ -8,8 +8,8 @@
   <p>While you can add one or two Cassandra nodes to an existing Edge installation, Apigee
   recommends that you add three nodes at a time.</p>
 
-  <p>For a list of the system requirements for a Cassandra node, see <a href=
-  "installation-requirements">Installation Requirements</a>.</p>
+  <p>For a list of the system requirements for a Cassandra node, see
+  <a href="installation-requirements">Installation requirements</a>.</p>
 
   <h2 id="existingedgeconfiguration">Existing Edge configuration</h2>
 
@@ -116,8 +116,10 @@ ADMIN_EMAIL=opdk@google.com
     the <code>REGION</code> property. In this example, it is "dc-1":
       <ol>
         <li>On the first node, run:
-          <pre class="devsite-terminal">/opt/apigee/apigee-cassandra/bin/nodetool -h <var>nodeIP</var> rebuild <strong>dc-1</strong></pre>
+          <pre class="devsite-terminal">/opt/apigee/apigee-cassandra/bin/nodetool [-u <var>username</var> -pw <var>password</var>] -h <var>nodeIP</var> rebuild <strong>dc-1</strong></pre>
           <p>Where <var>nodeIP</var> is the IP address of the Cassandra node.</p>
+          <p>You only need to pass your username and password if you
+          <a href="how-monitor#cassauthenable">enabled JMX authentication for Cassandra</a>.</p>
         </li>
         <li>Repeat this step on the remaining new Cassandra nodes.</li>
       </ol>
@@ -146,12 +148,19 @@ ADMIN_EMAIL=opdk@google.com
     </li>
   </ol>
 
-  <h3 id="configureedge-freememoryontheexistingcassandranodes">Free memory on the existing
+  <h3 id="configureedge-freememoryontheexistingcassandranodes">Free disk space on existing
   Cassandra nodes</h3>
 
-  <p>On the existing Cassandra nodes, run the nodetool <code>cleanup</code> command to free up
-  memory:</p>
+  <p>After you add a new node, you can use the <code>nodetool cleanup</code> command on the
+  pre-existing nodes to free up disk space. This command clears configuration tokens that are no
+  longer owned by the pre-existing Cassandra node.</p>
 
-  <pre class="devsite-terminal">/opt/apigee/apigee-cassandra/bin/nodetool -h <var>cassandraIP</var> cleanup</pre>
+  <p>To free up disk space on pre-existing Cassandra nodes after adding a new node, execute the
+  following command:</p>
+
+  <pre class="devsite-terminal">/opt/apigee/apigee-cassandra/bin/nodetool [-u <var>username</var> -pw <var>password</var>] -h <var>cassandraIP</var> cleanup</pre>
+
+  <p>You only need to pass your username and password if you
+  <a href="how-monitor#cassauthenable">enabled JMX authentication for Cassandra</a>.</p>
 
 {% endblock %}

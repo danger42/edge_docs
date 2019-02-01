@@ -1,217 +1,150 @@
-  {% extends "_base.html" %} {% block title %}Managing proxy state with flow variables{% endblock %} {% block body %}
+{% extends "_base.html" %}
+{% block title %}Overview of flow variables{% endblock %}
+{% block body %}
 
-  <h2 id="whatyoulllearninthistopic">What you'll learn in this topic</h2>
+  <p><em>Flow variables</em> are pre-bound (or <em>pre-defined</em>) variables that, depending on
+  context, point to objects. Flow variables let you maintain state associated with an API transaction
+  processed by Apigee Edge.</p>
 
-  <p>This overview topic discusses how to access and use flow variables in Apigee Edge API proxies.
-  After reading this topic, you'll understand:</p>
+  <p>You use flow variables in policies, conditional flows, utilities such as {{trace}},
+  and other areas of Edge. For more information, see
+  <a href="#howareflowvariablesused">How flow variables are used</a>.</p>
 
-  <ul>
-    <li>What flow variables are</li>
-
-    <li>When and where flow variables are created</li>
-
-    <li>How to reference flow variables</li>
-
-    <li>Flow variable scopes and data types</li>
-
-    <li>How to access flow variables in policies</li>
-
-    <li>How to access flow variables JavaScript and Node.js code</li>
-
-    <li>How to create custom flow variables</li>
-  </ul>
-  <hr>
-
-  <aside class="note"><b>Sample:</b> If you'd like to jump directly to code samples, many of the
-  API proxy samples available on GitHub use flow variables. See "<a href=
-  "#relatedCodeSamples">Related code samples</a>" below for details.</aside>
-
-  <div class="video">
-    <p>Watch this video for an introduction to flow variables.</p>
-
-    <div style="text-align: left;">
-      <iframe allowfullscreen="" frameborder="0" height="315" src=
-      "https://www.youtube.com/embed/L3RF-au9gbs" width="560"></iframe>
-    </div>
-  </div>
+  <section class="expandable">
+    <h3 class="showalways hide-from-toc">Further Reading</h3>
+      <ul>
+        <li>Introduction to flow variables (video)
+          <div style="text-align: left;">
+          <iframe allowfullscreen="" frameborder="0" height="315" src=
+          "https://www.youtube.com/embed/L3RF-au9gbs" width="560"></iframe>
+          </div>
+        </li>
+        <li><a href="#relatedcodesamples">Related code samples:</a> Many of the API proxy samples
+          use flow variables</li>
+        <li>{{variables_reference}}: A complete list of all flow variables and their
+          properties</li>
+        <li>{{flow_configuration_reference}}: List of all elements used in flow configuration</li>
+      </ul>
+  </section>
 
   <h2 id="whatareflowvariables">What are flow variables?</h2>
 
-  <p>Flow variables are named references that hold <strong>state</strong> associated with an
-  API transaction processed by Apigee Edge. They exist within the context of an API proxy flow, and
-  they track state in an API transaction the way named variables track state in a software program.
-  Flow variables store information such as:</p>
+  <p>Flow variables exist within the context of an API proxy flow, and they track state in an API
+  transaction the way named variables track state in a software program. Flow variables store
+  information such as:</p>
 
   <ul>
-    <li>The IP address, headers, URL path, and payload sent from the requesting app</li>
-
+    <li>The content of a request or response</li>
+    <li>The IP address, headers, and URL path sent from the requesting app</li>
     <li>System information such as the date and time when Edge receives a request</li>
-
-    <li>Data derived when a policy executes. For example after a policy executes that validates an
-    OAuth token, Edge creates flow variables that hold information like the name of the requesting
-    application.</li>
-
+    <li>Data derived when a policy executes. For example, after a policy that validates an
+      OAuth token executes, Edge creates flow variables that hold information like the name of the
+      requesting application.</li>
     <li>Information about the response from the target system</li>
   </ul>
 
-  <p>Some variables are "built-in" to Edge and are automatically populated whenever an API request
-  is received. They are available throughout an API transaction. You can also create your own
-  custom variables using policies like AssignMessage or in JavaScript, Node.js, and Java code. As
-  you'll see, variables have scope, and where they are accessible depends in part on when they are
-  created in the API proxy flow. In general, when a variable is created, it is available to
-  policies and code that execute later in the API transaction flow.</p>
+  <p>Some variables are "pre-bound" and are automatically populated whenever an API request
+  is received. They are available throughout an API transaction.</p>
+
+  <p>You can also create your own custom variables using policies (such as the
+  {{assign_message_policy}}), or in JavaScript, Node.js, or Java code.</p>
+
+  <p>As you'll see, variables have scope, and where they are accessible depends in part on when they
+  are created in the API proxy flow. In general, when a variable is created, it is available to
+  all policies and code that execute later in the API transaction flow.</p>
 
   <h2 id="howareflowvariablesused">How are flow variables used?</h2>
 
   <p>Flow variable are used in <a href=
-  "/api-platform/develop/policy-attachment-and-enforcement.html">policies</a> and <a href=
-  "/api-platform/fundamentals/flow-variables-and-conditions.html">conditional flows</a>.
-  <strong>Policies</strong> can retrieve state from flow variables and use them to do their work.
-  For example, a VerifyAccessToken policy can retrieve the token to be verified from a flow
-  variable and then perform the verification on it. As another example, a JavaScript callout can
-  retrieve flow variables and encode the data contained within those variables. <strong>Conditional
-  flows</strong> can reference flow variables to direct the flow of an API through Edge, kind of
-  like the way a switch statement works in programming. For example, a policy to return a fault may
-  execute only when a particular flow variable is set. Finally, you can get and set flow variables
-  in a Node.js target application. </p>
+  "/api-platform/develop/policy-attachment-and-enforcement">policies</a> and <a href=
+  "/api-platform/fundamentals/flow-variables-and-conditions">conditional flows</a>:
+  <ul>
+    <li><strong>Policies</strong> can retrieve state from flow variables and use them to do their
+      work.
+      <p>For example, the {{verify_jwt_policy}} can retrieve the token to be verified from
+      a flow variable and then perform the verification on it. As another example, a
+      {{javascript_policy}} can retrieve flow variables and encode the data contained within
+      those variables.</p>
+      <p>Many policies create policy-specific flow variables as part of their normal execution. The
+      <a href="/api-platform/reference/policies/reference-overview-policy">Policy reference</a>
+      lists these policy-specific variables. For example, the {{quota_policy}} creates a set of
+      variables that contain information about quota counts and limits, expiry time, and so on.</p>
+      <p>Some policy variables are useful for debugging. You can use the {{trace}} tool, for
+      instance, to see which variables were set at a particular step in the proxy flow.</p>
+    </li>
+    <li><strong>Conditional flows</strong> can reference flow variables to direct the flow of an API
+      request through Edge, kind of like the way a switch statement works in programming.
+      <p>For example, a policy can check whether a request was a <code>GET</code> or a
+      <code>POST</code>. If it's a <code>GET</code>, then Edge can execute one set of conditions;
+      for <code>POST</code>, another set of conditions.</p>
+    </li>
+  </ul>
 
-  <p>Let's look at examples of how variables are used in each of these contexts.</p>
+  <h3>Overwrite flow variables</h3>
 
-  <h3 id="howareflowvariablesused-flowvariablesinpolicies">Flow variables in policies</h3>
+  <p>If you're not careful, you <em>can</em> overwrite flow variables. For example, you can overwrite
+  the {{request_object}} flow variable in a {{javascript_policy}} with the following line:</p>
 
-  <p>Some <a href=
-  "/api-platform/develop/policy-attachment-and-enforcement.html">policies</a> take flow
-  variables as input. For example, the following <a href=
-  "/api-platform/reference/policies/assign-message-policy.html">AssignMessage policy</a> takes
-  the value of the flow variable <code>client.ip</code> and puts it in a request header
-  called <code>My-Client-IP</code>. If added to the request flow, this policy sets a header
-  that is passed to the backend target. If set on the response flow, the header would be sent back
-  to the client app.</p>
-  <pre class="prettyprint">
-&lt;AssignMessage name="set-ip-in-header"&gt;
-    &lt;AssignTo createNew="false" transport="http" type="request"&gt;request&lt;/AssignTo&gt;
-    &lt;Set&gt;
-        &lt;Headers&gt;
-            &lt;Header name="My-Client-IP"&gt;{client.ip}&lt;/Header&gt;
-        &lt;/Headers&gt;
-    &lt;/Set&gt;
-    &lt;IgnoreUnresolvedVariables&gt;true&lt;/IgnoreUnresolvedVariables&gt;
-&lt;/AssignMessage&gt;
-</pre>
+  <pre class="prettyprint">context.setVariable("request", 42);</pre>
 
-  <p>For another example, when a <a href=
-  "/api-platform/reference/policies/quota-policy.html">Quota policy</a> executes, several flow
-  variables are populated with policy-related values. One of these variables is
-  called <code>ratelimit.my-quota-policy.used.count</code> (where <code>my-quota-policy</code> is
-  the name of the quota policy you're interested in). You might later execute a conditional flow
-  that says "if the current quota count is below 50% of maximum, and it's between 9 am and 5 pm,
-  enforce a different quota." This condition might depend on the value of the current quota count
-  and on a flow variable called <code>system.time</code>, which is one of the built-in Edge
-  variables.</p>
+  <p>While this definitely isn't recommended, it <em>is</em> valid. Overwriting top-level flow
+  variables like <code>request</code> and {{response_object}} can cause unpredictable results.</p>
 
-  <h3 id="howareflowvariablesused-flowvariablesinconditionalflows">Flow variables in conditional
-  flows</h3>
 
-  <p><a href="/api-platform/fundamentals/flow-variables-and-conditions.html">Conditional flows</a>
-  evaluate flow variables and enable proxies to behave dynamically. Conditions are typically used
-  to change the behavior of flows, steps, and route rules. Here's a conditional flow that evaluates
-  the value of the variable <code>request.verb</code> in a proxy flow step. In this case, if the
-  request verb is POST, the VerifyApiKey policy is executed. This is a common pattern used in API
-  proxy configurations.</p>
-  <pre class="prettyprint">
-&lt;PreFlow name="PreFlow"&gt;
-    &lt;Request&gt;
-        &lt;Step&gt;
-            &lt;Condition&gt;request.verb equals "POST"&lt;/Condition&gt;
-            &lt;Name&gt;VerifyApiKey&lt;/Name&gt;
-        &lt;/Step&gt;
-    &lt;/Request&gt;
-&lt;/PreFlow&gt;
-</pre>
+  <h2 id="understandingflowvariablescope">Flow variable scope</h2>
 
-  <p>Now, you might wonder, where do variables like <code>request.verb</code>,
-  <code>client.ip</code>, and <code>system.time</code> come from? When are they instantiated and
-  populated with a value? To help you understand when variables are created and when they're
-  available to you, we'll discuss variable scope next.</p>
+  <p>Flow variable <strong>scope</strong> is related to the flow or overall "life cycle" of an API
+  proxy call.</p>
 
-  <h3 id="howareflowvariablesused-flowvariablesinjavascriptcodecalledwiththejavascriptpolicy">Flow
-  variables in JavaScript code called with the JavaScript policy</h3>
+  <p>There are a couple of simple rules to know when considering the scope of a flow
+  variable and its properties.<br/><strong>All flow variables and their properties are:</strong></p>
 
-  <p>Using the JavaScript policy, you can execute JavaScript code from within the context of an API
-  proxy flow. JavaScript that is executed by this policy uses the Apigee <a href=
-  "/api-platform/reference/javascript-object-model.html">JavaScript Object Model</a>, which
-  provides your custom code access to request, response, and context objects associated with the
-  API proxy flow in which your code is executing. For example, this code sets a response header
-  with the value obtained from the flow variable target.name.</p>
-  <pre class="prettyprint">
-context.setVariable("response.header.X-Apigee-Target", context.getVariable("target.name"));
-</pre>
+  <ol>
+    <li><strong>Global:</strong> You can access any flow variable from any context, as long as the
+      variable has been defined.</li>
+    <li><strong>Available in remaining contexts:</strong> <em>Starting with the step in the flow in
+      which they were defined</em>, all flow variables and their properties are accessible in all
+      the remaining contexts in the API proxy.
+      <p>For example, the {{response_object}} flow variable is defined in the TargetEndpoint
+      response. As a result, it is available in both the TargetEndpoint response and the
+      ProxyEndpoint response. The <code>response</code> flow variable is <em>not</em> available in
+      the TargetEndpoint request or the ProxyEndpoint request.</li>
+  </ol>
 
-  <p>This techniqe of using JavaScript to read and set variables is similar to the work you can do
-  with the AssignMessage policy (shown previously). It's just another way to accomplish the same
-  kinds of things on Edge. The key to remember is that JavaScript executed by the JavaScript policy
-  has access to all the flow variables that are exist and are in <a href=
-  "#FlowVariableScope">scope</a> within the API proxy flow.</p>
+  <p>The following image shows where in the proxy request each flow variable is populated by
+  Edge and becomes available to your conditional statements and policies:</p>
 
-  <h3 id="howareflowvariablesused-flowvariablesinnodejscode">Flow variables in Node.js code</h3>
 
-  <p>By requiring the <code>apigee-access</code> module, you can set and access flow variables from
-  within Node.js code that is deployed to Edge.</p>
+  <p><img src="/api-platform/images/flows/vars-added-to-scope.png"/></p>
 
-  <p>Here's a simple example where a variable called <code>custom.foo</code> is set to the value
-  <code>Bar</code>. Once set, this new variable becomes available to any policies or other code
-  that occurs in the proxy flow after the Node.js code executes.</p>
-  <pre class="prettyprint">
-var http = require('http');
-var apigee = require('apigee-access');
-
-http.createServer(function (request, response) {
-  apigee.setVariable(request, "custom.foo", "Bar");
-  response.writeHead(200, {'Content-Type': 'text/plain'});
-  response.end('Hello World\n');
-}).listen(8124);
-
-console.log('Server running at http://127.0.0.1:8124/');
-</pre>
-
-  <p>You can read more about using <code>apigee-access</code> to work with variables in <a href=
-  "/api-platform/nodejs/access-flow-variables-nodejs.html">Accessing flow variables in
-  Node.js</a>.</p>
-
-  <h2 id="understandingflowvariablescope"><a id="FlowVariableScope" name=
-  "FlowVariableScope"></a>Understanding flow variable scope</h2>
-
-  <p>Variable <strong>scope</strong> is related to the flow or overall "life cycle" of an API proxy
-  call.</p>
-
-  <h3 id="understandingflowvariablescope-visualizingtheflowofanapiproxy">Visualizing the flow of an
-  API proxy</h3>
+  <h3 id="visual-flow">Visualize the flow of an API proxy</h3>
 
   <p>To understand flow variable scope, it's important to understand or visualize the way messages
-  flow through an API proxy. An API proxy consists of a series of message processing steps
-  organized as a flow. At every step in a proxy flow, the proxy evaluates information available to
-  it and decides what to do next. Along the way, the proxy may execute <a href=
-  "/api-platform/develop/policy-attachment-and-enforcement.html">policy code</a> or perform
-  <a href="/api-platform/reference/conditions-reference.html">conditional branching</a>.</p>
+  flow through an API proxy:</p>
+
+  <ol>
+    <li>An API proxy consists of a series of message processing steps organized as a flow.</li>
+    <li>At every step in a proxy flow, the proxy evaluates information available to
+      it and decides what to do next.</li>
+    <li>Along the way, the proxy may execute <a href=
+    "/api-platform/develop/policy-attachment-and-enforcement">policies</a> or perform
+    <a href="/api-platform/reference/conditions-reference">conditional branching</a>.</li>
+  </ol>
 
   <p>The following figure illustrates this sequence of flows. Notice how the flows are composed of
   four main segments: ProxyEndpoint <em>request</em>, TargetEndpoint <em>request</em>,
-  TargetEndpoint <em>response</em>, and ProxyEndpoint <em>response</em>. </p>
+  TargetEndpoint <em>response</em>, and ProxyEndpoint <em>response</em>.</p>
 
   <p><img alt="" src="/api-platform/images/proxy_flow_diagram2.png"></p>
 
-  <p>Keep this flow structure in mind as we begin to explore flow variables through the rest of
-  this topic.</p>
 
-  <aside class="note"><b>Note:</b> If you'd like to read about proxy flow structure in more detail,
-  see <a href="/api-platform/fundamentals/flow-configurations.html">Configuring flows</a>.</aside>
+  <h3 id="scope-flow">How variable scope is related to proxy flow</h3>
 
-  <h3 id="understandingflowvariablescope-howvariablescopeisrelatedtoproxyflow">How variable scope
-  is related to proxy flow</h3>
-
-  <p>As soon as you can visualize how messages flow through a proxy, as described previously, you
+  <p>As soon as you can visualize how messages flow through a proxy, you
   can begin to understand variable scope. By scope, we mean the point in the proxy flow life cycle
-  when a variable is first instantiated.  For example, if you have a policy attached to the
+  when a variable is first instantiated.</p>
+
+  <p>For example, if you have a policy attached to the
   ProxyEndpoint request segment, that policy will not be able to access any variables that are
   scoped to the TargetEndpoint request segment. The reason for this is that the TargetEndpoint
   request segment of the flow has not executed yet, so the API proxy hasn't had a chance to
@@ -220,295 +153,335 @@ console.log('Server running at http://127.0.0.1:8124/');
   <p>The following table lists the complete set of variable scopes and indicates when in the proxy
   flow they become available.</p>
 
-  <aside class="note"><b>Note:</b> After a flow variable is populated within its given scope, it
-  remains available through the rest of the proxy flow life cycle. If you try to access a variable
-  that is not yet in scope, you will receive an error or a NULL value.</aside>
+  <aside class="note">
+    <h3 class="hide-from-toc">NOTE</h3>After a flow variable is populated within
+    its given scope, it remains available through the rest of the proxy flow life cycle. If you try to
+    access a variable that is not yet in scope, you will receive an error or a NULL value.
+  </aside>
 
-  <table width="600">
+  <table>
     <tbody>
       <tr>
-        <th width="15%">Variable scope</th>
-
-        <th width="33%">Where these variables are populated</th>
+        <th>Variable scope</th>
+        <th>Where these variables are populated</th>
       </tr>
-
       <tr>
         <td>proxy request</td>
-
         <td>The ProxyEndpoint request segment</td>
       </tr>
-
       <tr>
         <td>target request</td>
-
         <td>The TargetEndpoint request segment</td>
       </tr>
-
       <tr>
         <td>target response</td>
-
         <td>The TargetEndpoint response segment</td>
       </tr>
-
       <tr>
         <td>proxy response</td>
-
         <td>The ProxyEndpoint response segment</td>
       </tr>
-
       <tr>
         <td>always available</td>
-
         <td>As soon as the proxy receives a request. These variables are available through the
         entire proxy flow life cycle.</td>
       </tr>
     </tbody>
   </table>
 
-  <p>For example, there's a built-in Edge variable called <code>client.ip</code>. This variable has
-  "proxy request" scope. It is automatically populated with the IP address of the client that
-  called the proxy. It is populated when a request first hits the ProxyEndpoint and remains
-  available through the entire proxy flow life cycle.</p>
+  <p>For example, the pre-bound variable {{client_object}} has a property called <code>ip</code>.
+  This property is automatically populated with the IP address of the client that called the proxy.
+  This property has "proxy request" scope: it is populated when a request first hits the
+  ProxyEndpoint and remains available through the entire proxy flow life cycle.</p>
 
-  <aside class="note"><b>Note:</b> Scopes for all the built-in Edge variables are listed in the
-  <a href="/api-platform/reference/variables-reference.html">Variables reference</a>.</aside>
+  <p>Another pre-bound flow variable, {{target_object}}, has a <code>url</code> property.
+  <code>target.url</code> is populated in the TargetEndpoint request segment with the request URL sent
+  to the backend target. This property's scope is "target request". If you try to access
+  <code>target.url</code> in the ProxyEndpoint request segment, you will receive a NULL value.
+  If you try to set this variable before it is in scope, the proxy does nothing; it does not
+  generate an error and does not set the variable.</p>
 
-  <p>There's another built-in variable called <code>target.url</code>. This variable's scope is
-  "target request". It is populated in the TargetEndpoint request segment with the request URL sent
-  to the back-end target. If you try to access <code>target.url</code> in the ProxyEndpoint request
-  segment, you will receive a NULL value. If you try to set this variable before it is in scope,
-  the proxy does nothing&#8212;does not generate an error and does not set the variable. </p>
-
-  <aside class="note"><b>Note:</b> It's possible to configure some policies to either throw an
-  error or return NULL when an undefined variable is accessed. Refer to individual policy reference
-  pages for details.</aside>
+  <aside class="note"><h3 class="hide-from-toc">NOTE</h3>It's possible to configure some policies,
+  such as {{assign_message_policy}}, to either throw an error or return NULL when an undefined
+  variable is accessed. Refer to individual policy reference pages for details.</aside>
 
   <p>Here's a simple example that demonstrates how to think about variable scope. Suppose you want
-  to copy the entire contents of a request object (headers, parameters, body) and assign it to the
-  response payload to be sent back to the calling app. You can use the <a href=
-  "/api-platform/reference/policies/assign-message-policy.html">AssignMessage policy</a> for this
-  task. The policy code looks like this:</p>
-  <pre class="prettyprint">
-&lt;AssignMessage name="CopyRequestToResponse"&gt;
-    &lt;AssignTo type="response" createNew="false"&gt;response&lt;/AssignTo&gt;
-    &lt;Copy source="request"/&gt;
-&lt;/AssignMessage&gt;
-</pre>
+  to copy the entire contents of a {{request_object}} (headers, parameters, body) and assign it to the
+  response payload to be sent back to the calling app. You can use the {{assign_message_policy}} for
+  this task. The policy code looks like this:</p>
 
-  <p>This policy simply copies the <code>request</code> object and assigns it to the
-  <code>response</code> object. But where should this policy be placed in the proxy flow? The
+  <pre class="prettyprint">{% include "api-platform/fundamentals/examples/conditions/simple-assign-message.xml" %}</pre>
+
+  <p>This policy simply copies the {{request_object}} object and assigns it to the
+  {{response_object}} object. But where should this policy be placed in the proxy flow? The
   answer is that it must be placed on the TargetEndpoint response, because the scope of the
   response variable is "target response."</p>
 
-  <h2 id="referencingflowvariables">Referencing flow variables</h2>
+  <h2 id="referencingflowvariables">Reference flow variables</h2>
 
-  <p>All built-in variables in Apigee Edge follow a dot-notation naming convention. This convention
-  makes it easier to determine the purpose of the variable. For example
-  <code>system.time.hour</code> and <code>request.content</code>.</p>
+  <p>All pre-bound flow variables in Apigee Edge follow a dot-notation naming convention.</p>
 
-  <aside class="note"><b>Note:</b> Apigee considers following this naming convention a best
-  practice whenever you create your own custom flow variables. It can be useful to use the dots to
-  organize your custom variables. For example <code>approval.code</code> and
-  <code>approval.status</code> both might refer to an approval feature within the flow. Apigee uses
-  reserved prefixes like request, target, system, and response to organize relevant variables
-  appropriately.</aside>
+  <p>The exact syntax that you use to reference a flow variable depends on the context. For example,
+  within a policy configuration you use curly braces around flow variables and their properties. The
+  following table describes how you reference flow variables depending on the context:</p>
 
-  <p>When you reference a variable in a policy, you must enclose it in curly braces. For example,
-  this simple AssignMessage policy takes the value of the variable <code>client.ip</code> and puts
-  it in a request header called Client-IP.</p>
-  <pre class="prettyprint">
-&lt;AssignMessage name="set-ip-in-header"&gt;
-    &lt;AssignTo createNew="false" transport="http" type="request"&gt;request&lt;/AssignTo&gt;
-    &lt;Set&gt;
-        &lt;Headers&gt;
-            &lt;Header name="Client-IP"&gt;{client.ip}&lt;/Header&gt;
-        &lt;/Headers&gt;
-    &lt;/Set&gt;
-    &lt;IgnoreUnresolvedVariables&gt;true&lt;/IgnoreUnresolvedVariables&gt;
-&lt;/AssignMessage&gt;
-</pre>
+    <table>
+    <thead>
+      <tr>
+        <th>Context</th>
+        <th>Syntax</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Policy</td>
+        <td>
+          <strong>Syntax:</strong> Enclosed in curly braces:
+          <pre>{client.ip}</pre>
+          <hr/>
+          <p>The following example {{assign_message_policy}} takes the value of
+          <code>client.ip</code> and puts it in a request header called <code>Client-IP</code>:</p>
+          <pre class="prettyprint">{% include "api-platform/fundamentals/examples/conditions/flow-vars-in-policy.xml" %}</pre>
+          <p>Some policies take flow variables as input. The following example
+          takes the value of the {{client_object}} flow variable's <code>ip</code> property and puts
+          it in a request header called <code>My-Client-IP</code>:</p>
+          <pre class="prettyprint">{% include "api-platform/fundamentals/examples/conditions/am-ip.xml" %}</pre>
+          <p>If you add the policy to the <em>request</em> flow, it sets a header that is passed to
+          the backend target. If you add the policy to the <em>response</em> flow, the header is
+          sent back to the client app.</p>
+          <p>As another example, when a {{quota_policy}} executes, several flow variables are populated
+          with policy-related values. One of these variables is called
+          <code>ratelimit.<var>policy_name</var>.used.count</code> (where <var>policy_name</var> is
+          the value of the policy's <code>name</code> attribute) in its configuration file.</p>
+          <p>You might later execute a conditional flow
+          that says "if the current quota count is below 50% of maximum, and it's between 9 am and 5 pm,
+          enforce a different quota." This condition might depend on the value of the current quota count
+          and on the {{system_object}} flow variable, which is one of the pre-bound Edge variables.</p>
+        </td>
+      </tr>
+      <tr>
+        <td>Conditional&nbsp;flow</td>
+        <td>
+          <strong>Syntax:</strong> Curly braces are not necessary:
+          <pre>client.ip</pre>
+          <hr/>
+          The following example evaluates <code>request.header.accept</code> in a
+          conditional flow:
+          <pre class="prettyprint">{% include "api-platform/fundamentals/examples/conditions/flow-step.xml" %}</pre>
+          <p><a href="/api-platform/fundamentals/flow-variables-and-conditions">Conditional flows</a>
+          evaluate flow variables and enable proxies to behave dynamically based on the values of those
+          variables. Conditions are typically used to change the behavior of flows, steps, and route
+          rules.</p>
+          <p>Here's a conditional flow that evaluates
+          the value of the {{request_object}} variable's <code>verb</code> property in a proxy flow step:</p>
+          <pre class="prettyprint">{% include "api-platform/fundamentals/examples/conditions/conditional-verb.xml" %}</pre>
+          <p>In this example, if the request verb is "POST", the {{verify_api_key_policy}}
+          executes. This is a common pattern used in API proxy configurations.</p>
+        </td>
+      </tr>
+      <tr>
+        <td>Javascript code</td>
+        <td>
+          <strong>Syntax:</strong> Usually wrapped in quotes within a getter/setter:
+          <pre>"client.ip"</pre>
+          <hr/>
+          <p>For example:</p>
+          <pre class="prettyprint">context.setVariable("request.verb", "GET");</pre>
+          <p>With the {{javascript_policy}}, you can execute JavaScript code from within the context of an
+          API proxy flow. JavaScript executed by this policy uses the Apigee {{javascript_object_model}},
+          which provides your custom code access to the following objects in the API proxy flow in which
+          your code is executing:</p>
+          <ul>
+            <li>{{request_object}}</li>
+            <li>{{response_object}}</li>
+            <li><code>context</code> object (part of Edge's {{jom}}</li>
+          </ul>
+          <p>The following example sets a response header with the value obtained from
+          <code>target.name</code>:</p>
+          <pre class="prettyprint">context.setVariable("response.header.X-Apigee-Target",
+  context.getVariable("<strong>target.name</strong>"));</pre>
+          <p>This technique of using JavaScript to read and set variables is similar to the work you
+          can do with the {{assign_message_policy}}. It's just another way to accomplish the same
+          kinds of things on Edge. The key to remember is that JavaScript executed by the
+          {{javascript_policy}} has access to <em>all</em> the flow variables and are
+          <a href="#understandingflowvariablescope">in scope</a> within the API proxy flow.</p>
+          <p>For more information, see:</p>
+          <ul>
+            <li><a href="#variablesInJavascript">Working with variables in JavaScript</a></li>
+            <li>{{javascript_policy}}</li>
+          </ul>
+        </td>
+      </tr>
+      <tr>
+        <td>Java code</td>
+        <td>
+          <strong>Syntax:</strong> Usually wrapped in quotes within a getter/setter:
+          <pre>"client.ip"</pre>
+          <p>You can get and set flow variables with Java by using the {{java_callout_policy}}.
+          For more information, see
+          <a href="/api-platform/samples/cookbook/how-use-properties-java-callout">How to use
+          properties in a Java callout</a>.</td>
+      </tr>
+      <tr>
+        <td>Node.js</td>
+        <td>
+          <strong>Syntax:</strong> Usually wrapped in quotes within a getter/setter:
+          <pre>"client.ip"</pre>
+          <p>You can get, set, and delete flow variables from Node.js code deployed to Edge. All you
+          need to do is "require" the <code>apigee-access</code> module in your code. For details,
+          see <a href="/api-platform/nodejs/access-flow-variables-nodejs">Accessing flow variables
+          in Node.js</a>.
+          <p>The following simple example sets <code>custom.foo</code> to "Bar". Once set, the
+          <code>custom</code> variable's <code>foo</code> property becomes available to any policies
+          or other code that occurs in the proxy flow after the Node.js code executes.</p>
+          <pre class="prettyprint">var http = require('http');
+var apigee = require('apigee-access');
 
-  <p>In conditional flows, the curly braces are not necessary. For example, this condition
-  evaluates the variable <code>request.header.accept</code>.</p>
-  <pre class="prettyprint">
-&lt;Step&gt;   
-    &lt;Condition&gt;request.header.accept = "application/json"&lt;/Condition&gt;   
-    &lt;Name&gt;XMLToJSON&lt;/Name&gt; 
-&lt;/Step&gt;
-</pre>
+http.createServer(function (request, response) {
+  apigee.setVariable(request, "custom.foo", "Bar");
+  response.writeHead(200, {'Content-Type': 'text/plain'});
+  response.end('Hello World\n');
+}).listen(8124);
 
-  <p>You can also reference flow variables in JavaScript and Java code. For more information, see
-  "<a href="#variablesInJavascript">Working with variables in JavaScript</a>" later in this topic.
-  See also <a href="/api-platform/nodejs/access-flow-variables-nodejs.html">Accessing flow
-  variables in Node.js</a>.</p>
+console.log('Server running at http://127.0.0.1:8124/');</pre>
+            <p>You can read more about using <code>apigee-access</code> to work with variables in <a href=
+            "/api-platform/nodejs/access-flow-variables-nodejs">Accessing flow variables in Node.js</a>.</p>
+          </td>
+      </tr>
+    </tbody>
+  </table>
 
-  <h2 id="datatypeofflowvariables">Data type of flow variables</h2>
-
-  <p>Flow variables have a well-defined data type, such as string, long, integer, boolean, and
-  collection. You can find the data types listed for each built-in Edge flow variable in the
-  <a href="/api-platform/reference/variables-reference.html">Variables reference</a>. For
-  policy-created variables, refer to the specific policy reference topic for data type information.
-  Finally, variables you create manually assume the type given when they were created, and depend
-  on the types of values that are allowed. For example, variables created in Node.js code are
-  restricted to number, String, boolean, null, or undefined.</p>
-
-  <h2 id="usingflowvariablesinpolicies">Using flow variables in policies</h2>
-
-  <p>Many policies create flow variables as part of their normal execution. The <a href=
-  "/api-platform/reference/policies/reference-overview-policy.html">Policy reference</a> documents
-  all of these policy-specific variables. As you work with proxies and policies, be sure to consult
-  the Policy reference to find out which variables are created and what they are used for. For
-  example, the Quota policy creates a set of variables, that contain information about quota counts
-  and limits, expiry time, and so on. See the section "Policy-specific variables" in <a href=
-  "/api-platform/reference/policies/quota-policy.html">Quota policy</a> for the complete list. Some
-  policy variables are useful for debugging. You can use the Trace tool, for instance, to see which
-  variables were set at a particular instance in a proxy flow.</p>
-
-  <p>The <a href=
-  "/api-platform/reference/policies/extract-variables-policy.html">ExtractVariables</a> policy lets
-  you populate custom variables with data extracted from messages. You can extract query
-  parameters, headers, and other data. For example, you can parse request and response messages
-  using patterns to extract specific data from the messages.</p>
-
-  <p>In this example, ExtractVariables is used to parse a response message and store specific data
-  taken from the response. Two custom variables are created and assigned values. The variables are
-  called <code>geocoderesponse.latitude</code> and <code>geocoderesponse.longitude</code>.</p>
-  <pre class="prettyprint">
-&lt;ExtractVariables name="ParseGeocodingResponse"&gt; 
-  &lt;Source&gt;response&lt;/Source&gt; 
-  &lt;VariablePrefix&gt;geocoderesponse&lt;/VariablePrefix&gt; 
-  &lt;JSONPayload&gt; 
-    &lt;Variable name="latitude"&gt; 
-      &lt;JSONPath&gt;$.results[0].geometry.location.lat&lt;/JSONPath&gt; 
-    &lt;/Variable&gt; 
-    &lt;Variable name="longitude"&gt; 
-      &lt;JSONPath&gt;$.results[0].geometry.location.lng&lt;/JSONPath&gt; 
-    &lt;/Variable&gt; 
-  &lt;/JSONPayload&gt; 
-&lt;/ExtractVariables&gt;
-</pre>
-
-  <p>Again, be aware that many policies automatically create variables. You can access those
-  variables within the proxy flow context, and they are documented in the Policy reference under
-  each individual policy topic.</p>
-
-  <h2 id="workingwithflowvariablesinjavascriptcode"><a id="variablesInJavascript" name=
-  "variablesInJavascript"></a>Working with flow variables in JavaScript code</h2>
+  <h3 id="variablesInJavascript">Use flow variables in JavaScript</h3>
 
   <p>You can access and set variables directly in JavaScript code that is executing in the context
-  of an API proxy. Through the Apigee <a href=
-  "/api-platform/reference/javascript-object-model.html">JavaScript Object Model</a>, JavaScript
-  executing on Edge has direct access to proxy flow variables.</p>
+  of an API proxy. You do this from the {{javascript_policy}}. Through the Apigee
+  {{javascript_object_model}}, JavaScript executing on Edge has direct access to flow variables.</p>
 
-  <aside class="note"><b>Note:</b> You can call JavaScript from a proxy using the JavaScript
-  policy, as explained in <a href=
-  "/api-platform/reference/policies/javascript-policy.html">JavaScript policy</a>.</aside>
-
-  <p>To access variables in JavaScript code, call getter/setter methods on any of these
-  objects:</p>
+  <p>To access variables in JavaScript code, call getter/setter methods on any of these objects:</p>
 
   <ul>
-    <li><code>proxyRequest</code></li>
-
-    <li><code>targetRequest</code></li>
-
-    <li><code>targetResponse</code></li>
-
-    <li><code>proxyResponse</code></li>
-
     <li><code>context</code></li>
+    <li><code>proxyRequest</code></li>
+    <li><code>proxyResponse</code></li>
+    <li><code>targetRequest</code></li>
+    <li><code>targetResponse</code></li>
   </ul>
 
   <p>As you can see, these object references map to the familiar segments of the proxy flow model
-  as explained previously in "Visualizing the flow of an API proxy."</p>
+  as explained previously in <a href="#visual-flow">Visualizing the flow of an API proxy</a>.</p>
 
   <p>The <code>context</code> object corresponds to "globally" available variables, such as system
-  variables. For example, you can call getVariable() on the <code>context</code> object to get the
-  current year:</p>
-  <pre class="prettyprint">
-var year = context.getVariable('system.time.year');
-</pre>
+  variables. For example, you can call <code>getVariable()</code> on the <code>context</code> object
+  to get the current year:</p>
 
-  <p>Similarly, you can call setVariable() to set the value of a custom variable or for any
-  <em>writable</em> out-of-the-box variables. Here, we create a custom variable called
-  <code>organization.name.myorg</code> and assign a value to it.</p>
-  <pre class="prettyprint">
-var org = context.setVariable('organization.name.myorg', value);
-</pre>
+  <pre class="prettyprint">var year = context.getVariable("system.time.year");</pre>
+
+  <p>Similarly, you can call <code>setVariable()</code> to set the value of a custom variable or for
+  any <em>writable</em> flow variable.</p>
+
+  <p>The following example creates a custom variable called <code>organization.name.myorg</code>
+  and assigns a value to it:</p>
+
+  <pre class="prettyprint">var org = context.setVariable('organization.name.myorg', value);</pre>
 
   <p>Because this variable is created with the <code>context</code> object, it will be available to
   all flow segments (essentially, this is like creating a global variable).</p>
 
-  <aside class="note"><b>Note:</b> The Variables reference indicates which variables are writable
-  and which are read-only. See <a href="/api-platform/reference/variables-reference.html">Variables
-  reference</a>. For information about the JavaScript Object Model, see <a href=
-  "/api-platform/reference/javascript-object-model.html">JavaScript object model</a>.</aside>
+  <aside class="note"><h3 class="hide-from-toc">NOTE</h3> The {{variables_reference}} indicates which
+  variables are writable and which are read-only. For information about the JavaScript Object Model,
+  see {{jom}}.</aside>
 
-  <p>You can also get/set proxy flow variables in Java code that you execute with the JavaCallout
-  policy. For more information, see <a href=
-  "/api-platform/reference/policies/java-callout-policy.html">Java Callout policy</a>.</p>
+  <h2 id="datatypeofflowvariables">Data types of flow variables</h2>
 
-  <h2 id="accessingflowvariablesinnodejsapplications"><a id="flowVariableNodejs" name=
-  "flowVariableNodejs"></a>Accessing flow variables in Node.js applications</h2>
+  <p>Flow variables are typically complex data types (objects). Each property of a flow variable
+  has a well-defined data type, such as String, Long, Integer, Boolean, or Collection. You can find
+  the data types listed in the {{variables_reference}}. For variables that were created by a policy,
+  refer to the specific policy reference topic for data type information.</p>
 
-  <p>You can get, set, and delete flow variables from Node.js code deployed to Edge. All you need
-  to do is "require" the apigee-access module in your code. For details, see <a href=
-  "/api-platform/nodejs/access-flow-variables-nodejs.html">Accessing flow variables in
-  Node.js</a>.</p>
+  <p>Custom flow variables assume the type given when they were created, and depend
+  on the types of values that are allowed. For example, variables created in Node.js code are
+  restricted to Number, String, Boolean, null, or undefined.</p>
+
+  <h2 id="custom">Create custom flow variables</h2>
+
+  <p>The {{extract_variables_policy}} lets you create custom flow variables and populate them with
+  data extracted from messages. You can extract all the same data that the pre-bound flow
+  variables can, such as query parameters, headers, and other data. For example, you can parse
+  request and response messages using patterns to extract specific data from the messages.</p>
+
+  <p>In the following example, the Extract Variables policy parses a response message and stores
+  specific data taken from the response:</p>
+
+  <pre class="prettyprint">{% include "api-platform/fundamentals/examples/conditions/em-custom.xml" %}</pre>
+
+  <p>In this example, the policy creates a custom flow variable,
+  <code>geocoderesponse</code>, with two properties, <code>latitude</code> and
+  <code>longitude</code>. The policy assigns values to these properties.
+
+  <p>Again, be aware that many policies have their own policy-specific properties. You can access
+  those properties within the proxy flow context, and they are documented in the policy reference
+  under each individual policy topic.</p>
+
+  <p>When you create custom flow variables, be sure to use the following guidelines:</p>
+
+  <ul>
+    <li>Do not use an existing flow variable name for your custom variable. The results can be
+      unpredictable. Apigee reserves the following names for the pre-bound flow variables:
+      {% include "includes/flow-variables/_all.html" %}
+    </li>
+    <li>Apigee recommends that you use dot-notation when you create and use custom flow variables.
+      It can be useful to use the periods to organize a hierarchy of your custom variables.
+      <p>For example, <code>approval.code</code> and <code>approval.status</code> both might refer to
+      an approval feature within the flow.</p>
+    </li>
+  </ul>
+
 
   <h2 id="whatyouneedtoremember">What you need to remember</h2>
 
   <p>Here are a few important things to remember about flow variables:</p>
-
   <ul>
-    <li>Some "out-of-the-box" variables are instantiated and populated automatically by the proxy
-    itself. These are documented in the <a href=
-    "/api-platform/reference/variables-reference.html">Variables reference</a>.</li>
-
-    <li>You can create custom variables that are available for use in the proxy flow. It's possible
-    to create variables using policies like AssignMessage and JavaScript, and in Node.js
-    code. </li>
-
-    <li>Variables have scope. For example, some variables are automatically populated when the
-    first proxy receives a request from an app. Other variables are populated in the response flow
-    segment of the proxy. These response variables remain undefined until the response segment
-    executes.</li>
-
+    <li>Some variables are "pre-bound": Edge instantiates and populates them automatically. These
+      are documented in the {{variables_reference}}.</li>
+    <li>Flow variables and properties have scope. For example, some variables are automatically
+      populated when the first proxy receives a request from an app. Other variables are populated
+      in the response flow segment of the proxy. These response variables remain undefined until the
+      response segment executes.</li>
     <li>When policies execute, they can create and populate policy-specific variables. The
-    documentation for each policy lists all of these relevant policy-specific variables. 
-     </li>
-
-    <li>Conditional flows typically evaluate one or more variables. You need to understand
-    variables if you want to create conditional flows.  </li>
-
-    <li>Many policies use variables as input or output. Perhaps a variable that is created by one
-    policy is later used by another. </li>
-
-    <li>You can get and set many flow variables from within Node.js, straight <a href=
-    "/api-platform/reference/javascript-object-model.html">JavaScript,</a> or <a href=
-    "/api-platform/reference/policies/java-callout-policy.html">Java</a> code executing on
-    Edge.</li>
+      documentation for each policy lists all of these relevant policy-specific variables.</li>
+    <li>Conditional flows typically evaluate one or more variables. You must understand
+      variables if you want to create conditional flows.</li>
+    <li>Many policies use variables as input or output. For example, one policy might create a
+      custom variable and another policy might use its value.</li>
+    <li>You can get and set many flow variables from within Node.js by using straight JavaScript
+      (and our {{javascript_object_model}}) or the {{java_callout_policy}}, which executes code
+      on Edge).</li>
+    <li>You can create custom variables that are available for use in the proxy flow. It's possible
+      to create variables using policies like {{assign_message_policy}} and {{javascript_policy}},
+      as well as in Node.js code.</li>
+    <li>When you create a custom flow variable, use a unique value for its name; do not use the
+      names of the pre-bound variables.</li>
   </ul>
 
-  <h2 id="relatedcodesamples"><a id="relatedCodeSamples" name="relatedCodeSamples"></a>Related code
-  samples</h2>
+  <h2 id="relatedcodesamples">Related code samples</h2>
 
-  <aside class="note"><b>Sample:</b> API proxy samples are on GitHub and are easy to download and
-  use. See <a href="/api-platform/samples/using-samples.html">Using the sample API proxies</a> for
+  <p>API proxy samples are on GitHub and are easy to download and
+  use. See <a href="/api-platform/samples/using-samples">Using the sample API proxies</a> for
   information about downloading and using the samples. See <a href=
-  "/api-platform/samples/samples-reference.html">Samples list</a> for a description of the API
-  proxy samples and what they do.</aside>
+  "/api-platform/samples/samples-reference">Samples list</a> for a description of the API
+  proxy samples and what they do.</p>
 
   <p>Sample proxies that feature the use of variables and variable processing include:</p>
 
   <ul>
     <li><a href=
-    "https://github.com/apigee/api-platform-samples/tree/master/sample-proxies/variables">variables</a> -
+    "https://github.com/apigee/api-platform-samples/tree/master/sample-proxies/variables" class="external">variables</a> -
     Demonstrates how to extract and set variables based on transport and JSON and XML message
     content.</li>
 
     <li><a href=
-    "https://github.com/apigee/api-platform-samples/tree/master/doc-samples/policy-mashup-cookbook">
+    "https://github.com/apigee/api-platform-samples/tree/master/doc-samples/policy-mashup-cookbook" class="external">
     policy-mashup-cookbook</a> - A complete application that uses policy composition to call
     two public APIs, combines results, and generates an enriched response for the client
     app. For more information on this sample, see <a href=
@@ -516,25 +489,14 @@ var org = context.setVariable('organization.name.myorg', value);
     composition</a>.</li>
 
     <li><a href=
-    "https://github.com/apigee/api-platform-samples/tree/master/sample-proxies/conditional-policy">conditional-policy</a> -
+    "https://github.com/apigee/api-platform-samples/tree/master/sample-proxies/conditional-policy" class="external">conditional-policy</a> -
     Implements simple conditional policy enforcement based on variable values.</li>
   </ul>
 
-  <aside class="key-point"><b>Tip:</b> You'll find a number of other samples that use variables in
-  one way or another. Look for ones that use the policy ExtractVariables, which is commonly used to
-  process variables in a proxy flow.</aside>
+  <aside class="key-point">
+    <h3 class="hide-from-toc">TIP</h3>You'll find a number of other samples
+    that use variables in one way or another. Look for ones that use the {{extract_variables_policy}},
+    which is commonly used to process variables in a proxy flow.
+  </aside>
 
-  <h2 id="relatedtopics">Related topics</h2>
-
-  <ul>
-    <li>All of the variables that are automatically populated in an API proxy are listed in the
-    <a href="/api-platform/reference/variables-reference.html">Variables reference</a>. The
-    reference also lists the type and scope of each variable.</li>
-
-    <li>If you want to know which variables a specific policy populates, refer to the reference
-    topic for the policy. For example, see <a href=
-    "/api-platform/reference/policies/quota-policy.html">Quota policy</a> and the section called
-    "Policy-specific variables".</li>
-  </ul>
-
-  {% endblock %}
+{% endblock %}

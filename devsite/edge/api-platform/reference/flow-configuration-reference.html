@@ -1,0 +1,407 @@
+{% extends "_base.html" %}
+{% block title %}Flow configuration reference{% endblock %}
+{% block body %}
+
+<p>This section provides reference information about the XML elements you use to define your
+API proxy flows.</p>
+
+<section class="expandable">
+  <h3 class="showalways hide-from-toc">More information</h3>
+    <ul>
+      <li><a href="/api-platform/fundamentals/what-are-flows">Control proxy execution with flows</a></li>
+      <li>{{proxy_configuration_reference}}</li>
+    </ul>
+</section>
+
+<h2> Hierarchy &amp; syntax</h2>
+<p>The following examples show the element hierarchy and syntax of the flow configuration
+elements:</p>
+
+{% setvar arrow %}<span class="material-icons"><span style="color:lightgray">subdirectory_arrow_right</span></span>{% endsetvar %}
+{% setvar ham %}<span class="material-icons"><span style="color:lightgray">more_horiz</span></span>{% endsetvar %}
+
+  <div class="ds-selector-tabs">
+    <section>
+      <h3>Element Hierarchy</h3>
+      <p>The following example shows the hierarchy of the flow configuration elements within the
+      {{proxyendpoint_link}} and {{ targetendpoint_link}} elements:</p>
+      <pre>&lt;ProxyEndpoint | TargetEndpoint&gt;
+    {{arrow}}{{preflow_link}}
+          {{arrow}}{{request_link}}
+                {{arrow}}{{step_link}}
+                    {{arrow}}{{condition_link}}
+                    {{arrow}}{{name_link}}
+          {{arrow}}{{response_link}}
+                {{arrow}}{{step_link}}
+                    {{arrow}}{{condition_link}}
+                    {{arrow}}{{name_link}}
+          {{arrow}}{{description_link}}
+    {{arrow}}{{flows_link}}
+          {{arrow}}{{flow_link}}
+                {{arrow}}{{description_link}}
+                {{arrow}}{{condition_link}}
+                {{arrow}}{{request_link}}
+                      {{arrow}}{{step_link}}
+                          {{arrow}}{{ham}}
+                {{arrow}}{{response_link}}
+                      {{arrow}}{{step_link}}
+                          {{arrow}}{{ham}}
+          {{arrow}}{{description_link}}
+    {{arrow}}{{postflow_link}}
+          {{arrow}}{{request_link}}
+                {{arrow}}{{step_link}}
+                    {{arrow}}{{ham}}
+          {{arrow}}{{response_link}}
+                {{arrow}}{{step_link}}
+                    {{arrow}}{{ham}}
+          {{arrow}}{{description_link}}
+    {{arrow}}{{postclientflow_link}} (&lt;ProxyEndpoint&gt; only)
+          {{arrow}}{{response_link}}
+                {{arrow}}{{ham}}
+          {{arrow}}{{description_link}}
+
+    {{ham}}  // <a href="api-proxy-configuration-reference">Additional configuration elements</a>
+
+&lt;/ProxyEndpoint | TargetEndpoint&gt;</pre>
+    </section>
+    <section>
+      <h3>Syntax</h3>
+      <p>The following example shows the syntax for the flow configuration elements. Each of these
+      elements is described in detail in the sections that follow:</p>
+      <pre class="prettyprint">{% includecode content_path="api-platform/reference/examples/flow-segments/_flow-segments-uber-syntax.xml" html_escape="False" %}</pre>
+    </section>
+  </div>
+
+<p>You use these elements to define your PreFlow, Conditional Flow, PostFlow, and PostClientFlow
+execution.</p>
+
+<!-- ALREADY DOC'd in https://apigee.devsite.corp.google.com/api-platform/reference/api-proxy-configuration-reference: -->
+<section class="expandable">
+  <h3 class="showalways hide-from-toc">Other configuration elements</h3>
+  <p>This section does not cover the following elements that are used in proxy configuration:</p>
+  <ul>
+    <li>{{apiproxy}}
+    <li>{{defaultfaultrule}}
+    <li>{{faultrules}}
+    <li>{{httpproxyconnection}}
+    <li>{{proxyendpoint}}
+    <li>{{routerule}}
+    <li>{{targetendpoint}}
+  </ul>
+  <p>These elements, which define the <em>proxy</em> configuration and not the flows, are discussed
+  in the {{proxy_configuration_reference}}.</p>
+</section>
+
+
+  <h2 id="condition">{{condition}}</h2>
+  <p>Defines a statement that is processed at runtime. If the statement evaluates to
+  true, then the step or flow associated with the condition is executed. If the
+  statement evaluates to false, then the step or flow is ignored.</p>
+
+  {% setvar dvt_type %}String{% endsetvar %}
+  {% setvar dvt_parent %}{{flow_link}}<br/>{{preflow_link}}<br/>{{postflow_link}}{% endsetvar %}
+  {% setvar dvt_children %}None{% endsetvar %}
+  {% include "includes/_reference_value_table.html" %}
+
+  <div class="ds-selector-tabs">
+    <section>
+      <h3>Syntax</h3>
+      <p>The {{description}} element uses the following syntax:</p>
+      <pre class="prettyprint">{% includecode content_path="api-platform/reference/examples/flow-segments/_flow-segments-uber-syntax.xml" region_tag="description" html_escape="False" adjust_indentation="auto" %}</pre>
+    </section>
+    <section>
+      <h3>Example</h3>
+      <p>The following example shows a {{description}} element that specifies the purpose of a
+      flow:</p>
+      <pre class="prettyprint">{% includecode content_path="api-platform/reference/examples/flow-segments/description-1.xml" %}</pre>
+    </section>
+  </div>
+
+  <h4>Attributes</h4>
+  <p>The {{description}} element has no attributes.</p>
+
+  <h4>Child Elements</h4>
+  <p>The {{description}} element has no child elements.</p>
+
+
+  <h2 id="flow">{{flow}}</h2>
+  <p>Defines a custom set of steps that Edge executes.</p>
+
+  {% setvar dvt_type %}Complex object{% endsetvar %}
+  {% setvar dvt_parent %}{{proxyendpoint_link}}<br/>{{targetendpoint_link}}{% endsetvar %}
+  {% setvar dvt_children %}{{flow_link}}{% endsetvar %}
+  {% include "includes/_reference_value_table.html" %}
+
+  <p>If there are multiple {{flow}} elements within {{flows}}, only one {{flow}} will execute. This
+  will be the first flow that either doesn't have a {{condition_link}}, or whose condition resolves
+  to true.</p>
+
+  <p>You can define a default flow that always executes (if none of the other flows do).
+  Depending on how your API proxy is configured, this can be a useful tool in
+  <a href="/api-platform/fundamentals/what-are-flows#defaultflow">protecting against malicious
+  attacks</a>.</p>
+
+  <div class="ds-selector-tabs">
+    <section>
+      <h3>Syntax</h3>
+      <p>The {{flows}} element uses the following syntax:</p>
+      <pre class="prettyprint">{% includecode content_path="api-platform/reference/examples/flow-segments/_flow-segments-uber-syntax.xml" region_tag="flows" html_escape="False" adjust_indentation="auto" %}</pre>
+      <p>All child elements of {{flows}} are optional.</p>
+    </section>
+    <section>
+      <h3>Example 1</h3>
+      <p>The following example shows a simple {{flows}} element with a single {{flow}}:</p>
+      <pre class="prettyprint">{% includecode content_path="api-platform/reference/examples/flow-segments/flows-1.xml" %}</pre>
+      <p>Edge executes one of these policies based on the path suffix that it gathers from the
+      {{proxy_object}} flow variable. If the path suffix matches neither of the conditions, then
+      Edge does not execute this flow.</p>
+    </section>
+    <section>
+      <h3>Example 2</h3>
+      <p>The following example shows multiple {{flow}} elements within {{flows}}, each with its own
+      {{condition_link}}:</p>
+      <pre class="prettyprint">{% includecode content_path="api-platform/reference/examples/flow-segments/flows-2.xml" %}</pre>
+      <p>Edge executes only the first flow in a segment whose condition evaluates to true. After
+      that, Edge skips the remaining flows in the segment.</p>
+    </section>
+    <section>
+      <h3>Example 3</h3>
+      <p>The following example shows a "default" {{flow}}:</p>
+      <pre class="prettyprint">{% includecode content_path="api-platform/reference/examples/flow-segments/flows-3.xml" %}</pre>
+      <p>Edge executes only the first flow in a segment whose condition evaluates to true. If
+      no conditional flows execute, then the third flow in this example (with no condition)
+      executes.</p>
+      <p>A default flow can be a useful tool in
+      <a href="/api-platform/fundamentals/what-are-flows#defaultflow">protecting against malicious
+      attacks</a>.</p>
+    </section>
+  </div>
+
+  <h4>Attributes</h4>
+  <p>The {{flows}} element has no attributes.</p>
+
+  <h4>Child Elements</h4>
+  <p>The {{flows}} element has the following child elements:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Child Element</th>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>{{flow_link}}</td>
+        <td>Complex object</td>
+        <td>A flow that defines one possible set of steps within the Conditional Flow.</td>
+      </tr>
+    </tbody>
+  </table>
+
+
+  <h2 id="name">{{name}}</h2>
+
+  <p>Specifies the ID of the policy to execute within a {{flow_link}}.</p>
+
+  {% setvar dvt_type %}Complex object{% endsetvar %}
+  {% setvar dvt_parent %}{{proxyendpoint_link}}<br/>{{targetendpoint_link}}{% endsetvar %}
+  {% setvar dvt_children %}{{description_link}}<br/>{{request_link}}<br/>{{response_link}}{% endsetvar %}
+  {% include "includes/_reference_value_table.html" %}
+
+  <p>The {{postflow}} element uses the following syntax:</p>
+  <div class="ds-selector-tabs">
+    <section>
+      <h3>Syntax</h3>
+      <pre class="prettyprint">{% includecode content_path="api-platform/reference/examples/flow-segments/_flow-segments-uber-syntax.xml" region_tag="postflow" html_escape="False" adjust_indentation="auto" %}</pre>
+    </section>
+    <section>
+      <h3>Example</h3>
+      <p>The following example shows a PostFlow with steps for both the request and response
+      defined:</p>
+      <pre class="prettyprint">{% includecode content_path="api-platform/reference/examples/flow-segments/postflow-1.xml" %}</pre>
+    </section>
+  </div>
+
+  <h4>Attributes</h4>
+  <p>The following table describes the attributes of the {{postflow}} element:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Attribute</th>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>name</code></td>
+        <td>String</td>
+        <td>A unique ID for the flow (unique within the endpoint). For example, "My-PostFlow-1". The
+          value cannot include spaces or other special characters.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h4>Child Elements</h4>
+
+  <p>The following table describes the child elements of {{postflow}}:</p>
+  <table>
+    <thead>
+      <tr>
+        <th>Child Element</th>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>{{description_link}}</td>
+        <td>String</td>
+        <td>Provides a brief description of the flow.</td>
+      </tr>
+      <tr>
+        <td>{{request_link}}</td>
+        <td>Complex&nbsp;object</td>
+        <td>Defines the policies to execute during the request's PostFlow.</td>
+      </tr>
+      <tr>
+        <td>{{response_link}}</td>
+        <td>Complex object</td>
+        <td>Defines the policies to execute during the response's PostFlow.</td>
+      </tr>
+    </tbody>
+  </table>
+
+
+  <h2 id="postclientflow">{{postclientflow}}</h2>
+  <p>Defines policies in the ProxyEndpoint that execute only after a response has been returned to
+  the client. These policies typically log messages related to the response.</p>
+
+  {% setvar dvt_type %}Complex object{% endsetvar %}
+  {% setvar dvt_parent %}{{proxyendpoint_link}}<br/>{{targetendpoint_link}}{% endsetvar %}
+  {% setvar dvt_children %}{{description_link}}<br/>{{request_link}}<br/>{{response_link}}{% endsetvar %}
+  {% include "includes/_reference_value_table.html" %}
+
+  <div class="ds-selector-tabs">
+    <section>
+      <h3>Syntax</h3>
+      <p>The {{preflow}} element uses the following syntax:</p>
+      <pre class="prettyprint">{% includecode content_path="api-platform/reference/examples/flow-segments/_flow-segments-uber-syntax.xml" region_tag="preflow" html_escape="False" adjust_indentation="auto" %}</pre>
+      <p>All child elements of {{preflow}} are optional.</p>
+    </section>
+    <section>
+      <h3>Example</h3>
+      <p>The following example shows a PreFlow with a request and a response flow defined:</p>
+      <pre class="prettyprint">{% includecode content_path="api-platform/reference/examples/flow-segments/preflow-1.xml" %}</pre>
+    </section>
+  </div>
+
+  <h4>Attributes</h4>
+  <p>The following table describes the attributes of the {{preflow}} element:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Attribute</th>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>name</code></td>
+        <td>String</td>
+        <td>A unique ID for the flow. The name cannot include spaces or other special
+        characters. For example, "My-PreFlow-1".</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h4>Child Elements</h4>
+  <p>The following table describes the child elements of {{preflow}}:</p>
+  <table>
+    <thead>
+      <tr>
+        <th>Child Element</th>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>{{description_link}}</td>
+        <td>String</td>
+        <td>Provides a brief description of the flow.</td>
+      </tr>
+      <tr>
+        <td>{{request_link}}</td>
+        <td>Complex&nbsp;object</td>
+        <td>Defines the policies to execute during the request's PreFlow.</td>
+      </tr>
+      <tr>
+        <td>{{response_link}}</td>
+        <td>Complex object</td>
+        <td>Defines the policies to execute during the response's PreFlow.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="request">{{request}}</h2>
+
+  <p>Defines the policies to execute during the request segment of the flow.</p>
+
+  {% setvar dvt_type %}Complex object{% endsetvar %}
+  {% setvar dvt_parent %}{{flow_link}}<br/>{{preflow_link}}<br/>{{postclientflow_link}}<br/>{{postflow_link}}{% endsetvar %}
+  {% setvar dvt_children %}{{condition_link}}<br/>{{step_link}}{% endsetvar %}
+  {% include "includes/_reference_value_table.html" %}
+
+  <div class="ds-selector-tabs">
+    <section>
+      <h3>Syntax</h3>
+      <p>The {{response}} element uses the following syntax:</p>
+      <pre class="prettyprint">{% includecode content_path="api-platform/reference/examples/flow-segments/_flow-segments-uber-syntax.xml" region_tag="response" html_escape="False" adjust_indentation="auto" %}</pre>
+      <p>All child elements of {{response}} are optional.</p>
+    </section>
+    <section>
+      <h3>Example</h3>
+      <p>The following example shows flows defined for the response, in both the PreFlow and
+      PostFlow:</p>
+      <pre class="prettyprint">{% includecode content_path="api-platform/reference/examples/flow-segments/response-1.xml" %}</pre>
+    </section>
+  </div>
+
+  <h4>Attributes</h4>
+  <p>The {{response}} element has no attributes.</p>
+
+  <h4>Child Elements</h4>
+  <p>The following table describes the child elements of {{response}}:</p>
+  <table>
+    <thead>
+      <tr>
+        <th>Child Element</th>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>{{condition_link}}</td>
+        <td>String</td>
+        <td>Determines if the steps within the response segment are executed.</td>
+      </tr>
+      <tr>
+        <td>{{step_link}}</td>
+        <td>String</td>
+        <td>Specifies a policy to execute within the response segment.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="step">{{step}}</h2>
+
+  <p>Specifies a policy to execute and (optionally) a condition that determines whether to execute
+  that policy.</p>
+

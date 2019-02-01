@@ -1,1996 +1,834 @@
-  {% extends "_base.html" %} {% block title %}Assign Message policy{% endblock %} {% block body %}
+{% extends "_base.html" %}
+{% block title %}AssignMessage policy{% endblock %}
+{% block body %}
 
-  <p><img alt="" src="/api-platform/images/icon_policy_assign-message.jpg"></p>
 
-  <h3>What</h3>
+  <p><img src="/api-platform/images/icon_policy_assign-message.jpg"></p>
 
-  <p>Creates or modifies HTTP request or response messages during an API proxy flow. For example,
-  you can use this policy to modify the request message before it is sent to the target server,
-  modify the response returned by the target server, or create a custom request or response object.
-  You often create custom request and response objects when using a ServiceCallout policy. See
-  <a href="/api-platform/reference/policies/service-callout-policy.html">Service Callout policy</a>
-  for more. </p>
+  <p>Changes or creates new request and response messages during the API proxy Flow. The Assign
+  Message policy lets you perform the following actions on those messages:</p>
+  <ul>
+    <li><a href="#add">Add</a> new form parameters, headers, or query parameters to a message</li>
+    <li><a href="#copy">Copy</a> existing properties from one message to another</li>
+    <li><a href="#remove">Remove</a> headers, query parameteters, form parameters, and/or message
+      payloads from a message</li>
+    <li><a href="#set">Set</a> the value of existing properties in a message</li>
+  </ul>
 
-  <p>You can also use this policy to create and populates new flow variables.</p>
+  <p>With Assign Message, you typically add, change, or remove properties of either the
+  request or response. However, you can also use Assign Message to create a custom
+  request or response message and pass it to an alternative target, as described in
+  <a href="#customrequests">Create custom request messages</a>.</p>
 
-  <h2 id="videos">Videos</h2>
+  <section class="expandable">
+    <h3 class="showalways">Use cases</h3>
+    <p>There are many situations in which you might want to modify a request or a response message
+    during processing by Apigee Edge. For example:
+    <ul>
+      <li>Define a default value for a query string parameter or other type of input.</li>
+      <li>Strip HTTP headers from a request message before the message is forwarded to the backend
+        service.</li>
+      <li>Add HTTP headers before a response is sent to the consumer app.</li>
+      <li>Insert JSON or XML message content before a response is sent.</li>
+      <li>Generate complete request or response messages. For example,
+        you might use a {{service_callout_policy}} to invoke a remote API from an API proxy. You can
+        use the Assign Message policy to create a custom request message and assign it to a variable.
+        Then, use Service Callout to send that message to the remote API.</li>
+      <li>Add headers to requests and responses for debugging and troubleshooting.</li>
+    </ul>
+  </section>
 
-  <p>Watch the following videos to learn more about the Assign Message policy.</p>
+  <p>The Assign Message policy can create or change flow variables with the following child
+  elements:</p>
+  <ul>
+    <li>{{am_add_link}}</li>
+    <li>{{am_assignto_link}}</li>
+    <li>{{am_assignvariable_link}}</li>
+    <li>{{am_copy_link}}</li>
+    <li>{{am_set_link}}</li>
+  </ul>
 
-  <table>
-    <thead>
-      <tr>
-        <th>Video</th>
+  <h2 id="assignmessage">{{assignmessage}} element</h2>
 
-        <th>Description</th>
-      </tr>
-    </thead>
+  <p>Defines an Assign Message policy.</p>
 
-    <tbody>
-      <tr>
-        <td><a href="https://www.youtube.com/watch?v=-goGhTJoeB8" target="_blank">Why Assign
-        Message Policy?</a></td>
+  {% setvar dvt_default_value %}n/a{% endsetvar %}
+  {% setvar dvt_required %}Optional{% endsetvar %}
+  {% setvar dvt_type %}Complex type{% endsetvar %}
+  {% setvar dvt_parent %}{{am_link}}{% endsetvar %}
+  {% setvar dvt_children %}{{am_add_formparams_link}}<br/>{{am_add_headers_link}}<br/>{{am_add_queryparams_link}}{% endsetvar %}
+  {% include "includes/_default_value_table.html" %}
 
-        <td>Learn about the benefits of using Assign Message policy to modify the API request or
-        response without modifying the backend code.</td>
-      </tr>
+  <p>The {{am_add}} element uses the following syntax:</p>
 
-      <tr>
-        <td><a href="https://www.youtube.com/watch?v=cgRPbgKNpQI" target="_blank">Copy API elements
-        using Assign Message policy</a></td>
+  <div class="ds-selector-tabs">
+  <section>
+    <h3>Syntax</h3>
+      <pre class="prettyprint">
+{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="am_open" html_escape="False" %}
+{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="add" html_escape="False" %}
+{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="am_close" html_escape="False" %}
+</pre>
+    </section>
+    <section>
+      <h3>Example 1</h3>
+      <p>The following example uses the {{am_add_formparams_link}} element to get the values of
+      three query string parameters from the initial request and set them as form parameters on the
+      target endpoint request:</p>
+      <pre class="prettyprint">{% includecode content_path="api-platform/reference/policies/examples/assign-message/add-formparams-3.xml" %}</pre>
+    </section>
+    <section>
+      <h3>Example 2</h3>
+      <p>The following example uses the {{am_add_headers_link}} element to add the
+      <code>User-Agent</code> header to the target endpoint request:</p>
+      <pre class="prettyprint">{% includecode content_path="api-platform/reference/policies/examples/assign-message/add-headers-1.xml" %}</pre>
+    </section>
+    <section>
+      <h3>Example 3</h3>
+      <p>The following example uses the {{am_add_queryparams_link}} element to add a single query
+      parameter with a static value to the request:</p>
+      <pre class="prettyprint">{% includecode content_path="api-platform/reference/policies/examples/assign-message/add-queryparams-1.xml" %}</pre>
+      <p>This example uses {{am_add}} in the request preflow. If you look at the results in a tool
+      such as the {{trace}}, the request to "http://httpbin.org/get" becomes
+      "http://httpbin.org/get?myParam=42".</p>
+    </section>
+  </div>
 
-        <td>Copy elements from an API request or response and construct a new request or response
-        object using the Assign Message policy.</td>
-      </tr>
+  <p>The child elements of {{am_add}} support dynamic string substitution, known as
+  <a href="/api-platform/reference/message-template-intro.html">message templating</a>.</p>
 
-      <tr>
-        <td><a href="https://www.youtube.com/watch?v=r9MJxUbwMko" target="_blank">Remove API
-        elements using Assign Message policy</a></td>
+<!--
+  <p>In general, you should not use {{am_set}} and {{am_add}} in the same policy to modify the same
+  properties. For example, if you add a new form parameter with {{am_add}}, and set the value of the
+  new form parameter with {{am_set}}&mdash;in the same policy&mdash;unexpected results can occur.</p>
+-->
 
-        <td>Remove API elements and modify the API before it reaches the target backend using the
-        Assign Message policy.</td>
-      </tr>
+  <!-- ##################################################################################### -->
+  <h4 id="add-formparams">{{am_add_formparams}} (child of {{am_add_link}})</h4>
+  <!-- ##################################################################################### -->
 
-      <tr>
-        <td><a href="https://www.youtube.com/watch?v=kpXhNrZCwR4" target="_blank">Add and set API
-        elements using Assign Message policy</a></td>
+  <p>Adds new form parameters to the request message. This element has no effect on a response
+  message.</p>
 
-        <td>Change API request or response by adding query parameters, headers, form parameters, or
-        payloads using the Assign Message policy.</td>
-      </tr>
+  {% setvar dvt_default_value %}n/a{% endsetvar %}
+  {% setvar dvt_required %}Optional{% endsetvar %}
+  {% setvar dvt_type %}Array of {{am_headers_header}} elements{% endsetvar %}
+  {% setvar dvt_parent %}{{am_add_link}}{% endsetvar %}
+  {% setvar dvt_children %}{{am_headers_header}}{% endsetvar %}
+  {% include "includes/_default_value_table.html" %}
 
-      <tr>
-        <td><a href="https://www.youtube.com/watch?v=RyZI--auWfA" target="_blank">Create custom
-        variables using Assign Message policy</a></td>
+  <p>The {{am_add_headers}} element uses the following syntax:</p>
 
-        <td>Set custom flow variables using Assign Message policy and leverage the variables in
-        other policies in the API proxy.</td>
-      </tr>
+  <div class="ds-selector-tabs">
+  <section>
+    <h3>Syntax</h3>
+      <pre class="prettyprint">
+{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="am_open" html_escape="False" %}
+{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="add_open" html_escape="False" %}
+<strong>{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="add_headers" html_escape="False" %}</strong>
+{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="add_close" html_escape="False" %}
+{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="am_close" html_escape="False" %}
+</pre>
+  </section>
+  <section>
+    <h3>Example 1</h3>
+    <p>The following example adds the <code>user-agent</code> header to the request message, and
+    assigns the value of the <code>request.user.agent</code> flow variable to that header.</p>
+    <pre class="prettyprint">{% includecode content_path="api-platform/reference/policies/examples/assign-message/add-headers-1.xml" %}</pre>
+    </section>
+  </div>
 
-      <tr>
-        <td><a href="https://www.youtube.com/watch?v=Fk5EDazB4-Y" target="_blank">Create new
-        request or response objects using Assign Message policy</a></td>
+  <!-- ##################################################################################### -->
+  <h4 id="add-queryparams">{{am_add_queryparams}} (child of {{am_add_link}})</h4>
+  <!-- ##################################################################################### -->
 
-        <td>Create new API request or response objects using the Assign Message policy at API
-        runtime.</td>
-      </tr>
+  <p>Adds new query parameters to the request. This element has no effect on a response.</p>
 
-      <tr>
-        <td><a href="https://www.youtube.com/watch?v=grNhwkrFBxg" target="_blank">Create a mock API
-        using Assign Message policy</a></td>
+  {% setvar dvt_default_value %}n/a{% endsetvar %}
+  {% setvar dvt_required %}Optional{% endsetvar %}
+  {% setvar dvt_type %}String{% endsetvar %}
+  {% setvar dvt_parent %}{{am_link}}{% endsetvar %}
+  {% setvar dvt_children %}None{% endsetvar %}
+  {% include "includes/_default_value_table.html" %}
 
-        <td>Create a simple mock REST API by adding the Assign Message policy in the response
-        flow.</td>
-      </tr>
+  <p>If you do not specify {{am_assignto}}, the policy acts on the default request or response,
+  which is based on where the policy executes. If the policy executes in the request flow, it
+  affects the request message. If it executes in the response flow, the policy affects the response
+  by default.</p>
 
-      <tr>
-        <td><a href="https://www.youtube.com/watch?v=PUDogzEAZ-Y" target="_blank">Set or modify the
-        payload using Assign Message policy</a></td>
-
-        <td>Convert REST request to SOAP request by setting SOAP Payload using the Assign Message
-        policy at API runtime.</td>
-      </tr>
-    </tbody>
-  </table><!--This is the start of the expand/collapse div-->
-
-  <h2 id="samples"><a id="Samples" name="Samples"></a>Samples</h2>
+  <p>The {{am_assignto}} element uses the following syntax:</p>
 
   <div class="ds-selector-tabs">
     <section>
-      <h3 class="two-line-tab">Custom request (1)</h3>
-
-      <p><a id="Sample1" name="Sample1"></a>This sample shows how to build up a custom request
-      object with Assign Message.</p>
+      <h3>Syntax</h3>
       <pre class="prettyprint">
-&lt;AssignMessage name="AssignMessage-3"&gt;
-  &lt;AssignTo createNew="true" type="request"&gt;request1&lt;/AssignTo&gt;
-  &lt;Copy&gt;
-    &lt;Headers&gt;
-     &lt;Header name="user-agent"/&gt;
-    &lt;/Headers&gt;
-  &lt;/Copy&gt;
-  &lt;Set&gt;
-    &lt;QueryParams&gt;
-      &lt;QueryParam name="address"&gt;{request.queryparam.address}&lt;/QueryParam&gt;
-    &lt;/QueryParams&gt;
-    &lt;Verb&gt;GET&lt;/Verb&gt;
-  &lt;/Set&gt;
-  &lt;IgnoreUnresolvedVariables&gt;false&lt;/IgnoreUnresolvedVariables&gt;
-&lt;/AssignMessage&gt;
-</pre>
-
-      <p>It's a common use case to build up a custom request object using Assign Message, and then
-      send it to a backend target using the <a href=
-      "/api-platform/reference/policies/service-callout-policy.html">Service Callout policy</a>.
-      This sample:</p>
-
-      <ul>
-        <li>Creates a new request message object called <code>request1</code>.</li>
-
-        <li>Copies the value of the <code>user-agent</code> HTTP header from the incoming
-        <code>request</code> message object. Because the <code>&lt;Copy&gt;</code> element uses an
-        absolute reference to the <code>user-agent</code> flow variable, there is no need to
-        specify the <code>source</code> attribute to <code>&lt;Copy&gt;</code>.</li>
-
-        <li>Sets a query parameter on the <code>request1</code> message object.</li>
-
-        <li>Sets the HTTP verb for the <code>request1</code> message object to
-        <code>GET</code>.</li>
-
-        <li>Sets the <code>IgnoreUnresolvedVariables</code> element to <code>false</code>. So, if
-        one of the variables we are trying to copy or set does not exist, processing in the API
-        flow will stop.</li>
-      </ul>
-
-      <p>You can then access the <code>request1</code> object in another Assign Message policy as
-      shown below: </p>
-      <pre class="prettyprint">
-&lt;AssignMessage name="CopyExample1ToRequest"&gt;
-  &lt;DisplayName&gt;AccessRequest1&lt;/DisplayName&gt;
-  &lt;AssignTo createNew="false" type="request"&gt;&lt;/AssignTo&gt;
-  &lt;Set&gt;
-    &lt;Headers&gt;
-      &lt;Header name="user-agentCopyRequest1"&gt;{request1.header.user-agent}&lt;/Header&gt;
-    &lt;/Headers&gt;
-  &lt;/Set&gt;
-&lt;/AssignMessage&gt;
+{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="am_open" html_escape="False" %}
+<strong>{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="assignto" html_escape="False" %}</strong>
+{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="am_close" html_escape="False" %}
 </pre>
     </section>
-
     <section>
-      <h3 class="two-line-tab">Create request (2)</h3>
-
-      <p>Here's another example demonstrating how to create a custom request object with Assign
-      Message.</p>
-      <pre class="prettyprint">
-&lt;AssignMessage name="AssignMessage-2"&gt;
-  &lt;AssignTo createNew="true" type="request"&gt;partner.request&lt;/AssignTo&gt;
-  &lt;Set&gt;
-    &lt;Verb&gt;POST&lt;/Verb&gt;
-    &lt;Payload contentType="text/xml"&gt;
-      &lt;request&gt;&lt;operation&gt;105&lt;/operation&gt;&lt;/request&gt;
-    &lt;/Payload&gt;
-  &lt;/Set&gt;
-&lt;/AssignMessage&gt;
-</pre>
-
-      <p>To work with message content, Assign Message defines a set of elements that enable you to
-      populate or modify HTTP headers, query parameters, and XML or JSON payload content. This
-      sample policy creates a new HTTP request message, and assigns that message to the variable
-      called <code>partner.request</code>.</p>
-
-      <p>If the <code>createNew</code> attribute is set to <code>false</code>, then the policy will
-      modify the designated message.</p>
+      <h3>Example 1</h3>
+      <p>The following example specifies that the target is the original request that will be sent to the
+      target endpoint:</p>
+      <pre class="prettyprint">{% includecode content_path="api-platform/reference/policies/examples/assign-message/assignto-1.xml" %}</pre>
+      <p>By setting <code>createNew</code> to "false" (the default), this example does not create a
+      new request. All operations in this policy affect the original request.</p>
     </section>
-
     <section>
-      <h3 class="two-line-tab">Modify response</h3>
-
-      <p>This sample shows how to modify an existing response object by adding a Header to it.</p>
-      <pre class="prettyprint">
-&lt;AssignMessage name="assignMessage-4"&gt;
-  &lt;AssignTo createNew="false" type="response"&gt;&lt;/AssignTo&gt;
-  &lt;Set&gt;
-    &lt;Headers&gt;
-      &lt;Header name="Cache-Hit"&gt;{lookupcache.LookupCache-1.cachehit}&lt;/Header&gt;
-    &lt;/Headers&gt;
-  &lt;/Set&gt;
-  &lt;IgnoreUnresolvedVariables&gt;false&lt;/IgnoreUnresolvedVariables&gt;
-&lt;/AssignMessage&gt;
-</pre>
-
-      <p>This sample Assign Message policy does not create a new message. Instead, it modifies an
-      existing response message by adding an HTTP header. THis policy would be attached to a
-      response flow in the API proxy. Because you omitted a variable name in the
-      <code>&lt;AssignTo&gt;</code> tag, and specified a <code>type</code> as
-      <code>response</code>, this policy modifies the response object returned by the target
-      server. </p>
-
-      <p>The HTTP header added to the response message by this policy is derived from a variable
-      populated by the LookupCache policy. Therefore the response message modified by this
-      AssignMessage policy contains an HTTP header that indicates whether the results have been
-      pulled from the Cache or not. Setting headers in the response can be handy for debugging and
-      troubleshooting.</p>
-
-      <aside class="key-point"><b>Tip:</b> This pattern of setting headers for debugging and
-      troubleshooting is a common practice. You can see what header value was sent back by
-      inspecting the response with the Trace tool or other means.</aside>
+      <h3>Example 2</h3>
+      <p>The following example creates a new request object:</p>
+      <pre class="prettyprint">{% includecode content_path="api-platform/reference/policies/examples/assign-message/assignto-2.xml" %}</pre>
+      <p>When you create a new request or response object, the other elements of the Assign Message
+      policy (such as {{am_add_link}}, {{am_set_link}}, and {{am_set_link}}) act on that new
+      request object.</p>
+      <p>You can access the new request object in other policies later in the flow, or send the new
+      request object to an external service with a {{service_callout_policy}}.</p>
     </section>
-
     <section>
-      <h3 class="two-line-tab">Set dynamic content</h3>
-
-      <p>You can use Assign Message to embed dynamic content in the payload of XML or JSON response
-      and request messages.</p>
-
-      <p>To embed Edge flow variables in an XML payload, wrap the designated variable in curly
-      braces, like this: <code>{prefix.name}</code>. This sample policy embeds the value of
-      the HTTP user-agent header flow variable in an XML element called
-      <code>User-agent</code>:</p>
-      <pre class="prettyprint">
-&lt;AssignMessage name="set-dynamic-content"&gt;
-  &lt;AssignTo createNew="false" type="response"&gt;&lt;/AssignTo&gt;
-  &lt;Set&gt;
-    &lt;Payload contentType="text/xml"&gt;
-      &lt;User-agent&gt;{request.header.user-agent}&lt;/User-agent&gt;
-    &lt;/Payload&gt;
-  &lt;/Set&gt;
-  &lt;IgnoreUnresolvedVariables&gt;false&lt;/IgnoreUnresolvedVariables&gt;
-&lt;/AssignMessage&gt;
-</pre>
-
-      <p><strong>Note:</strong> In a JSON payload, you can insert variables using the
-      <code>variablePrefix</code> and <code>variableSuffix</code> attributes with delimiter
-      characters as shown in the following example. As of cloud release 16.08.17, you can also
-      use curly braces to insert variables.</p>
-      <pre class="prettyprint">
-&lt;Payload contentType="application/json" variablePrefix="@" variableSuffix="#"&gt;
-{
-   "user-agent": "@request.header.user-agent#"
-}
-&lt;/Payload&gt;
-</pre>
+      <h3>Example 3</h3>
+      <p>The following example creates a new request object named "MyRequestObject":</p>
+      <pre class="prettyprint">{% includecode content_path="api-platform/reference/policies/examples/assign-message/assignto-3.xml" %}</pre>
+      <p>When you create a new request or response object, the other elements of the Assign Message
+      policy (such as {{am_add_link}}, {{am_set_link}}, and {{am_set_link}}) act on that new
+      request object.</p>
+      <p>You can access the new request object in other policies later in the flow, or send the new
+      request object to an external service with a {{service_callout_policy}}.</p>
     </section>
+  </div>
 
-    <section>
-      <h3 class="two-line-tab">Remove query param</h3>
-
-      <p>This policy removes the <code>apikey</code> query parameter from the request.</p>
-      <pre class="prettyprint">
-&lt;AssignMessage name="AssignMessage-1"&gt;
-  &lt;AssignTo createNew="false" type="request"&gt;&lt;/AssignTo&gt;
-  &lt;Remove&gt;
-    &lt;QueryParams&gt;
-      &lt;QueryParam name='apikey'/&gt;
-    &lt;/QueryParams&gt;
-  &lt;/Remove&gt;
-&lt;/AssignMessage&gt;
-</pre>
-
-      <p>It's a best practice to strip the <code>apikey</code> query parameter from the request
-      message when you use the APIKey policy for user authentication. You do this to prevent
-      sensitive key information from being passed to the backend target. This sample pattern is a
-      common use case for AssignMessage. For details on APIKey, see <a href=
-      "/api-platform/reference/policies/verify-api-key-policy.html">Verify API Key policy</a>.</p>
-    </section>
-
-    <section>
-      <h3 class="two-line-tab">Set/Get variables</h3>
-
-      <p>This sample uses two Assign Message policies: the first sets three variables in the
-      request and the second gets them from the request.</p>
-      <pre class="prettyprint">
-&lt;AssignMessage async="false" continueOnError="false" enabled="true" name="Assign-Message-1"&gt;
-  &lt;AssignTo createNew="false" transport="http" type="request"/&gt;
-  &lt;AssignVariable&gt;
-    &lt;Name&gt;appSecretSet&lt;/Name&gt;
-    &lt;Value&gt;abcdedl1234&lt;/Value&gt;
-  &lt;/AssignVariable&gt;
-  &lt;AssignVariable&gt;
-    &lt;Name&gt;config.environmentSet&lt;/Name&gt;
-    &lt;Value&gt;test&lt;/Value&gt;
-  &lt;/AssignVariable&gt;
-  &lt;AssignVariable&gt;
-    &lt;Name&gt;config.protocolSet&lt;/Name&gt;
-    &lt;Value&gt;https&lt;/Value&gt;
-  &lt;/AssignVariable&gt;
-  &lt;IgnoreUnresolvedVariables&gt;true&lt;/IgnoreUnresolvedVariables&gt;
-&lt;/AssignMessage&gt;
-</pre>
-
-      <p>In this policy, use the <code>&lt;AssignVariable&gt;</code> tag to create and set three
-      variables to a value in the request. The <code>&lt;Name&gt;</code> tag specifies the variable
-      name, and the <code>&lt;Value&gt;</code> tag specifies the value.</p>
-
-      <p>In the second policy, you use the <code>&lt;AssignVariable&gt;</code> tag to read the
-      variables and set three new variables:</p>
-      <pre class="prettyprint">
-&lt;AssignMessage async="false" continueOnError="false" enabled="true" name="Assign-Message-1"&gt;
-  &lt;AssignTo createNew="false" transport="http" type="request"/&gt;
-  &lt;AssignVariable&gt;
-    &lt;Name&gt;appSecretGet&lt;/Name&gt;
-    &lt;Ref&gt;appSecretSet&lt;/Ref&gt;
-    &lt;Value&gt;0&lt;/Value&gt;
-  &lt;/AssignVariable&gt;
-  &lt;AssignVariable&gt;
-    &lt;Name&gt;config.environmentGet&lt;/Name&gt;
-    &lt;Ref&gt;config.environmentSet&lt;/Ref&gt;
-    &lt;Value&gt;default&lt;/Value&gt;
-  &lt;/AssignVariable&gt;
-  &lt;AssignVariable&gt;
-    &lt;Name&gt;config.protocolGet&lt;/Name&gt;
-    &lt;Ref&gt;config.protocolSet&lt;/Ref&gt;
-    &lt;Value&gt;default&lt;/Value&gt;
-  &lt;/AssignVariable&gt;
-  &lt;IgnoreUnresolvedVariables&gt;true&lt;/IgnoreUnresolvedVariables&gt;
-&lt;/AssignMessage&gt;
-</pre>
-
-      <p>In this example, the <code>&lt;Ref&gt;</code> tag references the source variable, and
-      <code>&lt;Name&gt;</code> tag specifies the name of the new variable. If the variable
-      referenced by the <code>&lt;Ref&gt;</code> tag is not accessible, use the value specified by
-      the <code>&lt;Value&gt;</code> tag.</p>
-    </section>
-
-    <section>
-      <h3 class="two-line-tab">Get Service Callout response headers</h3>
-
-      <p>In the following example, let's say that a Service Callout in is the API proxy request,
-      and the callout response contains multiple headers of the same name
-      (<code>Set-Cookie</code>). Assuming the Service Callout's response variable is the default
-      <code>calloutResponse</code>, the following policy gets the second <code>Set-Cookie</code>
-      header value.</p>
-      <pre class="prettyprint">
-&lt;AssignMessage async="false" continueOnError="false" enabled="true" name="Assign-Message-1"&gt;
-  &lt;DisplayName&gt;Assign Message-1&lt;/DisplayName&gt;
-  &lt;Set&gt;
-    &lt;Payload contentType="application/json"&gt;{"Cookies from Service Callout" : "{calloutResponse.header.Set-Cookie.<strong>2</strong>}"}&lt;/Payload&gt;
-  &lt;/Set&gt;
-  &lt;IgnoreUnresolvedVariables&gt;true&lt;/IgnoreUnresolvedVariables&gt;
-  &lt;AssignTo createNew="false" transport="http" type="request"/&gt;
-&lt;/AssignMessage&gt;
-</pre>
-
-      <p>If you wanted to list <em>all</em> header values, you'd use the following variable
-      instead:</p>
-      <pre class="prettyprint">
-{calloutResponse.header.Set-Cookie.<strong>values</strong>}
-</pre>
-    </section>
-  </div><!--END OF TAB SECTION--><!--BEGIN ELEMENT REFERENCE-->
-  <hr>
-
-  <p>For more use case examples, see <a href=
-  "https://community.apigee.com/articles/11172/various-uses-of-assign-message-policy.html">https://community.apigee.com/articles/11172/various-uses-of-assign-message-policy.html</a>.</p>
-  <hr>
-
-  <h2 id="abouttheassignmessagepolicy"><a id="Usage_Notes" name="Usage_Notes"></a>About the Assign
-  Message policy</h2>
-
-  <p>Use the Assign Message policy to generate or modify request or response messages during an API
-  proxy Flow. With this policy, you can assign the verb, the payload, the status code, and more -
-  everything pertaining to an HTTP request or response message.</p>
-
-  <p>Assign Message is so named because the policy requires a message to be 'assigned' to a
-  <b>variable</b>. (See <a href="/api-platform/reference/variables-reference.html">Variables
-  reference</a> for more on variables.) In the case of Assign Message, the variable holds a message
-  - which is a complex data type with multiple fields.</p>
-
-  <p>To use Assign Message, you must select a variable name and specify the message content to
-  assign to it. If you use the one of the built-in names - <code>request</code> or
-  <code>response</code> - the message will be assigned to the request or response, respectively. If
-  you use any other name, it refers to a custom variable that holds the message.</p>
-
-  <p>There are many situations in which a request or a response message must be modified during
-  processing by Apigee Edge. For example, you might need to strip HTTP headers from a request
-  message before the message is forwarded to the backend service. You might also need to add HTTP
-  headers or insert JSON or XML message content before a response is sent to the consumer app. You
-  can do both operations using the Assign Message policy type.</p>
-
-  <p>In other situations, you need to generate complete request or response messages. For example,
-  you might use a ServiceCallout policy to invoke a remote API from an API proxy. You can
-  use the AssignMessage policy to generate the request message and assign it to a variable. Then,
-  use a ServiceCallout policy that references the variable to send that message to the
-  remote API.</p>
-
-  <h2 id="elementreference"><a id="Element_Reference" name="Element_Reference"></a>Element
-  reference</h2>
-
-  <p>The element reference describes the elements and attributes of the Assign Message policy.</p>
-
-  <aside class="note"><b>Note:</b> This policy handles a number of use cases. Typically, you select
-  which operation(s) you wish to perform with this policy and delete the rest of the elements. For
-  example, if you know you want to do a Copy, then you can delete the Remove, Add, and other
-  elements if you wish.</aside>
-  <pre class="prettyprint">
-&lt;?xml version="1.0" encoding="UTF-8" standalone="yes"?&gt;
-&lt;AssignMessage async="false" continueOnError="false" enabled="true" name="a_name"&gt;
-    &lt;DisplayName&gt;a_display_name&lt;/DisplayName&gt;
-    &lt;AssignTo createNew="false" transport="http" type="request"/&gt;
-    &lt;Copy source="request"&gt;
-        &lt;Headers/&gt;
-        &lt;QueryParams/&gt;
-        &lt;FormParams/&gt;
-        &lt;Payload/&gt;
-        &lt;Verb/&gt;
-        &lt;Version/&gt;
-        &lt;StatusCode/&gt;
-        &lt;ReasonPhrase/&gt;
-        &lt;Path/&gt;
-    &lt;/Copy&gt;
-    &lt;Remove&gt;
-        &lt;Headers&gt;
-            &lt;Header name="a_header_name"&gt;&lt;/Header&gt;
-        &lt;/Headers&gt;
-        &lt;QueryParams&gt;
-            &lt;QueryParam name="a_query_param_name"&gt;&lt;/QueryParam&gt;
-        &lt;/QueryParams&gt;
-        &lt;FormParams&gt;
-            &lt;FormParam name="a_form_param_name"&gt;&lt;/FormParam&gt;
-        &lt;/FormParams&gt;
-        &lt;Payload&gt; &lt;/Payload&gt;
-    &lt;/Remove&gt;
-    &lt;Add&gt;
-        &lt;Headers/&gt;
-        &lt;QueryParams/&gt;
-        &lt;FormParams/&gt;
-    &lt;/Add&gt;
-    &lt;Set&gt;
-        &lt;Headers/&gt;
-        &lt;QueryParams/&gt;
-        &lt;FormParams/&gt;
-        &lt;Payload/&gt;
-        &lt;Verb/&gt;
-        &lt;Version/&gt;
-        &lt;Path/&gt;
-        &lt;ReasonPhrase/&gt;
-        &lt;StatusCode/&gt;
-    &lt;/Set&gt;
-    &lt;AssignVariable&gt;
-        &lt;Name&gt;name&lt;/Name&gt;
-        &lt;Value/&gt;
-        &lt;Ref/&gt;
-    &lt;/AssignVariable&gt;
-    &lt;IgnoreUnresolvedVariables&gt;true&lt;/IgnoreUnresolvedVariables&gt;
-&lt;/AssignMessage&gt;
-</pre>
-
-  <h2 id="assignmessageattributes">&lt;AssignMessage&gt; attributes</h2>
-  <pre class="prettyprint">
-&lt;AssignMessage async="false" continueOnError="false" enabled="true" name="Assign-Message-1"&gt;
-</pre>{% dynamic include /includes/___policies-parent-element-attributes %}
-
-  <h2 id="assigntoelement"><a id="AssignToElement" name="AssignToElement"></a>&lt;AssignTo&gt;
-  element</h2>
-
-  <p>The <code>&lt;AssignTo&gt;</code> element determines the variable that the Assign Message
-  policy operates on. The options are:</p>
-
-  <ul>
-    <li>The request object received by the API proxy</li>
-
-    <li>The response object returned from the target server</li>
-
-    <li>A custom request or response object</li>
-  </ul>
-
-  <p>For example, if you use the Assign Message policy to add a query parameter, the query
-  parameter is added to the variable specified by the <code>&lt;AssignTo&gt;</code> element.</p>
-
-  <p>If the <code>&lt;AssignTo&gt;</code> element is missing, or if the element does not explicitly
-  specify the name of the destination variable, then the policy assigns values to either the
-  <code>request</code> or <code>response</code> object, depending on the Flow to which the policy
-  is attached. For example, if you attach the policy to a request Flow, the default object is
-  the <code>request</code> object.</p>
-
-  <h3 id="assigntoelement-attributes"><a id="attributes" name="attributes"></a>Attributes</h3>
-
-  <p>No destination variable:</p>
-  <pre class="prettyprint">
-&lt;AssignTo createNew="false" transport="http" type="request"/&gt;
-</pre>
-
-  <p>Explicit destination variable:</p>
-  <pre class="prettyprint">
-&lt;AssignTo createNew="true" transport="http" type="request"&gt;destRequestObj&lt;/AssignTo&gt;
-</pre>
-
-  <table width="700">
+  <p>The following table describes the attributes of {{am_assignto}}:</p>
+  <a name="am_assignto_attributes"></a>
+  <table>
     <tbody>
       <tr>
-        <th scope="col" width="118">Attribute</th>
-
-        <th scope="col" width="382">Description</th>
-
-        <th scope="col" width="382">Default</th>
-
-        <th scope="col" width="92">Presence</th>
-
-        <th scope="col" width="88">Type</th>
+        <th>Attribute</th>
+        <th>Description</th>
+        <th>Required?</th>
+        <th>Type</th>
       </tr>
-
       <tr>
-        <td>createNew</td>
-
+        <td><code>createNew</code></td>
         <td>
-          <div>
-            If <code>createNew</code> is set to <code>true</code>, then a new variable of the type
-            specified by <code>type</code> is created. If you do not specify the name of the new
-            variable, then the policy creates a new <code>request</code> or <code>response</code>
-            object, based on the value of <code>type</code>.
-          </div>
-
-          <div>
-             
-          </div>
-
-          <div>
-            <strong>Caution</strong>: When creating a new <code>request</code> or
-            <code>response</code> object, the existing <code>request</code> or
-            <code>response</code> object is deleted and replaced by the new one, meaning all
-            information in the object is lost.
-          </div>
-
-          <div>
-             
-          </div>
-
-          <div>
-            If <code>createNew</code> is <code>false</code>, then the policy responds in one of two
-            ways:
-          </div>
-
+          <p>Determines whether this policy creates a new message when assigning values.</p>
+          <p>If "true", then the policy creates a new variable of the type
+          specified by <code>type</code> (either "request" or "response"). If you
+          do not specify the name of the new variable, then the policy creates a new request or
+          response object, based on the value of <code>type</code>.</p>
+          <aside class="caution">
+            <h3 class="hide-from-toc">CAUTION</h3>
+            <p>When creating a new request or response object, the existing request or
+            response object is deleted and replaced by the new one, meaning all
+            information in the object is lost.</p>
+          </aside>
+          <p>If "false", then the policy responds in one of two ways:</p>
           <ul>
-            <li>If AssignTo can resolve the variable name to a message, then it continues
-            processing. For example, if the policy is in a request flow, the variable is the
-            <code>request</code> object. If the policy is in a response, the variable is the
-            <code>response</code> object.</li>
-
-            <li>If AssignTo cannot be resolved, or resolves to a non-message type, then the policy
-            throws an error.</li>
+            <li>If {{am_assignto}} can resolve the variable name to a request or response, then it
+              continues processing. For example, if the policy is in a request flow, the variable is the
+              request object. If the policy is in a response, the variable is the
+              response object.</li>
+            <li>If {{am_assignto}} cannot be resolved, or resolves to a non-message type, then the
+              policy throws an error.</li>
+          </ul>
+          <p>If <code>createNew</code> is not specified, the policy responds in one of two ways:
+          <ul>
+            <li>If {{am_assignto}} resolves to a message, then processing advances to the next
+              step.</li>
+            <li>If {{am_assignto}} cannot be resolved, or resolves to a non-message type, a new
+              variable of type specified in <code>type</code> is created.</li>
           </ul>
         </td>
-
-        <td style="vertical-align: top;">
-          <div>
-            If <code>createNew</code> is not specified, the policy responds in one of two ways:
-          </div>
-
-          <ul>
-            <li>If AssignTo resolves to a message, then processing advances to the next step.</li>
-
-            <li>If AssignTo cannot be resolved, or resolves to a non-message type, a new variable
-            of type specified in <code>type</code> is created.</li>
-          </ul>
-        </td>
-
         <td>Optional</td>
-
-        <td>Boolean<br>
-         </td>
-      </tr>
-
-      <tr>
-        <td>transport</td>
-
-        <td>Specifies the transport type for the request or response message type.</td>
-
-        <td><code>http</code> (the only supported value)</td>
-
-        <td>Optional</td>
-
-        <td>String</td>
-      </tr>
-
-      <tr>
-        <td>type</td>
-
-        <td>
-          <div>
-            Specifies the type of the variable.
-          </div>
-
-          <div>
-            Valid values: <code>request</code> or <code>response</code>
-          </div>
-        </td>
-
-        <td><code>request</code></td>
-
-        <td>Optional</td>
-
-        <td>String</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <h3 id="assigntoelement-example">Example</h3>
-
-  <p>For sample code and discussion, see the <strong>Modify Request</strong> tab under
-  <a href="#Samples">Samples</a>.</p>
-
-  <h2 id="copyelement"><a id="CopyElement" name="CopyElement"></a>&lt;Copy&gt; element</h2>
-
-  <p>Copies information <em><strong>from</strong></em> the message specified by the
-  <code>source</code> attribute <strong><em>to</em></strong> the message object specified by this
-  policy's <code>&lt;AssignTo&gt;</code> element.</p>
-  <pre class="prettyprint">
-    &lt;Copy source="request"&gt;
-        &lt;Headers/&gt;
-        &lt;QueryParams/&gt;
-        &lt;FormParams/&gt;
-        &lt;Payload&gt; &lt;/Payload&gt;
-        &lt;Verb/&gt;
-        &lt;Version/&gt;
-        &lt;StatusCode/&gt;
-        &lt;ReasonPhrase/&gt;
-        &lt;Path/&gt;
-    &lt;/Copy&gt;
-</pre>
-
-  <table class="columns">
-    <tbody>
-      <tr>
-        <td style="width:90px">
-          <p><strong>Default:</strong></p>
-        </td>
-
-        <td>
-          <p>N/A</p>
-        </td>
-      </tr>
-
-      <tr>
-        <td>
-          <p><strong>Presence:</strong></p>
-        </td>
-
-        <td>
-          <p>Optional</p>
-        </td>
-      </tr>
-
-      <tr>
-        <td>
-          <p><strong>Type:</strong></p>
-        </td>
-
-        <td>
-          <p>String</p>
-        </td>
-      </tr>
-    </tbody>
-  </table>
-
-  <h3 id="copyelement-attributes">Attributes</h3>
-  <pre class="prettyprint">
-<strong> </strong>&lt;Copy source="request"&gt;
-</pre>
-
-  <table width="700">
-    <tbody>
-      <tr>
-        <th scope="col" style="width: 50px;">Attribute</th>
-
-        <th scope="col" width="382">Description</th>
-
-        <th scope="col" style="width: 50px;">Presence</th>
-
-        <th scope="col" style="width: 50px;">Type</th>
-      </tr>
-
-      <tr>
-        <td>source</td>
-
-        <td>
-          <p>Specifies the source object of the copy.</p>
-
-          <ul>
-            <li>If <code>source</code> is not specified, it is treated as a simple message. For
-            example, if the policy is in the request flow, then the source defaults to the
-            <code>request</code> object. If the policy is in the response flow, it defaults to the
-            <code>response</code> object. If you omit <code>source</code>, you can use an absolute
-            reference to a flow variable as the source of the copy. For example, specify the value
-            as <code>{request.header.user-agent}</code>.</li>
-
-            <li>If the source variable cannot be resolved, or resolves to a non-message type,
-            <code>&lt;Copy&gt;</code> fails to respond.</li>
-          </ul>
-        </td>
-
-        <td>Optional</td>
-
-        <td>String</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <h3 id="copyelement-copyheaderselement">&lt;Copy&gt;/&lt;Headers&gt; element</h3>
-
-  <p>Copies the specified HTTP header from the source to the message variable specified with the
-  <code>&lt;AssignTo&gt;</code> element. To copy all headers, specify
-  <code>&lt;Copy&gt;&lt;Headers/&gt;&lt;/Copy&gt;.</code></p>
-  <pre class="prettyprint">
-&lt;Copy source='request'&gt;
-    &lt;Headers&gt;
-        &lt;Header name="headerName"/&gt;
-    &lt;/Headers&gt;
-&lt;/Copy&gt;
-</pre>
-
-  <p>If there are multiple headers with the same name, use the following syntax:</p>
-  <pre class="prettyprint">
-&lt;Copy source='request'&gt;
-    &lt;Headers&gt;
-      &lt;Header name="h1"/&gt;
-      &lt;Header name="h2"/&gt;
-      &lt;Header name="h3.2"/&gt;
-    &lt;/Headers&gt;
-&lt;/Copy&gt;
-</pre>
-
-  <p>This example copies "h1", "h2", and the second value of "h3". If "h3" has only one
-  value, then it is not copied.</p>
-
-  <table class="columns">
-    <tbody>
-      <tr>
-        <td style="width:90px">
-          <p><strong>Default:</strong></p>
-        </td>
-
-        <td>
-          <p>N/A</p>
-        </td>
-      </tr>
-
-      <tr>
-        <td>
-          <p><strong>Presence:</strong></p>
-        </td>
-
-        <td>Optional</td>
-      </tr>
-
-      <tr>
-        <td>
-          <p><strong>Type:</strong></p>
-        </td>
-
-        <td>
-          <p>String</p>
-        </td>
-      </tr>
-    </tbody>
-  </table>
-
-  <h3 id="copyelement-copyqueryparamselement">&lt;Copy&gt;/&lt;QueryParams&gt; element</h3>
-
-  <p>Copies query parameters. Note that the QueryParams is copied only when both the source and
-  AssignTo type are <em>request</em>. To copy all query parameters,
-  specify<code> &lt;Copy&gt;&lt;QueryParams/&gt;&lt;/Copy&gt;</code>. This example copies
-  the <code>user-agent</code> header to the message variable specified with the
-  <code>&lt;AssignTo&gt;</code> element:</p>
-  <pre class="prettyprint">
-&lt;Copy source='request'&gt;
-    &lt;QueryParams&gt;
-        &lt;QueryParam name="paramName"/&gt;
-    &lt;/QueryParams&gt;
-&lt;/Copy&gt;
-</pre>
-
-  <p>If there are multiple query params with the same name, use the following syntax:</p>
-  <pre class="prettyprint">
-&lt;Copy source='request'&gt;
-    &lt;QueryParams&gt;
-      &lt;QueryParam name="qp1"/&gt;
-      &lt;QueryParam name="qp2"/&gt;
-      &lt;QueryParam name="qp3.2"/&gt;
-    &lt;/QueryParams&gt;
-&lt;/Copy&gt;
-</pre>
-
-  <p>This example copies "qp1", "qp2", and the second value of "qp3". If "qp3" has only
-  one value, then it is not copied.</p>
-
-  <table class="columns">
-    <tbody>
-      <tr>
-        <td style="width:90px">
-          <p><strong>Default:</strong></p>
-        </td>
-
-        <td width="217">N/A</td>
-      </tr>
-
-      <tr>
-        <td>
-          <p><span style="font-weight: bold; text-align: center;">Presence:</span></p>
-        </td>
-
-        <td>Optional</td>
-      </tr>
-
-      <tr>
-        <td>
-          <p><strong>Type:</strong></p>
-        </td>
-
-        <td>String</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <h3 id="copyelement-copyformparamselement">&lt;Copy&gt;/&lt;FormParams&gt; element</h3>
-
-  <p>Copies the form parameters. Note that the FormParams is copied only when the contentType is
-  <code>source</code> and AssignTo is <code>application/x-www-form-urlencoded</code>. To copy
-  all form parameters, specify <code>&lt;Copy&gt;&lt;FormParams/&gt;&lt;/Copy&gt;</code>. This
-  example copies specified form parameter from the object specified in the source attribute to
-  the variable specified in the <code>&lt;AssignTo&gt;</code> element:</p>
-  <pre class="prettyprint">
-&lt;Copy source='request'&gt;
-    &lt;FormParams&gt;
-        &lt;FormParam name="paramName"/&gt;
-    &lt;/FormParams&gt;
-&lt;/Copy&gt;
-</pre>
-
-  <p>If there are multiple form params with the same name, use the following syntax:</p>
-  <pre class="prettyprint">
-&lt;Copy source='request'&gt;
-    &lt;FormParams&gt;
-      &lt;FormParam name="f1"/&gt;
-      &lt;FormParam name="f2"/&gt;
-      &lt;FormParam name="f3.2"/&gt;
-    &lt;/FormParams&gt;
-&lt;/Copy&gt;
-</pre>
-
-  <p>This example copies "f1", "f2", and the second value of "f3". If "f3" has only one
-  value, then it is not copied.</p>
-
-  <table class="columns">
-    <tbody>
-      <tr>
-        <td style="width:90px">
-          <p><strong>Default:</strong></p>
-        </td>
-
-        <td width="217">N/A</td>
-      </tr>
-
-      <tr>
-        <td>
-          <p><span style="font-weight: bold; text-align: center;">Presence:</span></p>
-        </td>
-
-        <td>Optional</td>
-      </tr>
-
-      <tr>
-        <td>
-          <p><strong>Type:</strong></p>
-        </td>
-
-        <td>String</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <h3 id="copyelement-copypayloadelement">&lt;Copy&gt;/&lt;Payload&gt; element</h3>
-
-  <p>If true, the payload is copied from the object specified in the source attribute to the
-  variable specified in the <code>&lt;AssignTo&gt;</code> element.</p>
-  <pre class="prettyprint">
-&lt;Copy source='request'&gt;
-    &lt;Payload&gt;true&lt;/Payload&gt;
-&lt;/Copy&gt;
-</pre>
-
-  <table class="columns">
-    <tbody>
-      <tr>
-        <td style="width:90px">
-          <p><strong>Default:</strong></p>
-        </td>
-
-        <td width="217">false</td>
-      </tr>
-
-      <tr>
-        <td>
-          <p><span style="font-weight: bold; text-align: center;">Presence:</span></p>
-        </td>
-
-        <td>Optional</td>
-      </tr>
-
-      <tr>
-        <td>
-          <p><strong>Type:</strong></p>
-        </td>
-
         <td>Boolean</td>
       </tr>
-    </tbody>
-  </table>
-
-  <h3 id="copyelement-copyversionelement">&lt;Copy&gt;/&lt;Version&gt; element</h3>
-
-  <p>If true, the HTTP version is copied from the object specified in the source attribute to the
-  variable specified in the <code>&lt;AssignTo&gt;</code> element.</p>
-  <pre class="prettyprint">
-&lt;Copy source='request'&gt;
-  &lt;Version&gt;true&lt;/Version&gt;
-&lt;/Copy&gt;
-</pre>
-
-  <table class="columns">
-    <tbody>
       <tr>
-        <td style="width:90px">
-          <p><strong>Default:</strong></p>
-        </td>
-
-        <td width="217">false</td>
-      </tr>
-
-      <tr>
+        <td><code>transport</code></td>
         <td>
-          <p><span style="font-weight: bold; text-align: center;">Presence:</span></p>
+          <p>Specifies the transport type for the request or response message type.</p>
+          <p>The default value is "http" (the only supported value).</p>
         </td>
-
         <td>Optional</td>
+        <td>String</td>
       </tr>
-
       <tr>
-        <td>
-          <p><strong>Type:</strong></p>
+        <td><code>type</code></td>
+        <td>Specifies the type of the new message, when <code>createNew</code> is "true". Valid
+          values are "request" or "response".
+          <p>The default value is "request". If you omit this attribute, then Edge creates either
+          a request or a response, depending on where in the flow this policy executes.</p>
         </td>
-
-        <td>Boolean</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <h3 id="copyelement-copyverbelement">&lt;Copy&gt;/&lt;Verb&gt; element</h3>
-
-  <p><span style="vertical-align: middle;">If true, copies the verb found in the source attribute
-  object to the variable specified in the <code>&lt;AssignTo&gt;</code> variable. The verb is
-  assigned only when both the source and AssignTo type are <code>request</code>.</span></p>
-  <pre class="prettyprint">
-&lt;Copy source='request'&gt;
-    &lt;Verb&gt;true&lt;/Verb&gt;
-&lt;/Copy&gt;
-</pre>
-
-  <table class="columns">
-    <tbody>
-      <tr>
-        <td style="width:90px">
-          <p><strong>Default:</strong></p>
-        </td>
-
-        <td width="217">false</td>
-      </tr>
-
-      <tr>
-        <td>
-          <p><span style="font-weight: bold; text-align: center;">Presence:</span></p>
-        </td>
-
         <td>Optional</td>
-      </tr>
-
-      <tr>
-        <td>
-          <p><strong>Type:</strong></p>
-        </td>
-
-        <td>Boolean</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <h3 id="copyelement-copypathelement">&lt;Copy&gt;/&lt;Path&gt; element</h3>
-
-  <p><span style="vertical-align: middle;">Copies the path found in the source attribute object to
-  the variable specified in the <code>&lt;AssignTo&gt;</code> variable. The path is assigned only
-  when both the source and <code>AssignTo</code> type are <code>request</code>.</span></p>
-  <pre class="prettyprint">
-&lt;Copy source='request'&gt;
-    &lt;Path&gt;true&lt;/Path&gt;
-&lt;/Copy&gt;
-</pre>
-
-  <table class="columns">
-    <tbody>
-      <tr>
-        <td style="width:90px">
-          <p><strong>Default:</strong></p>
-        </td>
-
-        <td width="217">false</td>
-      </tr>
-
-      <tr>
-        <td>
-          <p><span style="font-weight: bold; text-align: center;">Presence:</span></p>
-        </td>
-
-        <td>Optional</td>
-      </tr>
-
-      <tr>
-        <td>
-          <p><strong>Type:</strong></p>
-        </td>
-
-        <td>Boolean</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <h3 id="copyelement-copystatuscodeelement">&lt;Copy&gt;/&lt;StatusCode&gt; element</h3>
-
-  <p><span style="vertical-align: middle;">If <code>true</code>, copies the StatusCode from the
-  object specified by the source attribute to the variable specified in the AssignType element. The
-  <code>StatusCode</code> is copied only when both the <code>source</code> and
-  <code>AssignTo</code> type are <code>response</code>.</span> A common use case is to use
-  ensure that the proxy response has the same status as the response received from the target when
-  <a href="#attributes">createNew=true</a>. </p>
-  <pre class="prettyprint">
-&lt;Copy source='request'&gt;
-    &lt;StatusCode&gt;true&lt;/StatusCode&gt;
-&lt;/Copy&gt;
-</pre>
-
-  <table class="columns">
-    <tbody>
-      <tr>
-        <td style="width:90px">
-          <p><strong>Default:</strong></p>
-        </td>
-
-        <td width="217">false</td>
-      </tr>
-
-      <tr>
-        <td>
-          <p><span style="font-weight: bold; text-align: center;">Presence:</span></p>
-        </td>
-
-        <td>Optional</td>
-      </tr>
-
-      <tr>
-        <td>
-          <p><strong>Type:</strong></p>
-        </td>
-
-        <td>Boolean</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <h3 id="copyelement-copyreasonphraseelement">&lt;Copy&gt;/&lt;ReasonPhrase&gt; element</h3>
-
-  <p>If true, copies the ReasonPhrase from the object specified by the source attribute to the
-  variable specified in the AssignType element. The ReasonPhrase is copied only when both the
-  source and AssignTo type are <code>response</code>.</p>
-  <pre class="prettyprint">
-&lt;Copy source='request'&gt;
-    &lt;ReasonPhrase&gt;true&lt;/ReasonPhrase&gt;
-&lt;/Copy&gt;
-</pre>
-
-  <table class="columns">
-    <tbody>
-      <tr>
-        <td style="width:90px">
-          <p><strong>Default:</strong></p>
-        </td>
-
-        <td width="217">false</td>
-      </tr>
-
-      <tr>
-        <td>
-          <p><span style="font-weight: bold; text-align: center;">Presence:</span></p>
-        </td>
-
-        <td>Optional</td>
-      </tr>
-
-      <tr>
-        <td>
-          <p><strong>Type:</strong></p>
-        </td>
-
-        <td>Boolean</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <h2 id="removeelement"><a id="RemoveElement" name="RemoveElement"></a>&lt;Remove&gt; element</h2>
-
-  <p>Removes specified elements from the message variable specified in the
-  <code>&lt;AssignTo&gt;</code> element of this policy. For example, a common use case is to remove
-  a query parameter that contains sensitive information from the incoming request object, to avoid
-  passing it to the backend server.</p>
-  <pre class="prettyprint">
-    &lt;Remove&gt;
-        &lt;Headers&gt;
-            &lt;Header name="h1"/&gt;
-        &lt;/Headers&gt;
-        &lt;QueryParams&gt;
-            &lt;QueryParam name="q1"/&gt;
-        &lt;/QueryParams&gt;
-        &lt;FormParams&gt;
-            &lt;FormParam name="f1"/&gt;
-        &lt;/FormParams&gt;
-        &lt;Payload&gt;&lt;/Payload&gt;
-    &lt;/Remove&gt;
-</pre>
-
-  <table class="columns">
-    <tbody>
-      <tr>
-        <td style="width:90px">
-          <p><strong>Default:</strong></p>
-        </td>
-
-        <td>N/A</td>
-      </tr>
-
-      <tr>
-        <td>
-          <p><span style="font-weight: bold; text-align: center;">Presence:</span></p>
-        </td>
-
-        <td>Optional</td>
-      </tr>
-
-      <tr>
-        <td>
-          <p><strong>Type:</strong></p>
-        </td>
-
-        <td>N/A</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <h3 id="removeelement-removeheaderselement">&lt;Remove&gt;/&lt;Headers&gt; element</h3>
-
-  <p>Removes specified HTTP headers from the message variable specified in the
-  &lt;AssignTo&gt; element of this policy. To remove all the headers, specify
-  <code>&lt;Remove&gt;&lt;Headers/&gt;&lt;/Remove&gt;</code>. This example removes
-  the <code>user-agent</code> header from the message variable specified with the
-  <code>&lt;AssignTo&gt;</code> element.</p>
-  <pre class="prettyprint">
-&lt;Remove&gt;
-    &lt;Headers&gt;
-        &lt;Header name="user-agent"/&gt;
-    &lt;/Headers&gt;
-&lt;/Remove&gt;
-</pre>
-
-  <p>If there are multiple headers with the same name, use the following syntax:</p>
-  <pre class="prettyprint">
-&lt;Remove&gt;
-    &lt;Headers&gt;
-      &lt;Header name="h1"/&gt;
-      &lt;Header name="h2"/&gt;
-      &lt;Header name="h3.2"/&gt;
-    &lt;/Headers&gt;
-&lt;/Remove&gt;
-</pre>
-
-  <p>This example removes "h1", "h2", and the second value of "h3". If "h3" has only one
-  value, then it is not removed.</p>
-
-  <table class="columns">
-    <tbody>
-      <tr>
-        <td style="width:90px">
-          <p><strong>Default:</strong></p>
-        </td>
-
-        <td width="217">N/A</td>
-      </tr>
-
-      <tr>
-        <td>
-          <p><span style="font-weight: bold; text-align: center;">Presence:</span></p>
-        </td>
-
-        <td>Optional</td>
-      </tr>
-
-      <tr>
-        <td>
-          <p><strong>Type:</strong></p>
-        </td>
-
         <td>String</td>
       </tr>
     </tbody>
   </table>
 
-  <h3 id="removeelement-removequeryparamselement">&lt;Remove&gt;/&lt;QueryParams&gt; element</h3>
+  <!-- ##################################################################################### -->
+  <!-- ##################################################################################### -->
+  <h3 id="assignvariable">{{am_assignvariable}}</h3>
+  <!-- ##################################################################################### -->
+  <!-- ##################################################################################### -->
 
-  <p>Removes specified query parameters from the message variable specified in
-  the &lt;AssignTo&gt; element of this policy. To remove all query paremeters,
-  specify <code>&lt;Remove&gt;&lt;QueryParams/&gt;&lt;/Remove&gt;</code>.</p>
+  <p>Assigns a value to a destination flow variable (e.g., a variable whose value is set by the
+  Assign Message policy). If the flow variable does not exist, then {{am_assignvariable}} creates
+  it.</p>
 
-  <p><strong>Note:</strong> This option only works when the <code>&lt;AssignTo&gt;</code> type
-  is request.</p>
-  <pre class="prettyprint">
-&lt;Remove&gt;
-    &lt;QueryParams&gt;
-        &lt;QueryParam name="param_name"/&gt;
-    &lt;/QueryParams&gt;
-&lt;/Remove&gt;
+  {% setvar dvt_default_value %}n/a{% endsetvar %}
+  {% setvar dvt_required %}Required{% endsetvar %}
+  {% setvar dvt_type %}String{% endsetvar %}
+  {% setvar dvt_parent %}{{am_assignvariable_link}}{% endsetvar %}
+  {% setvar dvt_children %}None{% endsetvar %}
+  {% include "includes/_default_value_table.html" %}
+
+  <p>The {{am_assignvariable_name}} element uses the following syntax:</p>
+
+  <div class="ds-selector-tabs">
+  <section>
+    <h3>Syntax</h3>
+      <pre class="prettyprint">
+{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="am_open" html_escape="False" %}
+{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="assignvariable_open" html_escape="False" %}
+<strong>{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="assignvariable_name" html_escape="False" %}</strong>
+{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="assignvariable_close" html_escape="False" %}
+{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="am_close" html_escape="False" %}
 </pre>
-
-  <p>If there are multiple query params with the same name, use the following syntax:</p>
-  <pre class="prettyprint">
-&lt;Remove&gt;
-    &lt;QueryParams&gt;
-      &lt;QueryParam name="qp1"/&gt;
-      &lt;QueryParam name="qp2"/&gt;
-      &lt;QueryParam name="qp3.2"/&gt;
-    &lt;/QueryParams&gt;
-&lt;/Remove&gt;
-</pre>
-
-  <p>This example removes "qp1", "qp2", and the second value of "qp3". If "qp3" has only
-  one value, then it is not removed.</p>
-
-  <table class="columns">
-    <tbody>
-      <tr>
-        <td style="width:90px">
-          <p><strong>Default:</strong></p>
-        </td>
-
-        <td width="217">N/A</td>
-      </tr>
-
-      <tr>
-        <td>
-          <p><span style="font-weight: bold; text-align: center;">Presence:</span></p>
-        </td>
-
-        <td>Optional</td>
-      </tr>
-
-      <tr>
-        <td>
-          <p><strong>Type:</strong></p>
-        </td>
-
-        <td>String</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <h4>Example</h4>
-
-  <p>For more sample code and discussion, see the <strong>Modify Request</strong> tab
-  under <a href="#Samples">Samples</a>. </p>
-
-  <h3 id="removeelement-removeformparamselement">&lt;Remove&gt;/&lt;FormParams&gt; element</h3>
-
-  <p>Removes specified query parameters from the message variable specified in
-  the <code>&lt;AssignTo&gt;</code> element of this policy. To remove all form
-  parameters, specify <code>&lt;Remove&gt;&lt;FormParams/&gt;&lt;/Remove&gt;</code>.</p>
-
-  <p><strong>Note:</strong> This option only works when the contentType of &lt;AssignTo&gt; element
-  is <em>application/x-www-form-urlencoded</em>.</p>
-  <pre class="prettyprint">
-&lt;Remove&gt;
-    &lt;FormParams&gt;
-        &lt;FormParam name="form_param_name"/&gt;
-    &lt;/FormParams&gt;
-&lt;/Remove&gt;
-</pre>
-
-  <p>If there are multiple form params with the same name, use the following syntax:</p>
-  <pre class="prettyprint">
-&lt;Remove&gt;
-    &lt;FormParams&gt;
-      &lt;FormParam name="f1"/&gt;
-      &lt;FormParam name="f2"/&gt;
-      &lt;FormParam name="f3.2"/&gt;
-    &lt;/FormParams&gt;
-&lt;/Remove&gt;
-</pre>
-
-  <p>This example removes "f1", "f2", and the second value of "f3". If "f3" has only one
-  value, then it is not removed.</p>
-
-  <table class="columns">
-    <tbody>
-      <tr>
-        <td style="width:90px">
-          <p><strong>Default:</strong></p>
-        </td>
-
-        <td width="217">N/A</td>
-      </tr>
-
-      <tr>
-        <td>
-          <p><span style="font-weight: bold; text-align: center;">Presence:</span></p>
-        </td>
-
-        <td>Optional</td>
-      </tr>
-
-      <tr>
-        <td>
-          <p><strong>Type:</strong></p>
-        </td>
-
-        <td>String</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <h3 id="removeelement-removepayloadelement">&lt;Remove&gt;/&lt;Payload&gt; element</h3>
-
-  <p>If <code>true</code>, the payload is cleared from the message variable specified in the
-  <code>&lt;AssignTo&gt;</code> element. </p>
-  <pre class="prettyprint">
-&lt;Remove&gt;
-    &lt;Payload&gt;true&lt;/Payload&gt;
-&lt;/Remove&gt;
-</pre>
-
-  <table class="columns">
-    <tbody>
-      <tr>
-        <td style="width:90px">
-          <p><strong>Default:</strong></p>
-        </td>
-
-        <td width="217">false</td>
-      </tr>
-
-      <tr>
-        <td>
-          <p><span style="font-weight: bold; text-align: center;">Presence:</span></p>
-        </td>
-
-        <td>Optional</td>
-      </tr>
-
-      <tr>
-        <td>
-          <p><strong>Type:</strong></p>
-        </td>
-
-        <td>Boolean</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <h2 id="addelement"><a id="AddElement" name="AddElement"></a>&lt;Add&gt; element</h2>
-
-  <p>Adds information <strong><em>to</em></strong> the message object specified with this policy's
-  <code>&lt;AssignTo&gt;</code> element. This adds headers or parameters to the message that don't
-  exist in the original message. To overwrite existing headers or parameters, use the &lt;Set&gt;
-  element instead.</p>
-<aside class="note">The sub-elements of <code>&lt;Add&gt;</code> support the dynamic string substitution feature called
-  <a href="/api-platform/reference/message-template-intro.html">message templating</a>.</aside>
-  <pre class="prettyprint">
-    &lt;Add&gt;
-        &lt;Headers&gt;
-            &lt;Header name="h1"&gt;value&lt;/Header&gt;
-        &lt;/Headers&gt;
-        &lt;QueryParams&gt;
-            &lt;QueryParam name="q1"&gt;value&lt;/QueryParam&gt;
-        &lt;/QueryParams&gt;
-        &lt;FormParams&gt;
-            &lt;FormParam name="f1"&gt;value&lt;/FormParam&gt;
-        &lt;/FormParams&gt;
-    &lt;/Add&gt;
-</pre>
-
-  <table class="columns">
-    <tbody>
-      <tr>
-        <td style="width:90px">
-          <p><strong>Default:</strong></p>
-        </td>
-
-        <td>N/A</td>
-      </tr>
-
-      <tr>
-        <td>
-          <p><span style="font-weight: bold; text-align: center;">Presence:</span></p>
-        </td>
-
-        <td>Optional</td>
-      </tr>
-
-      <tr>
-        <td>
-          <p><strong>Type:</strong></p>
-        </td>
-
-        <td>String</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <h3 id="addelement-addheaderselement">&lt;Add&gt;/&lt;Headers&gt; element</h3>
-
-  <p>Adds new headers in the variable specified in the <code>&lt;AssignTo&gt;</code> element. Note
-  that the empty header <code>&lt;Add&gt;&lt;Headers/&gt;&lt;/Add&gt;</code> does not add any
-  header. The same holds true for QueryParams and FormParams. This example adds
-  the <code>user-agent</code> header to the message variable specified with the
-  <code>&lt;AssignTo&gt;</code> element, and copies the value of the
-  <code>request.user.agent</code> flow variable into the header.</p>
-  <pre class="prettyprint">
-&lt;Add&gt;
-    &lt;Headers&gt;
-        &lt;Header name="user-agent"&gt;{request.user.agent}&lt;/Header&gt;
-    &lt;/Headers&gt;
-&lt;/Add&gt;
-</pre>
-
-  <table class="columns">
-    <tbody>
-      <tr>
-        <td style="width:90px">
-          <p><strong>Default:</strong></p>
-        </td>
-
-        <td width="217">N/A</td>
-      </tr>
-
-      <tr>
-        <td>
-          <p><span style="font-weight: bold; text-align: center;">Presence:</span></p>
-        </td>
-
-        <td>Optional</td>
-      </tr>
-
-      <tr>
-        <td>
-          <p><strong>Type:</strong></p>
-        </td>
-
-        <td>String</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <h3 id="addelement-addqueryparamselement">&lt;Add&gt;/&lt;QueryParams&gt; element</h3>
-
-  <p>Adds new query parameters to the message variable specified in
-  the <code>&lt;AssignTo&gt;</code> element of this policy. Note that the empty query
-  params, <code>&lt;Add&gt;&lt;QueryParams/&gt;&lt;/Add&gt;,</code> does not add any
-  query params. </p>
-
-  <p><strong>Note:</strong> This option only works when the <code>&lt;AssignTo&gt;</code> type
-  is request.</p>
-
-  <p>This example adds the query param named "param_name" and assign the value 27 to
-  it:</p>
-  <pre class="prettyprint">
-&lt;Add&gt;
-    &lt;QueryParams&gt;
-        &lt;QueryParam name="param_name"&gt;27&lt;/QueryParam&gt;
-    &lt;/QueryParams&gt;
-&lt;/Add&gt;
-</pre>
-
-  <table class="columns">
-    <tbody>
-      <tr>
-        <td style="width:90px">
-          <p><strong>Default:</strong></p>
-        </td>
-
-        <td width="217">N/A</td>
-      </tr>
-
-      <tr>
-        <td>
-          <p><span style="font-weight: bold; text-align: center;">Presence:</span></p>
-        </td>
-
-        <td>Optional</td>
-      </tr>
-
-      <tr>
-        <td>
-          <p><strong>Type:</strong></p>
-        </td>
-
-        <td>String</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <h3 id="addelement-addformparamselement">&lt;Add&gt;/&lt;FormParams&gt; element</h3>
-
-  <p>Adds new form parameters to the message variable specified in the
-  <code>&lt;AssignTo&gt;</code> element of this policy. Note that the empty form params,
-  <code>&lt;Add&gt;&lt;FormParams/&gt;&lt;/Add&gt;</code> does not add any form params.</p>
-
-  <p><strong>Note:</strong> This option only works when the contentType of
-  <code>&lt;AssignTo&gt;</code> element is <em>application/x-www-form-urlencoded</em>.</p>
-
-  <p>This example adds the specified form parameter to the message variable specified with the
-  <code>&lt;AssignTo&gt;</code> element, and assigns it the value of the "name" query param:</p>
-  <pre class="prettyprint">
-&lt;Add&gt;
-    &lt;FormParams&gt;
-        &lt;FormParam name="{my_username}"&gt;{request.queryparam.name}&lt;/FormParam&gt;
-    &lt;/FormParams&gt;
-&lt;/Add&gt; 
-</pre>
-
-  <table class="columns">
-    <tbody>
-      <tr>
-        <td style="width:90px">
-          <p><strong>Default:</strong></p>
-        </td>
-
-        <td width="217">N/A</td>
-      </tr>
-
-      <tr>
-        <td>
-          <p><span style="font-weight: bold; text-align: center;">Presence:</span></p>
-        </td>
-
-        <td>Optional</td>
-      </tr>
-
-      <tr>
-        <td>
-          <p><strong>Type:</strong></p>
-        </td>
-
-        <td>String</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <h2 id="setelement">&lt;Set&gt; element</h2>
-
-  <p>Sets information in the request or response, specified in this policy's
-  <code>&lt;AssignTo&gt;</code> element. This overwrites headers or parameters that already
-  exist in the original message. To add new headers or parameters, use the &lt;Add&gt; element
-  instead.</p>
-<aside class="note">The sub-elements of <code>&lt;Set&gt;</code> support the dynamic string substitution feature called
-  <a href="/api-platform/reference/message-template-intro.html">message templating</a>.</aside>
-  <pre class="prettyprint">
-    &lt;Set&gt;
-        &lt;Headers/&gt;
-        &lt;QueryParams/&gt;
-        &lt;FormParams/&gt;
-        &lt;Payload&gt; &lt;/Payload&gt;
-        &lt;Verb/&gt;
-        &lt;StatusCode/&gt;
-        &lt;ReasonPhrase/&gt;
-        &lt;Path/&gt;
-    &lt;/Set&gt;
-</pre>
-
-  <table class="columns">
-    <tbody>
-      <tr>
-        <td style="width:90px">
-          <p><strong>Default:</strong></p>
-        </td>
-
-        <td width="217">N/A</td>
-      </tr>
-
-      <tr>
-        <td>
-          <p><span style="font-weight: bold; text-align: center;">Presence:</span></p>
-        </td>
-
-        <td>Optional</td>
-      </tr>
-
-      <tr>
-        <td>
-          <p><strong>Type:</strong></p>
-        </td>
-
-        <td>N/A</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <h3 id="setelement-setheaderselement">&lt;Set&gt;/&lt;Headers&gt; element</h3>
-
-  <p>Overwrites existing HTTP headers in the request or response (specified with the
-  <code>&lt;AssignTo&gt;</code> element). Note that the empty header
-  <code>&lt;Set&gt;&lt;Headers/&gt;&lt;/Set&gt;</code> does not set any header. This example sets
-  the <code>user-agent</code> header to the value of the request.header.agent
-  variable.</p>
-  <pre class="prettyprint">
-&lt;Set&gt;
-    &lt;Headers&gt;
-        &lt;Header name="user-agent"&gt;{request.header.agent}&lt;/Header&gt;
-    &lt;/Headers&gt;
-&lt;/Set&gt;
-</pre>
-
-  <table class="columns">
-    <tbody>
-      <tr>
-        <td style="width:90px">
-          <p><strong>Default:</strong></p>
-        </td>
-
-        <td width="217">N/A</td>
-      </tr>
-
-      <tr>
-        <td>
-          <p><span style="font-weight: bold; text-align: center;">Presence:</span></p>
-        </td>
-
-        <td>Optional</td>
-      </tr>
-
-      <tr>
-        <td>
-          <p><strong>Type:</strong></p>
-        </td>
-
-        <td>String</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <h3 id="setelement-setqueryparamselement">&lt;Set&gt;/&lt;QueryParams&gt; element</h3>
-
-  <p>Overwrites existing query parameters. Note that the empty query parameter
-  <code>&lt;Set&gt;&lt;QueryParams/&gt;&lt;/Set&gt;</code> does not set any query parameters. This
-  example sets the "address" query parameter to the value of the request.header.address
-  variable.</p>
-  <pre class="prettyprint">
-&lt;Set&gt;
-    &lt;QueryParams&gt;
-        &lt;QueryParam name="address"&gt;{request.header.address}&lt;/QueryParam&gt;
-    &lt;/QueryParams&gt;
-&lt;/Set&gt;
-</pre>
-
-  <table class="columns">
-    <tbody>
-      <tr>
-        <td style="width:90px">
-          <p><strong>Default:</strong></p>
-        </td>
-
-        <td width="217">N/A</td>
-      </tr>
-
-      <tr>
-        <td>
-          <p><span style="font-weight: bold; text-align: center;">Presence:</span></p>
-        </td>
-
-        <td>Optional</td>
-      </tr>
-
-      <tr>
-        <td>
-          <p><strong>Type:</strong></p>
-        </td>
-
-        <td>String</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <h3 id="setelement-setformparamselement">&lt;Set&gt;/&lt;FormParams&gt; element</h3>
-
-  <p>Overwrites existing form parameters, and the contentType of the message is set to
-  <code>application/x-www-form-urlencoded</code>. Note that the empty form parameter
-  <code>&lt;Set&gt;&lt;FormParams/&gt;&lt;/Set&gt;</code> does not set any form parameters. This
-  example sets a form parameter called "myparam" to the value of the request.header.myparam
-  variable. </p>
-  <pre class="prettyprint">
-&lt;Set&gt;
-    &lt;FormParams&gt;
-        &lt;FormParam name="myparam"&gt;{request.header.myparam}&lt;/FormParam&gt;
-    &lt;/FormParams&gt;
-&lt;/Set&gt;
-</pre>
-
-  <table class="columns">
-    <tbody>
-      <tr>
-        <td style="width:90px">
-          <p><strong>Default:</strong></p>
-        </td>
-
-        <td width="217">N/A</td>
-      </tr>
-
-      <tr>
-        <td>
-          <p><span style="font-weight: bold; text-align: center;">Presence:</span></p>
-        </td>
-
-        <td>Optional</td>
-      </tr>
-
-      <tr>
-        <td>
-          <p><strong>Type:</strong></p>
-        </td>
-
-        <td>String</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <h3 id="setelement-setpayloadelement">&lt;Set&gt;/&lt;Payload&gt; element</h3>
-
-  <p>The content of <code>&lt;Payload&gt;</code> is treated as a message template. This means a
-  variable name wrapped in curly braces will be replaced at runtime with the value of the
-  referenced variable, as illustrated in the third example below. The same holds true for Version,
-  Verb, Path, StatusCode, and ReasonPhrase. </p>
-
-  <p>Set a plain text payload:</p>
-  <pre class="prettyprint">
-&lt;Set&gt;
-    &lt;Payload contentType="text/plain"&gt;test1234&lt;/Payload&gt;
-&lt;/Set&gt;
-</pre>
-
-  <p>Set a JSON payload:</p>
-  <pre class="prettyprint">
-&lt;Set&gt;
-    &lt;Payload contentType="application/json"&gt;
-        {"name":"foo", "type":"bar"}
-    &lt;/Payload&gt;
-&lt;/Set&gt;
-</pre>
-
-  <p>In a JSON payload, you can insert variables by wrapping variable names in curly braces, as
-  shown in the following example.</p>
-  <pre class="prettyprint">
-&lt;Set&gt;
-    &lt;Payload contentType="application/json"&gt;
-        {"name":"foo", "type":"{variable_name}"}
-    &lt;/Payload&gt;
-&lt;/Set&gt;
-</pre>
-
-  <p>In older versions of Apigee Edge - for example, prior to cloud release 16.08.17 - you could
-  not use curly braces to denote variable references within JSON payloads. In those releases, you
-  needed to use the <code>variablePrefix</code> and <code>variableSuffix</code> attributes to
-  specify delimiter characters, and use those to wrap variable names, like so:</p>
-  <pre class="prettyprint">
-&lt;Set&gt;
-    &lt;Payload contentType="application/json" variablePrefix="@" variableSuffix="#"&gt;
-        {"name":"foo", "type":"@variable_name#"}
-    &lt;/Payload&gt;
-&lt;/Set&gt;
-</pre>
-
-  <p>This older syntax still works.</p>
-
-  <p>To set an XML payload:</p>
-  <pre class="prettyprint">
-&lt;Set&gt;
-    &lt;Payload contentType="text/xml"&gt;
-        &lt;root&gt;
-          &lt;e1&gt;sunday&lt;/e1&gt;
-          &lt;e2&gt;funday&lt;/e2&gt;
-          &lt;e3&gt;{var1}&lt;/e3&gt;
-        &lt;/root&gt;
-    &lt;/Payload&gt;
-&lt;/Set&gt;
-</pre>
-
-  <aside class="note"><b>Note:</b> Do not include the XML prologue in the payload; otherwise, you
-  will get XML validation errors.</aside>
-
-  <table class="columns">
-    <tbody>
-      <tr>
-        <td style="width:90px">
-          <p><strong>Default:</strong></p>
-        </td>
-
-        <td width="217">the empty string</td>
-      </tr>
-
-      <tr>
-        <td>
-          <p><span style="font-weight: bold; text-align: center;">Presence:</span></p>
-        </td>
-
-        <td>Optional</td>
-      </tr>
-
-      <tr>
-        <td>
-          <p><strong>Type:</strong></p>
-        </td>
-
-        <td>String</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <h4>Attributes</h4>
-  <pre class="prettyprint">
-&lt;Payload contentType="content_type" variablePrefix="char" variableSuffix="char"&gt;
-</pre>
-
-  <table width="700">
-    <tbody>
-      <tr>
-        <th scope="col" style="width: 50px;">Attribute</th>
-
-        <th scope="col" width="382">Description</th>
-
-        <th scope="col" style="width: 50px;">Presence</th>
-
-        <th scope="col" style="width: 50px;">Type</th>
-      </tr>
-
-      <tr>
-        <td>contentType</td>
-
-        <td>
-          <p>If contentType is specified, its value is assigned to the <code>Content-Type</code>
-          header.</p>
-        </td>
-
-        <td>Optional</td>
-
-        <td>String</td>
-      </tr>
-
-      <tr>
-        <td>variablePrefix</td>
-
-        <td>Optionally specifies the leading delimiter on a flow variable. Defaults to
-        "{".</td>
-
-        <td>Optional</td>
-
-        <td>Char</td>
-      </tr>
-
-      <tr>
-        <td>variableSuffix</td>
-
-        <td>Optionally specifies the trailing delimiter on a flow variable. Defaults to
-        "}".</td>
-
-        <td>Optional</td>
-
-        <td>Char</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <h3 id="setelement-setversionelement">&lt;Set&gt;/&lt;Version&gt; element</h3>
-
-  <p>Sets the HTTP version for a request sent to the ProxyEndpoint from the client app. In the
-  response, setting this value has no effect.</p>
-
-  <p>The content of <code>&lt;Version&gt;</code> is treated as a message template. This means a
-  variable name wrapped in curly braces will be replaced at runtime with the value of the referenced
-  variable. The same holds true for Verb, Path, StatusCode, and ReasonPhrase.</p>
-
-  <p>Valid values are "1.0" or "1.1".</p>
-
-  <pre class="prettyprint">
-&lt;Set&gt;
-    &lt;Version&gt;1.1&lt;/Version&gt;
-&lt;/Set&gt;
-</pre>
-
-  <table class="columns">
-    <tbody>
-      <tr>
-        <td style="width:90px">
-          <p><strong>Default:</strong></p>
-        </td>
-
-        <td width="217">NA</td>
-      </tr>
-      <tr>
-        <td>
-          <p><strong>Presence:</strong></p>
-        </td>
-        <td>Optional</td>
-      </tr>
-      <tr>
-        <td>
-          <p><strong>Type:</strong></p>
-        </td>
-        <td>String</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <h3 id="setelement-setverbelement">&lt;Set&gt;/&lt;Verb&gt; element</h3>
-
-  <p>Sets the HTTP verb only when <code>AssignTo</code> type is request. The content of
-  <code>&lt;Verb&gt;</code> is treated as a message template. This means a variable name wrapped in
-  curly braces will be replaced at runtime with the value of the referenced variable, as shown in
-  the second example below. The same holds true for Version, Path, StatusCode, and
-  ReasonPhrase.</p>
-  <pre class="prettyprint">
-&lt;Set&gt;
-    &lt;Verb&gt;POST&lt;/Verb&gt;
-&lt;/Set&gt;
-</pre>
-  <pre class="prettyprint">
-&lt;Set&gt;
-    &lt;Verb&gt;{variable_name}&lt;/Verb&gt;
-&lt;/Set&gt;
-</pre>
-
-  <p>When referring to a variable, the variable should contain a valid verb, such as "GET" or
-  "POST".</p>
-
-  <table class="columns">
-    <tbody>
-      <tr>
-        <td style="width:90px">
-          <p><strong>Default:</strong></p>
-        </td>
-
-        <td width="217">false</td>
-      </tr>
-
-      <tr>
-        <td>
-          <p><span style="font-weight: bold; text-align: center;">Presence:</span></p>
-        </td>
-
-        <td>Optional</td>
-      </tr>
-
-      <tr>
-        <td>
-          <p><strong>Type:</strong></p>
-        </td>
-
-        <td>String (a valid HTTP verb)</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <h3 id="setelement-setpathelement">&lt;Set&gt;/&lt;Path&gt; element</h3>
+    </section>
+    <section>
+      <h3>Example 1</h3>
+      <p>The following example specifies the destination variable as <code>myvar</code>, and sets it
+      to the literal value "42":</p>
+      <pre class="prettyprint">{% includecode content_path="api-platform/reference/policies/examples/assign-message/assignvariable-1.xml" adjust_indentation="auto" %}</pre>
+      <p>If <code>myvar</code> does not exist, {{am_assignvariable}} creates it.</p>
+    </section>
+  </div>
 
   <aside class="note">
-    <b>Note:</b> This element isn't currently working as designed to override/rewrite a proxy's
-    target URL. (It does work for setting the Path in Service Callouts, as shown in the Learn by
-    Doing example below.)
+    <h3 class="hide-from-toc">NOTE</h3>The name "ratelimit" is reserved. For more information, see
+    <a href="https://community.apigee.com/questions/8860/quota-policy-throws-nullpointerexception.html"
+    class="external">Quota Policy Throws NullPointerException</a> in the Apigee Community.
+  </aside>
+
+  <!-- ##################################################################################### -->
+  <h4 id="assignvariable-ref">{{am_assignvariable_ref}} (child of {{am_assignvariable_link}})</h4>
+  <!-- ##################################################################################### -->
+
+  <p>Specifies the source of the assignment as a flow variable. The flow variable can be one of the
+  pre-defined flow variables (as listed in the {{variables_reference}}), or a custom flow variable
+  that you created.</p>
+
+  <p>The value of {{am_assignvariable_ref}} is always interpreted as a flow variable; you cannot
+  specify a literal string as the
+  value. To assign a literal string value, use the {{am_assignvariable_value_link}} element
+  instead.</p>
+
+  {% setvar dvt_default_value %}n/a{% endsetvar %}
+  {% setvar dvt_required %}Optional{% endsetvar %}
+  {% setvar dvt_type %}String{% endsetvar %}
+  {% setvar dvt_parent %}{{am_assignvariable_link}}{% endsetvar %}
+  {% setvar dvt_children %}None{% endsetvar %}
+  {% include "includes/_default_value_table.html" %}
+
+  <p>The {{am_assignvariable_template}} element uses the following syntax:</p>
+
+  <div class="ds-selector-tabs">
+  <section>
+    <h3>Syntax</h3>
+      <pre class="prettyprint">
+{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="am_open" html_escape="False" %}
+{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="assignvariable_open" html_escape="False" %}
+<strong>{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="assignvariable_template" html_escape="False" %}</strong>
+{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="assignvariable_close" html_escape="False" %}
+{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="am_close" html_escape="False" %}
+</pre>
+    </section>
+    <section>
+      <h3>Example 1</h3>
+      <p>The following example uses message templating syntax to concatenate two context variables
+      with a literal string (a hyphen) between them:</p>
+      <pre class="prettyprint">{% includecode content_path="api-platform/reference/policies/examples/assign-message/template-1.xml" adjust_indentation="auto" %}</pre>
+    </section>
+  </div>
+
+  <!-- ##################################################################################### -->
+  <h4 id="assignvariable-value">{{am_assignvariable_value}} (child of {{am_assignvariable_link}})</h4>
+  <!-- ##################################################################################### -->
+
+  <p>Defines the value of the destination flow variable set with {{am_assignvariable_link}}. The
+  value is always interpreted as a literal string; you cannot use a flow variable as the value, even
+  if you wrap the value in brackets ("{}"). To use a flow variable, use {{am_assignvariable_ref_link}}
+  instead.</p>
+
+  {% setvar dvt_default_value %}n/a{% endsetvar %}
+  {% setvar dvt_required %}Optional{% endsetvar %}
+  {% setvar dvt_type %}Complex type{% endsetvar %}
+  {% setvar dvt_parent %}{{am_link}}{% endsetvar %}
+  {% setvar dvt_children %}{{am_copy_formparams_link}}<br/>{{am_copy_headers_link}}
+ <br/>{{am_copy_payload_link}}<br/>{{am_copy_path_link}}<br/>
+  {{am_copy_queryparams_link}}<br/>{{am_copy_reasonphrase_link}}<br/>
+  {{am_copy_statuscode_link}}<br/>{{am_copy_verb_link}}<br/>
+  {{am_copy_version_link}}<br/>{% endsetvar %}
+  {% include "includes/_default_value_table.html" %}
+
+  <p>The {{am_copy}} element uses the following syntax:</p>
+
+  <div class="ds-selector-tabs">
+    <section>
+      <h3>Syntax</h3>
+      <pre class="prettyprint">{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="am_open" html_escape="False" %}
+  <strong>{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="copy" html_escape="False" %}</strong>
+  &lt;!-- Used as the destination for the {{am_copy}} values --&gt;
+{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="assignto" html_escape="False" %}
+{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="am_close" html_escape="False" %}
+  </pre>
+    </section>
+    <section>
+      <h3>Example 1</h3>
+      <p>The following example copies a header, three form parameters, the path, and all query
+      parameters <em>from</em> the request <em>to</em> a new, custom request:</p>
+      <pre class="prettyprint">{% includecode content_path="api-platform/reference/policies/examples/assign-message/copy-1.xml"  highlight="2,19" adjust_indentation="auto" %}</pre>
+    </section>
+  </div>
+
+  <p>The {{am_copy}} element has the following attributes:</p>
+
+  <table>
+    <tbody>
+      <tr>
+        <th>Attribute</th>
+        <th>Description</th>
+        <th>Required?</th>
+        <th>Type</th>
+      </tr>
+      <tr>
+        <td>source</td>
+        <td>
+          <p>Specifies the source object of the copy.</p>
+          <ul>
+            <li>If <code>source</code> is not specified, it is treated as a simple message. For
+              example, if the policy is in the request flow, then the source defaults to the
+              <code>request</code> object. If the policy is in the response flow, it defaults to the
+              <code>response</code> object. If you omit <code>source</code>, you can use an absolute
+              reference to a flow variable as the source of the copy. For example, specify the value
+              as <code>{request.header.user-agent}</code>.</li>
+            <li>If the source variable cannot be resolved, or resolves to a non-message type,
+              {{am_copy}} fails to respond.</li>
+          </ul>
+        </td>
+        <td>Optional</td>
+        <td>String</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ##################################################################################### -->
+  <h4 id="copy-formparams">{{am_copy_formparams}} (child of {{am_copy_link}})</h4>
+  <!-- ##################################################################################### -->
+
+  <p>Copies form parameters from the request specified by the
+  {{am_copy_link}} element's <code>source</code> attribute <em>to</em> the request
+  specified by the {{am_assignto_link}} element. This element has no effect on a
+  response.</p>
+
+  {% setvar dvt_default_value %}n/a{% endsetvar %}
+  {% setvar dvt_required %}Optional{% endsetvar %}
+  {% setvar dvt_type %}An array of {{am_headers_header}} elements or an empty array{% endsetvar %}
+  {% setvar dvt_parent %}{{am_copy_link}}{% endsetvar %}
+  {% setvar dvt_children %}{{am_headers_header}}{% endsetvar %}
+  {% include "includes/_default_value_table.html" %}
+
+  <p>The {{am_copy_headers}} element uses the following syntax:</p>
+
+  <div class="ds-selector-tabs">
+    <section>
+      <h3>Syntax</h3>
+      <pre class="prettyprint">
+{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="am_open" html_escape="False" %}
+{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="copy_open" html_escape="False" %}
+<strong>{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="copy_headers" html_escape="False" %}</strong>
+{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="copy_close" html_escape="False" %}
+{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="am_close" html_escape="False" %}
+</pre>
+    </section>
+    <section>
+      <h3>Example 1</h3>
+      <p>The following example copies the <code>user-agent</code> header from the request to the
+      new, custom request object:</p>
+      <pre class="prettyprint">{% includecode content_path="api-platform/reference/policies/examples/assign-message/copy-headers-1.xml" adjust_indentation="auto" %}</pre>
+    </section>
+    <section>
+      <h3>Example 2</h3>
+      <p>To copy all headers, use an empty {{am_copy_headers}} element, as the following example
+      shows:</p>
+      <pre class="prettyprint">{% includecode content_path="api-platform/reference/policies/examples/assign-message/copy-headers-2.xml" adjust_indentation="auto" %}</pre>
+    </section>
+    <section>
+      <h3>Example 3</h3>
+      <p>If there are multiple headers with the same name, use the following syntax:</p>
+      <pre class="prettyprint">{% includecode content_path="api-platform/reference/policies/examples/assign-message/copy-headers-3.xml" adjust_indentation="auto" %}</pre>
+      <p>This example copies "h1", "h2", and the second value of "h3". If "h3" has only one
+      value, then it is not copied.</p>
+    </section>
+  </div>
+
+  <!-- ##################################################################################### -->
+  <h4 id="copy-path">{{am_copy_path}} (child of {{am_copy_link}})</h4>
+  <!-- ##################################################################################### -->
+
+  <p>Determines whether the path should be copied from the source request to the destination
+  request. This element has no effect on a response.</p>
+
+  <p>If "true", this policy copies the path <em>from</em> the request message specified by the
+  {{am_copy_link}} element's <code>source</code> attribute <em>to</em> the request
+  message specified by the {{am_assignto_link}} element.</p>
+
+  {% setvar dvt_default_value %}false{% endsetvar %}
+  {% setvar dvt_required %}Optional{% endsetvar %}
+  {% setvar dvt_type %}Boolean{% endsetvar %}
+  {% setvar dvt_parent %}{{am_copy_link}}{% endsetvar %}
+  {% setvar dvt_children %}None{% endsetvar %}
+  {% include "includes/_default_value_table.html" %}
+
+  <p>The {{am_copy_payload}} element uses the following syntax:</p>
+
+  <div class="ds-selector-tabs">
+    <section>
+      <h3>Syntax</h3>
+      <pre class="prettyprint">
+{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="am_open" html_escape="False" %}
+{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="copy_open" html_escape="False" %}
+<strong>{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="copy_payload" html_escape="False" %}</strong>
+{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="copy_close" html_escape="False" %}
+{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="am_close" html_escape="False" %}
+</pre>
+    </section>
+    <section>
+      <h3>Example 1</h3>
+      <p>The following example sets {{am_copy_payload}} to "true" so that the request payload is
+      copied from the request to the response:</p>
+      <pre class="prettyprint">{% includecode content_path="api-platform/reference/policies/examples/assign-message/copy-payload-1.xml" adjust_indentation="auto" %}</pre>
+    </section>
+  </div>
+
+  <!-- ##################################################################################### -->
+  <h4 id="copy-queryparams">{{am_copy_queryparams}} (child of {{am_copy_link}})</h4>
+  <!-- ##################################################################################### -->
+
+  <p>Copies query string parameters <em>from</em> the request specified by the
+  {{am_copy_link}} element's <code>source</code> attribute <em>to</em> the request specified
+  by the {{am_assignto_link}} element. This element has no effect on a response.</p>
+
+  {% setvar dvt_default_value %}false{% endsetvar %}
+  {% setvar dvt_required %}Optional{% endsetvar %}
+  {% setvar dvt_type %}Boolean{% endsetvar %}
+  {% setvar dvt_parent %}{{am_copy_link}}{% endsetvar %}
+  {% setvar dvt_children %}None{% endsetvar %}
+  {% include "includes/_default_value_table.html" %}
+
+  <p>The {{am_copy_reasonphrase}} element uses the following syntax:</p>
+
+  <div class="ds-selector-tabs">
+    <section>
+      <h3>Syntax</h3>
+      <pre class="prettyprint">
+{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="am_open" html_escape="False" %}
+{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="copy_open" html_escape="False" %}
+<strong>{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="copy_reasonphrase" html_escape="False" %}</strong>
+{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="copy_close" html_escape="False" %}
+{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="am_close" html_escape="False" %}
+</pre>
+    </section>
+    <section>
+      <h3>Example 1</h3>
+      <p>The following example sets {{am_copy_reasonphrase}} to "true", which causes {{am_copy}}
+      to copy the reason phrase from the default response to a custom response object:</p>
+      <pre class="prettyprint">{% includecode content_path="api-platform/reference/policies/examples/assign-message/copy-reasonphrase-1.xml" adjust_indentation="auto" %}</pre>
+    </section>
+  </div>
+
+  <p>You can use {{am_copy_reasonphrase}} only when the following criteria are met:</p>
+  <ul>
+    <li>Message type: Response</li>
+  </ul>
+
+  <!-- ##################################################################################### -->
+  <h4 id="copy-statuscode">{{am_copy_statuscode}} (child of {{am_copy_link}})</h4>
+  <!-- ##################################################################################### -->
+
+  <p>Determines whether the status code is copied from the source response to the destination
+  response. This element has no effect on a request.</p>
+
+  <p>If "true", this policy copies the status code <em>from</em> the response message specified by
+  the {{am_copy_link}} element's <code>source</code> attribute <em>to</em> the response
+  message specified by the {{am_assignto_link}} element.</p>
+
+  {% setvar dvt_default_value %}false{% endsetvar %}
+  {% setvar dvt_required %}Optional{% endsetvar %}
+  {% setvar dvt_type %}Boolean{% endsetvar %}
+  {% setvar dvt_parent %}{{am_copy_link}}{% endsetvar %}
+  {% setvar dvt_children %}None{% endsetvar %}
+  {% include "includes/_default_value_table.html" %}
+
+  <p>The {{am_copy_verb}} element uses the following syntax:</p>
+
+  <div class="ds-selector-tabs">
+    <section>
+      <h3>Syntax</h3>
+      <pre class="prettyprint">
+{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="am_open" html_escape="False" %}
+{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="copy_open" html_escape="False" %}
+<strong>{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="copy_verb" html_escape="False" %}</strong>
+{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="copy_close" html_escape="False" %}
+{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="am_close" html_escape="False" %}
+</pre>
+    </section>
+    <section>
+      <h3>Example 1</h3>
+      <p>The following example sets {{am_copy_verb}} to "true", which copies the verb from the
+      default request to a new, custom request:</p>
+      <pre class="prettyprint">{% includecode content_path="api-platform/reference/policies/examples/assign-message/copy-verb-1.xml" adjust_indentation="auto" %}</pre>
+    </section>
+  </div>
+
+  <p>You can use {{am_copy_verb}} only when the following criteria are met:</p>
+  <ul>
+    <li>Message type: Request</li>
+  </ul>
+
+  <!-- ##################################################################################### -->
+  <h4 id="copy-version">{{am_copy_version}} (child of {{am_copy_link}})</h4>
+  <!-- ##################################################################################### -->
+
+  <p>Determines whether the HTTP version is copied from the source request to the
+  destination request. This element has no effect on a response.</p>
+
+  <p>If "true", copies the HTTP version found in the {{am_copy}} element's <code>source</code> attribute
+  to the object specified by the {{am_assignto_link}} element.</p>
+
+  {% setvar dvt_default_value %}true{% endsetvar %}
+  {% setvar dvt_required %}Optional{% endsetvar %}
+  {% setvar dvt_type %}Boolean{% endsetvar %}
+  {% setvar dvt_parent %}{{am_link}}{% endsetvar %}
+  {% setvar dvt_children %}None{% endsetvar %}
+  {% include "includes/_default_value_table.html" %}
+
+  <p>Set to "true" to ignore unresolved variables and continue processing; otherwise "false". The
+  default value is "true".</p>
+
+  <p>Setting {{am_ignoreunresolvedvariables}} to "true" is different from setting the {{am_link}}'s
+  <code>continueOnError</code> to "true" in that it is specific to setting and getting values of
+  variables. If you set <code>continueOnError</code> to "true", then Edge ignores all errors, not
+  just errors encountered when using variables.</p>
+
+  <p>The {{am_ignoreunresolvedvariables}} element uses the following syntax:</p>
+
+  <div class="ds-selector-tabs">
+    <section>
+      <h3>Syntax</h3>
+      <pre class="prettyprint">
+{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="am_open" html_escape="False" %}
+<strong>{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="ignoreunresolvedvariables" html_escape="False" %}</strong>
+{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="am_close" html_escape="False" %}
+</pre>
+    </section>
+    <section>
+      <h3>Example 1</h3>
+      <p>The following example sets {{am_ignoreunresolvedvariables}} to "true":</p>
+      <pre class="prettyprint">{% includecode content_path="api-platform/reference/policies/examples/assign-message/ignoreunresolvedvariables.xml" adjust_indentation="auto" %}</pre>
+    </section>
+  </div>
+
+  <!-- ##################################################################################### -->
+  <!-- ##################################################################################### -->
+  <h3 id="remove">{{am_remove}}</h3>
+  <!-- ##################################################################################### -->
+  <!-- ##################################################################################### -->
+
+  <p>Removes headers, query parameteters, form parameters, and/or the message payload from
+  a message. The message can be a request or a response. You specify which message {{am_remove}}
+  acts on by using the {{am_assignto_link}} element.</p>
+
+  {% setvar dvt_default_value %}n/a{% endsetvar %}
+  {% setvar dvt_required %}Optional{% endsetvar %}
+  {% setvar dvt_type %}Array of {{am_formparams_formparam}} elements or an empty array{% endsetvar %}
+  {% setvar dvt_parent %}{{am_remove_link}}{% endsetvar %}
+  {% setvar dvt_children %}{{am_formparams_formparam}}{% endsetvar %}
+  {% include "includes/_default_value_table.html" %}
+
+  <p>The {{am_remove_formparams}} element uses the following syntax:</p>
+
+  <div class="ds-selector-tabs">
+    <section>
+      <h3>Syntax</h3>
+      <pre class="prettyprint">
+{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="am_open" html_escape="False" %}
+{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="remove_open" html_escape="False" %}
+<strong>{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="remove_formparams" html_escape="False" %}</strong>
+{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="remove_close" html_escape="False" %}
+{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="am_close" html_escape="False" %}
+</pre>
+    </section>
+    <section>
+      <h3>Example 1</h3>
+      <p>The following example removes three form parameters from the request:</p>
+      <pre class="prettyprint">{% includecode content_path="api-platform/reference/policies/examples/assign-message/remove-formparams-1.xml" adjust_indentation="auto"%}</pre>
+    </section>
+    <section>
+      <h3>Example 2</h3>
+      <p>The following example removes all form parameters from the request:</p>
+      <pre class="prettyprint">{% includecode content_path="api-platform/reference/policies/examples/assign-message/remove-formparams-2.xml" adjust_indentation="auto"%}</pre>
+    </section>
+    <section>
+      <h3>Example 3</h3>
+      <p>If there are multiple form params with the same name, use the following syntax:</p>
+      <pre class="prettyprint">{% includecode content_path="api-platform/reference/policies/examples/assign-message/remove-formparams-3.xml" adjust_indentation="auto" %}</pre>
+      <p>This example removes "f1", "f2", and the second value of "f3". If "f3" has only one
+      value, then it is not removed.</p>
+    </section>
+  </div>
+
+  <p>You can use {{am_remove_formparams}} only when the following criteria are met:</p>
+  <ul>
+    <li>Message type: Request</li>
+    <li><code>Content-Type</code>: "application/x-www-form-urlencoded"</li>
+  </ul>
+
+  <!-- ##################################################################################### -->
+  <h4 id="remove-headers">{{am_remove_headers}} (child of {{am_remove_link}})</h4>
+  <!-- ##################################################################################### -->
+
+  <p>Removes the specified HTTP headers from the request or response, which is specified by the
+  {{am_assignto_link}} element.</p>
+
+  {% setvar dvt_default_value %}false{% endsetvar %}
+  {% setvar dvt_required %}Optional{% endsetvar %}
+  {% setvar dvt_type %}Boolean{% endsetvar %}
+  {% setvar dvt_parent %}{{am_remove_link}}{% endsetvar %}
+  {% setvar dvt_children %}None{% endsetvar %}
+  {% include "includes/_default_value_table.html" %}
+
+  <p>The {{am_remove_payload}} element uses the following syntax:</p>
+
+  <div class="ds-selector-tabs">
+    <section>
+      <h3>Syntax</h3>
+      <pre class="prettyprint">
+{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="am_open" html_escape="False" %}
+{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="remove_open" html_escape="False" %}
+<strong>{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="remove_payload" html_escape="False" %}</strong>
+{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="remove_close" html_escape="False" %}
+{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="am_close" html_escape="False" %}
+</pre>
+    </section>
+    <section>
+      <h3>Example 1</h3>
+      <p>The following example sets {{am_remove_payload}} to "true" so that the request payload is
+      cleared:</p>
+      <pre class="prettyprint">{% includecode content_path="api-platform/reference/policies/examples/assign-message/remove-payload-1.xml" adjust_indentation="auto" %}</pre>
+    </section>
+  </div>
+
+  <!-- ##################################################################################### -->
+  <h4 id="remove-queryparams">{{am_remove_queryparams}} (child of {{am_remove_link}})</h4>
+  <!-- ##################################################################################### -->
+
+  <p>Removes the specified query parameters from the request. This element has no effect on a
+  response.</p>
+
+  {% setvar dvt_default_value %}n/a{% endsetvar %}
+  {% setvar dvt_required %}Optional{% endsetvar %}
+  {% setvar dvt_type %}Complex type{% endsetvar %}
+  {% setvar dvt_parent %}{{am_link}}{% endsetvar %}
+  {% setvar dvt_children %}{{am_set_formparams_link}}<br/>{{am_set_headers_link}}<br/>{{am_set_payload_link}}<br/>
+  {{am_set_path_link}}<br/>{{am_set_queryparams_link}}<br/>{{am_set_reasonphrase_link}}<br/>{{am_set_statuscode_link}}<br/>
+  {{am_set_verb_link}}<br/>{{am_set_version_link}}<br/>{% endsetvar %}
+  {% include "includes/_default_value_table.html" %}
+
+  <aside class="note">
+    <h3 class="hide-from-toc">NOTE</h3>The sub-elements of <code>&lt;Set&gt;</code> support the
+    dynamic string substitution feature called
+    <a href="/api-platform/reference/message-template-intro">message templating</a>.
+  </aside>
+
+  <p>The {{am_set}} element uses the following syntax:</p>
+
+  <div class="ds-selector-tabs">
+    <section>
+      <h3>Syntax</h3>
+      <pre class="prettyprint">
+{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="am_open" html_escape="False" %}
+<strong>{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="set" html_escape="False" %}</strong>
+{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="am_close" html_escape="False" %}
+</pre>
+    </section>
+    <section>
+      <h3>Example 1</h3>
+      <p>The following example shows the {{am_set}} element:</p>
+      <pre class="prettyprint">{% includecode content_path="api-platform/reference/policies/examples/assign-message/set-1.xml" adjust_indentation="auto"%}</pre>
+    </section>
+  </div>
+
+<!--
+  <p>In general, you should not use {{am_set}} and {{am_add}} in the same policy to modify the same
+  properties. For example, if you add a new form parameter with {{am_add}}, and set the value of the
+  new form parameter with {{am_set}}&mdash;in the same policy&mdash;unexpected results can occur.</p>
+-->
+
+  <!-- ##################################################################################### -->
+  <h4 id="set-formparams">{{am_set_formparams}} (child of {{am_set_link}})</h4>
+  <!-- ##################################################################################### -->
+
+  <p>Overwrites existing form parameters on a request and replaces them with the new values that you
+  specify with this element. This element has no effect on a response.</p>
+
+  {% setvar dvt_default_value %}n/a{% endsetvar %}
+  {% setvar dvt_required %}Optional{% endsetvar %}
+  {% setvar dvt_type %}Array of {{am_headers_header}} elements{% endsetvar %}
+  {% setvar dvt_parent %}{{am_set_link}}{% endsetvar %}
+  {% setvar dvt_children %}{{am_headers_header}}{% endsetvar %}
+  {% include "includes/_default_value_table.html" %}
+
+  <p>The {{am_set_headers}} element uses the following syntax:</p>
+
+  <div class="ds-selector-tabs">
+    <section>
+      <h3>Syntax</h3>
+      <pre class="prettyprint">
+{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="am_open" html_escape="False" %}
+{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="set_open" html_escape="False" %}
+<strong>{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="set_headers" html_escape="False" %}</strong>
+{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="set_close" html_escape="False" %}
+{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="am_close" html_escape="False" %}
+</pre>
+    </section>
+    <section>
+      <h3>Example 1</h3>
+      <p>The following example sets the <code>user-agent</code> header to the value of the
+      <code>request.header.user-agent</code> variable:</p>
+      <pre class="prettyprint">{% includecode content_path="api-platform/reference/policies/examples/assign-message/set-headers-1.xml" adjust_indentation="auto"%}</pre>
+    </section>
+  </div>
+
+  <p>If you define empty headers in your policy
+  (<code>&lt;Add&gt;&lt;Headers/&gt;&lt;/Add&gt;</code>), the policy does not add any headers. This
+  is the same as omitting {{am_add_headers}}.</p>
+
+  <!-- ##################################################################################### -->
+  <h4 id="set-path">{{am_set_path}} (child of {{am_set_link}})</h4>
+  <!-- ##################################################################################### -->
+
+  <aside class="note">
+    <h3 class="hide-from-toc">NOTE</h3>
+    <p>This element isn't currently working as designed to override/rewrite a proxy's
+    target URL. (It does work for setting the path in Service Callouts, as shown in the Learn by
+    Doing example below.)</p>
 
     <p>Sometimes you may need to send a message to a URL other than the URL defined in an API
     proxy's TargetEndpoint. If you want to rewrite the target URL, override the
-    <code>target.url</code> variable in the TargetEndpoint using the <a href=
-    "#assignvariable">AssignVariable</a> element. (You can't override <code>target.url</code> in
-    the ProxyEndpoint, because Edge sets the variable in the TargetEndpoint). The following example
+    <code>target.url</code> variable in the TargetEndpoint using the {{am_assignvariable}} element.
+    (You can't override <code>target.url</code> in
+    the ProxyEndpoint, because Edge sets the variable in the TargetEndpoint).</p>
+
+    <p>The following example
     shows how an Assign Message policy would override <code>target.url</code>. Again, add the
     policy to the TargetEndpoint request. With this policy, the proxy would call the URL below
     instead of the URL defined on the TargetEndpoint.</p>
@@ -2004,22 +842,150 @@
 ...
 </pre>
 
-    <p>You can also use a JavaScript policy in the TargetEndpoint to override
-    the <code>target.url</code>.</p>
-
-    <p>For a more advanced example of how to override the <code>target.url</code> from the
-    ProxyEndpoint, see <a href=
-    "https://community.apigee.com/questions/4303/how-do-i-transform-the-path-between-the-proxy-and.html"
-    target="_blank">this Apigee Community article</a>.</p>
+    <p>You can also use a {{javascript_policy}} in the TargetEndpoint to
+    override the <code>target.url</code>.</p>
   </aside>
 
-  <aside class="note"><b>Sample:</b> <strong>Learn by doing!</strong><br>
-  If you want to see a "set path" in action in a Service Callout, check out this <a href=
-  "https://github.com/apigee/api-platform-samples/tree/master/learn-edge/service-callout-1" target=
-  "_blank">Learn by doing example</a> in the Apigee GitHub samples. Just clone the repository and
-  follow the instructions in that topic. The example uses Assign Message to set a request path,
-  then uses a Service Callout policy to make the request to an external service.</aside>
-  <!-- Temporarily commenting this out pending resolution of APIRT-1894
+  <!-- ##################################################################################### -->
+  <h4 id="set-payload">{{am_set_payload}} (child of {{am_set_link}})</h4>
+  <!-- ##################################################################################### -->
+
+  <p>Defines the message body for a request or response, which is specified by the
+  {{am_assignto_link}} element. The payload can be any valid content type, such as plain
+  text, JSON, or XML.</p>
+
+  {% setvar dvt_default_value %}n/a{% endsetvar %}
+  {% setvar dvt_required %}Optional{% endsetvar %}
+  {% setvar dvt_type %}Array of {{am_queryparams_queryparam}} elements{% endsetvar %}
+  {% setvar dvt_parent %}{{am_set_link}}{% endsetvar %}
+  {% setvar dvt_children %}{{am_queryparams_queryparam}}{% endsetvar %}
+  {% include "includes/_default_value_table.html" %}
+
+  <p>The {{am_set_queryparams}} element uses the following syntax:</p>
+
+  <div class="ds-selector-tabs">
+    <section>
+      <h3>Syntax</h3>
+      <pre class="prettyprint">
+{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="am_open" html_escape="False" %}
+{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="set_open" html_escape="False" %}
+<strong>{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="set_queryparams" html_escape="False" %}</strong>
+{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="set_close" html_escape="False" %}
+{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="am_close" html_escape="False" %}
+</pre>
+    </section>
+    <section>
+      <h3>Example 1</h3>
+      <p>The following example sets the "address" query parameter to the value of the
+      <code>request.header.address</code> variable:</p>
+      <pre class="prettyprint">{% includecode content_path="api-platform/reference/policies/examples/assign-message/set-queryparams-1.xml" adjust_indentation="auto" %}</pre>
+    </section>
+  </div>
+
+  <p>You can use {{am_set_queryparams}} only when the following criteria are met:</p>
+  <ul>
+    <li>HTTP verb: GET</li>
+    <li>Message type: Request</li>
+  </ul>
+
+  <p>If you define empty query parameters in your policy
+  (<code>&lt;Set&gt;&lt;QueryParams/&gt;&lt;/Set&gt;</code>), the policy does not set any query
+  parameters. This is the same as omitting {{am_set_queryparams}}.</p>
+
+  <!-- ##################################################################################### -->
+  <h4 id="set-reasonphrase">{{am_set_reasonphrase}} (child of {{am_set_link}})</h4>
+  <!-- ##################################################################################### -->
+
+  <p>Sets the reason phrase on the response. This is normally done for debugging in combination with
+  {{am_set_statuscode}}. This element has no effect on a request.</p>
+
+  {% setvar dvt_default_value %}200 (when {{am_assignto}}'s <code>createNew</code> attribute is set
+  to "true"){% endsetvar %}
+  {% setvar dvt_required %}Optional{% endsetvar %}
+  {% setvar dvt_type %}String or {variable}{% endsetvar %}
+  {% setvar dvt_parent %}{{am_set_link}}{% endsetvar %}
+  {% setvar dvt_children %}None{% endsetvar %}
+  {% include "includes/_default_value_table.html" %}
+
+  <p>The {{am_set_statuscode}} element uses the following syntax:</p>
+
+  <div class="ds-selector-tabs">
+    <section>
+      <h3>Syntax</h3>
+      <pre class="prettyprint">
+{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="am_open" html_escape="False" %}
+{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="set_open" html_escape="False" %}
+<strong>{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="set_statuscode" html_escape="False" %}</strong>
+{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="set_close" html_escape="False" %}
+{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="am_close" html_escape="False" %}
+</pre>
+    </section>
+    <section>
+      <h3>Example 1</h3>
+      <p>The following example sets a simple status code:</p>
+      <pre class="prettyprint">{% includecode content_path="api-platform/reference/policies/examples/assign-message/set-statuscode-1.xml" adjust_indentation="auto" %}</pre>
+    </section>
+    <section>
+      <h3>Example 2</h3>
+      <p>The content of {{am_set_statuscode}} is treated as a message template. This means a
+      variable name wrapped in curly braces will be replaced at runtime with the value of the
+      referenced variable, as the following example shows:</p>
+      <pre class="prettyprint">{% includecode content_path="api-platform/reference/policies/examples/assign-message/set-statuscode-2.xml" %}</pre>
+    </section>
+  </div>
+
+  <p>You can use {{am_set_statuscode}} only when the following criteria are met:</p>
+  <ul>
+    <li>Message type: Response</li>
+  </ul>
+
+  <!-- ##################################################################################### -->
+  <h4 id="set-verb">{{am_set_verb}} (child of {{am_set_link}})</h4>
+  <!-- ##################################################################################### -->
+
+  <p>Sets the HTTP verb on the request. This element has no effect on a response.</p>
+
+  {% setvar dvt_default_value %}n/a{% endsetvar %}
+  {% setvar dvt_required %}Optional{% endsetvar %}
+  {% setvar dvt_type %}String or {variable}{% endsetvar %}
+  {% setvar dvt_parent %}{{am_set_link}}{% endsetvar %}
+  {% setvar dvt_children %}None{% endsetvar %}
+  {% include "includes/_default_value_table.html" %}
+
+  <p>The {{am_set_version}} element uses the following syntax:</p>
+
+  <div class="ds-selector-tabs">
+    <section>
+      <h3>Syntax</h3>
+      <pre class="prettyprint">
+{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="am_open" html_escape="False" %}
+{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="set_open" html_escape="False" %}
+<strong>{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="set_version" html_escape="False" %}</strong>
+{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="set_close" html_escape="False" %}
+{% includecode content_path="api-platform/reference/policies/examples/assign-message/assign-message-uber-syntax.xml" region_tag="am_close" html_escape="False" %}
+</pre>
+    </section>
+    <section>
+      <h3>Example 1</h3>
+      <p>The following example sets the version number to "1.1":</p>
+      <pre class="prettyprint">{% includecode content_path="api-platform/reference/policies/examples/assign-message/set-version-1.xml" adjust_indentation="auto" %}</pre>
+    </section>
+    <section>
+      <h3>Example 2</h3>
+      <p>The following uses a variable in curly braces to set the version number:</p>
+      <pre class="prettyprint">{% includecode content_path="api-platform/reference/policies/examples/assign-message/set-version-2.xml" adjust_indentation="auto" %}</pre>
+      <p>The content of {{am_set_version}} is treated as a message template. This means a
+      variable name wrapped in curly braces will be replaced at runtime with the value of the referenced
+      variable.</p>
+    </section>
+  </div>
+
+  <p>You can use {{am_set_version}} only when the following criteria are met:</p>
+  <ul>
+    <li>Message type: Request</li>
+  </ul>
+
+<!-- Temporarily commenting this out pending resolution of APIRT-1894
 <p>Sets the HTTP path of the request only when <code>AssignTo</code> type is <code>request</code>. To set the path, the Assign Message policy has to be attached to a request flow of the TargetEndpoint, not to a flow in the ProxyEndpoint. &nbsp;In addition, you must use the <code>&lt;AssignVariable&gt;</code> tag of the Assign Message policy to set the&nbsp;<code>target.copy.pathsuffix</code> flow variable to <code>false</code>.&nbsp;</p>
 <p>Specify the path relative to the domain, which is defined by the target endpoint. For example, to set the request path as <code>http://myCo.com/a/b/c</code>, where <code>http://myCo.com</code> is defined by the API proxy's target endpoint, specify the path as:</p>
 <pre>
@@ -2061,232 +1027,140 @@
 </table>
 -->
 
-  <h3 id="setelement-setstatuscodeelement">&lt;Set&gt;/&lt;StatusCode&gt; element</h3>
+  <h2 id="customrequests">Create custom request messages</h2>
 
-  <p>Sets the status code. This makes sense only when the <code>type</code> attribute in the
-  <code>AssignTo</code> element is <code>response</code>. Example:</p>
-  <pre class="prettyprint">
-&lt;Set&gt;
-    &lt;StatusCode&gt;400&lt;/StatusCode&gt;
-&lt;/Set&gt;
-</pre>
+  <p>You can use Assign Message to create a custom request message. After you create a custom
+  request, you can use it in the following ways:</p>
 
-  <p>The content of <code>&lt;StatusCode&gt;</code> is treated as a message template. This means a
-  variable name wrapped in curly braces will be replaced at runtime with the value of the
-  referenced variable, as shown below. The same holds true for Version, Verb, Path, Payload, and
-  ReasonPhrase. Use this form to set a status code to a value contained within a variable:</p>
-  <pre class="prettyprint">
-&lt;Set&gt;
-    &lt;StatusCode&gt;{calloutresponse.status.code}&lt;/StatusCode&gt;
-&lt;/Set&gt;
-</pre>
+  <ul>
+    <li>Access its variables in other policies</li>
+    <li>Pass it to an external service</li>
+  </ul>
 
-  <table class="columns">
+  <aside class="note"><h3 class="hide-from-toc">NOTE</h3>
+  You cannot pass a custom request message to the target endpoint in the flow. Edge only passes
+  the <em>original request</em> (with any modifications you might have made) to the target
+  endpoint.</aside>
+
+  <p>To create a custom request message, use the {{am_assignto_link}} element in your Assign Message
+  policy. Set <code>createNew</code> to "true" and specify the name of the new message in the body
+  of the element, as the following example shows:</p>
+
+  <pre class="prettyprint">{% includecode content_path="api-platform/reference/policies/examples/assign-message/assignto-2.xml" highlight="2" %}</pre>
+
+  <p>By default, Edge does nothing with the custom request message. After creating it, Edge will
+  continue through the flow with the original request. To use the custom request, add a policy such
+  as the {{service_callout_policy}} to your proxy that can pass the custom request to an external
+  service.</p>
+
+  <p>The following examples create custom request messages:</p>
+
+  <div class="ds-selector-tabs">
+    <section>
+      <h3>Example 1</h3>
+      {% include "api-platform/reference/policies/examples/assign-message/ex1_customrequest1.html" %}
+    </section>
+    <section>
+      <h3>Example 2</h3>
+      {% include "api-platform/reference/policies/examples/assign-message/ex2_customrequest2.html" %}
+    </section>
+  </div>
+
+  <p>You can access a custom request message in another Assign Message policy that occurs later in
+  the flow. The following example gets the value of the custom request message's
+  <code>user-agent</code> header:</p>
+
+  <pre class="prettyprint">{% includecode content_path="api-platform/reference/policies/examples/assign-message/custom-request-1-access.xml" %}</pre>
+
+  <h2 id="videos">Videos</h2>
+
+  <p>Watch the following videos to learn more about the Assign Message policy.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Video</th>
+        <th>Description</th>
+      </tr>
+    </thead>
     <tbody>
       <tr>
-        <td style="width:90px">
-          <p><strong>Default:</strong></p>
-        </td>
-
-        <td width="217">200 (when createNew=true)</td>
+        <td><a href="https://www.youtube.com/watch?v=-goGhTJoeB8" target="_blank">Why Assign
+        Message Policy?</a></td>
+        <td>Learn about the benefits of using Assign Message policy to modify the API request or
+        response without modifying the backend code.</td>
       </tr>
-
       <tr>
-        <td>
-          <p><span style="font-weight: bold; text-align: center;">Presence:</span></p>
-        </td>
-
-        <td>Optional</td>
+        <td><a href="https://www.youtube.com/watch?v=cgRPbgKNpQI" target="_blank">Copy API elements
+        using Assign Message policy</a></td>
+        <td>Copy elements from an API request or response and construct a new request or response
+        object using the Assign Message policy.</td>
       </tr>
-
       <tr>
-        <td>
-          <p><strong>Type:</strong></p>
-        </td>
-
-        <td>String</td>
+        <td><a href="https://www.youtube.com/watch?v=r9MJxUbwMko" target="_blank">Remove API
+        elements using Assign Message policy</a></td>
+        <td>Remove API elements and modify the API before it reaches the target backend using the
+        Assign Message policy.</td>
+      </tr>
+      <tr>
+        <td><a href="https://www.youtube.com/watch?v=kpXhNrZCwR4" target="_blank">Add and set API
+        elements using Assign Message policy</a></td>
+        <td>Change API request or response by adding query parameters, headers, form parameters, or
+        payloads using the Assign Message policy.</td>
+      </tr>
+      <tr>
+        <td><a href="https://www.youtube.com/watch?v=RyZI--auWfA" target="_blank">Create custom
+        variables using Assign Message policy</a></td>
+        <td>Set custom flow variables using Assign Message policy and leverage the variables in
+        other policies in the API proxy.</td>
+      </tr>
+      <tr>
+        <td><a href="https://www.youtube.com/watch?v=Fk5EDazB4-Y" target="_blank">Create new
+        request or response objects using Assign Message policy</a></td>
+        <td>Create new API request or response objects using the Assign Message policy at API
+        runtime.</td>
+      </tr>
+      <tr>
+        <td><a href="https://www.youtube.com/watch?v=grNhwkrFBxg" target="_blank">Create a mock API
+        using Assign Message policy</a></td>
+        <td>Create a simple mock REST API by adding the Assign Message policy in the response
+        flow.</td>
+      </tr>
+      <tr>
+        <td><a href="https://www.youtube.com/watch?v=PUDogzEAZ-Y" target="_blank">Set or modify the
+        payload using Assign Message policy</a></td>
+        <td>Convert REST request to SOAP request by setting SOAP Payload using the Assign Message
+        policy at API runtime.</td>
       </tr>
     </tbody>
   </table>
 
-  <h3 id="setelement-setreasonphraseelement">&lt;Set&gt;/&lt;ReasonPhrase&gt; element</h3>
-
-  <p>Sets the reason phrase. This is normally done when using
-  <code>&lt;Set&gt;&lt;StatusCode&gt;</code>, when <code>AssignTo</code> type is
-  <code>response</code>. Example:</p>
-  <pre class="prettyprint">
-&lt;Set&gt;
-    &lt;ReasonPhrase&gt;Bad Request&lt;/ReasonPhrase&gt;
-&lt;/Set&gt;
-</pre>
-
-  <p>The content of <code>&lt;ReasonPhrase&gt;</code> is treated as a message template. This means
-  a variable name wrapped in curly braces will be replaced at runtime with the value of the
-  referenced variable, as shown in the example below. The same holds true for Version, Verb, Path,
-  Payload, and StatusCode. Use this form to set a reason phrase to a value contained within a
-  variable:</p>
-  <pre class="prettyprint">
-&lt;Set&gt;
-    &lt;ReasonPhrase&gt;{calloutresponse.reason.phrase}&lt;/ReasonPhrase&gt;
-&lt;/Set&gt;
-</pre>
-
-  <table class="columns">
-    <tbody>
-      <tr>
-        <td style="width:90px">
-          <p><strong>Default:</strong></p>
-        </td>
-
-        <td width="217">NA</td>
-      </tr>
-
-      <tr>
-        <td>
-          <p><span style="font-weight: bold; text-align: center;">Presence:</span></p>
-        </td>
-
-        <td>Optional</td>
-      </tr>
-
-      <tr>
-        <td>
-          <p><strong>Type:</strong></p>
-        </td>
-
-        <td>String</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <h2 id="assignvariable">&lt;AssignVariable&gt; element</h2>
-
-  <p>Assign a value to a flow variable. If the variable does not exist, then create it.</p>
-
-  <p>In the first example, the <code>&lt;Name&gt;</code> tag specifies the variable name, and the
-  <code>&lt;Value&gt;</code> tag specifies the value.</p>
-  <pre class="prettyprint">
-&lt;AssignVariable&gt;
-  &lt;Name&gt;myvar&lt;/Name&gt;
-  &lt;Value&gt;10&lt;/Value&gt;
-&lt;/AssignVariable&gt;
-&lt;AssignVariable&gt;
-  &lt;Name&gt;Country&lt;/Name&gt;
-  &lt;Value&gt;USA&lt;/Value&gt;
-&lt;/AssignVariable&gt;
-</pre>
-
-  <p>In the next example, you copy a value from one variable to another variable. This example
-  assigns the value of the flow variable <code>request.header.user-agent</code> to the flow
-  variable <code>myvar</code> and the value of the query parameter <code>country</code> to the
-  <code>Country</code> variable:</p>
-  <pre class="prettyprint">
-&lt;AssignVariable&gt;
-  &lt;Name&gt;myvar&lt;/Name&gt;
-  &lt;Ref&gt;request.header.user-agent&lt;/Ref&gt;
-  &lt;Value&gt;ErrorOnCopy&lt;/Value&gt;
-&lt;/AssignVariable&gt;
-&lt;AssignVariable&gt;
-  &lt;Name&gt;Country&lt;/Name&gt;
-  &lt;Ref&gt;request.queryparam.country&lt;/Ref&gt;
-  &lt;Value&gt;ErrorOnCopy&lt;/Value&gt;
-&lt;/AssignVariable&gt;
-</pre>
-
-  <p>Use the <code>&lt;Ref&gt;</code> tag to specify the source variable. If the variable
-  referenced by the <code>&lt;Ref&gt;</code> tag is not accessible, use the value specified by the
-  <code>&lt;Value&gt;</code> tag.</p>
-
-  <p>One way to use <code>&lt;AssignVariable&gt;</code> is to set the default value of a query
-  parameter, header, or other value that can be passed in with the request. For example, you create
-  a weather API proxy where the request takes a single query parameter named "w". This
-  parameter contains the ID of the city for which you want the weather. The request URL has
-  the form:</p>
-  <pre class="prettyprint">
-http://myCO.com/v1/weather/forecastrss?w=12797282
-</pre>
-
-  <p>To define a default value for the "w" query parameter, create an Assign Message policy as
-  shown below:</p>
-  <pre class="prettyprint">
-&lt;AssignMessage async="false" continueOnError="false" enabled="true" name="DefaultWQP"&gt;
-  &lt;AssignTo createNew="false" transport="http" type="request"/&gt;
-  &lt;IgnoreUnresolvedVariables&gt;true&lt;/IgnoreUnresolvedVariables&gt;
- <strong> &lt;AssignVariable&gt;
-    &lt;Name&gt;request.queryparam.w&lt;/Name&gt;
-    &lt;Ref&gt;request.queryparam.w&lt;/Ref&gt;
-    &lt;Value&gt;12797282&lt;/Value&gt;
-  &lt;/AssignVariable&gt; </strong>
-&lt;/AssignMessage&gt;
-</pre>
-
-  <p>In this example, you use <code>&lt;AssignVariable&gt;</code> to copy the
-  <code>request.queryparam.w</code> flow variable to itself. If the flow variable is null, meaning
-  the "w" query parameter was omitted from the request, then it copies the default value from the
-  <code>&lt;Value&gt;</code> element. Therefore, you can make a request to this API proxy that
-  omits the "w" query parameter:</p>
-  <pre class="prettyprint">
-http://myCO.com/v1/weather/forecastrss
-</pre>
-
-  <p>...and still have the API proxy return a valid result.</p>
-
-  <aside class="note"><b>Note:</b> It is not possible to use AssignVariable to concatenate a string
-  with a dynamic variable (for example, by putting the dynamic variable in curly braces). However,
-  you can use a JavaScript policy to do this kind of concatenation. For more information, see this
-  <a href=
-  "https://community.apigee.com/questions/28704/using-assign-message-can-we-concatenate-a-string-w.html">
-  post on the Apigee Community</a>.</aside>
-
-  
-
-  <h3 id="assignvariableelement-assignvariablenameelement">&lt;AssignVariable&gt;/&lt;Name&gt;
-  element</h3>
-
-  <p>Specifies the name of the destination flow variable. If the variable does not exist, a new one
-  is created.</p>
-
-  <aside class="note"><b>Note:</b> The name <code>ratelimit</code> is reserved. For more
-  information, see <a href=
-  "https://community.apigee.com/questions/8860/quota-policy-throws-nullpointerexception.html">this
-  Apigee Community post</a>.</aside>
-
-  <h3 id="assignvariableelement-assignvariablerefelement">&lt;AssignVariable&gt;/&lt;Ref&gt;
-  element</h3>
-
-  <p>Specifies the source of the assignment as a flow variable or other value. If you specify a
-  flow variable, omit the enclosing brackets "{}" normally used to reference a flow variable.</p>
-
-  <h3 id="assignvariableelement-assignvariablevalueelement">&lt;AssignVariable&gt;/&lt;Value&gt;
-  element</h3>
-
-  <p>If <code>&lt;Ref&gt;</code> is not specified or is unresolvable or null, this value is
-  assigned to the <code>&lt;Name&gt;</code> variable. The value is always interpreted as a literal
-  string; you cannot use a flow variable or other variable as the value.</p>
-
-  <h2 id="flowvariables"><a id="Flow_Variables" name="Flow_Variables"></a>Flow variables</h2>
-
-  <p>This policy does not automatically create or populate any flow variables. However, you can
-  create and populate flow variables manually using this policy's <code>&lt;AssignTo&gt;</code>,
-  <code>&lt;Copy&gt;</code>, <code>&lt;Set&gt;</code>, <code>&lt;Add&gt;</code>, and
-  <code>&lt;AssignVariable&gt;</code> elements. </p>
-
-  <h2 id="errorreference"><a id="Error_Codes" name="Error_Codes"></a>Error reference</h2>
+  <h2 id="errorreference">Error codes</h2>
 
   <p>{% dynamic include /includes/___assign-message-policy-error-codes %}</p>
 
-  <h2 id="schema"><a name="schema" id="schema"></a>Schema</h2>
+  <h2 id="schema">Schemas</h2>
 
   <p>Each policy type is defined by an XML schema (<code>.xsd</code>). For reference, <a href=
-  "https://github.com/apigee/api-platform-samples/tree/master/schemas/policy">policy schemas</a>
+  "https://github.com/apigee/api-platform-samples/tree/master/schemas/policy" class="external">policy schemas</a>
   are available on GitHub.</p>
 
-  <h2 id="relatedtopics"><a id="Related_Informatoin" name="Related_Informatoin"></a>Related
-  topics</h2>
+  <h2 id="relatedtopics">Related topics</h2>
 
   <p><a href=
-  "https://github.com/apigee/api-platform-samples/tree/master/sample-proxies/pagination">Working
+  "https://github.com/apigee/api-platform-samples/tree/master/sample-proxies/pagination" class="external">Working
   samples of the AssignMessage</a> policy are available in the <a href=
-  "https://github.com/apigee/api-platform-samples">API Platform samples</a>.</p>
+  "https://github.com/apigee/api-platform-samples" class="external">API Platform samples</a>.</p>
 
-  <h3 id="relatedtopics-"> </h3>{% endblock %}
+  <p>For a more advanced example of how to override the <code>target.url</code> from the
+  ProxyEndpoint, see <a href=
+  "https://community.apigee.com/questions/4303/how-do-i-transform-the-path-between-the-proxy-and.html"
+  class="external">this Apigee Community article</a>.</p>
+
+  <p>To see a "set path" in action in a {{service_callout_policy}}, check out this <a href=
+  "https://github.com/apigee/api-platform-samples/tree/master/learn-edge/service-callout-1"
+  class="external">Learn by doing example</a> in the Apigee GitHub samples. Just clone the repository and
+  follow the instructions in that topic. The example uses Assign Message to set a request path,
+  then uses a Service Callout policy to make the request to an external service.</p>
+
+{% endblock %}

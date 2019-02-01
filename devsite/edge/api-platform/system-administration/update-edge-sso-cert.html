@@ -1,0 +1,75 @@
+{% extends "_base.html" %} {% block title %}Update the Edge SSO Service Provider certificate{% endblock %}
+{% block body %}
+
+<p>The Edge SSO Service Provider (SP) uses an x509 certificate to sign authentication requests and
+  decrypt SAML assertions. As part of Apigee's security process, we update our SP certificate annually,
+  typically in January of each year. Apigee will contact you when the certificate is due to expire.</p>
+
+<p>If you are using SAML with an Identity Provider (IDP) that is not configured to refresh the
+  certificate metadata automatically, you will not be able to access the Apigee Management Console UI
+  until after you update the  certificate. This change will not impact your runtime API traffic.</p>
+
+<aside class="note"><b>Note: </b> If you configured your IDP to use the metadata URL to pull certificate
+  metadata automatically, you will not be impacted by the certificate update. No action is required on your part. </aside>
+
+
+<h2 id="download-the-metadata-file">Download the certificate metadata file</h2>
+
+<p>If you configured your SAML IDP by manually adding metadata containing the certificate, or you uploaded
+  the certificate from a static file, your users will not be able to login the Apigee Management Console UI
+  after Apigee updates the certificate. You must download the latest certificate metadata after the January
+  release and replace your current certificate metadata on the IDP. </p>
+
+<p>You can download the latest certificate metadata from the following location:</p>
+
+<pre class="prettyprint">https://<var>zoneName</var>.login.apigee.com/saml/metadata/alias/<var>zoneName</var>.apigee-saml-login</pre>
+
+<p>where <var>zoneName</var> corresponds to the zone name you received from Apigee.
+  For example, if your zone name is 'myzone', then the URL is:</p>
+
+<pre class="prettyprint">https://myzone.login.apigee.com/saml/metadata/alias/myzone.apigee-saml-login</pre>
+
+
+
+<h2 id="updating-the-certificate-metadata-for-adfs">Updating the certificate metadata for ADFS</h2>
+
+<p>This section describes how to update the metadata for Microsoft Active Directory Federation Services (ADFS).</p>
+
+<p>For all other IDPs, please see the IDP documentation on metadata refresh.</p>
+
+<aside class="note"><b>Note: </b>If ADFS is configured to auto refresh the certificate, no action is needed. </aside>
+
+<p>The way you update the certificate metadata depends on how you configured ADFS:</p>
+
+<ol>
+
+  <li><p><strong>If you have setup your ADFS instance to monitor relying party</strong> (Apigee in this case),
+  then refresh the metadata after the January release by clicking the option <strong>Update from Federation metadata</strong>
+  available within ADFS management tool:</p>
+
+    <img src="/api-platform/images/edgesso-cert-update.png" width="750" alt="Update Edge SSO cert">
+
+  </li>
+
+  <li><p><strong>If you use file based metadata</strong>: </p>
+
+    <ol>
+
+      <li><p>Download the new metadata from the below location after the January release from:</p>
+
+        <pre class="prettyprint">https://<var>zoneName</var>.login.apigee.com/saml/metadata/alias/<var>zoneName</var>.apigee-saml-login</pre>
+
+        <p>where <var>zoneName</var> corresponds to the zone name you received from Apigee.</p>
+      </li>
+
+      <li>Recreate the relying party trust by deleting the existing one.
+        See <a href="configuring-edge-relying-party-adfs-idp">Configuring Edge as a Relying Party in ADFS IDP</a>
+        doc for more information.</li>
+    </ol>
+  </li>
+</ol>
+
+<p>If you have any questions or require assistance, please contact {{support}}.</p>
+
+
+{% endblock %}

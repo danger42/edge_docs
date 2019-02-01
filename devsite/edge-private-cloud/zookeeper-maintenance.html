@@ -1,4 +1,4 @@
-{% extends "private-cloud/v4.18.05/_base.html" %}
+{% extends "private-cloud/v4.19.01/_base.html" %}
 {% block title %}About ZooKeeper maintenance{% endblock %}
 {% block body %}
 
@@ -13,12 +13,12 @@
   supported Edge topologies for a production system specify to use at least three ZooKeeper
   nodes.</p>
 
-  <aside class="note"><strong>Note:</strong> Using three ZooKeeper nodes is not a requirement, but it it the
+  <aside class="note"><strong>Note:</strong> Using three ZooKeeper nodes is the
   minimum number of ZooKeeper nodes required. You can add additional ZooKeeper nodes as necessary
   based on your system requirements.</aside>
 
   <p>Use the <code>ZK_HOSTS</code> and <code>ZK_CLIENT_HOSTS</code> properties in the
-  Edge config file to specify the ZooKeeper nodes. For exam</p>
+  Edge config file to specify the ZooKeeper nodes. For example:</p>
   <pre class="prettyprint">ZK_HOSTS="$IP1 $IP2 $IP3"
 ZK_CLIENT_HOSTS="$IP1 $IP2 $IP3"</pre>
 
@@ -49,7 +49,7 @@ ZK_CLIENT_HOSTS="$IP1 $IP2 $IP3"</pre>
   12-host Edge installation with two Data Centers, ZooKeeper on node 9 in Data Center 2 is the
   observer:</p>
 
-  <p><img alt="" src="/private-cloud/images/zookeperDC.png"></p>
+  <p><img alt="" src="/private-cloud/images/zookeperDC.png"/></p>
 
   <p>You then use the following settings in your config file for Data Center 1:</p>
   <pre class="prettyprint">ZK_HOSTS="$IP1 $IP2 $IP3 $IP7 $IP8 $IP9:observer"
@@ -130,6 +130,47 @@ ZK_CLIENT_HOSTS="$IP7 $IP8 $IP9"</pre>
   of the number of observer nodes. In two Data Centers, Apigee recommends that you have no more
   than nine voters (five in one Data Center and four in the other). You can then then add as many
   observer nodes as necessary for your system requirements.</p>
+
+  <h3>Remove a Zookeeper node</h3>
+
+  <p>There are many reasons you might want to remove a Zookeeper node; for example, a node got
+  corrupted or it was added to the wrong environment.
+
+  <p>This section describes how to remove a Zookeeper node when the node is down and not
+  reachable.</p>
+
+  <p><strong>To remove a Zookeeper node:</strong></p>
+  <ol>
+    <li>Edit your silent configuration file and remove the IP address of the Zookeeper node that you
+      want to remove.</li>
+    <li>Re-run the <code>setup</code> command for Zookeeper to reconfigure the remaining ZooKeeper
+      nodes, as the following example shows:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-zookeeper setup -f <var>updated_config_file</var></pre>
+    </li>
+    <li>Restart all Zookeeper nodes, as the following example shows:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-zookeeper restart</pre>
+    </li>
+    <li>Reconfigure the Management Server node, as the following example shows:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-management-server setup -f <var>updated_config_file</var>
+<code class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-management-server restart</code></pre>
+    </li>
+    <li>Reconfigure all the Routers, as the following example shows:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-router setup -f <var>updated_config_file</var>
+<code class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-router restart</code></pre>
+    </li>
+    <li>Reconfigure all the Message Processors, as the following example shows:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-message-processor setup -f <var>updated_config_file</var>
+<code class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-message-processor restart</code></pre>
+    </li>
+    <li>Reconfigure all Qpid nodes, as the following example shows:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-qpid-server setup -f <var>updated_config_file</var>
+<code class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-qpid-server restart</code></pre>
+    </li>
+    <li>Reconfigure all Postgres nodes, as the following example shows:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-postgres-server setup -f <var>updated_config_file</var>
+<code class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-postgres-server restart</code></pre>
+    </li>
+  </ol>
 
   <h2 id="maintenanceconsiderations">Maintenance considerations</h2>
 

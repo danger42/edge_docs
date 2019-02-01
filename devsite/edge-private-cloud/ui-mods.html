@@ -1,0 +1,82 @@
+{% extends "private-cloud/v4.19.01/_base.html" %}
+{% block title %}UI modifications{% endblock %}
+{% block body %}
+
+  <p>You can make minor changes to the Edge UI to improve the experience of your developer
+  community. For example, you can change the following:</p>
+
+  <ul>
+    <li><strong>Support contact:</strong> The recipient of internal UI errors.</li>
+    <li><strong>Consent banner:</strong> Text that is displayed when a user first accesses the Edge
+      UI. The consent banner displays HTML-formatted text and a button that the user selects to
+      proceed to the log in screen.</li>
+  </ul>
+
+  <p>Changing these settings will give your developers a more cohesive experience and help ensure
+  that issues are routed to the proper place.</p>
+
+  <p>You make these changes by editing properties files using the {{cwc}} technique.</p>
+
+  <h2>Change the support contact</h2>
+  <p>When the UI experiences certain errors (such as when a developer logs in as a user that has no
+  organization associated with it), a developer may be presented with an error like the
+  following:</p>
+
+  <p><img src="/private-cloud/images/internal-error.png" class="screenshot"/></p>
+
+  <p>You should change the default value of the "support team" contact to point to an active
+  resource within your organization that can provide your developers with timely assistance.</p>
+
+  <p><strong>To change the support contact:</strong></p>
+  <ol>
+    <li>Open the <code>/opt/apigee/customer/application/ui.properties</code> file in an editor. If
+      the file does not exist, create it.</li>
+    <li>If you just created the file, change the owner to "apigee:apigee", as the following example
+      shows:
+      <pre class="devsite-terminal">chown apigee:apigee /opt/apigee/customer/application/ui.properties</pre>
+    </li>
+    <li>Set the value of the <code>conf_apigee_apigee.branding.contactemailsupport</code>
+      property to your internal support contact. For example:
+      <pre>conf_apigee_apigee.branding.contactemailsupport=api-support@mycompany.com</pre>
+    </li>
+    <li>Save your changes.</li>
+    <li>Restart the Edge UI service:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-ui restart</pre>
+    </li>
+  </ol>
+
+  <p>The next time your developers experience an internal error, the "contact team" link will
+  send an email to your internal support organization.</p>
+
+  <h2>Change the consent banner</h2>
+  <p>The consent banner is displayed when a user first accesses the Edge UI. For example:</p>
+
+  <p><img alt="" src="/private-cloud/images/consentBanner.png" width="80%" class="screenshot"></p>
+
+  <p><strong>To add a consent banner:</strong></p>
+  <ol>
+    <li>Open the <code>/opt/apigee/customer/application/ui.properties</code> file in an editor. If
+      the file does not exist, create it.</li>
+    <li>If you just created the file, change the owner to "apigee:apigee", as the following example
+      shows:
+      <pre class="devsite-terminal">chown apigee:apigee /opt/apigee/customer/application/ui.properties</pre>
+    </li>
+    <li>Set the following properties:
+      <pre># Enable the consent banner:
+conf_apigee-base_apigee.feature.enableconsentbanner="true"
+# Set the button text:
+conf_apigee-base_apigee.consentbanner.buttoncaption="I Agree"
+# Set the HTML text:
+conf_apigee-base_apigee.consentbanner.body="&lt;h1&gt;Notice and Consent Banner&lt;/h1&gt;
+&lt;div&gt;&lt;p&gt;Enter your consent text here.&lt;/p&gt;&lt;/div&gt;"</pre>
+    </li>
+    <li>Save your changes.</li>
+    <li>Restart the Edge UI service:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-ui restart</pre>
+    </li>
+  </ol>
+
+  <p>The next time your developers open the Edge UI in a browser, they must accept the consent
+  agreement before they can log in.</p>
+
+{% endblock %}

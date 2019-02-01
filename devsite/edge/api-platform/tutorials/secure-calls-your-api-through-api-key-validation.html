@@ -1,0 +1,536 @@
+  {% extends "_base.html" %} {% block title %}Secure an API by requiring API keys{% endblock %} {% block body %}
+
+  <div class="tutorial-container">
+    <div class="tutorial-learn">
+      <p><strong>What you'll learn</strong></p>
+
+      <p>Through this tutorial, you'll learn to:</p>
+
+      <ul>
+        <li>Create an API proxy that requires an API key.</li>
+
+        <li>Add a developer and register an app.</li>
+
+        <li>Call your API with an API key.</li>
+      </ul>
+    </div>
+
+    <div class="tutorial-section">
+      <p>It's important to protect your API from unauthorized access. One way to do that is with
+      API keys (also called "public keys", "consumer keys" or "app keys").</p>
+
+      <p>When an app makes a request to your API, the app must supply a valid key. At runtime, the
+      Verify API Key policy checks that the supplied API key:</p>
+
+      <ul>
+        <li>Is valid</li>
+
+        <li>Hasn't been revoked</li>
+
+        <li>Matches the API key for the API product that exposes the requested resources</li>
+      </ul>
+
+      <p>If the key is valid, the request is allowed. If the key is invalid, the request results in
+      an authorization failure.</p>
+
+      <p>In this tutorial, you'll create an API proxy that requires a valid API key to access
+      it.</p>
+    </div>
+
+    <div class="tutorial-section">
+      <h2 id="whatyoullneed">What you'll need</h2>
+
+      <ul>
+        <li>An Apigee Edge account. If you don't have one yet, you can sign up with the directions
+        at <a href="/api-platform/get-started/creating-apigee-edge-account.html">Creating an Apigee
+        Edge account</a>.</li>
+
+        <li>A web browser to make an API call.</li>
+
+        <li>(For the extra credit section, not required) <a href="https://curl.haxx.se/" target=
+        "_blank">cURL</a> installed on your machine to make API calls from the command line.</li>
+      </ul>
+    </div>
+
+    <div class="tutorial-section">
+      <h2 id="createtheapiproxy">Create the API proxy</h2>
+
+      <div class="tutorial-sidebar">
+        <p><strong>About the 'mocktarget'</strong></p>
+
+        <p>The <strong>mocktarget</strong> service is hosted at Apigee and returns simple data. It
+        requires no API key or access token. In fact, you can access it in a web browser. Try it
+        out by clicking the following:</p>
+
+        <p><a href="https://mocktarget.apigee.net" target=
+        "_blank">http://mocktarget.apigee.net</a></p>
+
+        <p>The target returns <code>Hello, Guest!</code>. Use the <a href=
+        "https://mocktarget.apigee.net/help" target="_blank">/help</a> resource to get a help
+        page of other API resources that are available</p>
+      </div>
+
+      <ol>
+        <li>Go to <a href="https://apigee.com/edge" target=
+        "_blank">https://apigee.com/edge</a> and log in. This is the New Edge experience UI.
+        (You could also use the <a href="https://enterprise.apigee.com" target=
+        "_blank">classic management UI</a>, which has slightly different navigation. Both UIs
+        create the proxy in your organization.)</li>
+
+        <li>Switch to the organization you want by clicking your user name at the top of the side
+        navigation bar to display the user profile menu, and then selecting the organization from
+        the list.<br>
+        <img alt="" src="/api-platform/images/org-list.png"></li>
+
+        <li>
+          <p>Click <strong>API Proxies</strong> on the landing page to display the API
+          proxies list.</p><img alt="" src="/api-platform/images/tutorial_new_edge_apis_menu.png">
+        </li>
+
+        <li>Click <strong>+ Proxy</strong>.<br>
+        <img src="/api-platform/images/tutorial_new_api_proxy_button.png"></li>
+
+        <li>In the Build a Proxy wizard, select <strong>Reverse proxy (most common)</strong>, and
+        click <strong>Next</strong>.</li>
+
+        <li>Configure the proxy as follows:<br>
+
+          <table>
+            <thead>
+              <tr>
+                <th>In this field</th>
+
+                <th>do this</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr>
+                <td><strong>Proxy Name</strong></td>
+
+                <td>Enter: <code>helloworld_apikey</code></td>
+              </tr>
+
+              <tr>
+                <td><strong>Project Base Path</strong></td>
+
+                <td>
+                  <p>Change to: <code>/helloapikey</code></p>
+
+                  <p>The Project Base Path is part of the URL used to make requests to the API
+                  proxy.</p>
+
+                  <p><b>Note</b>: For Apigee's recommendations on API versioning, see <a href=
+                  "https://docs-apis.apigee.io/files/Web-design-the-missing-link-ebook-2016-11.pdf#page=45"
+                  target="_blank">Versioning</a> in the <em>Web API Design: The Missing
+                  Link</em> e-book.</p>
+                </td>
+              </tr>
+
+              <tr>
+                <td><strong>Existing API</strong></td>
+
+                <td>
+                  <p>Enter: <code>http://mocktarget.apigee.net</code></p>
+
+                  <p>This defines the target URL that Apigee Edge invokes on a request to the API
+                  proxy.</p>
+                </td>
+              </tr>
+
+              <tr>
+                <td><strong>Description</strong></td>
+
+                <td>Enter: <code>hello world protected by API key</code></td>
+              </tr>
+            </tbody>
+          </table>
+        </li>
+
+        <li>Click <strong>Next</strong>.</li>
+
+        <li>On the <strong>Security</strong> page:
+
+          <table>
+            <thead>
+              <tr>
+                <th>In this field</th>
+
+                <th>do this</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr>
+                <td><strong>Authorization</strong></td>
+
+                <td>
+                  Select the following options:
+
+                  <ul>
+                    <li><strong>API Key</strong></li>
+
+                    <li><strong>Publish API Product</strong></li>
+                  </ul>
+
+                  <p>These options are very handy. They'll automatically add two policies to your
+                  API proxy and create an API product needed for generating the API key.</p>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </li>
+
+        <li>On the Virtual Hosts page, click <strong>Next</strong>.</li>
+
+        <li>On the Build page, make sure the <strong>test</strong> deployment environment is
+        selected, and click <strong>Build and Deploy</strong>.</li>
+
+        <li>On the Summary page, you see an acknowledgment that your new API proxy and an API
+        product were created successfully, and that the API proxy was deployed to your test
+        environment.</li>
+
+        <li>Click <strong>View the helloworld_apikey proxy in the editor</strong> to display the
+        Overview page for the API proxy.</li>
+      </ol>
+    </div>
+
+    <div class="tutorial-section">
+      <h2 id="viewthepolicies">View the policies</h2>
+
+      <ol>
+        <li>In the API proxy editor, click the <strong>Develop</strong> tab. You'll see that two
+        policies have been added to the request flow of the API proxy:
+
+          <ul>
+            <li><strong>Verify API Key</strong> &#8211; Checks the API call to make sure a valid
+            API key is present (sent as a query parameter).</li>
+
+            <li><strong>Remove Query Param apikey</strong> &#8211; An Assign Message policy that
+            removes the API key after it's checked, so that it doesn't get passed around and
+            exposed unnecessarily.</li>
+          </ul>
+        </li>
+
+        <li>
+          <p>Click the Verify API Key policy icon in the flow view, and look at the policy's XML
+          configuration in the lower code view. The <code>&lt;APIKey&gt;</code> element tells the
+          policy where it should look for the API key when the call is made. By default, it looks
+          for the key as a query parameter called <code>apikey</code> in the HTTP request:</p>
+          <pre class="prettyprint">
+&lt;APIKey ref="request.queryparam.apikey" /&gt;
+</pre>
+
+          <p>The name <code>apikey</code> is arbitrary and can be any property that contains the
+          API key.</p><img src="/api-platform/images/tutorial_apikey_policy-3.png">
+        </li>
+      </ol>
+    </div>
+
+    <div class="tutorial-section">
+      <h2 id="trytocalltheapi">Try to call the API</h2>
+
+      <p>In this step, you'll make a successful API call directly to the target service, then
+      you'll make an unsuccessful call to the API proxy to see how it's being protected by the
+      policies.</p>
+
+      <ol>
+        <li>
+          <p><strong>Success</strong></p>
+
+          <p>In a web browser, go to the following address. This is the target service that the API
+          proxy is configured to forward the request to, but you'll hit it directly for now:</p>
+          <pre class="prettyprint">
+http://mocktarget.apigee.net
+</pre>
+
+          <p>You should get this successful response: <code>Hello, Guest!</code></p>
+        </li>
+
+        <li>
+          <p><strong>Failure</strong></p>
+
+          <p>Now try to call your API proxy:</p>
+          <pre class="prettyprint">
+http://{org-name}-test.apigee.net/helloapikey
+</pre>
+
+          <p>replacing <code>{org-name}</code> with the name of your Edge organization.</p>
+
+          <p>Without the Verify API Key policy, this call would give you the same response as the
+          previous call. But in this case, you should get the following error response:</p>
+          <pre class="prettyprint">
+{"fault":{"faultstring":"Failed to resolve API Key variable request.queryparam.apikey","detail":{"errorcode":"steps.oauth.v2.FailedToResolveAPIKey"}}}
+</pre>
+
+          <p>which means, correctly, that you didn't pass a valid API key (as a query
+          parameter).</p>
+        </li>
+      </ol>
+
+      <p>In the next steps, you'll get the required API key.</p>
+    </div>
+
+    <div class="tutorial-section">
+      <h2 id="abouttheapiproduct">About the API product</h2>
+
+      <p>Without getting into too much detail for this tutorial, an API product in Edge (among
+      other nifty features) generates API keys for developers; or more accurately, for the apps
+      developers register with Edge.</p>
+
+      <p>If you're curious, you can view the API product that was automatically created when your
+      API proxy was generated. Select <strong>Publish &gt; API Products &gt;
+      helloworld_apikey-Product</strong> in the UI.</p>
+
+      <p>Notice that the <strong>Key Approval Type</strong> is <strong>Automatic</strong>. That
+      means developers get an API key automatically when they register an app, as opposed to you
+      manually approving keys before they're given to developers.</p>
+
+      <p>Moving on.</p>
+    </div>
+
+    <div class="tutorial-section">
+      <h2 id="addadeveloperandapptoyourorganization">Add a developer and app to your
+      organization</h2>
+
+      <p>Next, we're going to simulate the workflow of a developer signing up to use your APIs. A
+      developer will have one or more apps that call your APIs, and each app gets a unique API key.
+      This gives you, the API provider, more granular control over access to your APIs and more
+      granular reporting on API traffic by app.</p>
+
+      <h3 id="addadeveloperandapptoyourorganization-createadeveloper">Create a developer</h3>
+
+      <p>To create a developer:</p>
+
+      <ol>
+        <li>Select <strong>Publish &gt; Developers</strong> in the menu.</li>
+
+        <li>Click <strong>+ Developer</strong>.</li>
+
+        <li>Enter the following in the New Developer window:<br>
+
+          <table>
+            <thead>
+              <tr>
+                <th>In this field</th>
+
+                <th>enter</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr>
+                <td><strong>First Name</strong></td>
+
+                <td><code>Keyser</code></td>
+              </tr>
+
+              <tr>
+                <td><strong>Last Name</strong></td>
+
+                <td><code>Soze</code></td>
+              </tr>
+
+              <tr>
+                <td><strong>Username</strong></td>
+
+                <td><code>keyser</code></td>
+              </tr>
+
+              <tr>
+                <td><strong>Email</strong></td>
+
+                <td><code>keyser@example.com</code></td>
+              </tr>
+            </tbody>
+          </table>
+        </li>
+
+        <li>Click <strong>Save</strong>.</li>
+      </ol>
+
+      <h3 id="addadeveloperandapptoyourorganization-registeranapp">Register an app</h3>
+
+      <p>To register a developer app:</p>
+
+      <ol>
+        <li>Select <strong>Publish &gt; Apps</strong>.</li>
+
+        <li>Click <strong>+ App</strong>.</li>
+
+        <li>Enter the following in the New Developer App window:<br>
+
+          <table>
+            <thead>
+              <tr>
+                <th>In this field</th>
+
+                <th>do this</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr>
+                <td><strong>Name</strong> and <strong>Display Name</strong></td>
+
+                <td>Enter: <code>keyser_app</code></td>
+              </tr>
+
+              <tr>
+                <td><strong>Developer</strong></td>
+
+                <td>Select: <code>Keyser Soze (keyser@example.com)</code></td>
+              </tr>
+
+              <tr>
+                <td><strong>Callback URL</strong> and <strong>Notes</strong></td>
+
+                <td>Leave blank</td>
+              </tr>
+            </tbody>
+          </table>
+        </li>
+
+        <li>Under <strong>Products</strong>, click <strong>+ Product</strong>.</li>
+
+        <li>Select <strong>helloworld_apikey-Product</strong>.</li>
+
+        <li>Click <strong>Save</strong>.</li>
+      </ol>
+
+      <h3 id="addadeveloperandapptoyourorganization-gettheapikey">Get the API key</h3>
+
+      <p>To get the API key:</p>
+
+      <ol>
+        <li>On the Apps page (Publish &gt; Apps), click <strong>keyser_app</strong>.</li>
+
+        <li>On the keyser_app page, click <strong>Show</strong> in the <strong>Consumer
+        Key</strong> column. Notice that the key is associated with the "helloworld_apikey
+        Product". Click <strong>Hide</strong> to hide the key. <img src=
+        "/api-platform/images/tutorial_helloapikey_consumer_key.png"></li>
+
+        <li>Select and copy the Consumer Key. You'll use it in the next step.</li>
+      </ol>
+    </div>
+
+    <div class="tutorial-section">
+      <h2 id="calltheapiwithakey">Call the API with a key</h2>
+
+      <p>Now that you have an API key, you can use it to call the API proxy. Enter the following in
+      your web browser. Substitute your Edge organization name for <code>{org-name}</code>, and
+      paste the API (Consumer) key as shown, as a query parameter. Make sure there are no extra
+      spaces in the query parameter.</p>
+      <pre class="prettyprint">
+http://{org-name}-test.apigee.net/helloapikey<strong>?apikey=<var>apikey</var></strong>
+</pre>
+
+      <p>Now when you call to the API proxy, you should get this response: <code>Hello,
+      Guest!</code></p>
+
+      <p>Congratulations! You've created an API proxy and protected it by requiring that a valid
+      API key be included in the call.</p>
+
+      <p>Note that in general it's not good practice to pass an API key as a query parameter. You
+      should consider <a href="#extracreditpassingthekeyinthehttpheader">passing it in the HTTP
+      header instead</a>.</p>
+    </div>
+
+    <div class="tutorial-section">
+      <h2 id="extracreditpassingthekeyinthehttpheader">Best practice: Passing the key in the HTTP
+      header</h2>
+
+      <aside class="note">It's a good practice to pass the API
+        key in a header rather than in a query parameter. The reason is because headers do not appear in the browser history or
+        network logs, which could present a possible security risk.</aside>
+
+      <p>In this step, you will modify the proxy to look for the API key in a header called <code>x-apikey</code>.</p>
+
+      <ol>
+        <li>Edit the API proxy. Select <strong>Develop &gt; API Proxies &gt;
+        helloworld_apikey</strong>, and go to the <strong>Develop</strong> view.</li>
+
+        <li>
+          <p>Select the <strong>Verify API Key</strong> policy, and modify the policy XML to tell
+          the policy to look in the <code>header</code> rather than in the
+          <code>queryparam</code>:</p>
+          <pre class="prettyprint">
+&lt;APIKey ref="request.<strong>header</strong>.x-apikey"/&gt;
+</pre>
+        </li>
+
+        <li><strong>Save</strong> the API proxy to deploy the change.</li>
+
+        <li>
+          <p>Make the following API call using cURL to pass the API key as a header called
+          <code>x-apikey</code>. Don't forget to substitute your organization name.</p>
+          <pre class="prettyprint">
+curl -v -H "x-apikey: <strong>{api_key_goes_here}</strong>" http://<strong>{org-name}</strong>-test.apigee.net/helloapikey
+</pre>
+        </li>
+      </ol>
+
+      <p>Note that to fully complete the change, you'd also need to configure the Assign Message
+      policy to remove the header instead of the query parameter. For example:</p>
+
+<pre>
+&lt;Remove&gt;
+  &lt;Headers&gt;
+      &lt;Header name=&quot;x-apikey&quot;/&gt;
+  &lt;/Headers&gt;
+&lt;/Remove&gt;
+</pre>
+
+      <aside class="note">
+        <b>Note:</b> You could also pass the API key as a form parameter. If you did, the Verify
+        API Key policy would be configured like this:
+        <pre class="prettyprint">
+&lt;APIKey ref="request.<strong>formparam</strong>.{key name}"/&gt;
+</pre>
+      </aside>
+    </div>
+
+    <div class="tutorial-section">
+      <h2 id="relatedtopics">Related topics</h2>
+
+      <p>Here are some topics that directly relate to this tutorial:</p>
+
+      <ul>
+        <li><a href="/api-platform/publish/create-api-products.html">Create API products</a></li>
+
+        <li><a href="/api-platform/security/api-keys.html">API keys</a></li>
+
+        <li><a href="/api-platform/publish/adding-developers-your-api-product.html">Managing app
+        developers</a></li>
+
+        <li><a href="/api-platform/publish/creating-apps-surface-your-api.html">Register apps and
+        manage API keys</a></li>
+
+        <li><a href="/api-platform/reference/policies/verify-api-key-policy.html">Verify API Key
+        policy</a></li>
+
+        <li><a href="/api-platform/reference/policies/assign-message-policy.html">Assign Message
+        policy</a></li>
+      </ul>
+
+      <p>Going a bit deeper, protecting APIs with API keys is only part of the story. Oftentimes,
+      API protection involves additional security such as OAuth. Here are a couple of topics that
+      describe other security features:</p>
+
+      <ul>
+        <li><a href="/api-platform/security/oauth/oauth-home.html">OAuth</a> &#8211; OAuth is an
+        open protocol that, in a nutshell, exchanges credentials (like username and password) for
+        access tokens. Access tokens are long, random strings that can be passed around a message
+        pipeline, even from app to app, without compromising the original credentials. Access
+        tokens often have short lives, so new ones are always being generated.</li>
+
+        <li>For the rest, see the "Secure" section of the Apigee Edge documentation.</li>
+      </ul>
+    </div>
+  </div>
+
+  
+
+  <div>
+     
+  </div>{% endblock %}

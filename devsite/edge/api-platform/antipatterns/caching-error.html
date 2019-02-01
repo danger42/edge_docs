@@ -1,0 +1,135 @@
+{% extends "_base.html" %}
+{% block title %}Caching error responses{% endblock %}
+{% block body %}
+
+<p>Caching is a process of storing data temporarily in a storage area called cache for future
+reference. Caching data brings significant performance benefits because it:</p>
+
+<ul>
+  <li>Allows faster retrieval of data</li>
+  <li>Reduces processing time by avoiding regeneration of data again and again</li>
+  <li>Prevents API requests from hitting the backend servers and thereby reduces the overhead on
+    the backend servers</li>
+  <li>Allows better utilization of system/application resources</li>
+  <li>Improves the response times of APIs</li>
+</ul>
+
+<p>Whenever we have to frequently access some data that doesn’t change too often, we highly
+recommend to use a cache to store this data.</p>
+
+<p>Apigee Edge provides the ability to store data in a cache at runtime for persistence and faster
+retrieval. The caching feature is made available through the {{populate_cache_policy}},
+{{lookup_cache_policy}}, {{invalidate_cache_policy}}, and {{response_cache_policy}}.</p>
+
+<p>In this section, let’s look at Response Cache policy. The Response Cache policy in Apigee Edge
+platform allows you to cache the responses from backend servers. If the client applications
+make requests to the same backend resource repeatedly and the resource gets updated
+periodically, then we can cache these responses using this policy. The Response Cache policy
+helps in returning the cached responses and consequently avoids forwarding the requests
+to the backend servers unnecessarily.</p>
+
+<p>The Response Cache policy:</p>
+<ul>
+  <li>Reduces the number of requests reaching the backend</li>
+  <li>Reduces network bandwidth</li>
+  <li>Improves API performance and response times</li>
+</ul>
+
+<h2>Antipattern</h2>
+<p>The {{response_cache_policy}} lets you cache HTTP responses with any possible Status code,
+by default. This means that both success and error responses can be cached.
+
+<p>Here’s a sample Response Cache policy with default configuration:</p>
+
+<pre class="prettyprint">{% includecode content_path="api-platform/antipatterns/examples/1-1.xml" html_escape="True" %}</pre>
+
+<p>The Response Cache policy caches error responses in its default
+configuration. However, it is not advisable to cache error responses without
+considerable thought on the adverse implications because:</p>
+<ul>
+  <li><a href="#scenario1">Scenario 1</a>: Failures occur for a temporary, unknown period and we
+    may continue to send error responses
+    due to caching even after the problem has been fixed
+    <p><strong>OR</strong></p>
+  </li>
+  <li><a href="#scenario2">Scenario 2</a>: Failures will be observed for a fixed period of time,
+    then we will have to modify the code to avoid caching responses once the problem is fixed</li>
+</ul>
+
+<p>Let’s explain this by taking these two scenarios in more detail.</p>
+
+<h2 id="scenario1">Scenario 1: Temporary backend/resource failure</h2>
+
+<p>Consider that the failure in the backend server is because of one of the following reasons:
+<ul>
+  <li>A temporary network glitch</li>
+  <li>The backend server is extremely busy and unable to respond to the requests for a temporary
+    period</li>
+  <li>The requested backend resource may be removed/unavailable for a temporary period of time</li>
+  <li>The backend server is responding slow due to high processing time for a temporary period,
+    etc</li>
+</ul>
+
+<p>In all these cases, the failures could occur for a unknown time period and then we may start
+getting successful responses.  If we cache the error responses, then we may continue to send
+error responses to the users even though the problem with the backend server has been fixed.</p>
+
+<h2 id="scenario2">Scenario 2: Protracted or fixed backend/resource failure</h2>
+
+<p>Consider that we know the failure in the backend is for a fixed period of time. For instance,
+you are aware that either:
+<ul>
+  <li>A specific backend resource will be unavailable for 1 hour
+    <p><strong>OR</strong></p>
+  <li>The backend server is removed/unavailable for 24 hours due to a sudden site failure,
+    scaling issues, maintenance, upgrade, etc.
+</ul>
+
+<p>With this information, we can set the cache expiration time appropriately in the Response Cache
+policy so that we don’t cache the error responses for a longer time.  However, once the
+backend server/resource is available again, we will have to modify the policy to avoid caching
+error responses.  This is because if there is a temporary/one off failure from the backend
+server, we will cache the response and we will end up with the problem explained in scenario 1 above.
+
+<h2>Impact</h2>
+
+<ul>
+  <li>Caching error responses can cause error responses to be sent even after the problem has been
+    resolved in the backend server</li>
+  <li>Users may spend a lot of effort troubleshooting the cause of an issue without knowing that
+    it is caused by caching the error responses from the backend server</li>
+</ul>
+
+<h2>Best practice</h2>
+
+<ul>
+  <li>Don’t store the error responses in the response cache. Ensure that the
+    <code>&lt;ExcludeErrorResponse&gt;</code> element is set to <code>true</code> in the
+    {{response_cache_policy}} to prevent error responses from being cached as shown in the below code
+    snippet. With
+    this configuration only the responses for the default success codes 200 to 205 (unless the
+    success codes are modified) will be cached.
+    <pre class="prettyprint">{% includecode content_path="api-platform/antipatterns/examples/1-2.xml" html_escape="True" %}</pre>
+  </li>
+  <li>If you have the requirement to cache the error responses for some specific reason, then you
+    can determine the maximum/exact duration of time for which the failure will be observed (if
+    possible):
+    <ul>
+      <li>Set the Expiration time appropriately to ensure that you don’t cache the error responses
+        longer than the time for which the failure can be seen.</li>
+      <li>Use the ResponseCache policy to cache the error responses without the
+        <code>&lt;ExcludeErrorResponse&gt;</code> element.</li>
+    </ul>
+    <p>Do this <em>only if you are absolutely sure that the backend server failure is not for a
+    brief/temporary period</em>.</p>
+  </li>
+  <li>Apigee does not recommend caching 5xx responses from backend servers.</li>
+</ul>
+
+<aside class="note"><h3 class="hide-from-toc">NOTE</h3>After the failure has been fixed,
+remove/disable the {{response_cache_policy}}. Otherwise,
+the error responses for temporary backend server failures may get cached.</aside>
+
+
+
+{% endblock %}

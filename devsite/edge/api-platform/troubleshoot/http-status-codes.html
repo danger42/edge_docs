@@ -1,0 +1,116 @@
+  {% extends "_base.html" %} {% block title %}HTTP status codes{% endblock %} {% block body %}
+  <p>Managment API response error messages include an HTTP status code and an error message.</p>
+
+  <p>For example, if you try to create a cache entity with the same name as an existing cache, the
+  response is:</p>
+  <pre class="prettyprint">
+HTTP/1.1 409 Conflict<br>{
+  "code": "messaging.config.beans.CacheAlreadyExists",
+  "message": "Cache duplicate_cache already exists in environment test",
+  "contexts": []
+}
+</pre>
+
+  <p>The following table summarizes the most common HTTP status codes and what they mean in Apigee Edge.</p>
+<aside class="key-point"><b>See also</b>:
+<ul><li><a href="/api-platform/troubleshoot/apigee-edge-error-messages#runtimeerrors">Runtime errors</a> troubleshooting playbook</li>
+  <li><a href="https://tools.ietf.org/html/rfc7231#page-47" target="_blank">HTTP Status Codes</a> published by Internet Engineering Task Force (IETF)</li>
+  </ul></aside>
+
+<table class="table">
+  <tr>
+  <th>HTTP Status Code</th>
+  <th>Description</th>
+  </tr>
+<tr>
+  <td>2xx</td>
+  <td>Success. The API call was successful. An HTTP 204 indicates that the response is
+    submitted with no content, typically because a DELETE operation succeeded.</td>
+</tr>
+
+<tr>
+  <td>401</td>
+  <td>Unauthorized. The credentials that
+  you are using to make a request do have the appropriate permissions to perform the operation. Verify
+  the roles for the account you are using.</td>
+</tr>
+<tr>
+  <td>403</td>
+  <td>Forbidden. The username and
+  password combination you are using is not valid for the organization you specified. To test your
+  credentials, log in to <a href=
+  "https://login.apigee.com/login">login.apigee.com/login</a>. If you need an account, <a href=
+  "https://login.apigee.com/sign__up">sign
+    up</a>.
+  <p>Make sure that you are using the correct credentials for you organization and double-check spelling.</td>
+</tr>
+
+<tr>
+  <td>404</td>
+  <td>Not found. Verify that the request URL is spelled corectly and that the API you are trying to access exists. For example, ensure that you are not trying to access
+    the wrong revision of an API. See also <a href="/api-platform/troubleshoot/runtime/404-unable-identify-proxy-host">404 Unable to identify proxy for host: &lt;virtual host name&gt; and url: &lt;path&gt;</a>.</td>
+</tr>
+
+<tr>
+  <td>405</td>
+  <td>Method not allowed. You specified a method that is not supported. For example, you used the GET verb for an API call that requires the POST verb.</td>
+</tr>
+<tr>
+  <td>409</td>
+  <td>Request timeout. Indicates a conflict with an existing entity. For example, you attempted to create a cache using a name that already exists.
+  </td>
+  </tr>
+
+<tr>
+  <td>415</td>
+  <td>Unsupported media type. Typically, this error occurs on POST or PUT
+  requests when the <code>Content-type</code> HTTP header is set to the wrong value. For example,
+  an HTTP 415 error is returned if you POST the following to an API that only supports JSON:
+  <pre class="prettyprint">
+$ curl https://api.company.com/v1/json_service
+  -X POST
+  -H "Content-type:text/xml"
+  -d '&lt;SomeXML&gt;'
+</pre>
+
+  <p>For GET requests, use the <code>Accept</code> header instead of the
+  <code>Content-type</code> header.</p>
+</td>
+</tr>
+
+<tr><td>429</td>
+  <td>Too many requests. The rate limit was
+  exceeded on Quota or Spike Arrest policies. The current default status code for exceeding the
+  rate limit is 500, but the default may change to 429 in the future. See <a href=
+  "/api-platform/reference/policies/spike-arrest-policy.html">Spike Arrest policy</a> and <a href=
+  "/api-platform/reference/policies/quota-policy.html">Quota policy</a> for information on how to
+    change the 500 to a 429.</td>
+</tr>
+<tr>
+  <td>500</td>
+  <td>See <a href="/api-platform/troubleshoot/runtime/500-internal-server-error-0">500 Internal Server Error</a>.
+
+  <aside class="note"><b>Note:</b> Apigee Edge organizations can be
+  configured to return an HTTP status code of 429 (Too Many Requests) instead of 500 for all
+  requests that exceed a rate limit set by some rate-limiting policies. For more information, see
+  <a href="/api-platform/reference/policies/spike-arrest-policy.html">Spike Arrest policy</a> and
+  <a href="/api-platform/reference/policies/quota-policy.html">Quota policy</a>.</aside>
+</td>
+</tr>
+  <tr>
+  <td>502</td>
+  <td>See <a href="/api-platform/troubleshoot/runtime/502-bad-gateway">502 Bad Gateway</a>.
+    </td>
+  </tr>
+    <tr>
+  <td>503</td>
+  <td>See <a href="/api-platform/troubleshoot/runtime/503-service-unavailable">503 Service Unavailable</a>.
+    </td>
+  </tr>
+      <tr>
+  <td>504</td>
+  <td>See <a href="/api-platform/troubleshoot/runtime/504-gateway-timeout">504 Gateway Timeout</a>.
+    </td>
+  </tr>
+</table>
+{% endblock %}

@@ -1,0 +1,440 @@
+{% extends "_base.html" %} {% block title %}SSL Handshake Failures - Bad Client Certificate{% endblock %} {% block body %}
+
+<aside class="note">Was this troubleshooting playbook helpful? Please let us know
+  by clicking <a href="" class="google-feedback"
+   data-p="1636213" data-b="docsite" data-context="troubleshooting-feedback">
+  Send Feedback
+</a>.</aside>
+
+
+<h2>Symptom</h2>
+
+  <p>The client application receives an HTTP status code of <strong>503</strong> with
+  the message <strong>"Service Unavailable"</strong> as a response to an API request.
+  In the UI trace, you will observe that the <strong>error.cause </strong>
+  is <code>Received fatal alert: bad_certificate</code> in the Target Request Flow
+  for the failing API request.</p>
+
+  <p>If you have access to Message Processor logs,
+  then you will notice the error message as <code>Received fatal alert: bad_certificate</code>
+  for the failing API request. This error is observed during the SSL handshake
+  process between the Message Processor and the backend server in a <strong>2 way TLS setup</strong>.</p>
+
+<h2>Error Message</h2>
+
+  <p>The Client application gets the following response code:</p>
+
+  <pre class="prettyprint">HTTP/1.1 503 Service Unavailable</pre>
+
+  <p>In addition, you may observe the following error message:</p>
+
+<pre class="prettyprint">{
+ "fault": {
+    "faultstring":"The Service is temporarily unavailable",
+    "detail":{
+        "errorcode":"messaging.adaptors.http.flow.ServiceUnavailable"
+    }
+ }
+}
+</pre>
+
+  <p>Private Cloud users will see the following error for the specific API request
+  in the Message Processor logs <code>/opt/apigee/var/log/edge-message-processor/system.log</code>:</p>
+
+  <p><code>2017-10-23 05:28:57,813 org:<var>org-name</var> env:<var>env-name</var> api:<var>apiproxy-name</var>
+    rev:<var>revision-number</var> messageid:<var>message_id</var> NIOThread@0 ERROR HTTP.CLIENT - HTTPClient$Context.handshakeFailed() :
+    SSLClientChannel[C:<var>IP address</var>:<var>port #</var> Remote host:<var>IP address</var>:<var>port #</var>]@65461
+    useCount=1 bytesRead=0 bytesWritten=0 age=529ms lastIO=529ms <strong>handshake failed</strong>,
+    message: <strong>Received fatal alert: bad_certificate</strong></code>
+
+
+<h2>Possible Causes</h2>
+
+<p>The possible causes for this issue are as follows:</p>
+
+<table>
+  <tr>
+   <td><strong>Cause</strong>
+   </td>
+   <td><strong>Description</strong>
+   </td>
+   <td><strong>Troubleshooting Instructions Applicable For</strong>
+   </td>
+  </tr>
+  <tr>
+   <td><a href="#no_client_cert">No Client Certificate</a></td>
+   <td>The Keystore used in the Target Endpoint of Target Server does not have any Client Certificate.
+   </td>
+   <td>Edge Private and Public Cloud Users
+   </td>
+  </tr>
+  <tr>
+   <td><a href="#cert_auth_mismatch">Certificate Authority Mismatch</a></td>
+   <td>The Certificate Authority of the leaf certificate (the first Certificate in the Certificate chain)
+     in the Message Processor's Keystore does not match any of the Certificate Authorities accepted by the backend server.
+   </td>
+   <td>Edge Private and Public Cloud Users
+   </td>
+  </tr>
+</table>
+
+
+<h2>Common Diagnosis Steps</h2>
+
+  <ol>
+
+    <li>Enable trace in the Edge UI, make the API call, and reproduce the issue.</li>
+
+    <li>In the UI trace results, navigate through each Phase and determine where the
+    error occurred. The error would've occurred in the Target Request Flow.</li>
+
+    <li>Examine the Flow that shows the error, you should observe the error as shown
+    in the example trace below:
+    <br>
+    <p><img src="/api-platform/images/ssl-handsake-fail-trace.png" width="" alt="alt_text" title="image_tooltip"></p></li>
+
+    <li>As you see in the screenshot above, the <strong>error.cause </strong>is
+    <strong>"Received fatal alert: bad_certificate"</strong>.</li>
+
+    <li>If you are a <strong>Private Cloud user</strong>, then follow the instructions below:
+
+     <ol>
+
+     <li>You can get the message id for the failing API request by determining the
+     value of the Error Header "<strong><code>X-Apigee.Message-ID</code></strong>"
+     in the Phase indicated by AX in the trace. </li>
+
+     <li>Search for this message id in the Message Processor log
+     <code>/opt/apigee/var/log/edge-message-processor/system.log</code> and determine
+     if you can find any further information about the error:
+
+<pre class="prettyprint">2017-10-23 05:28:57,813 org:<var>org-name</var> env:<var>env-name</var> api:<var>apiproxy-name</var>
+rev:<var>revision-number</var> messageid:<var>message_id</var> NIOThread@0 ERROR HTTP.CLIENT - HTTPClient$Context.handshakeFailed() :
+SSLClientChannel[C:<var>IP address</var>:<var>port #</var> Remote host:<var>IP address</var>:<var>port #</var>]@65461 useCount=1
+bytesRead=0 bytesWritten=0 age=529ms lastIO=529ms handshake failed, message: Received fatal alert: bad_certificate
+2017-10-23 05:28:57,813 org:<var>org-name</var> env:<var>env-name</var> api:<var>apiproxy-name</var>
+rev:<var>revision-number</var> messageid:<var>message_id</var> NIOThread@0 ERROR HTTP.CLIENT - HTTPClient$Context.handshakeFailed() : SSLInfo:
+KeyStore:java.security.KeyStore@52de60d9 KeyAlias:<var>KeyAlias</var> TrustStore:java.security.KeyStore@6ec45759
+2017-10-23 05:28:57,814 org:<var>org-name</var> env:<var>env-name</var> api:<var>apiproxy-name</var>
+rev:<var>revision-number</var> messageid:<var>message_id</var> NIOThread@0 ERROR ADAPTORS.HTTP.FLOW - RequestWriteListener.onException() :
+RequestWriteListener.onException(HTTPRequest@6071a73d)
+javax.net.ssl.SSLException: Received fatal alert: bad_certificate 
+at sun.security.ssl.Alerts.getSSLException(Alerts.java:208) ~[na:1.8.0_101] 
+at sun.security.ssl.SSLEngineImpl.fatal(SSLEngineImpl.java:1666) ~[na:1.8.0_101] 
+at sun.security.ssl.SSLEngineImpl.fatal(SSLEngineImpl.java:1634) ~[na:1.8.0_101] 
+at sun.security.ssl.SSLEngineImpl.recvAlert(SSLEngineImpl.java:1800) ~[na:1.8.0_101]
+at com.apigee.nio.NIOSelector$SelectedIterator.findNext(NIOSelector.java:496) [nio-1.0.0.jar:na] 
+at com.apigee.nio.util.NonNullIterator.computeNext(NonNullIterator.java:21) [nio-1.0.0.jar:na] 
+at com.apigee.nio.util.AbstractIterator.hasNext(AbstractIterator.java:47) [nio-1.0.0.jar:na] 
+at com.apigee.nio.NIOSelector$2.findNext(NIOSelector.java:312) [nio-1.0.0.jar:na] 
+at com.apigee.nio.NIOSelector$2.findNext(NIOSelector.java:302) [nio-1.0.0.jar:na] 
+at com.apigee.nio.util.NonNullIterator.computeNext(NonNullIterator.java:21) [nio-1.0.0.jar:na] 
+at com.apigee.nio.util.AbstractIterator.hasNext(AbstractIterator.java:47) [nio-1.0.0.jar:na] 
+at com.apigee.nio.handlers.NIOThread.run(NIOThread.java:59) [nio-1.0.0.jar:na]
+</pre>
+
+
+    <p>The Message Processor log had a stack trace for the error 
+    <strong><code>Received fatal alert: bad_certificate</code></strong>, but does not
+    have any further information that indicates the cause for this issue.</p>
+  </li>
+      </ol>
+    </li>
+
+  <li>To investigate this issue further, you will need to capture TCP/IP packets using
+<a class="external" href="https://docs.apigee.com/api-platform/troubleshoot/diagnostic-tools-and-logs#tcpippacketsniffertcpdumputility">tcpdump</a> tool.
+
+    <ol>
+
+     <li>If you are a <strong>Private Cloud user</strong>, then you can capture the
+     TCP/IP packets on the backend server or Message Processor.
+     Preferably, capture them on the backend server as the packets are decrypted on
+     the backend server.</li>
+
+     <li>If you are a <strong>Public Cloud user</strong>, then capture the TCP/IP 
+     packets on the backend server.</li>
+
+     <li>Once you've decided where you would like to capture TCP/IP packets, use the
+     below <a class="external" href="https://docs.apigee.com/api-platform/troubleshoot/diagnostic-tools-and-logs#tcpippacketsniffertcpdumputility">tcpdump</a>
+     command to capture TCP/IP packets.</li>
+
+<pre class="devsite-terminal">tcpdump -i any -s 0 host &lt;IP address> -w &lt;File name></pre>
+
+    <aside class="note"><b>Note: </b> If you are taking the TCP/IP packets on the backend server, then use the
+    public IP address of the Message Processor in the <code>tcpdump</code> command.  </aside>
+
+    <p>If you are taking the TCP/IP packets on the Message Processor, then use the
+    public IP address of the backend server in the <code>tcpdump</code> command.</p>
+
+    <p>If there are multiple IP addresses for backend server/Message Processor, then
+    you need to use a different tcpdump command.  Refer to 
+    <a class="external" href="https://docs.apigee.com/api-platform/troubleshoot/diagnostic-tools-and-logs#tcpippacketsniffertcpdumputility">tcpdump</a>
+    for more information about this tool and for other variants of this command.</p>
+      </ol>
+    </li>
+
+    <li>Analyze the TCP/IP packets using the <a class="external" href="https://www.wireshark.org/">Wireshark tool</a> or similar tool with which you are familiar.</li>
+  </ol>
+
+  <p>Here's the analysis of sample TCP/IP packets data using Wireshark tool:</p>
+
+  <p><img src="/api-platform/images/ssl-handsake-fail-tcp-ip.png" width="" alt="alt_text" title="image_tooltip"></p>
+
+  <ol>
+
+    <li>Message #4 in the tcpdump above shows that the Message Processor (source)
+    sent a <strong>"Client Hello"</strong> message to the backend server (destination).</li>
+
+    <li>Message #5 shows that the backend server acknowledges the Client Hello message
+    from the Message Processor.</li>
+
+    <li>The backend server sends the "Server Hello" message along with its Certificate,
+    and then requests the Client to send its Certificate in Message #7.</li>
+
+    <li>The Message Processor completes the verification of the Certificate and acknowledges
+    the backend server's ServerHello message in Message #8.</li>
+
+    <li>The Message Processor sends its Certificate to the backend server in Message #9.</li>
+
+    <li>The backend server acknowledges the receipt of the Message Processor's
+    Certificate in Message #11.</li>
+
+    <li><p>However, it immediately sends a <strong>Fatal Alert: Bad Certificate</strong> to the
+    Message Processor (Message #12). This indicates that the Certificate sent by
+    the Message Processor was bad and hence the Certificate Verification failed on
+    the backend server. As a result, the SSL Handshake failed and the connection
+      will be closed.</p>
+    <br/>
+    <p><img src="/api-platform/images/ssl-handsake-fail-alert-mess.png" width="" alt="alt_text" title="image_tooltip"></p>
+    </li>
+
+    <li><p>Let's now look at the Message #9 to check the contents of the certificate sent by the Message Processor:</p>
+      <br/>
+      <p><img src="/api-platform/images/ssl-handsake-fail-protocol.png" width="" alt="alt_text" title="image_tooltip"></p>
+    </li>
+
+    <li>As you can notice, the backend server did not get any Certificate from the Client
+    (<strong>Certificate Length: 0)</strong>. Hence, the backend server sends the Fatal Alert: Bad Certificate.</li>
+
+    <li>Typically this happens when the Client, that is, Message Processor (a Java based process): 
+
+    <ol>
+     <li>Does not have any Client Certificate in its KeyStore, or;
+
+    <li>It is unable to send a Client Certificate. This can happen if it can't find
+     a Certificate that is issued by one of the Backend Server's acceptable Certificate Authorities.
+     Meaning, if the Certificate Authority of the Client's Leaf Certificate
+     (i.e., the first Certificate in the chain) does not match any of the backend server's
+     acceptable Certificate Authorities, then the Message Processor will not send the certificate.</li>
+    </ol>
+  </li>
+  </ol>
+
+  <p>Let's look at each of these causes separately as follows.</p>
+
+
+<h2 id="no_client_cert">Cause: No Client Certificate</h2>
+
+  <h3>Diagnosis</h3>
+
+  <p>If there is no Certificate in the Keystore specified in the SSL Info section
+  of the Target Endpoint or the target server used in the Target Endpoint,
+  then that's the cause for this error.</p>
+
+  <p>Follow the below steps to determine if this is the cause:</p>
+
+  <ol>
+
+    <li>Determine the Keystore being used in the Target Endpoint or the Target Server
+    for the specific API Proxy by using the below steps: 
+
+      <ol>
+        <li>Get the Keystore reference name from the <strong>Keystore</strong> element
+        in <strong>SSLInfo</strong> section in the Target Endpoint or the Target Server.
+
+  <p>Let's look at a sample SSLInfo section in a Target Endpoint Configuration:</p>
+
+<pre class="prettyprint">&lt;SSLInfo&gt;
+  &lt;Enabled&gt;true&lt;/Enabled&gt;
+  &lt;ClientAuthEnabled&gt;true&lt;/ClientAuthEnabled&gt;
+  &lt;KeyStore&gt;ref://myKeystoreRef&lt;/KeyStore&gt;
+  &lt;KeyAlias&gt;myKey&lt;/KeyAlias&gt;
+  &lt;TrustStore&gt;ref://myTrustStoreRef&lt;/TrustStore&gt;
+&lt;/SSLInfo&gt;</pre>
+
+  </li>
+
+   <li>In the above example, the Keystore reference name is "<strong>myKeystoreRef".</strong> </li>
+
+   <li>Go to Edge UI and select <strong>API Proxies -> Environment Configurations.</strong>
+
+      <p>Select the <strong>References</strong> tab and search for the Keystore reference name.
+      Note down the name in the <strong>Reference</strong> column for the specific Keystore reference.
+      This will be your Keystore name.</p>
+      <br>
+      <p><img src="/api-platform/images/ssl-handsake-fail-env_prod.png" width="" alt="alt_text" title="image_tooltip"></p>
+   </li> 
+  
+   <li>In the above example, you can notice that <strong>myKeystoreRef has the reference
+   to "myKeystore". Therefore, the Keystore name is myKeystore.</strong></li> 
+  
+  </ol>
+
+  <li>Check if this Keystore contains the Certificate either using the Edge UI or
+  <a class="external" href="https://apidocs.apigee.com/management/apis/get/organizations/%7Borg_name%7D/environments/%7Benv_name%7D/keystores/%7Bkeystore_name%7D/certs">this management API</a>.</li>
+
+  <li>If the Keystore does contain Certificate(s), then move to
+  <a href="#cert_auth_mismatch">Cause: Certificate Authority Mismatch</a>.</li>
+
+  <li>If the Keystore doesn't contain any Certificate, then that's the reason why
+  the Client Certificate is not sent by the Message Processor.</li>
+</ol>
+
+  <h3>Resolution</h3>
+
+  <ol>
+    <li>Ensure the proper and complete Client Certificate chain is uploaded to the specific Keystore in the Message Processor.</li>
+  </ol>
+
+
+<h2 id="cert_auth_mismatch">Cause: Certificate Authority Mismatch</h2>
+
+  <p>Generally when the Server requests the Client to send its Certificate, it
+  indicates the set of accepted Issuers or Certificate Authorities.
+  If the Issuer/Certificate Authority of the leaf certificate (i.e., the first
+  Certificate in the Certificate chain) in the Message Processor's Keystore does
+  not match any of the Certificate Authorities accepted by the backend server,
+  then Message Processor (which is a <strong>Java based process</strong>) will
+  not send the Certificate to the backend server. </p>
+  
+  <p>Use the below steps to confirm if this is the case:</p>
+  
+  <ol>
+
+  <li><a class="external" href="https://apidocs.apigee.com/management/apis/get/organizations/%7Borg_name%7D/environments/%7Benv_name%7D/keystores/%7Bkeystore_name%7D/certs">List the Certificates from the Keystore</a>.</li>
+
+  <li>Get the Details of each Certificate obtained in Step #1 above using
+  <a class="external" href="https://apidocs.apigee.com/management/apis/get/organizations/%7Borg_name%7D/environments/%7Benv_name%7D/keystores/%7Bkeystore_name%7D/certs/%7Bcert_name%7D">this management API</a>.</li>
+
+  <li>Note down the <strong>issuer of the leaf Certificate (i.e., the first Certificate in the certificate chain) stored in the Keystore.</strong>
+
+    <p><strong>Sample Leaf Certificate</strong></p>
+
+<pre class="prettyprint">{
+  "certInfo" : [ {
+    "basicConstraints" : "CA:FALSE",
+    "expiryDate" : 1578889324000,
+    "isValid" : "Yes",
+    "issuer" : "CN=MyCompany Test SHA2 CA G2, DC=testcore, DC=test, DC=dir, DC=mycompany, DC=com",
+    "publicKey" : "RSA Public Key, 2048 bits",
+    "serialNumber" : "65:00:00:00:d2:3e:12:d8:56:fa:e2:a9:69:00:06:00:00:00:d2",
+    "sigAlgName" : "SHA256withRSA",
+    "subject" : "CN=nonprod-api.mycompany.com, OU=ITS, O=MyCompany, L=MELBOURNE, ST=VIC, C=AU",
+    "subjectAlternativeNames" : [ ],
+    "validFrom" : 1484281324000,
+    "version" : 3
+  } ],
+  "certName" : "nonprod-api.mycompany.com.key.pem-cert"
+}
+</pre>
+
+  <p>In the above example, the issuer/Certificate Authority is
+  <strong><code>"CN=MyCompany Test SHA2 CA G2, DC=testcore, DC=test, DC=dir, DC=mycompany, DC=com"</code></strong></li>
+
+  <li>Determine the backend server's accepted list of Issuers or Certificate Authorities using one of the following techniques:
+
+  <p><strong>Technique #1: Use the openssl command below:</strong></p>
+
+  <pre class="devsite-terminal">openssl s_client -host &lt;backend server host name> -port &lt;Backend port#> -cert &lt;Client Certificate> -key &lt;Client Private Key>
+</pre>
+
+  <p>Refer to the section titled <strong>"Acceptable Client Certificate CA names"</strong>
+  in the output of this command as shown below:</p>
+
+<pre class="prettyprint">Acceptable client certificate CA names
+/C=AU/ST=VIC/L=MELBOURNE/O=MyCompany/OU=ITS/CN=nonprod-api.mycompany.com
+/C=AU/ST=VIC/L=MELBOURNE/O=MyCompany/OU=ITS/CN=nonprod-api.mycompany.com
+</pre>
+
+  <p><strong>Technique #2: Check the <code>Certificate Request</code> packet in
+  TCP/IP Packets, where the backend server requests the Client to send its certificate:</strong></p>
+
+  <p>In the sample TCP/IP packets shown above, <code>Certificate Request</code>
+  packet is message #7.  Refer to the section "Distinguished Names",
+  which contains the backend server's Acceptable Certificate Authorities.</p>
+
+  <p><img src="/api-platform/images/ssl-handsake-fail-dname.png" width="" alt="alt_text" title="image_tooltip"></p>
+
+  <aside class="note"><b>Note: </b> The list of backend server's "Acceptable Certificate Authorities"
+    is populated by adding the issuers of all the Certificates stored in backend server's Truststore.
+</aside></li>
+
+  <li><p>Verify if the Certificate Authority obtained in step#3 matches with the list
+  of backend server's accepted Issuers or Certificate Authorities obtained in step #4.
+  If there's a mismatch, then the Message Processor will not send the Client Certificate
+    to the backend server.</p>
+
+  <p>In the above example, you can notice that the issuer of the Client's Leaf Certificate
+  in the Message Processor's Keystore does not match any of the backend server's
+  <strong>Accepted Certificate Authorities</strong>. Hence, the Message Processor does not
+  send the Client Certificate to the backend server.
+  This causes the SSL handshake to fail and backend server sends "<code>Fatal alert: bad_certificate</code>" message.</p>
+  </li>
+</ol>
+
+
+  <h3>Resolution</h3>
+
+  <ol>
+    <li>Ensure the certificate with the issuer/Certificate Authority that matches
+    the issuer/Certificate Authority of the Client's Leaf Certificate (first certificate
+    in the chain) is stored in the backend server's Truststore.</li>
+
+    <li>In the example described in this Playbook, the Certificate with the issuer
+    <strong><code>"issuer" : "CN=MyCompany Test SHA2 CA G2, DC=testcore, DC=test, DC=dir, DC=mycompany, DC=com"</code></strong>
+    was added to backend server's Truststore to resolve the issue.</li>
+  </ol>
+
+  <p>If the problem still persists, go to <a href="#must_gather">Must Gather Diagnostic Information</a>.</p>
+
+
+<h2  id="must_gather">Must Gather Diagnostic Information</h2>
+
+  <p>If the problem persists even after following the above instructions,
+  please gather the following diagnostic information. Contact and share them to
+  <a class="external" href="https://support.apigee.com/">Apigee Support</a>:</p>
+
+  <ol>
+
+    <li>If you are a Public Cloud user, then provide the following information:
+
+    <ol>
+      <li>Organization Name</li>
+     <li>Environment Name</li>
+     <li>API Proxy Name</li>
+     <li>Complete curl command to reproduce the error</li>
+     <li>Trace File showing the error</li>
+     <li>TCP/IP packets captured on the backend server</li>
+    </ol>
+   </li>
+
+  <li>If you are a Private Cloud user, provide the following information:
+
+    <ol>
+     <li>Complete Error Message observed</li>
+     <li>API Proxy bundle</li>
+     <li>Trace File showing the error</li>
+     <li>Message Processor logs <code>/opt/apigee/var/log/edge-message-processor/logs/system.log</code></li>
+     <li>TCP/IP packets captured on the backend server or Message Processor.</li>
+     <li>Output of <a class="external" href="https://apidocs.apigee.com/management/apis/get/organizations/%7Borg_name%7D/environments/%7Benv_name%7D/keystores/%7Bkeystore_name%7D/certs">List the Certificates from the Keystore</a>
+     API and also the details of each Certificate obtained using
+     <a class="external" href="https://apidocs.apigee.com/management/apis/get/organizations/%7Borg_name%7D/environments/%7Benv_name%7D/keystores/%7Bkeystore_name%7D/certs/%7Bcert_name%7D">this management API</a>. </li>
+   </ol>
+  </li>
+
+  <li>Details about what sections in this Playbook you have tried and any other
+  insights that will help us to fastrack resolution of this issue.</li>
+
+</ol>
+
+{% endblock %}

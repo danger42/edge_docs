@@ -8,6 +8,16 @@ Edge. It contains a subset of files used by the Apigee docs developer site
 Doc drop:
 https://github.com/danger42/edge_docs.git
 
+SAP-specific product updates/known issues:
+4.19.01: TBD
+Earlier:
+4.18.05: https://docs.google.com/document/d/1BhvTzgEChrV-jJpAcxcVNlXaG_rF2lhzXZJoqYLcD20
+
+Release Notes 
+4.19.01: https://docs.apigee.com/release/notes/41901-edge-private-cloud-release-notes
+Earlier:
+4.18.05: https://docs.apigee.com/release/notes/41805-edge-private-cloud-release-notes
+
 ******************************
 *       What’s included      *
 ******************************
@@ -20,7 +30,7 @@ This archive includes the following files:
      Private Cloud release version 4.18.05. Content files in our CMS
      ("devsite") contain a mixture of the following markup:
        - HTML
-       - Django (https://docs.djangoproject.com)
+       - Jinja2 (http://jinja.pocoo.org/docs/2.10/)
        - Markdown (https://daringfireball.net/projects/markdown/syntax)
 
      This directory also includes PDFs, images, CSS, "helper" files, and included
@@ -47,11 +57,7 @@ This archive includes the following files:
   4. /README.txt
 
   5. /license.txt
-  
-  6. /41805-private-cloud-links.txt 
-  
-     Contains links to the 4.18.05 Private Cloud release notes and SAP Updates.
-  
+
 This may not be a comprehensive list of all files included in the archive; it's
 provided as informational.
 
@@ -68,9 +74,27 @@ The following files are not included in this archive:
 7. AWS and Cloud Foundry integrations docs
 8. Advisory docs
 9. Management API docs
+10. Istio adapter docs
+11. Integrations docs
 
 As with the included files, this is informational and not mean to be a
 complete list.
+
+******************************
+*         Doc Updates        *
+******************************
+This section lists some of the changes to the documentation structure and
+contents of the docs sent to SAP.
+
+1. Markup languages has been updated to use a new version of the Google CMS.
+   Changes include using Jinja rather than Django.
+
+2. Apigee antipatterns content (formerly a PDF) is now included
+   (/edge/troubleshoot/antipatterns/).
+
+3. Apigee Extensions doc is now included (/edge/api-platform/extensions/).
+
+4. Tutorials are now included (/edge/api-platform/tutorials/).
 
 ******************************
 *      Formatting Notes      *
@@ -103,11 +127,11 @@ sense out of it if you look at the source.
 4. Metadata/page wrappers:
    {% extends "_base.html" %}{% block title %}some_title{% endblock %}{% block body %}
 
-   Django header that defines the opening <html> and <body> tags.
+   Jinja2 header that defines the opening <html> and <body> tags.
 
    {% endblock %}
 
-   Django footer that defines the closing </body> and </html> tags.
+   Jinja2 footer that defines the closing </body> and </html> tags.
 
 5. Styles:
    Apigee-specific CSS styles include:

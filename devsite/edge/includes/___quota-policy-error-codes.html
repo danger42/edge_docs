@@ -5,96 +5,86 @@
   </head>
   <body>
 
-  <p>This section describes the error messages and flow variables that are set when this policy
-  triggers an error. This information is important to know if you are developing fault rules for a
-  proxy. To learn more, see <a href=
-  "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html">What you need to know
+  <p>This section describes the fault codes and error messages that are returned and fault variables that are set by Edge when this policy triggers an error.
+    This information is important to know if you are developing fault rules to
+  handle faults. To learn more, see <a href="/api-platform/fundamentals/what-you-need-know-about-policy-errors.html">What you need to know
   about policy errors</a> and <a href="/api-platform/fundamentals/fault-handling.html">Handling
   faults</a>.</p>
-
-  <h3>Error code prefix</h3>
-
-  <p><code>policies.ratelimit</code> <span style="font-size: 10pt">(<a href=
-  "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html#aboutthedefaultpolicyerrorresponse">What's
-  this?</a>)</span></p>
 
   <h3>Runtime errors</h3>
 
   <p>These errors can occur when the policy executes.</p>
 
-  <table>
-    <thead>
+     <aside class="key-point">Need help resolving an error? Click <i class="material-icons" title="Click this icon in the error table to visit the troubleshooting page.">build</i> in the Fix column for detailed troubleshooting information.
+<p>Use <a href="/api-monitoring">API Monitoring</a> to investigate fault codes and diagnose issues faster.</p></aside>
+  <table> 
+   <thead>
       <tr>
-        <th scope="col" width="271">Error name</th>
+        <th scope="col" width="523">Fault code</th>
 
-        <th scope="col" width="58">HTTP status</th>
+        <th scope="col" width="49">HTTP status</th>
 
-        <th scope="col" width="379">Occurs when</th>
+        <th scope="col" width="863">Cause</th>
+        <th scope="col" width="63">Fix</th>
       </tr>
     </thead>
 
     <tbody>
       <tr>
-        <td><code>QuotaViolation</code></td>
+        <td><code>policies.ratelimit.FailedToResolveQuotaIntervalReference</code></td>
 
         <td>500</td>
 
-        <td>The quota limit is exceeded.</td>
-      </tr>
+        <td>Occurs if the <code>&lt;Interval&gt;</code> element is not defined within the Quota policy. This element
+          is mandatory and used to specify the interval of time applicable to the quota. The time interval
+          can be minutes, hours, days, weeks, or months as defined with the <code>&lt;TimeUnit&gt;</code> element.</td>
 
+        <td><a href="/api-platform/troubleshoot/policies/runtime/quota-runtime-errors#failedtoresolvequotaintervalreference"><i class="material-icons" title="Troubleshoot this error.">build</i></a></td>
+      </tr>
       <tr>
-        <td><code>InvalidMessageWeight</code></td>
+        <td><code>policies.ratelimit.FailedToResolveQuotaIntervalTimeUnitReference</code></td>
 
         <td>500</td>
 
-        <td>The message weight value must be an integer.</td>
-      </tr>
+        <td>Occurs if the <code>&lt;TimeUnit&gt;</code> element is not defined within the Quota policy. This element
+          is mandatory and used to specify the unit of time applicable to the quota. The time interval
+          can be in minutes, hours, days, weeks, or months.</td>
 
+        <td><a href="/api-platform/troubleshoot/policies/runtime/quota-runtime-errors#failedtoresolvequotaintervaltimeunitreference"><i class="material-icons" title="Troubleshoot this error.">build</i></a></td>
+      </tr>
       <tr>
-        <td><code>InvalidQuotaInterval</code></td>
+        <td><code>policies.ratelimit.InvalidMessageWeight</code></td>
 
         <td>500</td>
 
-        <td>The quota interval must be an integer.</td>
-      </tr>
+        <td>Occurs if the value of the <code>&lt;MessageWeight&gt;</code> element specified through a flow variable
+          is invalid (a non-integer value).</td>
 
+        <td><a href="/api-platform/troubleshoot/policies/runtime/quota-runtime-errors#invalidmessageweight"><i class="material-icons" title="Troubleshoot this error.">build</i></a></td>
+      </tr>
       <tr>
-        <td><code>FailedToResolveQuota\<br>
-        IntervalReference</code></td>
+        <td><code>policies.ratelimit.QuotaViolation</code></td>
 
         <td>500</td>
 
-        <td>See fault string. </td>
+        <td>The quota limit was exceeded.</td>
+        <td>N/A</td>
+
       </tr>
 
-      <tr>
-        <td><code>FailedToResolveQuota\<br>
-        IntervalTimeUnitReference</code></td>
-
-        <td>500</td>
-
-        <td>See fault string. </td>
-      </tr>
-
-      <tr>
-        <td><code>InvalidQuotaTimeUnit</code></td>
-
-        <td>500</td>
-
-        <td>If no default value is specified, then the specified variable reference must be set to
-        minute, hour, day, week, or month.</td>
-      </tr>
     </tbody>
   </table>
 
   <h3>Deployment errors</h3>
 
-  <table>
-    <thead>
-      <tr>
-        <th scope="col" width="271">Error name</th>
+    <aside class="key-point">Need help resolving an error?Click <i class="material-icons" title="Click this icon in the error table to visit the troubleshooting page.">build</i> in the Fix column for detailed troubleshooting information.</aside>
 
-        <th scope="col" width="379">Occurs when</th>
+  <table>
+   <thead>
+      <tr>
+        <th scope="col" width="523">Error name</th>
+        <th scope="col" width="863">Cause</th>
+        <th scope="col" width="63">Fix</th>
       </tr>
     </thead>
 
@@ -102,73 +92,88 @@
       <tr>
         <td><code>InvalidQuotaInterval</code></td>
 
-        <td>The quota interval must be an integer.</td>
+        <td>If the quota interval specified in the <code>&lt;Interval&gt;</code> element is not
+          an integer, then the deployment of the API proxy fails. For example, if the quota interval
+          specified is 0.1 in the <code>&lt;Interval&gt;</code> element, then the deployment of the
+          API proxy fails.
+        </td>
+        <td><a href="/api-platform/troubleshoot/policies/deployment/quota-deployment-errors#invalidquotainterval"><i class="material-icons" title="Troubleshoot this error.">build</i></a></td>
       </tr>
 
       <tr>
         <td><code>InvalidQuotaTimeUnit</code></td>
 
-        <td>If specified, default value must be set to minute, hour, day, week, or month.</td>
+        <td>If the time unit specified in the <code>&lt;TimeUnit&gt;</code> element is unsupported,
+          then the deployment of the API proxy fails. The supported time units are <code>minute</code>,
+          <code>hour</code>, <code>day</code>, <code>week</code>, and <code>month</code>.
+        </td>
+        <td><a href="/api-platform/troubleshoot/policies/deployment/quota-deployment-errors#invalidquotatimeunit"><i class="material-icons" title="Troubleshoot this error.">build</i></a></td>
       </tr>
 
       <tr>
         <td><code>InvalidQuotaType</code></td>
 
-        <td>See fault string. Valid types are listed in the documentation.</td>
+        <td>If the type of the quota specified by the <code>type</code> attribute in the <code>&lt;Quota&gt;</code>
+          element is invalid, then the deployment of the API proxy fails. The
+          supported quota types are <code>default</code>, <code>calendar</code>, <code>flexi</code>, and <code>rollingwindow</code>.
+        </td>
+        <td><a href="/api-platform/troubleshoot/policies/deployment/quota-deployment-errors#invalidquotatype"><i class="material-icons" title="Troubleshoot this error.">build</i></a></td>
       </tr>
 
       <tr>
         <td><code>InvalidStartTime</code></td>
 
-        <td>See fault string.</td>
+        <td>If the format of the time specified in the <code>&lt;StartTime&gt;</code> element is
+          invalid, then the deployment of the API proxy fails. The valid format is <code>yyyy-MM-dd HH:mm:ss</code>,
+          which is the <a href="https://en.wikipedia.org/wiki/ISO_8601">ISO 8601</a> date and time format. For
+          example, if the time specified in the  <code>&lt;StartTime&gt;</code> element is
+          <code>7-16-2017 12:00:00</code> then the deployment of the API proxy fails.
+        </td>
+        <td><a href="/api-platform/troubleshoot/policies/deployment/quota-deployment-errors#invalidstarttime"><i class="material-icons" title="Troubleshoot this error.">build</i></a></td>
       </tr>
 
       <tr>
         <td><code>StartTimeNotSupported</code></td>
 
-        <td>See fault string and Quota policy documentation for more information about
-        <code>&lt;StartTime&gt;</code>.</td>
+        <td>If the <code>&lt;StartTime&gt;</code> element is specified whose quota type is not
+          <code>calendar</code> type, then the deployment of the API proxy fails. The <code>&lt;StartTime&gt;</code> element is
+          supported only for the  <code>calendar</code> quota type. For example, if the <code>type</code> attribute is set
+          to <code>flexi</code> or <code>rolling window</code> in the <code>&lt;Quota&gt;</code> element, then the
+          deployment of the API proxy fails.
+        </td>
+        <td><a href="/api-platform/troubleshoot/policies/deployment/quota-deployment-errors#starttimenotsupported"><i class="material-icons" title="Troubleshoot this error.">build</i></a></td>
       </tr>
-    </tbody>
-  </table>
 
-  <h3>Other errors</h3>
-
-  <table width="851">
-    <thead>
-      <tr>
-        <th scope="col" width="399">Error name</th>
-
-        <th scope="col" width="458">Occurs when</th>
-      </tr>
-    </thead>
-
-    <tbody>
       <tr>
         <td><code>InvalidTimeUnitForDistributedQuota</code></td>
 
-        <td>See fault string.</td>
+        <td>If the <code>&lt;Distributed&gt;</code> element is set to <code>true</code> and the <code>&lt;TimeUnit&gt;</code> element is set to
+          <code>second</code> then the deployment of the API proxy fails. The timeunit <code>second</code> is invalid for
+          a distributed quota. </td>
+        <td><a href="/api-platform/troubleshoot/policies/deployment/quota-deployment-errors#invalidtimeunitfordistributedquota"><i class="material-icons" title="Troubleshoot this error.">build</i></a></td>
       </tr>
 
       <tr>
         <td><code>InvalidSynchronizeIntervalForAsyncConfiguration</code></td>
 
-        <td>See fault string.</td>
+        <td>If the value specified for the <code>&lt;SyncIntervalInSeconds&gt;</code> element within the
+         <code>&lt;AsynchronousConfiguration&gt;</code> element in a Quota policy is less than zero, then the
+          deployment of the API proxy fails. </td>
+        <td><a href="/api-platform/troubleshoot/policies/deployment/quota-deployment-errors#invalidsynchronizeintervalforasyncconfiguration"><i class="material-icons" title="Troubleshoot this error.">build</i></a></td>
+
       </tr>
-
-      <tr>
-        <td><code>InvalidSynchronizeMessageCountForAsyncConfiguration</code></td>
-
-        <td>See fault string.</td>
-      </tr>
-
       <tr>
         <td><code>InvalidAsynchronizeConfigurationForSynchronousQuota</code></td>
 
-        <td>See fault string.</td>
+        <td>If the value of the <code>&lt;AsynchronousConfiguration&gt;</code> element is set to <code>true</code> in a Quota policy, which also
+          has asynchronous configuration defined using the <code>&lt;AsynchronousConfiguration&gt;</code> element, then
+          the deployment of the API proxy fails.</td>
+        <td><a href="/api-platform/troubleshoot/policies/deployment/quota-deployment-errors#invalidasynchronizeconfigurationforsynchronousquota"><i class="material-icons" title="Troubleshoot this error.">build</i></a></td>
+
       </tr>
     </tbody>
   </table>
+
 
   <h3>Fault variables</h3>
 
@@ -176,12 +181,11 @@
   "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html">What you need to know
   about policy errors</a>.</p>
 
-  <table>
+
+     <table>
     <tbody>
       <tr>
-        <th width="324">Variables set <code><span style="font-size: 10pt">(<a href=
-        "/api-platform/fundamentals/what-you-need-know-about-policy-errors.html">Learn
-        more</a>)</span></code></th>
+        <th width="324">Variables</th>
 
         <th width="428">Where</th>
 
@@ -189,25 +193,22 @@
       </tr>
 
       <tr>
-        <td width="324"><code>[prefix].[policy_name].failed</code></td>
+        <td><code>fault.name="<var>fault_name</var>"</code></td>
 
-        <td width="428">The fault variable <code>[prefix]</code> is
-        <code><strong>ratelimit</strong>.</code><br>
-        The <code>[policy_name]</code> is the name of the policy that threw the error.</td>
-
-        <td width="428"><code>ratelimit.QT-QuotaPolicy.failed = true</code></td>
-      </tr>
-
-      <tr>
-        <td><code>fault.[error_name]</code></td>
-
-        <td><code>[error_name]</code> = The specific error name to check for as listed in the table
-        above.</td>
+        <td><var>fault_name</var> is the name of the fault, as listed in the <a href="#runtime-errors">Runtime errors</a> table above. The fault name is the last part of the fault code.</td>
 
         <td><code>fault.name Matches "QuotaViolation"</code></td>
       </tr>
+      <tr>
+        <td width="324"><code>ratelimit.<var>policy_name</var>.failed</code></td>
+
+        <td width="428"><var>policy_name</var> is the user-specified name of the policy that threw the fault.</td>
+
+        <td width="428"><code>ratelimit.QT-QuotaPolicy.failed = true</code></td>
+      </tr>
     </tbody>
   </table>
+
 
   <h3>Example error response</h3>
 

@@ -1,21 +1,21 @@
-{% extends "private-cloud/v4.18.05/_base.html" %}
+{% extends "private-cloud/v4.19.01/_base.html" %}
 {% block title %}Installation Requirements{% endblock %}
 {% block body %}
 
-  <h2 id="hardwarerequirements">Hardware Requirements</h2>
+  <h2 id="hardwarerequirements">Hardware requirements</h2>
 
   <p>You must meet the following minimum hardware requirements for a highly available
-  infrastructure in a production grade environment. For all installation scenarios described in
-  <a href="installation-topologies">Installation Topologies</a>, the following tables list the
-  minimum hardware requirements for the installation components.</p>
+  infrastructure in a production grade environment.
 
-  <aside class="note"><strong>Note:</strong> The Edge installation configuration file supports the
-    following property:
-    <pre class="prettyprint">ENABLE_SYSTEM_CHECK=y</pre>
-    <p>If you set this property to "y", the installer check that the system meets the CPU and
-    memory requirements for the component being installed. The default value is "n" to disable
-    check.</p>
-  </aside>
+  <p>The following video gives you high-level sizing guidance for your installation:</p>
+
+  <iframe class="devsite-embedded-youtube-video" data-video-id="xJ-IaB3pSaU"
+    data-autohide="1" width="560" height="315" data-showinfo="0" frameborder="0" allowfullscreen="">
+  </iframe>
+
+  <p>For all installation scenarios described in
+  {{topologies}}, the following tables list the
+  minimum hardware requirements for the installation components.</p>
 
   <p>In these tables the hard disk requirements are in addition to the hard disk space required by
   the operating system. Depending on your applications and network traffic, your installation might
@@ -35,16 +35,16 @@
         <td>Cassandra</td>
         <td>16GB</td>
         <td>8-core</td>
-        <td>250GB local storage with SSD or fast HDD supporting 2000 IOPS</td>
+        <td>250GB local storage with SSD</td>
       </tr>
       <tr>
-        <td>Message Processor/Router on same machine</td>
+        <td>Message&nbsp;Processor/Router&nbsp;on&nbsp;same&nbsp;machine</td>
         <td>16GB</td>
         <td>8-core</td>
         <td>100GB</td>
       </tr>
       <tr>
-        <td>Analytics - Postgres/Qpid on same server (not recommended for production)</td>
+        <td>Analytics - Postgres/Qpid on same server</td>
         <td>16GB<sup>*</sup></td>
         <td>8&#8209;core<sup>*</sup></td>
         <td>500GB - 1TB<sup>**</sup> network storage<sup>***</sup>, preferably with SSD backend,
@@ -61,9 +61,7 @@
         <td>Analytics - Qpid standalone</td>
         <td>8GB</td>
         <td>4-core</td>
-        <td>30GB - 50GB local storage with SSD or fast HDD</p>
-          <p>For installations greater than 250 TPS, HDD with local storage supporting 1000 IOPS is
-          recommended.</p>
+        <td>30GB - 50GB local storage with SSD
           <p>The default Qpid queue size is 20 GB. If you need to add more capacity, add additional
           Qpid nodes.</p>
         </td>
@@ -74,54 +72,59 @@
         <td>2-core</td>
         <td>60GB</td>
       </tr>
+      <tr>
+        <td class="alt" colspan="4">
+          <sup>
+            <p>* Adjust Postgres system requirements based on throughput:</p>
+            <ul>
+              <li>Less than 250 TPS: 8GB, 4-core can be considered with managed network
+                storage<sup>***</sup> supporting 1000 IOPS or higher</li>
+              <li>Greater than 250 TPS: 16GB, 8-core, managed network storage<sup>***</sup>
+                supporting 1000 IOPS or higher</li>
+              <li>Greater than 1000 TPS: 16GB, 8-core, managed network storage<sup>***</sup>
+                supporting 2000 IOPS or higher</li>
+              <li>Greater than 2000 TPS: 32GB, 16-core, managed network storage<sup>***</sup>
+                supporting 2000 IOPS or higher </li>
+              <li>Greater than 4000 TPS: 64GB, 32-core, managed network storage<sup>***</sup>
+                supporting 4000 IOPS or higher</li>
+            </ul>
+          </sup>
+          <sup>
+            <p>** The Postgres hard disk value is based on the out of the box analytics captured by Edge.
+            If you add custom values to the analytics data, then these values should be increased
+            accordingly. Use the following formula to estimate the required storage:</p>
+            <p><code><strong>bytes of storage needed =</strong><br/><br/>
+        &nbsp;&nbsp;(# bytes of analytics data/request) *<br/><br/>
+        &nbsp;&nbsp;(requests/second) *<br/><br/>
+        &nbsp;&nbsp;(seconds/hour) *<br/><br/>
+        &nbsp;&nbsp;(hours of peak usage/day) *<br/><br/>
+        &nbsp;&nbsp;(days/month) *<br/><br/>
+        &nbsp;&nbsp;(months of data retention)</code></p>
+            <p>For example:</p>
+            <p><code>(2K bytes) * (100 req/sec) * (3600 secs/hr) * (18 peak hours/day) * (30 days/month) * (3 months retention)<br/><br/>
+                                  <strong>= 1,194,393,600,000 bytes or 1194.4 GB of storage needed</strong></code></p>
+          </sup>
+          <sup>
+            <p>*** Network Storage is recommended for Postgresql database because:</p>
+            <ul>
+              <li>It gives the ability to dynamically scale up the storage size if and when
+                required.</li>
+              <li>Network IOPS can be adjusted on the fly in most of today's
+                environment/Storage/Network subsystems.</li>
+              <li>Storage level snapshots can be enabled as part of backup and recovery
+                solutions.</li>
+            </ul>
+          </sup>
+        </td>
+      </tr>
     </tbody>
   </table>
 
-  <sup><p>* Adjust Postgres system requirements based on throughput:</p>
-  <ul>
-    <li>Less than 250 TPS: 8GB, 4-core can be considered with managed network
-      storage<sup>***</sup> supporting 1000 IOPS or higher</li>
-    <li>Greater than 250 TPS: 16GB, 8-core, managed network storage<sup>***</sup>
-      supporting 1000 IOPS or higher</li>
-    <li>Greater than 1000 TPS: 16GB, 8-core, managed network storage<sup>***</sup>
-      supporting 2000 IOPS or higher</li>
-    <li>Greater than 2000 TPS: 32GB, 16-core, managed network storage<sup>***</sup>
-      supporting 2000 IOPS or higher </li>
-    <li>Greater than 4000 TPS: 64GB, 32-core, managed network storage<sup>***</sup>
-      supporting 4000 IOPS or higher</li>
-  </ul></sup>
-
-  <sup><p>** The Postgres hard disk value is based on the out of the box analytics captured by Edge.
-    If you add custom values to the analytics data, then these values should be increased
-    accordingly. Use the following formula to estimate the required storage:</p>
-    <p><code><strong>bytes of storage needed =</strong><br/><br/>
-&nbsp;&nbsp;(# bytes of analytics data/request) *<br/><br/>
-&nbsp;&nbsp;(requests/second) *<br/><br/>
-&nbsp;&nbsp;(seconds/hour) *<br/><br/>
-&nbsp;&nbsp;(hours of peak usage/day) *<br/><br/>
-&nbsp;&nbsp;(days/month) *<br/><br/>
-&nbsp;&nbsp;(months of data retention)</code></p>
-
-    <p>For example:</p>
-    <p><code>(2K bytes) * (100 req/sec) * (3600 secs/hr) * (18 peak hours/day) * (30 days/month) * (3 months retention)<br/><br/>
-<strong>= 1,194,393,600,000 bytes or 1194.4 GB</strong></code></p>
-  </sup>
-
-  <sup><p>*** Network Storage is recommended for Postgresql database because:</p>
-    <ul>
-      <li>It gives the ability to dynamically scale up the storage size if and when
-        required.</li>
-      <li>Network IOPS can be adjusted on the fly in most of today's
-        environment/Storage/Network subsystems.</li>
-      <li>Storage level snapshots can be enabled as part of backup and recovery
-        solutions.</li>
-    </ul>
-  </sup>
 
   <hr/>
 
-  <p>In addition, the following lists the hardware requirements if you wish to install the
-  Monetization Services:</p>
+  <p>In addition, the following lists the hardware requirements if you want to install the
+  Monetization Services (not supported on All-in-One installation):</p>
 
   <table>
     <thead>
@@ -186,7 +189,7 @@
   operating systems and third-party software listed in
   <a href="/release/supported-software">Supported software and supported versions</a>.</p>
 
-  <h2 id="creatingtheapigeeuser">Creating the apigee user</h2>
+  <h2 id="creatingtheapigeeuser">Creating the 'apigee' user</h2>
 
   <p>The installation procedure creates a Unix system user named 'apigee'. Edge directories and
   files are owned by 'apigee', as are Edge processes. That means Edge components run as the
@@ -207,7 +210,7 @@
   <p>Before you create the symlink, you must first create a user and group named "apigee". This is
   the same group and user created by the Edge installer.</p>
 
-  <p>To create the symlink, perform these steps before downloading the bootstrap_4.18.05.sh file.
+  <p>To create the symlink, perform these steps before downloading the bootstrap_{{cur_version}}.sh file.
   You must perform all of these steps as root:</p>
 
   <ol>
@@ -239,7 +242,7 @@
   installation, and then re-enable it after installation. See <a href=
   "install-edge-apigee-setup-utility">Install the Edge apigee-setup utility</a> for more.</p>
 
-  <h2 id="networksetting">Network Setting</h2>
+  <h2 id="networksetting">Network setting</h2>
 
   <p>Apigee recommendeds that you check the network setting prior to the installation. The installer
   expects that all machines have fixed IP addresses. Use the following commands to validate the
@@ -649,458 +652,6 @@ apigee hard nofile 65536</pre>
   <code>http://api.mycompany.com:80/salesdemo</code>. If you deploy your API mycompany with the
   base URL of <code>/</code> then your users access the API by the URL
   <code>http://api.mycompany.com:80/</code>.</p>
-
-  <h3 id="firewallsandvirtualhosts-edgeportrequirements">Edge port requirements</h3>
-
-  <p>The need to manage the firewall goes beyond just the virtual hosts; both VM and physical host
-  firewalls must allow traffic for the ports required by the components to communicate with each
-  other.</p>
-
-  <p>The following image shows the ports requirements for each Edge component:</p>
-
-  <p><img alt="" src="/private-cloud/images/arch_ports_v11.png"></p>
-
-  <p><strong>Notes on this diagram:</strong></p>
-
-  <ul>
-    <li>* Port 8082 on the Message Processor only has to be open for access by the Router when you
-      configure TLS/SSL between the Router and Message Processor. If you do not configure TLS/SSL
-      between the Router and Message Processor, the default configuration, port 8082 still must
-      be open on the Message Processor to manage the component, but the Router does not require
-      access to it.</li>
-    <li>The ports prefixed by "M" are ports used to manage the component and must be open on the
-      component and must be open on the component for access by the Management Server.</li>
-    <li>The following components require access to port 8080 on the Management Server: Router,
-      Message Processor, UI, Postgres, and Qpid.</li>
-    <li>A Message Processor must open port 4528 as its management port. If you have multiple
-      Message Processors, they must all be able to access each other over port 4528 (indicated by the
-      loop arrow in the diagram above for port 4528 on the Message Processor). If you have multiple
-      Data Centers, the port must be accessible from all Message Processors in all Data Centers.</li>
-    <li>While it is not required, you can open port 4527 on the Router for access by any Message
-      Processor. Otherwise, you might see error messages in the Message Processor log files.</li>
-    <li>A Router must open port 4527 as its management port. If you have multiple Routers, they
-      must all be able to access each other over port 4527 (indicated by the loop arrow in the
-      diagram above for port 4527 on the Router).</li>
-    <li>The Edge UI requires access to the Router, on the ports exposed by API proxies, to support
-      the <strong>Send</strong> button in the trace tool.</li>
-    <li>The Management Server requires access to the JMX port on the Cassandra
-      nodes.</li>
-    <li>Access to JMX ports can be configured to require a username/password. See
-      <a href="how-monitor">How to Monitor</a> for more information.</li>
-    <li>You can optionally configure TLS/SSL access for certain connections, which can use
-      different ports. See <a href="/api-platform/system-administration/ssl">TLS/SSL</a> for
-      more.</li>
-    <li>If configuring two Postgres nodes to use master-standby replication, you must open port 22
-      on each node for ssh access. You can optionally open ports on individual nodes to allow
-      ssh access.</li>
-    <li>You can configure the Management Server and Edge UI to send emails through an external SMTP
-      server. If you do, you must ensure that the Management Server and UI can access the necessary
-      port on the SMTP server. For non-TLS SMTP, the port number is typically 25. For TLS-enabled
-      SMTP, it is often 465, but check with your SMTP provider.</li>
-  </ul>
-
-  <p>The table below shows the ports need to be opened in firewalls, by Edge component:</p>
-
-  <table>
-    <thead>
-      <tr>
-        <th>Component</th>
-        <th>Port</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>Standard&nbsp;HTTP&nbsp;ports</td>
-        <td>80, 443</td>
-        <td>HTTP plus any other ports you use for virtual hosts</td>
-      </tr>
-      <tr>
-        <td rowspan="3">Management Server</td>
-        <td>8080</td>
-        <td>Port for Edge management API calls. These components require access to port 8080 on
-          the Management Server: Router, Message Processor, UI, Postgres, and Qpid.</td>
-      </tr>
-      <tr>
-        <td>1099</td>
-        <td>JMX port</td>
-      </tr>
-      <tr>
-        <td>4526</td>
-        <td>For distributed cache and management calls</td>
-      </tr>
-      <tr>
-        <td>Management UI</td>
-        <td>9000</td>
-        <td>Port for browser access to management UI</td>
-      </tr>
-      <tr>
-        <td rowspan="4">Message Processor</td>
-        <td>8998</td>
-        <td>Message Processor port for communications from Router</td>
-      </tr>
-      <tr>
-        <td>8082</td>
-        <td>
-          <p>Default management port for Message Processor and must be open on the component for
-          access by the Management Server.</p>
-          <p>If you configure TLS/SSL between the Router and Message Processor, used by the Router
-          to make health checks on the Message Processor.</p>
-        </td>
-      </tr>
-      <tr>
-        <td>1101</td>
-        <td>JMX port</td>
-      </tr>
-      <tr>
-        <td>4528</td>
-        <td>For distributed cache and management calls between Message Processors, and for
-          communication from the Router and Management Server</td>
-      </tr>
-      <tr>
-        <td rowspan="4">Router</td>
-        <td>8081</td>
-        <td>Default management port for Router and must be open on the component for access
-          by the Management Server.</td>
-      </tr>
-      <tr>
-        <td>4527</td>
-        <td>For distributed cache and management calls</td>
-      </tr>
-      <tr>
-        <td>15999</td>
-        <td>
-          <p>Health check port. A load balancer uses this port to determine if the Router is
-          available.</p>
-          <p>To get the status of a Router, the load balancer makes a request to port 15999 on the
-          Router:</p>
-          <pre class="devsite-terminal">curl -v http://<var>routerIP</var>:15999/v1/servers/self/reachable</pre>
-          <p>If the Router is reachable, the request returns HTTP 200.</p>
-        </td>
-      </tr>
-      <tr>
-        <td>59001</td>
-        <td>Port used for testing the Edge installation by the <code>apigee-validate</code> utility.
-          This utility requires access to port 59001 on the Router. See
-          <a href= "test-install">Test the install</a> for more on port 59001.</td>
-      </tr>
-      <tr>
-        <td rowspan="2">ZooKeeper</td>
-        <td>2181</td>
-        <td>Used by other components like Management Server, Router, Message Processor and so on</td>
-      </tr>
-      <tr>
-        <td>2888, 3888</td>
-        <td>Used internally by ZooKeeper for ZooKeeper cluster (known as ZooKeeper ensemble)
-          communication</td>
-      </tr>
-      <tr>
-        <td rowspan="2">Cassandra</td>
-        <td>7000,&nbsp;9042,&nbsp;9160</td>
-        <td>Apache Cassandra ports for communication between Cassandra nodes and for access by
-          other Edge components.</td>
-      </tr>
-      <tr>
-        <td>7199</td>
-        <td>JMX port. Must be open for access by the Management Server.</td>
-      </tr>
-      <tr>
-        <td rowspan="4">Qpid</td>
-        <td>5672</td>
-        <td>Used for communications from the Router and Message Processor to Qpid server</td>
-      </tr>
-      <tr>
-        <td>8083</td>
-        <td>Default management port on Qpid server and must be open on the component for
-          access by the Management Server.</td>
-      </tr>
-      <tr>
-        <td>1102</td>
-        <td>JMX port</td>
-      </tr>
-      <tr>
-        <td>4529</td>
-        <td>For distributed cache and management calls</td>
-      </tr>
-      <tr>
-        <td rowspan="5">Postgres</td>
-        <td>5432</td>
-        <td>Used for communication from Qpid/Management Server to Postgres</td>
-      </tr>
-      <tr>
-        <td>8084</td>
-        <td>Default management port on Postgres serverand must be open on the component for access
-          by the Management Server.</td>
-      </tr>
-      <tr>
-        <td>1103</td>
-        <td>JMX port</td>
-      </tr>
-      <tr>
-        <td>4530</td>
-        <td>For distributed cache and management calls</td>
-      </tr>
-      <tr>
-        <td>22</td>
-        <td>If configuring two Postgres nodes to use master-standby replication, you must open
-          port 22 on each node for ssh access.</td>
-      </tr>
-      <tr>
-        <td>LDAP</td>
-        <td>10389</td>
-        <td>OpenLDAP</td>
-      </tr>
-      <tr>
-        <td>SmartDocs</td>
-        <td>59002</td>
-        <td>The port on the Edge router where SmartDocs page requests are sent.</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <p>The next table shows the same ports, listed numerically, with the source and destination
-  components:</p>
-
-  <table>
-    <thead>
-      <tr>
-        <th>Port Number</th>
-        <th>Purpose</th>
-        <th>Source&nbsp;Component</th>
-        <th>Destination&nbsp;Component</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td><var>virtual_host_port</var></td>
-        <td>HTTP plus any other ports you use for virtual host API call traffic. Ports 80 and 443
-          are most commonly used; the Message Router can terminate TLS/SSL connections.</td>
-        <td>External&nbsp;client&nbsp;(or&nbsp;load&nbsp;balancer)</td>
-        <td>Listener on Message Router</td>
-      </tr>
-      <tr>
-        <td>1099&nbsp;through&nbsp;1103</td>
-        <td>JMX Management</td>
-        <td>JMX Client</td>
-        <td>Management&nbsp;Server&nbsp;(1099)<br/>
-          Message Processor (1101)<br/>
-          Qpid Server (1102)<br/>
-          Postgres Server (1103)
-        </td>
-      </tr>
-      <tr>
-        <td>2181</td>
-        <td>Zookeeper client communication</td>
-        <td>Management Server<br/>
-          Router<br/>
-          Message Processor<br/>
-          Qpid Server<br/>
-          Postgres Server
-        </td>
-        <td>Zookeeper</td>
-      </tr>
-      <tr>
-        <td>2888 and 3888</td>
-        <td>Zookeeper internode management</td>
-        <td>Zookeeper</td>
-        <td>Zookeeper</td>
-      </tr>
-      <tr>
-        <td>4526</td>
-        <td>RPC Management port</td>
-        <td>Management Server</td>
-        <td>Management Server</td>
-      </tr>
-      <tr>
-        <td>4527</td>
-        <td>RPC Management port for distributed cache and management calls, and for communications
-        between Routers</td>
-        <td>Management Server<br/>Router</td>
-        <td>Router</td>
-      </tr>
-      <tr>
-        <td>4528</td>
-        <td>For distributed cache calls between Message Processors, and for communication
-          from the Router</td>
-        <td>Management Server<br/>
-          Router<br/>
-          Message Processor
-        </td>
-        <td>Message Processor</td>
-      </tr>
-      <tr>
-        <td>4529</td>
-        <td>RPC Management port for distributed cache and management calls</td>
-        <td>Management Server</td>
-        <td>Qpid Server</td>
-      </tr>
-      <tr>
-        <td>4530</td>
-        <td>RPC Management port for distributed cache and management calls</td>
-        <td>Management Server</td>
-        <td>Postgres Server</td>
-      </tr>
-      <tr>
-        <td>5432</td>
-        <td>Postgres client</td>
-        <td>Qpid Server</td>
-        <td>Postgres
-        </td>
-      </tr>
-      <tr>
-        <td>5672</td>
-        <td>
-          <p>Used for sending analytics from Router and Message Processor to Qpid</p>
-        </td>
-        <td>Router<br/>
-          Message Processor
-        </td>
-        <td>Qpid Server</td>
-      </tr>
-      <tr>
-        <td>7000</td>
-        <td>Cassandra inter-node communications</td>
-        <td>Cassandra</td>
-        <td>Other Cassandra node</td>
-      </tr>
-      <tr>
-        <td>7199</td>
-        <td>JMX management. Must be open for access on the Cassandra node by the Management
-          Server.
-        </td>
-        <td>JMX client</td>
-        <td>Cassandra</td>
-      </tr>
-      <tr>
-        <td>8080</td>
-        <td>Management API port</td>
-        <td>Management API clients</td>
-        <td>Management Server</td>
-      </tr>
-      <tr>
-        <td>8081 through 8084</td>
-        <td>
-          <p>Component API ports, used for issuing API requests directly to individual components.
-          Each component opens a different port; the exact port used depends on the configuration
-          but must be open on the component for access by the Management Server</p>
-        </td>
-        <td>Management API clients</td>
-        <td>Router (8081)<br/>
-          Message Processor (8082)<br/>
-          Qpid Server (8083)<br/>
-          Postgres Server (8084)
-        </td>
-      </tr>
-      <tr>
-        <td>8998</td>
-        <td>Communication between Router and Message Processor</td>
-        <td>Router</td>
-        <td>Message Processor</td>
-      </tr>
-      <tr>
-        <td>9000</td>
-        <td>Default Edge management UI port</td>
-        <td>Browser</td>
-        <td>Management UI Server</td>
-      </tr>
-      <tr>
-        <td>9042</td>
-        <td>CQL native transport</td>
-        <td>Router<br/>
-          Message Processor<br/>
-          Management Server
-        </td>
-        <td>Cassandra</td>
-      </tr>
-      <tr>
-        <td>9160</td>
-        <td>Cassandra thrift client</td>
-        <td>Router<br/>
-          Message Processor<br/>
-          Management Server
-        </td>
-        <td>Cassandra</td>
-      </tr>
-      <tr>
-        <td>10389</td>
-        <td>LDAP port</td>
-        <td>Management Server</td>
-        <td>OpenLDAP</td>
-      </tr>
-      <tr>
-        <td>15999</td>
-        <td>Health check port. A load balancer uses this port to determine if the Router is
-          available.</td>
-        <td>Load balancer</td>
-        <td>Router</td>
-      </tr>
-      <tr>
-        <td>59001</td>
-        <td>Port used by the <code>apigee-validate</code> utility to test the Edge installation</td>
-        <td>apigee-validate</td>
-        <td>Router</td>
-      </tr>
-      <tr>
-        <td>59002</td>
-        <td>The router port where SmartDocs page requests are sent</td>
-        <td>SmartDocs</td>
-        <td>Router</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <p>A message processor keeps a dedicated connection pool open to Cassandra, which is configured
-  to never timeout. When a firewall is between a message processor and Cassandra server, the
-  firewall can time out the connection. However, the message processor is not designed to
-  reestablish connections to Cassandra.</p>
-
-  <p>To prevent this situation, Apigee recommends that the Cassandra server, message processor, and
-  routers be in the same subnet so that a firewall is not involved in the deployment of these
-  components.</p>
-
-  <p>If a firewall is between the router and message processors, and has an idle tcp timeout set,
-  our recommendations is to:</p>
-
-  <ol>
-    <li>Set <code>net.ipv4.tcp_keepalive_time = 1800</code> in sysctl settings on Linux OS, where
-      1800 should be lower than the firewall idle tcp timeout. This setting should keep the
-      connection in an established state so that the firewall does not disconnect the connection.</li>
-    <li>On all Message Processors, edit
-      <code>/opt/apigee/customer/application/message-processor.properties</code>
-      to add the following property. If the file does not exist, create it.
-      <pre>conf_system_cassandra.maxconnecttimeinmillis=-1</pre>
-    </li>
-    <li>Restart the Message Processor:
-      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-message-processor restart</pre>
-    </li>
-    <li>On all Routers, edit <code>/opt/apigee/customer/application/router.properties</code>
-      to add the following property. If the file does not exist, create it.
-      <pre>conf_system_cassandra.maxconnecttimeinmillis=-1</pre>
-    </li>
-    <li>Restart the Router:
-      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-router restart</pre>
-    </li>
-  </ol>
-
-  <p>If you install the 12 host clustered configuration with two Data Centers, ensure that the
-  nodes in the two Data Centers can communicate over the ports shown below:</p>
-
-  <p><img alt="" src="/private-cloud/images/arch_ports_multi_dc_V7.png"></p>
-
-  <aside class="note"><strong>Note:</strong>
-    <ul>
-      <li>All Management Servers must be able to access all Cassandra nodes in all other Data
-        Centers.</li>
-      <li>All Message Processors in all Data Centers must all be able to access each other over
-        port 4528.</li>
-      <li>The Management Server must be able to access all Message Processors over port 8082.</li>
-      <li>All Management Servers and all Qpid nodes must be able to access Postgres in all other
-        Data Centers.</li>
-      <li><strong>For security reasons</strong>, other than the ports shown above and any others
-        required by your own network requirements, no other ports should be open between data
-        centers.</li>
-    </ul>
-  </aside>
 
   <h2 id="licensing">Licensing</h2>
 

@@ -6,8 +6,10 @@
 
   <p>TargetServer configurations decouple concrete endpoint URLs from TargetEndpoint
   configurations. Each TargetServer is referenced by name in a TargetEndpoint
-  HTTPConnection. Instead of defining concrete URL in the configuration, you can configure one
-  or more named TargetServers. </p>
+  HTTPConnection. Instead of
+  <a href="https://docs.apigee.com/api-platform/reference/api-proxy-configuration-reference#targetendpoint">
+  defining a concrete URL in the configuration</a>, you can configure one
+  or more named TargetServers.</p>
 
   <p>A TargetServer definition consists of a name, a host and a port, with an additional element to
   indicate whether the TargetServer is enabled or disabled.</p>
@@ -129,7 +131,7 @@
     </tbody>
   </table>
 
-  
+
 
   <h2 id="managingtargetserverswiththeui">Managing target servers with the UI</h2>
 
@@ -263,8 +265,7 @@ $ curl -u email:password https://api.enterprise.apigee.com/v1/o/{org_name}/envir
   target1 and target 2. </p>
 
   <p>The <code>&lt;Path&gt; </code> element forms the basepath of the TargetEndpoint URI for
-  all target servers. It is only used when <span style=
-  "font-family:courier new,courier,monospace;">&lt;LoadBalancer&gt;</span> is used. Otherwise, it
+  all target servers. It is only used when <code>&lt;LoadBalancer&gt;</code> is used. Otherwise, it
   is ignored. In the above example, a request reaching to "target1" will be
   <code>http://target1/test</code> and so for other target servers.</p>
 
@@ -276,13 +277,11 @@ $ curl -u email:password https://api.enterprise.apigee.com/v1/o/{org_name}/envir
   <p>You can tune availability by using options for load balancing and failover at the load
   balancer and TargetServer level.</p>
 
-  <p>Available options for <span style=
-  "font-family:courier new,courier,monospace;">&lt;LoadBalancer&gt;</span> are:</p>
+  <p>Available options for <code>&lt;LoadBalancer&gt;</code> are:</p>
 
   <h3 id="settingloadbalanceroptions-algorithm">Algorithm</h3>
 
-  <p>Sets the algorithm used by <span style=
-  "font-family:courier new,courier,monospace;">&lt;LoadBalancer&gt;</span>. The available
+  <p>Sets the algorithm used by <code>&lt;LoadBalancer&gt;</code>. The available
   algorithms are <code>RoundRobin</code>, <code>Weighted</code>, and <code>LeastConnections</code>,
   each of which is documented below.</p>
 
@@ -378,11 +377,10 @@ $ curl -u email:password https://api.enterprise.apigee.com/v1/o/{org_name}/envir
     must <a href="/api-platform/deploy/deploying-proxies-ui.html">redeploy the API
     proxy</a> before Edge puts the TargetServer back into rotation.
 
-    
-
-    <p>Alternatively, you can define a HealthMonitor. A HealthMonitor puts the
-    TargetServer back into rotation after it becomes available again. See <a href=
-    "#healthmonitoring">Health monitoring</a> below for more information.</p>
+    <p>Alternatively, if you configure MaxFailures &gt; 0, you can also define a HealthMonitor.
+    A HealthMonitor puts the TargetServer back into rotation after it becomes available again,
+     meaning there is no need to redeploy the proxy.
+    See <a href="#healthmonitoring">Health monitoring</a> below for more information.</p>
   </aside>
 
   <h3 id="settingloadbalanceroptions-retry">Retry</h3>
@@ -422,15 +420,29 @@ $ curl -u email:password https://api.enterprise.apigee.com/v1/o/{org_name}/envir
   <h3 id="settingloadbalanceroptions-path">Path</h3>
 
   <p>Path defines a URI fragment that will be appended to all requests issued by the TargetServer
-  to the backend server.</p>
+    to the backend server.</p>
+
+   <p>This element accepts a literal string path or a <a href="/api-platform/reference/message-template-intro">message template</a>. A message
+template lets you perform variable string substitution at runtime.
+     For example, in the following target endpoint definition, the value of <code>{mypath}</code> will be used for the path:</p>
+<pre class="prettyprint">
+&lt;HTTPTargetConnection&gt;
+    &lt;SSLInfo&gt;
+      &lt;Enabled&gt;true&lt;/Enabled&gt;
+    &lt;/SSLInfo&gt;
+    &lt;LoadBalancer&gt;
+      &lt;Server name=&quot;testserver&quot;/&gt;
+    &lt;/LoadBalancer&gt;
+    &lt;Path&gt;{mypath}&lt;/Path&gt;
+&lt;/HTTPTargetConnection&gt;
+</pre>
 
   <h2 id="configuringatargetserverfortlsssl">Configuring a target server for
   TLS/SSL </h2>
 
   <p>If you are using a TargetServer to define the backend service, and the backend service
   requires the connection to use the HTTPS protocol, then you must enable TLS/SSL in the
-  TargetServer definition. This is necessary because the <span style=
-  "font-family:courier new,courier,monospace;">&lt;Host&gt;</span> tag does not let you
+  TargetServer definition. This is necessary because the <code>&lt;Host&gt;</code> tag does not let you
   specify the connection protocol. Shown below is the TargetServer definition for one-way
   TLS/SSL where Edge makes HTTPS requests to the backend service:</p>
   <pre class="prettyprint">
@@ -438,36 +450,37 @@ $ curl -u email:password https://api.enterprise.apigee.com/v1/o/{org_name}/envir
   &lt;Host&gt;mocktarget.apigee.net&lt;/Host&gt;
   &lt;Port&gt;443&lt;/Port&gt;
   &lt;IsEnabled&gt;true&lt;/IsEnabled&gt;
-  <strong>&lt;SSLInfo&gt; 
-      &lt;Enabled&gt;true&lt;/Enabled&gt; 
+  <strong>&lt;SSLInfo&gt;
+      &lt;Enabled&gt;true&lt;/Enabled&gt;
   &lt;/SSLInfo&gt; </strong>
-&lt;/TargetServer&gt; 
+&lt;/TargetServer&gt;
 </pre>
+
+<aside class="note"><b>Note: </b>If you define the <code>&lt;SSLInfo&gt;</code> block in both the
+TargetEndpoint and the TargetServer definition, the one in the TargetServer takes precedence.</aside>
 
   <p>If the backend service requires two-way, or mutual, TLS/SSL, then you configure
   the TargetServer by using the same TLS/SSL configuration settings as TargetEndpoints:</p>
   <pre class="prettyprint">
-&lt;TargetServer  name="TargetServer 1"&gt; 
-    &lt;IsEnabled&gt;true&lt;/IsEnabled&gt; 
-    &lt;Host&gt;www.example.com&lt;/Host&gt; 
-    &lt;Port&gt;443&lt;/Port&gt; 
-    &lt;SSLInfo&gt; 
-        &lt;Ciphers/&gt; 
-        &lt;ClientAuthEnabled&gt;true&lt;/ClientAuthEnabled&gt; 
-        &lt;Enabled&gt;true&lt;/Enabled&gt; 
-        &lt;IgnoreValidationErrors&gt;false&lt;/IgnoreValidationErrors&gt; 
-        &lt;KeyAlias&gt;keystore-alias&lt;/KeyAlias&gt; 
-        &lt;KeyStore&gt;keystore-name&lt;/KeyStore&gt; 
-        &lt;Protocols/&gt; 
-        &lt;TrustStore&gt;truststore-name&lt;/TrustStore&gt; 
-    &lt;/SSLInfo&gt; 
-&lt;/TargetServer &gt; 
+&lt;TargetServer  name="TargetServer 1"&gt;
+    &lt;IsEnabled&gt;true&lt;/IsEnabled&gt;
+    &lt;Host&gt;www.example.com&lt;/Host&gt;
+    &lt;Port&gt;443&lt;/Port&gt;
+    &lt;SSLInfo&gt;
+        &lt;Ciphers/&gt;
+        &lt;ClientAuthEnabled&gt;true&lt;/ClientAuthEnabled&gt;
+        &lt;Enabled&gt;true&lt;/Enabled&gt;
+        &lt;IgnoreValidationErrors&gt;false&lt;/IgnoreValidationErrors&gt;
+        &lt;KeyAlias&gt;keystore-alias&lt;/KeyAlias&gt;
+        &lt;KeyStore&gt;keystore-name&lt;/KeyStore&gt;
+        &lt;Protocols/&gt;
+        &lt;TrustStore&gt;truststore-name&lt;/TrustStore&gt;
+    &lt;/SSLInfo&gt;
+&lt;/TargetServer &gt;
 </pre>
 
-  <p>For information on the <span style=
-  "font-family:courier new,courier,monospace;">&lt;SSLInfo&gt;</span> properties, such as
-  <span style="font-family:courier new,courier,monospace;">&lt;Ciphers&gt;</span>, <span style=
-  "font-family:courier new,courier,monospace;">&lt;ClientAuthEnabled&gt;</span>, etc., see the
+  <p>For information on the <code>&lt;SSLInfo&gt;</code> properties, such as
+  <code>&lt;Ciphers&gt;</code>, <code>&lt;ClientAuthEnabled&gt;</code>, etc., see the
   information on setting those properties for a Virtual Host at  <a href=
   "/api-platform/system-administration/creating-virtual-host.html">Configuring TLS access to an API
   for the Private Cloud</a>.</p>
@@ -480,39 +493,35 @@ $ curl -u email:password https://api.enterprise.apigee.com/v1/o/{org_name}/envir
 
   <p>See the schema for TargetServer and other entities on <a href=
   "https://github.com/apigee/api-platform-samples/blob/master/schemas/configuration/configuration_schemas.xsd">
-  Github</a>.</p>
+  GitHub</a>.</p>
 
   <h2 id="healthmonitoring">Health monitoring</h2>
 
-  <p>As mentioned above in <a href="#settingloadbalanceroptions-maximumfailures">Maximum
-  failures</a>, you can use <span style=
-  "font-family:courier new,courier,monospace;">&lt;MaxFailures&gt;</span> to set the number of
-  failed requests from the API proxy to the TargetServer that results in the request being
-  redirected to another TargetServer. The failing TargetServer is then taken out of rotation until
-  you redeploy the proxy.</p>
-
   <p>Health monitoring enables you to enhance load balancing configurations by actively polling the
-  backend service URLs defined in the TargetServer configurations. The HealthMonitor acts as a
-  simple client that invokes a backend service over TCP or HTTP.</p>
+    backend service URLs defined in the TargetServer configurations. With health monitoring enabled,
+    a failed TargetServer is automatically put back into rotation when the HealthMonitor determines
+    that the TargetServer is active.</p>
+
+  <p>Health monitoring works with <code>&lt;MaxFailures&gt;</code>. Without health monitoring enabled,
+  <code>&lt;MaxFailures&gt;</code> specifies the number of failed requests from the API proxy to the
+    TargetServer that results in the request being redirected to another TargetServer.
+    The failing TargetServer is then taken out of rotation until you redeploy the proxy.</p>
+
+  <p>With health monitoring enabled, a failed TargetServer is automatically put back to rotation and no proxy
+    re-deployments are required.</p>
+
+  <aside>You must set <code>&lt;MaxFailures&gt;</code> greater than 0 when using the HealthMonitor.
+  A <code>&lt;MaxFailures&gt;</code> value of 0 configures Edge to always try to connect to the target
+    for each request and never removes the target server from the rotation.</aside>
+
+  <p>The HealthMonitor acts as a simple client that invokes a backend service over TCP or HTTP:</p>
 
   <ul>
     <li>A TCP client simply ensures that a socket can be opened.</li>
 
     <li>You configure the HTTP client to submit a valid HTTP request to the backend service. You
-    can define HTTP GET, PUT, POST, or DELETE operations. Typically, you define a simple GET
-    request that simply shows that the backend service is available. </li>
-  </ul>
-
-  <p>With <span style="font-family:courier new,courier,monospace;">&lt;MaxFailures&gt;</span> set
-  to a non-zero value and HealthMonitor enabled (either HTTP or TCP), a failed TargetServer is
-  put back to rotation and no proxy re-deployments are required when:</p>
-
-  <ul>
-    <li><strong>HTTP monitoring</strong>: When the response of the HTTP monitor call matches the
-    configured settings in the <span style=
-    "font-family:courier new,courier,monospace;">SuccessResponse</span> block. </li>
-
-    <li><strong>TCP monitoring</strong>: When the connection succeeds.</li>
+    can define HTTP GET, PUT, POST, or DELETE operations. The response of the HTTP monitor call must match the
+    configured settings in the <code>&lt;SuccessResponse&gt;</code> block. </li>
   </ul>
 
   <h3 id="healthmonitoring-enablingahealthmonitor">Enabling a HealthMonitor</h3>
@@ -524,17 +533,14 @@ $ curl -u email:password https://api.enterprise.apigee.com/v1/o/{org_name}/envir
   have multiple proxies that call the same target server, you must configure a Health Monitor for
   each proxy.</aside>
 
-  <p>A simple HealthMonitor defines an <span style=
-  "font-family:courier new,courier,monospace;">IntervalInSec</span> combined with either a
-  TCPMonitor or an HTTPMonitor. The <span style=
-  "font-family:courier new,courier,monospace;">&lt;MaxFailures&gt;</span> tag specifies maximum
+  <p>A simple HealthMonitor defines an <code>IntervalInSec</code> combined with either a
+  TCPMonitor or an HTTPMonitor. The <code>&lt;MaxFailures&gt;</code> tag specifies maximum
   number of failed requests from the API proxy to the TargetServer that results in the request
-  being redirected to another TargetServer. By default <span style=
-  "font-family:courier new,courier,monospace;">&lt;MaxFailures&gt;</span> is 0, which means
+  being redirected to another TargetServer. By default <code>&lt;MaxFailures&gt;</code> is 0, which means
   Edge performs no corrective action. When configuring a health monitor, ensure that you set
-  <span style="font-family:courier new,courier,monospace;">&lt;MaxFailures&gt;</span> in the
-  <span style="font-family:courier new,courier,monospace;">&lt;HTTPTargetConnection&gt;</span> tag
-  of the <span style="font-family:courier new,courier,monospace;">&lt;TargetEndpoint&gt;</span> tag
+  <code>&lt;MaxFailures&gt;</code> in the
+  <code>&lt;HTTPTargetConnection&gt;</code> tag
+  of the <code>&lt;TargetEndpoint&gt;</code> tag
   to a non-zero value. </p>
 
   <h3 id="healthmonitoring-tcpmonitor">TCPMonitor</h3>
@@ -654,7 +660,7 @@ $ curl -u email:password https://api.enterprise.apigee.com/v1/o/{org_name}/envir
 &lt;HealthMonitor&gt;
   &lt;IsEnabled&gt;true&lt;/IsEnabled&gt;
   &lt;IntervalInSec&gt;5&lt;/IntervalInSec&gt;
-  &lt;HTTPMonitor&gt; 
+  &lt;HTTPMonitor&gt;
     &lt;Request&gt;
       &lt;ConnectTimeoutInSec&gt;10&lt;/ConnectTimeoutInSec&gt;
       &lt;SocketReadTimeoutInSec&gt;30&lt;/SocketReadTimeoutInSec&gt;
@@ -663,11 +669,11 @@ $ curl -u email:password https://api.enterprise.apigee.com/v1/o/{org_name}/envir
       &lt;Path&gt;/healthcheck&lt;/Path&gt;
       &lt;Header name="Authorization"&gt;Basic 12e98yfw87etf&lt;/Header&gt;
     &lt;/Request&gt;
-    &lt;SuccessResponse&gt; 
+    &lt;SuccessResponse&gt;
       &lt;ResponseCode&gt;200&lt;/ResponseCode&gt;
       &lt;Header name=&#8221;ImOK&#8221;&gt;YourOK&lt;/Header&gt;
     &lt;/SuccessResponse&gt;
-  &lt;/HTTPMonitor&gt; 
+  &lt;/HTTPMonitor&gt;
 &lt;/HealthMonitor&gt;
 </pre>
 

@@ -1,0 +1,153 @@
+  {% extends "_base.html" %} {% block title %}Error Fetching Children for Path{% endblock %} {% block body %}
+
+<aside class="note">Was this troubleshooting playbook helpful? Please let us know
+  by clicking <a href="" class="google-feedback"
+   data-p="1636213" data-b="docsite" data-context="troubleshooting-feedback">
+  Send Feedback
+</a>.</aside>
+
+  <h2 id="symptom">Symptom</h2>
+
+  <p>Deployment of API proxy revisions through the Edge UI or Edge management API fails with the
+  ZooKeeper error "Error while fetching children for path".</p>
+
+  <h2 id="errormessages">Error Messages</h2>
+  <pre class="prettyprint">
+Error in deployment for environment prod. 
+The revision is deployed, but traffic cannot flow. com.apigee.repository.RepositoryException{ code = repository.zookeeper.UnExpectedError, message = Unexpected error Error while fetching children for path : /organizations/myorg/environments/prod/apiproxies/tinkerbell/revisions, associated contexts = []};
+</pre>
+
+  <h2 id="possiblecauses">Possible Causes</h2>
+
+  <p>The typical cause for this error is a network connectivity issue between the Message Processor
+  and ZooKeeper.</p>
+
+  <h3 id="possiblecauses-diagnosis">Diagnosis</h3>
+
+  <p><strong>Note:</strong> Only Edge Private Cloud users can perform the following steps. If you
+  are on Edge Public Cloud, contact <a href="https://support.apigee.com">Apigee Support</a>.</p>
+
+  <ol>
+    <li>Get the deployment status output for the specific API that shows the error using the
+    following management API call:
+      <pre class="prettyprint">
+curl -v http://&lt;management-server-IPaddress&gt;:&lt;port#&gt;/organizations/&lt;orgname&gt;/environments/&lt;envname&gt;/apis/&lt;apiname&gt;/deployments -u &lt;username&gt;
+</pre>
+
+      <p>Sample deployment status output showing the error:</p>
+      <pre class="prettyprint">
+{ 
+"environment" : [ { 
+"name" : "prod", 
+"revision" : [ { 
+"configuration" : { 
+"basePath" : "/", 
+"steps" : [ ] 
+}, 
+"name" : "1", 
+"server" : [ { 
+"error" : "com.apigee.repository.RepositoryException: com.apigee.zookeeper.ZooKeeperException{ code = zookeeper.ErrorFetchingChildren, message = Error while fetching children for path : /organizations/gsc/environments/prod/apiproxies/apigee_test/revisions, associated contexts = []}", 
+"status" : "error", 
+"type" : [ "message-processor" ], 
+"uUID" : "01fc5b23-8ad3-40bf-b059-2fc82cdac111" 
+},
+</pre>
+    </li>
+
+    <li>Check the Message Processor
+    (<code>/opt/apigee/var/log/edge-message-processor/system.log</code>).
+
+      <p><strong>Sample error from Message Processor log</strong></p>
+      <pre class="prettyprint">
+2017-05-29 01:25:40,592  main ERROR KERNEL - MicroKernel.deployAll() : MicroKernel.deployAll() : Error in deploying the deployment : WebService
+com.apigee.zookeeper.ZooKeeperException: Error while checking path existence for path : /regions/dc-2/pods/gateway/servers/099c2603-93a4-4b73-ae03-a55d130adb80/reachable
+        at com.apigee.zookeeper.impl.ZooKeeperServiceImpl.exists(ZooKeeperServiceImpl.java:410) ~[zookeeper-1.0.0.jar:na]
+        at com.apigee.zookeeper.impl.ZooKeeperServiceImpl.exists(ZooKeeperServiceImpl.java:394) ~[zookeeper-1.0.0.jar:na]
+        at com.apigee.services.repository.zookeeper.ZKRepository.exists(ZKRepository.java:280) ~[repository-impl-1.0.0.jar:na]
+        at com.apigee.services.repository.RepositoryServiceImpl.exists(RepositoryServiceImpl.java:234) ~[repository-impl-1.0.0.jar:na]
+        at com.apigee.registration.info.StatusBuilder.build(StatusBuilder.java:26) ~[registration-1.0.0.jar:na]
+        at com.apigee.registration.ServerRegistrationServiceImpl.buildServerInfo(ServerRegistrationServiceImpl.java:856) ~[registration-1.0.0.jar:na]
+        at com.apigee.registration.ServerRegistrationServiceImpl.start(ServerRegistrationServiceImpl.java:122) ~[registration-1.0.0.jar:na]
+        at com.apigee.kernel.service.deployment.ServiceDeployer.startService(ServiceDeployer.java:167) ~[microkernel-1.0.0.jar:na]
+        at com.apigee.kernel.service.deployment.ServiceDeployer.deploy(ServiceDeployer.java:70) ~[microkernel-1.0.0.jar:na]
+        at com.apigee.kernel.service.deployment.ServiceDeployer.deployDependantServices(ServiceDeployer.java:356) ~[microkernel-1.0.0.jar:na]
+        at com.apigee.kernel.service.deployment.ServiceDeployer.deploy(ServiceDeployer.java:76) ~[microkernel-1.0.0.jar:na]
+        at com.apigee.kernel.service.deployment.ServiceDeployer.deployDependantServices(ServiceDeployer.java:356) ~[microkernel-1.0.0.jar:na]
+        at com.apigee.kernel.service.deployment.ServiceDeployer.deploy(ServiceDeployer.java:76) ~[microkernel-1.0.0.jar:na]
+        at com.apigee.kernel.MicroKernel.deployAll(MicroKernel.java:178) [microkernel-1.0.0.jar:na]
+        at com.apigee.kernel.MicroKernel.start(MicroKernel.java:139) [microkernel-1.0.0.jar:na]
+        at com.apigee.kernel.MicroKernel.start(MicroKernel.java:135) [microkernel-1.0.0.jar:na]
+        at com.apigee.kernel.MicroKernel.main(MicroKernel.java:84) [microkernel-1.0.0.jar:na]
+Caused by: org.apache.zookeeper.KeeperException$ConnectionLossException: KeeperErrorCode = ConnectionLoss for /regions/dc-2/pods/gateway/servers/099c2603-93a4-4b73-ae03-a55d130adb80/reachable
+        at org.apache.zookeeper.KeeperException.create(KeeperException.java:99) ~[zookeeper-3.4.6.jar:3.4.6-1569965]
+        at org.apache.zookeeper.KeeperException.create(KeeperException.java:51) ~[zookeeper-3.4.6.jar:3.4.6-1569965]
+        at org.apache.zookeeper.ZooKeeper.exists(ZooKeeper.java:1045) ~[zookeeper-3.4.6.jar:3.4.6-1569965]
+        at org.apache.zookeeper.ZooKeeper.exists(ZooKeeper.java:1073) ~[zookeeper-3.4.6.jar:3.4.6-1569965]
+        at com.apigee.zookeeper.impl.ZooKeeperServiceImpl.exists(ZooKeeperServiceImpl.java:402) ~[zookeeper-1.0.0.jar:na]
+        ... 16 common frames omitted
+</pre>
+    </li>
+
+    <li>If you observe a similar error as shown in the above example, then perform the following
+    steps:
+
+      <ol>
+        <li>Test the connectivity from the Message Processor to ZooKeeper servers on port 2181
+        using the following steps:
+
+          <ol>
+            <li>If telnet is available, then use telnet:
+              <pre class="prettyprint">
+telnet &lt;ZooKeeper-IP&gt; 2181
+</pre>
+            </li>
+
+            <li>If telnet is not available, use netcat to check the connectivity as follows:
+              <pre class="prettyprint">
+nc -vz &lt;ZooKeeper-IP&gt; 2181
+</pre>
+            </li>
+
+            <li>If you get the response "Connection Refused" or "Connection timed out", engage your
+            network operations team. Go to <strong>Resolution</strong> section below.</li>
+          </ol>
+        </li>
+      </ol>
+    </li>
+
+    <li>If you observe any other, then contact <a href="https://support.apigee.com">Apigee
+    Support</a>.</li>
+  </ol>
+
+  <h3 id="possiblecauses-resolution">Resolution</h3>
+
+  <p><strong>Note:</strong> Only Edge Private Cloud users can perform the following steps. If you
+  are on Edge Public Cloud, contact <a href="https://support.apigee.com">Apigee Support</a>.</p>
+
+  <ol>
+    <li>Work with your network team to:
+
+      <ol>
+        <li>
+          <ol>
+            <li>Ensure connectivity is allowed between the Message Processor and all ZooKeeper
+            nodes on port 2181.</li>
+
+            <li>Remove any firewall restrictions or security rules setup from Message Processors to
+            allow connectivity to port 2181 on the ZooKeeper servers.</li>
+          </ol>
+        </li>
+
+        <li>If there is network issue on the Message Processor, then restarting the specific
+        Message Processor that shows the error (as per the deployment status output) might fix the
+        issue. Restart the specific Message Processor:
+          <pre class="prettyprint">
+/opt/apigee/apigee-service/bin/apigee-service edge-message-processor restart
+</pre>
+        </li>
+      </ol>
+
+      <p>If the problem persists, contact <a href="https://support.apigee.com">Apigee
+      Support</a>.</p>
+    </li>
+  </ol>{% endblock %}

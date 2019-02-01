@@ -1,12 +1,12 @@
-  {% extends "_base.html" %} {% block title %}Data masking and hiding{% endblock %} {% block body %}
-
-  <h2 id="overview">Overview</h2>
+{% extends "_base.html" %}
+{% block title %}Data masking and hiding{% endblock %}
+{% block body %}
 
   <p>When you debug APIs calls in Edge, the content can sometimes contain sensitive data, such
   credit cards or personally identifiable health information (PHI) that needs to be masked.</p>
 
-  <p>Edge provides different ways of hiding or masking sensitive data from Trace and debug
-  sessions.</p>
+  <p>Edge provides different ways of hiding or masking sensitive data from
+    <a href="/api-platform/debug/using-trace-tool-0">Trace</a> and debug sessions.</p>
 
   <h2 id="hidingsensitivedata">Hiding sensitive data</h2>
 
@@ -63,32 +63,34 @@
 
   <p>The basic structure of a mask configuration is shown by the following XML representation:</p>
 
-  <aside class="note"><b>Note:</b> The name of the mask must be <span style=
-  "font-family:courier new,courier,monospace;">default</span>.</aside>
+  <aside class="note"><b>Note:</b> The name of the mask must be code>default</code>.</aside>
   <pre class="prettyprint">
 &lt;MaskDataConfiguration name="default"&gt;
-  &lt;XPathsRequest&gt;
-        &lt;XPathRequest&gt;/apigee:Greeting/apigee:User&lt;/XPathRequest&gt;
-  &lt;/XPathsRequest&gt;
-  &lt;XPathsResponse&gt;
-    &lt;XPathResponse&gt;/apigee:Greeting/apigee:User&lt;/XPathResponse&gt;
-  &lt;/XPathsResponse&gt;
-  &lt;JSONPathsRequest&gt;
-    &lt;JSONPathRequest&gt;$.store.book[*].author&lt;/JSONPathRequest&gt;
-  &lt;/JSONPathsRequest&gt;
-  &lt;JSONPathsResponse&gt;
+    &lt;Namespaces&gt;
+        &lt;Namespace prefix="myco"&gt;http://example.com&lt;/Namespace&gt;
+    &lt;/Namespaces&gt;
+    &lt;XPathsRequest&gt;
+        &lt;XPathRequest&gt;/myco:Greeting/myco:User&lt;/XPathRequest&gt;
+    &lt;/XPathsRequest&gt;
+    &lt;XPathsResponse&gt;
+        &lt;XPathResponse&gt;/myco:Greeting/myco:User&lt;/XPathResponse&gt;
+    &lt;/XPathsResponse&gt;
+    &lt;JSONPathsRequest&gt;
+        &lt;JSONPathRequest&gt;$.store.book[*].author&lt;/JSONPathRequest&gt;
+    &lt;/JSONPathsRequest&gt;
+    &lt;JSONPathsResponse&gt;
         &lt;JSONPathResponse&gt;$.store.book[*].author&lt;/JSONPathResponse&gt;
-  &lt;/JSONPathsResponse&gt;
-  &lt;XPathsFault&gt;
-        &lt;XPathFault&gt;/apigee:Greeting/apigee:User&lt;/XPathFault&gt;
-  &lt;/XPathsFault&gt;
-  &lt;JSONPathsFault&gt;
+    &lt;/JSONPathsResponse&gt;
+    &lt;XPathsFault&gt;
+        &lt;XPathFault&gt;/myco:Greeting/myco:User&lt;/XPathFault&gt;
+    &lt;/XPathsFault&gt;
+    &lt;JSONPathsFault&gt;
         &lt;JSONPathFault&gt;$.store.book[*].author&lt;/JSONPathFault&gt;
-  &lt;/JSONPathsFault&gt;
-  &lt;Variables&gt;
+    &lt;/JSONPathsFault&gt;
+    &lt;Variables&gt;
         &lt;Variable&gt;request.header.user-agent&lt;/Variable&gt;
-    &lt;Variable&gt;request.formparam.password&lt;/Variable&gt;
-  &lt;/Variables&gt;
+        &lt;Variable&gt;request.formparam.password&lt;/Variable&gt;
+    &lt;/Variables&gt;
 &lt;/MaskDataConfiguration&gt;
 </pre>
 
@@ -100,8 +102,7 @@
   <aside class="key-point"><b>Tip:</b> If you use ServiceCallout to make a request, the information
   in that request is not masked with the normal mask configuration. If you wish to mask
   ServiceCallout request information, add the flow variable <code>ServiceCallout.request</code> to
-  the <code>&lt;Variables&gt;</code> element of the <span style=
-  "font-family:courier new,courier,monospace;">&lt;MaskDataConfiguration&gt;</span>
+  the <code>&lt;Variables&gt;</code> element of the <code>&lt;MaskDataConfiguration&gt;</code>
   configuration. </aside>
 
   <table>
@@ -194,7 +195,7 @@
         <td>Variables</td>
 
         <td>
-          <p>A list of variables (either pre-defined or custom) who values will be masked. For a
+          <p>A list of variables (either pre-defined or custom) whose values will be masked. For a
           list of default variables, see <a href=
           "/api-platform/reference/variables-reference.html">Variables reference</a>.</p>
 
@@ -221,24 +222,25 @@
   <code>/maskconfigs</code> in your organization:</p>
   <pre class="terminal">
 $ curl https://api.enterprise.apigee.com/v1/o/{org_name}/maskconfigs \
--u email:password
-</pre>
+-u email</pre>
+
+  {{b_auth_blurb}}
 
   <p>To see mask configurations defined for specific API proxies, you can call the
   <code>/maskconfigs</code> API:</p>
   <pre class="terminal">
 $ curl https://api.enterprise.apigee.com/v1/o/{org_name}/apis/{api_name}/maskconfigs \
--u email:password
+-u email
 </pre>
 
   <p>To see a specific mask configuration, specify the name of the mask:</p>
   <pre class="terminal">
 $ curl https://api.enterprise.apigee.com/v1/o/{org_name}/maskconfigs/default \
--u email:password
+-u email
 </pre>
   <pre class="terminal">
 $ curl https://api.enterprise.apigee.com/v1/o/{org_name}/apis/{api_name}/maskconfigs/default \
--u email:password
+-u email
 </pre>
 
   <p>To create a mask configuration, use the POST verb to submit a payload that defines the mask
@@ -246,89 +248,95 @@ $ curl https://api.enterprise.apigee.com/v1/o/{org_name}/apis/{api_name}/maskcon
   <pre class="terminal">
 $ curl -H "Content-type:text/xml" -X POST -d \
 '&lt;MaskDataConfiguration name="default"&gt;
-  &lt;XPathsRequest&gt;
-        &lt;XPathRequest&gt;/apigee:Greeting/apigee:User&lt;/XPathRequest&gt;
-  &lt;/XPathsRequest&gt;
-  &lt;XPathsResponse&gt;
-    &lt;XPathResponse&gt;/apigee:Greeting/apigee:User&lt;/XPathResponse&gt;
-  &lt;/XPathsResponse&gt;
-  &lt;JSONPathsRequest&gt;
-    &lt;JSONPathRequest&gt;$.store.book[*].author&lt;/JSONPathRequest&gt;
-  &lt;/JSONPathsRequest&gt;
-  &lt;JSONPathsResponse&gt;
+    &lt;Namespaces&gt;
+        &lt;Namespace prefix="myco"&gt;http://example.com&lt;/Namespace&gt;
+    &lt;/Namespaces&gt;
+    &lt;XPathsRequest&gt;
+        &lt;XPathRequest&gt;/myco:Greeting/myco:User&lt;/XPathRequest&gt;
+    &lt;/XPathsRequest&gt;
+    &lt;XPathsResponse&gt;
+        &lt;XPathResponse&gt;/myco:Greeting/myco:User&lt;/XPathResponse&gt;
+    &lt;/XPathsResponse&gt;
+    &lt;JSONPathsRequest&gt;
+        &lt;JSONPathRequest&gt;$.store.book[*].author&lt;/JSONPathRequest&gt;
+    &lt;/JSONPathsRequest&gt;
+    &lt;JSONPathsResponse&gt;
         &lt;JSONPathResponse&gt;$.store.book[*].author&lt;/JSONPathResponse&gt;
-  &lt;/JSONPathsResponse&gt;
-  &lt;XPathsFault&gt;
-        &lt;XPathFault&gt;/apigee:Greeting/apigee:User&lt;/XPathFault&gt;
-  &lt;/XPathsFault&gt;
-  &lt;JSONPathsFault&gt;
+    &lt;/JSONPathsResponse&gt;
+    &lt;XPathsFault&gt;
+        &lt;XPathFault&gt;/myco:Greeting/myco:User&lt;/XPathFault&gt;
+    &lt;/XPathsFault&gt;
+    &lt;JSONPathsFault&gt;
         &lt;JSONPathFault&gt;$.store.book[*].author&lt;/JSONPathFault&gt;
-  &lt;/JSONPathsFault&gt;
-  &lt;Variables&gt;
+    &lt;/JSONPathsFault&gt;
+    &lt;Variables&gt;
         &lt;Variable&gt;request.header.user-agent&lt;/Variable&gt;
-    &lt;Variable&gt;request.formparam.password&lt;/Variable&gt;
-  &lt;/Variables&gt;
+        &lt;Variable&gt;request.formparam.password&lt;/Variable&gt;
+    &lt;/Variables&gt;
 &lt;/MaskDataConfiguration&gt;' \
 https://api.enterprise.apigee.com/v1/o/{org_name}/maskconfigs \
--u email:password
+-u email
 </pre>To create a mask configuration that is scoped to a specific API proxy:
   <pre class="terminal">
 $ curl -H "Content-type:text/xml" -X POST -d \
 '&lt;MaskDataConfiguration name="default"&gt;
-  &lt;XPathsRequest&gt;
-        &lt;XPathRequest&gt;/apigee:Greeting/apigee:User&lt;/XPathRequest&gt;
-  &lt;/XPathsRequest&gt;
-  &lt;XPathsResponse&gt;
-    &lt;XPathResponse&gt;/apigee:Greeting/apigee:User&lt;/XPathResponse&gt;
-  &lt;/XPathsResponse&gt;
-  &lt;JSONPathsRequest&gt;
-    &lt;JSONPathRequest&gt;$.store.book[*].author&lt;/JSONPathRequest&gt;
-  &lt;/JSONPathsRequest&gt;
-  &lt;JSONPathsResponse&gt;
+    &lt;Namespaces&gt;
+        &lt;Namespace prefix="myco"&gt;http://example.com&lt;/Namespace&gt;
+    &lt;/Namespaces&gt;
+    &lt;XPathsRequest&gt;
+        &lt;XPathRequest&gt;/myco:Greeting/myco:User&lt;/XPathRequest&gt;
+    &lt;/XPathsRequest&gt;
+    &lt;XPathsResponse&gt;
+        &lt;XPathResponse&gt;/myco:Greeting/myco:User&lt;/XPathResponse&gt;
+    &lt;/XPathsResponse&gt;
+    &lt;JSONPathsRequest&gt;
+        &lt;JSONPathRequest&gt;$.store.book[*].author&lt;/JSONPathRequest&gt;
+    &lt;/JSONPathsRequest&gt;
+    &lt;JSONPathsResponse&gt;
         &lt;JSONPathResponse&gt;$.store.book[*].author&lt;/JSONPathResponse&gt;
-  &lt;/JSONPathsResponse&gt;
-  &lt;XPathsFault&gt;
-        &lt;XPathFault&gt;/apigee:Greeting/apigee:User&lt;/XPathFault&gt;
-  &lt;/XPathsFault&gt;
-  &lt;JSONPathsFault&gt;
+    &lt;/JSONPathsResponse&gt;
+    &lt;XPathsFault&gt;
+        &lt;XPathFault&gt;/myco:Greeting/myco:User&lt;/XPathFault&gt;
+    &lt;/XPathsFault&gt;
+    &lt;JSONPathsFault&gt;
         &lt;JSONPathFault&gt;$.store.book[*].author&lt;/JSONPathFault&gt;
-  &lt;/JSONPathsFault&gt;
-  &lt;Variables&gt;
+    &lt;/JSONPathsFault&gt;
+    &lt;Variables&gt;
         &lt;Variable&gt;request.header.user-agent&lt;/Variable&gt;
-    &lt;Variable&gt;request.formparam.password&lt;/Variable&gt;
-  &lt;/Variables&gt;
+        &lt;Variable&gt;request.formparam.password&lt;/Variable&gt;
+    &lt;/Variables&gt;
 &lt;/MaskDataConfiguration&gt;' \
 https://api.enterprise.apigee.com/v1/o/{org_name}/apis/{api_name}/maskconfigs \
--u email:password
+-u email
 </pre>
 
   <p>You can delete a mask configuration using the DELETE verb:</p>
   <pre class="terminal">
 $ curl -X DELETE \
 https://api.enterprise.apigee.com/v1/o/{org_name}/apis/{api_name}/maskconfigs/{maskconfig_name} \
--u email:password
+-u email
 </pre>
+
+  {{b_auth_blurb}}
 
   <p>The response to a DELETE operation is an HTTP code <code>204</code> with no message
   content.</p>
 
   <h3 id="maskingsensitivedata-maskingforxmlnamespaces">Masking for XML namespaces</h3>
 
-  <p>A mask configuration doesn't require the <span style=
-  "font-family:courier new,courier,monospace;">&lt;Namespace&gt;</span> element in an XPATH
+  <p>A mask configuration doesn't require the <code>&lt;Namespace&gt;</code> element in an XPATH
   definition unless a namespace is defined in the XML payload. This is also true if the XML payload
   uses a default namespace.</p>
 
   <p>For example, the XML payload does not define a namespace:</p>
   <pre class="prettyprint">
 &lt;employee&gt;
-   &lt;name&gt;abc&lt;/name&gt;
-   &lt;age&gt;50&lt;/age&gt;
- &lt;/employee&gt;
+    &lt;name&gt;abc&lt;/name&gt;
+    &lt;age&gt;50&lt;/age&gt;
+&lt;/employee&gt;
 </pre>
 
-  <p>Therefore, the mask configuration doesn't require the <span style=
-  "font-family:courier new,courier,monospace;">&lt;Namespace&gt;</span> element:</p>
+  <p>Therefore, the mask configuration doesn't require the <code>&lt;Namespace&gt;</code> element:</p>
   <pre class="prettyprint">
 &lt;MaskDataConfiguration&gt;
     &lt;XPathsRequest&gt;
@@ -339,44 +347,43 @@ https://api.enterprise.apigee.com/v1/o/{org_name}/apis/{api_name}/maskconfigs/{m
 
   <p>If the XML payload contains a namespace and prefix:</p>
   <pre class="prettyprint">
-&lt;employee xmlns:emp="http://emp.com"&gt;
-    &lt;emp:name&gt;xyz&lt;/emp:name&gt;
-    &lt;emp:age&gt;50&lt;/emp:age&gt;
-&lt;/emp:employee&gt;
+&lt;employee xmlns:myco="http://example.com"&gt;
+    &lt;myco:name&gt;xyz&lt;/myco:name&gt;
+    &lt;myco:age&gt;50&lt;/myco:age&gt;
+&lt;/myco:employee&gt;
 </pre>
 
-  <p>Then the mask configuration definition should contain the <span style=
-  "font-family: 'courier new', courier, monospace;">&lt;</span><span style=
-  "font-family: 'courier new', courier, monospace;">Namespace&gt;</span> element:</p>
+  <p>Then the mask configuration definition should contain the <code>&lt;Namespace&gt;</code>
+  element:</p>
   <pre class="prettyprint">
 &lt;MaskDataConfiguration&gt;
     &lt;Namespaces&gt;
-        &lt;Namespace prefix="emp"&gt;http://emp.com&lt;/Namespace&gt;
+        &lt;Namespace prefix="myco"&gt;http://example.com&lt;/Namespace&gt;
     &lt;/Namespaces&gt;
     &lt;XPathsRequest&gt;
-        &lt;XPathRequest&gt;/emp:employee/emp:name&lt;/XPathRequest&gt;
+        &lt;XPathRequest&gt;/myco:employee/myco:name&lt;/XPathRequest&gt;
     &lt;XPathsRequest&gt;
-&lt;/MaskDataConfiguration&gt;    
+&lt;/MaskDataConfiguration&gt;
 </pre>
 
   <p>If the XML Payload has a namespace but no prefix, meaning the default namespace:</p>
   <pre class="prettyprint">
-&lt;employee xmlns="http://emp.com"&gt;
+&lt;employee xmlns="http://example.com"&gt;
     &lt;name&gt;xyz&lt;/name&gt;
     &lt;age&gt;50&lt;/age&gt;
 &lt;/employee&gt;
 </pre>
 
-  <p>Then the mask configuration should contain the <span style=
-  "font-family: 'courier new', courier, monospace;">&lt;</span><span style=
-  "font-family: 'courier new', courier, monospace;">Namespace&gt;</span> element:</p>
+  <p>Then the mask configuration should still contain the <code>&lt;Namespace&gt;</code> element:</p>
   <pre class="prettyprint">
 &lt;MaskDataConfiguration&gt;
     &lt;Namespaces&gt;
-        &lt;Namespace prefix="emp"&gt;http://emp.com&lt;/Namespace&gt;
+        &lt;Namespace prefix="myco"&gt;http://example.com&lt;/Namespace&gt;
     &lt;/Namespaces&gt;
     &lt;XPathsRequest&gt;
-        &lt;XPathRequest&gt;/emp:employee/emp:name&lt;/XPathRequest&gt;
+        &lt;XPathRequest&gt;/myco:employee/myco:name&lt;/XPathRequest&gt;
     &lt;XPathsRequest&gt;
 &lt;/MaskDataConfiguration&gt;
-</pre>{% endblock %}
+</pre>
+
+{% endblock %}

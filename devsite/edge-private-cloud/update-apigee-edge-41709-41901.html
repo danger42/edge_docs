@@ -1,0 +1,1092 @@
+{% extends "private-cloud/v4.19.01/_base.html" %}
+{% block title %}Update Apigee Edge 4.17.09 to 4.19.01{% endblock %}
+{% block body %}
+
+  <p>This section describes how to perform the following upgrades:</p>
+  <ul>
+    <li>From 4.17.09 to 4.19.01</li>
+  </ul>
+
+  <section class="expandable">
+    <h4 class="showalways">All Upgrade Paths</h4>
+    <p>The following table shows you the upgrade paths for version 4.19.01:</p>
+    {% setvar version_41709_alt %}class="alt"{% endsetvar %}
+    {% include "includes/___opdk-41901-upgrade-paths.html" %}
+  </section>
+
+  <h2 id="whocanperformtheupdate">Who can perform the update</h2>
+
+  <p>The user running the update should be the same as the user who originally installed Edge, or a
+  user running as root.</p>
+
+  <p>After you install the Edge RPMs, any user can configure them.</p>
+
+  <h2 id="whichcomponentsmustyouupdate">Which components must you update</h2>
+
+  <p>You must update all Edge components. Edge does not support a setup that contains components
+  from multiple versions.</p>
+
+
+  <h2 id="remove-retry">Maintain compatibility</h2>
+
+  <p>When upgrading Apigee Edge for Private Cloud to {{cur_version}}, you must ensure that the
+  resulting implementation only references supported properties in its configuration files.</p>
+
+  <aside class="warning">
+    <b>Warning:</b> <strong>Check your implementation for backwards compatibility</strong>
+    <p>You must change or remove the following properties in your configuration files during the
+    upgrade process. Failure to do so could affect your implementation's compatibility with the
+    new version.</p>
+  </aside>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Property</th>
+        <th>Location</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>conf_load_balancing_load.balancing.<br/>&nbsp;&nbsp;driver.nginx.server.retry</code></td>
+        <td><code>router.properties</code></td>
+        <td>Remove this property from your <code>router.properties</code> file. To set retry options in
+          {{cur_version}}, use the <a href="/api-platform/fundamentals/virtual-host-property-reference#virtualhostconfigurationproperties">virtual
+          host configuration properties</a>.</td>
+      </tr>
+    </tbody>
+  </table>
+
+
+  <h2 id="automaticpropagationofpropertysettings">Automatic propagation of property
+  settings</h2>
+
+  <p>If you have set any properties by editing <code>.properties</code> files in
+  <code>/opt/apigee/customer/application</code> then these values are retained by the update.</p>
+
+  <h2 id="requiredupgradetopostgres96">Required upgrade to Postgres 9.6</h2>
+
+  <p>This release of Edge includes an upgrade to Postgres 9.6. As part of that upgrade, all
+  Postgres data is migrated to the Postgres 9.6.</p>
+
+  <p>Most Edge production systems use two Postgres nodes configured for master-standby replication.
+  During the update process, while the Postgres nodes are down for update, analytics data is still
+  written to the Qpid nodes. After the Postgres nodes are updated and back online, analytics data
+  is then pushed to the Postgres nodes.</p>
+
+  <p>The way you perform the Postgres update depends on how you configured data storage for your
+  Postgres nodes:</p>
+
+  <ul>
+    <li><strong>If you use local data storage for your Postgres nodes</strong>, you must
+      install a new Postgres standby node for the duration of the upgrade. After the
+      upgrade completes, you can decommission the new Postgres standby node.
+      <p>The additional Postgres standby node is required if you have to roll back the update
+      for any reason. If you have to roll back the update, the new Postgres standby node
+      becomes the master Postgres node after the rollback. Therefore, when you install the
+      new Postgres standby node, it should be on a node that meets all the hardware
+      requirements of a Postgres server, as defined in the Edge
+      <a href="installation-requirements">Installation requirements</a>.</p>
+      <p>In a 1-node and 2-node configuration of Edge, topologies used for prototyping and testing, you
+      only have a single Postgres node. You can update these Postgres nodes directly without having
+      to create a new Postgres node.</p>
+    </li>
+    <li><strong>If you use network storage for your Postgres nodes</strong>, as
+      recommended by Apigee, you do not have to install a new Postgres node. In the
+      procedures below, you can skip the steps that specify to install and later decommission a new
+      Postgres standby node.
+      <p>Before you begin the update process, take a network snapshot of the data store used by
+      Postgres. Then, if any errors occur during update and you are forced to perform a roll back,
+      you can restore the Postgres node from that snapshot.</p>
+    </li>
+  </ul>
+
+  <h3 id="requiredupgradetopostgres96-installinganewpostgresstandbynode">Installing a new Postgres
+  standby node</h3>
+
+  <p>This procedure creates a Postgres standby server on a new node. Ensure that you install a new
+  Postgres standby server for your <strong>existing</strong> version of Edge (4.17.09),
+  not for version {{cur_version}}.</p>
+
+  <p>To perform the install, use the same config file that you used to install your current version
+  of Edge.</p>
+
+  <p>To create a new Postgres standby node:</p>
+
+  <ol>
+    <li>On the current Postgres master, edit the <code>/opt/apigee/customer/application/postgresql.properties</code>
+      file to set the following token. If that file does not exist, create it:
+      <pre>conf_pg_hba_replication.connection=host replication apigee <var>existing_standby_ip</var>/32 trust\ \nhost replication apigee <var>new_standby_ip</var>/32 trust</pre>
+      <p>Where <var>existing_standby_ip</var> is the IP address of the current Postgres
+      standby server and <var>new_standby_ip</var> is the IP address of the new standby node.</p>
+    </li>
+    <li>Restart <code>apigee-postgresql</code> on the Postgres master:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-postgresql restart</pre>
+    </li>
+    <li>Verify that the new standby node was added by viewing the
+      <code>/opt/apigee/apigee-postgresql/conf/pg_hba.conf</code> file on the master. You should see
+      the following lines in that file:
+      <pre>host replication apigee <var>existing_standby_ip</var>/32 trust
+host replication apigee <var>new_standby_ip</var>/32 trust</pre>
+    </li>
+    <li>Install the new Postgres standby server:
+      <ol>
+        <li>Edit the config file that you used to install your current version of Edge to specify
+          the following:
+          <pre># IP address of the current master:
+PG_MASTER=192.168.56.103
+# IP address of the new standby node
+PG_STANDBY=192.168.56.102</pre>
+        </li>
+        <li>Disable SELinux as described in
+          <a href="install-edge-apigee-setup-utility">Install the Edge apigee-setup utility</a>.</li>
+        <li>Download the Edge bootstrap_4.17.09.sh file to
+          <code>/tmp/bootstrap_4.17.09.sh </code>:
+          <pre class="devsite-terminal">curl https://software.apigee.com/bootstrap_4.17.09.sh -o /tmp/bootstrap_4.17.09.sh</pre>
+        </li>
+        <li>Install the Edge <code>apigee-service</code> utility and dependencies:
+          <pre class="devsite-terminal">sudo bash /tmp/bootstrap_4.17.09.sh apigeeuser=<var>uName</var> apigeepassword=<var>pWord</var></pre>
+        </li>
+        <li>Use <code>apigee-service</code> to install the <code>apigee-setup</code> utility:
+          <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-setup install</pre>
+        </li>
+        <li>Install Postgres:
+          <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/setup.sh -p ps -f <var>configFile</var></pre>
+        </li>
+        <li>On the new standby node, run the following command:
+          <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-postgresql postgres-check-standby</pre>
+          <p>Validate that it says it is the standby.</p>
+        </li>
+      </ol>
+    </li>
+  </ol>
+
+  <h3 id="decom">Decommissioning a Postgres node</h3>
+
+  <p>After the update completes, decommission the new standby node:</p>
+
+  <ol>
+    <li>Make sure Postgres is running:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-all status</pre>
+      <p>If Postgres is not running, start it:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-all start</pre>
+    </li>
+    <li>Get the UUID of the new standby node by running the following <code>curl</code> command on the new
+      standby node:
+      <pre class="devsite-terminal">curl -u <var>sysAdminEmail:password</var> http://<var>node_IP</var>:8084/v1/servers/self</pre>
+      <p>You should see the UUID of the node at the end of the output, in the form:
+      <pre class="prettyprint">"type" : [ "postgres-server" ],
+"uUID" : "599e8ebf-5d69-4ae4-aa71-154970a8ec75"</pre>
+    </li>
+    <li>Stop the new standby node by running the following command on the new standby node:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-all stop</pre>
+    </li>
+    <li>On the Postgres master node, edit <code>/opt/apigee/customer/application/postgresql.properties</code>
+      to remove the new standby node from <code>conf_pg_hba_replication.connection</code>:
+      <pre class="prettyprint">conf_pg_hba_replication.connection=host replication apigee <var>existing_standby_ip</var>/32 trust</pre>
+    </li>
+    <li>Restart apigee-postgresql on the Postgres master:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-postgresql restart</pre>
+    </li>
+    <li>Verify that the new standby node was removed by viewing the
+      <code>/opt/apigee/apigee-postgresql/conf/pg_hba.conf</code> file on the master. You should see
+      only the following line in that file:
+      <pre class="prettyprint">host replication apigee <var>existing_standby_ip</var>/32 trust</pre>
+    </li>
+    <li>Delete the UUID of the standby node from ZooKeeper by making the following Edge management
+      API call on the Management Server node:
+      <pre class="devsite-terminal">curl -u <var>sysAdminEmail:password</var> -X DELETE http://<var>ms_IP</var>:8080/v1/servers/<var>new_standby_uuid</var></pre>
+    </li>
+  </ol>
+
+  <h2 id="updateprerequisites">Update prerequisites</h2>
+
+  <p>Take care of following prerequisites before upgrading Apigee Edge:</p>
+
+  <ul>
+    <li><strong>Backup all nodes</strong><br/>
+      Before you update, it is recommended to perform a complete backup of all nodes for safety
+      reasons. Use the procedure for your current version of Edge to perform the backup.
+      <p>This allows you to have a backup plan, in case the update to a new version doesn't
+      function properly. For more information on backup, see <a href="backup-and-restore">Backup
+      and Restore</a>.</p>
+    </li>
+    <li><strong>Ensure Edge is running</strong><br/>
+      Ensure that Edge is up and running during update process by using the command:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-all status</pre>
+    </li>
+  </ul>
+
+  <h2 id="handlingafailedupdate">Handling a failed update</h2>
+
+  <p>In the case of an update failure, you can try to correct the issue, and then run update.sh
+  again. You can run the update multiple times and it continues the update from where it last left
+  off.</p>
+
+  <p>If the failure requires that you roll back the update to your previous version, see
+  <a href="rollback-41901">Roll back 4.19.01</a> for more.</p>
+
+  <aside class="note"><strong>Note:</strong> The Edge all-in-one and 2-node topologies are designed for a
+  getting started and prototyping environments, not for production. Therefore, there is no rollback
+  procedure for the all-in-one and 2-node topologies. In the situation where the update of these
+  topologies fails, and retrying the update does not resolve the issue, the easiest option is to do
+  a fresh install of {{cur_version}}.</aside>
+
+  <h2 id="loggingupdateinformation">Logging update information</h2>
+
+  <p>By default, the <code>update.sh</code> utility writes log information to:</p>
+  <pre class="prettyprint">/opt/apigee/var/log/apigee-setup/update.log</pre>
+
+  <p>If the user running the <code>update.sh</code> utility does not have access to
+  that directory, it writes the log to the <code>/tmp</code> directory as a file named
+  <code>update_username.log</code>.</p>
+
+  <p>If the user does not have access to <code>/tmp</code>, the <code>update.sh</code> utility
+  fails.</p>
+
+  <h2 id="zerodowntimeupdate">Zero-downtime update</h2>
+
+  <p>A zero-downtime update, or rolling update, lets you update your Edge configuration without
+  bringing down Edge. </p>
+
+  <p>Zero-downtime update is only possible with a 5-node configuration and larger. </p>
+
+  <p>The key to zero-downtime upgrading is to remove each Router, one at a time, from the load
+  balancer. You then update the Router and any other components on the same machine as the Router,
+  and then add the Router back to the load balancer.</p>
+
+  <ol>
+    <li>Update the machines in the correct order for your configuration as described in
+      <a href="#orderofmachineupdate">Order of machine update</a>.</li>
+    <li>When it is time to update the Routers, select any one Router and make it unreachable, as
+      described in <a href="enablingdisabling-server-message-processorrouter-reachability">Enabling/Disabling Server
+      (Message Processor/Router) Reachability</a>.</li>
+    <li>Update the selected Router and all other Edge components on the same machine as the Router.
+      All Edge configurations show a Router and Message Processor on the same node. </li>
+    <li>Make the Router reachable again.</li>
+    <li>Repeat steps 2 through 4 for the remaining Routers.</li>
+    <li>Continue the update for any remaining machines in your configuration.</li>
+  </ol>
+
+  <p>Take care of the following before/after update:</p>
+
+  <ul>
+    <li>On combined Router and Message Processor node:
+      <ul>
+        <li>Before update &#8211; perform the following:
+          <ol>
+            <li>Make the Router unreachable.</li>
+            <li>Make the Message Processor unreachable.</li>
+          </ol>
+        </li>
+        <li>After update - perform the following:
+          <ol>
+            <li>Make the Message Processor reachable.</li>
+            <li>Make the Router reachable.</li>
+          </ol>
+        </li>
+      </ul>
+    </li>
+    <li>On single Router node:
+      <ul>
+        <li>Before update, make the Router unreachable.</li>
+        <li>After update, make the Router reachable.</li>
+      </ul>
+    </li>
+    <li>On single Message Processor node:
+      <ul>
+        <li>Before update, make the Message Processor unreachable.</li>
+        <li>After update, make the Message Processor reachable.</li>
+      </ul>
+    </li>
+  </ul>
+
+
+
+  <h2 id="usingasilentconfigurationfile">Using a silent configuration file</h2>
+
+  <p>You must pass a silent configuration file to the update command. The silent configuration file
+  should be the same one you used to install Edge 4.17.09.</p>
+
+  <h2 id="procedureforupdatingto41805onanodewithanexternalinternetconnection">Update to
+  {{cur_version}} on a node with an external internet connection</h2>
+
+  <p>Use the following procedure to update the Edge components on a node:</p>
+
+  <ol>
+    <li>If you are currently using Postgres master-standby replication with local storage,
+      install a new Postgres standby node as described in <a href=
+      "#requiredupgradetopostgres96-installinganewpostgresstandbynode">Installing a new Postgres
+      standby node</a>.
+      <p>If you are using network storage, you do not have to install the new node. Instead, take a
+      network snapshot of the data store used by Postgres. See <a href=
+      "#requiredupgradetopostgres96">Required upgrade to Postgres 9.6</a> for more.</p>
+    </li>
+    <li>If present, disable any CRON jobs configured to perform a repair operation on Cassandra
+    until after the update completes. </li>
+    <li>Log in to your node as root to install the Edge RPMs.
+      <aside class="note"><strong>Note</strong>: While RPM installation requires root access, you can
+      perform Edge configuration without root access.</aside>
+    </li>
+    <li>Install <code>yum-utils</code> and <code>yum-plugin-priorities</code>:
+      <pre class="devsite-terminal">sudo yum install yum-utils
+<code class="devsite-terminal">sudo yum install yum-plugin-priorities</code></pre>
+    </li>
+    <li>Disable SELinux as described in <a href="install-edge-apigee-setup-utility">Install
+      the Edge apigee-setup utility</a>.</li>
+    <li><strong>If you are installing on Oracle 7.x</strong>, run the following command:
+      <pre class="devsite-terminal">sudo yum-config-manager --enable ol7_optional_latest</pre>
+    </li>
+    <li><strong>If you are installing on AWS</strong>, run the following
+      <code>yum-configure-manager</code> commands:
+      <pre class="devsite-terminal">yum update rh-amazon-rhui-client.noarch
+<code class="devsite-terminal">sudo yum-config-manager --enable rhui-REGION-rhel-server-extras rhui-REGION-rhel-server-optional</code></pre>
+    </li>
+    <li>Download the Edge {{cur_version}} <code>bootstrap_{{cur_version}}.sh</code> file to
+      <code>/tmp/bootstrap_{{cur_version}}.sh</code>:
+      <pre class="devsite-terminal">curl https://software.apigee.com/bootstrap_{{cur_version}}.sh -o /tmp/bootstrap_{{cur_version}}.sh</pre>
+    </li>
+    <li>Install the Edge {{cur_version}} <code>apigee-service</code> utility and dependencies:
+      <pre class="devsite-terminal">sudo bash /tmp/bootstrap_{{cur_version}}.sh apigeeuser=<var>uName</var> apigeepassword=<var>pWord</var></pre>
+      <p>Where <var>uName:pWord</var> are the username and password you received from Apigee. If you
+      omit <var>pWord</var>, you will be prompted to enter it.</p>
+      <p>By default, the installer checks to see that you have Java 1.8 installed. If you do not, it
+      installs it for you. Use the <code>JAVA_FIX</code> option to specify how to handle Java
+      installation. <code>JAVA_FIX</code> takes the following values:
+      <ul>
+        <li>I = Install OpenJDK 1.8 (default)</li>
+        <li>C = Continue without installing Java</li>
+        <li>Q = Quit. For this option, you have to install Java yourself.</li>
+      </ul>
+    </li>
+    <li>Use <code>apigee-service</code> to update the <code>apigee-setup</code> utility:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-setup update</pre>
+    </li>
+    <li>Update the <code>apigee-validate</code> utility on the Management Server:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-validate update</pre>
+    </li>
+    <li>Update the <code>apigee-provision</code> utility:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-provision update</pre>
+    </li>
+    <li>Run the update utility on your nodes in the order described in
+      <a href="#orderofmachineupdate">Order of machine update</a>:
+      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/update.sh -c <var>component</var> -f <var>configFile</var></pre>
+      <p>The only requirement on the config file is that the configuration file must be accessible
+      or readable by the "apigee" user.</p>
+      <p>Use the <code>-c</code> option to specify the component to update. The list of possible
+      components includes:
+      <ul>
+        <li>"cs" = Cassandra</li>
+        <li>"edge" =All Edge components except Edge UI. The "edge" component includes
+          Management Server, Message Processor, Router, QPID Server, Edge Postgres Server.</li>
+        <li>"ldap" = OpenLDAP</li>
+        <li>"ps" = postgresql</li>
+        <li>"qpid" = qpidd</li>
+        <li>"sso" = Edge SSO</li>
+        <li>"ui" = Edge UI</li>
+        <li>"zk" = Zookeeper</li>
+      </ul>
+      <p>You can run <code>update.sh</code> against all components by setting <var>component</var>
+      to "all", but only if you have an Edge all-in-one (AIO) configuration profile. For example:</p>
+      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/update.sh <strong>-c all</strong> -f ./sa_silent_config</pre>
+    </li>
+    <li>Restart the Edge UI component on all machines running it, if you haven't done so already:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-ui restart</pre>
+    </li>
+    <li>Test the update by running the <code>apigee-validate</code> utility on the Management
+      Server, as described in <a href="test-install">Test the install</a>.</li>
+    <li>If you installed a new Postgres standby node, decommission the node as described
+      in <a href="#requiredupgradetopostgres96-decommissioningapostgresnode">Decommissioning a
+      Postgres node</a>.
+      <p>If you are using network storage, you do not have to install the new node. See
+      <a href="#requiredupgradetopostgres96">Required upgrade to Postgres 9.6</a> for more.</p>
+    </li>
+  </ol>
+
+  <p>To later roll back the update, use the procedure described in
+  <a href="rollback-41901">Roll back 4.19.01</a>.</p>
+
+  <h2 id="localrepo">Update to {{cur_version}} from a local repo</h2>
+
+  <p>If your Edge nodes are behind a firewall, or in some other way are prohibited from accessing
+  the Apigee repository over the Internet, then you can perform the update from a local repository,
+  or mirror, of the Apigee repo. </p>
+
+  <p>After you create a local Edge repository, you have two options for updating Edge from the
+  local repo:</p>
+
+  <ul>
+    <li>Create a .tar file of the repo, copy the .tar file to a node, and then update Edge from the
+      .tar file.</li>
+    <li>Install a webserver on the node with the local repo so that other nodes can access it.
+      Apigee provides the Nginx webserver for you to use, or you can use your own
+      webserver.</li>
+  </ul>
+
+  <p>To update from a local {{cur_version}} repo:</p>
+
+  <ol>
+    <li>If you are currently using Postgres master-standby replication, install a new Postgres
+      standby node as described in <a href="#requiredupgradetopostgres96-installinganewpostgresstandbynode">Installing a new Postgres
+      standby node</a>.
+      <p>If you are using network storage, you do not have to install the new node. Instead, take a
+      network snapshot of the data store used by Postgres. See <a href=
+      "#requiredupgradetopostgres96">Required upgrade to Postgres 9.6</a> for more.</p>
+    </li>
+    <li>Create a local {{cur_version}} repo as described in "Create a local Apigee repository" at
+      <a href="install-edge-apigee-setup-utility">Install the Edge apigee-setup utility</a>.<br>
+      <aside class="note"><strong>Note</strong>: If you already have an existing 4.17.09
+      repo, you can add the {{cur_version}} repo to it as described in "Update a local Apigee
+      repository" at <a href="install-edge-apigee-setup-utility">Install the Edge apigee-setup utility</a>.</aside>
+    </li>
+    <li><strong>To install apigee-service from a .tar file</strong>:
+      <ol>
+        <li>On the node with the local repo, use the following command to package the local repo
+          into a single .tar file named <code>/opt/apigee/data/apigee-mirror/apigee-{{cur_version}}.tar.gz</code>:
+          <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-mirror package</pre>
+        </li>
+        <li>Copy the .tar file to the node where you want to update Edge. For example, copy it to
+          the <code>/tmp</code> directory on the new node.</li>
+        <li>On the new node, untar the file to the /tmp directory:
+          <pre class="devsite-terminal">tar -xzf apigee-{{cur_version}}tar.gz</pre>
+          <p>This command creates a new directory, named repos, in the directory containing the .tar
+          file. For example /tmp/repos.</p>
+        </li>
+        <li>Install the Edge apigee-service utility and dependencies from /tmp/repos: <br>
+          <pre class="devsite-terminal">sudo bash /tmp/repos/bootstrap_{{cur_version}}.sh apigeeprotocol="file://" apigeerepobasepath=/tmp/repos</pre>
+          <p>Notice that you include the path to the repos directory in this command.</p>
+        </li>
+      </ol>
+    </li>
+    <li><strong>To install apigee-service using the Nginx webserver:</strong>
+      <ol>
+        <li>Configure the Nginx web server as described in "Install from the repo using the Nginx
+          webserver" at <a href="install-edge-apigee-setup-utility">Install the Edge
+          <code>apigee-setup</code> utility</a>.</li>
+        <li>On the remote node, download the Edge <code>bootstrap_{{cur_version}}.sh</code> file to
+          <code>/tmp/bootstrap_{{cur_version}}.sh</code>:
+          <pre class="devsite-terminal">/usr/bin/curl http://<var>uName:</var><var>pWord</var>@<var>remoteRepo</var>:3939/bootstrap_{{cur_version}}.sh -o /tmp/bootstrap_{{cur_version}}.sh</pre>
+          <p>Where <var>uName:pWord</var> are the username and password you set previously for
+          the repo, and <var>remoteRepo</var> is the IP address or DNS name of the repo node.</p>
+        </li>
+        <li>On the remote node, install the Edge <code>apigee-service</code> utility and
+          dependencies:
+          <pre class="devsite-terminal">sudo bash /tmp/bootstrap_{{cur_version}}.sh apigeerepohost=<var>remoteRepo</var>:3939 apigeeuser=<var>uName</var> apigeepassword=<var>pWord</var> apigeeprotocol=http://</pre>
+          <p>Where <var>uName:pWord</var> are the repo username and password.</p>
+        </li>
+      </ol>
+    </li>
+    <li>Use <code>apigee-service</code> to update the <code>apigee-setup</code> utility:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-setup update </pre>
+    </li>
+    <li>Update the <code>apigee-validate</code> utility on the Management Server:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-validate update</pre>
+    </li>
+    <li>Update the <code>apigee-provision</code> utility:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-provision update</pre>
+    </li>
+    <li>Run the <code>update</code> utility on your nodes in the order described in
+      <a href="#orderofmachineupdate">Order of machine update</a>:
+      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/update.sh -c component -f <var>configFile</var></pre>
+      <p>The only requirement on the config file is that the configuration file must be accessible or
+      readable by the "apigee" user.</p>
+      <p>Use the <code>-c</code> option to specify the component to update. The list of possible
+      components includes:</p>
+      <ul>
+        <li>"cs" = Cassandra</li>
+        <li>"edge" =All Edge components except Edge UI. The "edge" component includes
+          Management Server, Message Processor, Router, QPID Server, Edge Postgres Server.</li>
+        <li>"ldap" = OpenLDAP</li>
+        <li>"ps" = postgresql</li>
+        <li>"qpid" = qpidd</li>
+        <li>"sso" = Edge SSO</li>
+        <li>"ui" = Edge UI</li>
+        <li>"zk" = Zookeeper</li>
+      </ul>
+      <p>You can run <code>update.sh</code> against all components by setting <var>component</var>
+      to "all", but only if you have an Edge all-in-one (AIO) configuration profile. For example:</p>
+      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/update.sh <strong>-c all</strong> -f ./sa_silent_config</pre>
+    </li>
+    <li>Restart the Edge UI component on all machines running it, if you haven't done so already:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-ui restart</pre>
+    </li>
+    <li>Test the update by running the <code>apigee-validate</code> utility on the Management
+      Server, as described in <a href="test-install">Test the install</a>.</li>
+    <li>If you installed a new Postgres standby node, decommission the node as described
+      in <a href="#requiredupgradetopostgres96-decommissioningapostgresnode">Decommissioning
+      a Postgres node</a>.
+      <p>If you are using network storage, you do not have to install the new node. See <a href=
+      "#requiredupgradetopostgres96">Required upgrade to Postgres 9.6</a> for more.</p>
+    </li>
+  </ol>
+
+  <p>To later roll back the update, use the procedure described in <a href=
+  "rollback-41901">Roll back 4.19.01</a>.</p>
+
+  <h2 id="orderofmachineupdate">Order of machine update</h2>
+
+  <p>The order that you update the machines in an Edge configuration is important. The most
+  important considerations to an update are:</p>
+
+  <ul>
+    <li>You must update <strong>all</strong> Cassandra and ZooKeeper nodes before you update any
+      other nodes.</li>
+    <li>For any machine with multiple Edge components (Management Server, Message Processor,
+      Router, QPID Server but not Postgres Server), use the "-c edge" option to update them all at
+      the same time. </li>
+    <li>If a step specifies that it should be performed on multiple machines, perform it in the
+      specified machine order.</li>
+    <li>There is no separate step to update Monetization. It is updated when you specify the "-c
+      edge" option.</li>
+  </ul>
+
+  <aside class="note"><strong>Note:</strong> After you update the Edge UI component, you must
+  restart the Edge UI service, as described in the update installation instructions.</aside>
+
+  <h3 id="orderofmachineupdate-fora1hoststandaloneinstallation">1-node standalone upgrade</h3>
+
+  <aside class="note"><strong>Note:</strong> For a 1-node configuration, you do not have to create a new
+  Postgres standby node even if it uses local storage. The Edge all-in-one topology is
+  designed for getting started and prototyping environments, not for production. Therefore, there
+  is no rollback procedure. If the update fails, try the update procedure again. If the update
+  continues to fail after multiple attempts, then the easiest option is to do a fresh install of
+  {{cur_version}}.</aside>
+
+  <ol>
+    <li>Update Cassandra and ZooKeeper:
+      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/update.sh -c cs,zk -f <var>configFile</var></pre>
+    </li>
+    <li>Update Qpid:
+      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/update.sh -c qpid -f <var>configFile</var></pre>
+    </li>
+    <li>Update LDAP:
+      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/update.sh -c ldap -f <var>configFile</var></pre>
+    </li>
+    <li>Stop Postgres Server, Qpid server, and PostgreSQL:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-postgres-server stop
+<code class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-qpid-server stop</code>
+<code class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-postgresql stop</code></pre>
+    </li>
+    <li>Update postgresql:
+      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/update.sh -c ps -f <var>configFile</var></pre>
+    </li>
+    <li>Update the remaining Edge components:
+      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/update.sh -c edge -f <var>configFile</var></pre>
+    </li>
+    <li>Update Edge UI:
+      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/update.sh -c ui -f <var>configFile</var></pre>
+    </li>
+    <li><em>(If you installed Edge SSO)</em> Update Edge SSO:
+      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/update.sh -c sso -f <var>sso_config_file</var></pre>
+      <p>Where <var>sso_config_file</var> is the configuration file you created when you
+      <a href="install-and-configure-edge-sso">installed SSO</a>.</p>
+    </li>
+    <li>Restart the Edge UI component:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-ui restart</pre>
+    </li>
+  </ol>
+
+  <h3 id="orderofmachineupdate-fora2hoststandaloneinstallation">2-node standalone upgrade</h3>
+
+  <aside class="note"><strong>Note:</strong> For a 2-node configuration, you do not have to create a new
+  Postgres standby node even if it uses local storage. The Edge 2-node topology is designed
+  for getting started and prototyping environments, not for production. Therefore, there is no
+  rollback procedure. In the situation where the update fails, try the update procedure again. If
+  the update continues to fail after multiple attempts, then the easiest option is to do a fresh
+  install of {{cur_version}}.</aside>
+
+  <p>See {{topologies}} for the list of Edge
+  topologies and node numbers.</p>
+
+  <ol>
+    <li>Update Cassandra and ZooKeeper on machine 1:
+      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/update.sh -c cs,zk -f <var>configFile</var></pre>
+    </li>
+    <li>Update Qpid on machine 2:
+      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/update.sh -c qpid -f <var>configFile</var></pre>
+    </li>
+    <li>Update LDAP on machine 1:
+      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/update.sh -c ldap -f <var>configFile</var></pre>
+    </li>
+    <li>Update Edge components on machine 1:
+      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/update.sh -c edge -f <var>configFile</var></pre>
+    </li>
+    <li>Update UI on machine 1:
+      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/update.sh -c ui -f <var>configFile</var></pre>
+    </li>
+    <li><em>(If you installed Edge SSO)</em> Update Edge SSO on machine 1:
+      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/update.sh -c sso -f <var>sso_config_file</var></pre>
+      <p>Where <var>sso_config_file</var> is the configuration file you created when you
+      <a href="install-and-configure-edge-sso">installed SSO</a>.</p>
+    </li>
+    <li>Update postgresql on machine 2:
+      <ol>
+        <li>Stop Postgres Server, Qpid server, and postgresql:<br>
+          <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-postgres-server stop
+<code class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-qpid-server stop</code>
+<code class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-postgresql stop</code></pre>
+        </li>
+        <li>Update postgresql:
+          <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/update.sh -c ps -f configFile</pre>
+        </li>
+        <li>Update Edge components on machine 2:
+          <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/update.sh -c edge -f <var>configFile</var></pre>
+        </li>
+      </ol>
+    </li>
+    <li>Restart the Edge UI component on machine 1:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-ui restart</pre>
+    </li>
+  </ol>
+
+  <h3 id="orderofmachineupdate-fora5hostclusteredinstallation">5-node upgrade</h3>
+
+  <p>See {{topologies}} for the list of Edge
+  topologies and node numbers.</p>
+
+  <ol>
+    <li>Ensure that you have installed a new Postgres standby node as described in
+      <a href="#requiredupgradetopostgres96-installinganewpostgresstandbynode"><em>Installing
+      a new Postgres standby node</em></a>.
+      <p>If you are using network storage, you do not have to install the new node. Instead, take a
+      network snapshot of the data store used by Postgres. See <a href=
+      "#requiredupgradetopostgres96">Required upgrade to Postgres 9.6</a> for more.</p>
+    </li>
+    <li>Update Cassandra and ZooKeeper on machine 1, 2, and 3:
+      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/update.sh -c cs,zk -f <var>configFile</var></pre>
+    </li>
+    <li>Update Qpid on machine 4 and 5:
+      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/update.sh -c qpid -f <var>configFile</var></pre>
+    </li>
+    <li>Update LDAP on machine 1:
+      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/update.sh -c ldap -f <var>configFile</var></pre>
+    </li>
+    <li>Update Edge components on machine 1, 2, 3:
+      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/update.sh -c edge -f <var>configFile</var></pre>
+    </li>
+    <li>Update UI on machine 1:
+      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/update.sh -c ui -f <var>configFile</var></pre>
+    </li>
+    <li><em>(If you installed Edge SSO)</em> Update Edge SSO on machine 1:
+      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/update.sh -c sso -f <var>sso_config_file</var></pre>
+      <p>Where <var>sso_config_file</var> is the configuration file you created when you
+      <a href="install-and-configure-edge-sso">installed SSO</a>.</p>
+    </li>
+    <li>Update machines 4 and 5:
+      <ol>
+        <li>Stop Postgres server and Qpid server on machine 4:<br>
+          <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-postgres-server stop
+<code class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-qpid-server stop</code></pre>
+        </li>
+        <li>Stop Postgres server, Qpid server, and postgresql on machine  5:
+          <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-postgres-server stop
+<code class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-qpid-server stop</code>
+<code class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-postgresql stop</code></pre>
+        </li>
+        <li><strong>If installed</strong>, stop Postgres server and postgresql on the new standby
+          node that you added for rollback:
+          <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-postgres-server stop
+<code class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-postgresql stop</code></pre>
+        </li>
+        <li>Update postgresql on machines 4:
+          <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/update.sh -c ps -f <var>configFile</var></pre>
+        </li>
+        <li>Update postgresql on machines 5:
+          <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/update.sh -c ps -f <var>configFile</var></pre>
+        </li>
+        <li>Start Postgres server and Qpid server on machines 4 and 5:
+          <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-postgres-server start
+<code class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-qpid-server start</code></pre>
+        </li>
+        <li>Configure Postgres as a standby node by running the following commands on machine 5:
+          <pre class="devsite-terminal">cd /opt/apigee/data/apigee-postgresql/pgdata
+<code class="devsite-terminal">rm -rf *</code>
+<code class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-postgresql setup-replication-on-standby -f <var>configFile</var></code></pre>
+        </li>
+        <li>Verify the replication status by issuing the following scripts on both servers. The
+        system should display identical results on both servers to ensure a successful replication:
+        <ul>
+          <li>On the machine 4, the master node, run:
+            <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-postgresql postgres-check-master</pre>
+            <p>Validate that it says it is the master.</p>
+          </li>
+          <li>On machine 5, the standby node:
+            <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-postgresql postgres-check-standby</pre>
+            <p>Validate that it says it is the standby.</p>
+          </li>
+        </ul>
+      </ol>
+    </li>
+    <li>Update Edge components on machine 4, 5:
+      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/update.sh -c edge -f <var>configFile</var></pre>
+    </li>
+    <li>Ensure that you decommission the new standby node as described
+      in <a href="#requiredupgradetopostgres96-decommissioningapostgresnode">Decommissioning
+      a Postgres node</a>.
+      <p>If you are using network storage, you do not have to install the new node. See <a href=
+      "#requiredupgradetopostgres96">Required upgrade to Postgres 9.6</a> for more.</p>
+    </li>
+    <li>Restart the Edge UI component on machine 1:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-ui restart</pre>
+    </li>
+  </ol>
+
+  <h3 id="orderofmachineupdate-fora9hostclusteredinstallation">9-node clustered upgrade</h3>
+
+  <p>See {{topologies}} for the list of Edge
+  topologies and node numbers.</p>
+
+  <ol>
+    <li>Ensure that you have installed a new Postgres standby node as described
+      in <a href="#requiredupgradetopostgres96-installinganewpostgresstandbynode"><em>Installing
+      a new Postgres standby node</em></a>.
+      <p>If you are using network storage, you do not have to install the new node. Instead, take a
+      network snapshot of the data store used by Postgres. See <a href=
+      "#requiredupgradetopostgres96">Required upgrade to Postgres 9.6</a> for more.</p>
+    </li>
+    <li>Update Cassandra and ZooKeeper on machine 1, 2, and 3:
+      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/update.sh -c cs,zk -f <var>configFile</var></pre>
+    </li>
+    <li>Update Qpid on machine 6 and 7:
+      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/update.sh -c qpid -f <var>configFile</var></pre>
+    </li>
+    <li>Update LDAP on machine 1:
+      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/update.sh -c ldap -f <var>configFile</var></pre>
+    </li>
+    <li>Update Edge components on machine 6, 7, 1, 4, and 5 in that order:
+      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/update.sh -c edge -f <var>configFile</var></pre>
+    </li>
+    <li>Update UI on machine 1:
+      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/update.sh -c ui -f <var>configFile</var></pre>
+    </li>
+    <li><em>(If you installed Edge SSO)</em> Update Edge SSO on machine 1:
+      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/update.sh -c sso -f <var>sso_config_file</var></pre>
+      <p>Where <var>sso_config_file</var> is the configuration file you created when you
+      <a href="install-and-configure-edge-sso">installed SSO</a>.</p>
+    </li>
+    <li>Update machines 8 and 9:
+      <ol>
+        <li>Stop Postgres server on machine 8:
+          <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-postgres-server stop</pre>
+        </li>
+        <li>Stop Postgres server and postgresql on machine 9:
+          <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-postgres-server stop
+<code class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-postgresql stop</code></pre>
+        </li>
+        <li>Stop Qpid server on machines 6 and 7:
+          <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-qpid-server stop</pre>
+        </li>
+        <li><strong>If installed</strong>, stop Postgres server and postgresql on the new standby
+          node that you added for rollback:
+          <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-postgres-server stop
+<code class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-postgresql stop</code></pre>
+        </li>
+        <li>Update postgresql on machines 8:
+          <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/update.sh -c ps -f <var>configFile</var></pre>
+        </li>
+        <li>Update postgresql on machines 9:
+          <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/update.sh -c ps -f <var>configFile</var></pre>
+        </li>
+        <li>Start Postgres server server on machines 8 and 9:
+          <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-postgres-server start</pre>
+        </li>
+        <li>Start Qpid server server on machines 6 and 7:
+          <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-qpid-server start</pre>
+        </li>
+        <li>Configure Postgres as a standby node by running the following commands on machine 9:
+        <pre class="devsite-terminal">cd /opt/apigee/data/apigee-postgresql/pgdata
+<code class="devsite-terminal">rm -rf *</code>
+<code class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-postgresql setup-replication-on-standby -f <var>configFile</var></code></pre>
+        </li>
+        <li>Verify the replication status by issuing the following scripts on both servers. The
+          system should display identical results on both servers to ensure a successful replication:
+          <ul>
+            <li>On the machine 8, the master node, run:
+              <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-postgresql postgres-check-master</pre>
+              <p>Validate that it says it is the master.</p>
+            </li>
+            <li>On machine 9, the standby node:
+              <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-postgresql postgres-check-standby</pre>
+              <p>Validate that it says it is the standby.</p>
+            </li>
+          </ul>
+        </li>
+      </ol>
+    </li>
+    <li>Update Edge components on machine 8 and 9:
+      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/update.sh -c edge -f <var>configFile</var></pre>
+    </li>
+    <li>Ensure that you decommission the new standby node as described
+      in <a href="#requiredupgradetopostgres96-decommissioningapostgresnode"><em>Decommissioning
+      a Postgres node</em></a>.
+      <p>If you are using network storage, you do not have to install the new node. See <a href=
+      "#requiredupgradetopostgres96">Required upgrade to Postgres 9.6</a> for more.</p>
+    </li>
+    <li>Restart the Edge UI component on machine 1:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-ui restart</pre>
+    </li>
+  </ol>
+
+  <h3 id="orderofmachineupdate-fora13hostclusteredinstallation">13-node clustered upgrade</h3>
+
+  <p>See {{topologies}} for the list of Edge
+  topologies and node numbers.</p>
+
+  <ol>
+    <li>Ensure that you have installed a new Postgres standby node as described
+      in <a href="#requiredupgradetopostgres96-installinganewpostgresstandbynode"><em>Installing
+      a new Postgres standby node</em></a>.
+      <p>If you are using network storage, you do not have to install the new node. Instead, take a
+      network snapshot of the data store used by Postgres. See <a href=
+      "#requiredupgradetopostgres96">Required upgrade to Postgres 9.6</a> for more.</p>
+    </li>
+    <li>Update Cassandra and ZooKeeper on machine 1, 2, and 3:
+      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/update.sh -c cs,zk -f <var>configFile</var></pre>
+    </li>
+    <li>Update Qpid on machine 12 and 13:
+      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/update.sh -c qpid -f <var>configFile</var></pre>
+    </li>
+    <li>Update LDAP on machine 4 and 5:
+      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/update.sh -c ldap -f <var>configFile</var></pre>
+    </li>
+    <li>Update Edge components on machine 12, 13, 6, 7, 10, and 11 in that order:
+      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/update.sh -c edge -f <var>configFile</var></pre>
+    </li>
+    <li>Update UI on machine 6 and 7:
+      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/update.sh -c ui -f <var>configFile</var></pre>
+    </li>
+    <li><em>(If you installed Edge SSO)</em> Update Edge SSO on machine 6 and 7:
+      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/update.sh -c sso -f <var>sso_config_file</var></pre>
+      <p>Where <var>sso_config_file</var> is the configuration file you created when you
+      <a href="install-and-configure-edge-sso">installed SSO</a>.</p>
+    </li>
+    <li>Update machines 8 and 9:
+      <ol>
+        <li>Stop Postgres server on machine 8:
+          <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-postgres-server stop</pre>
+        </li>
+        <li>Stop Postgres server and postgresql on machine 9:
+          <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-postgres-server stop
+<code class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-postgresql stop</code></pre>
+        </li>
+        <li>Stop Qpid server on machines 12 and 13:
+          <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-qpid-server stop</pre>
+        </li>
+        <li><strong>If installed</strong>, stop Postgres server and postgresql on the new standby
+          node that you added for rollback:
+          <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-postgres-server stop
+<code class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-postgresql stop</code></pre>
+        </li>
+        <li>Update postgresql on machines 8:
+          <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/update.sh -c ps -f <var>configFile</var></pre>
+        </li>
+        <li>Update postgresql on machines 9:
+          <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/update.sh -c ps -f <var>configFile</var></pre>
+        </li>
+        <li>Start Postgres server on machines 8 and 9:
+          <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-postgres-server start</pre>
+        </li>
+        <li>Start Qpid server server on machines 12 and 13:
+          <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-qpid-server start</pre>
+        </li>
+        <li>Configure Postgres as a standby node by running the following commands on machine 9:
+        <pre class="devsite-terminal">cd /opt/apigee/data/apigee-postgresql/pgdata
+<code class="devsite-terminal">rm -rf *</code>
+<code class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-postgresql setup-replication-on-standby -f <var>configFile</var></code></pre>
+        </li>
+        <li>Verify the replication status by issuing the following scripts on both servers. The
+          system should display identical results on both servers to ensure a successful replication:
+          <ul>
+            <li>On the machine 8, the master node, run:
+              <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-postgresql postgres-check-master</pre>
+              <p>Validate that it says it is the master.</p>
+            </li>
+            <li>On machine 9, the standby node:
+              <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-postgresql postgres-check-standby</pre>
+              <p>Validate that it says it is the standby.</p>
+            </li>
+          </ul>
+        </li>
+      </ol>
+    </li>
+    <li>Update Edge components on machine 8 and 9:
+      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/update.sh -c edge -f <var>configFile</var></pre>
+    </li>
+    <li>Ensure that you decommission the new standby node as described
+      in <a href="#requiredupgradetopostgres96-decommissioningapostgresnode"><em>Decommissioning
+      a Postgres node</em></a>.
+      <p>If you are using network storage, you do not have to install the new node. See <a href=
+      "#requiredupgradetopostgres96">Required upgrade to Postgres 9.6</a> for more.</p>
+    </li>
+    <li>Restart the Edge UI component on machines 6 and 7:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-ui restart</pre>
+    </li>
+  </ol>
+
+  <h3 id="orderofmachineupdate-fora12hostclusteredinstallation">12-node clustered upgrade</h3>
+
+  <p>See {{topologies}} for the list of Edge
+  topologies and node numbers.</p>
+
+  <ol>
+    <li>Ensure that you have installed a new Postgres standby node as described
+      in <a href="#requiredupgradetopostgres96-installinganewpostgresstandbynode">Installing
+      a new Postgres standby node</a>.
+      <p>If you are using network storage, you do not have to install the new node. Instead, take a
+      network snapshot of the data store used by Postgres. See
+      <a href="#requiredupgradetopostgres96">Required upgrade to Postgres 9.6</a> for more.</p>
+    </li>
+    <li>Update Cassandra and ZooKeeper:
+      <ol>
+        <li>On machines 1, 2 and 3 in Data Center 1:
+          <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/update.sh -c cs,zk -f <var>configFile</var></pre>
+        </li>
+        <li>On machines 7, 8, and 9 in Data Center 2
+          <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/update.sh -c cs,zk -f <var>configFile</var></pre>
+        </li>
+      </ol>
+    </li>
+    <li>Update qpidd:
+      <ol>
+        <li>Machines 4, 5 in Data Center 1
+          <ol>
+            <li>Update <code>qpidd</code> on machine 4:
+              <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/update.sh -c qpid -f <var>configFile</var></pre>
+            </li>
+            <li>Repeat step 1 on machine 5.</li>
+          </ol>
+        </li>
+        <li>Machines 10, 11 in Data Center 2
+          <ol>
+            <li>Update <code>qpidd </code>on machine 10:
+              <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/update.sh -c qpid -f <var>configFile</var></pre>
+            </li>
+            <li>Repeat step 1 on machine 11.</li>
+          </ol>
+        </li>
+      </ol>
+    </li>
+    <li>Update LDAP:
+      <ol>
+        <li>Machines 1 in Data Center 1
+          <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/update.sh -c ldap -f <var>configFile</var></pre>
+        </li>
+        <li>Machines 7 in Data Center 2
+          <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/update.sh -c ldap -f <var>configFile</var></pre>
+        </li>
+      </ol>
+    </li>
+    <li>Update Edge components:
+      <ol>
+        <li>Machines 4, 5, 1, 2, 3 in Data Center 1
+          <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/update.sh -c edge -f <var>configFile</var></pre>
+        </li>
+        <li>Machines 10, 11, 7, 8, 9 in Data Center 2
+          <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/update.sh -c edge -f <var>configFile</var></pre>
+        </li>
+      </ol>
+    </li>
+    <li>Update UI:
+      <ol>
+        <li>Machine 1 in Data Center 1:
+          <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/update.sh -c ui -f <var>configFile</var></pre>
+        </li>
+        <li>Machine 7 in Data Center 2:
+          <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/update.sh -c ui -f <var>configFile</var></pre>
+        </li>
+      </ol>
+    </li>
+    <li><em>(If you installed Edge SSO)</em> Update Edge SSO:
+      <ol>
+        <li>Machine 1 in Data Center 1:
+          <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/update.sh -c sso -f <var>sso_config_file</var></pre>
+        </li>
+        <li>Machine 7 in Data Center 2:
+          <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/update.sh -c sso -f <var>sso_config_file</var></pre>
+        </li>
+        <p>Where <var>sso_config_file</var> is the configuration file you created when you
+        <a href="install-and-configure-edge-sso">installed SSO</a>.</p>
+      </ol>
+    </li>
+    <li><strong>Update machine 6 in Data Center 1 and 12 in Data Center 2:</strong>
+      <ol>
+        <li>Stop Postgres server on machine 6:
+          <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-postgres-server stop</pre>
+        </li>
+        <li>Stop Postgres server and postgresql on machine 12:
+          <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-postgres-server stop
+<code class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-postgresql stop</code></pre>
+        </li>
+        <li>Stop Qpid server on machines 4, 5, 10, and 11:
+          <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-qpid-server stop</pre>
+        </li>
+        <li><strong>If installed</strong>, stop Postgres server and postgresql on the new standby
+          node that you added for rollback:
+          <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-postgres-server stop
+<code class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-postgresql stop</code></pre>
+        </li>
+        <li>Update postgresql on machines 6:
+          <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/update.sh -c ps -f <var>configFile</var></pre>
+        </li>
+        <li>Update postgresql on machines 12:
+          <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/update.sh -c ps -f <var>configFile</var></pre>
+        </li>
+        <li>Start Postgres server server on machines 6 and 12:
+          <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-postgres-server start</pre>
+        </li>
+        <li>Start Qpid server server on machines 4, 5, 10, and 11:
+          <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-qpid-server start</pre>
+        </li>
+        <li>Configure Postgres as a standby node by running the following commands on machine 12:
+          <pre class="devsite-terminal">cd /opt/apigee/data/apigee-postgresql/pgdata
+<code class="devsite-terminal">rm -rf *</code>
+<code class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-postgresql setup-replication-on-standby -f <var>configFile</var></code></pre>
+        </li>
+        <li>Verify the replication status by issuing the following scripts on both servers. The
+          system should display identical results on both servers to ensure a successful
+          replication:
+          <p>On the machine 6, the master node, run:</p>
+          <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-postgresql postgres-check-master</pre>
+          <p>Validate that it says it is the master.<p>
+          <p>On machine 12, the standby node:<p>
+          <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-postgresql postgres-check-standby</pre>
+          <p>Validate that it says it is the standby.</p>
+        </li>
+      </ol>
+    </li>
+    <li>Update Edge components on machine 6 and 12:
+      <pre class="devsite-terminal">/opt/apigee/apigee-setup/bin/update.sh -c edge -f <var>configFile</var></pre>
+    </li>
+    <li>Ensure that you decommission the new standby node as described in
+      <a href="#requiredupgradetopostgres96-decommissioningapostgresnode">Decommissioning a Postgres
+      node</a>.
+      <p>If you are using network storage, you do not have to install the new node. See
+      <a href="#requiredupgradetopostgres96">Required upgrade to Postgres 9.6</a> for more.</p>
+    </li>
+    <li>Restart the Edge UI component on machines 1 and 7:
+      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service edge-ui restart</pre>
+    </li>
+  </ol>
+
+  <h3 id="orderofmachineupdate-foranonstandardinstallation">For a non-standard upgrade</h3>
+
+  <p>If you have a non-standard configuration, then update Edge components in the following
+  order:</p>
+  <ol>
+    <li>ZooKeeper</li>
+    <li>Cassandra</li>
+    <li>qpidd, ps</li>
+    <li>LDAP</li>
+    <li>Edge, meaning the "-c edge" profile on all nodes in the order: nodes with Qpid server,
+      Edge Postgres Server, Management Server, Message Processor, and Router.
+      <aside class="note"><strong>Note:</strong> If the node has both Qpid server and Postgres
+      server installed, run the "-c edge" profile step.</aside>
+    </li>
+    <li>Edge UI</li>
+    <li>Edge SSO</li>
+  </ol>
+  <p>After you finish updating, be sure to restart the Edge UI component on all machines running
+  it.</p>
+
+{% endblock %}

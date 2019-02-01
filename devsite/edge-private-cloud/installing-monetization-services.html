@@ -1,14 +1,15 @@
-{% extends "private-cloud/v4.18.05/_base.html" %}
+{% extends "private-cloud/v4.19.01/_base.html" %}
 {% block title %}Installing Monetization Services{% endblock %}
 {% block body %}
 
   <p>Monetization Services is an extension to Apigee Edge, hence it does not run as a standalone
-  process. It runs within any existing Apigee Edge setup.</p>
+  process. It runs within any existing Apigee Edge setup, with the exception of the All-In-One (AIO)
+  configuration. You cannot install Monetization Services on an AIO configuration.</p>
 
   <h2 id="monetizationrequirements">Monetization requirements</h2>
 
   <ul>
-    <li>If you are installing Monetization on an Edge topology that use multiple Management Server
+    <li>If you are installing Monetization on an Edge topology that uses multiple Management Server
     nodes, such as a 13-node installation, then you must install both Edge Management Server nodes
     before installing Monetization.</li>
 
@@ -17,6 +18,8 @@
     on Edge if you have multiple Postgres master nodes. For more, see
     <a href="set-master-standby-replication-postgres">Set up Master-Standby Replication for
     Postgres</a>.</li>
+
+    <li>Monetization is not available with the All-In-One (AIO) configuration.</li>
   </ul>
 
   <h2 id="installationoverview">Installation overview</h2>
@@ -175,81 +178,23 @@ CASS_PASSWORD</pre>
 
   <h2 id="onboarding">Monetization onboarding</h2>
 
-  <p>To create a new organization with monetization enabled, you first create the organization as
-  you would for any new organization. For more information, see
-  <a href="onboard-organization">Onboard an organization</a>.</p>
-
-  <h3 id="additional-onboarding">
-  Additional onboarding to enable Monetization for an organization</h3>
-
-  <p>To complete monetization onboarding of an organization, you have to:</p>
-
+  <p><strong>To create a new organization and enable monetization:</strong></p>
   <ol>
-    <li>Create the monetization group: <code>mxgroup</code>.</li>
-    <li>Add Qpid to the group.</li>
-    <li>Enable monetization for the organization.</li>
-    <li>Enable notification settings for the organization.</li>
-    <li>Repeat this process for all organizations where you want to enable Monetization.</li>
-  </ol>
-
-  <p>Use the <code>enable-monetization</code>
-  command to perform all of these tasks. This script takes a configuration file containing the
-  following properties:</p>
-  <pre class="prettyprint">MSIP=<var>IPorDNSofManagementServer</var>
-APIGEE_PORT_HTTP_MS=8080    # Default is 8080.
-ADMIN_EMAIL=your@email.com
-APIGEE_ADMINPW=<var>yourPassword</var>    # If omitted, you are prompted for it.
-# Must use IP addresses for CASS_HOSTS, not DNS names.
-CASS_HOSTS="$IP1:1,1 $IP2:1,1 $IP3:1,1"
-# Space-separated list IP/DNS names of all Qpid nodes in the data center being configured.
-QPID_HOST="$IP6 $IP7"
-QPID_PORT=8083     # Default is 8083.
-REGION=dc-1
-ORG_NAME=myorg    # The Edge org where you want to enable monetization. 
-MX_GROUP=mxgroup    # Default Monetization group.
-</pre>
-
-  <p><strong>Notes:</strong></p>
-
-  <ul>
-    <li>Set <code>CASS_HOSTS</code> and <code>REGION</code> to the same values as
-    you used when installing Monetization.</li>
-    <li>If you are enabling Monetization in a multiple data center configuration:
-      <ul>
-        <li>You must repeat the onboarding process on the Management Server in each data
-          center.</li>
-        <li>The configuration file should only list the Qpid nodes in the data center being
-          configured.</li>
-      </ul>
-    </li>
-  </ul>
-
-  <p>To run the script:</p>
-  <ol>
-    <li>Invoke the script:
-      <pre class="devsite-terminal">/opt/apigee/apigee-service/bin/apigee-service apigee-provision enable-monetization -f <var>configFile</var></pre>
-      <p>The configuration file must be accessible or readable by the "apigee" user.</p>
-      <p>If you have multiple Management Servers, you only have to run this script on one of them.</p>
-      <p>This script replicates the organization, products, developers and applications from Cassandra
-      database to Monetization PostgreSQL database. After successful installation of Monetization
-      Services the data is synchronized automatically.</p>
-    </li>
-    <li>Repeat this procedure for every organization where you want to enable Monetization.</li>
-    <li>If you are in a multiple data center environment, repeat this process on the Management
-      Server in the other data center. Ensure that the config file list only the Qpid nodes in the
-      data center being configured.</li>
+    <li>Create the organization as you would any new organization. For more information, see
+      <a href="onboard-organization">Onboard an organization</a>.</li>
+    <li>Use the monetization provisioning API as described in
+      <a href="/api-platform/monetization/enabling-monetization-organization#apigeeedgeprivatecloud">Enable
+      monetization for an organization</a>. To do this, you must have system adminsitrator
+      privileges.</li>
   </ol>
 
   <p>When you next log in to the Edge UI, you see the Monetization entry in the top-level menu for
   the organization:</p>
-
   <p><img alt="" src="/private-cloud/images/mon_ui.png" width="80%"></p>
 
-  <h3 id="configure-portal">Configure the portal</h3>
-
   <p>To configure the portal to support monetization, see <a href=
-  "/api-platform/monetization/configure-monetization-developer-portal">Configure Monetization in
-  the developer portal</a>.</p>
+    "/api-platform/monetization/configure-monetization-developer-portal">Configure Monetization in
+    the developer portal</a>.</p>
 
   <h2 id="adding-ms">Adding a Management Server node to a Monetization installation</h2>
 
