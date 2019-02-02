@@ -19,9 +19,28 @@ Earlier:
 4.18.05: https://docs.apigee.com/release/notes/41805-edge-private-cloud-release-notes
 
 ******************************
-*        Viewing Diffs       *
+*       Viewing Changes      *
 ******************************
+To view the files for a particular version of Edge for Private Cloud or to diff two
+versions, use tags. Tags are logical labels that identify a particular set of docs. Tag
+names include "4.18.01", "4.18.05", and "4.19.01".
 
+To view the state of the docs at a particular version:
+  1. Open https://github.com/danger42/edge_docs in a browser.
+  2. From the Branch drop-down button, select the Tags tab.
+  3. Select the tag corresponding to the Private Cloud version number that you want to view.
+
+To diff two versions of the docs, open the following link in a browser:
+  https://github.com/danger42/edge_docs/compare/<tag_old_version>...<tag_new_version>?diff=<diff_type>
+
+For example:
+  https://github.com/danger42/edge_docs/compare/4.18.05...4.19.01?diff=split
+
+Possible values of <diff_type> are:
+ - split: show the side by side view of changes
+ - unified: show a single view that contains all changes with standard diff markup
+
+Note that the old version MUST precede the new version in the URL.
 
 ******************************
 *       What’s included      *
