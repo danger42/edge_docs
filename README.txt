@@ -9,7 +9,7 @@ Apigee docs developer site (https://docs.apigee.com).
 https://github.com/danger42/edge_docs.git
 
 * SAP-specific product updates/known issues *
-4.19.01: https://docs.google.com/document/d/1J_ZrfCmzv-984J1wraLOX5j-WPHZxBPtefRbdsgrEv4
+4.19.01: https://docs.google.com/a/google.com/document/d/e/2PACX-1vQhtvQoqQvdODulXjGfNg8rx6AkNEZCHmZKQt_ziN2SgdVPL1wx-mbJViJUsf5B2yWblli4w4dC54oW/pub
 
 * Release Notes *
 4.19.01: https://docs.apigee.com/release/notes/41901-edge-private-cloud-release-notes
