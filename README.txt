@@ -1,22 +1,18 @@
 ******************************
 *           README           *
 ******************************
-This GitHub repo contains the source documentation for the SAP release of Apigee
-Edge and Apigee Edge for the Private Cloud. It contains a subset of files used
-by the Apigee docs developer site (https://docs.apigee.com).
+This GitHub repo contains the source files for documentation for the SAP release of Apigee
+Edge and Apigee Edge for the Private Cloud. It contains a subset of files used by the
+Apigee docs developer site (https://docs.apigee.com).
 
-Doc drop:
+* Edge and Edge for the Private Cloud Docs *
 https://github.com/danger42/edge_docs.git
 
-SAP-specific product updates/known issues:
-4.19.01: TBD
-Earlier:
-4.18.05: https://docs.google.com/document/d/1BhvTzgEChrV-jJpAcxcVNlXaG_rF2lhzXZJoqYLcD20
+* SAP-specific product updates/known issues *
+4.19.01: https://docs.google.com/document/d/1J_ZrfCmzv-984J1wraLOX5j-WPHZxBPtefRbdsgrEv4
 
-Release Notes 
+* Release Notes *
 4.19.01: https://docs.apigee.com/release/notes/41901-edge-private-cloud-release-notes
-Earlier:
-4.18.05: https://docs.apigee.com/release/notes/41805-edge-private-cloud-release-notes
 
 ******************************
 *       Viewing Changes      *
@@ -65,9 +61,10 @@ This archive includes the following files:
 
      Contains files that are included within another file (see below for more info)
      
-  2. /devsite/_localvars.html 
+  2. /devsite/*/_localvars*.html 
   
-     Contains variable definitions that should replace {{variable_name}} (see below)
+     Contains variable definitions that should replace instances of {{ variable_name }}
+     (For more information, see below)
 
   3. /drupal-node-to-file-mapping.csv
 
@@ -79,7 +76,7 @@ This archive includes the following files:
        - new_alias        File location in new CMS
        - new_path
 
-  4. /README.txt
+  4. /README.txt (this file)
 
   5. /license.txt
 
@@ -135,11 +132,16 @@ sense out of it if you look at the source.
    Included files are in the /devsite/edge/includes directory of the repo. In some
    cases, an included file is used more than once.
 
-2. Variable values:
+2. Variables:
    {{ variable_name }}
 
-   Variable names in double braces {{ ... }} are replace by their values that
-   are defined in the _localvars.html file (at /devsite).
+   Variable values are wrapped in double braces. Replace the variables with the
+   corresponding values that are defined by setvar directives in the following
+   files:
+    /devsite/_localvars.html
+    /devsite/edge/includes/_localvars_limits.html
+    /devsite/edge/includes/_localvars_policies.html
+    /devsite/edge-private-cloud/_localvars-41901.html
 
 3. Custom tags:
    <var>...</var>                  Bold, red, italic character style
@@ -149,16 +151,18 @@ sense out of it if you look at the source.
                                    without bullets
 
 4. Metadata/page wrappers:
-   {% extends "_base.html" %}{% block title %}some_title{% endblock %}{% block body %}
+   The following are directives that define the opening <html> and <body> tags:
+   {% extends "_base.html" %}
+   {% block title %}some_title{% endblock %}
+   {% block body %}
 
-   Headers that define the opening <html> and <body> tags.
-
+   Footer that defines the closing </body> and </html> tags:
    {% endblock %}
 
-   Footer that defines the closing </body> and </html> tags.
+   You can remove these wrappers and replace with your own HTML elements.
 
 5. Styles:
-   Apigee-specific CSS styles include:
+   Apigee-specific CSS style classes include:
      devsite-terminal      Inserts a "$" for commands inside <pre> tags
      prettyprint           Adds colorization for <pre> tags
      external              Adds a "linkbox" prompt to <a> tags
